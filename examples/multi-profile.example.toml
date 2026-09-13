@@ -1,0 +1,55 @@
+# 框架 TOML：同时覆盖两个已声明 profile，不是原生 DSH 配方。
+# 字段参考见 local.example.toml；测试基线 dsh-default/dsh-ssh 均属于 example-fixture-json。
+# 实际 agent 身份来自公共 profile，local 不能改变它或创建缺少基线的 profile。
+# 全部 profile 都须校验，但只返回当前选择的实体；未选中的私有 MCP 不启用。
+schema_version = 1
+
+[machine]
+id = "multi-profile-workstation"
+default_profile = "dsh-default"
+
+[overrides.providers.private_gateway]
+protocol = "openai-compatible"
+base_url = "https://gateway.example.invalid/v1"
+auth_kind = "api-key"
+credential_ref = "secret:private_gateway_key"
+
+[overrides.models.private_main]
+provider = "private_gateway"
+remote_id = "fictional-private-chat"
+input = ["text"]
+
+[overrides.mcp.private_docs]
+transport = "http"
+url = "https://docs.example.invalid/mcp"
+credential_ref = "secret:private_docs_key"
+
+# 默认 profile 使用私有实体；省略 agent_options，继承测试工具 terminal_images=true。
+[overrides.profiles.dsh-default]
+providers = ["private_gateway"]
+models = ["private_main"]
+mcp = ["private_docs"]
+
+[overrides.profiles.dsh-default.roles]
+main = "private_main"
+
+# 第二个 profile 保留公共 provider，但整个模型数组替换为较小的虚构模型。
+# [] 清空四种资源选择，不删除 registry 实体或磁盘文件，不自动回落到默认选择。
+[overrides.profiles.dsh-ssh]
+models = ["public_small"]
+rules = []
+skills = []
+plugins = []
+mcp = []
+
+[overrides.profiles.dsh-ssh.roles]
+main = "public_small"
+small = "public_small"
+
+[overrides.profiles.dsh-ssh.agent_options]
+terminal_images = false
+
+[secrets]
+private_gateway_key = ""
+private_docs_key = ""
+public_gateway_key = ""

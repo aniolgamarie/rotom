@@ -1,0 +1,24 @@
+[project]
+name = "agentcfg"
+version = "0.1.0"
+description = "个人 Agent 配置管理器"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+    "jsonschema>=4.20",
+    "jinja2>=3.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[tool.uv]
+# 管理器由仓库入口加载，不额外解析未锁定的 PEP 517 构建依赖。
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

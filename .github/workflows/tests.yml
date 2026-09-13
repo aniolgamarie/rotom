@@ -1,0 +1,35 @@
+name: Offline manager tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ['3.11', '3.13']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: '0.12.13'
+          python-version: ${{ matrix.python }}
+      - name: Prepare locked dependencies
+        run: uv sync --locked --python '${{ matrix.python }}'
+      - name: Run isolated offline tests
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+        run: .venv/bin/python -m pytest -q -p no:cacheprovider
+      - name: Confirm lock remains unchanged
+        run: git diff --exit-code -- uv.lock locks/dsh

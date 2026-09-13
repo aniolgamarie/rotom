@@ -1,0 +1,17 @@
+# 原生 replace({}) 清除用户覆盖的合成期望；不是实际 settings 文件或已执行结果。
+native_status: not-run
+unknown_namespace_is_native_schema: false
+before:
+  agent-presets:
+    default: standard
+  rotom-fixture-unregistered:
+    note: "中文 {{example}}"
+    items: [one, two]
+operation:
+  namespace: agent-presets
+  replace_user_section: {}
+expected_document:
+  agent-presets: {}
+  rotom-fixture-unregistered:
+    note: "中文 {{example}}"
+    items: [one, two]

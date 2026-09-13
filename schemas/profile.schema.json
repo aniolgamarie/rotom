@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "id", "agent"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "id": {"$ref": "#/$defs/id"},
+    "agent": {"$ref": "#/$defs/id"},
+    "providers": {"$ref": "#/$defs/selection"},
+    "models": {"$ref": "#/$defs/selection"},
+    "rules": {"$ref": "#/$defs/selection"},
+    "skills": {"$ref": "#/$defs/selection"},
+    "plugins": {"$ref": "#/$defs/selection"},
+    "mcp": {"$ref": "#/$defs/selection"},
+    "roles": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/id"}},
+    "agent_options": {"type": "object", "additionalProperties": false, "$comment": "由实际 adapter schema 替换；无上下文时不得接受工具选项。"}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "pattern": "^(?!\\.{1,2}$)[^/\\\\\\u0000-\\u001f\\u007f]+(?![\\s\\S])"},
+    "selection": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+  }
+}

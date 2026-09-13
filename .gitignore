@@ -1,0 +1,39 @@
+# Python 环境、缓存和构建产物
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+*.egg-info/
+node_modules/
+
+# 仓库内误放的机器私有配置和管理器运行产物
+/local/
+/private/
+/machines/
+/instances/
+/state/
+/cache/
+/rendered/
+/.agentcfg/
+/local.toml
+/local.*.toml
+
+# 原生登录数据与本地秘密，不忽略公共配方、示例或依赖锁
+/.dsh/
+/.dsh-tui/
+/dsh-home/
+/auth.json
+/oauth.json
+/credentials.json
+/secrets.toml
+/.codex/auth.json
+/.pi/agent/auth.json
+/.env
+/.env.*
+!/.env.example
+!/.env.*.example

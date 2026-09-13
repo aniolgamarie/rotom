@@ -1,0 +1,24 @@
+{
+  "commit": "793978ee3b72a1c81d8b769b269ac2fa3bc90654",
+  "source_sha256": "a02d0fa2d08d84bdbe2235db30c9c2d915a30f78cfb9ebe36009002a755186cb",
+  "version": "0.0.88-agentcfg.1",
+  "patches": {
+    "lib/oauth/controller.js": {
+      "before": "102a4854123314be7a0bb54e5cacde2c124dc64df41bd2b08c335f65881414af",
+      "after": "d0ba684329bd8c4d78ad7314529c2009b414730182b60e43f906bde6192ebe94"
+    },
+    "src/oauth/controller.ts": {
+      "before": "bb041f5be4e60d2452aa4de36cc5cccdd854020f9cb887776c216d5e130d37a7",
+      "after": "420b9c44bb66f1c0fdcb83f19a6ff72d41f9e31e146fcc44d04a9d3bfc409eae"
+    },
+    "lib/index.js": {
+      "before": "038cc030e645c37c0dbcf12e87b8d30076e6fb332f41784323c982994f36ce0d",
+      "after": "d96a897d13db553455feb03c52161cd5c56a7e3bc52ae9dfef37154c83266e01"
+    },
+    "src/index.ts": {
+      "before": "381c30f45ce12f94100cb384ac49b10c9c84e2796d9a44436393f9c684ae1d9a",
+      "after": "466a6028e1d77342db1bed5a6accb75332fdb557a7eaba10945b02d415632122"
+    }
+  },
+  "build": "upstream checked-in lib with equivalent source/lib isolation patches and native cursor-login command; no compilation"
+}

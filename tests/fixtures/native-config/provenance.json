@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "validation_level": "fixture-integrity-only",
+  "native_execution": "not-run",
+  "production_policy_execution": "not-run",
+  "origin": "Synthetic examples adapted from task1.3 native-config-evidence research; no upstream source file or user configuration copied.",
+  "adaptations": "Grouped report examples into inert case records; added explicit expected values and unexecuted statuses. Settings sample clears the known user default instead of inventing an installed preset. Skill text/resources are synthetic, not a production navigation skill.",
+  "pins": {
+    "host": "183f08e9c6dde7e36cd2318eaee70b0da08fb35e",
+    "tui": "78081cebde1ee1b47a561ef57c04f128c5623476"
+  },
+  "limitations": [
+    "Source-based expectations are not observed upstream results; tests never implement or invoke applyEntryPatches, mergeLayers or native discovery.",
+    "No published tarball verification, resolved dependency tree, installation, host loading, JS evaluation or model call.",
+    "Unknown synthetic config/namespace data is not asserted valid for registered native schemas.",
+    "Exact-node JS allowlist and recursive __jsExpr rejection are proposed policy, not existing production behavior.",
+    "Repository mode checks cover executable bits; copy tests exercise shutil only, not a production deployer or private 0700/0600 deployment permissions.",
+    "Linux fixture integrity does not establish macOS or either platform's native acceptance."
+  ],
+  "sources": {
+    "include": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/vendor/include/src/index.ts",
+      "symbol_or_scope": "applyEntryPatches; JsExpr; entryListSchema"
+    },
+    "loader-js": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/vendor/loader/src/config/utils.ts",
+      "symbol_or_scope": "evaluate; interpolate; isJsExpr"
+    },
+    "base-bundle": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/packages/bundle/base/cordis.patch.yml",
+      "symbol_or_scope": "storage-json root; session-query-sqlite row; settings-file"
+    },
+    "settings": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/packages/settings/settings/src/index.ts",
+      "symbol_or_scope": "mergeLayers; replace; publish; SettingsPathOp warning"
+    },
+    "settings-file": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/packages/settings/settings-file/src/index.ts",
+      "symbol_or_scope": "resolveSpec; FileSettingsProvider; persistSection; patchNode"
+    },
+    "instructions": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/packages/context/agent-instructions/src/files.ts",
+      "symbol_or_scope": "discoverInstructionFiles; dedupInstructionFilesByDirectory"
+    },
+    "skill-filesystem": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/packages/skill/skill-filesystem/src/index.ts",
+      "symbol_or_scope": "FileSystemSkillProvider.roots; parseSkillFile; resourceBase"
+    },
+    "skill-scopes": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/packages/skill/skill/src/index.ts",
+      "symbol_or_scope": "compareIndexedCandidates; collectFresh"
+    },
+    "standard-preset": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/packages/preset/agent-presets/presets/standard/agent.cordis.yml",
+      "symbol_or_scope": "preset-scoped agent-instructions, skill-filesystem and tool-skill"
+    },
+    "presets": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/packages/preset/agent-presets/src/index.ts",
+      "symbol_or_scope": "SETTINGS_NAMESPACE; defaultId; preset roots"
+    },
+    "profile-boot": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/apps/cli/src/profile-boot.ts",
+      "symbol_or_scope": "allPatches; composeProfile; prepareProfile"
+    },
+    "profile": {
+      "component": "host",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/183f08e9c6dde7e36cd2318eaee70b0da08fb35e/packages/boot/app-boot/src/profile.ts",
+      "symbol_or_scope": "initProfile; profile module fallback"
+    },
+    "tui-bundle": {
+      "component": "tui",
+      "url": "https://github.com/ccch1mneyyy/dsh-TUI/blob/78081cebde1ee1b47a561ef57c04f128c5623476/cordis.patch.yml",
+      "symbol_or_scope": "disabled global loaders; dsh-tui-agent-presets; whole config JS expressions"
+    },
+    "tui-paths": {
+      "component": "tui",
+      "url": "https://github.com/ccch1mneyyy/dsh-TUI/blob/78081cebde1ee1b47a561ef57c04f128c5623476/src/utils/paths.ts",
+      "symbol_or_scope": "DATA_DIR; homeDir"
+    }
+  },
+  "files": {
+    "cordis-cases.yaml": {
+      "attribution": "synthetic; no upstream file copied",
+      "sources": ["include", "base-bundle"],
+      "expected_behavior": "Supplied config replaces the complete config; omitted name/disabled survive. Metadata-only and empty patches preserve config/rows. x-rotom-fixture is unknown DATA, not a native option.",
+      "native_status": "not-run",
+      "executable": false
+    },
+    "js-cases.json": {
+      "attribution": "synthetic; no upstream file copied",
+      "sources": ["include", "loader-js", "base-bundle", "tui-bundle"],
+      "expected_behavior": "Proposed exact storage-json/config/root scalar allowlist only; unsafe scalar, other tags, non-scalar JS and untagged __jsExpr carriers should reject under future rotom policy. Plain quoted expressions remain text. Policy is not executed.",
+      "native_status": "not-run",
+      "executable": false
+    },
+    "settings-case.yaml": {
+      "attribution": "synthetic; no upstream file copied",
+      "sources": ["settings", "settings-file", "presets"],
+      "expected_behavior": "Replacing agent-presets user section with {} clears its override and re-inherits composition default while retaining unregistered sibling data. This does not certify unknown keys in registered namespaces.",
+      "native_status": "not-run",
+      "executable": false
+    },
+    "discovery.json": {
+      "attribution": "synthetic; no upstream file copied",
+      "sources": ["instructions", "skill-filesystem", "skill-scopes", "standard-preset", "presets", "tui-bundle", "profile-boot", "profile", "settings-file", "tui-paths"],
+      "expected_behavior": "Record active standard-preset scope, symbolic locations, conditional instruction order and within-scope skill ranks. Nearest scope wins before rank; project entries may shadow user skills. Paths are data only, not expanded or discovered.",
+      "native_status": "not-run",
+      "executable": false
+    },
+    "rule.md": {
+      "attribution": "synthetic; no upstream file copied",
+      "sources": ["instructions", "standard-preset"],
+      "expected_behavior": "Plain rule bytes retain Chinese and {{example}}/$() literals; proposed isolated-home AGENTS.md target. No template, prompt construction or native discovery executed.",
+      "native_status": "not-run",
+      "executable": false
+    },
+    "skill/rotom-local-nav/SKILL.md": {
+      "attribution": "synthetic; no upstream file copied",
+      "sources": ["skill-filesystem", "skill-scopes", "standard-preset"],
+      "expected_behavior": "Valid synthetic frontmatter and references to complete relative resources; not the production large-C++ navigation skill.",
+      "native_status": "not-run",
+      "executable": false
+    },
+    "skill/rotom-local-nav/资料/局部说明.txt": {
+      "attribution": "synthetic; no upstream file copied",
+      "sources": ["skill-filesystem"],
+      "expected_behavior": "Chinese resource path and literal braces survive data-only copying.",
+      "native_status": "not-run",
+      "executable": false
+    },
+    "skill/rotom-local-nav/scripts/show-note.sh": {
+      "attribution": "synthetic; no upstream file copied",
+      "sources": ["skill-filesystem"],
+      "expected_behavior": "Executable bit and bytes survive copying, but script is never invoked during fixture validation.",
+      "native_status": "not-run",
+      "executable": true
+    }
+  }
+}

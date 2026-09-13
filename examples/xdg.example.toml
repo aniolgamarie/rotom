@@ -1,0 +1,16 @@
+# 框架 TOML：XDG 缺失字段默认值示例，不是原生 DSH 配方。
+# 字段参考见 local.example.toml；测试仅使用虚构公共基线与 example-fixture-json adapter。
+# 不写 machine.paths：instances_root/state_root/cache_root 使用当前 XDG，
+# 未设置时分别回落 ~/.local/share/agentcfg/instances、~/.local/state/agentcfg、~/.cache/agentcfg。
+# 不写 overrides：继承 profile 及工具默认；不是清空选择。
+# 不写 editor/environment：不猜编辑器，环境声明默认 inherit=[]、values={}。
+# validate/render CLI 已实现；首次使用流程见 docs/getting-started.md。
+schema_version = 1
+
+[machine]
+id = "xdg-workstation"
+default_profile = "dsh-default"
+
+# 虚构公共 provider 的引用可以尚未填写；离线不解析其值。
+[secrets]
+public_gateway_key = ""
