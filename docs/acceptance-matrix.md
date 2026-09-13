@@ -2,6 +2,8 @@
 
 实现要求的编号来自 OpenSpec；测试总结果见 acceptance.md。一个文件可覆盖多个场景，账号及平台证据单独记录，不能从文件存在推断通过。
 
+审查修复补充映射：R1/R2/R3/R4/R5/R6 与 capture/诊断的具体回归位于 `tests/test_review_hardening.py`；非 npm 后端完整命令路径位于 `tests/test_extensibility.py::test_non_npm_backend_drives_public_commands_and_launch`；损坏虚拟环境有限重启位于 `tests/test_entry.py::EntryTests::test_existing_python_without_venv_metadata_does_not_exec_loop`。维护技能独立 A 场景的实际证据见 acceptance.md，其余行为场景见 improvement-plan.md。
+
 | 要求 | 证据入口 | 验收边界 |
 |---|---|---|
 | EXT-01 — Common core owns portable management behavior | tests/test_adapter.py、test_extensibility.py | 测试专用非 DSH 适配器；不宣称支持 Pi/Codex |
@@ -25,12 +27,12 @@
 | CFG-07 — Rendering is deterministic and text-safe | tests/test_config_schema.py、test_config_resolution.py、test_config_policy.py、test_config_examples.py、test_audit_regressions.py、test_render.py、test_skills.py | 离线测试；CLI 流程 |
 | CFG-08 — Skills are complete attributed packages | tests/test_config_schema.py、test_config_resolution.py、test_config_policy.py、test_config_examples.py、test_audit_regressions.py、test_render.py、test_skills.py | 离线测试；CLI 流程 |
 | CFG-09 — Local examples are executable framework documentation | tests/test_config_schema.py、test_config_resolution.py、test_config_policy.py、test_config_examples.py、test_audit_regressions.py、test_render.py、test_skills.py | 离线测试；CLI 流程 |
-| SKILL-01 — A complete maintenance skill is delivered and discoverable | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/配置流程/原生发现已检查；独立 Agent 行为未评估 |
-| SKILL-02 — Local configuration authoring follows the actual schema | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/配置流程/原生发现已检查；独立 Agent 行为未评估 |
-| SKILL-03 — Local edits preserve unrelated private content | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/配置流程/原生发现已检查；独立 Agent 行为未评估 |
-| SKILL-04 — Maintenance follows source and version boundaries | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/配置流程/原生发现已检查；独立 Agent 行为未评估 |
-| SKILL-05 — Generation and deployment follow user authorization | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/配置流程/原生发现已检查；独立 Agent 行为未评估 |
-| SKILL-06 — Skill validation checks realistic behavior and outcomes | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/配置流程/原生发现已检查；独立 Agent 行为未评估 |
+| SKILL-01 — A complete maintenance skill is delivered and discoverable | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/流程/发现及独立 A 场景已检查；B–E 行为待验证 |
+| SKILL-02 — Local configuration authoring follows the actual schema | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/流程/发现及独立 A 场景已检查；B–E 行为待验证 |
+| SKILL-03 — Local edits preserve unrelated private content | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/流程/发现及独立 A 场景已检查；B–E 行为待验证 |
+| SKILL-04 — Maintenance follows source and version boundaries | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/流程/发现及独立 A 场景已检查；B–E 行为待验证 |
+| SKILL-05 — Generation and deployment follow user authorization | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/流程/发现及独立 A 场景已检查；B–E 行为待验证 |
+| SKILL-06 — Skill validation checks realistic behavior and outcomes | Skill Creator 结构校验；test_config_examples.py、test_dsh_pipeline.py、test_runtime.py | 结构/流程/发现及独立 A 场景已检查；B–E 行为待验证 |
 | DSH-01 — Native interfaces are verified against locked sources | tests/test_dsh_pipeline.py；scripts/smoke-dsh.py；锁定原生 schema 检查 | Linux 无账号通过；账号调用及 macOS 待验证 |
 | DSH-02 — Native configuration respects complete row replacement and safe tags | tests/test_dsh_pipeline.py；scripts/smoke-dsh.py；锁定原生 schema 检查 | Linux 无账号通过；账号调用及 macOS 待验证 |
 | DSH-03 — Default recipe retains native permissions and low-noise behavior | tests/test_dsh_pipeline.py；scripts/smoke-dsh.py；锁定原生 schema 检查 | Linux 无账号通过；账号调用及 macOS 待验证 |

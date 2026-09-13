@@ -24,7 +24,7 @@
 1. 读取目标工具的固定版本文档/源码，记录配置、认证、profile、技能、规则、权限、环境变量和持久化路径。尤其核实真实 home 之外的写入，默认建立新的隔离实例。
 2. 新建 `agents/<id>/agent.toml`、bindings/plugins 和有实际内容的模板；为其定义严格 schema。通用 provider/model 的稳定 ID 与原生路由分开，未知能力不编造。
 3. 实现 adapter 类，加入 `workspace.ADAPTER_TYPES`。只有真实实现才加入 CLI 支持集合，未支持操作明确失败。
-4. 实现该工具自己的完整依赖锁及安装后端。当前 `dependencies.py` 是 DSH 的 npm 锁消费实现；不要把非 npm 工具强行套入它。接入时在命令层选择对应后端，并保留相同的暂存、验证、失败不激活约束。
+4. 实现 `backends.DependencyBackend`，由 adapter 的 `dependency_backend()` 返回。后端提供 read_lock、resolve_lock、sync、root、status、executable_paths、toolchain；命令和 run 已通过 `workspace.backend` 调用，不再假定 npm 目录。`dependencies.py` 和 `runtime_packages.py` 是 DSH 后端实现；非 npm 工具应实现自己的包收据和恢复。可选 `openspec_argv` 只在后端提供锁定 CLI 时实现，否则项目命令明确拒绝。
 5. 全文件 TOML 等可作为 bytes 产物。需要字段管理的新格式时，通过 `deployment.register_codec` 提供安全 reader/writer；不能把未知格式当 YAML。未知字段保留，秘密/运行时数据不得进入投影或备份。
 6. 使用自己的原生环境和启动准备钩子，不 source/eval 本地文件。用户已部署的 argv/凭据引用固定，密钥值在启动时才解析。
 7. 复用契约与部署测试，再补原生无账号 smoke 和平台证据；账户调用仍需用户独立授权。
@@ -40,3 +40,5 @@
 - 共享规则统一用户维护的文字，不统一内置提示、权限或工具能力。
 
 测试适配器仅位于 tests 中；其通过表示公共流程可复用，不表示 Pi/Codex 已安装或可调用。
+
+`test_non_npm_backend_drives_public_commands_and_launch` 使用不同目录布局的假后端，通过 validate/plan/lock/sync/apply/doctor/run/rollback，检查启动路径和 PATH 不包含 node_modules。增加第二个工具仍需实现自己的原生适配、CLI 支持声明及账号/平台验收，不需要改写上述公共命令的依赖逻辑。
