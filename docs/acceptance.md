@@ -2,6 +2,8 @@
 
 实现与证据分开记录。规划产物完整、测试文件存在、或第三方进程退出 0，都不单独代表对应功能已通过。
 
+审查后的改进对应 `harden-agent-config-after-review`，后续外部验收计划见 [改进计划](improvement-plan.md)。下方原生宿主/安装表记录此前执行结果；本轮修复没有重新启动第三方宿主或执行账号调用。
+
 ## 已执行环境
 
 - 日期：2026-09-13。
@@ -38,23 +40,33 @@
 
 | 项目 | Linux 本机 | GitHub Linux CI | macOS CI/本机 |
 |---|---|---|---|
-| 管理器完整离线测试 | 756 passed，7 subtests passed | 工作流已配置，未触发远端执行 | 工作流已配置，未执行 |
+| 管理器完整离线测试 | 788 passed，7 subtests passed | 工作流已配置，未触发远端执行 | 工作流已配置，未执行 |
 | 无账号原生 smoke | 已执行通过 | 独立显式步骤，不默认运行 | 未执行 |
 | 真实订阅调用 | 未执行 | 不自动运行 | 未执行 |
 
-维护 skill 已通过结构检查，合法配置与生成/部署边界由隔离流程测试覆盖；尚未进行独立 Agent 自动执行该 skill 的行为评估，不能将普通测试写成 Agent 行为已验收。
+维护 skill 已通过结构检查，并完成一次独立 Agent 的“私有模型、保留既有配置、仅生成”行为验证：在临时仓库副本新增网关与逻辑模型，保留 Codex/Cursor 选择、原始注释与秘密原文；validate/render/plan 均返回 0，11 项产物、0 冲突、0 漂移。评估器另行检查原文和秘密保留、缓存不含 canary、实例及部署状态未创建。
+
+该行为测试使用真实 Python 管理器，未启动 DSH 或模型服务。首次临时虚拟环境缺少 pyvenv.cfg 暴露入口循环，已补被动失败回归；沙箱 UID 映射问题通过相同临时环境下的受审查执行解决，没有关闭路径保护。该结果只证明改进计划中的 A 场景，B–E 场景仍待独立行为验收。
 
 ## 限制
 
 - 首版仅 DSH；其他工具需真实适配器、依赖后端和原生验收。
-- 当前 capture allowlist 只包括 terminalImages，不全量导出原生配置。
+- capture allowlist 包括 terminalImages、支持主题和当前已声明模型的原生选择；未声明动态模型或任意自定义主题明确报不支持，不全量导出原生配置。
 - 项目集成要求在最近 Git 工作树根初始化；非 Git 项目需从初始化目录启动。
 - 私人写入目录的安全祖先要求可能拒绝共享可写路径，不能关闭保护来掩盖失败。
 - Native prefs、恢复会话 preset、SDK 的未知容量默认值仍有各自语义，详见 DSH 文档。
 - 模型账号及真实服务调用未验证。后续步骤见 [live 验收](live-acceptance.md)。
 
-## 完整离线测试
+## 首版完整离线测试（历史）
 
 执行 `.venv/bin/python -m pytest -q -p no:cacheprovider`：**756 passed，7 subtests passed，0 failed，280.20 秒**。这包含源路径修复、OAuth 无静态地址回归、配置/技能/CLI、依赖失败、字段部署、上一版备份、故障恢复、活动锁、启动密钥和项目隔离测试。之后仅更新文档/验收状态，无生产代码变更。
 
 `uv lock --check --offline` 与 OpenSpec strict 校验通过。管理器从无额外构建后端的仓库入口运行；uv.lock 中的依赖保持锁定。需求编号到证据入口见 [验收矩阵](acceptance-matrix.md)。
+
+## 审查修复后的完整离线测试
+
+执行 `.venv/bin/python -m pytest -q -p no:cacheprovider`：**788 passed，7 subtests passed，0 failed，238.25 秒**。包含 R1–R6、安全定位、主题/已声明模型 capture、非 npm 后端完整命令路径和损坏虚拟环境入口回归。此前第一轮全量的 5 个失败已修正，最终结果以本段为准。
+
+原 Spec 与 `harden-agent-config-after-review` 的 OpenSpec strict 校验通过；`UV_CACHE_DIR=/tmp/rotom-uv-cache uv lock --check --offline`、维护 skill quick_validate 及文档链接检查通过。npm package-lock.json 与 uv.lock 的字节未改变，依赖版本与运行包锁身份未改变；新增锁策略和 manifest recipe 摘要。
+
+本轮没有重新执行真实 npm 安装或 DSH 原生 smoke。安装修复由假安装器、真实临时文件与失败注入验证；已有 Linux 原生证据属于同一依赖版本此前的执行。macOS、远端 CI 和真实订阅调用仍按改进计划待验证。
