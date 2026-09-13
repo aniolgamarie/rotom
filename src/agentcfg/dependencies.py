@@ -8,10 +8,13 @@ from pathlib import Path
 import shutil
 import tempfile
 import tomllib
+import sys
+import re
 
 from .deployment import json_bytes
 from .process import DependencyError, checked, environment
 from .storage import Conflict, Tree, ensure_private, instance_lock
+from . import runtime_packages
 
 
 AUDITED_HELPER_SHA256 = "ca5509febf1e6ec1356df121835ebe5ed2f9cace4bdc2ba6d83d41c7e45e0f1b"
@@ -19,7 +22,7 @@ AUDITED_HELPER_SHA256 = "ca5509febf1e6ec1356df121835ebe5ed2f9cace4bdc2ba6d83d41c
 
 def recipe_digest(repository):
   h = hashlib.sha256()
-  for relative in ("agents/dsh/dependencies.json", "agents/dsh/plugins.toml"):
+  for relative in ("agents/dsh/dependencies.json", "agents/dsh/plugins.toml", "agents/dsh/lock-policy.json"):
     h.update(relative.encode())
     h.update((repository / relative).read_bytes())
   vendor = repository / "locks/dsh/vendor"
@@ -73,6 +76,17 @@ def read_lock(repository):
   root = repository / "locks/dsh"
   try:
     metadata = json.loads((root / "manifest.json").read_bytes())
+    from jsonschema import Draft202012Validator
+    schema = json.loads((Path(__file__).resolve().parents[2] / "schemas/lock.schema.json").read_bytes())
+    if not Draft202012Validator(schema).is_valid(metadata):
+      raise ValueError()
+    policy = lock_policy(repository)
+    if (type(metadata.get("version")) is not int or metadata["version"] != 1
+        or any(metadata.get(key) != policy[key] for key in ("adapter_version", "node", "npm", "upstream"))
+        or not isinstance(metadata.get("platforms"), dict)
+        or sys.platform not in policy["supported_platforms"]
+        or sys.platform not in metadata["platforms"]):
+      raise ValueError()
     package = (root / "package.json").read_bytes()
     resolution = (root / "package-lock.json").read_bytes()
     digest = lock_identity(package, resolution, metadata)
@@ -89,12 +103,41 @@ def read_lock(repository):
         if "integrity" not in item or "version" not in item or "resolved" not in item:
           raise ValueError()
     return Lock(digest, metadata, package, resolution)
-  except (OSError, ValueError, KeyError, TypeError):
+  except (OSError, ValueError, KeyError, TypeError, DependencyError):
     from .schema import ConfigError
     raise ConfigError("lock-missing-or-stale: 请执行 lock --agent dsh") from None
 
 
+def lock_policy(repository):
+  from .dsh import DshAdapter
+  policy = json.loads((repository / "agents/dsh/lock-policy.json").read_bytes())
+  agent = tomllib.loads((repository / "agents/dsh/agent.toml").read_text())
+  plugins = tomllib.loads((repository / "agents/dsh/plugins.toml").read_text())["plugins"]
+  packages = json.loads((repository / "agents/dsh/dependencies.json").read_bytes())["dependencies"]
+  if (policy["adapter_version"] != DshAdapter.declaration.adapter_version
+      or policy["adapter_version"] != agent["adapter_version"]
+      or policy["upstream"]["host"] != agent["upstream_commit"]
+      or policy["upstream"]["tui"] != agent["tui_commit"]
+      or policy["upstream"]["cursor"] != plugins["cursor-auth"]["commit"]
+      or policy["supported_platforms"] != ["linux", "darwin"]
+      or set(policy) != {"node", "npm", "adapter_version", "upstream", "npm_integrity", "node_distributions", "supported_platforms", "packages"}
+      or set(policy["packages"]) != {"@deepseek-ai/dsh", "@deepseek-harness-tui/dsh-tui", "dsh-plugin-oauth-subs", "@fission-ai/openspec"}
+      or any(packages.get(name) != version for name, version in policy["packages"].items())
+      or set(policy["upstream"]) != {"host", "tui", "cursor", "openspec"}
+      or not all(re.fullmatch(r"[a-f0-9]{40}", value) for value in policy["upstream"].values())
+      or not re.fullmatch(r"v\d+\.\d+\.\d+", policy["node"])
+      or not re.fullmatch(r"\d+\.\d+\.\d+", policy["npm"])):
+    raise ValueError("incompatible lock policy")
+  return policy
+
+
 def resolve_lock(repository, *, npm="npm"):
+  try:
+    policy = lock_policy(repository)
+    if sys.platform not in policy["supported_platforms"]:
+      raise ValueError()
+  except (OSError, ValueError, KeyError, TypeError):
+    raise DependencyError("依赖来源策略无效；核实 lock-policy.json 与 adapter/插件声明") from None
   package = (repository / "agents/dsh/dependencies.json").read_bytes()
   with tempfile.TemporaryDirectory(prefix="agentcfg-lock-") as directory:
     root = Path(directory)
@@ -106,16 +149,17 @@ def resolve_lock(repository, *, npm="npm"):
     copy_vendors(repository, root, package)
     node_version = checked(["node", "--version"], cwd=root, env=env)
     npm_version = checked([npm, "--version"], cwd=root, env=env)
+    if node_version != policy["node"] or npm_version != policy["npm"]:
+      raise DependencyError("解析工具链与已核实 lock-policy.json 不一致")
     checked([npm, "install", "--package-lock-only", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=root, env=env)
     resolution = (root / "package-lock.json").read_bytes()
     validate_plugin_versions(repository, json.loads(resolution))
     manifest = {"version": 1, "identity": hashlib.sha256(package + resolution).hexdigest(),
       "recipe": recipe_digest(repository), "node": node_version, "npm": npm_version,
-      "adapter_version": "dsh-1", "platforms": {"linux": "not-smoked", "darwin": "not-smoked"},
-      "upstream": {"host": "183f08e9c6dde7e36cd2318eaee70b0da08fb35e",
-                   "tui": "78081cebde1ee1b47a561ef57c04f128c5623476",
-                   "cursor": "793978ee3b72a1c81d8b769b269ac2fa3bc90654",
-                   "openspec": "9d4e5974e5c0d9a09b9c6c1e1eb0975e80ec4461"}}
+      "adapter_version": policy["adapter_version"],
+      "platforms": {name: "not-smoked" for name in policy["supported_platforms"]},
+      "upstream": policy["upstream"], "npm_integrity": policy["npm_integrity"],
+      "node_distributions": policy["node_distributions"]}
     manifest["identity"] = lock_identity(package, resolution, manifest)
     # 仓库锁是公开产物；先校验所有结果，再单文件原子替换，manifest 最后提交。
     out = repository / "locks/dsh"
@@ -132,17 +176,14 @@ def runtime_root(workspace, lock):
 
 
 def installed(workspace, lock):
-  root = runtime_root(workspace, lock)
-  try:
-    with Tree(root) as tree:
-      marker = tree.read(".agentcfg-ready")
-      return marker is not None and marker[1] == 0o600 and marker[0].decode().strip() == lock.identity
-  except OSError:
-    return False
+  return runtime_packages.status(runtime_root(workspace, lock), lock.identity) == "installed"
 
 
 def sync(workspace, lock):
   with Tree(workspace.state_root, create=True) as state, instance_lock(state):
+    if state.read("pending.json"):
+      raise Conflict("存在待恢复部署；请先 apply/rollback，恢复完成前不能 sync")
+    runtime_packages.recover_repair(runtime_root(workspace, lock), lock.identity)
     if installed(workspace, lock):
       return {"installed": True, "changed": False}
     ensure_private(workspace.instance)
@@ -176,14 +217,12 @@ def sync(workspace, lock):
                        "@deepseek-harness-tui/dsh-tui/cordis.patch.yml", "dsh-plugin-oauth-subs/lib/index.js"):
         if not (stage / "node_modules" / required).is_file():
           raise DependencyError("安装结果缺少锁定配方所需文件")
-      (stage / ".agentcfg-ready").write_text(lock.identity + "\n")
-      (stage / ".agentcfg-ready").chmod(0o600)
+      runtime_packages.seal(stage, lock.identity)
       final = runtime_root(workspace, lock)
-      if final.exists() or final.is_symlink():
-        raise Conflict("运行目录已存在但没有有效安装凭证")
-      os.rename(stage, final)
+      runtime_packages.activate(stage, final, lock.identity)
     except BaseException:
       # 安装器自己创建的本次 stage；不清理其他运行包或实例内容。
-      shutil.rmtree(stage)
+      if stage.exists():
+        shutil.rmtree(stage)
       raise
     return {"installed": True, "changed": True}

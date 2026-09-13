@@ -27,6 +27,7 @@ class IsolatedEnvironment:
 
 @pytest.fixture(autouse=True)
 def isolated_environment(tmp_path, monkeypatch):
+  previous_umask = os.umask(0o077)
   home = tmp_path / "home"
   cwd = tmp_path / "业务 中文 目录"
   paths = {
@@ -53,7 +54,10 @@ def isolated_environment(tmp_path, monkeypatch):
     monkeypatch.setenv(name, value)
   monkeypatch.setattr(tempfile, "tempdir", str(paths["TMPDIR"]))
   monkeypatch.chdir(cwd)
-  return IsolatedEnvironment(tmp_path, home, cwd, env)
+  try:
+    yield IsolatedEnvironment(tmp_path, home, cwd, env)
+  finally:
+    os.umask(previous_umask)
 
 
 @pytest.fixture(autouse=True)
@@ -184,6 +188,23 @@ def fake_subprocess(offline_guards, monkeypatch):
   fake = FakeSubprocess()
   monkeypatch.setattr(subprocess, "run", fake.run)
   return fake
+
+
+@pytest.fixture
+def prepared_runtime():
+  """有完整收据的虚构安装包，不执行第三方代码。"""
+  from agentcfg.runtime_packages import REQUIRED_FILES, seal
+  from agentcfg.storage import ensure_private
+  def prepare(workspace, lock):
+    root = workspace.backend.root(workspace, lock.identity)
+    ensure_private(root)
+    for name in REQUIRED_FILES:
+      target = root / name
+      target.parent.mkdir(parents=True, exist_ok=True)
+      target.write_bytes(lock.package if name == "package.json" else lock.resolution if name == "package-lock.json" else b"synthetic installed artifact\n")
+    seal(root, lock.identity)
+    return root
+  return prepare
 
 
 @pytest.fixture

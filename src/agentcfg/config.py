@@ -58,9 +58,37 @@ def _read_toml(path: Path) -> dict:
 
 
 def load_local(path: Path, *, adapter_schemas: AdapterSchemas | None = None) -> tuple[LocalConfig, SecretStore]:
-  ordinary, store = separate_local(_read_toml(path))
+  missing = False
+  try:
+    document = read_local_document(path)
+  except FileNotFoundError:
+    missing = True
+  if missing:
+    raise ConfigError("read")
+  ordinary, store = separate_local(document)
   validate_document("local", ordinary, adapter_schemas=adapter_schemas)
   return LocalConfig(ordinary), store
+
+
+def read_local_document(path):
+  from .paths import read_private_file
+  from .storage import Conflict
+  error = None
+  try:
+    content = read_private_file(path)
+  except FileNotFoundError:
+    error = "missing"
+  except (OSError, PathError):
+    error = "unsafe"
+  if error == "missing":
+    raise FileNotFoundError()
+  if error:
+    raise Conflict("本地配置读取不安全；检查访问权限、路径无链接、属主为当前用户、文件 0600、私人父目录 0700")
+  try:
+    return tomllib.loads(content.decode("utf-8"))
+  except (tomllib.TOMLDecodeError, UnicodeError):
+    pass
+  raise ConfigError("parse", ("local", "TOML"))
 
 
 def load_sources(explicit_sources: SourceInputs, *, adapter_schemas: AdapterSchemas) -> Catalog:
@@ -203,9 +231,15 @@ def _callback(callback, *args):
   result = None
   try:
     result = callback(*(deepcopy(arg) for arg in args))
+  except ConfigError as error:
+    if error.code == "oauth-provider-options-not-supported":
+      result = "oauth-provider-options-not-supported"
+    failed = True
   except Exception:
     failed = True
   if failed:
+    if result == "oauth-provider-options-not-supported":
+      raise ConfigError("oauth-provider-options-not-supported", ("profile", "agent_options", "provider_options"))
     raise ConfigError("adapter", ("adapter",))
   return result
 
