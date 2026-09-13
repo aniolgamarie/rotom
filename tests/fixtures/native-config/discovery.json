@@ -1,0 +1,37 @@
+{
+  "native_status": "not-run",
+  "preset": "standard",
+  "active_scope": "preset",
+  "disabled_host_rows": ["agent-instructions", "skill-filesystem"],
+  "rule_target": "$DSH_HOME/AGENTS.md",
+  "skill_target": "$DSH_HOME/skills/rotom-local-nav",
+  "cwd": "project/sub",
+  "project_root_marker": "project/.git",
+  "rule_order": [
+    "$DSH_HOME/AGENTS.md",
+    "project/AGENTS.md",
+    "project/CLAUDE.md",
+    "project/AGENTS.local.md",
+    "project/sub/AGENTS.md"
+  ],
+  "rule_conditions": "Listed synthetic paths must exist; no other candidates present. Native byte caps still apply. Same-directory trimmed duplicates collapse; cross-directory duplicates do not.",
+  "same_scope_skill_ranks": {
+    "project/.dsh/skills": 100,
+    "project/.agents/skills": 200,
+    "customSkillDirs": 300,
+    "$DSH_HOME/skills": 400,
+    "$DSH_AGENTS_HOME/skills": 500,
+    "bundledSkillDir": 600
+  },
+  "skill_conditions": "Default roots enabled; optional custom/bundled paths configured. DSH_AGENTS_HOME is a symbolic configured agentsHome here; default is HOME/.agents. No path expansion or native discovery executed.",
+  "nearest_scope_wins_before_rank": true,
+  "collision_policy": "Native precedence is not rotom shared/agent override authorization; explicit source collision policy remains unimplemented.",
+  "ownership": {
+    "profile/cordis.yml": "runtime-owned; prepareProfile rewrites empty composition root",
+    "profile/package.json and node_modules": "package-manager-owned; not ordinary renderer artifacts",
+    "$DSH_HOME/settings.yaml": "mixed-field-ownership; no whole-file adoption or backup",
+    "$DSH_HOME/AGENTS.md and selected skills": "proposed whole-file targets only in a newly owned isolated home",
+    "project instructions and skills": "unmanaged; may shadow or supplement user defaults",
+    "$HOME/.dsh-tui": "runtime-owned outside DSH_HOME; not adopted"
+  }
+}

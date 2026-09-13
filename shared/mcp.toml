@@ -1,0 +1,2 @@
+# 服务只按 profile 选择启用；默认没有服务。
+schema_version = 1

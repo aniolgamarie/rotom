@@ -1,0 +1,10 @@
+# 从 TUI 0.10.1 固定提交提取数据 config，保留已核实的三个启动表达式。
+# 插件、inject 和其他运行时行由包拥有，此处仅合成完整 dsh-tui config。
+- id: dsh-tui
+  config:
+    provider: openai-codex
+    fullscreen: false
+    terminalImages: false
+    preset: !!js process.env.DSH_TUI_PRESET ?? undefined
+    workspace: !!js process.env.DSH_TUI_WORKSPACE_TARGET ?? undefined
+    sessionId: !!js process.env.DSH_TUI_RESUME_SESSION ?? undefined

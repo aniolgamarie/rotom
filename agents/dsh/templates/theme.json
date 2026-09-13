@@ -1,0 +1,9 @@
+{
+  "name": "rotom-poimandres",
+  "displayName": "Rotom Poimandres",
+  "base": "dark",
+  "colors": {
+    "accent": "#5DE4C7",
+    "text": "#E4F0FB"
+  }
+}

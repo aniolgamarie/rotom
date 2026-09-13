@@ -1,0 +1,19 @@
+# 框架 TOML：自定义中文空格路径，不是原生 DSH 配方。
+# 字段参考见 local.example.toml；由测试专用 adapter 解析，不访问这些示例磁盘/程序。
+# 绝对路径保持字面值，~/ 仅按当前 HOME 展开一次；空字符串不能请求默认。
+# editor 是单个路径，不执行、不拆词；迁移配置不自动搬运账号/会话。
+schema_version = 1
+
+[machine]
+id = "custom-paths"
+default_profile = "dsh-default"
+editor = "~/工具 空格/editor"
+
+[machine.paths]
+instances_root = "/示例 磁盘/私人 实例"
+state_root = "~/中文 状态/agentcfg"
+cache_root = "~/中文 缓存/agentcfg"
+
+# 缺少 overrides 表示继承虚构公共基线；不是启用真实服务。
+[secrets]
+public_gateway_key = ""

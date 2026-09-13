@@ -1,0 +1,15 @@
+schema_version = 1
+settings_namespace = "llm-pi-ai"
+credential_field = "apiKeyEnv"
+
+[protocols]
+openai-compatible = "openai-completions"
+openai-responses = "openai-responses"
+
+[oauth.codex]
+route = "openai-codex"
+owner = "codex-auth"
+
+[oauth.cursor]
+route = "oauth-cursor"
+owner = "cursor-auth"

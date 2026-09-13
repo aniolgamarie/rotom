@@ -1,0 +1,49 @@
+{
+  "commit": "78081cebde1ee1b47a561ef57c04f128c5623476",
+  "version": "0.10.1",
+  "source_integrity": "sha512-xnwLON+c28zt1Yg5nrI2fNHysUEF63TsIC7XndtIJIiDOBEomcSfydnc9DrT+Xzx7p2/qAi6d7+GFB0eSyJ2uw==",
+  "changes": {
+    "package/node_modules/@dsh-std/command/package.json": {
+      "before": "eb424620a3548a455eff729017d9b95324512562ab9cb906422bf7dd4d6c901b",
+      "after": "e905caf989beeead2f7332e1913cbd8f8dcf96760674f85523d69ecddc4d7adb"
+    },
+    "package/node_modules/@dsh-std/connection/package.json": {
+      "before": "46667ce5fd6a5c0fb40559c6907b1ca2f4d959bf7af8da117b91ef1e72c78e2e",
+      "after": "11c6ad7e07f97475a9b6accf7303eb9151986917280c67209f61a1c065ae0d1d"
+    },
+    "package/node_modules/@dsh-std/manifest/package.json": {
+      "before": "b65f376f7079576effdc93d590024a2160f83cb3af3f6131b53d8571d3f41e16",
+      "after": "51661ee5d3848a7ed8fa077bd3502a04b90d82ea501deed4b44a46c61b1a7f54"
+    },
+    "package/node_modules/@dsh-std/messages/package.json": {
+      "before": "53bcba82da3b6c636a1a57f2f23ac5a8cbe12bbb0ec7891dd0c98155f29324f0",
+      "after": "c6201ded5ec3d527cfb91a012ea7e33bc75667bc43ac0ad17b1861dbcd4a9214"
+    },
+    "package/node_modules/@dsh-std/presentation/package.json": {
+      "before": "e5f2ec2d07fce0129530c5343e4a5c2d7d0d58a790b969ad7db82365a76abe90",
+      "after": "d8bc0fe949d1cf95f9bf47d9846d9b73cd91554aea6e4c88a65a27df28423af2"
+    },
+    "package/node_modules/@dsh-std/storage/package.json": {
+      "before": "fed39dc4ce58cc059d993855919ded648fa88e1902b3771210c7075ac890a27c",
+      "after": "11c4f88faf4e9e08530b9f6a7c0afd960700bac106b37dbfaeb2c03c105188c0"
+    },
+    "package/vendor/dsh-std/packages/command/node_modules/@dsh-std/connection/package.json": {
+      "before": "46667ce5fd6a5c0fb40559c6907b1ca2f4d959bf7af8da117b91ef1e72c78e2e",
+      "after": "11c6ad7e07f97475a9b6accf7303eb9151986917280c67209f61a1c065ae0d1d"
+    },
+    "package/vendor/dsh-std/packages/command/node_modules/@dsh-std/manifest/package.json": {
+      "before": "b65f376f7079576effdc93d590024a2160f83cb3af3f6131b53d8571d3f41e16",
+      "after": "51661ee5d3848a7ed8fa077bd3502a04b90d82ea501deed4b44a46c61b1a7f54"
+    },
+    "package/vendor/dsh-std/packages/command/node_modules/@dsh-std/presentation/package.json": {
+      "before": "e5f2ec2d07fce0129530c5343e4a5c2d7d0d58a790b969ad7db82365a76abe90",
+      "after": "d8bc0fe949d1cf95f9bf47d9846d9b73cd91554aea6e4c88a65a27df28423af2"
+    },
+    "package/vendor/dsh-std/packages/presentation/node_modules/@dsh-std/connection/package.json": {
+      "before": "46667ce5fd6a5c0fb40559c6907b1ca2f4d959bf7af8da117b91ef1e72c78e2e",
+      "after": "11c6ad7e07f97475a9b6accf7303eb9151986917280c67209f61a1c065ae0d1d"
+    }
+  },
+  "runtime_code": "unchanged",
+  "reason": "npm frozen installation rejects bundled workspace:* metadata"
+}

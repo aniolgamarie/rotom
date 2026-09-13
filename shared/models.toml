@@ -1,0 +1,2 @@
+# OAuth 模型目录由插件在登录后发现；不编造静态 model ID。
+schema_version = 1

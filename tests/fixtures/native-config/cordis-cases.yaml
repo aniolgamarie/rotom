@@ -1,0 +1,69 @@
+# 合成的纯函数输入/期望值；未运行上游算法，不是可启动的插件配置。
+base:
+  - id: session-query-sqlite
+    name: "@deepseek-ai/dsh-session-query-sqlite"
+    disabled: false
+    config:
+      path: ":memory:"
+      openAt: never
+      x-rotom-fixture:
+        note: "中文 {{example}} $() `literal`"
+cases:
+  lossy-config:
+    native_status: not-run
+    patches:
+      - id: session-query-sqlite
+        config:
+          openAt: first-search
+    expected:
+      - id: session-query-sqlite
+        name: "@deepseek-ai/dsh-session-query-sqlite"
+        disabled: false
+        config:
+          openAt: first-search
+  complete-config:
+    native_status: not-run
+    patches:
+      - id: session-query-sqlite
+        name: "@deepseek-ai/dsh-session-query-sqlite"
+        disabled: false
+        config:
+          path: ":memory:"
+          openAt: first-search
+          x-rotom-fixture:
+            note: "中文 {{example}} $() `literal`"
+    expected:
+      - id: session-query-sqlite
+        name: "@deepseek-ai/dsh-session-query-sqlite"
+        disabled: false
+        config:
+          path: ":memory:"
+          openAt: first-search
+          x-rotom-fixture:
+            note: "中文 {{example}} $() `literal`"
+  metadata-only:
+    native_status: not-run
+    patches:
+      - id: session-query-sqlite
+        disabled: false
+    expected:
+      - id: session-query-sqlite
+        name: "@deepseek-ai/dsh-session-query-sqlite"
+        disabled: false
+        config:
+          path: ":memory:"
+          openAt: never
+          x-rotom-fixture:
+            note: "中文 {{example}} $() `literal`"
+  omitted-id:
+    native_status: not-run
+    patches: []
+    expected:
+      - id: session-query-sqlite
+        name: "@deepseek-ai/dsh-session-query-sqlite"
+        disabled: false
+        config:
+          path: ":memory:"
+          openAt: never
+          x-rotom-fixture:
+            note: "中文 {{example}} $() `literal`"

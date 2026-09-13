@@ -1,0 +1,13 @@
+schema_version = 1
+
+[rules.chinese]
+path = "shared/rules/chinese.md"
+[rules.terminal]
+path = "shared/rules/terminal.md"
+[rules.cpp-local-search]
+path = "shared/rules/cpp-local-search.md"
+
+[skills.repo-navigation]
+path = "shared/skills/repo-navigation"
+[skills.maintain-agent-config]
+path = "shared/skills/maintain-agent-config"

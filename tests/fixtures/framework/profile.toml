@@ -1,0 +1,15 @@
+schema_version = 1
+id = "synthetic-default"
+agent = "synthetic"
+providers = ["synthetic"]
+models = ["synthetic"]
+rules = ["synthetic"]
+skills = ["synthetic"]
+plugins = []
+mcp = []
+
+[roles]
+main = "synthetic"
+
+[agent_options]
+terminal_images = true

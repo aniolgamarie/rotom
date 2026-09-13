@@ -1,0 +1,2 @@
+# Unified diff 的空上下文行必须保留一个空格，不将其当作源码尾随空格。
+locks/dsh/vendor/*.patch -whitespace

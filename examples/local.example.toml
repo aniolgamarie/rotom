@@ -1,0 +1,99 @@
+# 框架 TOML 字段参考：不是 DSH/Pi/Codex 原生配置，也不是生产服务配方。
+# 本目录全部 endpoint 使用 example.invalid，模型 ID 均为虚构；不读取现有凭据。
+# tests/test_config_examples.py 用测试专用 example-fixture-json adapter 和公共基线
+# 执行 load_local → load_sources → resolve_config → adapter.validate/render。
+# dsh-default 只是示例的已声明 profile ID；上述测试不证明原生 DSH 可用。
+# 当前可运行 ./agentcfg init-local --machine workstation：只创建仓库外私人框架文件，
+# 不覆盖既有文件，不填密钥；目录 0700、文件 0600，仓库提供实际 dsh-default 配方。
+# 目标为 $XDG_CONFIG_HOME/agentcfg/machines/workstation.toml，未设置时用 ~/.config。
+# validate/render/plan CLI 已实现；从首次安装到启动见 docs/getting-started.md。
+# 本例含虚构网关；仅使用订阅时保留 init-local 的最小文件即可。
+# 字段与未知表严格校验，不静默丢弃、修复或迁移。此版本号属于框架数据，
+# 与 adapter 自有文档 schema_version / adapter_version 分开；目前仅支持整数 1。
+schema_version = 1
+
+[machine]
+# id 必填，标识本机；不含斜杠、反斜杠、控制字符，不可为 . 或 ..。
+id = "workstation"
+# default_profile 可省略：显式 profile 选择优先，其次此项，再回落 dsh-default。
+# 指定的 profile 必须已有公共基线，不能填空字符串或通过 local 偷建 profile。
+default_profile = "dsh-default"
+# editor 可省略；一个程序名或绝对/~/ 路径，仅作单个 argv[0]，不是 shell 命令。
+# 路径可含中文空格；不能写 nvim -f，不拆词、不执行、不检查是否已安装。
+editor = "nvim"
+
+# paths 表及三项都可省略，只有缺失字段才使用默认；空字符串不是默认值。
+# instances_root 默认 $XDG_DATA_HOME/agentcfg/instances，未设置时 ~/.local/share/agentcfg/instances。
+# state_root 默认 $XDG_STATE_HOME/agentcfg，未设置时 ~/.local/state/agentcfg。
+# cache_root 默认 $XDG_CACHE_HOME/agentcfg，未设置时 ~/.cache/agentcfg。
+# 以上 $XDG_* 是默认规则说明，不是可写入路径的插值语法；已设置为空也不是缺失。
+# 显式路径只接受绝对路径或 ~/；按当前 HOME 展开一次，中文空格保持字面值。
+# 禁止相对路径、~user、环境插值、命令替换及 .. 跳转；解析不创建/搬运运行数据。
+[machine.paths]
+instances_root = "~/agentcfg-private/instances"
+state_root = "~/agentcfg-private/state"
+cache_root = "~/agentcfg-private/cache"
+
+# environment 仅声明非秘密输入，不复制全部父环境，也不在解析时构造子进程环境。
+# inherit 是明确变量名数组（不能 LC_* 通配）；省略时默认 []。
+# inherit 和 values 都禁止 HOME、DSH_HOME、实例 XDG_*、adapter 声明的凭据目标
+# 以及明确凭据名称（如 API_KEY/TOKEN）；本例测试 adapter 还保留 EXAMPLE_GATEWAY_KEY。
+[machine.environment]
+inherit = []
+
+# values 为非秘密字符串表；省略时默认 {}。允许空字符串，不做 shell/环境展开。
+# 不得放密钥、secret: 引用或含账号密码/凭据查询参数的 URL。
+# 任意 opaque 字符串无法被证明非秘密；不要依赖自动检测代替正确的凭据通道。
+[machine.environment.values]
+LANG = "zh_CN.UTF-8"
+
+# 合并顺序：registry/工具默认 → profile → local；本次参数仅限已明确定义的字段，
+# 当前 resolver 不接受非空 request_overrides。对象递归合并，标量替换，数组整体替换。
+# 省略字段意味着继承；[] 清空选择，false 明确关闭，不按真假回落；{} 不删除继承键。
+# 不支持任意删除表达式；取消选择只在解析结果中表示缺席，不在此阶段删除文件。
+# providers/models/mcp 按稳定 ID 覆盖，可新增私有实体；新实体合并后必须完整合法。
+# 所有引用均须存在，新增实体不会自动启用；未知 transport/参数仍由 adapter 拒绝。
+[overrides.providers.private_gateway]
+protocol = "openai-compatible"
+base_url = "https://gateway.example.invalid/v1"
+auth_kind = "api-key"
+# 只存引用；值只从下面 secrets 由需要凭据的运行操作读取，离线可缺失/为空。
+credential_ref = "secret:private_gateway_key"
+
+[overrides.models.private_main]
+provider = "private_gateway"
+remote_id = "fictional-private-chat"
+input = ["text"]
+
+# MCP 的 command/args 或 url/credential_ref 由所选 adapter 校验组合与能力。
+# 此服务仅登记，不选中；命令/参数为字面数据，解析不执行脚本或连接服务。
+[overrides.mcp.private_docs]
+transport = "stdio"
+command = "fictional-private-mcp"
+args = ["--workspace", "~/示例 文档"]
+
+# profiles 可同时覆盖多个已声明 profile；不能改变 agent 身份，不能塞任意原生表。
+# providers/models/rules/skills/plugins/mcp 都是 ID 选择数组，整体替换而不是追加。
+# roles 引用的模型必须在该 profile.models 内，模型 provider 也必须被选中。
+# 未写 rules/skills/plugins 表示继承公共 profile；不会自动安装或运行未选中的内容。
+[overrides.profiles.dsh-default]
+providers = ["private_gateway"]
+models = ["private_main"]
+mcp = []
+
+# roles 是工具角色到模型 ID 的映射；合法角色名由对应 adapter 绑定校验。
+[overrides.profiles.dsh-default.roles]
+main = "private_main"
+
+# agent_options 只接受该 profile 所属 adapter 的 schema，不是任意原生键容器。
+# terminal_images 已由 DSH adapter 映射；原生验证证据见 docs/acceptance.md。
+# false 保留；关闭显示选项不改变上面模型 input 能力。
+[overrides.profiles.dsh-default.agent_options]
+terminal_images = false
+
+# secrets 读取后立即隔离，不进入普通解析配置、来源树、渲染输入、摘要或异常。
+# 引用形式 secret:<name>；离线不要求有同名条目，也不联网验证有效性。
+# 实际值只能填写在仓库外私人本地文件，切勿提交；示例只能为空字符串。
+# 私有 endpoint/model ID 可进入必要的私人产物，不应出现在公开诊断中。
+[secrets]
+private_gateway_key = ""

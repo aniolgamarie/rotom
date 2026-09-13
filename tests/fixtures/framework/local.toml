@@ -1,0 +1,42 @@
+schema_version = 1
+
+[machine]
+id = "workstation"
+default_profile = "synthetic-default"
+editor = "nvim"
+
+[machine.paths]
+instances_root = "~/agentcfg-private/instances"
+state_root = "~/agentcfg-private/state"
+cache_root = "~/agentcfg-private/cache"
+
+[machine.environment]
+inherit = []
+
+[machine.environment.values]
+LANG = "zh_CN.UTF-8"
+
+[overrides.providers.private_gateway]
+protocol = "openai-compatible"
+base_url = "https://gateway.example.invalid/v1"
+auth_kind = "api-key"
+credential_ref = "secret:private_gateway_key"
+
+[overrides.models.private_main]
+provider = "private_gateway"
+remote_id = "example-private-chat"
+input = ["text"]
+
+[overrides.profiles.synthetic-default]
+providers = ["private_gateway"]
+models = ["private_main"]
+mcp = []
+
+[overrides.profiles.synthetic-default.roles]
+main = "private_main"
+
+[overrides.profiles.synthetic-default.agent_options]
+terminal_images = false
+
+[secrets]
+private_gateway_key = ""

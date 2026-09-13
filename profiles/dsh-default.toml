@@ -1,0 +1,4 @@
+# agentcfg 框架格式，不是原生 DSH 配置。
+schema_version = 1
+id = "dsh-default"
+agent = "dsh"
