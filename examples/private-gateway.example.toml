@@ -1,0 +1,41 @@
+# 框架 TOML：本地新增私有网关/模型/MCP，不是原生 DSH 配方或服务推荐。
+# 字段参考见 local.example.toml；所有地址和模型均为虚构，仅测试 adapter 支持下列形状。
+# 新实体必须完整，引用合法后仍须在 profile 中选择；不连接网关，不安装/执行 MCP。
+schema_version = 1
+
+[machine]
+id = "private-workstation"
+default_profile = "dsh-default"
+
+[overrides.providers.private_gateway]
+protocol = "openai-compatible"
+base_url = "https://gateway.example.invalid/v1"
+auth_kind = "api-key"
+credential_ref = "secret:private_gateway_key"
+
+[overrides.models.private_main]
+provider = "private_gateway"
+remote_id = "fictional-private-chat"
+input = ["text"]
+
+# URL 不嵌凭据；运行时引用是否支持必须由真实 adapter 证明，不能退回明文。
+[overrides.mcp.private_docs]
+transport = "http"
+url = "https://docs.example.invalid/mcp"
+credential_ref = "secret:private_docs_key"
+
+[overrides.profiles.dsh-default]
+providers = ["private_gateway"]
+models = ["private_main"]
+mcp = ["private_docs"]
+
+[overrides.profiles.dsh-default.roles]
+main = "private_main"
+
+[overrides.profiles.dsh-default.agent_options]
+terminal_images = false
+
+# 仅空值占位，离线不需要登录；其他 profile 的公共凭据引用也可完全缺席。
+[secrets]
+private_gateway_key = ""
+private_docs_key = ""

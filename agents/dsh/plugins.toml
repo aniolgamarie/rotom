@@ -1,0 +1,26 @@
+schema_version = 1
+
+[plugins.tui]
+package = "@deepseek-harness-tui/dsh-tui"
+version = "0.10.1"
+bundled = false
+enabled = true
+requires = []
+conflicts = []
+
+[plugins.codex-auth]
+package = "@deepseek-harness-tui/dsh-auth"
+version = "0.1.0"
+bundled = true
+enabled = true
+requires = ["tui"]
+conflicts = []
+
+[plugins.cursor-auth]
+package = "dsh-plugin-oauth-subs"
+version = "0.0.88-agentcfg.1"
+commit = "793978ee3b72a1c81d8b769b269ac2fa3bc90654"
+bundled = false
+enabled = true
+requires = ["tui"]
+conflicts = []

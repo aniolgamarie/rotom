@@ -1,0 +1,24 @@
+schema_version = 1
+
+[providers.synthetic]
+protocol = "openai-compatible"
+base_url = "https://example.invalid/v1"
+auth_kind = "api-key"
+credential_ref = "secret:missing"
+
+[models.synthetic]
+provider = "synthetic"
+remote_id = "fictional-chat"
+input = ["text"]
+
+[mcp.synthetic]
+transport = "stdio"
+command = "fictional-mcp"
+args = []
+
+[rules.synthetic]
+path = "shared/rules/synthetic.md"
+template = false
+
+[skills.synthetic]
+path = "shared/skills/synthetic"

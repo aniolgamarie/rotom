@@ -1,0 +1,29 @@
+# 框架 TOML：Linux SSH/tmux 的机器差异，不是 SSH 连接命令或原生 DSH 配方。
+# 字段参考见 local.example.toml；仅用测试 adapter 证明格式和离线解析，不启动 SSH/tmux。
+# dsh-ssh 必须已有公共 profile；省略 state_root/cache_root，仅这两项继承 XDG 默认。
+schema_version = 1
+
+[machine]
+id = "ssh-workstation"
+default_profile = "dsh-ssh"
+editor = "nvim"
+
+[machine.paths]
+instances_root = "~/远程 工作/instances"
+
+# 明确非秘密变量名，不继承全部父环境、不使用通配符、不覆盖 HOME/DSH_HOME/XDG/凭据。
+[machine.environment]
+inherit = ["TERM", "SSH_TTY", "TMUX"]
+
+[machine.environment.values]
+LANG = "zh_CN.UTF-8"
+
+[overrides.profiles.dsh-ssh]
+mcp = []
+
+# 仅测试 adapter 的受校验显示选项；false 不会被默认 true 替代。
+[overrides.profiles.dsh-ssh.agent_options]
+terminal_images = false
+
+[secrets]
+public_gateway_key = ""

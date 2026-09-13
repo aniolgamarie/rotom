@@ -1,0 +1,51 @@
+{
+  "policy_status": "proposed-not-implemented",
+  "cases": {
+    "proposed-allowed": {
+      "yaml": "- id: storage-json\n  config:\n    root: !!js dshHomePath('storages')\n",
+      "node_tag": "tag:yaml.org,2002:js",
+      "node_kind": "scalar",
+      "scalar": "dshHomePath('storages')",
+      "expected_policy": "allow-exact-node",
+      "policy_execution": "not-run"
+    },
+    "unsafe-scalar": {
+      "yaml": "- id: storage-json\n  config:\n    root: !!js \"(() => { throw new Error('rotom-fixture'); })()\"\n",
+      "node_tag": "tag:yaml.org,2002:js",
+      "node_kind": "scalar",
+      "scalar": "(() => { throw new Error('rotom-fixture'); })()",
+      "expected_policy": "reject",
+      "policy_execution": "not-run"
+    },
+    "unknown-tag": {
+      "yaml": "- id: storage-json\n  config:\n    root: !rotom-fixture value\n",
+      "node_tag": "!rotom-fixture",
+      "node_kind": "scalar",
+      "scalar": "value",
+      "expected_policy": "reject",
+      "policy_execution": "not-run"
+    },
+    "tagged-sequence": {
+      "yaml": "- id: storage-json\n  config:\n    root: !!js []\n",
+      "node_tag": "tag:yaml.org,2002:js",
+      "node_kind": "sequence",
+      "expected_policy": "reject",
+      "policy_execution": "not-run"
+    },
+    "untagged-carrier": {
+      "yaml": "- id: storage-json\n  config:\n    root: {__jsExpr: \"process.cwd()\"}\n",
+      "node_tag": "tag:yaml.org,2002:map",
+      "node_kind": "mapping",
+      "expected_policy": "reject",
+      "policy_execution": "not-run"
+    },
+    "quoted-text": {
+      "yaml": "- id: storage-json\n  config:\n    root: \"process.env.X\"\n",
+      "node_tag": "tag:yaml.org,2002:str",
+      "node_kind": "scalar",
+      "scalar": "process.env.X",
+      "expected_policy": "plain-text",
+      "policy_execution": "not-run"
+    }
+  }
+}

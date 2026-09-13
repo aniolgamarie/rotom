@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "machine"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "machine": {
+      "type": "object", "additionalProperties": false, "required": ["id"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "default_profile": {"$ref": "#/$defs/id"},
+        "editor": {"$ref": "#/$defs/text"},
+        "paths": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "instances_root": {"$ref": "#/$defs/text"},
+            "state_root": {"$ref": "#/$defs/text"},
+            "cache_root": {"$ref": "#/$defs/text"}
+          }
+        },
+        "environment": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "inherit": {"type": "array", "items": {"$ref": "#/$defs/environment_name"}, "uniqueItems": true},
+            "values": {"type": "object", "propertyNames": {"$ref": "#/$defs/environment_name"}, "additionalProperties": {"type": "string"}}
+          }
+        }
+      }
+    },
+    "overrides": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "providers": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/provider"}},
+        "models": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/model"}},
+        "mcp": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/mcp"}},
+        "profiles": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/profile"}}
+      }
+    },
+    "secrets": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"type": "string"}}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "pattern": "^(?!\\.{1,2}$)[^/\\\\\\u0000-\\u001f\\u007f]+(?![\\s\\S])"},
+    "text": {"type": "string", "minLength": 1, "pattern": "^[^\\u0000]+(?![\\s\\S])"},
+    "secret": {"type": "string", "pattern": "^secret:(?!\\.{1,2}$)[^/\\\\\\u0000-\\u001f\\u007f]+(?![\\s\\S])"},
+    "environment_name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?![\\s\\S])"},
+    "selection": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+    "provider": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "protocol": {"$ref": "#/$defs/text"},
+        "base_url": {"$ref": "#/$defs/text"},
+        "auth_kind": {"$ref": "#/$defs/text"},
+        "credential_ref": {"$ref": "#/$defs/secret"}
+      }
+    },
+    "model": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "provider": {"$ref": "#/$defs/id"},
+        "remote_id": {"$ref": "#/$defs/text"},
+        "context_window": {"type": "integer", "minimum": 1},
+        "max_output_tokens": {"type": "integer", "minimum": 1},
+        "source": {"$ref": "#/$defs/text"},
+        "input": {"type": "array", "items": {"$ref": "#/$defs/text"}, "uniqueItems": true}
+      }
+    },
+    "mcp": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "transport": {"$ref": "#/$defs/text"},
+        "command": {"$ref": "#/$defs/text"},
+        "args": {"type": "array", "items": {"type": "string"}},
+        "url": {"$ref": "#/$defs/text"},
+        "credential_ref": {"$ref": "#/$defs/secret"}
+      }
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "providers": {"$ref": "#/$defs/selection"},
+        "models": {"$ref": "#/$defs/selection"},
+        "rules": {"$ref": "#/$defs/selection"},
+        "skills": {"$ref": "#/$defs/selection"},
+        "plugins": {"$ref": "#/$defs/selection"},
+        "mcp": {"$ref": "#/$defs/selection"},
+        "roles": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/id"}},
+        "agent_options": {"type": "object", "additionalProperties": false, "$comment": "逐 profile 使用明确 adapter schema 校验。"}
+      }
+    }
+  }
+}

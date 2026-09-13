@@ -1,0 +1,190 @@
+--- a/lib/oauth/controller.js
++++ b/lib/oauth/controller.js
+@@ -64,13 +64,13 @@
+         this.kiroFlows = new KiroIdcFlowManager();
+         this.cursorFlows = new CursorPollFlowManager();
+         // node:test sets NODE_TEST_CONTEXT; do not harvest the agent/IDE login into unit snapshots.
+-        this.cursorAutoImport = cursorAutoImport ?? !process.env.NODE_TEST_CONTEXT;
++        this.cursorAutoImport = false;
+         this.cursorImport = cursorImport && typeof cursorImport === 'object' ? cursorImport : {};
+         this.cursorAutoImportTried = false;
+         this.cursorDiscover = typeof cursorDiscover === 'function'
+             ? cursorDiscover
+             : (process.env.NODE_TEST_CONTEXT ? undefined : refreshCursorCatalog);
+-        this.ollamaAutoImport = ollamaAutoImport ?? !process.env.NODE_TEST_CONTEXT;
++        this.ollamaAutoImport = false;
+         this.ollamaAutoImportTried = false;
+         this.ollamaDiscover = typeof ollamaDiscover === 'function'
+             ? ollamaDiscover
+@@ -78,12 +78,12 @@
+         this.kiroDiscover = typeof kiroDiscover === 'function'
+             ? kiroDiscover
+             : (process.env.NODE_TEST_CONTEXT ? undefined : ((session) => refreshKiroCatalog(session, { fetchFn })));
+-        this.kimiAutoImport = kimiAutoImport ?? !process.env.NODE_TEST_CONTEXT;
++        this.kimiAutoImport = false;
+         this.kimiAutoImportTried = false;
+         this.kimiDiscover = typeof kimiDiscover === 'function'
+             ? kimiDiscover
+             : (process.env.NODE_TEST_CONTEXT ? undefined : ((session) => refreshKimiCatalog(session, { fetchFn })));
+-        this.copilotAutoImport = copilotAutoImport ?? !process.env.NODE_TEST_CONTEXT;
++        this.copilotAutoImport = false;
+         this.copilotAutoImportTried = false;
+         this.copilotDiscover = typeof copilotDiscover === 'function'
+             ? copilotDiscover
+@@ -610,6 +610,7 @@
+         return this.quota.consume('codex', accountIdOf('codex', live), live);
+     }
+     async checkUpdate(payload = {}) {
++    if (payload.apply) throw new Error("Updates are managed by agentcfg lock/sync");
+         const apply = payload?.apply === true;
+         const profileOpts = {
+             profile: this.profile,
+@@ -666,6 +667,7 @@
+         }
+     }
+     async checkDshUpdate(payload = {}) {
++    if (payload.apply) throw new Error("Updates are managed by agentcfg lock/sync");
+         const apply = payload?.apply === true;
+         const targetVersion = payload?.targetVersion;
+         const opts = {
+@@ -740,6 +742,7 @@
+         return { ...this.autoUpdate };
+     }
+     startAutoUpdateWatch({ intervalMs = AUTO_UPDATE_INTERVAL_MS } = {}) {
++    return; // agentcfg: no background updater
+         if (this.autoUpdateTimer)
+             return;
+         void this.runAutoUpdate();
+--- a/src/oauth/controller.ts
++++ b/src/oauth/controller.ts
+@@ -153,13 +153,13 @@
+     this.kiroFlows = new KiroIdcFlowManager()
+     this.cursorFlows = new CursorPollFlowManager()
+     // node:test sets NODE_TEST_CONTEXT; do not harvest the agent/IDE login into unit snapshots.
+-    this.cursorAutoImport = cursorAutoImport ?? !process.env.NODE_TEST_CONTEXT
++    this.cursorAutoImport = false
+     this.cursorImport = cursorImport && typeof cursorImport === 'object' ? cursorImport : {}
+     this.cursorAutoImportTried = false
+     this.cursorDiscover = typeof cursorDiscover === 'function'
+       ? cursorDiscover
+       : (process.env.NODE_TEST_CONTEXT ? undefined : refreshCursorCatalog)
+-    this.ollamaAutoImport = ollamaAutoImport ?? !process.env.NODE_TEST_CONTEXT
++    this.ollamaAutoImport = false
+     this.ollamaAutoImportTried = false
+     this.ollamaDiscover = typeof ollamaDiscover === 'function'
+       ? ollamaDiscover
+@@ -167,12 +167,12 @@
+     this.kiroDiscover = typeof kiroDiscover === 'function'
+       ? kiroDiscover
+       : (process.env.NODE_TEST_CONTEXT ? undefined : ((session) => refreshKiroCatalog(session, { fetchFn })))
+-    this.kimiAutoImport = kimiAutoImport ?? !process.env.NODE_TEST_CONTEXT
++    this.kimiAutoImport = false
+     this.kimiAutoImportTried = false
+     this.kimiDiscover = typeof kimiDiscover === 'function'
+       ? kimiDiscover
+       : (process.env.NODE_TEST_CONTEXT ? undefined : ((session) => refreshKimiCatalog(session, { fetchFn })))
+-    this.copilotAutoImport = copilotAutoImport ?? !process.env.NODE_TEST_CONTEXT
++    this.copilotAutoImport = false
+     this.copilotAutoImportTried = false
+     this.copilotDiscover = typeof copilotDiscover === 'function'
+       ? copilotDiscover
+@@ -678,6 +678,7 @@
+   }
+ 
+   async checkUpdate(payload = {}) {
++    if (payload.apply) throw new Error("Updates are managed by agentcfg lock/sync");
+     const apply = payload?.apply === true
+     const profileOpts = {
+       profile: this.profile,
+@@ -733,6 +734,7 @@
+   }
+ 
+   async checkDshUpdate(payload = {}) {
++    if (payload.apply) throw new Error("Updates are managed by agentcfg lock/sync");
+     const apply = payload?.apply === true
+     const targetVersion = payload?.targetVersion
+     const opts = {
+@@ -808,6 +810,7 @@
+   }
+ 
+   startAutoUpdateWatch({ intervalMs = AUTO_UPDATE_INTERVAL_MS } = {}) {
++    return; // agentcfg: no background updater
+     if (this.autoUpdateTimer) return
+     void this.runAutoUpdate()
+     this.autoUpdateTimer = setInterval(() => void this.runAutoUpdate(), intervalMs)
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -223,9 +223,33 @@
+             void proxy?.close();
+         };
+     }, 'dsh-plugin-oauth-subs: local responses proxy');
+-    registerRpc(ctx, controller);
++    registerRpc(ctx, controller);;
++    // agentcfg: terminal-native login; no credential import, no auxiliary web server.
++    ctx.inject(['commands'], (scope) => {
++      scope.effect(() => scope.commands.register({
++        name: 'cursor-login',
++        description: 'Sign in to Cursor subscription in this isolated DSH instance',
++        handler: async (invocation) => {
++          try {
++            if (invocation.rawInput.trim() === 'cancel') {
++              await controller.cancel('cursor');
++              return { kind: 'success', text: 'Cursor login cancelled.' };
++            }
++            if (invocation.rawInput.trim()) {
++              return { kind: 'error', text: 'Usage: /cursor-login [cancel]' };
++            }
++            if (!proxy) return { kind: 'error', text: 'Cursor proxy is not ready.' };
++            const result = await controller.login('cursor', {});
++            return { kind: 'success', text: 'Open this URL to finish Cursor login:\n' + result.authorizeUrl + '\nAfter login, select oauth-cursor in /model.' };
++          } catch {
++            return { kind: 'error', text: 'Cursor login could not start; cancel an existing attempt and retry.' };
++          }
++        },
++      }), 'agentcfg Cursor terminal login');
++    });
++
+     try {
+-        stampDshHostVersion(pluginClientJsPath(), localDshInfo().version);
++        void 0 /* agentcfg: immutable installed package */;
+     }
+     catch { /* client.js stamp is best-effort */ }
+     ctx.effect(() => {
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -229,9 +229,33 @@
+     }
+   }, 'dsh-plugin-oauth-subs: local responses proxy')
+ 
+-  registerRpc(ctx, controller)
++  registerRpc(ctx, controller);
++    // agentcfg: terminal-native login; no credential import, no auxiliary web server.
++    ctx.inject(['commands'], (scope) => {
++      scope.effect(() => scope.commands.register({
++        name: 'cursor-login',
++        description: 'Sign in to Cursor subscription in this isolated DSH instance',
++        handler: async (invocation) => {
++          try {
++            if (invocation.rawInput.trim() === 'cancel') {
++              await controller.cancel('cursor');
++              return { kind: 'success', text: 'Cursor login cancelled.' };
++            }
++            if (invocation.rawInput.trim()) {
++              return { kind: 'error', text: 'Usage: /cursor-login [cancel]' };
++            }
++            if (!proxy) return { kind: 'error', text: 'Cursor proxy is not ready.' };
++            const result = await controller.login('cursor', {});
++            return { kind: 'success', text: 'Open this URL to finish Cursor login:\n' + result.authorizeUrl + '\nAfter login, select oauth-cursor in /model.' };
++          } catch {
++            return { kind: 'error', text: 'Cursor login could not start; cancel an existing attempt and retry.' };
++          }
++        },
++      }), 'agentcfg Cursor terminal login');
++    });
++
+   try {
+-    stampDshHostVersion(pluginClientJsPath(), localDshInfo().version)
++    void 0 /* agentcfg: immutable installed package */
+   } catch { /* client.js stamp is best-effort */ }
+ 
+   ctx.effect(() => {

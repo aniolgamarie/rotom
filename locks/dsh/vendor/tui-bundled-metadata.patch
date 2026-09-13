@@ -1,0 +1,374 @@
+--- a/package/node_modules/@dsh-std/command/package.json
++++ b/package/node_modules/@dsh-std/command/package.json
+@@ -5,18 +5,28 @@
+   "type": "module",
+   "main": "lib/index.js",
+   "types": "lib/index.d.ts",
+-  "exports": { ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" } },
+-  "files": ["lib", "CHANGELOG.md"],
++  "exports": {
++    ".": {
++      "types": "./lib/index.d.ts",
++      "default": "./lib/index.js"
++    }
++  },
++  "files": [
++    "lib",
++    "CHANGELOG.md"
++  ],
+   "scripts": {
+     "build": "pnpm run typecheck && tsdown",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "vitest run --passWithNoTests"
+   },
+   "dependencies": {
+-    "@dsh-std/core": "workspace:*",
+-    "@dsh-std/manifest": "workspace:*",
+-    "@dsh-std/connection": "workspace:*",
+-    "@dsh-std/presentation": "workspace:*"
++    "@dsh-std/core": "0.1.0",
++    "@dsh-std/manifest": "0.1.0",
++    "@dsh-std/connection": "0.1.0",
++    "@dsh-std/presentation": "0.1.0"
+   },
+-  "engines": { "node": "^22.19 || >=24" }
++  "engines": {
++    "node": "^22.19 || >=24"
++  }
+ }
+--- a/package/node_modules/@dsh-std/connection/package.json
++++ b/package/node_modules/@dsh-std/connection/package.json
+@@ -6,15 +6,28 @@
+   "main": "lib/index.js",
+   "types": "lib/index.d.ts",
+   "exports": {
+-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+-    "./memory": { "types": "./lib/memory.d.ts", "default": "./lib/memory.js" }
++    ".": {
++      "types": "./lib/index.d.ts",
++      "default": "./lib/index.js"
++    },
++    "./memory": {
++      "types": "./lib/memory.d.ts",
++      "default": "./lib/memory.js"
++    }
+   },
+-  "files": ["lib", "CHANGELOG.md"],
++  "files": [
++    "lib",
++    "CHANGELOG.md"
++  ],
+   "scripts": {
+     "build": "pnpm run typecheck && tsdown",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "vitest run"
+   },
+-  "dependencies": { "@dsh-std/core": "workspace:*" },
+-  "engines": { "node": "^22.19 || >=24" }
++  "dependencies": {
++    "@dsh-std/core": "0.1.0"
++  },
++  "engines": {
++    "node": "^22.19 || >=24"
++  }
+ }
+--- a/package/node_modules/@dsh-std/manifest/package.json
++++ b/package/node_modules/@dsh-std/manifest/package.json
+@@ -6,15 +6,26 @@
+   "main": "lib/index.js",
+   "types": "lib/index.d.ts",
+   "exports": {
+-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
++    ".": {
++      "types": "./lib/index.d.ts",
++      "default": "./lib/index.js"
++    },
+     "./schema/dsh-plugin-0.15.schema.json": "./schema/dsh-plugin-0.15.schema.json"
+   },
+-  "files": ["lib", "schema", "CHANGELOG.md"],
++  "files": [
++    "lib",
++    "schema",
++    "CHANGELOG.md"
++  ],
+   "scripts": {
+     "build": "pnpm run typecheck && tsdown",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "vitest run"
+   },
+-  "dependencies": { "@dsh-std/core": "workspace:*" },
+-  "engines": { "node": "^22.19 || >=24" }
++  "dependencies": {
++    "@dsh-std/core": "0.1.0"
++  },
++  "engines": {
++    "node": "^22.19 || >=24"
++  }
+ }
+--- a/package/node_modules/@dsh-std/messages/package.json
++++ b/package/node_modules/@dsh-std/messages/package.json
+@@ -6,15 +6,26 @@
+   "main": "lib/index.js",
+   "types": "lib/index.d.ts",
+   "exports": {
+-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
++    ".": {
++      "types": "./lib/index.d.ts",
++      "default": "./lib/index.js"
++    },
+     "./schema/message-observer-envelope-0.15.json": "./schema/message-observer-envelope-0.15.schema.json"
+   },
+-  "files": ["lib", "schema", "CHANGELOG.md"],
++  "files": [
++    "lib",
++    "schema",
++    "CHANGELOG.md"
++  ],
+   "scripts": {
+     "build": "pnpm run typecheck && tsdown",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "vitest run --passWithNoTests"
+   },
+-  "dependencies": { "@dsh-std/core": "workspace:*" },
+-  "engines": { "node": "^22.19 || >=24" }
++  "dependencies": {
++    "@dsh-std/core": "0.1.0"
++  },
++  "engines": {
++    "node": "^22.19 || >=24"
++  }
+ }
+--- a/package/node_modules/@dsh-std/presentation/package.json
++++ b/package/node_modules/@dsh-std/presentation/package.json
+@@ -6,20 +6,37 @@
+   "main": "lib/index.js",
+   "types": "lib/index.d.ts",
+   "exports": {
+-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+-    "./operations": { "types": "./lib/operations.d.ts", "default": "./lib/operations.js" },
+-    "./interaction": { "types": "./lib/interaction.d.ts", "default": "./lib/interaction.js" },
+-    "./callback": { "types": "./lib/callback.d.ts", "default": "./lib/callback.js" }
++    ".": {
++      "types": "./lib/index.d.ts",
++      "default": "./lib/index.js"
++    },
++    "./operations": {
++      "types": "./lib/operations.d.ts",
++      "default": "./lib/operations.js"
++    },
++    "./interaction": {
++      "types": "./lib/interaction.d.ts",
++      "default": "./lib/interaction.js"
++    },
++    "./callback": {
++      "types": "./lib/callback.d.ts",
++      "default": "./lib/callback.js"
++    }
+   },
+-  "files": ["lib", "CHANGELOG.md"],
++  "files": [
++    "lib",
++    "CHANGELOG.md"
++  ],
+   "scripts": {
+     "build": "pnpm run typecheck && tsdown",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "vitest run --passWithNoTests"
+   },
+   "dependencies": {
+-    "@dsh-std/core": "workspace:*",
+-    "@dsh-std/connection": "workspace:*"
++    "@dsh-std/core": "0.1.0",
++    "@dsh-std/connection": "0.1.0"
+   },
+-  "engines": { "node": "^22.19 || >=24" }
++  "engines": {
++    "node": "^22.19 || >=24"
++  }
+ }
+--- a/package/node_modules/@dsh-std/storage/package.json
++++ b/package/node_modules/@dsh-std/storage/package.json
+@@ -6,15 +6,26 @@
+   "main": "lib/index.js",
+   "types": "lib/index.d.ts",
+   "exports": {
+-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
++    ".": {
++      "types": "./lib/index.d.ts",
++      "default": "./lib/index.js"
++    },
+     "./schema/local-storage-0.15.json": "./schema/local-storage-0.15.schema.json"
+   },
+-  "files": ["lib", "schema", "CHANGELOG.md"],
++  "files": [
++    "lib",
++    "schema",
++    "CHANGELOG.md"
++  ],
+   "scripts": {
+     "build": "pnpm run typecheck && tsdown",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "vitest run --passWithNoTests"
+   },
+-  "dependencies": { "@dsh-std/core": "workspace:*" },
+-  "engines": { "node": "^22.19 || >=24" }
++  "dependencies": {
++    "@dsh-std/core": "0.1.0"
++  },
++  "engines": {
++    "node": "^22.19 || >=24"
++  }
+ }
+--- a/package/vendor/dsh-std/packages/command/node_modules/@dsh-std/connection/package.json
++++ b/package/vendor/dsh-std/packages/command/node_modules/@dsh-std/connection/package.json
+@@ -6,15 +6,28 @@
+   "main": "lib/index.js",
+   "types": "lib/index.d.ts",
+   "exports": {
+-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+-    "./memory": { "types": "./lib/memory.d.ts", "default": "./lib/memory.js" }
++    ".": {
++      "types": "./lib/index.d.ts",
++      "default": "./lib/index.js"
++    },
++    "./memory": {
++      "types": "./lib/memory.d.ts",
++      "default": "./lib/memory.js"
++    }
+   },
+-  "files": ["lib", "CHANGELOG.md"],
++  "files": [
++    "lib",
++    "CHANGELOG.md"
++  ],
+   "scripts": {
+     "build": "pnpm run typecheck && tsdown",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "vitest run"
+   },
+-  "dependencies": { "@dsh-std/core": "workspace:*" },
+-  "engines": { "node": "^22.19 || >=24" }
++  "dependencies": {
++    "@dsh-std/core": "0.1.0"
++  },
++  "engines": {
++    "node": "^22.19 || >=24"
++  }
+ }
+--- a/package/vendor/dsh-std/packages/command/node_modules/@dsh-std/manifest/package.json
++++ b/package/vendor/dsh-std/packages/command/node_modules/@dsh-std/manifest/package.json
+@@ -6,15 +6,26 @@
+   "main": "lib/index.js",
+   "types": "lib/index.d.ts",
+   "exports": {
+-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
++    ".": {
++      "types": "./lib/index.d.ts",
++      "default": "./lib/index.js"
++    },
+     "./schema/dsh-plugin-0.15.schema.json": "./schema/dsh-plugin-0.15.schema.json"
+   },
+-  "files": ["lib", "schema", "CHANGELOG.md"],
++  "files": [
++    "lib",
++    "schema",
++    "CHANGELOG.md"
++  ],
+   "scripts": {
+     "build": "pnpm run typecheck && tsdown",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "vitest run"
+   },
+-  "dependencies": { "@dsh-std/core": "workspace:*" },
+-  "engines": { "node": "^22.19 || >=24" }
++  "dependencies": {
++    "@dsh-std/core": "0.1.0"
++  },
++  "engines": {
++    "node": "^22.19 || >=24"
++  }
+ }
+--- a/package/vendor/dsh-std/packages/command/node_modules/@dsh-std/presentation/package.json
++++ b/package/vendor/dsh-std/packages/command/node_modules/@dsh-std/presentation/package.json
+@@ -6,20 +6,37 @@
+   "main": "lib/index.js",
+   "types": "lib/index.d.ts",
+   "exports": {
+-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+-    "./operations": { "types": "./lib/operations.d.ts", "default": "./lib/operations.js" },
+-    "./interaction": { "types": "./lib/interaction.d.ts", "default": "./lib/interaction.js" },
+-    "./callback": { "types": "./lib/callback.d.ts", "default": "./lib/callback.js" }
++    ".": {
++      "types": "./lib/index.d.ts",
++      "default": "./lib/index.js"
++    },
++    "./operations": {
++      "types": "./lib/operations.d.ts",
++      "default": "./lib/operations.js"
++    },
++    "./interaction": {
++      "types": "./lib/interaction.d.ts",
++      "default": "./lib/interaction.js"
++    },
++    "./callback": {
++      "types": "./lib/callback.d.ts",
++      "default": "./lib/callback.js"
++    }
+   },
+-  "files": ["lib", "CHANGELOG.md"],
++  "files": [
++    "lib",
++    "CHANGELOG.md"
++  ],
+   "scripts": {
+     "build": "pnpm run typecheck && tsdown",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "vitest run --passWithNoTests"
+   },
+   "dependencies": {
+-    "@dsh-std/core": "workspace:*",
+-    "@dsh-std/connection": "workspace:*"
++    "@dsh-std/core": "0.1.0",
++    "@dsh-std/connection": "0.1.0"
+   },
+-  "engines": { "node": "^22.19 || >=24" }
++  "engines": {
++    "node": "^22.19 || >=24"
++  }
+ }
+--- a/package/vendor/dsh-std/packages/presentation/node_modules/@dsh-std/connection/package.json
++++ b/package/vendor/dsh-std/packages/presentation/node_modules/@dsh-std/connection/package.json
+@@ -6,15 +6,28 @@
+   "main": "lib/index.js",
+   "types": "lib/index.d.ts",
+   "exports": {
+-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+-    "./memory": { "types": "./lib/memory.d.ts", "default": "./lib/memory.js" }
++    ".": {
++      "types": "./lib/index.d.ts",
++      "default": "./lib/index.js"
++    },
++    "./memory": {
++      "types": "./lib/memory.d.ts",
++      "default": "./lib/memory.js"
++    }
+   },
+-  "files": ["lib", "CHANGELOG.md"],
++  "files": [
++    "lib",
++    "CHANGELOG.md"
++  ],
+   "scripts": {
+     "build": "pnpm run typecheck && tsdown",
+     "typecheck": "tsc -p tsconfig.json --noEmit",
+     "test": "vitest run"
+   },
+-  "dependencies": { "@dsh-std/core": "workspace:*" },
+-  "engines": { "node": "^22.19 || >=24" }
++  "dependencies": {
++    "@dsh-std/core": "0.1.0"
++  },
++  "engines": {
++    "node": "^22.19 || >=24"
++  }
+ }

@@ -1,0 +1,18 @@
+# 框架 TOML：macOS 风格数据路径，不是原生 DSH/macOS 可运行配方。
+# 字段参考见 local.example.toml；Linux 上的测试只证明 TOML 格式与字面路径解析，
+# 不代表原生 macOS 验收通过，不检查/运行此虚构编辑器，不触碰真实 Library 数据。
+# 显式覆盖三项路径，不依赖操作系统自动把 XDG 默认改成 Library。
+schema_version = 1
+
+[machine]
+id = "macos-workstation"
+default_profile = "dsh-default"
+editor = "/Applications/示例 编辑器.app/Contents/MacOS/editor"
+
+[machine.paths]
+instances_root = "~/Library/Application Support/agentcfg/instances"
+state_root = "~/Library/Application Support/agentcfg/state"
+cache_root = "~/Library/Caches/agentcfg"
+
+[secrets]
+public_gateway_key = ""
