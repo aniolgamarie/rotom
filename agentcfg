@@ -22,6 +22,9 @@ def main() -> int:
 
     # 尝试使用 .venv 的 Python 重新执行
     if VENV_PYTHON.exists():
+        if Path(sys.executable).absolute() == VENV_PYTHON:
+            print("错误: 虚拟环境损坏或缺少 pyvenv.cfg；请执行 uv sync --locked 修复", file=sys.stderr)
+            return 2
         import os
         os.execv(str(VENV_PYTHON), [str(VENV_PYTHON), __file__] + sys.argv[1:])
 

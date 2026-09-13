@@ -32,3 +32,72 @@ def test_explicit_codec_extension_does_not_silently_use_yaml(tmp_path, monkeypat
   candidate = RenderCandidate("custom", (Artifact(target, b"false"),))
   dep.apply(tmp_path / "instance", tmp_path / "state", candidate, {"id": "custom"}, {})
   assert json.loads((tmp_path / "instance/config.fixture").read_text()) == {"enabled": False}
+
+
+def test_non_npm_backend_drives_public_commands_and_launch(tmp_path, monkeypatch, fake_subprocess, capsys):
+  from types import SimpleNamespace
+  from pathlib import Path
+  from agentcfg import commands
+  from agentcfg.adapter import EnvironmentBinding, LaunchSpec
+  from agentcfg.storage import Tree, ensure_private, instance_lock
+  from agentcfg.workspace import load_workspace
+  path = tmp_path / "local.toml"
+  path.write_text('schema_version=1\n[machine]\nid="backend-test"\n')
+  real = load_workspace(path)
+  calls = []
+  lock = SimpleNamespace(identity="fixture-package", metadata={"platforms": {}})
+
+  class Backend:
+    def read_lock(self, repository):
+      calls.append("read")
+      return lock
+
+    def resolve_lock(self, repository):
+      calls.append("resolve")
+
+    def root(self, w, identity):
+      return w.instance / "native-packages" / identity
+
+    def status(self, w, identity):
+      return "installed" if (self.root(w, identity) / "ready").exists() else "missing"
+
+    def sync(self, w, lock):
+      calls.append("sync")
+      with Tree(w.state_root, create=True) as tree, instance_lock(tree):
+        ensure_private(self.root(w, lock.identity))
+        (self.root(w, lock.identity) / "ready").write_text("synthetic package")
+      return {"installed": True}
+
+    def executable_paths(self, root):
+      return (root / "native-bin",)
+
+    def toolchain(self, lock):
+      return {"fixture-tool": "1"}
+
+  class Adapter:
+    def launch_spec(self, data, *, cwd, runtime_root, instance_root, lock_identity):
+      return LaunchSpec((str(runtime_root / "native-bin/fixture-tool"),), cwd, lock_identity,
+        (EnvironmentBinding("HOME", str(instance_root / "home")),))
+
+    def prepare_runtime(self, w, root):
+      ensure_private(w.instance / "home")
+
+    def doctor(self, projection):
+      return ()
+
+  w = SimpleNamespace(repository=real.repository, local_path=path, profile="fixture-profile", agent="fixture-tool",
+    resolved=real.resolved, secret_store=real.secret_store, instance=tmp_path / "instance", state_root=tmp_path / "state",
+    cache=tmp_path / "cache", binding={"machine": "fixture"}, backend=Backend(), adapter=Adapter(),
+    candidate=lambda identity: RenderCandidate("fixture-generation", (Artifact(ManagedTarget("config.json", Ownership.FILE, "json"), b"{}"),)))
+  monkeypatch.setattr(commands, "workspace", lambda args: w)
+  args = SimpleNamespace(cwd=tmp_path, passthrough=["--literal"], live=False)
+  for name in ("validate", "plan", "lock", "sync", "apply", "doctor"):
+    assert getattr(commands, "cmd_" + name)(args) == 0
+  fake_subprocess.queue(returncode=0)
+  assert commands.cmd_run(args) == 0
+  call = fake_subprocess.calls[-1]
+  assert "native-packages" in call["argv"][0]
+  assert "node_modules" not in call["env"]["PATH"]
+  assert call["argv"][-1] == "--literal"
+  assert commands.cmd_rollback(args) == 0
+  assert "sync" in calls and "resolve" in calls

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "identity": "d73a162d695682d98f1c2c56379d9164a51e405414bae9b9efdde2ea1f9a64bc",
-  "recipe": "3fe07065ac24c12fcd16c5353c893bb1b6dd19723e21543f07d00f2b64703d38",
+  "recipe": "0eee80ba7f29fd20ecbd517bdf0fce1200989abeb9049c6de1293a5056455dd2",
   "node": "v24.14.0",
   "npm": "11.19.1",
   "adapter_version": "dsh-1",
@@ -16,7 +16,6 @@
     "openspec": "9d4e5974e5c0d9a09b9c6c1e1eb0975e80ec4461"
   },
   "npm_integrity": "sha512-ztsxKxt/kkIaAs+2i0GU6I+DRmUdrNasxTZKJe9TCdSjKxlhah/4r/hl5ygMD6XAg1qZ9c2TNomR4qgOydp10g==",
-  "linux_node_sha256": "e237a2839d0cbdc9a9a2adda1a184afc0f5b20306ffbe923af5686550472d8a8",
   "install_policy": {
     "default": "ignore-scripts",
     "audited_steps": [

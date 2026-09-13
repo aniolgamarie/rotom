@@ -2,6 +2,11 @@
 
 from .adapter import SecretRef
 from .paths import PathError, safe_id
+import hashlib
+
+
+def credential_id(reference):
+  return "credential-" + hashlib.sha256(reference.encode()).hexdigest()[:16]
 
 
 class CredentialError(Exception):
@@ -9,8 +14,9 @@ class CredentialError(Exception):
 
   exit_code = 3
 
-  def __init__(self):
-    super().__init__("凭据无效或所需凭据缺失")
+  def __init__(self, reference=None):
+    suffix = ("；定位 " + credential_id(reference) + "，执行 doctor 后在私人 locations.json 中查找对应 secret 引用") if reference else ""
+    super().__init__("凭据无效或所需凭据缺失" + suffix)
 
 
 def _valid_values(values: object) -> bool:
@@ -48,6 +54,6 @@ class SecretStore:
     value = self.__values.get(reference.reference[len("secret:"):])
     if not value:
       if required:
-        raise CredentialError()
+        raise CredentialError(reference.reference)
       return None
     return value

@@ -4,6 +4,7 @@ import base64
 from copy import deepcopy
 from dataclasses import dataclass, field
 import json
+import hashlib
 from pathlib import Path
 
 import yaml
@@ -134,6 +135,10 @@ def item_key(item):
   return json.dumps([item["path"], item["selector"]], ensure_ascii=False)
 
 
+def target_id(key):
+  return "target-" + hashlib.sha256(key.encode()).hexdigest()[:16]
+
+
 def desired_items(candidate):
   result = {}
   for artifact in candidate.artifacts:
@@ -203,7 +208,7 @@ class Plan:
     # 不输出文件名或动态 selector，可能含私有模型和 endpoint。
     known = {"dsh-home/settings.yaml", "dsh-home/AGENTS.md", "dsh-home/agentcfg.patch.yml", "env-guard.mjs",
              "user-home/.dsh-tui/themes/rotom-poimandres.json"}
-    entries = [{"target": c["item"]["path"] if c["item"]["path"] in known else "<managed-resource>",
+    entries = [{"id": target_id(item_key(c["item"])), "target": c["item"]["path"] if c["item"]["path"] in known else "<managed-resource>",
                 "field": "<managed-field>" if c["item"]["selector"] else None,
                 "action": "add" if not c["before"]["present"] else "remove" if not c["after"]["present"] else "update",
                 "value": "<redacted>"} for c in self.changes]
@@ -211,11 +216,15 @@ class Plan:
       result = []
       for key in keys:
         path, selector = json.loads(key)
-        result.append({"target": path if path in known else "<managed-resource>",
+        result.append({"id": target_id(key), "target": path if path in known else "<managed-resource>",
                        "field": "<managed-field>" if selector else None})
       return result
     return {"changes": len(self.changes), "drift": len(self.drift), "conflicts": len(self.conflicts), "diff": entries,
             "drift_targets": locations(self.drift), "conflict_targets": locations(self.conflicts)}
+
+  def private_locations(self):
+    keys = {item_key(change["item"]) for change in self.changes} | set(self.drift) | set(self.conflicts)
+    return [{"id": target_id(key), "path": json.loads(key)[0], "selector": json.loads(key)[1]} for key in sorted(keys)]
 
 
 def plan(tree, state, candidate, binding, launch):

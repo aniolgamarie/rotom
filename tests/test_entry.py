@@ -114,6 +114,15 @@ class EntryTests(unittest.TestCase):
     self.assertIn("uv sync --locked", result.stderr)
     self.assertTrue(python.is_symlink())
 
+  def test_existing_python_without_venv_metadata_does_not_exec_loop(self):
+    python = self.repo / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.symlink_to(self.base_python)
+    result = self.invoke([self.entry, "validate"])
+    self.assertEqual(result.returncode, 2, result.stderr)
+    self.assertIn("uv sync --locked", result.stderr)
+    self.assertEqual(result.stdout, "")
+
   def test_symlinked_venv_preserves_cwd_argv_and_exit_code(self):
     environment = self.repo / ".venv"
     venv.EnvBuilder(with_pip=False, symlinks=True).create(environment)

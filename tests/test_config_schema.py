@@ -66,7 +66,9 @@ def test_load_sources_and_local_are_callable_and_nonsecret(tmp_path):
     adapters={"synthetic": config.AdapterSources(**paths)},
   )
   catalog = config.load_sources(sources, adapter_schemas=context)
-  local, store = config.load_local(FIXTURES / "local.toml", adapter_schemas=catalog.adapter_schemas)
+  private = tmp_path / "local.toml"
+  private.write_bytes((FIXTURES / "local.toml").read_bytes())
+  local, store = config.load_local(private, adapter_schemas=catalog.adapter_schemas)
   assert catalog.registry["models"]["synthetic"]["remote_id"] == "fictional-chat"
   assert catalog.profiles["synthetic-default"]["agent"] == "synthetic"
   assert catalog.adapter_documents["synthetic"]["bindings"]["schema_version"] == 2
@@ -141,16 +143,18 @@ def test_credential_reference_syntax_is_checked_offline(reference):
     schema.validate_document("registry", data)
 
 
-def test_options_require_explicit_adapter_context():
+def test_options_require_explicit_adapter_context(tmp_path):
   schema, config = api()
+  private = tmp_path / "local.toml"
+  private.write_bytes((FIXTURES / "local.toml").read_bytes())
   with pytest.raises(schema.ConfigError):
-    config.load_local(FIXTURES / "local.toml")
+    config.load_local(private)
   with pytest.raises(schema.ConfigError):
     schema.validate_document("profile", document("profile"))
   context = adapter_context()
   context.profile_agents["synthetic-default"] = "missing"
   with pytest.raises(schema.ConfigError):
-    config.load_local(FIXTURES / "local.toml", adapter_schemas=context)
+    config.load_local(private, adapter_schemas=context)
 
 
 @pytest.mark.parametrize("kind", ["agent", "bindings", "plugins"])

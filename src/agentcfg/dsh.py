@@ -25,7 +25,7 @@ PROVIDER_OPTIONS = closed({"reasoning": {"type": "string", "enum": ["off", "mini
   "retryPolicy": closed({"mode": {"type": "string", "enum": ["normal", "always"]}, "maxRetries": {"type": "integer", "minimum": 0}}, ("mode",)),
   "timeoutMs": {"type": "integer", "minimum": 1}})
 OPTIONS = closed({"preset": {"type": "string", "enum": ["standard"]},
-                  "theme": {"type": "string", "enum": ["rotom-poimandres"]},
+                  "theme": {"type": "string", "enum": ["rotom-poimandres", "auto", "dark", "dark-ansi", "light"]},
                   "terminal_images": BOOL,
                   "cursor_port": {"type": "integer", "minimum": 1024, "maximum": 65535},
                   "provider_options": {"type": "object", "additionalProperties": PROVIDER_OPTIONS}},
@@ -47,6 +47,10 @@ class DshAdapter(Adapter):
 
   def __init__(self, repository: Path):
     self.repository = repository
+
+  def dependency_backend(self):
+    from .backends import DshBackend
+    return DshBackend()
 
   def route(self, data, provider):
     binding = data["adapter_documents"]["bindings"]
@@ -96,6 +100,9 @@ class DshAdapter(Adapter):
       retry = options.get("retryPolicy", {})
       if retry.get("mode") == "always" and "maxRetries" in retry:
         raise ConfigError("retry-always-has-no-limit")
+    if any(data["providers"][key]["auth_kind"] == "oauth" and options
+           for key, options in selected["agent_options"].get("provider_options", {}).items()):
+      raise ConfigError("oauth-provider-options-not-supported")
     for server in data["mcp"].values():
       if server["transport"] == "stdio":
         if "command" not in server or "url" in server or "credential_ref" in server:
@@ -210,15 +217,43 @@ class DshAdapter(Adapter):
 
   def capture_projection(self, tree):
     from .deployment import parse_native
+    projection = {}
     raw = tree.read("dsh-home/settings.yaml")
     if raw:
       section = parse_native(raw[0], "yaml").get("dsh-tui", {})
       if isinstance(section, dict) and type(section.get("terminalImages")) is bool:
-        return {"terminal_images": section["terminalImages"]}
-    return {}
+        projection["terminal_images"] = section["terminalImages"]
+    for name, keys in (("theme", ("theme",)), ("model", ("provider", "model"))):
+      raw = tree.read("user-home/.dsh-tui/" + name + ".json")
+      if raw:
+        try:
+          value = json.loads(raw[0])
+          if not isinstance(value, dict) or any(not isinstance(value.get(key), str) or not value[key] for key in keys):
+            raise ValueError()
+          projection[name] = {key: value[key] for key in keys}
+        except (ValueError, TypeError):
+          raise ConfigError("capture-invalid-native-preference") from None
+    return projection
 
   def capture(self, projection):
-    return {"agent_options": {key: value for key, value in projection.items() if key == "terminal_images"}}
+    options = {key: value for key, value in projection.items() if key == "terminal_images"}
+    if "theme" in projection:
+      theme = projection["theme"]["theme"]
+      if theme not in OPTIONS["properties"]["theme"]["enum"]:
+        raise ConfigError("capture-theme-not-supported")
+      options["theme"] = theme
+    return {"agent_options": options}
+
+  def capture_configuration(self, projection, data):
+    result = self.capture(projection)
+    if "model" in projection:
+      route = projection["model"]
+      matches = [key for key, model in data["models"].items()
+                 if self.route(data, model["provider"]) == route["provider"] and model["remote_id"] == route["model"]]
+      if len(matches) != 1:
+        raise ConfigError("capture-model-not-uniquely-declared: 先在本地配置声明并选择该模型，再 capture")
+      result["roles"] = {"main": matches[0]}
+    return result
 
   def doctor(self, projection):
     return ("oauth-status-owned-by-native-plugin", "native-user-preferences-isolated")
