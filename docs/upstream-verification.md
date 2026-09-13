@@ -3,6 +3,8 @@
 本文件记录 DSH/TUI/插件/OpenSpec 的版本调查与兼容性核实结果。
 所有条目须追溯到选定版本的源码/文档或 smoke 证据。
 
+审查修复补查（仍为 TUI 0.10.1 / `78081cebde1ee1b47a561ef57c04f128c5623476`）：读取锁定包 `lib/types/themePrefs.js`、`modelPrefs.js`、`theme.js`，确认隔离 user-home 下 `.dsh-tui/theme.json` 使用 `{theme}`，`model.json` 使用 `{provider,model}`；内建主题为 dark/dark-ansi/light，另有 auto。显式主题环境与完整 Cordis 模型对优先于持久化偏好。本轮据此扩展 capture，使用离线 fixture 验证，未重新运行宿主或账号调用。
+
 > 2026-09-13 实施状态：完整锁、CLI 锁消费、原生无账号 TUI 与 OpenSpec 技能发现已验证。真实订阅登录/调用及 macOS 实测尚未执行。下方“初始调查记录”保留当时的阻塞描述，解决方式见最新实施记录；最新测试结果统一在 acceptance.md。
 
 ## 核实范围

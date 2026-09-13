@@ -59,6 +59,8 @@ maxRetries = 2
 
 已核实的原生 reasoning 词汇为 off/minimal/low/medium/high/xhigh/max；远端支持情况需另查。retry 的 always 模式没有 maxRetries。已知模型容量可用 `context_window`、`max_output_tokens` 和 `source` 记录，未知时省略；框架不会填虚构上限，原生库自己的默认值仍可能参与运行。
 
+目前 `agent_options.provider_options` 只支持静态 API-key provider。给 Codex/Cursor OAuth provider 填这些选项会在 validate 失败，不再静默忽略。OAuth 参数持久化的字段所有权仍需专项核实，不能套用静态 provider 写入覆盖动态账号目录。
+
 ## 原生所有权与优先级
 
 - `dsh-home/AGENTS.md`、完整技能、独占 overlay、独占主题是整文件受管。

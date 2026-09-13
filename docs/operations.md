@@ -87,7 +87,25 @@ input = ["text"]
 ./agentcfg --machine workstation capture
 ```
 
-当前 allowlist 捕获原生 `dsh-tui.terminalImages`，生成缓存中的 `capture.json` 覆盖提案。它是局部提案，不是完整机器文件，也不是可直接复制的 DSH YAML。审阅后将相关非秘密字段局部合并进本地 TOML，再 validate/plan/apply。不会捕获 auth、会话或动态 OAuth 模型目录，不自动修改 Git。
+当前 allowlist 捕获原生 `dsh-tui.terminalImages`、隔离 user-home 中 `.dsh-tui/theme.json` 的主题及 `model.json` 的模型选择，生成缓存中的 `capture.json` 覆盖提案。主题允许 `rotom-poimandres`、`auto`、`dark`、`dark-ansi`、`light`。模型必须唯一对应当前 profile 已声明且选中的逻辑模型；未知动态模型或未支持主题会明确报错，原有提案保留。
+
+提案经过 schema 和完整合并/适配/渲染校验。它是局部提案，不是完整机器文件，也不是可直接复制的 DSH YAML。审阅后将相关非秘密字段局部合并进本地 TOML，再 validate/plan/apply。不会捕获 auth、会话或动态 OAuth 模型目录，不自动修改 Git。原生保存的偏好只是待采纳的 UI 选择，部署配置及环境变量仍可能覆盖其运行效果。
+
+## 冲突和凭据定位
+
+plan 的每个差异、漂移和冲突会带 `target-…` 编号。输出中的 `diagnostics` 指向私人缓存的 `locations.json`；用本地编辑器打开，按相同编号查找具体产物路径和字段 selector。文件不保存字段值，但路径可能包含私有模型名称，不要公开整份文件。
+
+缺密钥报错带 `credential-…` 编号。执行同一机器/profile 的 doctor，再在其 `diagnostics` 文件查对应 `secret:` 引用，然后只填写本地 `[secrets]` 中那一项。定位信息包含当前来源和已部署契约引用，因此未 apply 的改选不会让你找错实际启动所需的 key。文件中不含密钥值，也不读取 OAuth。
+
+## 审查修复后的升级
+
+1. 拉取代码后执行 `uv sync --locked`。validate 若报告本地文件权限问题，检查你选择的文件是普通文件、属主为当前用户、无符号链接；用户自行用 `chmod 600 /本地文件路径` 和 `chmod 700 /其私人父目录` 修正。不要对整个 HOME 或系统目录执行 chmod；管理器不会自动放宽或修改权限。
+2. 退出当前 DSH，执行 `sync`。旧运行包缺少文件收据会被识别为 `damaged`，sync 按相同依赖锁暂存重建，保留固定账号 home。无需执行 lock，也没有升级模型依赖版本。
+3. 执行 `plan`、`apply`、`doctor`，再启动。doctor 的 `dependencies` 对应当前仓库锁，`deployed_dependencies` 对应实际部署的版本；回滚后两者可能不同。
+
+运行文件缺失或关键入口摘要不符时，doctor 报 `damaged`，run 拒绝启动，sync 可修复有管理器所有权标记的包。没有所有权标记的非空目录不会被自动接管。检查覆盖安装清单和必要入口，不是对全部传递依赖每个文件的安全审计。
+
+修复先暂存安装，成功后替换旧包；中断后重新 sync 会处理 `.repair-<锁身份>` 恢复槽。该槽属于包修复，不是配置上一版备份，不包含账号和会话。若配置 pending 尚未解决，sync 会在安装前拒绝；先按 doctor 提示执行 apply/rollback 恢复。
 
 ## 备份、漂移与恢复
 
@@ -105,7 +123,7 @@ input = ["text"]
 
 ## 升级依赖
 
-1. 核实目标提交、原生字段和实际打包布局，更新适配器/模板与 `agents/dsh/dependencies.json`、plugins.toml。
+1. 核实目标提交、原生字段和实际打包布局，更新适配器/模板与 `agents/dsh/dependencies.json`、plugins.toml、lock-policy.json。lock-policy 保存工具链、包输入、完整源码 SHA 和平台支持；更换包版本时必须重新核实来源，不能只沿用旧 SHA。
 2. 需要 vendor 修复时用 scripts 中的构建器重新生成，审阅 diff、源码 SHA、归档 integrity。不可只改文件名或版本标签。
 3. 执行 `lock --agent dsh`；它在新临时目录解析完整锁，不使用浮动 main 或无版本 npx。
 4. 运行默认测试和独立无账号 smoke；检查 Node/npm 和各平台证据，再 sync/apply。
