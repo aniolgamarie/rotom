@@ -112,3 +112,5 @@
 71 项实施任务已交付。完整离线测试：756 passed、7 subtests passed；Linux 原生无账号 smoke、实际锁消费安装与 OpenSpec 项目集成通过。具体 requirement 映射和命令证据见 docs/acceptance.md 与 docs/acceptance-matrix.md。
 
 复选框表示代码、配方、文档或明确要求的验收准备已完成，不表示未执行的外部验收通过：macOS/GitHub CI 尚未运行；真实 Codex/Cursor 登录与模型调用待用户授权；独立 Agent 自动使用维护 skill 的行为评估未执行。没有读取现存 OAuth、push 或发布。
+
+后续整体审查发现与修复由 `harden-agent-config-after-review` 单独跟踪。最新测试和独立维护技能 A 场景结果见 docs/acceptance.md，后续外部验收见 docs/improvement-plan.md；上述 71 项记录保留首版交付时的历史证据。
