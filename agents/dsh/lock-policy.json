@@ -1,14 +1,7 @@
 {
-  "version": 1,
-  "identity": "d73a162d695682d98f1c2c56379d9164a51e405414bae9b9efdde2ea1f9a64bc",
-  "recipe": "0eee80ba7f29fd20ecbd517bdf0fce1200989abeb9049c6de1293a5056455dd2",
   "node": "v24.14.0",
   "npm": "11.19.1",
   "adapter_version": "dsh-1",
-  "platforms": {
-    "linux": "native host smoke passed; live model calls not run",
-    "darwin": "not-smoked"
-  },
   "upstream": {
     "host": "183f08e9c6dde7e36cd2318eaee70b0da08fb35e",
     "tui": "78081cebde1ee1b47a561ef57c04f128c5623476",
@@ -16,15 +9,6 @@
     "openspec": "9d4e5974e5c0d9a09b9c6c1e1eb0975e80ec4461"
   },
   "npm_integrity": "sha512-ztsxKxt/kkIaAs+2i0GU6I+DRmUdrNasxTZKJe9TCdSjKxlhah/4r/hl5ygMD6XAg1qZ9c2TNomR4qgOydp10g==",
-  "install_policy": {
-    "default": "ignore-scripts",
-    "audited_steps": [
-      "@deepseek-ai/dsh-subprocess-local/scripts/ensure-spawn-helper.mjs"
-    ],
-    "linux_frozen_install": "passed on Node 24.14.0 / npm 11.19.1",
-    "macos_frozen_install": "not-run",
-    "audited_helper_sha256": "ca5509febf1e6ec1356df121835ebe5ed2f9cace4bdc2ba6d83d41c7e45e0f1b"
-  },
   "node_distributions": {
     "node-v24.14.0-aix-ppc64.tar.gz": "27ac48f94c7e88f4b0c5d9077f0fec10256289c7dca21e0d9f82cbaad13d6e3d",
     "node-v24.14.0-arm64.msi": "63d07136eead197b66c58f4ee6c4343e0b4027cc3a1f852ada45b081250e21b7",
@@ -58,5 +42,15 @@
     "win-x64/node.lib": "35fcdd35d3d22e283c0e2e095cc43ef676301bb85f950c344a73d59231bd7e61",
     "win-x64/node_pdb.7z": "802553494ca6c8049aa542ddcc54e2616a0a1819ae23f894767a4110a1ec0b5a",
     "win-x64/node_pdb.zip": "b8e1aee14390b2828ede1f4b89ed8a8b0c5da40e43fbfe14dc4b42dc14ed3710"
+  },
+  "supported_platforms": [
+    "linux",
+    "darwin"
+  ],
+  "packages": {
+    "@deepseek-ai/dsh": "0.1.5-rc.1",
+    "@deepseek-harness-tui/dsh-tui": "file:vendor/dsh-tui-0.10.1-agentcfg.1.tgz",
+    "dsh-plugin-oauth-subs": "file:vendor/oauth-subs-0.0.88-agentcfg.1.tgz",
+    "@fission-ai/openspec": "1.13.0"
   }
 }

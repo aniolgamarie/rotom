@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .config import AdapterSources, SourceInputs, load_local, load_sources, resolve_config
+from .config import AdapterSources, SourceInputs, LocalConfig, load_local, load_sources, resolve_config
 from .dsh import DshAdapter
 from .paths import safe_id
 from .render import render_candidate
@@ -21,6 +21,10 @@ class Workspace:
   adapter: object = field(repr=False)
   schemas: object = field(repr=False)
   secret_store: object = field(repr=False)
+
+  @property
+  def backend(self):
+    return self.adapter.dependency_backend()
 
   @property
   def profile(self):
@@ -54,7 +58,7 @@ class Workspace:
       lock_identity=lock_identity, **skills)
 
 
-def load_workspace(local, profile=None, *, repository=None):
+def load_workspace(local, profile=None, *, repository=None, proposal=None):
   repository = repository or Path(__file__).resolve().parents[2]
   adapters = {name: kind(repository) for name, kind in ADAPTER_TYPES.items()}
   schemas = AdapterSchemas({name: adapter.schemas().bundles[name] for name, adapter in adapters.items()})
@@ -67,6 +71,11 @@ def load_workspace(local, profile=None, *, repository=None):
     {name: AdapterSources(*(repository / "agents" / name / (kind + ".toml") for kind in ("agent", "bindings", "plugins"))) for name in adapters})
   catalog = load_sources(sources, adapter_schemas=schemas)
   config, store = load_local(local, adapter_schemas=catalog.adapter_schemas)
+  if proposal is not None:
+    from .merge import merge_layers
+    from .schema import validate_document
+    config = LocalConfig(merge_layers((("local", config.data), ("request", proposal))).data)
+    validate_document("local", config.data, adapter_schemas=catalog.adapter_schemas)
   resolved = resolve_config(catalog, config, profile_id=profile, adapter_schemas=catalog.adapter_schemas)
   safe_id(resolved.data["profile"]["id"])
   return Workspace(repository, local.absolute(), resolved, adapters[resolved.data["profile"]["agent"]], catalog.adapter_schemas, store)

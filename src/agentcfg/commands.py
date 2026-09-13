@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from . import dependencies, deployment, runtime
+from . import deployment, runtime
 from .config import public_diagnostics
 from .local import initialize_local
 from .storage import Conflict, Tree
@@ -28,7 +28,7 @@ def cmd_init_local(args):
 
 def prepared(args):
   w = workspace(args)
-  lock = dependencies.read_lock(w.repository)
+  lock = w.backend.read_lock(w.repository)
   return w, lock, w.candidate(lock.identity)
 
 
@@ -64,7 +64,8 @@ def cmd_plan(args):
   plan = current_plan(w, lock, candidate)
   result = plan.public()
   result["sources"] = [{"field": ".".join(path), "source": layer} for path, layer in public_diagnostics(w.resolved)]
-  result["dependencies"] = "installed" if dependencies.installed(w, lock) else "sync-required"
+  result["dependencies"] = dependency_status(w, lock)
+  result["diagnostics"] = write_diagnostics(w, lock, plan)
   output(w, "plan", result)
   return 4 if plan.conflicts else 0
 
@@ -82,13 +83,13 @@ def cmd_rollback(args):
 
 def cmd_lock(args):
   w = workspace(args)
-  dependencies.resolve_lock(w.repository)
+  w.backend.resolve_lock(w.repository)
   return output(w, "lock", {"locked": True})
 
 
 def cmd_sync(args):
   w = workspace(args)
-  return output(w, "sync", dependencies.sync(w, dependencies.read_lock(w.repository)))
+  return output(w, "sync", w.backend.sync(w, w.backend.read_lock(w.repository)))
 
 
 def cmd_run(args):
@@ -98,18 +99,24 @@ def cmd_run(args):
 
 def cmd_doctor(args):
   w = workspace(args)
-  lock = dependencies.read_lock(w.repository)
+  lock = w.backend.read_lock(w.repository)
   with Tree(w.state_root) as state:
     saved = deployment.read_state(state)
     result = {"deployed": saved["current"] is not None, "previous_backup": saved["previous"] is not None,
       "recovery_pending": state.read("pending.json") is not None,
-      "dependencies": "installed" if dependencies.installed(w, lock) else "sync-required",
+      "dependencies": dependency_status(w, lock),
       "authentication": "not-inspected; use native auth status", "live": False,
       "notes": list(w.adapter.doctor({}))}
-  result["required_toolchain"] = {"node": lock.metadata["node"], "npm": lock.metadata["npm"]}
+  result["required_toolchain"] = w.backend.toolchain(lock)
+  import sys
+  result["platform_evidence"] = lock.metadata.get("platforms", {}).get(sys.platform, "not-recorded")
+  if saved["current"] is not None:
+    result["deployed_dependencies"] = w.backend.status(w, saved["current"]["launch"]["lock_identity"])
+  drift = None
   if result["deployed"] and not result["recovery_pending"]:
     drift = current_plan(w, lock, w.candidate(lock.identity))
     result.update(drift=bool(drift.drift), conflicts=bool(drift.conflicts), changes_pending=len(drift.changes))
+  result["diagnostics"] = write_diagnostics(w, lock, drift)
   if args.live:
     import urllib.request
     checks = []
@@ -128,9 +135,13 @@ def cmd_capture(args):
   w = workspace(args)
   with Tree(w.instance) as target:
     projection = w.adapter.capture_projection(target)
-  proposal = {"schema_version": 1, "overrides": {"profiles": {w.profile: w.adapter.capture(projection)}}}
+  captured = (w.adapter.capture_configuration(projection, w.resolved.data)
+              if hasattr(w.adapter, "capture_configuration") else w.adapter.capture(projection))
+  proposal = {"schema_version": 1, "overrides": {"profiles": {w.profile: captured}}}
   from .schema import validate_document
   validate_document("local", {**proposal, "machine": {"id": w.resolved.data["machine"]["id"]}}, adapter_schemas=w.schemas)
+  checked = load_workspace(w.local_path, w.profile, repository=w.repository, proposal=proposal)
+  checked.candidate(w.backend.read_lock(w.repository).identity)
   with Tree(w.cache / "proposals", create=True) as cache:
     cache.write_state("capture.json", deployment.json_bytes(proposal))
   return output(w, "capture", {"captured_fields": len(projection), "proposal": str(w.cache / "proposals/capture.json")})
@@ -139,4 +150,25 @@ def cmd_capture(args):
 def cmd_project(args):
   from .project import initialize_openspec
   w = workspace(args)
-  return output(w, "project", initialize_openspec(w, dependencies.read_lock(w.repository), args.path.absolute()))
+  return output(w, "project", initialize_openspec(w, w.backend.read_lock(w.repository), args.path.absolute()))
+
+
+def dependency_status(w, lock):
+  status = w.backend.status(w, lock.identity)
+  return "sync-required" if status == "missing" else status
+
+
+def write_diagnostics(w, lock, plan=None):
+  """仅存非秘密定位信息；不读取 OAuth 或 SecretStore，不保存字段值。"""
+  from .secrets import credential_id
+  contracts = [runtime.record(w, lock)]
+  with Tree(w.state_root) as state:
+    current = deployment.read_state(state)["current"]
+    if current:
+      contracts.append(current["launch"])
+  references = {e["secret_ref"] for contract in contracts for e in contract["environment"] if "secret_ref" in e}
+  document = {"credentials": [{"id": credential_id(ref), "reference": ref} for ref in sorted(references)],
+              "targets": plan.private_locations() if plan else []}
+  with Tree(w.cache / "diagnostics", create=True) as cache:
+    cache.write_state("locations.json", deployment.json_bytes(document))
+  return str(w.cache / "diagnostics/locations.json")

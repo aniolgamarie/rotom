@@ -139,6 +139,33 @@ def _create_directory(parent: int, name: str) -> int:
     raise
 
 
+def read_private_file(path: Path) -> bytes:
+  """私人输入在读正文前检查；不 resolve 链接，不修正用户权限。"""
+  path = _absolute_path(os.fspath(path.absolute()))
+  def identity(info):
+    return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_nlink,
+            info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+  with _absolute_directory(path.parent) as parent:
+    _check_private(parent)
+    before = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+    if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.geteuid()
+        or before.st_nlink != 1 or stat.S_IMODE(before.st_mode) != 0o600):
+      raise PathError("本地文件必须为当前用户的普通单链接 0600 文件；私人父目录需为 0700")
+    fd = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, dir_fd=parent)
+    with os.fdopen(fd, "rb") as stream:
+      if identity(os.fstat(stream.fileno())) != identity(before):
+        raise PathError("本地文件在读取前变化")
+      data = stream.read()
+      if identity(os.fstat(stream.fileno())) != identity(before):
+        raise PathError("本地文件在读取期间变化")
+    if identity(os.stat(path.name, dir_fd=parent, follow_symlinks=False)) != identity(before):
+      raise PathError("本地文件路径在读取期间变化")
+    with _absolute_directory(path.parent) as current:
+      if identity(os.fstat(current)) != identity(os.fstat(parent)):
+        raise PathError("本地文件父目录在读取期间变化")
+    return data
+
+
 class InitializationError(Exception):
   """初始化专用的固定脱敏错误；不携带路径或底层异常正文。"""
 

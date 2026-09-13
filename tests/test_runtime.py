@@ -25,16 +25,13 @@ def local_file(path, provider="one", used=CANARY):
     f'[secrets]\none={json.dumps(used)}\ntwo="synthetic-unselected"\nunused="synthetic-unused"\n')
 
 
-def test_run_keeps_deployed_selection_uses_current_secret_and_cwd(tmp_path, fake_subprocess, monkeypatch, capsys):
+def test_run_keeps_deployed_selection_uses_current_secret_and_cwd(tmp_path, fake_subprocess, monkeypatch, capsys, prepared_runtime):
   path = tmp_path / "local.toml"
   local_file(path)
   w = load_workspace(path)
   lock = read_lock(w.repository)
   deployment.apply(w.instance, w.state_root, w.candidate(lock.identity), w.binding, runtime.record(w, lock))
-  installed = runtime_root(w, lock)
-  ensure_private(installed)
-  (installed / ".agentcfg-ready").write_text(lock.identity)
-  (installed / ".agentcfg-ready").chmod(0o600)
+  prepared_runtime(w, lock)
   local_file(path, provider="two", used=CANARY + "rotated")
   changed = load_workspace(path)
   monkeypatch.setenv("UNRELATED_PARENT_SECRET", "synthetic-parent")

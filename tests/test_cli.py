@@ -153,8 +153,8 @@ def test_cli_read_failure_is_redacted(monkeypatch, capsys):
   write_local()
   def denied(*args, **kwargs):
     raise PermissionError(CANARY)
-  monkeypatch.setattr(Path, "open", denied)
-  assert cli.main(["validate"]) == 6
+  monkeypatch.setattr("agentcfg.paths.read_private_file", denied)
+  assert cli.main(["validate"]) == 4
   output = capsys.readouterr()
   assert "访问权限" in output.err
   assert CANARY not in output.out + output.err

@@ -7,14 +7,13 @@ import subprocess
 
 from .adapter import EnvironmentBinding, LaunchSpec, SecretRef
 from .deployment import read_state, recover
-from .dependencies import installed, runtime_root
 from .process import DependencyError, checked, environment, launch_environment
 from .storage import Conflict, Tree, ensure_private, instance_lock
 
 
 def record(workspace, lock):
   spec = workspace.adapter.launch_spec(workspace.resolved.data, cwd=Path("/"),
-    runtime_root=runtime_root(workspace, lock), instance_root=workspace.instance, lock_identity=lock.identity)
+    runtime_root=workspace.backend.root(workspace, lock.identity), instance_root=workspace.instance, lock_identity=lock.identity)
   return {"argv": list(spec.argv), "lock_identity": lock.identity,
     "shared_files": list(getattr(workspace.adapter, "shared_files", ())),
     "preflight": workspace.adapter.launch_preflight(lock) if hasattr(workspace.adapter, "launch_preflight") else [],
@@ -40,15 +39,9 @@ def run(workspace, *, cwd, arguments=()):
     if current is None or current["binding"] != workspace.binding:
       raise Conflict("未部署当前实例，请先 apply")
     contract = current["launch"]
-    root = workspace.instance / "runtimes" / contract["lock_identity"]
-    try:
-      with Tree(root) as package:
-        marker = package.read(".agentcfg-ready")
-        ready = marker[0].decode().strip() if marker is not None and marker[1] == 0o600 else None
-    except OSError:
-      ready = None
-    if ready != contract["lock_identity"]:
-      raise DependencyError("当前部署需要的运行包未准备；请 sync 对应依赖锁")
+    root = workspace.backend.root(workspace, contract["lock_identity"])
+    if workspace.backend.status(workspace, contract["lock_identity"]) != "installed":
+      raise DependencyError("当前部署的运行包缺失或损坏；请 sync 对应依赖锁修复")
     workspace.adapter.prepare_runtime(workspace, root)
     spec = decode(contract, cwd, arguments)
     for check in contract.get("preflight", []):
@@ -58,7 +51,7 @@ def run(workspace, *, cwd, arguments=()):
         raise DependencyError("运行时工具链版本不匹配已部署契约，请检查 Node 版本")
     env = launch_environment(spec, contract["machine"], workspace.secret_store)
     import os
-    env["PATH"] = str(root / "node_modules/.bin") + os.pathsep + env.get("PATH", "")
+    env["PATH"] = os.pathsep.join([*(str(path) for path in workspace.backend.executable_paths(root)), env.get("PATH", "")])
     # 不打印 argv/env，原生子进程继承终端用于正常 TUI 交互。
     try:
       # 原生宿主也持有 lease：管理器先退出时仍阻止修改活动实例；不靠 PID 猜测。

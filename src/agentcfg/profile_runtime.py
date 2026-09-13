@@ -20,13 +20,13 @@ def prepare(workspace, runtime):
     if owner is None and package is not None:
       raise Conflict("原生 profile 存在未接管的 package.json")
     record = json.loads(owner[0]) if owner else {"runtime": None, "binding": workspace.binding}
+    if owner is not None and owner[1] != 0o600:
+      raise Conflict("原生 profile 所有权记录必须为 0600")
     if record["binding"] != workspace.binding:
       raise Conflict("原生 profile 属于另一份机器配置")
     expected_package = json_bytes(manifest)
     if package is not None and package[0] != expected_package:
       raise Conflict("包拥有的 profile 配置已被修改")
-    if package is None:
-      tree.write_state("package.json", expected_package)
     destination = str(runtime / "node_modules")
     with tree.parent("node_modules") as (fd, name):
       try:
@@ -35,8 +35,13 @@ def prepare(workspace, runtime):
         old = None
       except OSError:
         raise Conflict("原生 profile node_modules 不是已知运行包链接") from None
-      if old is not None and old not in (record["runtime"], destination):
+      if old is not None and (owner is None or old not in (record["runtime"], record.get("pending_runtime"))):
         raise Conflict("原生 profile 运行包链接已被外部修改")
+      # 先记录允许的前后值；中断后只能恢复明确归本次准备所有的文件和链接。
+      tree.write_state(".agentcfg-package-owner.json", json_bytes({"binding": workspace.binding,
+        "runtime": old, "pending_runtime": destination}))
+      if package is None:
+        tree.write_state("package.json", expected_package)
       if old != destination:
         temporary = ".agentcfg-modules-" + uuid.uuid4().hex
         os.symlink(destination, temporary, dir_fd=fd)

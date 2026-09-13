@@ -6,7 +6,6 @@ from pathlib import Path
 import tempfile
 import stat
 
-from .dependencies import installed, runtime_root
 from .deployment import json_bytes
 from .process import DependencyError, checked, environment
 from .storage import Conflict, Tree, ensure_private
@@ -16,9 +15,11 @@ def initialize_openspec(workspace, lock, project):
   if not project.is_dir() or project.is_symlink():
     raise Conflict("项目必须为已有真实目录")
   validate_project_root(project)
-  if not installed(workspace, lock):
+  if workspace.backend.status(workspace, lock.identity) != "installed":
     raise DependencyError("锁定 OpenSpec 尚未安装，请先 sync")
-  cli = runtime_root(workspace, lock) / "node_modules/@fission-ai/openspec/bin/openspec.js"
+  if not hasattr(workspace.backend, "openspec_argv"):
+    raise DependencyError("所选工具的依赖后端未提供锁定 OpenSpec 集成")
+  argv = workspace.backend.openspec_argv(workspace, lock)
   ensure_private(workspace.cache / "projects")
   with tempfile.TemporaryDirectory(prefix="generate-", dir=workspace.cache / "projects") as temporary:
     root = Path(temporary)
@@ -28,7 +29,7 @@ def initialize_openspec(workspace, lock, project):
     stage.mkdir(mode=0o700)
     env = environment(home=home)
     env.update(OPENSPEC_TELEMETRY="0", DO_NOT_TRACK="1", OPENSPEC_NO_UPDATE_CHECK="1")
-    checked(["node", str(cli), "init", "--tools", "agents", "--profile", "core", "--no-animation"], cwd=stage, env=env)
+    checked([*argv, "init", "--tools", "agents", "--profile", "core", "--no-animation"], cwd=stage, env=env)
     return apply_generated(project, stage)
 
 

@@ -80,7 +80,17 @@ def local_path(value):
     raise SelectionError("--local: 仅支持当前 HOME 的 ~/ 前缀")
   else:
     path = Path(text)
-  return path.resolve()
+  if ".." in path.parts:
+    # CLI 明确允许 ../ 相对选择；先逐段验证真实目录，再进行纯词法归一化。
+    from .paths import _absolute_directory, _check_private
+    from .storage import Conflict
+    try:
+      with _absolute_directory(path.absolute().parent) as parent:
+        _check_private(parent)
+    except (OSError, PathError):
+      raise Conflict("本地配置相对路径不安全；不得穿透符号链接") from None
+    path = Path(os.path.abspath(path))
+  return path.absolute()
 
 
 def resolve_selection(args):
@@ -97,13 +107,13 @@ def resolve_selection(args):
     args.machine = args.machine or "default"
     config_home = os.environ.get("XDG_CONFIG_HOME")
     root = Path(config_home) if config_home else Path.home() / ".config"
-    args.local = (root / "agentcfg" / "machines" / f"{args.machine}.toml").resolve()
+    args.local = (root / "agentcfg" / "machines" / f"{args.machine}.toml").absolute()
   else:
     args.local = local_path(args.local)
 
   try:
-    with args.local.open("rb") as file:
-      metadata = tomllib.load(file)
+    from .config import read_local_document
+    metadata = read_local_document(args.local)
   except FileNotFoundError:
     if args.machine == "default":
       raise SelectionError("默认机器文件不存在；请执行 init-local --machine default") from None
