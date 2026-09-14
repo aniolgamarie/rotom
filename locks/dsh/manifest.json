@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "identity": "d73a162d695682d98f1c2c56379d9164a51e405414bae9b9efdde2ea1f9a64bc",
-  "recipe": "0eee80ba7f29fd20ecbd517bdf0fce1200989abeb9049c6de1293a5056455dd2",
+  "identity": "649c987029749a2244cd80b0c1a05930aeed65a2573d7187bc058861c2abcb14",
+  "recipe": "98f15212a711a77ae40cf800b80300457f57bfef3b2924034c86b95e9bed216c",
   "node": "v24.14.0",
   "npm": "11.19.1",
   "adapter_version": "dsh-1",
   "platforms": {
-    "linux": "native host smoke passed; live model calls not run",
+    "linux": "frozen dependency install and React single-instance resolution passed; host/live model calls not run",
     "darwin": "not-smoked"
   },
   "upstream": {

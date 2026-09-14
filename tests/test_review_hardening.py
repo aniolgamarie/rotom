@@ -10,6 +10,7 @@ import pytest
 
 from agentcfg import cli, commands, dependencies as dep, profile_runtime, runtime, runtime_packages
 from agentcfg.config import read_local_document
+from agentcfg.deployment import json_bytes
 from agentcfg.schema import ConfigError
 from agentcfg.secrets import CredentialError, SecretStore, credential_id
 from agentcfg.adapter import SecretRef
@@ -71,7 +72,7 @@ def test_profile_first_preparation_recovers(tmp_path, monkeypatch, failure):
   w = load_workspace(local(tmp_path))
   root = w.instance / "runtimes/fixture"
   ensure_private(root)
-  write, replace = Tree.write_state, os.replace
+  write, mkdir = Tree.write_state, os.mkdir
   calls = 0
   def failing_write(self, name, data):
     nonlocal calls
@@ -82,18 +83,40 @@ def test_profile_first_preparation_recovers(tmp_path, monkeypatch, failure):
     if name == "package.json" and failure == "package":
       raise OSError("synthetic interruption")
     return write(self, name, data)
-  def failing_replace(source, target, *args, **kwargs):
-    if target == "node_modules" and failure == "link":
+  def failing_mkdir(name, *args, **kwargs):
+    if name == "node_modules" and kwargs.get("dir_fd") is not None and failure == "link":
       raise OSError("synthetic interruption")
-    return replace(source, target, *args, **kwargs)
+    return mkdir(name, *args, **kwargs)
   with monkeypatch.context() as patch:
     patch.setattr(Tree, "write_state", failing_write)
-    patch.setattr(os, "replace", failing_replace)
+    patch.setattr(os, "mkdir", failing_mkdir)
     with pytest.raises(OSError):
       profile_runtime.prepare(w, root)
   profile = profile_runtime.prepare(w, root)
-  assert os.readlink(profile / "node_modules") == str(root / "node_modules")
+  assert (profile / "node_modules").is_dir()
+  assert not (profile / "node_modules").is_symlink()
   assert "pending_runtime" not in json.loads((profile / ".agentcfg-package-owner.json").read_text())
+
+
+def test_profile_migrates_owned_runtime_link_to_isolated_directory(tmp_path):
+  w = load_workspace(local(tmp_path))
+  root = w.instance / "runtimes/fixture"
+  ensure_private(root / "node_modules")
+  profile = w.instance / "dsh-home/profiles/agentcfg"
+  ensure_private(profile)
+  manifest = {"name": "agentcfg-managed-profile", "version": "1.0.0", "private": True,
+    "dsh": {"profile": {"bundles": ["@deepseek-ai/dsh-base", "@deepseek-harness-tui/dsh-tui"]}}}
+  destination = str(root / "node_modules")
+  (profile / "package.json").write_bytes(json_bytes(manifest))
+  owner = profile / ".agentcfg-package-owner.json"
+  owner.write_bytes(json_bytes({"binding": w.binding, "runtime": destination}))
+  owner.chmod(0o600)
+  (profile / "node_modules").symlink_to(destination)
+  profile_runtime.prepare(w, root)
+  assert (profile / "node_modules").is_dir()
+  assert not (profile / "node_modules").is_symlink()
+  assert json.loads((profile / ".agentcfg-package-owner.json").read_text()) == {
+    "binding": w.binding, "modules": "isolated"}
 
 
 def test_profile_upgrade_recovers_and_unknown_files_still_conflict(tmp_path, monkeypatch):
@@ -114,7 +137,8 @@ def test_profile_upgrade_recovers_and_unknown_files_still_conflict(tmp_path, mon
     with pytest.raises(OSError):
       profile_runtime.prepare(w, b)
   profile_runtime.prepare(w, a)
-  assert os.readlink(profile / "node_modules") == str(a / "node_modules")
+  assert (profile / "node_modules").is_dir()
+  assert not (profile / "node_modules").is_symlink()
   (profile / "package.json").write_text("unknown edit")
   with pytest.raises(Conflict):
     profile_runtime.prepare(w, a)
@@ -129,6 +153,26 @@ def test_runtime_receipt_detects_missing_or_changed_entry(tmp_path, prepared_run
   (root / name).write_bytes(b"corrupted")
   assert w.backend.status(w, lock.identity) == "damaged"
   (root / name).unlink()
+  assert not dep.installed(w, lock)
+
+
+def test_profile_fallback_writes_cannot_mutate_runtime(tmp_path):
+  w = load_workspace(local(tmp_path))
+  root = w.instance / "runtimes/fixture"
+  ensure_private(root / "node_modules")
+  profile = profile_runtime.prepare(w, root)
+  fallback = profile / "node_modules/react-reconciler"
+  fallback.symlink_to(profile / ".dsh-module-fallback/node_modules/react-reconciler")
+  assert fallback.is_symlink()
+  assert not (root / "node_modules/react-reconciler").exists()
+
+
+def test_runtime_receipt_detects_dependency_topology_pollution(tmp_path, prepared_runtime):
+  w = load_workspace(local(tmp_path))
+  lock = dep.read_lock(REPO)
+  root = prepared_runtime(w, lock)
+  assert dep.installed(w, lock)
+  (root / "node_modules/injected-package").symlink_to(root / "node_modules/react")
   assert not dep.installed(w, lock)
 
 

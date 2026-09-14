@@ -1,31 +1,33 @@
 # rotom / agentcfg
 
-个人 Agent 配置管理仓库：公共规则、完整技能包、工具模板和依赖锁进入 Git，机器覆盖与 API key 留在仓库外。通过一个入口生成、检查、部署和启动独立实例；每个实例只保留上一版受管配置备份。
+**English** | [中文](README.zh-CN.md)
 
-首版实现 **DSH + ccch1mneyyy/dsh-TUI**。Pi、Codex CLI 等工具尚未适配；可复用公共核心增加适配器。Codex 订阅和 Cursor 订阅在本项目中指 DSH 内的认证/provider 接入，不等于已实现 Codex/Cursor 配置同步。
+Personal Agent configuration management repository: shared rules, complete skill packs, tool templates, and dependency locks live in Git; per-machine overrides and API keys stay outside. A single entry point generates, validates, deploys, and launches isolated instances; each instance keeps only the previous round of managed-configuration backup.
 
-**第一次使用请从 [新手使用教程](docs/getting-started.md) 开始。** 教程按实际操作顺序说明准备环境、创建本机文件、安装、部署、登录、日常启动和备份恢复，并解释命令输出。仅使用 Codex/Cursor 订阅时，可以先保留空的 `[secrets]`，不需要照抄下面的私有网关示例。
+The first release implements **DSH + ccch1mneyyy/dsh-TUI**. Pi, Codex CLI, and other tools are not yet adapted — they can reuse the shared core via new adapters. "Codex subscription" and "Cursor subscription" in this project refer to authentication / provider access *within* DSH, not to standalone Codex or Cursor configuration sync.
 
-已有首版安装的用户请先看 [升级与故障修复说明](docs/operations.md#审查修复后的升级)。本地文件现在会严格检查权限和链接；旧运行包没有文件收据时，退出 DSH 后执行一次 `sync` 重建即可，账号 home 保持不变。
+**First-time users: start with the [Getting Started Guide](docs/getting-started.md).** It walks through environment setup, local file creation, installation, deployment, login, daily startup, and backup/restore in actual operation order, and explains command output. When using only Codex/Cursor subscriptions, you can leave `[secrets]` empty — no need to copy the private-gateway example below.
 
-记住三个动作即可：`sync` 安装软件，`apply` 部署配置，`run` 启动 DSH。第一次需要依次执行；之后通常只需 `run`。命令中的 `workstation` 是本机配置名称，`dsh-default` 是配置配方名称；可先原样使用。
+Existing first-release users: see [Upgrade & Repair Notes](docs/operations.md#审查修复后的升级). Local files now enforce strict permission and link checks; old deployment packages without a file receipt can be rebuilt by running `sync` after exiting DSH — account home directories are preserved.
 
-## 准备环境
+Three commands cover the basics: `sync` installs software, `apply` deploys configuration, `run` starts DSH. Run them in order the first time; afterwards `run` is usually all you need. In the examples below, `workstation` is the local machine config name and `dsh-default` is the recipe name — both can be used as-is.
 
-- 管理器：Python 3.11+、uv。运行一次 `uv sync --locked` 后，入口直接调用仓库 `.venv`，离线命令不安装依赖。
-- DSH 工具链：**Node 24.14.0、npm 11.19.1**。使用自己的版本管理器准备它们；`sync` 和 `run` 会检查所需版本。Node 24.1 虽满足部分上游宽泛声明，但无法执行该版本使用的 `import.meta.main` 入口，已在实际检查中排除。
-- 首版平台：Linux、macOS；原生 Windows 不支持。Linux 已进行隔离验证，macOS 验收状态见 [验收记录](docs/acceptance.md)。
+## Prerequisites
 
-## 从 clone 到运行
+- **Manager:** Python 3.11+, uv. Run `uv sync --locked` once; the entry point then uses the repo `.venv` directly — offline commands install nothing.
+- **DSH toolchain:** **Node 24.14.0, npm 11.19.1**. Prepare these with your own version manager; `sync` and `run` check the required versions. Node 24.1, while satisfying some upstream range declarations, cannot execute the `import.meta.main` entry used here and is excluded by runtime checks.
+- **First-release platforms:** Linux, macOS. Native Windows is not supported. Linux has been isolation-verified; macOS acceptance status is tracked in [Acceptance Records](docs/acceptance.md).
+
+## From Clone to Running
 
 ```sh
-git clone <你的仓库地址> rotom
+git clone <your-repo-url> rotom
 cd rotom
 uv sync --locked
 ./agentcfg init-local --machine workstation
 
-# 用编辑器填写 ~/.config/agentcfg/machines/workstation.toml。
-# 设置 XDG_CONFIG_HOME 时，文件位于该目录的 agentcfg/machines/ 下。
+# Edit ~/.config/agentcfg/machines/workstation.toml with your editor.
+# When XDG_CONFIG_HOME is set, the file lives under $XDG_CONFIG_HOME/agentcfg/machines/.
 ./agentcfg --machine workstation validate
 ./agentcfg --machine workstation plan
 ./agentcfg --machine workstation sync
@@ -34,13 +36,13 @@ uv sync --locked
 ./agentcfg --machine workstation run dsh --cwd /path/to/worktree
 ```
 
-默认配方选择 Codex/Cursor 订阅入口，没有虚构的 OAuth endpoint 或 model ID，也不要求 DeepSeek key。可以先完成 validate/render/sync/apply，再在原生 TUI 登录；实际模型调用仍需要用户账号。
+The default recipe selects the Codex/Cursor subscription entry. It contains no fabricated OAuth endpoints or model IDs, and does not require a DeepSeek key. You can complete validate → render → sync → apply first, then log in via the native TUI; actual model calls still need a user account.
 
-公共选择器位于子命令前：`--machine NAME` 或 `--local PATH` 二选一，`--profile ID` 可选。缺省机器为 `default`，缺省 profile 来自本地文件，随后回落到 `dsh-default`。`init-local --machine NAME` 是保留的初始化形式，重复执行不会覆盖文件。
+Public selectors precede subcommands: `--machine NAME` or `--local PATH` (mutually exclusive), `--profile ID` optional. Default machine is `default`; default profile comes from the local file, falling back to `dsh-default`. `init-local --machine NAME` is the reserved initialization form — repeating it does not overwrite files.
 
-## 本地文件
+## Local File
 
-下面是 **框架 TOML，不是原生 DSH 配置**。地址和模型是虚构示例；使用私有 API 时替换为服务实际支持的值，密钥由用户手工填写。
+Below is **framework TOML, not native DSH config**. Addresses and models are fictional examples; when using a private API, replace them with values your service actually supports, and fill in keys by hand.
 
 ```toml
 schema_version = 1
@@ -72,49 +74,49 @@ main = "private_main"
 private_gateway_key = ""
 ```
 
-文件为 0600，私人目录为 0700。对象递归合并，数组整体替换；空数组和 `false` 有效。未知字段、无效引用和认证拥有者冲突会失败。更多字段、机器路径、环境变量和多 profile 说明见 [本地配置参考](docs/local-config.md)；`examples/` 是明确标为虚构数据的格式例子，不能当作可调用服务。
+Files are 0600, private directories 0700. Objects merge recursively; arrays are replaced wholesale; empty arrays and `false` are valid. Unknown fields, invalid references, and authentication ownership conflicts fail. For more fields, machine paths, environment variables, and multi-profile usage see [Local Config Reference](docs/local-config.md); `examples/` contains explicitly fictional format examples that must not be treated as callable services.
 
-## 命令与副作用
+## Commands & Side Effects
 
-| 命令 | 行为 |
+| Command | Behavior |
 |---|---|
-| `init-local --machine NAME` | 创建空密钥本地文件，不覆盖 |
-| `validate` | 离线校验 schema、引用、适配与完整锁 |
-| `render` | 离线生成，只写私人缓存；字段意图不是整份原生 settings |
-| `plan` | 离线显示脱敏差异和定位编号；私人缓存保存具体字段定位，不写目标 |
-| `lock --agent dsh` | 显式联网解析完整依赖；升级时审查锁与 vendor 差异 |
-| `sync` | 消费现有锁并暂存安装或修复损坏包，不更新锁、不启动、不登录 |
-| `apply` | 离线重新计划、备份并部署，不安装依赖 |
-| `run dsh --cwd PATH` | 启动当前部署，保持工作目录，按需注入密钥，不隐式 sync/apply |
-| `doctor` / `doctor --live` | 默认离线诊断；live 才做声明的服务可达性检查，不自动登录或调用模型 |
-| `capture` | 捕获预览、支持的主题和已声明模型选择，生成合法本地提案，不导出认证数据 |
-| `rollback` | 恢复上一版受管配置；成功后消费该备份 |
-| `project init openspec --path PATH` | 使用锁定 CLI 仅初始化指定项目，预检查冲突 |
+| `init-local --machine NAME` | Creates an empty-secrets local file; does not overwrite |
+| `validate` | Offline schema, reference, adapter, and full-lock validation |
+| `render` | Offline generation; writes only to private cache — field intent is not a full native settings file |
+| `plan` | Offline redacted diff with location IDs; private cache stores concrete field positions, not targets |
+| `lock --agent dsh` | Explicit online resolution of the full dependency lock; review lock & vendor diffs on upgrade |
+| `sync` | Consumes the existing lock; stages installs or repairs damaged packages — does not update the lock, start, or log in |
+| `apply` | Offline re-plan, backup, and deploy — does not install dependencies |
+| `run dsh --cwd PATH` | Launches the current deployment, preserves the working directory, injects secrets on demand; no implicit sync/apply |
+| `doctor` / `doctor --live` | Default: offline diagnostics; `--live` adds declared-service reachability checks — never auto-logs-in or calls models |
+| `capture` | Captures previews, supported themes, and declared model selections; generates a legal local proposal; does not export auth data |
+| `rollback` | Restores the previous managed configuration; consumes that backup on success |
+| `project init openspec --path PATH` | Initializes a specific project with the locked CLI; pre-checks conflicts |
 
-可选原生参数通过 `run dsh --cwd PATH -- <原生参数>` 传递，`--` 是分界，不会传给 DSH。退出码：0 成功，2 参数/配置/锁错误，3 所需密钥缺失，4 冲突/活动锁/恢复待处理，5 依赖或原生检查失败，6 IO/内部失败；成功启动后保留原生进程退出结果。
+Optional native parameters are passed via `run dsh --cwd PATH -- <native-args>` — `--` is the separator and is not forwarded to DSH. Exit codes: 0 success, 2 argument/config/lock error, 3 required key missing, 4 conflict/active lock/recovery pending, 5 dependency or native check failure, 6 IO/internal failure; after a successful launch the native process exit code is preserved.
 
-## 备份和运行状态
+## Backup & Runtime State
 
-默认实例为 `~/.local/share/agentcfg/instances/dsh/<profile>/`；其 `dsh-home` 和隔离的 `user-home` 保持固定。状态/备份在 XDG state，生成物在 XDG cache。不会默认接管 `~/.dsh`、Pi 或其他工具的账号目录。
+Default instance path: `~/.local/share/agentcfg/instances/dsh/<profile>/`; its `dsh-home` and isolated `user-home` remain fixed. State/backup live in XDG state, artifacts in XDG cache. The manager does not take over `~/.dsh`, Pi, or other tool account directories by default.
 
-成功应用 A→B 后保留 A；再成功应用 C 后仅保留 B。无变化或失败操作不轮换备份。多文件写入有临时恢复记录，单文件原子替换；恢复会再次检查冲突。备份只包含受管文件/字段，不包含 OAuth、会话、整个混合 settings 或本地密钥文件。软件降级和数据库迁移不属于配置 rollback 保证。
+After a successful apply A→B, A is kept; after a subsequent successful apply C, only B is kept. No-change or failed operations do not rotate backups. Multi-file writes use a temporary recovery record; single files are atomically replaced; restore re-checks conflicts. Backups contain only managed files/fields — not OAuth, sessions, mixed settings, or local key files. Software downgrade and database migration are not covered by config rollback.
 
-运行中的受管实例阻止 apply/sync/rollback；管理器不杀用户进程。绕过管理器直接启动或修改文件的外部进程不受活动锁完全约束，写前复查仍执行。只读可信仓库可以位于共享挂载祖先下，但私人部署目录继续要求安全祖先、属主和权限。
+A running managed instance blocks apply/sync/rollback; the manager does not kill user processes. External processes started or modified outside the manager are not fully constrained by the active lock, but pre-write re-checks still run. A read-only trusted repository may reside under a shared mount ancestor, but private deployment directories continue to require secure ancestors, ownership, and permissions.
 
-## 认证、项目集成与维护
+## Authentication, Project Integration & Maintenance
 
-- [DSH 认证、参数与已核实限制](docs/dsh.md)：Codex 原生配套 `/auth login openai-codex`；Cursor 社区包增加 `/cursor-login`，账号由原生插件保管。
-- [OpenSpec 项目操作](docs/openspec.md)：采用上游 `agents` 集成，属于自定义 DSH 接入；初始化 Git 工作树根目录，不自动修改所有业务仓库。
-- [日常维护与新增共享资料](docs/operations.md)：包含规则、技能、provider/model 的例子。
-- `maintain-agent-config` 技能随默认 profile 分发，指导 Agent 编写合法本地 TOML、修改模板和校验生成结果；部署仍走管理器的备份/冲突流程。
-- [增加第二个工具](docs/adapters.md)：接口、所有权、原生编解码和验收边界。
+- [DSH Authentication, Parameters & Verified Limits](docs/dsh.md): Codex native companion `/auth login openai-codex`; Cursor community package adds `/cursor-login` — accounts are held by native plugins.
+- [OpenSpec Project Operations](docs/openspec.md): Uses the upstream `agents` integration as a custom DSH integration; initializes the Git worktree root, does not auto-modify all business repos.
+- [Daily Maintenance & Adding Shared Content](docs/operations.md): Includes examples for rules, skills, provider/model additions.
+- The `maintain-agent-config` skill ships with the default profile, guiding Agents to write legal local TOML, modify templates, and validate generated results; deployment still goes through the manager's backup/conflict flow.
+- [Adding a Second Tool](docs/adapters.md): Interface, ownership, native encoding, and acceptance boundaries.
 
-## 测试
+## Testing
 
 ```sh
 .venv/bin/python -m pytest -q
 ```
 
-默认测试使用临时 HOME/DSH_HOME/XDG、网络阻断及假进程，不运行第三方宿主。原生无账号 smoke 是独立显式步骤，真实模型调用另需用户授权和登录态。测试数量、实际运行环境、未运行平台及 live 状态以 [验收记录](docs/acceptance.md) 为准。
+Default tests use a temporary HOME/DSH_HOME/XDG, network blocking, and fake processes; no third-party hosts are run. The native no-account smoke is a separate explicit step; real model calls require separate user authorization and login state. Test counts, actual run environments, untested platforms, and live status are recorded in [Acceptance Records](docs/acceptance.md).
 
-DSH/TUI/插件/OpenSpec 的完整 npm 锁及 vendor 补丁在 `locks/dsh/`。TUI 的 bundled 清单修复保持运行代码不变；Cursor 的补丁关闭自动账号导入、后台更新和运行包 stamp，并提供终端登录入口。来源与修改记录见 [上游核实记录](docs/upstream-verification.md)。不安装 Superpowers；ModSearch、Memento、ModLens、MCPLens 不在默认安装清单中。
+Full npm locks and vendor patches for DSH/TUI/plugins/OpenSpec live in `locks/dsh/`. TUI bundled-manifest fixes keep runtime code unchanged; Cursor patches disable automatic account import, background updates, and package stamping, and provide a terminal login entry. Sources and modification records are in [Upstream Verification Records](docs/upstream-verification.md). Superpowers is not installed; ModSearch, Memento, ModLens, and MCPLens are not in the default install list.

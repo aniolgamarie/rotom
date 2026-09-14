@@ -471,6 +471,7 @@
     "@deepseek-ai/dsh-win32-process": "0.1.5-rc.1",
     "@deepseek-ai/dsh-workflow": "0.1.5-rc.1",
     "@deepseek-ai/dsh-workflow-worker-thread": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-workspace": "0.1.5-rc.1"
+    "@deepseek-ai/dsh-workspace": "0.1.5-rc.1",
+    "react": "19.3.0"
   }
 }
