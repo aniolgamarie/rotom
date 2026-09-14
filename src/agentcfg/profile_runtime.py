@@ -2,7 +2,7 @@
 
 import json
 import os
-import uuid
+import stat
 
 from .deployment import json_bytes
 from .storage import Conflict, Tree, ensure_private
@@ -27,31 +27,30 @@ def prepare(workspace, runtime):
     expected_package = json_bytes(manifest)
     if package is not None and package[0] != expected_package:
       raise Conflict("包拥有的 profile 配置已被修改")
-    destination = str(runtime / "node_modules")
     with tree.parent("node_modules") as (fd, name):
       try:
-        old = os.readlink(name, dir_fd=fd)
+        info = os.stat(name, dir_fd=fd, follow_symlinks=False)
       except FileNotFoundError:
-        old = None
-      except OSError:
-        raise Conflict("原生 profile node_modules 不是已知运行包链接") from None
-      if old is not None and (owner is None or old not in (record["runtime"], record.get("pending_runtime"))):
+        info = None
+      old = os.readlink(name, dir_fd=fd) if info is not None and stat.S_ISLNK(info.st_mode) else None
+      isolated = info is not None and stat.S_ISDIR(info.st_mode)
+      if info is not None and old is None and not isolated:
+        raise Conflict("原生 profile node_modules 不是受管目录")
+      if old is not None and (owner is None or old not in (record.get("runtime"), record.get("pending_runtime"))):
         raise Conflict("原生 profile 运行包链接已被外部修改")
-      # 先记录允许的前后值；中断后只能恢复明确归本次准备所有的文件和链接。
-      tree.write_state(".agentcfg-package-owner.json", json_bytes({"binding": workspace.binding,
-        "runtime": old, "pending_runtime": destination}))
+      if isolated and (owner is None or "isolated" not in (record.get("modules"), record.get("pending_modules"))):
+        raise Conflict("原生 profile node_modules 目录没有隔离所有权记录")
+      # 先记录允许的前后值；中断后只能恢复明确归本次准备所有的目录。
+      pending = {"binding": workspace.binding, "modules": record.get("modules"), "pending_modules": "isolated"}
+      if old is not None:
+        pending.update({"runtime": old, "pending_runtime": old})
+      tree.write_state(".agentcfg-package-owner.json", json_bytes(pending))
       if package is None:
         tree.write_state("package.json", expected_package)
-      if old != destination:
-        temporary = ".agentcfg-modules-" + uuid.uuid4().hex
-        os.symlink(destination, temporary, dir_fd=fd)
-        try:
-          os.replace(temporary, name, src_dir_fd=fd, dst_dir_fd=fd)
-        finally:
-          try:
-            os.unlink(temporary, dir_fd=fd)
-          except FileNotFoundError:
-            pass
+      if not isolated:
+        if old is not None:
+          os.unlink(name, dir_fd=fd)
+        os.mkdir(name, mode=0o700, dir_fd=fd)
         os.fsync(fd)
-    tree.write_state(".agentcfg-package-owner.json", json_bytes({"binding": workspace.binding, "runtime": destination}))
+    tree.write_state(".agentcfg-package-owner.json", json_bytes({"binding": workspace.binding, "modules": "isolated"}))
   return profile

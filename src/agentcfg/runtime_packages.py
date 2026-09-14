@@ -22,6 +22,34 @@ REQUIRED_FILES = (
 )
 
 
+def topology_digest(root):
+  """哈希完整 node_modules 形状、链接目标和每个包清单，不跟随链接。"""
+  modules = root / "node_modules"
+  if modules.is_symlink() or not modules.is_dir():
+    raise OSError("node_modules is not a directory")
+  digest = hashlib.sha256()
+
+  def visit(directory, prefix=""):
+    for entry in sorted(os.scandir(directory), key=lambda item: os.fsencode(item.name)):
+      relative = f"{prefix}/{entry.name}" if prefix else entry.name
+      info = entry.stat(follow_symlinks=False)
+      digest.update(os.fsencode(relative) + b"\0")
+      if stat.S_ISLNK(info.st_mode):
+        digest.update(b"l\0" + os.fsencode(os.readlink(entry.path)) + b"\0")
+      elif stat.S_ISDIR(info.st_mode):
+        digest.update(b"d\0")
+        visit(entry.path, relative)
+      elif stat.S_ISREG(info.st_mode):
+        digest.update(b"f\0")
+        if entry.name == "package.json":
+          digest.update(hashlib.sha256(Path(entry.path).read_bytes()).digest())
+      else:
+        digest.update(b"o\0")
+
+  visit(modules)
+  return digest.hexdigest()
+
+
 def owned(root, identity):
   try:
     with Tree(root) as tree:
@@ -42,7 +70,9 @@ def status(root, identity):
       if receipt is None or receipt[1] != 0o600:
         return "damaged"
       data = json.loads(receipt[0])
-      if data["version"] != 1 or data["identity"] != identity or set(data["files"]) != set(REQUIRED_FILES):
+      if (data["version"] != 2 or data["identity"] != identity
+          or set(data["files"]) != set(REQUIRED_FILES)
+          or data["topology"] != topology_digest(root)):
         return "damaged"
       for name in REQUIRED_FILES:
         raw = tree.read(name)
@@ -64,7 +94,9 @@ def seal(root, identity):
       if raw is None:
         raise Conflict("运行包缺少必需文件，拒绝激活")
       inventory[name] = hashlib.sha256(raw[0]).hexdigest()
-    tree.write_state(".agentcfg-receipt.json", json_bytes({"version": 1, "identity": identity, "files": inventory}))
+    receipt = {"version": 2, "identity": identity, "files": inventory,
+               "topology": topology_digest(root)}
+    tree.write_state(".agentcfg-receipt.json", json_bytes(receipt))
     tree.write_state(".agentcfg-ready", (identity + "\n").encode())
 
 

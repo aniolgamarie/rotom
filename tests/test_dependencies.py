@@ -45,6 +45,22 @@ def test_failed_sync_keeps_old_runtime_and_repository_lock(tmp_path, monkeypatch
   assert (REPO / "locks/dsh/package-lock.json").read_bytes() == before
 
 
+@pytest.mark.parametrize("tool", ["node", "npm"])
+def test_sync_rejects_minor_toolchain_version_drift(tmp_path, monkeypatch, tool):
+  w = SimpleNamespace(instance=tmp_path / "instance", state_root=tmp_path / "state",
+    cache=tmp_path / "cache", repository=REPO, resolved=SimpleNamespace(data={"machine": {}}))
+  lock = dep.read_lock(REPO)
+  def fake(argv, *, cwd, env):
+    if argv == ["node", "--version"]:
+      return "v24.14.1" if tool == "node" else lock.metadata["node"]
+    if argv == ["npm", "--version"]:
+      return "11.19.2" if tool == "npm" else lock.metadata["npm"]
+    pytest.fail("版本不匹配后不应开始安装")
+  monkeypatch.setattr(dep, "checked", fake)
+  with pytest.raises(DependencyError, match="版本不匹配"):
+    dep.sync(w, lock)
+
+
 def test_missing_and_stale_lock_do_not_resolve_dependencies(tmp_path, monkeypatch):
   with pytest.raises(ConfigError):
     dep.read_lock(tmp_path)
