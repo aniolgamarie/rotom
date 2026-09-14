@@ -95,6 +95,8 @@ def test_profile_first_preparation_recovers(tmp_path, monkeypatch, failure):
   profile = profile_runtime.prepare(w, root)
   assert (profile / "node_modules").is_dir()
   assert not (profile / "node_modules").is_symlink()
+  for package in profile_runtime.PROFILE_PROJECTIONS:
+    assert os.readlink(profile / "node_modules" / package) == str(root / "node_modules" / package)
   assert "pending_runtime" not in json.loads((profile / ".agentcfg-package-owner.json").read_text())
 
 
@@ -116,7 +118,9 @@ def test_profile_migrates_owned_runtime_link_to_isolated_directory(tmp_path):
   assert (profile / "node_modules").is_dir()
   assert not (profile / "node_modules").is_symlink()
   assert json.loads((profile / ".agentcfg-package-owner.json").read_text()) == {
-    "binding": w.binding, "modules": "isolated"}
+    "binding": w.binding, "modules": "isolated",
+    "projections": {package: str(root / "node_modules" / package)
+                    for package in profile_runtime.PROFILE_PROJECTIONS}}
 
 
 def test_profile_upgrade_recovers_and_unknown_files_still_conflict(tmp_path, monkeypatch):
