@@ -22,6 +22,8 @@
 
 只有依赖变化才需要显式 lock/sync。配置生成不安装软件，依赖安装不启动 Agent。共享规则不能消除工具内置系统提示差异。
 
+当前锁的 sync 接受 Node 24.2.0 起的 24.x 和 npm 11.x，run 使用相同 Node 下限；lock 仍要求精确 Node 24.14.0 / npm 11.19.1。Node 24.1.0 无法执行所用入口，需先切换版本。版本选择与原生验证范围见 [准备工具链](getting-started.md)。
+
 ## 添加共享 rule
 
 新建 `shared/rules/project-style.md`，写普通 Markdown。文件里的 `{{example}}` 保持原文，不会当 Jinja 求值。在 `shared/content.toml` 登记：
@@ -104,6 +106,8 @@ plan 的每个差异、漂移和冲突会带 `target-…` 编号。输出中的 
 3. 执行 `plan`、`apply`、`doctor`，再启动。doctor 的 `dependencies` 对应当前仓库锁，`deployed_dependencies` 对应实际部署的版本；回滚后两者可能不同。
 
 运行文件缺失或关键入口摘要不符时，doctor 报 `damaged`，run 拒绝启动，sync 可修复有管理器所有权标记的包。没有所有权标记的非空目录不会被自动接管。检查覆盖安装清单和必要入口，不是对全部传递依赖每个文件的安全审计。
+
+每次检查都会重新核验完整目录形状、链接目标、各包 package.json 和必要入口。不使用磁盘 marker 或进程内元数据缓存跳过正文校验：同长度修改可能保留相同文件时间戳，元数据相同不足以证明内容未变。
 
 修复先暂存安装，成功后替换旧包；中断后重新 sync 会处理 `.repair-<锁身份>` 恢复槽。该槽属于包修复，不是配置上一版备份，不包含账号和会话。若配置 pending 尚未解决，sync 会在安装前拒绝；先按 doctor 提示执行 apply/rollback 恢复。
 

@@ -40,7 +40,7 @@
 
 | 项目 | Linux 本机 | GitHub Linux CI | macOS CI/本机 |
 |---|---|---|---|
-| 管理器完整离线测试 | 788 passed，7 subtests passed | 工作流已配置，未触发远端执行 | 工作流已配置，未执行 |
+| 管理器完整离线测试 | 814 passed，7 subtests passed（2026-09-15） | 工作流已配置，未触发远端执行 | 工作流已配置，未执行 |
 | 无账号原生 smoke | 已执行通过 | 独立显式步骤，不默认运行 | 未执行 |
 | 真实订阅调用 | 未执行 | 不自动运行 | 未执行 |
 
@@ -70,3 +70,11 @@
 原 Spec 与 `harden-agent-config-after-review` 的 OpenSpec strict 校验通过；`UV_CACHE_DIR=/tmp/rotom-uv-cache uv lock --check --offline`、维护 skill quick_validate 及文档链接检查通过。npm package-lock.json 与 uv.lock 的字节未改变，依赖版本与运行包锁身份未改变；新增锁策略和 manifest recipe 摘要。
 
 本轮没有重新执行真实 npm 安装或 DSH 原生 smoke。安装修复由假安装器、真实临时文件与失败注入验证；已有 Linux 原生证据属于同一依赖版本此前的执行。macOS、远端 CI 和真实订阅调用仍按改进计划待验证。
+
+## 工具链与适配器复审（2026-09-15）
+
+最终版本执行 `.venv/bin/python -m pytest -q -p no:cacheprovider`：**814 passed，7 subtests passed，0 failed，227.27 秒**。fresh reviewer 独立复审未发现剩余可操作缺陷，并独立完成 **31 passed，35 deselected，31.17 秒** 的定向回归。compileall、git diff --check、修改文档的本地链接检查通过。
+
+sync 接受 Node 24.2.0 起的 24.x 和 npm 11.x，run 使用相同 Node 范围；lock 仍要求精确 24.14.0 / 11.19.1。Node 24.1.0 缺少入口需要的功能，继续拒绝。元数据缓存经复审发现可能漏检同长度修改，已撤回，status 保持每次正文核验。完整发现、回归及锁摘要见 [本次复审记录](review-2026-09-15.md)。
+
+本次未启动第三方宿主或进行真实安装/账号调用；其他通过版本检查的工具链不据此视为完成原生验收。

@@ -8,6 +8,7 @@ import subprocess
 from .adapter import EnvironmentBinding, LaunchSpec, SecretRef
 from .deployment import read_state, recover
 from .process import DependencyError, checked, environment, launch_environment
+from .toolchain import ensure_compatible_toolchain
 from .storage import Conflict, Tree, ensure_private, instance_lock
 
 
@@ -15,8 +16,8 @@ def record(workspace, lock):
   spec = workspace.adapter.launch_spec(workspace.resolved.data, cwd=Path("/"),
     runtime_root=workspace.backend.root(workspace, lock.identity), instance_root=workspace.instance, lock_identity=lock.identity)
   return {"argv": list(spec.argv), "lock_identity": lock.identity,
-    "shared_files": list(getattr(workspace.adapter, "shared_files", ())),
-    "preflight": workspace.adapter.launch_preflight(lock) if hasattr(workspace.adapter, "launch_preflight") else [],
+    "shared_files": list(workspace.adapter.shared_files),
+    "preflight": workspace.adapter.launch_preflight(lock),
     "machine": workspace.resolved.data["machine"],
     "environment": [{"name": e.name, "required": e.required,
       **({"secret_ref": e.value.reference} if isinstance(e.value, SecretRef) else {"literal": e.value})} for e in spec.environment]
@@ -44,11 +45,15 @@ def run(workspace, *, cwd, arguments=()):
       raise DependencyError("当前部署的运行包缺失或损坏；请 sync 对应依赖锁修复")
     workspace.adapter.prepare_runtime(workspace, root)
     spec = decode(contract, cwd, arguments)
+    preflight_env = environment(contract["machine"], home=workspace.instance / "user-home")
     for check in contract.get("preflight", []):
-      version = checked(check["argv"], cwd=cwd,
-                        env=environment(contract["machine"], home=workspace.instance / "user-home"))
-      if version != check["version"]:
-        raise DependencyError("运行时工具链版本不匹配已部署契约，请检查 Node 版本")
+      actual = checked(check["argv"], cwd=cwd, env=preflight_env)
+      tool = "Node" if check["argv"][0] == "node" else check["argv"][0]
+      if tool in ("Node", "npm"):
+        ensure_compatible_toolchain(tool, check["version"], actual)
+      elif actual != check["version"]:
+        # 其他适配器保留原有精确匹配，不将任意原生输出当作公开版本。
+        raise DependencyError("运行时工具链版本不匹配已部署契约；实际输出已隐藏，请检查对应适配器工具链")
     env = launch_environment(spec, contract["machine"], workspace.secret_store)
     import os
     env["PATH"] = os.pathsep.join([*(str(path) for path in workspace.backend.executable_paths(root)), env.get("PATH", "")])

@@ -15,13 +15,3 @@ mcp = []
 preset = "standard"
 theme = "rotom-poimandres"
 terminal_images = false
-
-[ownership]
-rules = "file"
-skills = "file"
-patch = "file"
-api_providers = "fields"
-theme = "file"
-oauth = "runtime"
-sessions = "runtime"
-packages = "package"

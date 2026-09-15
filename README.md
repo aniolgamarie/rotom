@@ -15,7 +15,7 @@ Three commands cover the basics: `sync` installs software, `apply` deploys confi
 ## Prerequisites
 
 - **Manager:** Python 3.11+, uv. Run `uv sync --locked` once; the entry point then uses the repo `.venv` directly — offline commands install nothing.
-- **DSH toolchain:** **Node 24.14.0, npm 11.19.1**. Prepare these with your own version manager; `sync` and `run` check the required versions. Node 24.1, while satisfying some upstream range declarations, cannot execute the `import.meta.main` entry used here and is excluded by runtime checks.
+- **DSH toolchain:** The lock was generated and smoke-tested with **Node 24.14.0, npm 11.19.1**. `sync` accepts Node **24.x from 24.2.0** and npm **11.x**; `run` checks the same Node requirement. Node 24.1 cannot execute the `import.meta.main` entry used here. Generating a lock still requires the exact locked versions. Prepare Node/npm with your own version manager; agentcfg does not install them. Other accepted versions have not been smoke-tested.
 - **First-release platforms:** Linux, macOS. Native Windows is not supported. Linux has been isolation-verified; macOS acceptance status is tracked in [Acceptance Records](docs/acceptance.md).
 
 ## From Clone to Running

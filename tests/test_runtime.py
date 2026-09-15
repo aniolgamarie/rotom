@@ -35,7 +35,7 @@ def test_run_keeps_deployed_selection_uses_current_secret_and_cwd(tmp_path, fake
   local_file(path, provider="two", used=CANARY + "rotated")
   changed = load_workspace(path)
   monkeypatch.setenv("UNRELATED_PARENT_SECRET", "synthetic-parent")
-  fake_subprocess.queue(returncode=0, stdout=lock.metadata["node"])
+  fake_subprocess.queue(returncode=0, stdout="v24.2.0")
   fake_subprocess.queue(returncode=17)
   cwd = tmp_path / "业务 空格"
   cwd.mkdir()
@@ -51,6 +51,22 @@ def test_run_keeps_deployed_selection_uses_current_secret_and_cwd(tmp_path, fake
   assert len(call["pass_fds"]) == 1
   assert CANARY not in capsys.readouterr().out
   assert CANARY.encode() not in (w.state_root / "deployment.json").read_bytes()
+
+
+@pytest.mark.parametrize("actual", ["v24.1.0", "v25.0.0", "v24.2.0\nsynthetic-private-token"])
+def test_run_rejects_incompatible_node_before_launch(tmp_path, fake_subprocess, prepared_runtime, actual):
+  path = tmp_path / "local.toml"
+  local_file(path)
+  w = load_workspace(path)
+  lock = read_lock(w.repository)
+  deployment.apply(w.instance, w.state_root, w.candidate(lock.identity), w.binding, runtime.record(w, lock))
+  prepared_runtime(w, lock)
+  fake_subprocess.queue(returncode=0, stdout=actual)
+  with pytest.raises(runtime.DependencyError) as caught:
+    runtime.run(w, cwd=tmp_path)
+  assert len(fake_subprocess.calls) == 1
+  assert "synthetic-private-token" not in str(caught.value)
+  assert "docs/getting-started.md" in str(caught.value)
 
 
 def test_native_environment_guard_is_a_managed_asset(tmp_path):

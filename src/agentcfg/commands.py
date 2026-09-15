@@ -135,8 +135,7 @@ def cmd_capture(args):
   w = workspace(args)
   with Tree(w.instance) as target:
     projection = w.adapter.capture_projection(target)
-  captured = (w.adapter.capture_configuration(projection, w.resolved.data)
-              if hasattr(w.adapter, "capture_configuration") else w.adapter.capture(projection))
+  captured = w.adapter.capture_configuration(projection, w.resolved.data)
   proposal = {"schema_version": 1, "overrides": {"profiles": {w.profile: captured}}}
   from .schema import validate_document
   validate_document("local", {**proposal, "machine": {"id": w.resolved.data["machine"]["id"]}}, adapter_schemas=w.schemas)

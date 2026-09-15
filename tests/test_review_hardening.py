@@ -171,12 +171,77 @@ def test_profile_fallback_writes_cannot_mutate_runtime(tmp_path):
   assert not (root / "node_modules/react-reconciler").exists()
 
 
+def test_runtime_receipt_rechecks_topology_each_time(tmp_path, prepared_runtime, monkeypatch):
+  w = load_workspace(local(tmp_path))
+  lock = dep.read_lock(REPO)
+  prepared_runtime(w, lock)
+  assert dep.installed(w, lock)
+  original = runtime_packages.topology_digest
+  calls = []
+
+  def checked(path):
+    calls.append(path)
+    return original(path)
+
+  monkeypatch.setattr(runtime_packages, "topology_digest", checked)
+  assert dep.installed(w, lock)
+  assert dep.installed(w, lock)
+  assert len(calls) == 2
+
+
+def test_runtime_receipt_detects_manifest_change_during_seal(tmp_path, prepared_runtime, monkeypatch):
+  w = load_workspace(local(tmp_path))
+  lock = dep.read_lock(REPO)
+  root = prepared_runtime(w, lock)
+  original = runtime_packages.topology_digest
+
+  def changed_after_digest(path):
+    digest = original(path)
+    (path / "node_modules/@deepseek-ai/dsh/package.json").write_text('{"name":"changed-during-seal"}')
+    return digest
+
+  with monkeypatch.context() as patch:
+    patch.setattr(runtime_packages, "topology_digest", changed_after_digest)
+    runtime_packages.seal(root, lock.identity)
+  assert not dep.installed(w, lock)
+
+
 def test_runtime_receipt_detects_dependency_topology_pollution(tmp_path, prepared_runtime):
   w = load_workspace(local(tmp_path))
   lock = dep.read_lock(REPO)
   root = prepared_runtime(w, lock)
   assert dep.installed(w, lock)
   (root / "node_modules/injected-package").symlink_to(root / "node_modules/react")
+  assert not dep.installed(w, lock)
+
+
+def test_runtime_receipt_ignores_forged_persistent_cache(tmp_path, prepared_runtime):
+  w = load_workspace(local(tmp_path))
+  lock = dep.read_lock(REPO)
+  root = prepared_runtime(w, lock)
+  assert dep.installed(w, lock)
+  injected = root / "node_modules/@deepseek-ai/dsh/package.json"
+  injected.write_text('{"name":"forged"}')
+  receipt = json.loads((root / ".agentcfg-receipt.json").read_text())
+  forged = {"version": 1, "identity": lock.identity, "topology": receipt["topology"],
+            "stamp": "synthetic-forged-stamp"}
+  marker = root / ".agentcfg-verified.json"
+  marker.write_bytes(json_bytes(forged))
+  marker.chmod(0o600)
+  assert not dep.installed(w, lock)
+
+
+def test_runtime_receipt_detects_same_size_manifest_edit_with_restored_mtime(tmp_path, prepared_runtime):
+  w = load_workspace(local(tmp_path))
+  lock = dep.read_lock(REPO)
+  root = prepared_runtime(w, lock)
+  path = root / "node_modules/@deepseek-ai/dsh/package.json"
+  path.write_text('{"name":"before"}')
+  runtime_packages.seal(root, lock.identity)
+  assert dep.installed(w, lock)
+  before = path.stat()
+  path.write_text('{"name":"edited"}')
+  os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
   assert not dep.installed(w, lock)
 
 
@@ -216,6 +281,24 @@ def test_sync_repairs_damaged_package_and_preserves_session(tmp_path, prepared_r
   calls.clear()
   assert not dep.sync(w, lock)["changed"]
   assert not calls
+
+
+def test_sync_installs_with_compatible_toolchain_versions(tmp_path, monkeypatch):
+  w = load_workspace(local(tmp_path))
+  lock = dep.read_lock(REPO)
+  installer(monkeypatch, lock)
+  original = dep.checked
+
+  def compatible(argv, *, cwd, env):
+    if argv == ["node", "--version"]:
+      return "v24.2.0"
+    if argv == ["npm", "--version"]:
+      return "11.0.0"
+    return original(argv, cwd=cwd, env=env)
+
+  monkeypatch.setattr(dep, "checked", compatible)
+  assert dep.sync(w, lock)["changed"]
+  assert dep.installed(w, lock)
 
 
 def test_failed_repair_and_interrupted_activation_keep_old_package(tmp_path, prepared_runtime, monkeypatch):

@@ -1,6 +1,7 @@
 """非 DSH 测试适配器复用部署和上一版恢复，不代表新增产品支持。"""
 
 import json
+import pytest
 
 from agentcfg import deployment as dep
 from agentcfg.adapter import Artifact, ManagedTarget, Ownership
@@ -34,7 +35,8 @@ def test_explicit_codec_extension_does_not_silently_use_yaml(tmp_path, monkeypat
   assert json.loads((tmp_path / "instance/config.fixture").read_text()) == {"enabled": False}
 
 
-def test_non_npm_backend_drives_public_commands_and_launch(tmp_path, monkeypatch, fake_subprocess, capsys):
+@pytest.mark.parametrize("actual", ["fixture 1", "synthetic-private-token"])
+def test_non_npm_backend_drives_public_commands_and_launch(tmp_path, monkeypatch, fake_subprocess, capsys, actual):
   from types import SimpleNamespace
   from pathlib import Path
   from agentcfg import commands
@@ -75,6 +77,11 @@ def test_non_npm_backend_drives_public_commands_and_launch(tmp_path, monkeypatch
       return {"fixture-tool": "1"}
 
   class Adapter:
+    shared_files = ()
+
+    def launch_preflight(self, lock):
+      return [{"argv": ["fixture-tool", "--version"], "version": "fixture 1"}]
+
     def launch_spec(self, data, *, cwd, runtime_root, instance_root, lock_identity):
       return LaunchSpec((str(runtime_root / "native-bin/fixture-tool"),), cwd, lock_identity,
         (EnvironmentBinding("HOME", str(instance_root / "home")),))
@@ -93,6 +100,14 @@ def test_non_npm_backend_drives_public_commands_and_launch(tmp_path, monkeypatch
   args = SimpleNamespace(cwd=tmp_path, passthrough=["--literal"], live=False)
   for name in ("validate", "plan", "lock", "sync", "apply", "doctor"):
     assert getattr(commands, "cmd_" + name)(args) == 0
+  fake_subprocess.queue(returncode=0, stdout=actual)
+  if actual != "fixture 1":
+    from agentcfg.process import DependencyError
+    with pytest.raises(DependencyError) as caught:
+      commands.cmd_run(args)
+    assert actual not in str(caught.value)
+    assert len(fake_subprocess.calls) == 1
+    return
   fake_subprocess.queue(returncode=0)
   assert commands.cmd_run(args) == 0
   call = fake_subprocess.calls[-1]

@@ -15,17 +15,25 @@ class DependencyBackend(Protocol):
 
 
 class DshBackend:
+  adapter_id = "dsh"
+
+  @property
+  def adapter_version(self):
+    from .dsh import DshAdapter
+    return DshAdapter.declaration.adapter_version
+
   def read_lock(self, repository):
     from .dependencies import read_lock
-    return read_lock(repository)
+    return read_lock(repository, self.adapter_id, self.adapter_version)
 
   def resolve_lock(self, repository):
     from .dependencies import resolve_lock
-    return resolve_lock(repository)
+    return resolve_lock(repository, adapter_id=self.adapter_id,
+                        expected_adapter_version=self.adapter_version)
 
   def sync(self, workspace, lock):
     from .dependencies import sync
-    return sync(workspace, lock)
+    return sync(workspace, lock, self.adapter_id)
 
   def root(self, workspace, identity):
     from .paths import safe_id

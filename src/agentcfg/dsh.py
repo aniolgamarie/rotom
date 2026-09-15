@@ -266,9 +266,8 @@ class DshAdapter(Adapter):
                     ("package", "version", "bundled", "enabled", "requires", "conflicts"))
     documents = {
       "agent": closed({"schema_version": VERSION, "adapter_version": STRING, "upstream_commit": SHA,
-                        "tui_commit": SHA, "defaults": defaults,
-                        "ownership": {"type": "object", "additionalProperties": STRING}},
-                       ("schema_version", "adapter_version", "upstream_commit", "tui_commit", "defaults", "ownership")),
+                        "tui_commit": SHA, "defaults": defaults},
+                       ("schema_version", "adapter_version", "upstream_commit", "tui_commit", "defaults")),
       "bindings": closed({"schema_version": VERSION, "settings_namespace": {"type": "string", "const": "llm-pi-ai"}, "credential_field": {"type": "string", "const": "apiKeyEnv"},
                            "protocols": {"type": "object", "additionalProperties": {"type": "string", "enum": ["openai-completions", "openai-responses"]}},
                            "oauth": {"type": "object", "additionalProperties": closed({"route": STRING, "owner": STRING}, ("route", "owner"))}},
