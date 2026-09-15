@@ -19,6 +19,8 @@
 
 实际工具还提供 schemas（含已校验文档的 policy/authentication_claims）、capture_projection（安全读取 allowlist）、prepare_runtime（原生包拥有的启动准备）和可选 launch_preflight。参见 `src/agentcfg/dsh.py`；不要把 DSH 原生路径和字段塞回公共 registry。
 
+`Adapter` 为 shared_files、launch_preflight、prepare_runtime 提供空默认实现，capture_configuration 默认委托 capture；需要依赖安装或捕获文件时，应实现 dependency_backend、capture_projection。launch_preflight 返回包含 argv 和 version 的检查项；当前 Node/npm 使用工具链兼容检查（Node 24 另要求至少 24.2.0），其他命令保留精确输出比较，失败时不回显原生输出。
+
 ## 接入步骤
 
 1. 读取目标工具的固定版本文档/源码，记录配置、认证、profile、技能、规则、权限、环境变量和持久化路径。尤其核实真实 home 之外的写入，默认建立新的隔离实例。
