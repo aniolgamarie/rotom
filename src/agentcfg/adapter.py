@@ -209,3 +209,22 @@ class Adapter(ABC, Generic[Config, NativeProjection, CaptureProposal]):
   @abstractmethod
   def doctor(self, projection: NativeProjection) -> tuple[str, ...]:
     """返回公开诊断代码；离线且不读取认证文件。"""
+
+  def dependency_backend(self):
+    raise NotImplementedError("adapter must provide dependency_backend")
+
+  @property
+  def shared_files(self) -> tuple[str, ...]:
+    return ()
+
+  def launch_preflight(self, lock) -> list[dict]:
+    return []
+
+  def prepare_runtime(self, workspace, root) -> None:
+    return None
+
+  def capture_projection(self, tree):
+    raise NotImplementedError("adapter must provide capture_projection")
+
+  def capture_configuration(self, projection, data):
+    return self.capture(projection)

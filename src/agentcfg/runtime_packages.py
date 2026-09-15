@@ -70,6 +70,7 @@ def status(root, identity):
       if receipt is None or receipt[1] != 0o600:
         return "damaged"
       data = json.loads(receipt[0])
+      # 每次校验正文：文件系统可能让同长度修改保留全部时间戳，不能只信元数据缓存。
       if (data["version"] != 2 or data["identity"] != identity
           or set(data["files"]) != set(REQUIRED_FILES)
           or data["topology"] != topology_digest(root)):

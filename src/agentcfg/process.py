@@ -51,10 +51,16 @@ def launch_environment(spec, machine, store):
 
 def checked(argv, *, cwd, env):
   """安装/探测命令不回显原始 stdout/stderr，避免 npm/private URL 异常泄漏。"""
+  command = argv[0] if argv else "command"
   try:
     result = subprocess.run(list(argv), cwd=cwd, env=env, capture_output=True, text=True)
   except OSError:
-    raise DependencyError("依赖命令不可执行；请检查锁定的 Node/npm") from None
+    raise DependencyError(
+      f"依赖命令 {command} 不可执行；请检查锁定的 Node/npm；agentcfg 不安装工具链"
+    ) from None
   if result.returncode:
-    raise DependencyError("依赖命令失败，未激活运行包；请检查版本、网络及完整锁")
+    raise DependencyError(
+      f"依赖命令 {command} 失败（退出码 {result.returncode}），未激活运行包；"
+      "请检查版本、网络及完整锁"
+    )
   return result.stdout.strip()
