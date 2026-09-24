@@ -462,3 +462,13 @@ def test_schema_resources_work_in_installed_layout(tmp_path, monkeypatch):
   (package / "schemas/registry.schema.json").write_text("{}")
   with pytest.raises(schema.ConfigError):
     schema.validate_document("registry", document("registry"))
+
+
+def test_schema_content_cache_never_hides_in_place_mutation():
+  schema, _ = api()
+  document = closed({"flag": {"type": "boolean"}})
+  schema._strict_schema(document)
+  schema._strict_schema(document)
+  document["properties"]["flag"]["unsupportedRule"] = True
+  with pytest.raises(ValueError):
+    schema._strict_schema(document)

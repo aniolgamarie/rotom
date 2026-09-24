@@ -1,0 +1,141 @@
+{
+  "kind": "test-design-static-review-v2",
+  "baselineRun": "2026-09-08T03-48-50-049Z",
+  "designCoverage": {
+    "sourceIds": 228,
+    "allObligations": 713,
+    "p0p3Obligations": 707,
+    "p0p3Designed": 707,
+    "currentMissingDesigned": 618,
+    "newlyUncreditedDesigned": 220,
+    "unmapped": 0,
+    "duplicates": 0,
+    "campaigns": 36,
+    "domainChecks": 171
+  },
+  "byLevel": {
+    "A": 103,
+    "E": 149,
+    "L": 2,
+    "P": 97,
+    "S": 150,
+    "U": 184,
+    "V": 22
+  },
+  "checks": [
+    "frozen baseline, old designs, current checkpoint and source matrix hashes unchanged",
+    "available historical runtime reports unchanged",
+    "all 8 specs / 56 requirements / 126 scenarios match actual WHEN/THEN digests",
+    "independent cross-product check: 66 await, 18 crash, 42 request, 4 stream, 12 lifecycle",
+    "all 228 IDs and all 713 source-required layers mapped exactly once",
+    "all 707 P0-P3 and six P4 obligations retained; T75 offline not deferred",
+    "all case IDs and proposed file/name identities unique and discoverable",
+    "all case source semantics / digest / primary assertion / observer artifacts correspond",
+    "all cases have layer-appropriate steps, positive and negative controls, variants and dependencies",
+    "all required recipe checks and applicable expanded matrix cells retained",
+    "all design rows remain unexecuted; no invented result artifact",
+    "current 618-gap view = 398 existing designs + 220 newly uncredited designs",
+    "rendered case catalog equals reviewed source recipes and layer profiles",
+    "OpenSpec/package sources and all nine v6 bundle checksums unchanged",
+    "14 in-memory negative controls rejected; no product/config writes"
+  ],
+  "negativeControls": [
+    {
+      "name": "delete obligation",
+      "expectedRejection": "missing-or-extra-obligation",
+      "result": "rejected"
+    },
+    {
+      "name": "duplicate obligation",
+      "expectedRejection": "duplicate-obligation",
+      "result": "rejected"
+    },
+    {
+      "name": "unknown obligation",
+      "expectedRejection": "missing-or-extra-obligation",
+      "result": "rejected"
+    },
+    {
+      "name": "change validation layer",
+      "expectedRejection": "wrong-layer",
+      "result": "rejected"
+    },
+    {
+      "name": "alter expected behavior",
+      "expectedRejection": "changed-source-semantics",
+      "result": "rejected"
+    },
+    {
+      "name": "omit negative control",
+      "expectedRejection": "incomplete-design-fields",
+      "result": "rejected"
+    },
+    {
+      "name": "borrow another level observer",
+      "expectedRejection": "wrong-layer-observer",
+      "result": "rejected"
+    },
+    {
+      "name": "drop required variant",
+      "expectedRejection": "variant-coverage-gap",
+      "result": "rejected"
+    },
+    {
+      "name": "claim runtime pass",
+      "expectedRejection": "fabricated-runtime-evidence",
+      "result": "rejected"
+    },
+    {
+      "name": "invent result artifact",
+      "expectedRejection": "fabricated-runtime-evidence",
+      "result": "rejected"
+    },
+    {
+      "name": "same test identity twice",
+      "expectedRejection": "duplicate-case-identity",
+      "result": "rejected"
+    },
+    {
+      "name": "wrong primary assertion ID",
+      "expectedRejection": "wrong-assertion-owner",
+      "result": "rejected"
+    },
+    {
+      "name": "silently defer T75 offline",
+      "expectedRejection": "changed-release-scope",
+      "result": "rejected"
+    },
+    {
+      "name": "drop reverse await order",
+      "expectedRejection": "matrix-cross-product-gap",
+      "result": "rejected"
+    }
+  ],
+  "verifiedRuntimeReports": [
+    "test-results/2026-09-07T23-05-22-890Z/report.json",
+    "test-results/2026-09-08T03-48-50-049Z/report.json"
+  ],
+  "runtimeEvidenceAdded": 0,
+  "runtimeReleaseMissingUnchanged": 618,
+  "runtimeReleaseReadyUnchanged": false,
+  "implementationTasksUnchanged": {
+    "complete": 66,
+    "total": 76
+  },
+  "designFiles": {
+    "case-recipes.json": "9e86636bc5555f9a98a30d5973834833e679220d3a00969a6c033dcc36e2c2bb",
+    "layer-profiles.json": "24830198a571859203cc28e5598ecd7b6eed0d68e1d53c174fb8001ab7d9ab8a",
+    "expanded-matrices.json": "e0e8a2eca177f4cef56b24e64997d6d5f4ca344f05a4697e4994b24418d3fd43",
+    "coverage-cases.csv": "17966e8c049d87618dbca1e7a78b2c5a6e3728c5f147924f919a4e1985214c92",
+    "current-gap-cases.csv": "9b56bd9a3b2819be03bd03063d103ae9ad624a771252791a2d82f8e320d67c6f",
+    "newly-uncredited-cases.csv": "047609ca04817f015d502c3bca599033f01b1a5f79f6cc2da2ffbcb9dee24ade",
+    "case-design.md": "a9eaebd4ecc41b7618a29fa471016d78ed7854c380d77bb08a5451948b491517",
+    "build-design.py": "2abdab9788aeb19fa9f89ee76694f4022944bb9bca085383b142e9753e4128b5",
+    "check-design.py": "cf562bff328d13c17272ad8c96baa38c2f005073a7ec099b3d94ea5312965e82"
+  },
+  "limitations": [
+    "100% is the declared obligation-to-design mapping, not executed/code coverage or exhaustive input-space proof.",
+    "Assertions and every planned variant must be implemented and executed against the correct layer before credit.",
+    "An unsupported success requirement remains pending; rejection cannot replace the required success case."
+  ]
+}

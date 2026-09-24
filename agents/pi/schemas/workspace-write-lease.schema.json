@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "workspace_key": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "host_boot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "uid": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "worktree_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "git_dir_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonical_worktree_identity": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "uid": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "device",
+        "inode",
+        "uid"
+      ],
+      "additionalProperties": false
+    },
+    "git_dir_identity": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "uid": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "device",
+        "inode",
+        "uid"
+      ],
+      "additionalProperties": false
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "workspace_lease_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "instance_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_lease_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "allocation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "attempt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "holder_nonce": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supervisor_activation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "grant_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "state": {
+      "enum": [
+        "reserved",
+        "active",
+        "revoking",
+        "unknown",
+        "released"
+      ]
+    },
+    "termination_evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "workspace_key",
+    "host_boot_id",
+    "uid",
+    "worktree_path",
+    "git_dir_path",
+    "canonical_worktree_identity",
+    "git_dir_identity",
+    "schema_version",
+    "workspace_lease_id",
+    "instance_id",
+    "execution_lease_id",
+    "allocation_id",
+    "task_id",
+    "attempt_id",
+    "holder_nonce",
+    "supervisor_activation_id",
+    "grant_generation",
+    "state",
+    "termination_evidence_refs"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,23 @@
+# Pi 机器绑定示例；配方已登记，真实源码和锁仍待后续实施完成。虚构服务，不代表已验证可用。
+schema_version = 1
+[machine]
+id = "pi-workstation"
+default_profile = "pi-default"
+[overrides.providers.example]
+protocol = "openai-compatible"
+base_url = "https://example.invalid/v1"
+auth_kind = "api-key"
+credential_ref = "secret:example_key"
+[overrides.models.example-main]
+provider = "example"
+remote_id = "fictional-chat"
+input = ["text"]
+[overrides.profiles.pi-default]
+providers = ["example"]
+models = ["example-main"]
+[overrides.profiles.pi-default.roles]
+main = "example-main"
+scout = "example-main"
+reviewer = "example-main"
+[secrets]
+example_key = ""

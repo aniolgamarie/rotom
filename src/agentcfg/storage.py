@@ -51,6 +51,31 @@ def ensure_private(path: Path):
     os.close(fd)
 
 
+def _write_new_at(fd, target, data):
+  temporary = ".agentcfg-" + uuid.uuid4().hex
+  output = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=fd)
+  try:
+    with os.fdopen(output, "wb") as stream:
+      os.fchmod(stream.fileno(), 0o600)
+      stream.write(data); stream.flush(); os.fsync(stream.fileno())
+    try:
+      os.link(temporary, target, src_dir_fd=fd, dst_dir_fd=fd, follow_symlinks=False)
+    except FileExistsError:
+      raise Conflict("新文件目标已存在，拒绝覆盖") from None
+  finally:
+    os.unlink(temporary, dir_fd=fd)
+    os.fsync(fd)
+
+
+def create_new_private_file(path, data):
+  """在明确指定的位置创建 0600 新文件；允许系统 sticky 临时目录。"""
+  from .paths import _absolute_directory
+  path = Path(path).absolute()
+  relative_path(path.name)
+  with _absolute_directory(path.parent) as fd:
+    _write_new_at(fd, path.name, data)
+
+
 class Tree:
   """一次操作固定根句柄；允许原生非私有模式文件读取，但从不跟随链接。"""
 
@@ -105,8 +130,9 @@ class Tree:
     finally:
       os.close(fd)
 
-  def read(self, path):
-    """返回 bytes/mode/身份；缺失返回 None，不将原生内容放进异常。"""
+  @contextmanager
+  def open_read(self, path, *, max_bytes=None):
+    """固定单文件身份的流读取；大资产不必一次装入内存，缺失仍由调用方处理。"""
     try:
       with self.parent(path) as (fd, name):
         before = os.stat(name, dir_fd=fd, follow_symlinks=False)
@@ -117,16 +143,30 @@ class Tree:
           opened = os.fstat(stream.fileno())
           if identity(opened) != identity(before):
             raise Conflict("目标在读取前发生变化")
-          data = stream.read()
+          if max_bytes is not None and opened.st_size > max_bytes:
+            raise Conflict("文件超过本次操作允许的大小")
+          yield stream, opened
           if identity(opened) != identity(os.fstat(stream.fileno())):
             raise Conflict("目标在读取时发生变化")
-        if identity(opened) != identity(os.stat(name, dir_fd=fd, follow_symlinks=False)):
+        try: current = os.stat(name, dir_fd=fd, follow_symlinks=False)
+        except FileNotFoundError: raise Conflict("目标路径在读取时发生变化") from None
+        if identity(opened) != identity(current):
           raise Conflict("目标路径在读取时发生变化")
-        return data, stat.S_IMODE(opened.st_mode), identity(opened)
     except FileNotFoundError:
-      return None
+      raise
     except (OSError, PathError):
       raise Conflict("无法安全读取目标；请检查路径与权限") from None
+
+  def read(self, path, *, max_bytes=None):
+    """返回 bytes/mode/身份；缺失返回 None，不将原生内容放进异常。"""
+    try:
+      with self.open_read(path, max_bytes=max_bytes) as (stream, opened):
+        data = stream.read() if max_bytes is None else stream.read(max_bytes + 1)
+        if max_bytes is not None and len(data) > max_bytes:
+          raise Conflict("文件超过本次操作允许的大小")
+      return data, stat.S_IMODE(opened.st_mode), identity(opened)
+    except FileNotFoundError:
+      return None
 
   def replace(self, path, data, mode=0o600, *, expected):
     """expected 是刚读的身份；调用者负责所有权、三方合并和 journal。"""
@@ -170,6 +210,20 @@ class Tree:
   def write_state(self, name, data):
     before = self.read(name)
     self.replace(name, data, expected=before[2] if before else None)
+
+  def write_new(self, name, data):
+    """原子发布新的私人文件；并发同名创建也绝不覆盖。"""
+    with self.parent(name, create=True) as (fd, target):
+      _write_new_at(fd, target, data)
+
+  def write_immutable(self, name, data):
+    """证据正文不能被重放或修复路径覆盖；相同正文幂等复用。"""
+    before = self.read(name)
+    if before is not None:
+      if before[0] != data or before[1] != 0o600:
+        raise Conflict("不可变证据已改变；不能覆盖旧记录")
+      return
+    self.replace(name, data, expected=None)
 
 
 @contextmanager

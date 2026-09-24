@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2
+    },
+    "artifact_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+    },
+    "context_artifact_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+    },
+    "turn": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "candidate_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "provisional",
+              "disputed",
+              "stale",
+              "unverified"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "source",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+      }
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 65536
+    }
+  },
+  "required": [
+    "schema_version",
+    "artifact_id",
+    "run_id",
+    "context_artifact_id",
+    "turn",
+    "candidate_digest",
+    "facts",
+    "conflicts",
+    "summary"
+  ],
+  "additionalProperties": false
+}

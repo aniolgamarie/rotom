@@ -1,0 +1,482 @@
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1,3 +1,6 @@
++import { requireOrdinaryHelper, assertSessionBoundary } from "@agentcfg/pi-runtime/capability-policy";
++import { pluginSettings, pluginAgentDir, managedSettingWrite, pluginProjectRoot } from "@agentcfg/pi-runtime/plugin-settings";
++import { pluginModelMethod, ownedCompactionHook, selectedPluginModel, selectedPluginModels } from "@agentcfg/pi-runtime/plugin-model";
+ // @bun
+ var __require = import.meta.require;
+ 
+@@ -7,7 +10,7 @@
+ } from "@earendil-works/pi-coding-agent";
+ 
+ // src/constants.ts
+-var VERSION = "9.6.0";
++var VERSION = "9.6.0-agentcfg.1";
+ var CHARS_PER_TOKEN = 3.8;
+ var MIN_COMPACTION_SAVING_RATIO = 0.1;
+ var ESTIMATOR_ROUNDING_TOLERANCE_TOKENS = 1;
+@@ -554,9 +557,8 @@
+   const configured = process.env.HOME?.trim() || process.env.USERPROFILE?.trim();
+   return configured || os.homedir();
+ }
+-function piAgentDir() {
+-  return path2.join(home(), ".pi", "agent");
+-}
++function piAgentDir() { return pluginAgentDir(); }
++
+ function cacheDir() {
+   return path2.join(piAgentDir(), ".cache");
+ }
+@@ -664,15 +666,10 @@
+   "batchMaxTokens"
+ ];
+ function readGlobalConfigValue(configPath) {
+-  assertGlobalConfigPath(configPath);
+-  try {
+-    const section = configuredSection(readSettingsRoot(settingsFile()));
+-    validateSmartCompactConfig(section);
+-    return cloneGlobalConfigValue(configPathValue(section, configPath));
+-  } catch {
+-    return;
+-  }
+-}
++ assertGlobalConfigPath(configPath);
++ return cloneGlobalConfigValue(configPathValue(pluginSettings("pi-smart-compact", "smart_compact"), configPath));
++}
++
+ function isRecord(value) {
+   return typeof value === "object" && value !== null && !Array.isArray(value);
+ }
+@@ -913,31 +910,8 @@
+   validateProfiles(sc);
+   validateLimits(sc);
+ }
+-async function writeGlobalConfigValue(configPath, value) {
+-  assertGlobalConfigPath(configPath);
+-  const file = settingsFile();
+-  const release = await acquireLock(file);
+-  try {
+-    const root = readSettingsRoot(file);
+-    const section = configuredSection(root);
+-    setConfigPath(section, configPath, cloneGlobalConfigValue(value));
+-    if (value === undefined && configPath === "agentToolAccess") {
+-      delete section.agentToolEnabled;
+-    }
+-    const validated = structuredClone(section);
+-    validateSmartCompactConfig(validated);
+-    if (!sameJsonValue(configPathValue(validated, configPath), value)) {
+-      throw new Error(`Invalid smartCompact setting: ${configPath}`);
+-    }
+-    root[CONFIG_KEY] = section;
+-    await atomicWriteFile(file, JSON.stringify(root, null, 2) + `
+-`);
+-    resetConfigCache();
+-    return loadConfig();
+-  } finally {
+-    release();
+-  }
+-}
++async function writeGlobalConfigValue(_configPath, _value) { return managedSettingWrite(); }
++
+ var cachedConfig = null;
+ var cachedMtime = 0;
+ var cachedPath = null;
+@@ -947,45 +921,16 @@
+   cachedPath = null;
+ }
+ function loadConfig() {
+-  try {
+-    const file = settingsFile();
+-    const stat = fs2.statSync(file);
+-    if (cachedConfig && cachedPath === file && stat.mtimeMs === cachedMtime)
+-      return cloneConfig(cachedConfig);
+-    const parsed = JSON.parse(fs2.readFileSync(file, "utf-8"));
+-    const raw = isRecord(parsed) ? parsed : {};
+-    if (raw !== parsed) {
+-      warn("smart-compact config: settings.json root must be an object.");
+-    }
+-    const configured = Object.hasOwn(raw, CONFIG_KEY) ? raw[CONFIG_KEY] : raw[CONFIG_KEY_ALT] ?? {};
+-    const sc = isRecord(configured) ? configured : {};
+-    if (sc !== configured) {
+-      warn("smart-compact config: smartCompact must be an object.");
+-    }
+-    validateSmartCompactConfig(sc);
+-    const merged = { ...defaultConfig(), ...sc };
+-    if (!("mode" in sc) && "profile" in sc) {
+-      merged.mode = sc.profile === "light" ? "thorough" : sc.profile;
+-    }
+-    if (sc.profiles) {
+-      const overrides = sc.profiles;
+-      merged.profiles = Object.fromEntries(VALID_PROFILES.map((name) => [
+-        name,
+-        { ...PROFILES[name], ...overrides[name] }
+-      ]));
+-    }
+-    if (!merged.backupDir)
+-      merged.backupDir = defaultBackupDir();
+-    cachedConfig = merged;
+-    cachedMtime = stat.mtimeMs;
+-    cachedPath = file;
+-    return cloneConfig(cachedConfig);
+-  } catch (error2) {
+-    debug("loadConfig: settings.json not found or unreadable, using defaults", error2);
+-    cachedConfig = defaultConfig();
+-    cachedPath = null;
+-    return cloneConfig(cachedConfig);
+-  }
++ const sc = pluginSettings("pi-smart-compact", "smart_compact");
++ if (Object.keys(sc).some(key => !Object.hasOwn(DEFAULT_CONFIG, key))) throw new Error("AGENTCFG_SMART_COMPACT_CONFIG");
++ const before = JSON.stringify(sc);
++ validateSmartCompactConfig(sc);
++ if (JSON.stringify(sc) !== before) throw new Error("AGENTCFG_SMART_COMPACT_CONFIG");
++ const merged = { ...defaultConfig(), autoTriggerStrategy: "settled", ...sc };
++ if (sc.profiles) merged.profiles = Object.fromEntries(VALID_PROFILES.map(name => [name, { ...PROFILES[name], ...sc.profiles[name] }]));
++ if (sc.backupDir && sc.backupDir !== defaultBackupDir()) throw new Error("AGENTCFG_SMART_COMPACT_BACKUP_ROOT");
++ merged.backupDir = defaultBackupDir();
++ return cloneConfig(merged);
+ }
+ 
+ // src/utils/lru.ts
+@@ -3108,48 +3053,11 @@
+ };
+ 
+ // src/infra/llm-client.ts
+-var _complete = null;
+-var _completeSimple = null;
+-var _stream = null;
+-var _streamSimple = null;
+-async function resolveComplete() {
+-  if (_complete)
+-    return _complete;
+-  const mod = await import("@earendil-works/pi-ai/compat");
+-  const fn = mod.complete;
+-  if (typeof fn !== "function")
+-    throw new Error("smart-compact: pi-ai /compat did not export complete()");
+-  _complete = fn;
+-  return fn;
+-}
+-async function resolveCompleteSimple() {
+-  if (_completeSimple)
+-    return _completeSimple;
+-  const mod = await import("@earendil-works/pi-ai/compat");
+-  const fn = mod.completeSimple;
+-  if (typeof fn !== "function")
+-    throw new Error("smart-compact: pi-ai /compat did not export completeSimple()");
+-  _completeSimple = fn;
+-  return fn;
+-}
+-async function resolveStream() {
+-  if (_stream)
+-    return _stream;
+-  const mod = await import("@earendil-works/pi-ai/compat");
+-  if (typeof mod.stream !== "function")
+-    throw new Error("smart-compact: pi-ai /compat did not export stream()");
+-  _stream = mod.stream;
+-  return _stream;
+-}
+-async function resolveStreamSimple() {
+-  if (_streamSimple)
+-    return _streamSimple;
+-  const mod = await import("@earendil-works/pi-ai/compat");
+-  if (typeof mod.streamSimple !== "function")
+-    throw new Error("smart-compact: pi-ai /compat did not export streamSimple()");
+-  _streamSimple = mod.streamSimple;
+-  return _streamSimple;
+-}
++async function resolveComplete() { return pluginModelMethod("pi-smart-compact", "complete"); }
++async function resolveCompleteSimple() { return pluginModelMethod("pi-smart-compact", "completeSimple"); }
++async function resolveStream() { return pluginModelMethod("pi-smart-compact", "stream"); }
++async function resolveStreamSimple() { return pluginModelMethod("pi-smart-compact", "streamSimple"); }
++
+ function isChatGptCodex(model) {
+   if (model.api !== "openai-codex-responses")
+     return false;
+@@ -4455,48 +4363,12 @@
+ import crypto4 from "crypto";
+ 
+ // src/infra/git.ts
+-import { execSync } from "child_process";
+ import path6 from "path";
+ var POSITIVE_TTL_MS = 5 * 60000;
+ var NEGATIVE_TTL_MS = 5000;
+ var ROOT_CACHE_MAX = 128;
+ var ROOT_CACHE = new Map;
+-function findGitRoot(cwd, now = Date.now()) {
+-  if (!cwd)
+-    return null;
+-  const key = path6.resolve(cwd);
+-  const cached = ROOT_CACHE.get(key);
+-  if (cached && cached.expiresAt > now) {
+-    ROOT_CACHE.delete(key);
+-    ROOT_CACHE.set(key, cached);
+-    return cached.root;
+-  }
+-  if (cached)
+-    ROOT_CACHE.delete(key);
+-  let root = null;
+-  try {
+-    const out = execSync("git rev-parse --show-toplevel", {
+-      cwd: key,
+-      encoding: "utf-8",
+-      timeout: 2000,
+-      stdio: ["ignore", "pipe", "ignore"]
+-    });
+-    root = out.trim() || null;
+-  } catch (e) {
+-    debug("git rev-parse failed for " + key, e);
+-  }
+-  ROOT_CACHE.set(key, {
+-    root,
+-    expiresAt: now + (root ? POSITIVE_TTL_MS : NEGATIVE_TTL_MS)
+-  });
+-  while (ROOT_CACHE.size > ROOT_CACHE_MAX) {
+-    const oldest = ROOT_CACHE.keys().next().value;
+-    if (oldest === undefined)
+-      break;
+-    ROOT_CACHE.delete(oldest);
+-  }
+-  return root;
+-}
++function findGitRoot(cwd) { return cwd ? pluginProjectRoot(cwd) : null; }
+ 
+ // src/utils/fingerprint.ts
+ var LANG_MAP = {
+@@ -12265,21 +12137,15 @@
+ }
+ 
+ // src/app/model-routing.ts
+-function findModelById(ctx, modelId) {
+-  const [provider, ...id] = modelId.split("/");
+-  return ctx.modelRegistry.find(provider, id.join("/"));
++function findModelById(_ctx, modelId) {
++  const split = modelId.indexOf("/");
++  if (split < 1) return undefined;
++  return selectedPluginModels("pi-smart-compact").find(model => model.provider === modelId.slice(0, split) && model.id === modelId.slice(split + 1));
+ }
+ function resolveModels(ctx, primary, config, explicit = false) {
+-  const fallback = primary ?? ctx.model;
+-  const available = ctx.modelRegistry.getAvailable();
+-  let sumModel = fallback;
+-  if (!explicit && config.summaryModel) {
+-    sumModel = findModelById(ctx, config.summaryModel) ?? sumModel;
+-  }
+-  if (!sumModel)
+-    sumModel = available[0];
+-  const segModel = config.segmentationModel ? findModelById(ctx, config.segmentationModel) ?? sumModel : sumModel;
+-  const verifyModel = config.verificationModel ? findModelById(ctx, config.verificationModel) ?? sumModel : sumModel;
++  const sumModel = selectedPluginModel("pi-smart-compact", !explicit && config.summaryModel || undefined, primary ?? ctx.model);
++  const segModel = config.segmentationModel ? selectedPluginModel("pi-smart-compact", config.segmentationModel, sumModel) : sumModel;
++  const verifyModel = config.verificationModel ? selectedPluginModel("pi-smart-compact", config.verificationModel, sumModel) : sumModel;
+   return { segModel, sumModel, verifyModel };
+ }
+ 
+@@ -14338,6 +14204,7 @@
+   ctx.ui.notify(file ? "Dashboard written: " + file : "Dashboard could not be written", file ? "info" : "error");
+ }
+ async function restoreBackup(ctx) {
++  await assertSessionBoundary(globalThis[Symbol.for("agentcfg.pi.runtime.v1")]);
+   const backups = listBackups();
+   if (!backups.length) {
+     ctx.ui.notify("No smart-compact backups found", "info");
+@@ -14360,6 +14227,7 @@
+   }
+   if (action !== "restore")
+     return;
++  await assertSessionBoundary(globalThis[Symbol.for("agentcfg.pi.runtime.v1")]);
+   const estimatedTokens = backup.contextTokens ?? estimateTokens(backup.content, ctx.model?.provider, ctx.model?.id);
+   const contextWindow = ctx.model?.contextWindow ?? 0;
+   if (contextWindow > 0 && estimatedTokens > contextWindow * 0.9) {
+@@ -14760,6 +14628,17 @@
+   }
+ }
+ function smartCompactExtension(pi) {
++  const register = pi.on.bind(pi), registerTool = pi.registerTool.bind(pi), registerCommand = pi.registerCommand.bind(pi);
++  pi = Object.create(pi);
++  pi.registerTool = definition => registerTool({ ...definition, execute: async (...args) => {
++    requireOrdinaryHelper(globalThis[Symbol.for("agentcfg.pi.runtime.v1")], "pi-smart-compact");
++    return definition.execute(...args);
++  } });
++  pi.registerCommand = (name, definition) => registerCommand(name, { ...definition, handler: async (...args) => {
++    requireOrdinaryHelper(globalThis[Symbol.for("agentcfg.pi.runtime.v1")], "pi-smart-compact");
++    return definition.handler(...args);
++  } });
++  pi.on = (name, handler) => register(name, name === "session_before_compact" ? ownedCompactionHook(handler) : handler);
+   const PENDING_TTL_MS = FIVE_MINUTES_MS;
+   const pendingRef = createPendingSlot({ ttlMs: PENDING_TTL_MS });
+   const isRunning = createSessionRunLock();
+--- a/package.json
++++ b/package.json
+@@ -1,85 +1,89 @@
+ {
+-	"name": "pi-smart-compact",
+-	"version": "9.6.0",
+-	"description": "Verification-oriented smart compaction extension for Pi Coding Agent — deterministic extraction, exploration, synthesis, verification, metrics, and safety checks.",
+-	"packageManager": "bun@1.4.0",
+-	"engines": {
+-		"node": ">=22.19.0"
+-	},
+-	"license": "MIT",
+-	"main": "./dist/index.js",
+-	"types": "./dist/index.d.ts",
+-	"exports": {
+-		".": {
+-			"types": "./dist/index.d.ts",
+-			"default": "./dist/index.js"
+-		}
+-	},
+-	"author": "Alper Tarhan <alpertarhan@gmail.com>",
+-	"repository": {
+-		"type": "git",
+-		"url": "git+https://github.com/alpertarhan/pi-smart-compact.git"
+-	},
+-	"homepage": "https://github.com/alpertarhan/pi-smart-compact#readme",
+-	"bugs": {
+-		"url": "https://github.com/alpertarhan/pi-smart-compact/issues"
+-	},
+-	"keywords": [
+-		"pi-package",
+-		"pi",
+-		"pi-extension",
+-		"pi-coding-agent",
+-		"pi-smart-compact",
+-		"smart-compaction",
+-		"context-compression",
+-		"eesv",
+-		"conversation-summarization",
+-		"llm-context"
+-	],
+-	"files": [
+-		"dist",
+-		"docs",
+-		"README.md",
+-		"ARCHITECTURE.md",
+-		"LICENSE",
+-		"CHANGELOG.md",
+-		"SECURITY.md",
+-		"SUPPORT.md"
+-	],
+-	"scripts": {
+-		"sync-version": "bun run scripts/sync-version.ts",
+-		"prebuild": "bun run sync-version",
+-		"build": "rm -rf dist && mkdir dist && bun build ./src/index.ts --outdir ./dist --target bun --external '@earendil-works/*' --external 'typebox' && bun build ./scripts/provider-eval.ts ./scripts/provider-scenario-eval.ts ./scripts/telemetry-report.ts --outdir ./dist --target bun --external '@earendil-works/*' --external 'typebox' && bun x tsc --emitDeclarationOnly --outDir dist",
+-		"test": "bun test",
+-		"bench": "bun bench/hot-paths.bench.ts",
+-		"gate": "bun run scripts/eval-gate.ts",
+-		"provider-eval": "bun run dist/provider-eval.js",
+-		"provider-eval:live": "bun run dist/provider-scenario-eval.js",
+-		"telemetry-report": "bun run dist/telemetry-report.js",
+-		"compat:pi": "bun run scripts/check-pi-compat.ts",
+-		"release:audit": "bun run scripts/release-audit.ts",
+-		"release:check": "bun run typecheck && bun test && bun run gate && bun run bench && bun run build && bun run release:audit && bun run compat:pi latest",
+-		"typecheck": "bun x tsc --noEmit && bun x tsc -p tsconfig.scripts.json && bun x tsc -p tsconfig.test.json && bun x tsc -p bench/tsconfig.json",
+-		"prepublishOnly": "bun run release:check"
+-	},
+-	"pi": {
+-		"extensions": [
+-			"./dist/index.js"
+-		],
+-		"image": "https://raw.githubusercontent.com/alpertarhan/pi-smart-compact/main/docs/assets/pi-smart-compact.png"
+-	},
+-	"peerDependencies": {
+-		"@earendil-works/pi-ai": "*",
+-		"@earendil-works/pi-coding-agent": "*",
+-		"@earendil-works/pi-tui": "*",
+-		"typebox": "*"
+-	},
+-	"devDependencies": {
+-		"@types/bun": "1.3.14",
+-		"@types/node": "^26.3.0",
+-		"typescript": "^7.0.2"
+-	},
+-	"publishConfig": {
+-		"access": "public"
+-	}
++  "name": "pi-smart-compact",
++  "version": "9.6.0-agentcfg.1",
++  "description": "Verification-oriented smart compaction extension for Pi Coding Agent \u2014 deterministic extraction, exploration, synthesis, verification, metrics, and safety checks.",
++  "packageManager": "bun@1.4.0",
++  "engines": {
++    "node": ">=22.19.0"
++  },
++  "license": "MIT",
++  "main": "./dist/index.js",
++  "types": "./dist/index.d.ts",
++  "exports": {
++    ".": {
++      "types": "./dist/index.d.ts",
++      "default": "./dist/index.js"
++    }
++  },
++  "author": "Alper Tarhan <alpertarhan@gmail.com>",
++  "repository": {
++    "type": "git",
++    "url": "git+https://github.com/alpertarhan/pi-smart-compact.git"
++  },
++  "homepage": "https://github.com/alpertarhan/pi-smart-compact#readme",
++  "bugs": {
++    "url": "https://github.com/alpertarhan/pi-smart-compact/issues"
++  },
++  "keywords": [
++    "pi-package",
++    "pi",
++    "pi-extension",
++    "pi-coding-agent",
++    "pi-smart-compact",
++    "smart-compaction",
++    "context-compression",
++    "eesv",
++    "conversation-summarization",
++    "llm-context"
++  ],
++  "files": [
++    "dist",
++    "docs",
++    "README.md",
++    "ARCHITECTURE.md",
++    "LICENSE",
++    "CHANGELOG.md",
++    "SECURITY.md",
++    "SUPPORT.md"
++  ],
++  "scripts": {
++    "sync-version": "bun run scripts/sync-version.ts",
++    "prebuild": "bun run sync-version",
++    "build": "rm -rf dist && mkdir dist && bun build ./src/index.ts --outdir ./dist --target bun --external '@earendil-works/*' --external 'typebox' && bun build ./scripts/provider-eval.ts ./scripts/provider-scenario-eval.ts ./scripts/telemetry-report.ts --outdir ./dist --target bun --external '@earendil-works/*' --external 'typebox' && bun x tsc --emitDeclarationOnly --outDir dist",
++    "test": "bun test",
++    "bench": "bun bench/hot-paths.bench.ts",
++    "gate": "bun run scripts/eval-gate.ts",
++    "provider-eval": "bun run dist/provider-eval.js",
++    "provider-eval:live": "bun run dist/provider-scenario-eval.js",
++    "telemetry-report": "bun run dist/telemetry-report.js",
++    "compat:pi": "bun run scripts/check-pi-compat.ts",
++    "release:audit": "bun run scripts/release-audit.ts",
++    "release:check": "bun run typecheck && bun test && bun run gate && bun run bench && bun run build && bun run release:audit && bun run compat:pi latest",
++    "typecheck": "bun x tsc --noEmit && bun x tsc -p tsconfig.scripts.json && bun x tsc -p tsconfig.test.json && bun x tsc -p bench/tsconfig.json",
++    "prepublishOnly": "bun run release:check"
++  },
++  "pi": {
++    "extensions": [
++      "./dist/index.js"
++    ],
++    "image": "https://raw.githubusercontent.com/alpertarhan/pi-smart-compact/main/docs/assets/pi-smart-compact.png"
++  },
++  "peerDependencies": {
++    "@earendil-works/pi-ai": "*",
++    "@earendil-works/pi-coding-agent": "*",
++    "@earendil-works/pi-tui": "*",
++    "typebox": "*"
++  },
++  "devDependencies": {
++    "@types/bun": "1.3.14",
++    "@types/node": "^26.3.0",
++    "typescript": "^7.0.2"
++  },
++  "publishConfig": {
++    "access": "public"
++  },
++  "type": "module",
++  "dependencies": {
++    "@agentcfg/pi-runtime": "1.0.0"
++  }
+ }

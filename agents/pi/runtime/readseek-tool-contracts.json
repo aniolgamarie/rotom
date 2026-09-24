@@ -1,0 +1,706 @@
+{
+  "schema_version": 1,
+  "tools": [
+    {
+      "name": "readSeek_edit",
+      "description": "Edit existing text files with fresh `LINE:HASH` anchors. Read or search first when no fresh anchors are available. Each `edits[]` item must use exactly one nested object: `{\"set_line\":{\"anchor\":\"LINE:HASH\",\"new_text\":\"...\"}}`, `{\"replace_lines\":{\"start_anchor\":\"LINE:HASH\",\"end_anchor\":\"LINE:HASH\",\"new_text\":\"...\"}}`, `{\"insert_after\":{\"anchor\":\"LINE:HASH\",\"new_text\":\"...\"}}`, `{\"replace_symbol\":{\"symbol\":\"name\",\"new_body\":\"...\"}}`, or `{\"replace\":{\"old_text\":\"...\",\"new_text\":\"...\"}}`.",
+      "parameters": {
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "path",
+          "edits"
+        ],
+        "properties": {
+          "path": {
+            "description": "Absolute or relative file path",
+            "type": "string"
+          },
+          "language": {
+            "description": "Language override for symbol replacement",
+            "type": "string"
+          },
+          "edits": {
+            "minItems": 1,
+            "description": "Use set_line, replace_lines, insert_after, replace_symbol, or replace",
+            "type": "array",
+            "items": {
+              "additionalProperties": false,
+              "minProperties": 1,
+              "maxProperties": 1,
+              "description": "Exactly one nested edit variant",
+              "type": "object",
+              "properties": {
+                "set_line": {
+                  "additionalProperties": false,
+                  "description": "Replace one line: {\"set_line\":{\"anchor\":\"LINE:HASH\",\"new_text\":\"...\"}}",
+                  "type": "object",
+                  "required": [
+                    "anchor",
+                    "new_text"
+                  ],
+                  "properties": {
+                    "anchor": {
+                      "description": "Fresh LINE:HASH anchor for the line to replace",
+                      "type": "string"
+                    },
+                    "new_text": {
+                      "description": "Replacement text; use an empty string to delete the line",
+                      "type": "string"
+                    }
+                  }
+                },
+                "replace_lines": {
+                  "additionalProperties": false,
+                  "description": "Replace a range: {\"replace_lines\":{\"start_anchor\":\"LINE:HASH\",\"end_anchor\":\"LINE:HASH\",\"new_text\":\"...\"}}",
+                  "type": "object",
+                  "required": [
+                    "start_anchor",
+                    "end_anchor",
+                    "new_text"
+                  ],
+                  "properties": {
+                    "start_anchor": {
+                      "description": "Fresh LINE:HASH anchor for the first line in the range",
+                      "type": "string"
+                    },
+                    "end_anchor": {
+                      "description": "Fresh LINE:HASH anchor for the last line in the range",
+                      "type": "string"
+                    },
+                    "new_text": {
+                      "description": "Replacement text; use an empty string to delete the range",
+                      "type": "string"
+                    }
+                  }
+                },
+                "insert_after": {
+                  "additionalProperties": false,
+                  "description": "Insert text: {\"insert_after\":{\"anchor\":\"LINE:HASH\",\"new_text\":\"...\"}}",
+                  "type": "object",
+                  "required": [
+                    "anchor",
+                    "new_text"
+                  ],
+                  "properties": {
+                    "anchor": {
+                      "description": "Fresh LINE:HASH anchor for the line after which to insert",
+                      "type": "string"
+                    },
+                    "new_text": {
+                      "description": "Text to insert after the anchored line",
+                      "type": "string"
+                    }
+                  }
+                },
+                "replace": {
+                  "additionalProperties": false,
+                  "description": "Replace text: {\"replace\":{\"old_text\":\"...\",\"new_text\":\"...\"}}",
+                  "type": "object",
+                  "required": [
+                    "old_text",
+                    "new_text"
+                  ],
+                  "properties": {
+                    "old_text": {
+                      "description": "Exact text to find",
+                      "type": "string"
+                    },
+                    "new_text": {
+                      "description": "Replacement text",
+                      "type": "string"
+                    },
+                    "all": {
+                      "description": "Replace every exact match",
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "replace_symbol": {
+                  "additionalProperties": false,
+                  "description": "Replace a symbol: {\"replace_symbol\":{\"symbol\":\"name\",\"new_body\":\"...\"}}",
+                  "type": "object",
+                  "required": [
+                    "symbol",
+                    "new_body"
+                  ],
+                  "properties": {
+                    "symbol": {
+                      "description": "Mapped symbol name",
+                      "type": "string"
+                    },
+                    "new_body": {
+                      "description": "Complete replacement body for the symbol",
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "postEditVerify": {
+            "description": "Read back and verify persisted content",
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    {
+      "name": "readSeek_grep",
+      "description": "Search text or regex in files and return edit-ready `LINE:HASH` anchors. Use for identifiers, strings, configuration, errors, comments, and documentation.",
+      "parameters": {
+        "type": "object",
+        "required": [
+          "pattern"
+        ],
+        "properties": {
+          "pattern": {
+            "description": "Regex pattern; set literal for exact text",
+            "type": "string"
+          },
+          "path": {
+            "description": "File or directory to search; defaults to the current directory",
+            "type": "string"
+          },
+          "glob": {
+            "description": "File-name glob, such as *.ts",
+            "type": "string"
+          },
+          "ignoreCase": {
+            "description": "Ignore case",
+            "type": "boolean"
+          },
+          "literal": {
+            "description": "Treat pattern literally",
+            "type": "boolean"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "description": "Surrounding lines for each match",
+                "type": "number"
+              },
+              {
+                "description": "Surrounding lines for each match",
+                "type": "string"
+              }
+            ]
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "description": "Maximum matches to return",
+                "type": "number"
+              },
+              {
+                "description": "Maximum matches to return",
+                "type": "string"
+              }
+            ]
+          },
+          "summary": {
+            "description": "Return per-file counts",
+            "type": "boolean"
+          },
+          "scope": {
+            "description": "Group matches by enclosing symbol",
+            "const": "symbol",
+            "type": "string"
+          },
+          "scopeContext": {
+            "anyOf": [
+              {
+                "description": "Context lines within each symbol",
+                "type": "number"
+              },
+              {
+                "description": "Context lines within each symbol",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "readSeek_search",
+      "description": "Search code by AST structure using ast-grep-style patterns. Results include line hashes usable as `LINE:HASH` anchors. Use `readSeek_grep` for identifiers, strings, comments, configuration, documentation, or other plain text and regex.",
+      "parameters": {
+        "type": "object",
+        "required": [
+          "pattern"
+        ],
+        "properties": {
+          "pattern": {
+            "description": "AST pattern (ast-grep style), such as console.log($$$ARGS)",
+            "type": "string"
+          },
+          "language": {
+            "description": "Language override when auto-detection is ambiguous",
+            "type": "string"
+          },
+          "path": {
+            "description": "File or directory to search; defaults to the current directory",
+            "type": "string"
+          },
+          "cached": {
+            "description": "In a Git repository, search tracked/indexed files",
+            "type": "boolean"
+          },
+          "others": {
+            "description": "In a Git repository, search untracked files",
+            "type": "boolean"
+          },
+          "ignored": {
+            "description": "With others=true, include ignored untracked files",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "readSeek_refs",
+      "description": "Find references or usages of an identifier by name or cursor binding. Results include enclosing symbols and line hashes usable as `LINE:HASH` anchors. Without cursor scope, results are identifier-name matches; with scope, they follow one binding and exclude shadows. Use text search for literals, and use this before renaming or deleting a symbol.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Identifier to find references for",
+            "type": "string"
+          },
+          "path": {
+            "description": "File or directory to search; defaults to the current directory",
+            "type": "string"
+          },
+          "language": {
+            "description": "Language override when auto-detection is ambiguous",
+            "type": "string"
+          },
+          "scope": {
+            "description": "Restrict results to the binding at the cursor",
+            "type": "boolean"
+          },
+          "line": {
+            "description": "One-based cursor line; required with scope",
+            "type": "number"
+          },
+          "column": {
+            "description": "One-based cursor byte column for disambiguation",
+            "type": "number"
+          },
+          "cached": {
+            "description": "In a Git repository, search tracked/indexed files",
+            "type": "boolean"
+          },
+          "others": {
+            "description": "In a Git repository, search untracked files",
+            "type": "boolean"
+          },
+          "ignored": {
+            "description": "With others=true, include ignored untracked files",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "readSeek_rename",
+      "description": "Rename a symbol at a source location. Resolvable same-named bindings are preserved; verified edits apply by default. Set `apply: false` to preview the plan before changing files.",
+      "parameters": {
+        "type": "object",
+        "required": [
+          "path",
+          "line",
+          "to"
+        ],
+        "properties": {
+          "path": {
+            "description": "Absolute or relative file path",
+            "type": "string"
+          },
+          "line": {
+            "minimum": 1,
+            "description": "One-based cursor line of the symbol to rename",
+            "type": "integer"
+          },
+          "column": {
+            "minimum": 1,
+            "description": "One-based cursor byte column for disambiguation",
+            "type": "integer"
+          },
+          "to": {
+            "description": "New symbol name",
+            "type": "string"
+          },
+          "workspace": {
+            "description": "Rename across the project",
+            "type": "boolean"
+          },
+          "apply": {
+            "description": "Apply the verified edits; defaults to true",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "readSeek_def",
+      "description": "Go to a symbol definition or declaration by name. Accepts qualified or unqualified names; use this instead of text search for functions, methods, classes, types, and other declarations.",
+      "parameters": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "description": "Qualified or unqualified symbol name",
+            "type": "string"
+          },
+          "path": {
+            "description": "File or directory to search; defaults to the current directory",
+            "type": "string"
+          },
+          "language": {
+            "description": "Language override when auto-detection is ambiguous",
+            "type": "string"
+          },
+          "cached": {
+            "description": "In a Git repository, search tracked/indexed files",
+            "type": "boolean"
+          },
+          "others": {
+            "description": "In a Git repository, search untracked files",
+            "type": "boolean"
+          },
+          "ignored": {
+            "description": "With others=true, include ignored untracked files",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "readSeek_digest",
+      "description": "Digest source content and images into the native CLI envelope. Returns metadata plus requested facets unchanged from `readseek digest`. Use it before edits to obtain fresh `LINE:HASH` anchors; use shallow maps for structural overviews, diagnostics for syntax checks, and identity for cursor context.",
+      "parameters": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "description": "Absolute or relative file path",
+            "type": "string"
+          },
+          "select": {
+            "description": "Facets: metadata, content, map, diagnostics, identity (default content)",
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "const": "metadata",
+                    "type": "string"
+                  },
+                  {
+                    "const": "content",
+                    "type": "string"
+                  },
+                  {
+                    "const": "map",
+                    "type": "string"
+                  },
+                  {
+                    "const": "diagnostics",
+                    "type": "string"
+                  },
+                  {
+                    "const": "identity",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "const": "metadata",
+                      "type": "string"
+                    },
+                    {
+                      "const": "content",
+                      "type": "string"
+                    },
+                    {
+                      "const": "map",
+                      "type": "string"
+                    },
+                    {
+                      "const": "diagnostics",
+                      "type": "string"
+                    },
+                    {
+                      "const": "identity",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              {
+                "description": "Comma-separated facets: metadata, content, map, diagnostics, identity",
+                "type": "string"
+              }
+            ]
+          },
+          "at": {
+            "description": "Location: line:N[:COLUMN], hash:HASH[:COLUMN], or symbol:NAME",
+            "type": "string"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "description": "Last line to include",
+                "type": "number"
+              },
+              {
+                "description": "Last line to include",
+                "type": "string"
+              }
+            ]
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "description": "Maximum number of lines to include",
+                "type": "number"
+              },
+              {
+                "description": "Maximum number of lines to include",
+                "type": "string"
+              }
+            ]
+          },
+          "depth": {
+            "anyOf": [
+              {
+                "description": "Maximum structural depth for map output; defaults to 1 in agent tools",
+                "type": "number"
+              },
+              {
+                "description": "Maximum structural depth for map output; defaults to 1 in agent tools",
+                "type": "string"
+              }
+            ]
+          },
+          "language": {
+            "description": "Language override",
+            "type": "string"
+          },
+          "visionMode": {
+            "description": "Standalone image mode: none, all, caption, objects, or ocr",
+            "anyOf": [
+              {
+                "const": "none",
+                "type": "string"
+              },
+              {
+                "const": "all",
+                "type": "string"
+              },
+              {
+                "const": "ocr",
+                "type": "string"
+              },
+              {
+                "const": "caption",
+                "type": "string"
+              },
+              {
+                "const": "objects",
+                "type": "string"
+              }
+            ]
+          },
+          "visionLevel": {
+            "description": "Vision inference level: low (default), medium, or high",
+            "anyOf": [
+              {
+                "const": "low",
+                "type": "string"
+              },
+              {
+                "const": "medium",
+                "type": "string"
+              },
+              {
+                "const": "high",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "readSeek_view",
+      "description": "Digest a document's structure or selected content. Start with the overview, then narrow by page, node, kind, or depth instead of reading the whole document. PDF is the first supported document format.",
+      "parameters": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "description": "Absolute or relative file path",
+            "type": "string"
+          },
+          "node": {
+            "description": "Node ID to use as the view root",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "description": "One-based source page",
+                "type": "number"
+              },
+              {
+                "description": "One-based source page",
+                "type": "string"
+              }
+            ]
+          },
+          "kind": {
+            "description": "Node kind filter",
+            "anyOf": [
+              {
+                "const": "artifact",
+                "type": "string"
+              },
+              {
+                "const": "footer",
+                "type": "string"
+              },
+              {
+                "const": "header",
+                "type": "string"
+              },
+              {
+                "const": "heading",
+                "type": "string"
+              },
+              {
+                "const": "marginal_label",
+                "type": "string"
+              },
+              {
+                "const": "page",
+                "type": "string"
+              },
+              {
+                "const": "page_number",
+                "type": "string"
+              },
+              {
+                "const": "paragraph",
+                "type": "string"
+              },
+              {
+                "const": "section",
+                "type": "string"
+              },
+              {
+                "const": "structural_section",
+                "type": "string"
+              }
+            ]
+          },
+          "depth": {
+            "anyOf": [
+              {
+                "description": "Maximum depth below selected roots",
+                "type": "number"
+              },
+              {
+                "description": "Maximum depth below selected roots",
+                "type": "string"
+              }
+            ]
+          },
+          "visionMode": {
+            "description": "Analyze selected assets: all, ocr, caption, or objects",
+            "anyOf": [
+              {
+                "const": "all",
+                "type": "string"
+              },
+              {
+                "const": "ocr",
+                "type": "string"
+              },
+              {
+                "const": "caption",
+                "type": "string"
+              },
+              {
+                "const": "objects",
+                "type": "string"
+              }
+            ]
+          },
+          "visionLevel": {
+            "description": "Vision inference level: low (default), medium, or high",
+            "anyOf": [
+              {
+                "const": "low",
+                "type": "string"
+              },
+              {
+                "const": "medium",
+                "type": "string"
+              },
+              {
+                "const": "high",
+                "type": "string"
+              }
+            ]
+          },
+          "outline": {
+            "description": "Return outline nodes only",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "readSeek_write",
+      "description": "Create or replace a complete text file and return `LINE:HASH` anchors. Use `readSeek_edit` for small changes to an existing file.",
+      "parameters": {
+        "type": "object",
+        "required": [
+          "path",
+          "content"
+        ],
+        "properties": {
+          "path": {
+            "description": "Absolute or relative file path",
+            "type": "string"
+          },
+          "content": {
+            "description": "Complete text file content",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  ]
+}

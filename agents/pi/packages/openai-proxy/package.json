@@ -1,0 +1,13 @@
+{
+  "name": "starter-pi-openai-proxy",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Automatically route OpenAI traffic through the local HTTP proxy",
+  "pi": { "extensions": ["./index.ts"] },
+  "scripts": {
+    "test": "node --test routing.test.mjs diagnostics.test.mjs",
+    "test:transport": "node --test transport.test.mjs"
+  },
+  "dependencies": { "undici": "8.9.0" }
+}

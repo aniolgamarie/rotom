@@ -5,6 +5,8 @@ from dataclasses import dataclass
 import os
 from pathlib import Path
 import socket
+import ssl  # 在 socket 替身安装前定义 SSLSocket；随后实际联网仍被阻断。
+import signal
 import stat
 import subprocess
 import sys
@@ -33,6 +35,9 @@ def isolated_environment(tmp_path, monkeypatch):
   paths = {
     "HOME": home,
     "DSH_HOME": home / "dsh",
+    "PI_CODING_AGENT_DIR": home / "pi-agent",
+    "PI_CODING_AGENT_SESSION_DIR": home / "pi-sessions",
+    "CODEX_HOME": home / "codex",
     "XDG_CONFIG_HOME": home / "config",
     "XDG_DATA_HOME": home / "data",
     "XDG_CACHE_HOME": home / "cache",
@@ -77,11 +82,14 @@ def offline_guards(isolated_environment, monkeypatch):
   monkeypatch.setattr(subprocess, "Popen", no_process)
   for name in (
     "system", "fork", "forkpty", "posix_spawn", "posix_spawnp",
+    "kill", "killpg", "pidfd_open",
     "execl", "execle", "execlp", "execlpe", "execv", "execve", "execvp", "execvpe",
     "spawnl", "spawnle", "spawnlp", "spawnlpe", "spawnv", "spawnve", "spawnvp", "spawnvpe",
   ):
     if hasattr(os, name):
       monkeypatch.setattr(os, name, no_process)
+  if hasattr(signal, "pidfd_send_signal"):
+    monkeypatch.setattr(signal, "pidfd_send_signal", no_process)
 
 
 class FileSentinel:

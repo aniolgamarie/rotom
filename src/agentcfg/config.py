@@ -191,7 +191,7 @@ def _path(value: str, location: tuple[str, ...]) -> str:
   return result
 
 
-def _machine_layers(machine: dict, credential_targets: set[str]) -> tuple[dict, dict]:
+def _machine_layers(machine: dict, credential_targets: set[str], *, reserved_environment=frozenset()) -> tuple[dict, dict]:
   defaults = {"paths": {}, "environment": {"inherit": [], "values": {}}}
   local = deepcopy(machine)
   paths = local.get("paths", {})
@@ -213,7 +213,7 @@ def _machine_layers(machine: dict, credential_targets: set[str]) -> tuple[dict, 
     elif not re.fullmatch(r"[\w.+-]+", editor) or editor in (".", ".."):
       raise ConfigError("editor", ("machine", "editor"))
   environment = local.get("environment", {})
-  reserved = _RESERVED_ENVIRONMENT | credential_targets
+  reserved = _RESERVED_ENVIRONMENT | credential_targets | reserved_environment
   for channel in ("inherit", "values"):
     for name in environment.get(channel, {}):
       location = ("machine", "environment", channel, "<key>")
@@ -250,9 +250,10 @@ def _adapter_policy(bundle, documents: dict, context: AdapterSchemas, profile_id
   try:
     valid = (isinstance(policy, AdapterPolicy) and isinstance(policy.defaults, dict)
              and isinstance(policy.plugins, dict) and isinstance(policy.credential_targets, frozenset)
+             and isinstance(policy.reserved_environment, frozenset)
              and all(isinstance(value, dict) and safe_id(key) for key, value in policy.plugins.items())
              and all(isinstance(name, str) and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name)
-                     for name in policy.credential_targets))
+                     for name in policy.credential_targets | policy.reserved_environment))
   except Exception:
     valid = False
   if not valid:
@@ -356,7 +357,8 @@ def resolve_config(catalog: Catalog, local: LocalConfig, *, profile_id: str | No
     policy = _adapter_policy(bundle, documents, context, key)
     policies[key] = policy
     credentials.update(policy.credential_targets)
-  machine_defaults, machine = _machine_layers(local.data["machine"], credentials)
+  machine_defaults, machine = _machine_layers(local.data["machine"], credentials,
+    reserved_environment=policies[selected_id].reserved_environment)
 
   selected = None
   for key, profile in catalog.profiles.items():
@@ -382,6 +384,9 @@ def resolve_config(catalog: Catalog, local: LocalConfig, *, profile_id: str | No
     _callback(bundle.validate, "resolved", data)
     _authentication(bundle, data)
     if key == selected_id:
+      # 未选择配方仍校验结构/引用；机器绑定就绪只由选中适配器检查。
+      if bundle.validate_selected is not None:
+        _callback(bundle.validate_selected, data)
       selected = ResolvedConfig(data, _selected_provenance(data, combined.provenance), len(catalog.profiles))
   return selected
 

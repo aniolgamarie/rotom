@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 7,
+  "enabled": true,
+  "features": {
+    "interactiveRecovery": true,
+    "managedWorkflows": true,
+    "crossProviderFailover": false
+  },
+  "usage": {
+    "enabled": true
+  },
+  "recovery": {
+    "primaryRoute": null,
+    "profileRef": "interactive",
+    "policies": {}
+  },
+  "routes": {
+    "primary": {
+      "provider": "YOUR_PROVIDER_A",
+      "model": "YOUR_MODEL_A",
+      "accountBinding": "provider:YOUR_PROVIDER_A",
+      "quotaGroup": "primary-quota",
+      "transportDomain": "primary-transport",
+      "network": "direct",
+      "protected": true
+    },
+    "review": {
+      "provider": "YOUR_PROVIDER_B",
+      "model": "YOUR_MODEL_B",
+      "accountBinding": "provider:YOUR_PROVIDER_B",
+      "quotaGroup": "review-quota",
+      "transportDomain": "review-transport",
+      "network": "direct",
+      "protected": true
+    }
+  },
+  "allowedRoutes": [
+    "primary",
+    "review"
+  ],
+  "projectRouteApprovals": {
+    "*": [
+      "primary",
+      "review"
+    ]
+  },
+  "roles": {
+    "scout": {
+      "route": "primary",
+      "profileRef": "scout"
+    },
+    "worker": {
+      "route": "primary",
+      "profileRef": "worker"
+    },
+    "reviewer": {
+      "route": "review",
+      "profileRef": "reviewer"
+    }
+  },
+  "executionProfiles": {
+    "interactive": {
+      "tools": [
+        "kernel_task"
+      ],
+      "requiredCapabilities": [
+        "settled",
+        "continuationIdentity",
+        "termination"
+      ],
+      "timeoutMs": 600000,
+      "maxModelTurns": 20,
+      "toolTimeoutMs": 30000,
+      "thinking": "off"
+    },
+    "scout": {
+      "tools": [
+        "read",
+        "grep",
+        "find",
+        "ls"
+      ],
+      "requiredCapabilities": [
+        "events",
+        "termination"
+      ],
+      "timeoutMs": 600000,
+      "maxModelTurns": 20,
+      "toolTimeoutMs": 30000,
+      "thinking": "off"
+    },
+    "worker": {
+      "tools": [
+        "read",
+        "grep",
+        "find",
+        "ls",
+        "write",
+        "edit"
+      ],
+      "requiredCapabilities": [
+        "events",
+        "termination"
+      ],
+      "timeoutMs": 600000,
+      "maxModelTurns": 20,
+      "toolTimeoutMs": 30000,
+      "thinking": "off"
+    },
+    "reviewer": {
+      "tools": [
+        "read",
+        "grep",
+        "find",
+        "ls"
+      ],
+      "requiredCapabilities": [
+        "events",
+        "termination"
+      ],
+      "timeoutMs": 600000,
+      "maxModelTurns": 20,
+      "toolTimeoutMs": 30000,
+      "thinking": "off"
+    }
+  },
+  "quotaGroups": {
+    "primary-quota": {
+      "classifier": "http",
+      "rules": [],
+      "baseIntervalMs": 60000,
+      "tailIntervalsMs": [
+        300000,
+        900000,
+        3600000
+      ]
+    },
+    "review-quota": {
+      "classifier": "http",
+      "rules": [],
+      "baseIntervalMs": 60000,
+      "tailIntervalsMs": [
+        300000,
+        900000,
+        3600000
+      ]
+    }
+  },
+  "network": {
+    "direct": {
+      "type": "direct"
+    }
+  },
+  "secondOpinion": {
+    "enabled": false,
+    "model": null,
+    "profileRef": "reviewer",
+    "reviewTask": "Review correctness, error handling and boundary cases using the current candidate and actual verification evidence.",
+    "focus": [
+      "correctness",
+      "error handling"
+    ],
+    "maxExchanges": 2
+  },
+  "verificationBindings": {
+    "build": {
+      "executable": "/ABSOLUTE/PATH/TO/node",
+      "args": [
+        "--check",
+        "src/sum.cjs"
+      ],
+      "environment": {},
+      "timeoutMs": 10000,
+      "kind": "build",
+      "parser": "exit-code",
+      "minimumTests": 1,
+      "inputs": []
+    },
+    "focused-tests": {
+      "executable": "/ABSOLUTE/PATH/TO/node",
+      "args": [
+        "--test",
+        "--test-reporter=tap",
+        "tests/sum.test.cjs"
+      ],
+      "environment": {},
+      "timeoutMs": 10000,
+      "kind": "tests",
+      "parser": "tap",
+      "minimumTests": 1,
+      "inputs": [
+        "tests/sum.test.cjs"
+      ]
+    }
+  },
+  "budget": {
+    "protectedAttemptsPerWorkScope": 24,
+    "backupAttemptsPerIncident": 4,
+    "minimumRequiredStageAttemptReserves": {
+      "independent-review": 1
+    }
+  }
+}

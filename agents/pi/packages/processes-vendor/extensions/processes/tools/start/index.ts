@@ -1,0 +1,64 @@
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+
+import type { ProcessManager } from "../../../../src/manager";
+import type { ProcessInfo } from "../../../../src/types";
+import type {
+  NotificationRegistry,
+  NotifyConfig,
+} from "../../notifications/registry";
+import { normalizeNotifyConfig } from "../notify";
+import type { ProcessesParamsType } from "../schema";
+import { formatMatcherForModel } from "../watch-format";
+
+export interface StartDetails {
+  action: "start";
+  process: ProcessInfo;
+  notify: NotifyConfig;
+}
+
+export async function executeStart(
+  params: ProcessesParamsType,
+  manager: ProcessManager,
+  ctx: ExtensionContext,
+  notifications: NotificationRegistry,
+): Promise<StartDetails> {
+  if (!params.name) {
+    throw new Error("process start requires name");
+  }
+
+  if (!params.command) {
+    throw new Error("process start requires command");
+  }
+
+  const notify = normalizeNotifyConfig(params.notify);
+
+  const cwd = params.cwd ?? ctx.cwd;
+  const process = await manager.start(params.name, params.command, cwd);
+  notifications.register(process.id, notify);
+
+  return {
+    action: "start",
+    process,
+    notify,
+  };
+}
+
+export function formatStartDetails(details: StartDetails): string {
+  const process = details.process;
+  const parts = [
+    process.status === "queued" ? `Queued process ${process.name} (${process.id}) in the shared agentcfg manager.` : `Started process ${process.name} (${process.id}) with pid ${process.pid}.`,
+  ];
+
+  if (details.notify.logMatches && details.notify.logMatches.length > 0) {
+    parts.push(
+      `Watches:\n${details.notify.logMatches
+        .map((matcher) => formatMatcherForModel(matcher))
+        .join("\n")}`,
+    );
+    parts.push(
+      "Continue other work; watch notifications will trigger follow-up.",
+    );
+  }
+
+  return parts.join(" ");
+}

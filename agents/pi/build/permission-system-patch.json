@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "source_package": "@gotgenes/pi-permission-system",
+  "source_version": "29.3.0",
+  "source_integrity": "sha512-Xoh7864eO/jwjSjUuFJcbxoDLotg4z4p8EhAk2nNWCzZcqaNBvzD86uV/ne/iZBUoxvL+FA7lVDkWZbbTZSwPw==",
+  "patch": "permission-system.patch",
+  "patch_sha256": "de2774d9b13c5356618802862b3deca96b0fa51e869575d2eff32abac21d4bfb",
+  "files": [
+    {
+      "path": "NOTICE.agentcfg.md",
+      "before_sha256": null,
+      "after_sha256": "f5f962c5241d849fa534c33e969e7fc41540031102dfdeec53e2fa2f52fc9462"
+    },
+    {
+      "path": "dist/public.d.ts",
+      "before_sha256": "aa8c5b73eec5456397b987bc248b39c8556994fb0b5e767a7dd52876c66ac216",
+      "after_sha256": "d390dda6c935c78a98cea137fb5045c6394f1fc02b05652192992a355157e3dd"
+    },
+    {
+      "path": "package.json",
+      "before_sha256": "7aef5546f382d82a50e465a37155cf105e8c581a0b5ae455064516c6ec0605c7",
+      "after_sha256": "32fcea01a9d943312e8f455d285fde3d87005d35fe0c59bff327e7824bafd124"
+    },
+    {
+      "path": "src/agentcfg.ts",
+      "before_sha256": null,
+      "after_sha256": "556d504bedb904cb6397e3b07383f21930c4a3316815198401b603c1ff16cc41"
+    },
+    {
+      "path": "src/config-store.ts",
+      "before_sha256": "554dec1b90e093f0e7647daa73bedf38d9276f2bf3ad6ea30be47d179fedea18",
+      "after_sha256": "634788f5cc7bf8874bbf17efec3f5bd6a4f3d72697d08c59e4de6dae8071440e"
+    },
+    {
+      "path": "src/index.ts",
+      "before_sha256": "b905024b341a57725ca6c5e15115de04b40c982c8a9b71d0f0413ec22e798d3e",
+      "after_sha256": "32a146ebaab09adaf93cbb5cc0f6ebbc9d5523e30f10b3e7e6164c481008cf8e"
+    },
+    {
+      "path": "src/node-modules-discovery.ts",
+      "before_sha256": "fec8c3c272af5a84d568cdaea6d222b43a40142b79875cb953290a47ad0af32b",
+      "after_sha256": "adf09a9a63465cd7e220d7e762c7a84e491fccbcfb86e3c8f9e953e9bc211974"
+    },
+    {
+      "path": "src/path/path-flavor.ts",
+      "before_sha256": "093b52a5d47855cb5baffee5013539c9109f81db6a0a5815a829ab35e844d7c4",
+      "after_sha256": "81441e2cb32bd54c0e5d9d88ac520312958e812fd2098ee64ceb0e4d37eade7e"
+    },
+    {
+      "path": "src/permission-manager.ts",
+      "before_sha256": "92abca47444286334a707cfcbb02f4acfafe6e0c34bb6c241a7917023f10212d",
+      "after_sha256": "a8f31c318bedc8fc4c6353cd4a630ec3efa59057e5c3de6a02e52e8383faa880"
+    },
+    {
+      "path": "src/service.ts",
+      "before_sha256": "c88443a07b2b702fca31d32b7fedfb68b059d316184e76c4be5aab98890163f9",
+      "after_sha256": "b2b24e6e6f50f1f680bb78771a54f886357c655c000e9487ee1f1fe21476384b"
+    },
+    {
+      "path": "tsconfig.json",
+      "before_sha256": null,
+      "after_sha256": "ca9ad290871c7e9285510caaef12af96120ff0e665d179426352dc7f08234a8c"
+    }
+  ],
+  "native": "not-run",
+  "live": "not-run"
+}

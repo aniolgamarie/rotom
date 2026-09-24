@@ -1,0 +1,874 @@
+{
+  "schema_version": 1,
+  "package": "pi-smart-compact",
+  "version": "9.6.0",
+  "resolved": "https://registry.npmjs.org/pi-smart-compact/-/pi-smart-compact-9.6.0.tgz",
+  "integrity": "sha512-ToB0XTM06HAzLXmgwnc4wJ+tk8VWYsjjlJG6nDy3s0rz7bTVLSLgTNybSTQoj0HqAkZKrG0aAXu3jG1wTpb77Q==",
+  "adaptation": "agentcfg-runtime-adapted",
+  "files": [
+    {
+      "source_path": "ARCHITECTURE.md",
+      "source_sha256": "54632829dfb80ea7c73e05495362d44f22f540621b5c5d345898c092edf70b68",
+      "target_path": "agents/pi/packages/smart-compact-vendor/ARCHITECTURE.md"
+    },
+    {
+      "source_path": "CHANGELOG.md",
+      "source_sha256": "643c53dc1626407262177c8b5cc1d33ec2ab018f0a62f5f403590f4d1533214a",
+      "target_path": "agents/pi/packages/smart-compact-vendor/CHANGELOG.md"
+    },
+    {
+      "source_path": "LICENSE",
+      "source_sha256": "aa1f71a0037e08239d2a972b2c480a36ec4f9e0e3d53883fd3379d145fee6f68",
+      "target_path": "agents/pi/packages/smart-compact-vendor/LICENSE"
+    },
+    {
+      "source_path": "README.md",
+      "source_sha256": "25b74622d27ec03e6feeaab5d5ef8bcc61f3b2447c86ffff242331523c9598fa",
+      "target_path": "agents/pi/packages/smart-compact-vendor/README.md"
+    },
+    {
+      "source_path": "SECURITY.md",
+      "source_sha256": "06e21a9638e2a3b2fdf16633de39e5d9e3d2c72c4be558e3b3acb771331e5325",
+      "target_path": "agents/pi/packages/smart-compact-vendor/SECURITY.md"
+    },
+    {
+      "source_path": "SUPPORT.md",
+      "source_sha256": "81f4b25f0171fbfa84381bd53dcaf2edc75278db4222957133c3c9fc7907ac25",
+      "target_path": "agents/pi/packages/smart-compact-vendor/SUPPORT.md"
+    },
+    {
+      "source_path": "dist/app/compaction-commit-store.d.ts",
+      "source_sha256": "54c334a49dd887d2614ba22a812d708522d737a8a3fb9ec115fe8d5aee6bc9e9",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/compaction-commit-store.d.ts"
+    },
+    {
+      "source_path": "dist/app/compaction-commit-store.d.ts.map",
+      "source_sha256": "49d030fe33b7069d76b8cc43e22a57b81986014fa220505584426258e23e0885",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/compaction-commit-store.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/global-settings-runtime.d.ts",
+      "source_sha256": "1375547178277f7f4c3816a64c4a9ea612493f8c3d295805a7bd5cd76a4f296e",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/global-settings-runtime.d.ts"
+    },
+    {
+      "source_path": "dist/app/global-settings-runtime.d.ts.map",
+      "source_sha256": "8652701f3dda9697cd3ae171e9fb04e87da45329a357d2cb2f6fb455da41a93c",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/global-settings-runtime.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/mode-policy.d.ts",
+      "source_sha256": "0ece77486cf4fbef6a3519ccd04d51e463e9a0353bef9596a82c63de8262b2ad",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/mode-policy.d.ts"
+    },
+    {
+      "source_path": "dist/app/mode-policy.d.ts.map",
+      "source_sha256": "e850b8d46431f39034256b8dd3eb4fc8280709848c66d69de46061d37512f9a3",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/mode-policy.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/model-routing.d.ts",
+      "source_sha256": "e4b31301f57c3ae00ef66d33c362e4887217a59a91426fe8218189f734e8ff22",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/model-routing.d.ts"
+    },
+    {
+      "source_path": "dist/app/model-routing.d.ts.map",
+      "source_sha256": "3f3667290c60838d248fe4618c4b8025a961e478c64188a3555fa2a2e8eeea3d",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/model-routing.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/native-continuity-bridge.d.ts",
+      "source_sha256": "a6c360e04e1c33318c5f3ea2e0edb6e0787450074e51f2c998289fa3022b84c9",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/native-continuity-bridge.d.ts"
+    },
+    {
+      "source_path": "dist/app/native-continuity-bridge.d.ts.map",
+      "source_sha256": "b798f9546a280f365127cfdd0ef0f514862441bf6ea2f9a153650db88ccbcb5f",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/native-continuity-bridge.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/pending-slot.d.ts",
+      "source_sha256": "f7a910d8742158bd338dc2e3d6edee5df3558ab6394bf41ff198d8b06ae60eae",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/pending-slot.d.ts"
+    },
+    {
+      "source_path": "dist/app/pending-slot.d.ts.map",
+      "source_sha256": "41a80243fd38896c4e493d6187a291614994d31d968d7a68e6c07ce7898ef963",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/pending-slot.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/preflight.d.ts",
+      "source_sha256": "2d83e8c4386f43697fd05544dee52af2ad48248875c139f9b3d775bbd219447d",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/preflight.d.ts"
+    },
+    {
+      "source_path": "dist/app/preflight.d.ts.map",
+      "source_sha256": "2f08f85d154e800136c60299e50e5103378d3348be8adc80dc18baa471d1c748",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/preflight.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/register-context-tools.d.ts",
+      "source_sha256": "a7f741bf2213ed7eab90176095e1f236af222c2f07704cd9e108f994c5aaa39c",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/register-context-tools.d.ts"
+    },
+    {
+      "source_path": "dist/app/register-context-tools.d.ts.map",
+      "source_sha256": "aec2f01c503ac63d85d71e6f8d6e368e32a4d1d2c2fe41303dbe498079983b26",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/register-context-tools.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/register-smart-compact-command.d.ts",
+      "source_sha256": "b7ff60d674e108c9def8e98d967638ef56f546ac85802837b9bac6b9ba619e2e",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/register-smart-compact-command.d.ts"
+    },
+    {
+      "source_path": "dist/app/register-smart-compact-command.d.ts.map",
+      "source_sha256": "993cc7e2e8657bfdcb887923b618ef8639ad940656689eb819d83915d76930c5",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/register-smart-compact-command.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/register-smart-compact-tool.d.ts",
+      "source_sha256": "c1e477f25f76093beec0a6bc4e27c3247df9ae10921944843a595d9c9301e3f2",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/register-smart-compact-tool.d.ts"
+    },
+    {
+      "source_path": "dist/app/register-smart-compact-tool.d.ts.map",
+      "source_sha256": "c4b0886653115c86aece4546c21a11ea60965e63f4b1ce82279b518316e4983c",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/register-smart-compact-tool.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/run-context.d.ts",
+      "source_sha256": "049576b265baa02efe100ff96dd199fbd4bfb956dc7dd85f22d020ae90ba4a95",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/run-context.d.ts"
+    },
+    {
+      "source_path": "dist/app/run-context.d.ts.map",
+      "source_sha256": "22a7c1b704b695da9999a2966375cdfc86cbedd8fb639972aac9955c8718dae5",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/run-context.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/run-smart-compact.d.ts",
+      "source_sha256": "a16b6a2498ee9f5d9dde327ef5b282d2ed25325fe51effb056776ce913553515",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/run-smart-compact.d.ts"
+    },
+    {
+      "source_path": "dist/app/run-smart-compact.d.ts.map",
+      "source_sha256": "12854ac14391fa055a4bcd8efa5cf528130a966b24bb9510bada7c8e5c1e0ef1",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/run-smart-compact.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/session-run-lock.d.ts",
+      "source_sha256": "f6e11d867e462710e7faeae28ef2318bf6a73e825b4cd6a1bd77b6b756b038f8",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/session-run-lock.d.ts"
+    },
+    {
+      "source_path": "dist/app/session-run-lock.d.ts.map",
+      "source_sha256": "f8ab05c5a009b61e6a7eb54bd94d8c38b6701583e9606dfd3b719a15b5559abc",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/session-run-lock.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/settled-auto-trigger.d.ts",
+      "source_sha256": "1a5bd9343536c82b6384b190625a536fcbd29e16d32f33bc2f561f386def146c",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/settled-auto-trigger.d.ts"
+    },
+    {
+      "source_path": "dist/app/settled-auto-trigger.d.ts.map",
+      "source_sha256": "a710222da0bb43d677a994ce66a91c5aca033da5d9bffcc80610b5216a048ef0",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/settled-auto-trigger.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/smart-compact-input.d.ts",
+      "source_sha256": "2bf0bc3ca3787e236a9cfafce6593d1596c8093ef36e5f895d2afae4a4b2af5e",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/smart-compact-input.d.ts"
+    },
+    {
+      "source_path": "dist/app/smart-compact-input.d.ts.map",
+      "source_sha256": "83221dec2045c672df1d1462aadbca43917309e31b9fd0ca8abfca3623218859",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/smart-compact-input.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/smart-compact-policy.d.ts",
+      "source_sha256": "e5a2425c10b51ec984f0f07020d29457de794d11677b9760705be1cc76af925a",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/smart-compact-policy.d.ts"
+    },
+    {
+      "source_path": "dist/app/smart-compact-policy.d.ts.map",
+      "source_sha256": "02fd7ce08f4e707b7d5baa4906c7156d155212ecc6129167be073e07b909e822",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/smart-compact-policy.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/stage-auth.d.ts",
+      "source_sha256": "58b1448d560cca1e6437e039ff47cc36a8e7b3962c30a41efbecb03ac7214d42",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/stage-auth.d.ts"
+    },
+    {
+      "source_path": "dist/app/stage-auth.d.ts.map",
+      "source_sha256": "10693df402edc30fd85de87e7d3481da75aca2715cf137be277c52cb32324b9f",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/stage-auth.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/steps/extract.d.ts",
+      "source_sha256": "efb80c7159f3a02882332f1eb0a205020201ea12dc0fe76db584d7a81f5218d4",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/extract.d.ts"
+    },
+    {
+      "source_path": "dist/app/steps/extract.d.ts.map",
+      "source_sha256": "b3d4330c9f990e1577ea679bfc84953f06833664ad9586edd345665fde09a2fa",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/extract.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/steps/metrics.d.ts",
+      "source_sha256": "cf95741a281d5bdfb29798bf88915d40b11177180d08cd766657322b95ad14dc",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/metrics.d.ts"
+    },
+    {
+      "source_path": "dist/app/steps/metrics.d.ts.map",
+      "source_sha256": "b4d5bf8d9a3025b431c5610aae3606ab4ffd65f9d92323deb86d1c621b85994e",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/metrics.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/steps/persist.d.ts",
+      "source_sha256": "ecf84f01205ce5f31f557d15aeafe7f4fbab2a7bef5d4ab586077c9065383369",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/persist.d.ts"
+    },
+    {
+      "source_path": "dist/app/steps/persist.d.ts.map",
+      "source_sha256": "7652a6fbf3ab4e53a74fe481c01bdfaead41206f77d6086a998c4cc9488b74ea",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/persist.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/steps/prepare.d.ts",
+      "source_sha256": "4c2a8a957fd89782da35d49a83603a1be398aea0261b82d23d305efdc988a51b",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/prepare.d.ts"
+    },
+    {
+      "source_path": "dist/app/steps/prepare.d.ts.map",
+      "source_sha256": "a9210365fbf0ea3cfd9fc1d92c92a717933c872042b795dd6c28d102aab6b36d",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/prepare.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/steps/recover.d.ts",
+      "source_sha256": "ade1553a3df00d558b037e34a962aa5f0c7076d9e51a3937d2373029c77b8717",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/recover.d.ts"
+    },
+    {
+      "source_path": "dist/app/steps/recover.d.ts.map",
+      "source_sha256": "c1d2eb6f9d5a8146e177fad567467edad88b98252f85e6478d2385fb2595e4a9",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/recover.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/steps/state.d.ts",
+      "source_sha256": "03f17755e294983c7a902bd63837707d4a924453b6c5b1c48997612e9566f155",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/state.d.ts"
+    },
+    {
+      "source_path": "dist/app/steps/state.d.ts.map",
+      "source_sha256": "eea1eee1266e9708b53a6f95c5efa4a9c4c0a277bf6ea5add01693ec23a38828",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/state.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/steps/synthesize.d.ts",
+      "source_sha256": "80a9d89ab998d6700d68f363ff6f8dcdd5c4eda49847be4f94965247f14b198e",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/synthesize.d.ts"
+    },
+    {
+      "source_path": "dist/app/steps/synthesize.d.ts.map",
+      "source_sha256": "ed60028c79f3b82cd28d656dbf148c849dff9f2b5c25ea7b10872e1e12594a1f",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/synthesize.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/steps/tier.d.ts",
+      "source_sha256": "091e24385ef714f7c021054107f26b894a085e3a6416224bf00ff243a848ee2f",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/tier.d.ts"
+    },
+    {
+      "source_path": "dist/app/steps/tier.d.ts.map",
+      "source_sha256": "b67b43b3f4b50f661d87c9e1f2dfcb2e10a2b1aa9f152e6923c44208408a3a76",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/tier.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/steps/verify.d.ts",
+      "source_sha256": "a3b2b3695d00c5adda1eeecef1907c13a38c96f2ac19989d2a7037add5178471",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/verify.d.ts"
+    },
+    {
+      "source_path": "dist/app/steps/verify.d.ts.map",
+      "source_sha256": "227bac7ef68f34b13f0dc78d0fe1547eecb40fcfce47c9d333ce22295f9744f0",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/verify.d.ts.map"
+    },
+    {
+      "source_path": "dist/app/steps/window.d.ts",
+      "source_sha256": "646ff38f953abfb38fcc077c1b5a4233da224b15d4516af64f5fe64d3c0d82e9",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/window.d.ts"
+    },
+    {
+      "source_path": "dist/app/steps/window.d.ts.map",
+      "source_sha256": "2d58037eee694e09d1ba48b83442b0cecc8fac2d0a73c23af708831911381daa",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/app/steps/window.d.ts.map"
+    },
+    {
+      "source_path": "dist/constants.d.ts",
+      "source_sha256": "98ffeca0ba6875bcc668a78f0fd7ae776768865ec2bb24ab9e31fb19fe570a84",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/constants.d.ts"
+    },
+    {
+      "source_path": "dist/constants.d.ts.map",
+      "source_sha256": "46a0f817a723b1111ac43c82ee87719e5a49b28b69cc561a5d03f9bed25efbbb",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/constants.d.ts.map"
+    },
+    {
+      "source_path": "dist/domain/keywords.d.ts",
+      "source_sha256": "bfeb6beb8a76991aa9a59e37893b2a3f6f1c50d5bd674252605d5a9c936afecb",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/keywords.d.ts"
+    },
+    {
+      "source_path": "dist/domain/keywords.d.ts.map",
+      "source_sha256": "68813ea36d9cb9462de7b73fbeb3748dbdb536bee6851c0940047ba37dcb3e1f",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/keywords.d.ts.map"
+    },
+    {
+      "source_path": "dist/domain/provider-evaluation.d.ts",
+      "source_sha256": "e4ef9b199ef6d9ac652d0f132bb01b11710d6564effab1bdfc1a86029b6bf44b",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/provider-evaluation.d.ts"
+    },
+    {
+      "source_path": "dist/domain/provider-evaluation.d.ts.map",
+      "source_sha256": "8533f4d7f90f1e35ba5dfccc6814ef0f6b1c53f3ef346bb6f16e8ee74fc0eca5",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/provider-evaluation.d.ts.map"
+    },
+    {
+      "source_path": "dist/domain/scrub.d.ts",
+      "source_sha256": "30336862185739d507f6de62a75543f94b352f12ae305c89cdc0269f23c38095",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/scrub.d.ts"
+    },
+    {
+      "source_path": "dist/domain/scrub.d.ts.map",
+      "source_sha256": "47665a0dc55740bb0c66a0d8a77bce3c5e9318d5ffd34107ce8f26c2606af932",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/scrub.d.ts.map"
+    },
+    {
+      "source_path": "dist/domain/summary-parse.d.ts",
+      "source_sha256": "66282cca59bbce14cf32930cf11e1e84ec304910d762b0d0c7e5ce4cdd3447ce",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/summary-parse.d.ts"
+    },
+    {
+      "source_path": "dist/domain/summary-parse.d.ts.map",
+      "source_sha256": "ab17c0653dc3e8804b4b288001f38e26f87da47af53571f2ebcf0f96f5c01e39",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/summary-parse.d.ts.map"
+    },
+    {
+      "source_path": "dist/domain/summary-schema.d.ts",
+      "source_sha256": "f89ed898ef98bf04e82c1f4dfb36d9b53bb779a52f55f4b2d0c7b6d770b4a3c6",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/summary-schema.d.ts"
+    },
+    {
+      "source_path": "dist/domain/summary-schema.d.ts.map",
+      "source_sha256": "f5817ab43a17985df095ad26ed2a66afd7c08f07f0c559453b6adf2c1994d908",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/summary-schema.d.ts.map"
+    },
+    {
+      "source_path": "dist/domain/telemetry.d.ts",
+      "source_sha256": "b6d90720490c0de46f190fe8c1c9403632b6bca08ffc6b4ddcef7baa4a2f097a",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/telemetry.d.ts"
+    },
+    {
+      "source_path": "dist/domain/telemetry.d.ts.map",
+      "source_sha256": "0f4b3dcd7b1dde0c53e6a22f6b159c46c5e74fa2ddc10a9f998329af62f8b621",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/telemetry.d.ts.map"
+    },
+    {
+      "source_path": "dist/domain/tool-semantics.d.ts",
+      "source_sha256": "f5a7848d7e7301a45977fe74b2de4ec185912c08a424ae949151b4dd4fed602d",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/tool-semantics.d.ts"
+    },
+    {
+      "source_path": "dist/domain/tool-semantics.d.ts.map",
+      "source_sha256": "f263eb95eff2c4da2b70ee40f4355165187e84b40cc8569527d9989f1e07612e",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/tool-semantics.d.ts.map"
+    },
+    {
+      "source_path": "dist/domain/yield-gate.d.ts",
+      "source_sha256": "2ecc6a77da19dece359c12eee0a3cd5d8c111d01b70edade6b8e2bd03d31e9c5",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/yield-gate.d.ts"
+    },
+    {
+      "source_path": "dist/domain/yield-gate.d.ts.map",
+      "source_sha256": "5cb95ed446d5367a3f27d32eecb3f621ce87e8af7ee3f03324fe285f1d559c53",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/domain/yield-gate.d.ts.map"
+    },
+    {
+      "source_path": "dist/index.d.ts",
+      "source_sha256": "768001255059cbd6adbf919230d55c06814d562497ea2a2d41875e83d8c5479b",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/index.d.ts"
+    },
+    {
+      "source_path": "dist/index.d.ts.map",
+      "source_sha256": "8175a6a8714431fba1b50f5ccafd8c0b0b5ea6c9b1862ff4ead8fd06438d1dd0",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/index.d.ts.map"
+    },
+    {
+      "source_path": "dist/index.js",
+      "source_sha256": "6373875a14de40075a983bac39ce45bcac09d6bea2d46d0e6d6eff1f632f4dfd",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/index.js"
+    },
+    {
+      "source_path": "dist/infra/ai-messages.d.ts",
+      "source_sha256": "1d814c1203e4f802bee5cd233a3bef74e47505e3a79220c9a55fc3255457722d",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/ai-messages.d.ts"
+    },
+    {
+      "source_path": "dist/infra/ai-messages.d.ts.map",
+      "source_sha256": "3eea95e834e10b058d97ab7d6abcb6984f5ee99af3ac558acb654aaaa0d5a2a5",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/ai-messages.d.ts.map"
+    },
+    {
+      "source_path": "dist/infra/clock.d.ts",
+      "source_sha256": "ec19f1367604bb924ef938b287a531d704354e363d1cc479d0c7b1429cc02579",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/clock.d.ts"
+    },
+    {
+      "source_path": "dist/infra/clock.d.ts.map",
+      "source_sha256": "efc1e409c83eb87ed7c178efa47d905098dcd64147f6500e87c14af08ec7a4ce",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/clock.d.ts.map"
+    },
+    {
+      "source_path": "dist/infra/context-graph.d.ts",
+      "source_sha256": "0d6312578966d85c50d26ba1406f5e49e84e5fb628e4c3a9c070e8729a3e4fe3",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/context-graph.d.ts"
+    },
+    {
+      "source_path": "dist/infra/context-graph.d.ts.map",
+      "source_sha256": "39e1af0fc18f04d94cbbf0da72fde9b94678cb5932b9655f729bc1794df577d6",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/context-graph.d.ts.map"
+    },
+    {
+      "source_path": "dist/infra/fs.d.ts",
+      "source_sha256": "0b376f754790807d9f1d89670d84da5523cd924f799e8a4c07b2c05e6cb23ca3",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/fs.d.ts"
+    },
+    {
+      "source_path": "dist/infra/fs.d.ts.map",
+      "source_sha256": "f77c7f8be9312a414416b63be8f509dfcc36be38d03a2f5d9134d43fa9167ba6",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/fs.d.ts.map"
+    },
+    {
+      "source_path": "dist/infra/git.d.ts",
+      "source_sha256": "b3673f0f5940e7e153ee730ea5ddd02e5bd1681cfd9da8a4915672447c46895c",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/git.d.ts"
+    },
+    {
+      "source_path": "dist/infra/git.d.ts.map",
+      "source_sha256": "21fd9a59cc0f7ecd748fe99a4b7e653cbc7e76584217f12c6a03c9d3e04a3876",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/git.d.ts.map"
+    },
+    {
+      "source_path": "dist/infra/llm-client.d.ts",
+      "source_sha256": "ffb9124e467fd7e3a93feaf112c1ba0a7690bcdb9b765ef8c366a804f32d2987",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/llm-client.d.ts"
+    },
+    {
+      "source_path": "dist/infra/llm-client.d.ts.map",
+      "source_sha256": "2fe6218a17f7b7f2fb73af791dc1ff9181c42675f4bbfff6b5ba6154da560a99",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/llm-client.d.ts.map"
+    },
+    {
+      "source_path": "dist/infra/paths.d.ts",
+      "source_sha256": "43d98816ee5ce8044d5a9b14d6e742c12d8152df1762a233404439ef0663e662",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/paths.d.ts"
+    },
+    {
+      "source_path": "dist/infra/paths.d.ts.map",
+      "source_sha256": "1b399ec2698190dac21e41bd800cdc975e3008aefdee91879b3e756ca73c812c",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/paths.d.ts.map"
+    },
+    {
+      "source_path": "dist/infra/services.d.ts",
+      "source_sha256": "4cb827599c3c67c1268953d6774bcab962b97171609bd8d58909df4d13178936",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/services.d.ts"
+    },
+    {
+      "source_path": "dist/infra/services.d.ts.map",
+      "source_sha256": "0932a6860a31f1957a6d60f63e82d15f5c0e5b1288de0b38f6f44d6c83ef7143",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/services.d.ts.map"
+    },
+    {
+      "source_path": "dist/infra/session-identity.d.ts",
+      "source_sha256": "82e0d0e81e0a0ed0760fb7702ba13448e0aa47e602538b30791cd5a5c3da40c9",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/session-identity.d.ts"
+    },
+    {
+      "source_path": "dist/infra/session-identity.d.ts.map",
+      "source_sha256": "94859b907f32f1b4c5a59cc8bd7d529819a6726404d6ed4acb1d6d15261e56a9",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/session-identity.d.ts.map"
+    },
+    {
+      "source_path": "dist/infra/synthesis-cache.d.ts",
+      "source_sha256": "6ddeeefb07a61ee43d7e47223f9b9dd5c16668180ea2821500dc21905395a95c",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/synthesis-cache.d.ts"
+    },
+    {
+      "source_path": "dist/infra/synthesis-cache.d.ts.map",
+      "source_sha256": "310406b0af33898867db775b4076ddcb26710f7956d043d1678f2b74894653bb",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/infra/synthesis-cache.d.ts.map"
+    },
+    {
+      "source_path": "dist/phases/explore.d.ts",
+      "source_sha256": "fefcb482e9fc158cefdcca8542ad9f14b81d7b4d64b8432bf9b11339c42c686f",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/phases/explore.d.ts"
+    },
+    {
+      "source_path": "dist/phases/explore.d.ts.map",
+      "source_sha256": "3b41903b485896d773fd77702744d7a58830f61e07141bd438e7c2bf700a18bf",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/phases/explore.d.ts.map"
+    },
+    {
+      "source_path": "dist/phases/synthesize.d.ts",
+      "source_sha256": "73680acb6c920cd070f62ed35b00a767aa9b6e4b6805a6a87e2b3e481f110189",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/phases/synthesize.d.ts"
+    },
+    {
+      "source_path": "dist/phases/synthesize.d.ts.map",
+      "source_sha256": "21bb54b5bb47ab332d478cf42b2d2900508072e97eb8a2231ef30b08cef617d5",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/phases/synthesize.d.ts.map"
+    },
+    {
+      "source_path": "dist/phases/verify.d.ts",
+      "source_sha256": "d6b729c7c31427e99da08564d9cf8c2ec2f096834cb4a9a6d48e1be48378316d",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/phases/verify.d.ts"
+    },
+    {
+      "source_path": "dist/phases/verify.d.ts.map",
+      "source_sha256": "36ccde9f5a953d8a380dd6ab63721d7b9abb3ebc29009f2fdc535c29b4297d9b",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/phases/verify.d.ts.map"
+    },
+    {
+      "source_path": "dist/provider-eval.js",
+      "source_sha256": "eaee58ddb90bbca7a88c8c13a2b20eee1b689ae74e6f9fc2540392fcb1144749",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/provider-eval.js"
+    },
+    {
+      "source_path": "dist/provider-scenario-eval.js",
+      "source_sha256": "d317ea4e45902aa2ce30067b9c9a351b1b9ae84242fedd2a97b3f35fdebf1548",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/provider-scenario-eval.js"
+    },
+    {
+      "source_path": "dist/telemetry-report.js",
+      "source_sha256": "7d4ce19cd7b03546cd7ca0e6390d5bebdb5325accc59b731859f64de46d10d58",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/telemetry-report.js"
+    },
+    {
+      "source_path": "dist/types.d.ts",
+      "source_sha256": "f3f84ce7242c60c69f0da6e997468e3eb30910dd2f8f48d8deb605b15d35a376",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/types.d.ts"
+    },
+    {
+      "source_path": "dist/types.d.ts.map",
+      "source_sha256": "24b5a506877a7d40e55a13d21a3f5176838ebeca123119f31ae7e6fced7d0c40",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/types.d.ts.map"
+    },
+    {
+      "source_path": "dist/ui/backup-overlays.d.ts",
+      "source_sha256": "332b26657d73f223e686a967a95c55dff6174b20e25706483e92b10cf5fbdf82",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/backup-overlays.d.ts"
+    },
+    {
+      "source_path": "dist/ui/backup-overlays.d.ts.map",
+      "source_sha256": "1825f2b696608a612a073626cdbc0905893d9d3039462ef1cc13c48eae575b48",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/backup-overlays.d.ts.map"
+    },
+    {
+      "source_path": "dist/ui/dashboard-format.d.ts",
+      "source_sha256": "30c724f31ead8fbc8f0c3343a7a020322b46cab31ff703ff6a239fb3ef88968a",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/dashboard-format.d.ts"
+    },
+    {
+      "source_path": "dist/ui/dashboard-format.d.ts.map",
+      "source_sha256": "d617494ae6b1fe793533e07c15168aecd4b33b2ca81dfebe1261647c86460f83",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/dashboard-format.d.ts.map"
+    },
+    {
+      "source_path": "dist/ui/dashboard-insights.d.ts",
+      "source_sha256": "64706309f2ed909ebecfc723d7457692aabd300eed381ef73d643ae87657874a",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/dashboard-insights.d.ts"
+    },
+    {
+      "source_path": "dist/ui/dashboard-insights.d.ts.map",
+      "source_sha256": "a0b9e5af96d721d0204c6af632640c6f5abe8b06038050b0346631d4638c7abd",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/dashboard-insights.d.ts.map"
+    },
+    {
+      "source_path": "dist/ui/error-format.d.ts",
+      "source_sha256": "798f04cf19c4bebf70e41ad366f68d32ca765cb5178e7a50e5cfc3bc39b647e7",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/error-format.d.ts"
+    },
+    {
+      "source_path": "dist/ui/error-format.d.ts.map",
+      "source_sha256": "6e2a95fb098277f243390b4a9e28c8117f09d1c87726be43abf3a7060b42fc37",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/error-format.d.ts.map"
+    },
+    {
+      "source_path": "dist/ui/metrics-dashboard-overlay.d.ts",
+      "source_sha256": "f2e21185558abc6ae977a127b250adfa5e546f43f86e33da5db184e506a59fb7",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/metrics-dashboard-overlay.d.ts"
+    },
+    {
+      "source_path": "dist/ui/metrics-dashboard-overlay.d.ts.map",
+      "source_sha256": "dc3c829060371700ae5906078310db69129e69aecdab354c332de3ef4cd51ab4",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/metrics-dashboard-overlay.d.ts.map"
+    },
+    {
+      "source_path": "dist/ui/metrics-report.d.ts",
+      "source_sha256": "75239f87a814f35e831979dd3c764915f35cc0eccbec456e56ec7725d5b81f50",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/metrics-report.d.ts"
+    },
+    {
+      "source_path": "dist/ui/metrics-report.d.ts.map",
+      "source_sha256": "63a4f40a5d21b80f3d8c8ccc6bbbb16146eb7ccf026b25041457f49994217db7",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/metrics-report.d.ts.map"
+    },
+    {
+      "source_path": "dist/ui/open-loops-overlay.d.ts",
+      "source_sha256": "7a841da349eaba03c3265c002f6bcf4b232ebd2b6f1259203b999cc2f1d055a4",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/open-loops-overlay.d.ts"
+    },
+    {
+      "source_path": "dist/ui/open-loops-overlay.d.ts.map",
+      "source_sha256": "8c0c5449af70e19ec1722b9ef1962b2940b5820038a26633ce75d10613b7d07a",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/open-loops-overlay.d.ts.map"
+    },
+    {
+      "source_path": "dist/ui/overlays.d.ts",
+      "source_sha256": "05daeda2c1a7def70ab283fea1695ef992a8834d4c4cb591f0106fa1c09509e0",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/overlays.d.ts"
+    },
+    {
+      "source_path": "dist/ui/overlays.d.ts.map",
+      "source_sha256": "8690b1d8babf5b586b6ccedc5adcf7ddcf29d9f21ef354ee6d3deb13701bec74",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/overlays.d.ts.map"
+    },
+    {
+      "source_path": "dist/ui/settings-complex.d.ts",
+      "source_sha256": "05ff6e7efdd4f4d50109348fe44e480d2b7206b463a9951f123a4bbc4116172c",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/settings-complex.d.ts"
+    },
+    {
+      "source_path": "dist/ui/settings-complex.d.ts.map",
+      "source_sha256": "fc3f866869452db813311249e9ae2671fc617057358ad9f2d7c8fdb29afebd87",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/settings-complex.d.ts.map"
+    },
+    {
+      "source_path": "dist/ui/settings-overlay.d.ts",
+      "source_sha256": "c0d26e93e47051df57e7e3420a05b5385c398baed63c01a652f7c75e53e0b5be",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/settings-overlay.d.ts"
+    },
+    {
+      "source_path": "dist/ui/settings-overlay.d.ts.map",
+      "source_sha256": "7865983c731610eabd79e4e765bcaebd4cebe80f239bdc3b0ba286155d2f3816",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/ui/settings-overlay.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/backups.d.ts",
+      "source_sha256": "8695dc555dbb757a77ff9eb2bf268385ace75ce8efc5a2cca015bf5dce18ce61",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/backups.d.ts"
+    },
+    {
+      "source_path": "dist/utils/backups.d.ts.map",
+      "source_sha256": "f4afd29c7ee91daaf26f9ba879aa889f1405c1d283cf0a0266422bf5d982cfa2",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/backups.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/cache.d.ts",
+      "source_sha256": "e5f7bd220c412341a7d5192ee9b82c4532b7b25fb39def98059a8bc93a442c81",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/cache.d.ts"
+    },
+    {
+      "source_path": "dist/utils/cache.d.ts.map",
+      "source_sha256": "b2bef7546787278d714234d83a6a0fccb152ddbcbbcfc91d370748685f3d01dc",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/cache.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/config.d.ts",
+      "source_sha256": "54e5c7539a2e58142a17a187c8a3709b4b02a07f0a337a4db9d084c622c9add2",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/config.d.ts"
+    },
+    {
+      "source_path": "dist/utils/config.d.ts.map",
+      "source_sha256": "841582e250c1641339fb76ceeddf368d0d1c4dd7671f050a257bd132d623e665",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/config.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/damage.d.ts",
+      "source_sha256": "f850fd3abd51cfdc0074041881cbe06c4c9650afd745f27b6e153ae8c6cd5355",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/damage.d.ts"
+    },
+    {
+      "source_path": "dist/utils/damage.d.ts.map",
+      "source_sha256": "4bfb91024396ce1a483243426264818fac4386258b7a46de5d8e83113ac7faa0",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/damage.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/extraction.d.ts",
+      "source_sha256": "0362723fc47470b7b8d637e4482ec176b95138e950f573118f4f4761a276e4f9",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/extraction.d.ts"
+    },
+    {
+      "source_path": "dist/utils/extraction.d.ts.map",
+      "source_sha256": "f188836ad539f79a147533fd4a2b9921dbb5dca689f83fbdaa0e29a2cc14c7b9",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/extraction.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/file-needles.d.ts",
+      "source_sha256": "c34a9c1354fcb84a0eb8d0f229a245c2dafaa15aee4c0fe7c41636b7f638daf6",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/file-needles.d.ts"
+    },
+    {
+      "source_path": "dist/utils/file-needles.d.ts.map",
+      "source_sha256": "66d9eaaeee77897f270778b97dc735dad27e142593cac7aca8200c2fadd57b0e",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/file-needles.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/file-ref-detect.d.ts",
+      "source_sha256": "19eb6d1c20a7ff6da84d6825bb0de264d1ab1b693dfa1ca6763b55b45cb0b253",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/file-ref-detect.d.ts"
+    },
+    {
+      "source_path": "dist/utils/file-ref-detect.d.ts.map",
+      "source_sha256": "49ed2be0ff19c48a77227d5ca683ee5e0662455895c4b6777b9fcb2077f5afa3",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/file-ref-detect.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/fingerprint.d.ts",
+      "source_sha256": "62083189cfef07346e9aae338a90d68e25f74270e4285a1c8e8730f5be664e2c",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/fingerprint.d.ts"
+    },
+    {
+      "source_path": "dist/utils/fingerprint.d.ts.map",
+      "source_sha256": "2e3d19999a54b1bff919b4e9d43c605427b786ed01e080aad71aee856b1b10e7",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/fingerprint.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/helpers.d.ts",
+      "source_sha256": "126b1aff40da9831f21140d1928637de50906f06a46a5abd73384f0bb3601253",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/helpers.d.ts"
+    },
+    {
+      "source_path": "dist/utils/helpers.d.ts.map",
+      "source_sha256": "f988a8a87d7c4bf5113956be458d2cccfd2ffc24df71779b1e20fec52fd63b97",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/helpers.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/id-fingerprint.d.ts",
+      "source_sha256": "3bdc4e04012822ee3d4b47a5f5a5b4e939042c92ae3a42d8fa63ca157f075771",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/id-fingerprint.d.ts"
+    },
+    {
+      "source_path": "dist/utils/id-fingerprint.d.ts.map",
+      "source_sha256": "690e47d429e726e27ff0106a69a43c048e1eef5aca7162051177134f1243ee54",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/id-fingerprint.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/logger.d.ts",
+      "source_sha256": "d2f2d2c08cdc9356238c4a47d14380453b0e6557c1dff3d3ac24bb73a2cc7e87",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/logger.d.ts"
+    },
+    {
+      "source_path": "dist/utils/logger.d.ts.map",
+      "source_sha256": "d977582b3d9947c631e01c1e615667a27ea2877c68fd40237a12a505994f85ca",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/logger.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/lru.d.ts",
+      "source_sha256": "8c7ad194f63d65e9f568174489acad482e9d280ed22e93a3b8c59acd8f766d1e",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/lru.d.ts"
+    },
+    {
+      "source_path": "dist/utils/lru.d.ts.map",
+      "source_sha256": "cfb00a1a43d7cb859a5d89e0eae3ab91561f3204086e86737c4e6fa4547d8504",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/lru.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/pruning.d.ts",
+      "source_sha256": "21de765186c02c030785dec8ede1272af38bce3275ec584925056d0c5381f427",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/pruning.d.ts"
+    },
+    {
+      "source_path": "dist/utils/pruning.d.ts.map",
+      "source_sha256": "454bff04d18ca2e7c64ad30914e0873c52a4df4bb71f718c31e5da3c7fbe04fd",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/pruning.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/session-log.d.ts",
+      "source_sha256": "69fcd54ce4aa2a827a8a6bd57794b6f3a00ac4f96142378cb95d442e40b66de3",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/session-log.d.ts"
+    },
+    {
+      "source_path": "dist/utils/session-log.d.ts.map",
+      "source_sha256": "27ae6689b2b4f1da5f0666cb433b4b4100c950de03ed5b212d28f5701f14ee06",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/session-log.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/state.d.ts",
+      "source_sha256": "8d043bd2567a914ba5bdbbc0023ea6a389fd6127f35ec13bec4c9684ceddbbe2",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/state.d.ts"
+    },
+    {
+      "source_path": "dist/utils/state.d.ts.map",
+      "source_sha256": "19033f77f15eebc4a92aabc2e975557569e2f0a37afd962c5b96aba2eb989955",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/state.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/tokens.d.ts",
+      "source_sha256": "735122f1c64e083c02ae6b15953c248473373573fbc75f406c4ae80a99b46b65",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/tokens.d.ts"
+    },
+    {
+      "source_path": "dist/utils/tokens.d.ts.map",
+      "source_sha256": "e901b68286381dead9dacd81e3fa38715f36a35aaf09cb637daf1b25acf3f32f",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/tokens.d.ts.map"
+    },
+    {
+      "source_path": "dist/utils/type-guards.d.ts",
+      "source_sha256": "5bc6ad4f61c8648e9f8c1943a0a3e0c0e5b63984eb07f4d9dfcf66e5a6458008",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/type-guards.d.ts"
+    },
+    {
+      "source_path": "dist/utils/type-guards.d.ts.map",
+      "source_sha256": "c25f8e419ddb8aa9f791c3fc1423009a2d8d74f44ebae3f4a34539124bd63a8b",
+      "target_path": "agents/pi/packages/smart-compact-vendor/dist/utils/type-guards.d.ts.map"
+    },
+    {
+      "source_path": "docs/MIGRATING_TO_V8.md",
+      "source_sha256": "2f749fffdbde6e2eac968b98ec0a8ccbb7ee7a0b8d615abd591902b650b09530",
+      "target_path": "agents/pi/packages/smart-compact-vendor/docs/MIGRATING_TO_V8.md"
+    },
+    {
+      "source_path": "docs/RELEASE.md",
+      "source_sha256": "9cfec6e00b24e4732c3479ab0cce9593e758ed31274aac7c413b2d1d0e0f8820",
+      "target_path": "agents/pi/packages/smart-compact-vendor/docs/RELEASE.md"
+    },
+    {
+      "source_path": "docs/assets/banner.svg",
+      "source_sha256": "49ffe854a41df09effda5f56937c30fc0f6a330da446d6bd4a467da08627c89b",
+      "target_path": "agents/pi/packages/smart-compact-vendor/docs/assets/banner.svg"
+    },
+    {
+      "source_path": "docs/assets/pi-smart-compact.png",
+      "source_sha256": "cc7db35e0fdc7c19467dc9f40ba2999d18e6ab06f2784ba64dd3df590055d5b1",
+      "target_path": "agents/pi/packages/smart-compact-vendor/docs/assets/pi-smart-compact.png"
+    },
+    {
+      "source_path": "docs/provider-evaluation-2026-08-06.md",
+      "source_sha256": "4079995d6a1c02484005e8d611e7eba93e6f2ab07f79b9f96ebc29f132e83ffd",
+      "target_path": "agents/pi/packages/smart-compact-vendor/docs/provider-evaluation-2026-08-06.md"
+    },
+    {
+      "source_path": "package.json",
+      "source_sha256": "1806fead6e0c65d610df11a2505cf7dbeb3f2a7aec44d173ea4abb9ae32ba676",
+      "target_path": "agents/pi/packages/smart-compact-vendor/package.json"
+    }
+  ],
+  "target_version": "9.6.0-agentcfg.1",
+  "derivation_patch": "agents/pi/build/smart-compact-agentcfg.patch",
+  "patch_sha256": "05de4ea2fd51a65a8ec3e35f9f3d8427a4b978d3593cd3fc1c9fe75d76db250c",
+  "native_status": "not-run"
+}

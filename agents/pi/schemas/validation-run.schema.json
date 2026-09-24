@@ -1,0 +1,576 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "tier",
+    "case",
+    "status",
+    "results"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "tier": {
+      "enum": [
+        "mock",
+        "native",
+        "live"
+      ]
+    },
+    "case": {
+      "type": "string",
+      "minLength": 1
+    },
+    "command": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed",
+        "not-run"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "missing": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "finished_at": {
+      "type": "string"
+    },
+    "source_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "scope_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "native_report_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lock_digest",
+        "runtime_digest",
+        "policy_digest",
+        "resource_digest",
+        "machine_contract_digest"
+      ],
+      "properties": {
+        "lock_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "runtime_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "resource_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "machine_contract_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "work_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "engine",
+        "platform",
+        "runtime_identity",
+        "lock_identity",
+        "slice_identity",
+        "toolchains"
+      ],
+      "properties": {
+        "profile": {
+          "enum": [
+            "pi-default",
+            "pi-managed",
+            "pi-codex",
+            "pi-cursor"
+          ]
+        },
+        "engine": {
+          "enum": [
+            "node",
+            "bun"
+          ]
+        },
+        "platform": {
+          "enum": [
+            "linux-x86_64",
+            "linux-arm64",
+            "darwin-arm64",
+            "darwin-x86_64"
+          ]
+        },
+        "runtime_identity": {
+          "$ref": "#/$defs/digest"
+        },
+        "lock_identity": {
+          "$ref": "#/$defs/digest"
+        },
+        "slice_identity": {
+          "$ref": "#/$defs/digest"
+        },
+        "toolchains": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "const": "mock"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/$defs/mock"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "const": "native"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "runtime"
+        ],
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/$defs/native"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tier": {
+            "const": "live"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/$defs/live"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "live": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "status"
+      ],
+      "properties": {
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "not-run"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "facts": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/delegate-facts"
+            },
+            {
+              "$ref": "#/$defs/service-facts"
+            }
+          ]
+        },
+        "run_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^run-[a-f0-9]{32}$"
+          },
+          "uniqueItems": true
+        },
+        "artifact_directory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidate_directory": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "mock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runner",
+        "exit_code",
+        "command",
+        "artifact_refs"
+      ],
+      "properties": {
+        "runner": {
+          "enum": [
+            "pytest",
+            "node"
+          ]
+        },
+        "exit_code": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "artifact_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "native": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "status"
+      ],
+      "properties": {
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "not-run"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_directory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "facts": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "execution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "termination_confirmed"
+          ],
+          "properties": {
+            "exit_code": {
+              "type": "integer"
+            },
+            "termination_confirmed": {
+              "type": "boolean"
+            },
+            "timed_out": {
+              "type": "boolean"
+            },
+            "cancel_accepted": {
+              "type": "boolean"
+            },
+            "stop_unverified": {
+              "type": "boolean"
+            },
+            "interrupted": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "delegate-facts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service_response_verified",
+        "fresh_resume_verified",
+        "cancellation_verified",
+        "write_verified",
+        "source_preserved",
+        "termination_confirmed",
+        "user_cli_operations"
+      ],
+      "properties": {
+        "service_response_verified": {
+          "type": "boolean"
+        },
+        "fresh_resume_verified": {
+          "type": "boolean"
+        },
+        "cancellation_verified": {
+          "type": "boolean"
+        },
+        "write_verified": {
+          "type": "boolean"
+        },
+        "source_preserved": {
+          "type": "boolean"
+        },
+        "termination_confirmed": {
+          "type": "boolean"
+        },
+        "user_cli_operations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "cancel",
+              "poll",
+              "probe",
+              "result",
+              "resume",
+              "start",
+              "status",
+              "wait"
+            ]
+          }
+        }
+      }
+    },
+    "service-facts": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sdk_session",
+            "capability",
+            "scope_restricted",
+            "termination_confirmed"
+          ],
+          "properties": {
+            "sdk_session": {
+              "type": "boolean"
+            },
+            "capability": {
+              "const": "mcp"
+            },
+            "scope_restricted": {
+              "type": "boolean"
+            },
+            "termination_confirmed": {
+              "type": "boolean"
+            },
+            "mcp_servers_verified": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "metadata_refreshed": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sdk_session",
+            "capability",
+            "scope_restricted",
+            "termination_confirmed"
+          ],
+          "properties": {
+            "sdk_session": {
+              "type": "boolean"
+            },
+            "capability": {
+              "const": "web"
+            },
+            "scope_restricted": {
+              "type": "boolean"
+            },
+            "termination_confirmed": {
+              "type": "boolean"
+            },
+            "web_providers_verified": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "search_response_verified": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sdk_session",
+            "capability",
+            "scope_restricted",
+            "termination_confirmed"
+          ],
+          "properties": {
+            "sdk_session": {
+              "type": "boolean"
+            },
+            "capability": {
+              "const": "terminal"
+            },
+            "scope_restricted": {
+              "type": "boolean"
+            },
+            "termination_confirmed": {
+              "type": "boolean"
+            },
+            "terminal_reports_acknowledged": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sdk_session",
+            "capability",
+            "scope_restricted",
+            "termination_confirmed"
+          ],
+          "properties": {
+            "capability": {
+              "const": "task-keeper"
+            },
+            "job_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sdk_session": {
+              "type": "boolean"
+            },
+            "scope_restricted": {
+              "type": "boolean"
+            },
+            "termination_confirmed": {
+              "type": "boolean"
+            },
+            "inspect_verified": {
+              "type": "boolean"
+            },
+            "fix_verified": {
+              "type": "boolean"
+            },
+            "checks_verified": {
+              "type": "boolean"
+            },
+            "review_verified": {
+              "type": "boolean"
+            },
+            "second_view_verified": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

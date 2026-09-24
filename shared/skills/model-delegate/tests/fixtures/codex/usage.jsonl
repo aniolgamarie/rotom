@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"01a06b07-d4e5-f678-9012-345678901234"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"reasoning","message":"Processing..."}}
+{"type":"item.completed","item":{"id":"item_1","type":"message","message":"Response complete."}}
+{"type":"turn.completed","usage":{"input_tokens":5000,"output_tokens":2500,"total_tokens":7500}}

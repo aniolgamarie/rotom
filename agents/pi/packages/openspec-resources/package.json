@@ -1,0 +1,15 @@
+{
+  "name": "agentcfg-openspec",
+  "version": "1.11.0-agentcfg.1",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "@fission-ai/openspec": "1.11.0"
+  },
+  "pi": {
+    "skills": [
+      "./skills"
+    ]
+  }
+}

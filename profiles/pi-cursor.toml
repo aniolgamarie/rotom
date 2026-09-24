@@ -1,0 +1,62 @@
+schema_version = 1
+id = "pi-cursor"
+agent = "pi"
+providers = ["cursor"]
+models = []
+rules = ["chinese", "terminal", "cpp-local-search"]
+skills = ["cpp-database-kernel", "neovim-plugin-development", "safe-linux-scripting", "model-delegate"]
+plugins = ["pi-subagents", "pi-permissions", "model-delegate", "pi-todo", "loop-guard", "colorful-footer", "pi-cursor"]
+mcp = []
+
+[roles]
+# 模型由本机显式绑定；普通 profile 可先进入 bootstrap 登录。
+
+[agent_options.runtime]
+engine = "bun"
+
+[agent_options.resources]
+roles = ["scout", "reviewer"]
+prompts = ["commit", "debug", "docs", "explain", "implement", "perf", "plan", "pr", "refactor", "review", "security", "test"]
+themes = ["everforest-dark"]
+extensions = []
+
+[agent_options.discovery]
+project_resources = false
+external_skills = []
+
+[agent_options.ui]
+theme = "everforest-dark"
+quiet_startup = true
+hide_thinking = false
+
+[agent_options.permissions]
+policy_ref = "project-default"
+readonly_roots = []
+denied_roots = []
+
+[agent_options.task_keeper]
+enabled = false
+second_view_enabled = false
+max_second_view_rounds = 2
+check_ids = []
+
+[agent_options.model_delegate]
+enabled = true
+backends = ["pi"]
+allowed_modes = ["review", "investigate"]
+presets = ["general", "context", "challenge", "plan", "research", "review", "scout"]
+max_run_seconds = 1800
+context_budget_tokens = 1800
+
+# Cursor 1.4.29 使用原生 HTTP/2；此配方明确选择 direct，代理绑定不静默降为直连。
+[agent_options.cursor]
+endpoint = "https://agentn.us.api5.cursor.sh"
+network_route = "cursor-direct"
+
+[agent_options.network.routes.cursor-direct]
+mode = "direct"
+provider_ids = ["cursor"]
+
+[agent_options.model_delegate.pi]
+model_roles = ["scout", "reviewer"]
+network_route = "cursor-direct"

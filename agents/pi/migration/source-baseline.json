@@ -1,0 +1,3111 @@
+{
+  "schema_version": 1,
+  "source_id": "starter",
+  "revision": "c60599df39e6350123f7fb9378cfe63dc5ed814f",
+  "snapshot_kind": "git-tree",
+  "files": [
+    {
+      "path": "local-plugins/ai/lua/ai/pi/audit.lua",
+      "mode": "100644",
+      "git_blob": "8bb5707e6dd502e7e7f1dd632fcfcef5f709c989"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/audit_format.lua",
+      "mode": "100644",
+      "git_blob": "cf120c8289a12e3bcc41d226673bd9dc9277f4ca"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/audit_models.lua",
+      "mode": "100644",
+      "git_blob": "2c3afdd2e5ab5186fd5b8cd970d39b27435f8d71"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/audit_packages.lua",
+      "mode": "100644",
+      "git_blob": "30f228a7bc8f99038b6a58da8019678e7798bd27"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/audit_settings.lua",
+      "mode": "100644",
+      "git_blob": "2043cde6f3fb4b33751c3e7f55b318fb0d7bee7b"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/config.lua",
+      "mode": "100644",
+      "git_blob": "cdcf7b66634e526afff948d561a15d805676772c"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/feature_flags.lua",
+      "mode": "100644",
+      "git_blob": "b204f1012193d66448264ecafd4df7d4bc43c580"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/packages.lua",
+      "mode": "100644",
+      "git_blob": "4cee54eeaa4d94a717b851c125162a8180d6fc16"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/packages_parse.lua",
+      "mode": "100644",
+      "git_blob": "40a698238da9531a817ec9b137fcbdcff37e8405"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/packages_reconcile.lua",
+      "mode": "100644",
+      "git_blob": "f4727bb96b0284d0e09e267df0a83e48613332c3"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/packages_semver.lua",
+      "mode": "100644",
+      "git_blob": "835c86c8f36879c4a23274c145741a8b2773efd6"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/packages_validate.lua",
+      "mode": "100644",
+      "git_blob": "90892bb07715f0d12a9535bbb559a9dbe9a64f0e"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/paths.lua",
+      "mode": "100644",
+      "git_blob": "18bc253fc3cab68182b5c63e91abc2d697825686"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/resources.lua",
+      "mode": "100644",
+      "git_blob": "6c416239b5cb3759d7886f380ec047a6608f68d7"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/settings_policy.lua",
+      "mode": "100644",
+      "git_blob": "07ab66ac80c6fcbb751b3ae3452bfa6110c0579f"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/settings_policy_merge.lua",
+      "mode": "100644",
+      "git_blob": "4633233b9cbc246bbfc5e1c1326ded33b1e3f23b"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/settings_policy_rules.lua",
+      "mode": "100644",
+      "git_blob": "7ff500d3c2b7f70bbda8f192ba2ec5503c3dd38a"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/target.lua",
+      "mode": "100644",
+      "git_blob": "d516ebac0b27e0058a7cbe78a882da8728207cea"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/pi/target_audit.lua",
+      "mode": "100644",
+      "git_blob": "c455593ea0d359a837c8b48ef316e52ef0379ee6"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/conflict_policy.lua",
+      "mode": "100644",
+      "git_blob": "4c9fc627776329d7a10e35bd63613c41e5a2f98d"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/fs.lua",
+      "mode": "100644",
+      "git_blob": "9fc7c6f5e8c78736fc9900948effb11218d275c3"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/manifest.lua",
+      "mode": "100644",
+      "git_blob": "085a4abc25c827245fbd3564f83f981909ee4c9e"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/migration.lua",
+      "mode": "100644",
+      "git_blob": "28f28a64245cac56feaf3294aaf695a84478f2ad"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/migration_execute.lua",
+      "mode": "100644",
+      "git_blob": "418dc6a024c72fc4f3d4ae82b5068197335efc2b"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/migration_plan.lua",
+      "mode": "100644",
+      "git_blob": "e2aa3e268bd52a85af8fbfe099fb80eee92f1044"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/resources.lua",
+      "mode": "100644",
+      "git_blob": "fdc532cbd4c09240ebd08b3165e1be274425dd8b"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/resources_apply.lua",
+      "mode": "100644",
+      "git_blob": "1077658df4998f883e2cbac0d99d327d573e1ee9"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/resources_plan.lua",
+      "mode": "100644",
+      "git_blob": "c969e42566d1d1234a34ab95688189d0cc8ad8ee"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/result.lua",
+      "mode": "100644",
+      "git_blob": "8d106d845d9f6750d21750382fb18db1c892db43"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/service.lua",
+      "mode": "100644",
+      "git_blob": "109b05cf064d7ad92b91ba831a0281414aa0382c"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/service_apply.lua",
+      "mode": "100644",
+      "git_blob": "3611ecdc4d7ee6554a5e8d4c28ae3e8a9699c5a8"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/service_journal.lua",
+      "mode": "100644",
+      "git_blob": "6429bfa100f018cdd542b94390d173dce06dbcab"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/service_validate.lua",
+      "mode": "100644",
+      "git_blob": "d8caf077391a54e34bca1b1612796012aa66653d"
+    },
+    {
+      "path": "local-plugins/ai/lua/ai/sync/ui.lua",
+      "mode": "100644",
+      "git_blob": "e763725d5e5d9ad37bdde93ba4160d7e9575aad6"
+    },
+    {
+      "path": "pi/AGENTS.template.md",
+      "mode": "100644",
+      "git_blob": "21eff8daf005eaf3d2280493cd47fbbed67c7cf9"
+    },
+    {
+      "path": "pi/APPEND_SYSTEM.template.md",
+      "mode": "100644",
+      "git_blob": "5e99a7346b48fd27fd0663d1d91423ea8b53c36c"
+    },
+    {
+      "path": "pi/AUTH.md",
+      "mode": "100644",
+      "git_blob": "55d7ebcf7146dcfad4d0f44e9c3acce07d253ba9"
+    },
+    {
+      "path": "pi/CLI.md",
+      "mode": "100644",
+      "git_blob": "12b94c1132aba01f32f59506163255d46713ea7b"
+    },
+    {
+      "path": "pi/INTEGRATION_WITH_CLAUDE_CODE.md",
+      "mode": "100644",
+      "git_blob": "d9fadf22bd2781e1755081bedfc74e153c236f8e"
+    },
+    {
+      "path": "pi/PACKAGES.md",
+      "mode": "100644",
+      "git_blob": "8ccf70737b6952242fd864a8915a848369fe84a2"
+    },
+    {
+      "path": "pi/README.md",
+      "mode": "100644",
+      "git_blob": "719950f53855922831676aee2cea2f29d9e69c93"
+    },
+    {
+      "path": "pi/agents/reviewer.md",
+      "mode": "100644",
+      "git_blob": "e01712c6fb3dc0438f2c9178f26304d530c55213"
+    },
+    {
+      "path": "pi/agents/scout.md",
+      "mode": "100644",
+      "git_blob": "c49efd262f3433a33007d57eca10ae274ef490c5"
+    },
+    {
+      "path": "pi/auth.template.jsonc",
+      "mode": "100644",
+      "git_blob": "f0ecb983bac2806d0aabe3af2a5ad543c95f8bd5"
+    },
+    {
+      "path": "pi/extensions/dirty-repo-guard.template.ts",
+      "mode": "100644",
+      "git_blob": "5357464ef124b6b9a0ec9ce20f20e24f3482bf5f"
+    },
+    {
+      "path": "pi/extensions/exit-command.template.ts",
+      "mode": "100644",
+      "git_blob": "7fcb3f2e90b4c23f345212dea9b56e3912a858fc"
+    },
+    {
+      "path": "pi/extensions/gentle-agent-state.template.ts",
+      "mode": "100644",
+      "git_blob": "fff496e0d445bfaf97971591c1ff293a1e5d4464"
+    },
+    {
+      "path": "pi/extensions/git-checkpoint.template.ts",
+      "mode": "100644",
+      "git_blob": "7ee5e6af88699387e66f377cfd70060c4ce0fb5e"
+    },
+    {
+      "path": "pi/extensions/handoff.template.ts",
+      "mode": "100644",
+      "git_blob": "10581dc6e93938eb234d2d05b5d5d76b51e49e9e"
+    },
+    {
+      "path": "pi/extensions/notify.template.ts",
+      "mode": "100644",
+      "git_blob": "f7b1f819adbee1438126d8cc9f6bf0b005acd140"
+    },
+    {
+      "path": "pi/keybindings.template.jsonc",
+      "mode": "100644",
+      "git_blob": "8893374fcfab3a065c94e9de24dae60a352afb62"
+    },
+    {
+      "path": "pi/mcp.template.jsonc",
+      "mode": "100644",
+      "git_blob": "339c1b2ef3e70f2762727f1a183d648459d5db5a"
+    },
+    {
+      "path": "pi/models.template.jsonc",
+      "mode": "100644",
+      "git_blob": "e8d9c119c6bcb41b7ffcc7afeb7e4446379df6c0"
+    },
+    {
+      "path": "pi/packages/codex-agents/README.md",
+      "mode": "100644",
+      "git_blob": "c8c31257dc43a069f2754818a82abba29c883f3f"
+    },
+    {
+      "path": "pi/packages/codex-agents/agents/codex-context-builder.md",
+      "mode": "100644",
+      "git_blob": "a89ea3baa1ab6e1667cd6eea387d1e55885c4398"
+    },
+    {
+      "path": "pi/packages/codex-agents/agents/codex-delegate.md",
+      "mode": "100644",
+      "git_blob": "018ada3e9b2c81b3f1fed7e338cdf474611a7916"
+    },
+    {
+      "path": "pi/packages/codex-agents/agents/codex-oracle.md",
+      "mode": "100644",
+      "git_blob": "0fa4f23dd5a316051cc9c8ebc4ea8d2f47f69143"
+    },
+    {
+      "path": "pi/packages/codex-agents/agents/codex-planner.md",
+      "mode": "100644",
+      "git_blob": "5b60c11886e23a38a9529dc682e9c20e9403adea"
+    },
+    {
+      "path": "pi/packages/codex-agents/agents/codex-researcher.md",
+      "mode": "100644",
+      "git_blob": "3979309c643b15999a7ec48a9be04363f94599dc"
+    },
+    {
+      "path": "pi/packages/codex-agents/agents/codex-reviewer.md",
+      "mode": "100644",
+      "git_blob": "913d3ca6e48378fb766648abcb323ccd9fa20804"
+    },
+    {
+      "path": "pi/packages/codex-agents/agents/codex-scout.md",
+      "mode": "100644",
+      "git_blob": "0663fec548ebe8c71678359eee9677c8f854e8aa"
+    },
+    {
+      "path": "pi/packages/codex-agents/delegation-policy.ts",
+      "mode": "100644",
+      "git_blob": "f1066b1e05b32aaef96cf795076a1b5f37a4b8da"
+    },
+    {
+      "path": "pi/packages/codex-agents/index.ts",
+      "mode": "100644",
+      "git_blob": "ca17b24855e25abf4da7176c8e2d3804895bc675"
+    },
+    {
+      "path": "pi/packages/codex-agents/package.json",
+      "mode": "100644",
+      "git_blob": "1c0c080812dd752ec50376b9e39b0b2efb5ae907"
+    },
+    {
+      "path": "pi/packages/codex-agents/runner.ts",
+      "mode": "100644",
+      "git_blob": "0637a50663aeefe34e33c312b1f6d8ae2beadc13"
+    },
+    {
+      "path": "pi/packages/colorful-footer/README.md",
+      "mode": "100644",
+      "git_blob": "c3a40469aa3948d5c486ec14c0cccc4f15d56d27"
+    },
+    {
+      "path": "pi/packages/colorful-footer/index.ts",
+      "mode": "100644",
+      "git_blob": "8353581b9807daeb829a62026bab45dba2b4092f"
+    },
+    {
+      "path": "pi/packages/colorful-footer/package.json",
+      "mode": "100644",
+      "git_blob": "4413ec1d48074b62035e9e5d42dbaef23cce4918"
+    },
+    {
+      "path": "pi/packages/loop-guard/README.md",
+      "mode": "100644",
+      "git_blob": "6471eb1029391e92affc159aaf602cc867841837"
+    },
+    {
+      "path": "pi/packages/loop-guard/action-reference.ts",
+      "mode": "100644",
+      "git_blob": "c47a685fe7b02196f7e774cae970385dc7b8f334"
+    },
+    {
+      "path": "pi/packages/loop-guard/advisory.ts",
+      "mode": "100644",
+      "git_blob": "ba579fd034a74aed3588010572971626e1897fc2"
+    },
+    {
+      "path": "pi/packages/loop-guard/config.ts",
+      "mode": "100644",
+      "git_blob": "fe489764ce8ea95db2ac1d975e5f4c7856d23e9b"
+    },
+    {
+      "path": "pi/packages/loop-guard/context.ts",
+      "mode": "100644",
+      "git_blob": "3e1763a2dd4e07cba4c07a7c84f7e789daae7cf6"
+    },
+    {
+      "path": "pi/packages/loop-guard/diagnostics.ts",
+      "mode": "100644",
+      "git_blob": "3d55ee231148ebbbfe4a7e8a77de8485e6daca60"
+    },
+    {
+      "path": "pi/packages/loop-guard/engine.ts",
+      "mode": "100644",
+      "git_blob": "27534e256bd78eb741f302bf540196319fcca3fb"
+    },
+    {
+      "path": "pi/packages/loop-guard/explanation.ts",
+      "mode": "100644",
+      "git_blob": "a50831f609c8c9a8b1e9960e6153309a0a06ec0a"
+    },
+    {
+      "path": "pi/packages/loop-guard/fingerprint.ts",
+      "mode": "100644",
+      "git_blob": "bc38e74958709e33844e9564da0675b69ab26348"
+    },
+    {
+      "path": "pi/packages/loop-guard/index.ts",
+      "mode": "100644",
+      "git_blob": "ba120410450f38df495cdda9eb87c2aa159f0ee9"
+    },
+    {
+      "path": "pi/packages/loop-guard/package.json",
+      "mode": "100644",
+      "git_blob": "69d309e62d44ac32237769909878748488791920"
+    },
+    {
+      "path": "pi/packages/loop-guard/persistence.ts",
+      "mode": "100644",
+      "git_blob": "d41f2384bebd51129bb3d94ffe2b2589b367f5ee"
+    },
+    {
+      "path": "pi/packages/loop-guard/redaction.ts",
+      "mode": "100644",
+      "git_blob": "3d38b0281e13cc431db61188054084a16d4072c3"
+    },
+    {
+      "path": "pi/packages/loop-guard/renderer.ts",
+      "mode": "100644",
+      "git_blob": "9913ee5f51f01e113774b6fb357a6386fc33d62b"
+    },
+    {
+      "path": "pi/packages/loop-guard/terminal-report.ts",
+      "mode": "100644",
+      "git_blob": "ff73eef3b8f6729883d6121358e9c02629debba9"
+    },
+    {
+      "path": "pi/packages/loop-guard/tsconfig.json",
+      "mode": "100644",
+      "git_blob": "644a7236fc256c451a5ab4645f36f19ea11e521d"
+    },
+    {
+      "path": "pi/packages/loop-guard/types.ts",
+      "mode": "100644",
+      "git_blob": "486d076c5a3bb87d311ed0582ae71ae2672f487d"
+    },
+    {
+      "path": "pi/packages/openai-proxy/README.md",
+      "mode": "100644",
+      "git_blob": "d5c8ec282514f70c889084ea755d3fb5a0c207ac"
+    },
+    {
+      "path": "pi/packages/openai-proxy/diagnostics.mjs",
+      "mode": "100644",
+      "git_blob": "fc4325bac876a2cfa337fffce6d2b3958a39ce46"
+    },
+    {
+      "path": "pi/packages/openai-proxy/diagnostics.test.mjs",
+      "mode": "100644",
+      "git_blob": "6a96681571f25df2ab9141d0308d3f6e58fa3b66"
+    },
+    {
+      "path": "pi/packages/openai-proxy/index.ts",
+      "mode": "100644",
+      "git_blob": "c7c60a357747b69f19413f76768b7195363442f9"
+    },
+    {
+      "path": "pi/packages/openai-proxy/package-lock.json",
+      "mode": "100644",
+      "git_blob": "230f43430ffa7a3ab1c510594254989b67a254cd"
+    },
+    {
+      "path": "pi/packages/openai-proxy/package.json",
+      "mode": "100644",
+      "git_blob": "af70cb1d5ab19332827b2b96374b21606ceb650e"
+    },
+    {
+      "path": "pi/packages/openai-proxy/routing.mjs",
+      "mode": "100644",
+      "git_blob": "dd5fa991977a10b75e2b7bf4b2219721a27bba37"
+    },
+    {
+      "path": "pi/packages/openai-proxy/routing.test.mjs",
+      "mode": "100644",
+      "git_blob": "3220b0555a181c24ca312b177bf232dd856d76bb"
+    },
+    {
+      "path": "pi/packages/openai-proxy/transport.test.mjs",
+      "mode": "100644",
+      "git_blob": "e30b1dfdb7ced3d2bf43594cd17f672f9fae361e"
+    },
+    {
+      "path": "pi/packages/session-yolo/index.ts",
+      "mode": "100644",
+      "git_blob": "a373fd1d1032308914f52aaf86cc582d37ff61ef"
+    },
+    {
+      "path": "pi/packages/session-yolo/package.json",
+      "mode": "100644",
+      "git_blob": "949327db40d451fe78d7577123dcbcd7cb98e9bc"
+    },
+    {
+      "path": "pi/packages/task-keeper/.gitignore",
+      "mode": "100644",
+      "git_blob": "7cbcdffaa6e1bbac539b0017da9e143326ab9b4e"
+    },
+    {
+      "path": "pi/packages/task-keeper/README.md",
+      "mode": "100644",
+      "git_blob": "0217010d68a64f7eacd13beb87e1ece88f93b328"
+    },
+    {
+      "path": "pi/packages/task-keeper/THIRD_PARTY_NOTICES.md",
+      "mode": "100644",
+      "git_blob": "ee5e6ba00c4f6216fa66a6caf6c9cc429989a7b7"
+    },
+    {
+      "path": "pi/packages/task-keeper/agents/task-keeper-reader.md",
+      "mode": "100644",
+      "git_blob": "d2957be74866e03ae9ab52de83ebff4eed71e762"
+    },
+    {
+      "path": "pi/packages/task-keeper/agents/task-keeper-reviewer.md",
+      "mode": "100644",
+      "git_blob": "4a6229fab2fddc01aad78a2707e9d3d8e2329a90"
+    },
+    {
+      "path": "pi/packages/task-keeper/agents/task-keeper-writer.md",
+      "mode": "100644",
+      "git_blob": "598fc78ae4eadf7e195671f2381cea522e432508"
+    },
+    {
+      "path": "pi/packages/task-keeper/config.example.json",
+      "mode": "100644",
+      "git_blob": "21b8951b38ab8f81f42d52dd76af9dbbf008a5e4"
+    },
+    {
+      "path": "pi/packages/task-keeper/config.schema.json",
+      "mode": "100644",
+      "git_blob": "28490a6960af57fa98cc9af0faed9d50acbc9013"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/architecture.md",
+      "mode": "100644",
+      "git_blob": "fc2e2ca231bed52566dd911d9e3cad0efe154e04"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/configuration.md",
+      "mode": "100644",
+      "git_blob": "005b24bdb9adb1c5d0e95af6730a5cafa502ab3d"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/decisions.md",
+      "mode": "100644",
+      "git_blob": "1923b6347ae111805ac9d8b15a634d2b2f6b10ca"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/documentation-map.md",
+      "mode": "100644",
+      "git_blob": "1e7e1bc12eb742a4292afc5561cca825984f88b3"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/examples/managed-demo.json",
+      "mode": "100644",
+      "git_blob": "b2a86ad1d31f7d000e27503e7af0823195c6ca67"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/examples/ordinary.json",
+      "mode": "100644",
+      "git_blob": "2b77aceaa1af7aeca2241c1af3235e920a1ad8b6"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/getting-started.md",
+      "mode": "100644",
+      "git_blob": "24fc75bca8ddccec5d9fa9e243a3451049a311c9"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/history/decisions-before-public-guide.md",
+      "mode": "100644",
+      "git_blob": "701dfe244849cb7227f6072b760b4eb4c93f158f"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/history/pre-r2-implementation-status.md",
+      "mode": "100644",
+      "git_blob": "9d717599d6be00517931afcedce780b60716d920"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/history/pre-r2-scope-audit.md",
+      "mode": "100644",
+      "git_blob": "3e614984f0ae4dc210ae521470e24e41b4cd599d"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/history/review-fixes-progress-2026-09-15.md",
+      "mode": "100644",
+      "git_blob": "0a1bc0eb5f7a98125cf2f06cdddd8cd2f8679d4f"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/history/testing-readme-before-public-guide.md",
+      "mode": "100644",
+      "git_blob": "7dc7f5126f5dfcf85cc64e0c731dfad3ff1244b9"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/history/tk-r2-implementation-progress-before-final.md",
+      "mode": "100644",
+      "git_blob": "170fa181d896423943655dae43b884bf6b27f2e3"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/implementation-status.md",
+      "mode": "100644",
+      "git_blob": "e62e4d5ae0bb2b82374fe5c96b0ee48a3170fd9b"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/multi-model.md",
+      "mode": "100644",
+      "git_blob": "f50efc8805c42c99e81826555c0b978902617166"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/qwen-classifier-fixtures.md",
+      "mode": "100644",
+      "git_blob": "53a319dbc72763072994c32098eb0f6efc689d18"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/reference-sources.json",
+      "mode": "100644",
+      "git_blob": "d4890d84a60acfdfcc336822c1084673b77b0aff"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/release-notes.md",
+      "mode": "100644",
+      "git_blob": "951e78aad566f0ee1d63f58cdff17dbd46e30fd4"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/request-admission.md",
+      "mode": "100644",
+      "git_blob": "d1457fd591e83208d6db87c46bba1bc5f70580a5"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/scope-audit.md",
+      "mode": "100644",
+      "git_blob": "12b4836cc509cf9b9a4fc38efc35429426026109"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/state-maintenance.md",
+      "mode": "100644",
+      "git_blob": "5711e8e21143cb5e4483463fc91e90e191febac0"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/README.md",
+      "mode": "100644",
+      "git_blob": "af9a1192349e000a1e191174747f1cf1c6032589"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/audit-2026-09-10-layer-misattribution.md",
+      "mode": "100644",
+      "git_blob": "9235d23d2fb36fc2fe2b2010cc206b64dc3b9c01"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/baseline.json",
+      "mode": "100644",
+      "git_blob": "264ad91091e8a94ed53913d43d0767bad7eb5dad"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/build-design.py",
+      "mode": "100644",
+      "git_blob": "aebd4a9fc465cc13152c0a77d2706d7bbdb6aeb8"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/campaigns.json",
+      "mode": "100644",
+      "git_blob": "738eaaafc5069cd6613ca6e40ff1166a52f94126"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/campaigns.md",
+      "mode": "100644",
+      "git_blob": "36b76103e8636109a7b480c2f489e751aa706ada"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/case-design.md",
+      "mode": "100644",
+      "git_blob": "cc9a6c31c9cab503fa78d436648fedfcfac74fd0"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/case-recipes.json",
+      "mode": "100644",
+      "git_blob": "5467934bf006f26d86dbd486372c98cf65bd0033"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/check-design.py",
+      "mode": "100644",
+      "git_blob": "8d9d20c6b703137fa9432105f65b293493e631ba"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/closure-baseline-2026-09-10.json",
+      "mode": "100644",
+      "git_blob": "80612ddc9fbcab406b7dc1f73b681f9cb286faf4"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/closure-domain-checks.csv",
+      "mode": "100644",
+      "git_blob": "58d0792f798a4fea97382a4eec3f9d41bb3ab44c"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/closure-matrices.csv",
+      "mode": "100644",
+      "git_blob": "c62796215b77371a9b30f48df26b84c38773dbfa"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/closure-obligations.csv",
+      "mode": "100644",
+      "git_blob": "3c37da35772695020be83d7b3407a641fc78c833"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/continuation-2026-09-09-2.md",
+      "mode": "100644",
+      "git_blob": "ff64cf24997a4a9f31291fbea7e910583521ebf9"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/continuation-2026-09-09.md",
+      "mode": "100644",
+      "git_blob": "0b85921cfe2cde0329d746f6adca014f0193b925"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/continuation-2026-09-10.md",
+      "mode": "100644",
+      "git_blob": "925d842ba31081e87409444907c9a1ca2a02e34d"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/continuation-2026-09-14.md",
+      "mode": "100644",
+      "git_blob": "2f54a5a50605e6dc868c708f767576912e4352d5"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/coverage-cases.csv",
+      "mode": "100644",
+      "git_blob": "47cd78996d87bd86619d9bd93207039901001cca"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/current-checkpoint.json",
+      "mode": "100644",
+      "git_blob": "d357c3d3db93f6cb2d33324eef92e5f9c446a902"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/current-gap-cases.csv",
+      "mode": "100644",
+      "git_blob": "07b7a3539bfc9a71cf0cdf497429902f9323c65c"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/design-baseline-v2.json",
+      "mode": "100644",
+      "git_blob": "cd6e2076fbbe175fd367917a6af8715da7992b8d"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/design-review-v2.json",
+      "mode": "100644",
+      "git_blob": "f1b9d2b61f2582b8bcc49c45ca49bef87b856203"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/design-review.json",
+      "mode": "100644",
+      "git_blob": "204a40ad5904cba223237e34ba53b662f19e4258"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/expanded-matrices.json",
+      "mode": "100644",
+      "git_blob": "8bc8d639a33bc592a3ac604d1ec8f3e810dbcda5"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/gap-obligations.csv",
+      "mode": "100644",
+      "git_blob": "0566434e8a967e4c867c812630df524db1d22e00"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/implementation-progress.md",
+      "mode": "100644",
+      "git_blob": "3a46f8c0c789750a3a27272c3b25ee01a950421b"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/layer-profiles.json",
+      "mode": "100644",
+      "git_blob": "e9e8efad5413b8eed16fcbaf3f5f72ac45b98bd6"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/newly-uncredited-cases.csv",
+      "mode": "100644",
+      "git_blob": "119f22b0d3f31454ae3658b7e1daa2c65f7dd7f5"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/obligation-gap-plan.md",
+      "mode": "100644",
+      "git_blob": "ad1ebbd14cae9982d9198e78f35a46d370652433"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/progress-2026-09-10.md",
+      "mode": "100644",
+      "git_blob": "68e7163dd4d865eef01e5ed270797a4ffbc71416"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/runtime-case-evidence.csv",
+      "mode": "100644",
+      "git_blob": "4d07135e4ecf8759e2281ecacef656373c869d7c"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/runtime-case-evidence.csv.before-audit",
+      "mode": "100644",
+      "git_blob": "9e4b3d67a263057e0d077c8406e403597596a5c2"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/runtime-gap-cases.csv",
+      "mode": "100644",
+      "git_blob": "efed0d6da4da402026295a6f101884606b3b00b8"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/runtime-matrix-evidence.csv",
+      "mode": "100644",
+      "git_blob": "0989d11bc83d9bf28b6cf1351a3198271d5c76ae"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/runtime-progress.json",
+      "mode": "100644",
+      "git_blob": "b2be98e370d685761911e67d4442b9c3cd3833d8"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/scope-audit.md",
+      "mode": "100644",
+      "git_blob": "168324f53430aef209b7b8d181f5a1d01d421518"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/w1-triage-2026-09-10.json",
+      "mode": "100644",
+      "git_blob": "058b7d14455d90e4164260c7e3dd627b64ac772b"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/w1-triage-2026-09-10.md",
+      "mode": "100644",
+      "git_blob": "bebd345fbea62a3c883da07cda35a62d2491fcf2"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/w2-f01-design-2026-09-10.md",
+      "mode": "100644",
+      "git_blob": "cc1e393f4a2b4a52e6f33c90bf729e326ac66713"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/w2-f02-design-2026-09-10.md",
+      "mode": "100644",
+      "git_blob": "9f6a46c52b0d6c2c8db628e8dd645d94b6c4c68b"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/w2-f03-2026-09-10.md",
+      "mode": "100644",
+      "git_blob": "598900e7c221cf2cf5cb6bebb95a061455bcd127"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/w2-f04-design-2026-09-10.md",
+      "mode": "100644",
+      "git_blob": "b426af49209ac935d8c933bd4629d75a378af194"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/testing/w3-tk11-restart-2026-09-10.md",
+      "mode": "100644",
+      "git_blob": "8f1de75a9ca72d0f29b985077c3ebbf3d19e8ecb"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/troubleshooting.md",
+      "mode": "100644",
+      "git_blob": "ab7359d37a42049583b33d456de83f8312c67a53"
+    },
+    {
+      "path": "pi/packages/task-keeper/docs/usage.md",
+      "mode": "100644",
+      "git_blob": "c26c66f5b3e11a2e17055b250e04dfe344073828"
+    },
+    {
+      "path": "pi/packages/task-keeper/index.ts",
+      "mode": "100644",
+      "git_blob": "2d62956bb1ce4f674ba63da9286d0f05ef2d8b28"
+    },
+    {
+      "path": "pi/packages/task-keeper/package-lock.json",
+      "mode": "100644",
+      "git_blob": "e24e25cfa0c0e557e1258ccfb1deeab16c8cc1a0"
+    },
+    {
+      "path": "pi/packages/task-keeper/package.json",
+      "mode": "100644",
+      "git_blob": "31f0298a15baffe7e9423f23aee94d06a1261fe1"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/acceptance-plan.ts",
+      "mode": "100644",
+      "git_blob": "ea6039f3d9104e1f13d11a4b4da7d3c544a0051d"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/check-plan.ts",
+      "mode": "100644",
+      "git_blob": "5b58735d0f31035b40954ece7f2b29945943203f"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/config-preview.ts",
+      "mode": "100644",
+      "git_blob": "b8e0112fd671ece6c8d4ae1c8e6fdcec884974a1"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/coverage-reporter.mjs",
+      "mode": "100644",
+      "git_blob": "54c05575c6899665fc70378832a578371c9a9df5"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/evaluation-report.ts",
+      "mode": "100644",
+      "git_blob": "5a8937c49168558facc3ad614c1c4e3dadc8980d"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/evidence-checkpoint.ts",
+      "mode": "100644",
+      "git_blob": "2fdb53783407de7207e7504b6cac34c03da87be6"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/isolation-child.mjs",
+      "mode": "100644",
+      "git_blob": "6fda2115541bae2980cb019d077a1beb4277cff0"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/launch.ts",
+      "mode": "100644",
+      "git_blob": "ef9be63ab06d54a121414f5c409e058317979ff1"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/prepare-subagents.mjs",
+      "mode": "100644",
+      "git_blob": "2a264623b0177b47569085b7f1d1216122336b40"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/recovery-report.ts",
+      "mode": "100644",
+      "git_blob": "7e2aa2f74abe8e4064409c3675fb2dfe2b151f47"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/source-lock.ts",
+      "mode": "100644",
+      "git_blob": "4c8a78c6525246df39ea35106cc6fd4b409ef425"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/state-maintenance.ts",
+      "mode": "100644",
+      "git_blob": "8d94b066adf9e0755dc7cc6af1e0b6e139f901aa"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/sync-test-plan.ts",
+      "mode": "100644",
+      "git_blob": "8038e2690fbecc5642b9f1f40ae940e7d671e43a"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/test-isolated.mjs",
+      "mode": "100644",
+      "git_blob": "350c273b383a3249d8196fa02bf350304aee39fb"
+    },
+    {
+      "path": "pi/packages/task-keeper/scripts/test-report.ts",
+      "mode": "100644",
+      "git_blob": "5b573bdd71ac77dc2a3724b7fd382d403d9b4e73"
+    },
+    {
+      "path": "pi/packages/task-keeper/skills/kernel-orchestrate/SKILL.md",
+      "mode": "100644",
+      "git_blob": "5dd9b22934b82ca9dbe9f4da84d89b9f318ba620"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/capabilities.ts",
+      "mode": "100644",
+      "git_blob": "1fdb2774ff3768a33444a4a863707a829cdaf6da"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/child-contract.ts",
+      "mode": "100644",
+      "git_blob": "6a4437a67790b988fc91e8f216a9de439ca80ea4"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/child-reporter.ts",
+      "mode": "100644",
+      "git_blob": "c945418af57c1834801cb3f88fa5787f225ba0a9"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/http-transport.ts",
+      "mode": "100644",
+      "git_blob": "1fd42692148f90dd768bc3bbe31b4881231966ff"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/pi-interactive.ts",
+      "mode": "100644",
+      "git_blob": "5edc3681130b18285eb08dadbef18935ee1481ff"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/process-identity.ts",
+      "mode": "100644",
+      "git_blob": "13eeba0fd21cece41d339837ea8c5a4286bfa122"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/route-requirements.ts",
+      "mode": "100644",
+      "git_blob": "75746b9806272232c78cd5eec06e8bb7f80b2e67"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/runtime-candidate.json",
+      "mode": "100644",
+      "git_blob": "715825ec92c66c88495037a579f84a2a177c25b1"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/runtime-identity.ts",
+      "mode": "100644",
+      "git_blob": "4ba60fcf5696398fa91571841d6bdb381283e297"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/subagents-lock.json",
+      "mode": "100644",
+      "git_blob": "a7e440b5642f2968fa0de57182635c43548e104c"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/subagents.ts",
+      "mode": "100644",
+      "git_blob": "b9c21526f53377ba2eed60b8a10b03bb8a381df8"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/task-keeper-identity.ts",
+      "mode": "100644",
+      "git_blob": "1b37ffdfe31f722f0690e4cd756cb478c57ffab9"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/telemetry.ts",
+      "mode": "100644",
+      "git_blob": "b91fa713ba6d8044fced067a7e5c4e44c67e2e09"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/adapters/terminal-input.ts",
+      "mode": "100644",
+      "git_blob": "ebdc7f39331b4a3c5914db5d48b0eb5ad5fdca6f"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/config.ts",
+      "mode": "100644",
+      "git_blob": "eb80d8a778f4c647dee156f7881b0569bb7f03eb"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/acceptance-plan.ts",
+      "mode": "100644",
+      "git_blob": "fa086e0abf4f2f71ac902bd48e74c4edc71f55d4"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/budget.ts",
+      "mode": "100644",
+      "git_blob": "f76a72eb7d8bce29ba04da49120ba2864219db7a"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/commands.ts",
+      "mode": "100644",
+      "git_blob": "b6d48cbdffa409c3c90c299a8e320c603b8ab545"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/events.ts",
+      "mode": "100644",
+      "git_blob": "96b948700b46680da60eabcb7f740a47122e7d6a"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/intents.ts",
+      "mode": "100644",
+      "git_blob": "ba72d97337db7020bcd12cf45335f3c83a8a9b99"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/ownership.ts",
+      "mode": "100644",
+      "git_blob": "2142650e6fa157b00b80a4f62d8acf900a84aa4d"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/primitives.ts",
+      "mode": "100644",
+      "git_blob": "1e413134ed39db42052fb2c08eaa3b1fdb9c6125"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/resources.ts",
+      "mode": "100644",
+      "git_blob": "142f5cdbe7240e4f0350278af944bc39d8c422ae"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/task.ts",
+      "mode": "100644",
+      "git_blob": "abde451d4c5fe9198b748588db3114231b97cb97"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/test-plan.ts",
+      "mode": "100644",
+      "git_blob": "c20931127a0a14526a64a210172e32a290c82a37"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/contracts/writers.ts",
+      "mode": "100644",
+      "git_blob": "84035b89134c5cb77c0b04026f02b440bf48849c"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/evidence/context.ts",
+      "mode": "100644",
+      "git_blob": "d46504ece4d45a453746e20ad7332cef51b281b3"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/evidence/decision-ledger.ts",
+      "mode": "100644",
+      "git_blob": "8d2b03d32555c0433bf4a5a15c058e03347f898a"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/evidence/evaluation.ts",
+      "mode": "100644",
+      "git_blob": "b5ba945646a4f77f232580aad127dab39aad6d6a"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/evidence/packet.ts",
+      "mode": "100644",
+      "git_blob": "72cde46396d00fffd2fdd4270fbf3a2d0c1cd715"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/evidence/progress.ts",
+      "mode": "100644",
+      "git_blob": "3cb6afa8c31bf655f39fcaf112536e97a28ff862"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/evidence/recovery-acceptance.ts",
+      "mode": "100644",
+      "git_blob": "0e289c01737f0593b764990272948b92dea1c128"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/evidence/status.ts",
+      "mode": "100644",
+      "git_blob": "bb64357cf9e282828c0488e15afc3caf3cf9bb9f"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/orchestration/decisions.ts",
+      "mode": "100644",
+      "git_blob": "c4ef1a5933afb86f073edf2a872f95e440ea2a09"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/orchestration/fairness.ts",
+      "mode": "100644",
+      "git_blob": "bac366240ce70d6fcd1d51542ea00ec5c1d26006"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/orchestration/policy.ts",
+      "mode": "100644",
+      "git_blob": "46de44e7db3019821fa0d1aefdb608ce1f34e516"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/orchestration/scheduler.ts",
+      "mode": "100644",
+      "git_blob": "56641d5b588372f1319b3cc959715ff77d947b3b"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/orchestration/service.ts",
+      "mode": "100644",
+      "git_blob": "ae6eb974d352965761f5174a221e757994bc3785"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/orchestration/work-scope.ts",
+      "mode": "100644",
+      "git_blob": "fc81395d127a01fa4ad339d518f31d611bac2ddb"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/orchestration/workflow-plan.ts",
+      "mode": "100644",
+      "git_blob": "d09e1f2d2850e2c4018a0862a3d0e95efc8e964a"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/policies/calendar.ts",
+      "mode": "100644",
+      "git_blob": "906e4cb324718f921cc6a6058a3456565eb4be2a"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/policies/configuration.ts",
+      "mode": "100644",
+      "git_blob": "244a164d3bc389d201e8767dd56c138645367ff6"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/policies/opinion.ts",
+      "mode": "100644",
+      "git_blob": "64f66b8ec6318d86575e5de591b117baef530fcf"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/policies/recovery.ts",
+      "mode": "100644",
+      "git_blob": "897a34414e7c45aca168c4de4819fef9e83a6d2d"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/policies/selection.ts",
+      "mode": "100644",
+      "git_blob": "4fc9dec7880492fc34c47ce851930866c822c81c"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/policies/submission.ts",
+      "mode": "100644",
+      "git_blob": "5f1bdfff53a7508d30885b824c44511e2e0800ed"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/reliability/classifier.ts",
+      "mode": "100644",
+      "git_blob": "5b76d80c4c8a5b4632eb19b7e63d678396e29baf"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/reliability/eligibility.ts",
+      "mode": "100644",
+      "git_blob": "adbbf982073765e70eb497b858358c1d4a095d05"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/reliability/incidents.ts",
+      "mode": "100644",
+      "git_blob": "59c0fa6f1f40e679dd5de2fe8543d793a48224a6"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/reliability/network-budget.ts",
+      "mode": "100644",
+      "git_blob": "b89daf1a10a556bf903cb3cdb52fc2cf73618753"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/reliability/recovery.ts",
+      "mode": "100644",
+      "git_blob": "b4a93b86354c35bda15ee2bd2ed93e56045e175d"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/reliability/stages.ts",
+      "mode": "100644",
+      "git_blob": "3495b248a8cff214da87c721bbf5b1f7c41de92f"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/reliability/timing.ts",
+      "mode": "100644",
+      "git_blob": "6e8a1f612436041a042f0bba89e1180f8129dce5"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/store/artifacts.ts",
+      "mode": "100644",
+      "git_blob": "e67193ce94dfcf0771343d12e80b69f887b4389c"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/store/database.ts",
+      "mode": "100644",
+      "git_blob": "42535f4f75744cafb3cf413f4a3853d89ac9e664"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/store/location.ts",
+      "mode": "100644",
+      "git_blob": "3badf9d96e28214d4bd2a7e5bee9859e9321230e"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/store/maintenance.ts",
+      "mode": "100644",
+      "git_blob": "fc51aa217e7f3040d58f80528b6ebc6268e76b36"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/store/schema.ts",
+      "mode": "100644",
+      "git_blob": "ae98f5d16c91faa5b0084329a75a7b63833868b2"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/usage/capture.ts",
+      "mode": "100644",
+      "git_blob": "a77672377b6f97d252bdc153fcb1b5fa93bebaab"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/usage/comparison.ts",
+      "mode": "100644",
+      "git_blob": "b05cd5b408eb46095e9ac826c663753186838116"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/usage/ledger.ts",
+      "mode": "100644",
+      "git_blob": "4fdda1bd7dfd65e077fa4da6628a215261e40049"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/usage/pricing.ts",
+      "mode": "100644",
+      "git_blob": "60a7b36ea46e84cb719d04670dbca65b3c654808"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/verification/inputs.ts",
+      "mode": "100644",
+      "git_blob": "a0c0799cbe3ab7ac9d14177959a2612042f086a7"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/verification/namespace-command.ts",
+      "mode": "100644",
+      "git_blob": "9c66efc268dfd51723fd4a92ad20144459a1c5d5"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/verification/read-causality.ts",
+      "mode": "100644",
+      "git_blob": "0be4c020bfd6a39ae42648836b213e96d8923647"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/verification/reuse.ts",
+      "mode": "100644",
+      "git_blob": "b31d356587273d2706efc70d061395c636ec6e39"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/verification/review.ts",
+      "mode": "100644",
+      "git_blob": "36b3ffe4d613aafe6f3ee2fa77761f1cb7870b9e"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/verification/runner.ts",
+      "mode": "100644",
+      "git_blob": "5be1462d02901e75e88dcab46f73f9651dc62e69"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/verification/supervisor.ts",
+      "mode": "100644",
+      "git_blob": "d31bf7e2a4629430f64f04c6557047389cc04240"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/workspace/async-workspace.ts",
+      "mode": "100644",
+      "git_blob": "dc67b4926a2b22da0a6e125f32c1e5a50da39b47"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/workspace/shared-resources.ts",
+      "mode": "100644",
+      "git_blob": "f29d3d960c8e66bb8f38e41093c0cf28a4b6c804"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/workspace/worker.ts",
+      "mode": "100644",
+      "git_blob": "8d667d4e953709e0699f0f514fc237aafd352857"
+    },
+    {
+      "path": "pi/packages/task-keeper/src/workspace/worktree.ts",
+      "mode": "100644",
+      "git_blob": "3986adb07168db8103eac99fcfbd68211660bcec"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/artifacts.test.ts",
+      "mode": "100644",
+      "git_blob": "d31f39001fdd8ca9bbb274a8e59666e2dc861255"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-acceptance-identity-u.test.ts",
+      "mode": "100644",
+      "git_blob": "fc43d899dd97341e6f69ef6c11787b7a6ac6be30"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-acceptance-policy-u.test.ts",
+      "mode": "100644",
+      "git_blob": "e957249689ff1ea87b858c807f274ad3f763e63b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-acceptance-revision.test.ts",
+      "mode": "100644",
+      "git_blob": "5ee32cddaa27a7a70f08dbc31c02a0d7cd1e2aec"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-ack-settlement-s.test.ts",
+      "mode": "100644",
+      "git_blob": "be8967eb154481875b89bde9a5b315438d967ef7"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-admission-mutations-v.test.ts",
+      "mode": "100644",
+      "git_blob": "2fdd05309df53297fa71071db99491ad54de728e"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-artifact-faults-u.test.ts",
+      "mode": "100644",
+      "git_blob": "e0702d285a7b6dfb73344fff729cf9851e6b7cfc"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-authorization-policy-u.test.ts",
+      "mode": "100644",
+      "git_blob": "7e11b4141b7608af9fdd86fc92e5074f699d97ae"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-backup-incident-s.test.ts",
+      "mode": "100644",
+      "git_blob": "c1b0b5622cdf65211277e11a9c37bccbaa80cc92"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-baseline-environment.test.ts",
+      "mode": "100644",
+      "git_blob": "2d460d5267bb7d1b451153810a9124f546411299"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-binding-diagnostics-u.test.ts",
+      "mode": "100644",
+      "git_blob": "68f21c884a365b85aad0f7ea843c2d571262ad56"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-checkpoint-v.test.ts",
+      "mode": "100644",
+      "git_blob": "7a045627947ef0fbbdbddcdb5e33412124846ea8"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-child-release-u.test.ts",
+      "mode": "100644",
+      "git_blob": "762b88cdce97b729587f7b1a0c0673f85d7c4611"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-command-contract-u.test.ts",
+      "mode": "100644",
+      "git_blob": "12d099700fab4f7c0f8e98a127988afa2860af15"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-continuation-cuts-s.test.ts",
+      "mode": "100644",
+      "git_blob": "9c9beeac519c3e013dc6e28ef53c24cf8d04bab7"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-controller-ownership-s.test.ts",
+      "mode": "100644",
+      "git_blob": "d0f4d5b29af7e8f09db1186d30e44d77d23cb058"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-cooldown-boundary-u.test.ts",
+      "mode": "100644",
+      "git_blob": "f5a014aacf620d43485ac663469701ac0e1134fa"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-coordination-status-s.test.ts",
+      "mode": "100644",
+      "git_blob": "c0ebe1de31f61e221ee25ef8380ba063e28ffc7c"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-critic-state.test.ts",
+      "mode": "100644",
+      "git_blob": "db9e55d15cccfa2d3d2d12f4e82dafdfa29bb2d9"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-details-error-s.test.ts",
+      "mode": "100644",
+      "git_blob": "b591227a0a4847eb83b373b34c82bcfc094ed3ec"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-details-error-u.test.ts",
+      "mode": "100644",
+      "git_blob": "1aab82a65ee2c98111c4c265d3cbf725742033d4"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-event-faults-u.test.ts",
+      "mode": "100644",
+      "git_blob": "2fc50f9454d30205b9fb34b35ee669b958c45027"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-event-ledger-p.test.ts",
+      "mode": "100644",
+      "git_blob": "4c34419a781bc21d6a49a1ac89285a498a7d1c5d"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-event-ledger-s.test.ts",
+      "mode": "100644",
+      "git_blob": "28fbf7b43852669491a09a5814fa7c74e9b2df86"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-event-ledger-u.test.ts",
+      "mode": "100644",
+      "git_blob": "b1a8fd09e7452ebd48383539f6811a455593615b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-evidence-validity-u.test.ts",
+      "mode": "100644",
+      "git_blob": "33ec1df601502ed3c3f6f483e12da53a3e331cba"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-exe-010-contention.test.ts",
+      "mode": "100644",
+      "git_blob": "59a9ff02c0dfef9ab08ed9378c93d755a27883e7"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-fairness-u.test.ts",
+      "mode": "100644",
+      "git_blob": "8e50ab1b60bafbdd5e993ca7876f4f1b47efff74"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-finish-gates-s.test.ts",
+      "mode": "100644",
+      "git_blob": "bdfc0e0328e96d52e2527e04bf7de67bd6ec96db"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-fixed-workflow-u.test.ts",
+      "mode": "100644",
+      "git_blob": "e93534ca13b49ec6c5e20c42275b684a8bedc117"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-focused-targets-v.test.ts",
+      "mode": "100644",
+      "git_blob": "e09b0eae22ed53e91740c53dd97cb434d1aac90c"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g01-e.test.ts",
+      "mode": "100644",
+      "git_blob": "7e13568da1c964f698da03f0cdd98ceaa12f89b4"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g02-u.test.ts",
+      "mode": "100644",
+      "git_blob": "d64b154ba077491ed64b896239841523ea854468"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g04-a.test.ts",
+      "mode": "100644",
+      "git_blob": "fe1d7d24a8b4dd0efc1034ef88f3e0389ae56e15"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g04-capabilities-u.test.ts",
+      "mode": "100644",
+      "git_blob": "b1dfb7973af6a98ea614f9c0f5542b71e825aaa1"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g04-v.test.ts",
+      "mode": "100644",
+      "git_blob": "f69d47123dbfd0a3dbbd65dbf4552de73c52a7bd"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g06-contract-u.test.ts",
+      "mode": "100644",
+      "git_blob": "ef3b98bb7d7355530f10e1b830514ff307cf0b30"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g07-state.test.ts",
+      "mode": "100644",
+      "git_blob": "88b0950e64b50682509fb76da48d68ebf24de7a0"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g07-u.test.ts",
+      "mode": "100644",
+      "git_blob": "9ab676894994ee2b491f802430353868eaffc479"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g08-u.test.ts",
+      "mode": "100644",
+      "git_blob": "65944847179b7aee546224556b54df0439aee8b9"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g09-v.test.ts",
+      "mode": "100644",
+      "git_blob": "a73cc7f15b2d41bd6964af15d6cdfdc4f12aa9ee"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g10-s.test.ts",
+      "mode": "100644",
+      "git_blob": "3e90ff626924c47335878f6bd4e71e40c73158dc"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g10-u.test.ts",
+      "mode": "100644",
+      "git_blob": "3b34c791e1e23e46faf2b94dd36ccda5ada360f7"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g13-owner-p.test.ts",
+      "mode": "100644",
+      "git_blob": "7200a2c0e9e4ea305fda1b21eaf676ad49f3297e"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g13-p.test.ts",
+      "mode": "100644",
+      "git_blob": "f6e5c849020db2895746d5e482d37bc5b7a3a188"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g15-provenance-u.test.ts",
+      "mode": "100644",
+      "git_blob": "704457e57a78273d45118985576655443fd6d012"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g15-recovery-s.test.ts",
+      "mode": "100644",
+      "git_blob": "3953507823e7256da8b0a94db96daf1d5bdd97a9"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g15-u.test.ts",
+      "mode": "100644",
+      "git_blob": "d74c88b92192fc1847b0273587561ce1fe267782"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g18-await-s.test.ts",
+      "mode": "100644",
+      "git_blob": "0f0d0eb592e4b9858d47811392503d006d787a2a"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g18-snapshot-s.test.ts",
+      "mode": "100644",
+      "git_blob": "9e4e0a64a9d8b9665398988b82bb112e8e0c0f0b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g22-u.test.ts",
+      "mode": "100644",
+      "git_blob": "e4f9a5541decab639c016d8ab479103a6eddd918"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g23-settlement.test.ts",
+      "mode": "100644",
+      "git_blob": "7c9a9feaffaf81efe56574c30e82f3263fdb3202"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g23-u.test.ts",
+      "mode": "100644",
+      "git_blob": "b592b76e2d5493c86a6a21aba6d57ef1edd36ae5"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g24-dependencies.test.ts",
+      "mode": "100644",
+      "git_blob": "2bc0100adedec4dd19b36272f39b0b8300c70986"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g24-scope-s.test.ts",
+      "mode": "100644",
+      "git_blob": "a2969924ff135faa92bafd424242ec11dff48a91"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g25-e.test.ts",
+      "mode": "100644",
+      "git_blob": "1fe26e4f566ea5c089cb44587eae43377f8737b8"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g25-p.test.ts",
+      "mode": "100644",
+      "git_blob": "a99e2152bdd98237a9c268e93077552b18764d8e"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g27-policy-u.test.ts",
+      "mode": "100644",
+      "git_blob": "d0cc756f146638eace1889eb74223e26e60c18be"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g27-stage-s.test.ts",
+      "mode": "100644",
+      "git_blob": "631900984c01c311ebac7c75e5842fbff34b1179"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g28-state.test.ts",
+      "mode": "100644",
+      "git_blob": "a07114ec08ff3e1789a9678384de9021a53e807e"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g30-launcher-v.test.ts",
+      "mode": "100644",
+      "git_blob": "ee97013869c0c9c82fdadd8a3f1f8e7135385227"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g30-v.test.ts",
+      "mode": "100644",
+      "git_blob": "a57a8c502ada0195f9bbf9190aa2bd1ca2e47377"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g32-v.test.ts",
+      "mode": "100644",
+      "git_blob": "a910b215d5e86a51f07b66b5403d53f8a504da4a"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g36-u.test.ts",
+      "mode": "100644",
+      "git_blob": "eae08eab6f2f4945ab894cd8b0296db4b4f5fb23"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-g36-v.test.ts",
+      "mode": "100644",
+      "git_blob": "b85ec81e117e49d5ca91131ddd21791bac67598b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-http-invocation.test.ts",
+      "mode": "100644",
+      "git_blob": "c82b62f86ee8032bc13526709e39d42a3dc49a8c"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-incident-close-u.test.ts",
+      "mode": "100644",
+      "git_blob": "3425c0b7dc73345b9159df53102271ad35bd5b9c"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-independent-pools-s.test.ts",
+      "mode": "100644",
+      "git_blob": "3eb025aeaacb8312656ea70ab0fec07c3cbfc0de"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-input-origin-s.test.ts",
+      "mode": "100644",
+      "git_blob": "8570c3dc601b958af6d2e2f7151b2b1be8d31b7c"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-inspect-race.test.ts",
+      "mode": "100644",
+      "git_blob": "0c1b8fee62c6dd5445e161eca23d4f7bacfad8e4"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-intent-dispatch-u.test.ts",
+      "mode": "100644",
+      "git_blob": "4ef3038acff01982a0291ef5743698555c124d32"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-local-budget-s.test.ts",
+      "mode": "100644",
+      "git_blob": "917fb317761c999f552243a3d9574b91f959f3b5"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-maintenance-digest-u.test.ts",
+      "mode": "100644",
+      "git_blob": "25d73e6ea39f76dcc628d0a126b0dadb84639a30"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-migration-state-s.test.ts",
+      "mode": "100644",
+      "git_blob": "a8ff1f52db95e2a92c35d5b1e64bf748fcf034a7"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-native-settled-orders.test.ts",
+      "mode": "100644",
+      "git_blob": "a59bb520bdaa5071b4c62c68a549c02e87fb74f6"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-native-terminal-u.test.ts",
+      "mode": "100644",
+      "git_blob": "412e971e3d9b47260f4497d3bcc6fd705370156a"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-network-budget-u.test.ts",
+      "mode": "100644",
+      "git_blob": "f2244044ec77c63c625000eb855bd8dfcb1ea631"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-network-policy-u.test.ts",
+      "mode": "100644",
+      "git_blob": "f4230d6ca966d9780b004a49010c6296203d407e"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-overdue-ticks-s.test.ts",
+      "mode": "100644",
+      "git_blob": "62343c0db769e8a8a81b80b71092dc673ac9a22a"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-owner-expiry-s.test.ts",
+      "mode": "100644",
+      "git_blob": "be543d9b42edce60344b6f9ff3af9147a4e4fed2"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-owner-writer-s.test.ts",
+      "mode": "100644",
+      "git_blob": "7555e97c3a943cf8f3c2903630eca9acbf82b83a"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-ownership-u.test.ts",
+      "mode": "100644",
+      "git_blob": "eae25fdb4a678edffcb08254fee2b96ae466cfc0"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-parent-context-s.test.ts",
+      "mode": "100644",
+      "git_blob": "88989c490ebc72c37cf66ea64c3a7c9ccb3e3dab"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-parent-context-u.test.ts",
+      "mode": "100644",
+      "git_blob": "24318d07944d2346d80db3df03562288514183ec"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-plan-admission-s.test.ts",
+      "mode": "100644",
+      "git_blob": "fcc55d283caaa401f74786b1810ee101a1609455"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-policy-reload-s.test.ts",
+      "mode": "100644",
+      "git_blob": "a535441ba57cc4e447c1239f06ba48feef50d65f"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-progress-state.test.ts",
+      "mode": "100644",
+      "git_blob": "4420c55950b01b5cde02bca59e166055992e2a74"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-project-policy-e.test.ts",
+      "mode": "100644",
+      "git_blob": "3b3604a0651acc793fffc8f657a8aace3a2338b0"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-project-policy-s.test.ts",
+      "mode": "100644",
+      "git_blob": "2f529e79d5607aa9688f511f186a0d2e9a08121b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-proposal-budget-s.test.ts",
+      "mode": "100644",
+      "git_blob": "01cd590a529ca8d75017701493769197e39ead6c"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-quota-release-s.test.ts",
+      "mode": "100644",
+      "git_blob": "f3f8d47f7f7ecbcb29db9612a9e91e0fbd4cc412"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-reader-profile-u.test.ts",
+      "mode": "100644",
+      "git_blob": "d7549d3c94ba2216499307a97d77608704ecb212"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-recovery-contention-p.test.ts",
+      "mode": "100644",
+      "git_blob": "e9d05b2186dd15be0e08a61f14431d3ab4df6346"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-recovery-eligibility-u.test.ts",
+      "mode": "100644",
+      "git_blob": "8bc7edd5b35cc9b07603e2d86a4d94bdf0026ef0"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-recovery-timing-u.test.ts",
+      "mode": "100644",
+      "git_blob": "c52d3f173f37f977a43bc447a7d79e62d6dc7d48"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-redacted-evidence-u.test.ts",
+      "mode": "100644",
+      "git_blob": "b712bb106faa1655f3899afb7c7d094d6ac423d6"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-redacted-state-s.test.ts",
+      "mode": "100644",
+      "git_blob": "095b36579206101edd18a40ef72c5757f124dc78"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-reference-state.test.ts",
+      "mode": "100644",
+      "git_blob": "9d5249c2530d7b021f853a89e4f3b6f6b4f52d0b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-replan-s.test.ts",
+      "mode": "100644",
+      "git_blob": "9f723cf6609e90cfb7f1821e3c7886c1b0783bd3"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-replay-state-s.test.ts",
+      "mode": "100644",
+      "git_blob": "9ee731035fba4052f6e6b002fe1b250092fd82c3"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-required-reserve-s.test.ts",
+      "mode": "100644",
+      "git_blob": "22a765437a0a2bb927e24bc5e9275f61a2230429"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-resource-contention-p.test.ts",
+      "mode": "100644",
+      "git_blob": "0d08bb9242a23a526ad2c09c1b6b62d1a04c309a"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-resource-contention-s.test.ts",
+      "mode": "100644",
+      "git_blob": "59c54f65252ebab79619f9c7acc32acfaf3822e6"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-resource-plan-u.test.ts",
+      "mode": "100644",
+      "git_blob": "16e9bd30e222b42d4e64e9db3f33f82a5ea7ee50"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-restart-wait-s.test.ts",
+      "mode": "100644",
+      "git_blob": "a270fc315a29b39be1a001ec4134325249849b9b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-resume-limits.test.ts",
+      "mode": "100644",
+      "git_blob": "22b8ae70b92ebe409c13565212666dc1a951a6b7"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-review-causality.test.ts",
+      "mode": "100644",
+      "git_blob": "18b56fc3014fd98f49db640bcae46b79922ed729"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-sch-010-contention.test.ts",
+      "mode": "100644",
+      "git_blob": "3502747b224b1529d94d47d1bf29bf616b979f48"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-scheduling-config.test.ts",
+      "mode": "100644",
+      "git_blob": "08744b2a3134569563a2db2d22d5b8f09b369e50"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-scope-identity.test.ts",
+      "mode": "100644",
+      "git_blob": "2f3a51d1a34b92bf2f992ee2e98f5d81269def73"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-selector-purity.test.ts",
+      "mode": "100644",
+      "git_blob": "4822274e145f6385e893cd42cd5b34c6ca6e0a2e"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-silent-build-u.test.ts",
+      "mode": "100644",
+      "git_blob": "1890e70daf758c801947ed1546497ce0022a37d5"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-skip-disclosure.test.ts",
+      "mode": "100644",
+      "git_blob": "8604af59d6f2b09caeef7e5d40c4f06b5208f075"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-snapshot-rpc.test.ts",
+      "mode": "100644",
+      "git_blob": "5bb5273289ddde7151e63b8513daf6aef113bd3c"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-state-directory-p.test.ts",
+      "mode": "100644",
+      "git_blob": "e77cd2bfe3775a55d665e955c46408feccefcbf8"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-state-directory-s.test.ts",
+      "mode": "100644",
+      "git_blob": "f9c0ec814d7ad8636d1b966fcc76d4f360f2e46a"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-status.test.ts",
+      "mode": "100644",
+      "git_blob": "232ec89bbc89c03abf7489a45a6c904c8f136af7"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-store-contention-s.test.ts",
+      "mode": "100644",
+      "git_blob": "101479ab1961b61348aa398bca9350d8923deb8a"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-stream-terminals-s.test.ts",
+      "mode": "100644",
+      "git_blob": "99b81409a8d9bdca457f08303f253aaaa207f834"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-summary-contract-u.test.ts",
+      "mode": "100644",
+      "git_blob": "a9ef946f29b8ec99b2c8455970848cd7b61bdab2"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-sync-entry.test.ts",
+      "mode": "100644",
+      "git_blob": "234a26fe6f36b4237958945331ec8eb6dabad5ec"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-ten-pi-parents.test.ts",
+      "mode": "100644",
+      "git_blob": "b58fce3718eb48143782b65579d460410187c84e"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-terminal-canary-s.test.ts",
+      "mode": "100644",
+      "git_blob": "5d961646dc6fcd98f8bd951da19f3187b6cee655"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-timeout-authority.test.ts",
+      "mode": "100644",
+      "git_blob": "05b66f3aa44d622681ba7ae68f0a966423af5ae3"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-transport-invocation-s.test.ts",
+      "mode": "100644",
+      "git_blob": "f120199e50900cc113b6a7344475386889a7daaf"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-unacknowledged-effects-s.test.ts",
+      "mode": "100644",
+      "git_blob": "ba9a883b49ffee90d49e393766b5264c6b31333d"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-validation-policy-u.test.ts",
+      "mode": "100644",
+      "git_blob": "b01711ec6fdc79f6fad3791101df70aaac023f12"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/cases-verifier-handshake.test.ts",
+      "mode": "100644",
+      "git_blob": "def0a06a0a231dc1319d27a513f1c62cab0926e2"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/config.test.ts",
+      "mode": "100644",
+      "git_blob": "1352447899d1a14909c8369a2c6c20594a75bdde"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/decision-ledger.test.ts",
+      "mode": "100644",
+      "git_blob": "01c561cda5eba0b61ea173b222b74c23234ea573"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/evaluation.test.ts",
+      "mode": "100644",
+      "git_blob": "039b1fe2cc7046e78d8abc17c28a8c9378e5bedc"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/child-gate-cut.ts",
+      "mode": "100644",
+      "git_blob": "d966bac281ede9c75c63664698356cc439dcdfe5"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/config.ts",
+      "mode": "100644",
+      "git_blob": "8a4517c9c11902aeb79dfb935e523c5bf3bafe59"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/context-abort-cut.ts",
+      "mode": "100644",
+      "git_blob": "a56613cc54808bb429a3defa0bfbd340983b7e2c"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/continuation-ack-cut.ts",
+      "mode": "100644",
+      "git_blob": "17dfe838424f6e411bd3f15921beac105d4a2002"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/database-binding-worker.ts",
+      "mode": "100644",
+      "git_blob": "be2ddef072863fff90c9a2e93cfff6718e925b29"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/details-error.ts",
+      "mode": "100644",
+      "git_blob": "fabbd9174497bbdbbf0ee2d1f8b9af03e892bff0"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/evaluation.ts",
+      "mode": "100644",
+      "git_blob": "ac9308ce8ee8bbf9991b6d6a2f1bd76ec4257fd1"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/event-ledger-worker.ts",
+      "mode": "100644",
+      "git_blob": "abc5c46652f6f10173829239340bde70d507d4a6"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/exe-010-worker.ts",
+      "mode": "100644",
+      "git_blob": "da0b1e88c711769b3a589f6b6c8db533ca407ff9"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/exe010-workspace-freeze.ts",
+      "mode": "100644",
+      "git_blob": "f98c2d679435e230f8bd483f9fc43f0d8d3b9f73"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/maintenance-worker.ts",
+      "mode": "100644",
+      "git_blob": "7268cbee684c18d8700cf4502b851645bede83a2"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/native-continuation-cut.ts",
+      "mode": "100644",
+      "git_blob": "4b1490c40b336b4e58e9ee9fdaea8eec3fffa6ef"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/native-dispatch-cut.ts",
+      "mode": "100644",
+      "git_blob": "c4d6ea3a85d1dca94fe0690c01c526540de1d91f"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/native-spawn-error.ts",
+      "mode": "100644",
+      "git_blob": "98a98e27821e1d39e52c4c48d6e5d282883ba29e"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/outcome.ts",
+      "mode": "100644",
+      "git_blob": "7c82cd8dc54c48e9cf55d1dbcf01232f44542d37"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/qwen-observed-error.json",
+      "mode": "100644",
+      "git_blob": "602f72f14dd7afa7a4912fc38007dd7006f91dbb"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/qwen-service-errors.json",
+      "mode": "100644",
+      "git_blob": "e1d5304f02e345d3792aec7603570d05da96a7cb"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/recovery-worker.ts",
+      "mode": "100644",
+      "git_blob": "810117933708a560a9012b8ed47207d94b7d8eb5"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/resource-worker.ts",
+      "mode": "100644",
+      "git_blob": "bbb0a507a379471f4bddba5086f084ceda9d7342"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/resume-snapshot-cut.ts",
+      "mode": "100644",
+      "git_blob": "7b3de29d89fb570c2c8a954afff0be39955d04fb"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/review-input-cut.ts",
+      "mode": "100644",
+      "git_blob": "a9b03cbbe72467cdff1fc06c3ccfb9d02fdee319"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/sch-010-worker.ts",
+      "mode": "100644",
+      "git_blob": "c351ea474e8db05136443ba24a1cdce93bd769bb"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/sch010-workspace-freeze.ts",
+      "mode": "100644",
+      "git_blob": "920706207c8392b5ce6989830d657ed6a24e04d6"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/service-state.ts",
+      "mode": "100644",
+      "git_blob": "4f747e99001af9324789f935225e6a5107792d48"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/settlement-replay.ts",
+      "mode": "100644",
+      "git_blob": "9d27ec44a38af16d60dfd40e660077401c467900"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/store-startup.ts",
+      "mode": "100644",
+      "git_blob": "afc3d355d051e56e08bfe63041446b560b1ecdfb"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/store-worker.ts",
+      "mode": "100644",
+      "git_blob": "efeaabe96bd245fb66408d9bfb016e7cf4be8437"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/subagents-harness.ts",
+      "mode": "100644",
+      "git_blob": "4ef6cdb9301bb05ff939adc35d2129450b7e7bee"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/thinking-cut.ts",
+      "mode": "100644",
+      "git_blob": "e8819476b1c3dea898ef1b53dd8203853e46d63a"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/verifier-completion-cut.ts",
+      "mode": "100644",
+      "git_blob": "ce2ae08065e57783bb6d9b8c1bf2cd74e019f8a7"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/workflow-cases.ts",
+      "mode": "100644",
+      "git_blob": "48df0a4ac492d5749ada79ac2664493fe5d204a1"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/writer-owner.ts",
+      "mode": "100644",
+      "git_blob": "4b120860ec9de9b934f3a26548513df46d8b56d3"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/fixtures/writer-parent-cut.ts",
+      "mode": "100644",
+      "git_blob": "585977f1db15c66ec342d2d0b32a7c3a192407d2"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/foundation.test.ts",
+      "mode": "100644",
+      "git_blob": "dec4af847661925397062a905fac26d41fd11a5b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g01-e.test.ts",
+      "mode": "100644",
+      "git_blob": "7ee01c747163960d9bdf675c13f339cb9de5a423"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g03-u.test.ts",
+      "mode": "100644",
+      "git_blob": "a4dcb6183e885bdb811249cdaad2cd9693803e20"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g04-binding-u.test.ts",
+      "mode": "100644",
+      "git_blob": "5e7fe047850874ee06603b809f4e00d8d3e82184"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g11-p.test.ts",
+      "mode": "100644",
+      "git_blob": "47ec650cc2b69ae156024cc16e1e164d85afdac0"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g14-p.test.ts",
+      "mode": "100644",
+      "git_blob": "8d319ba9ce19a05e3181fa6b79e48cacc6e8fd05"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g18-canary-s.test.ts",
+      "mode": "100644",
+      "git_blob": "9bf7986880de83dd27f3f7df6f96c7a0e07ce874"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g18-request-s.test.ts",
+      "mode": "100644",
+      "git_blob": "97cb787c606ed0be6e2e3727d03c6afb70af4932"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g18-s.test.ts",
+      "mode": "100644",
+      "git_blob": "ea035de20cbc5cf54fe539a53fdd4971ded14cc2"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g19-s.test.ts",
+      "mode": "100644",
+      "git_blob": "09349e95dbd0caf2716368e731bc2b0bc13175b6"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g20-route-s.test.ts",
+      "mode": "100644",
+      "git_blob": "a8a03f932774c3e355ede7126e2737b6bb59e33e"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g20-s.test.ts",
+      "mode": "100644",
+      "git_blob": "ffcd8a602c4cacd53d105805b96c810ab4dbc0cd"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g23-p.test.ts",
+      "mode": "100644",
+      "git_blob": "57f647cd2cdd55ee7100069f8a61c5988e90d11c"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g29-u.test.ts",
+      "mode": "100644",
+      "git_blob": "192e8a7d60c308a10bdef9889d0f49db840b491f"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g30-u.test.ts",
+      "mode": "100644",
+      "git_blob": "9b9c764dde269fcec87ea59c118beefacd6e4250"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/gap-g30-v.test.ts",
+      "mode": "100644",
+      "git_blob": "fd6a195503cbf73b5a35faac2facb18eb7b18041"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/helpers.ts",
+      "mode": "100644",
+      "git_blob": "b8433403690be9b89706eb42ff4c1e56b1e38a9b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/http-transport.test.ts",
+      "mode": "100644",
+      "git_blob": "4777de09f074d10c0b8c8153a463fa45d8eef1ab"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/late-owner.test.ts",
+      "mode": "100644",
+      "git_blob": "d53342c0baa0b4c2b28b85620496c32e3fc1bf05"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/late-verifier.test.ts",
+      "mode": "100644",
+      "git_blob": "c743ebaa654b31ef32e7fec977f3a9a89e752f46"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/matrix-evidence.test.ts",
+      "mode": "100644",
+      "git_blob": "714b09d8e2376d39ab172d4d1759d152f85b2746"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/model-tool-authority.test.ts",
+      "mode": "100644",
+      "git_blob": "51147f568a9b6b33f0133ab4e06528410a26e265"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/native-file-termination.test.ts",
+      "mode": "100644",
+      "git_blob": "e1fd9fae2a2f2abe29876817e02358e9f4910c41"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/native-owner.test.ts",
+      "mode": "100644",
+      "git_blob": "4379e2867e024e1370d47885b7ba9400b9d63c16"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/native-tool-termination.test.ts",
+      "mode": "100644",
+      "git_blob": "271210fbc96d1bc0c963f1765263357ed31bcadb"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/network-domains.test.ts",
+      "mode": "100644",
+      "git_blob": "75a7d9b39f9ef3f305bae3c140966173204d0257"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/pi-pty.test.ts",
+      "mode": "100644",
+      "git_blob": "80a13d848260cfc2959072b03113d575dc562c16"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/pi-rpc.test.ts",
+      "mode": "100644",
+      "git_blob": "3d96ee6f05a29e0235dc00bdd6dfe7b351e51f76"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan-r2/bundle.json",
+      "mode": "100644",
+      "git_blob": "4f89ed8a0801043e10144b7aaf35e4194b552a31"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan.test.ts",
+      "mode": "100644",
+      "git_blob": "9a50845e115bb0f63693eb57677695715b35443b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan/fault-traceability.csv",
+      "mode": "100644",
+      "git_blob": "6524413559605018e9fec022eb00ad38bf769e66"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan/scenario-test-matrix.csv",
+      "mode": "100644",
+      "git_blob": "ca555f5ef75a2f7feaaeaa0b800ad61feb13dffe"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan/specs/task-keeper-config/spec.md",
+      "mode": "100644",
+      "git_blob": "0417e9e01377ffa3942bbec74c6f5bec41ecd6fe"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan/specs/task-keeper-evidence/spec.md",
+      "mode": "100644",
+      "git_blob": "3142a16f6462ece06a6c26f50dc53ec49d9ddb4d"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan/specs/task-keeper-execution/spec.md",
+      "mode": "100644",
+      "git_blob": "7a3377dc8896eed83be61b9b81b8314122dc5953"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan/specs/task-keeper-recovery/spec.md",
+      "mode": "100644",
+      "git_blob": "5fa2e844b8f0d4623e1bcd0203ce3a14f45b5b51"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan/specs/task-keeper-routing-budget/spec.md",
+      "mode": "100644",
+      "git_blob": "62b427015429d02998413c284c36609b11a987af"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan/specs/task-keeper-scheduling/spec.md",
+      "mode": "100644",
+      "git_blob": "255385670b0c57e1bd3c82387138d67967447d47"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan/specs/task-keeper-validation/spec.md",
+      "mode": "100644",
+      "git_blob": "7de7d97bbcd2413a1af391d1d911d85b00406c50"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/plan/specs/task-keeper-workflows/spec.md",
+      "mode": "100644",
+      "git_blob": "45e995e00410925ee9dd3c878821e219b08253a9"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/policy.test.ts",
+      "mode": "100644",
+      "git_blob": "89bd91a96ac27f58791992bcb40b0663bf2ab1f9"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/process-identity.test.ts",
+      "mode": "100644",
+      "git_blob": "56a229ce6c4589ffd482cee2eb8e7c587858d882"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/process.test.ts",
+      "mode": "100644",
+      "git_blob": "349f985c82108968fe14ef740ced90a8c0af4042"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/properties.test.ts",
+      "mode": "100644",
+      "git_blob": "db67340678b4216db1d0707b1255dc5bf78841a9"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-comparison.test.ts",
+      "mode": "100644",
+      "git_blob": "58513207a74a5eb7a9b282446c34c96b30366a8d"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-config.test.ts",
+      "mode": "100644",
+      "git_blob": "2bf7f05fb0287de6e07f62966d062ef0970461f3"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-native-cuts.test.ts",
+      "mode": "100644",
+      "git_blob": "e92ab6534254408a6c62e8adf56b80460f586071"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-negative.test.ts",
+      "mode": "100644",
+      "git_blob": "b65016403a8dfa0e4dac43e1ec15ef5e8820cc68"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-plan-report.test.ts",
+      "mode": "100644",
+      "git_blob": "759d65e092a0926ab1b8058b0c747409326417a9"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-presentation.test.ts",
+      "mode": "100644",
+      "git_blob": "cb0cbea218607c919eb97f4ec74c6be66ec5f78f"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-pricing.test.ts",
+      "mode": "100644",
+      "git_blob": "105ceff8ea9da4ea53432c815716d03a6a2d5e85"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-recovery.test.ts",
+      "mode": "100644",
+      "git_blob": "d4642b15e58eca9d876d236451b46ad7d0c58b34"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-scheduling.test.ts",
+      "mode": "100644",
+      "git_blob": "25186d88be60ac48294ce4e7bac6f5300a631fe2"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-selection.test.ts",
+      "mode": "100644",
+      "git_blob": "2949b5aca40fc9dd15fdd7287924bb3abc08abb0"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-store.test.ts",
+      "mode": "100644",
+      "git_blob": "a6e7bb5758d953501a30567bd46d7bb7653901ba"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-usage.test.ts",
+      "mode": "100644",
+      "git_blob": "feea5a076771907e29b297995ef8d6b1fce6a16f"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/r2-workflow-boundaries.test.ts",
+      "mode": "100644",
+      "git_blob": "e6845d300bf96c414a99272227dd70bc09597433"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/recorded-test.ts",
+      "mode": "100644",
+      "git_blob": "6b07255f26abc4f3407f22048d547f052ce1838b"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/recovery.test.ts",
+      "mode": "100644",
+      "git_blob": "9a857a4f678277b5880328380a819fb79f9e23be"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/review-fixes.test.ts",
+      "mode": "100644",
+      "git_blob": "ee6dfcee96c19bffef336423c4cbf6ce658db99e"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/runtime-identity.test.ts",
+      "mode": "100644",
+      "git_blob": "93c0551b5067f414bf50e86c38cf9396465a561d"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/scheduler.test.ts",
+      "mode": "100644",
+      "git_blob": "f008ebc08188c212bc53f340a259e398c1a0e174"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/store-startup.test.ts",
+      "mode": "100644",
+      "git_blob": "c1e4c16148b938f7d33725cb665f5d3586e9de91"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/store.test.ts",
+      "mode": "100644",
+      "git_blob": "7dab4d6646a0903a253513219b688524c2b7e8b7"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/subagents.test.ts",
+      "mode": "100644",
+      "git_blob": "9789c5489f716b096b4ac691386611b2dff20944"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/supervisor-stress.test.ts",
+      "mode": "100644",
+      "git_blob": "7f9a7647cf374f59cb05f25b3a96b34bcd204a10"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/task.test.ts",
+      "mode": "100644",
+      "git_blob": "e45acbc9580a676b87afbf541d14fc92cb04bff3"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/telemetry.test.ts",
+      "mode": "100644",
+      "git_blob": "6015ca7796dea2fd79b437731d3ec3644af10466"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/verification.test.ts",
+      "mode": "100644",
+      "git_blob": "6b8e10cc903b1e583ddfb41abb6bf2d7bef4eac7"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/work-scope.test.ts",
+      "mode": "100644",
+      "git_blob": "70bb637d27d2e6fcd1ffb221f0854f9de4dcb1eb"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/workflows-evidence.test.ts",
+      "mode": "100644",
+      "git_blob": "7dc57963cde8e72ced8877529d9873fa39d302bd"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/workflows-policy.test.ts",
+      "mode": "100644",
+      "git_blob": "d320410080006d5798a5b2d29121ff55d8330b02"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/workflows-recovery.test.ts",
+      "mode": "100644",
+      "git_blob": "6e38d75f44a102bc9a119684b34dd887b9d2ec47"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/workflows.test.ts",
+      "mode": "100644",
+      "git_blob": "3ff37a26dd0335d82f164b394505c41b54c7072f"
+    },
+    {
+      "path": "pi/packages/task-keeper/tests/workspace.test.ts",
+      "mode": "100644",
+      "git_blob": "00e07a18034e3ab7866acfff637d7fdc6a01340f"
+    },
+    {
+      "path": "pi/packages/task-keeper/tsconfig.json",
+      "mode": "100644",
+      "git_blob": "6e43d7b78e0779f28acd028e5146cf7d1615cc1a"
+    },
+    {
+      "path": "pi/prompts/commit.md",
+      "mode": "100644",
+      "git_blob": "b96a24c8c667b63428385bfe2a41215169c9815e"
+    },
+    {
+      "path": "pi/prompts/debug.md",
+      "mode": "100644",
+      "git_blob": "de6fbf20b969ccdfa51e74c8b2e37d1d941ec5ec"
+    },
+    {
+      "path": "pi/prompts/docs.md",
+      "mode": "100644",
+      "git_blob": "3866b05b40020571e8e08835813c1fe1c0f12096"
+    },
+    {
+      "path": "pi/prompts/explain.md",
+      "mode": "100644",
+      "git_blob": "a0bbf49369d11c83e391a77f5e566d4553d5e0dc"
+    },
+    {
+      "path": "pi/prompts/perf.md",
+      "mode": "100644",
+      "git_blob": "0afe321dc25c2bbec1870365c345722061ea04d9"
+    },
+    {
+      "path": "pi/prompts/plan.md",
+      "mode": "100644",
+      "git_blob": "d0564065e7951b4cfac97c995faa36b89f25a297"
+    },
+    {
+      "path": "pi/prompts/pr.md",
+      "mode": "100644",
+      "git_blob": "536106b2570b1b4a5a24ba7e0938931a5841dd47"
+    },
+    {
+      "path": "pi/prompts/refactor.md",
+      "mode": "100644",
+      "git_blob": "8390bc7a895d23c29fa9c1507425d13917271e04"
+    },
+    {
+      "path": "pi/prompts/review.md",
+      "mode": "100644",
+      "git_blob": "d8de4469b3be69c34d07f162668ed4617122bc3c"
+    },
+    {
+      "path": "pi/prompts/security.md",
+      "mode": "100644",
+      "git_blob": "395b8d3140181033fbda3fa4e4fa94ac658ffbf4"
+    },
+    {
+      "path": "pi/prompts/test.md",
+      "mode": "100644",
+      "git_blob": "72dadaea7d01f295d2b3a810cc68db60e3b96e74"
+    },
+    {
+      "path": "pi/skills/codex-delegate/SKILL.md",
+      "mode": "100644",
+      "git_blob": "ee049be2a640b87d25ea3dd86739c006d828392b"
+    },
+    {
+      "path": "pi/skills/codex-delegate/agents/openai.yaml",
+      "mode": "100644",
+      "git_blob": "f42a37bfc2e7d5e6ba000edec85507443d6cfeb5"
+    },
+    {
+      "path": "pi/skills/codex-delegate/examples/context-artifact-investigate.md",
+      "mode": "100644",
+      "git_blob": "710e64ef4a512035014323eab96c0bdfbbfc66f9"
+    },
+    {
+      "path": "pi/skills/codex-delegate/examples/context-artifact-resume.md",
+      "mode": "100644",
+      "git_blob": "b810f09986e36ce19aef9c8a2b7205ae0065bace"
+    },
+    {
+      "path": "pi/skills/codex-delegate/examples/feedback-processing.md",
+      "mode": "100644",
+      "git_blob": "d8b31bbfd2b8992704429dbf3decd9f83f55de96"
+    },
+    {
+      "path": "pi/skills/codex-delegate/examples/manual-context.md",
+      "mode": "100644",
+      "git_blob": "f482ba132ae9335d235effe4cb9eb469b69b7cf5"
+    },
+    {
+      "path": "pi/skills/codex-delegate/examples/multiturn-conversation.md",
+      "mode": "100644",
+      "git_blob": "ab16b2e6001a7f75af5f9489bd17a8e193ba35f3"
+    },
+    {
+      "path": "pi/skills/codex-delegate/examples/observable-progress.md",
+      "mode": "100644",
+      "git_blob": "fe92fb3bfdbd614f8f077a8f4dc40e344022753e"
+    },
+    {
+      "path": "pi/skills/codex-delegate/examples/simple-delegation.md",
+      "mode": "100644",
+      "git_blob": "a05ac3056a91eb57a3eb0668455352080f358fe1"
+    },
+    {
+      "path": "pi/skills/codex-delegate/references/progress-protocol.md",
+      "mode": "100644",
+      "git_blob": "bc56e97f2e1e06103f22febf84e1d086ed50702f"
+    },
+    {
+      "path": "pi/skills/codex-delegate/scripts/normalize-event.jq",
+      "mode": "100644",
+      "git_blob": "af7f3a5821b7ba441a2aeeafea0688ee12aa9086"
+    },
+    {
+      "path": "pi/skills/codex-delegate/scripts/run-codex.sh",
+      "mode": "100755",
+      "git_blob": "7bbe1c6093a036eb3fe0f533c17d2aa8a3a09803"
+    },
+    {
+      "path": "pi/skills/codex-delegate/tests/fixtures/fake-codex.sh",
+      "mode": "100755",
+      "git_blob": "302583de343211b30d1843ab46076c995cf701a1"
+    },
+    {
+      "path": "pi/skills/codex-delegate/tests/fixtures/read-only-smoke-prompt.txt",
+      "mode": "100644",
+      "git_blob": "e9cab5881cab96f42e76aff0bad90e19a36a2f56"
+    },
+    {
+      "path": "pi/skills/codex-delegate/tests/fixtures/read-only-smoke-resume-prompt.txt",
+      "mode": "100644",
+      "git_blob": "c923c5216eb2edaaaaf6ad6ab291f9161fb97e3e"
+    },
+    {
+      "path": "pi/skills/codex-delegate/tests/test-delegation.sh",
+      "mode": "100755",
+      "git_blob": "f0483d0cfe95638944102475bc4dc8bb5c5c6e8a"
+    },
+    {
+      "path": "pi/skills/codex-delegate/tests/test-multiturn.sh",
+      "mode": "100755",
+      "git_blob": "6f6e1b2a82a9866b8aafbbf39a7318d910ea283c"
+    },
+    {
+      "path": "pi/skills/codex-delegate/tests/test-observe.sh",
+      "mode": "100755",
+      "git_blob": "f1d4d34274ccf3b8d927944b28250718b6289f79"
+    },
+    {
+      "path": "pi/skills/codex-delegate/tests/test-progress.sh",
+      "mode": "100755",
+      "git_blob": "c073b156ad86ea9af8fed0f3abb7f4b847635135"
+    },
+    {
+      "path": "pi/skills/codex-delegate/tests/test-runner.sh",
+      "mode": "100755",
+      "git_blob": "e4c314bbcc04a83485ca7bddbd4a20d45c593170"
+    },
+    {
+      "path": "pi/skills/cpp-database-kernel/SKILL.md",
+      "mode": "100644",
+      "git_blob": "384ac9753ef23aeca7ebb9cb495017deec6910a3"
+    },
+    {
+      "path": "pi/skills/neovim-plugin-development/SKILL.md",
+      "mode": "100644",
+      "git_blob": "475ef30d798e0c9eb3e50459135e8a29644c9bed"
+    },
+    {
+      "path": "pi/skills/safe-linux-scripting/SKILL.md",
+      "mode": "100644",
+      "git_blob": "3064ce2c73c81508f0140974a54f39354c31ff86"
+    },
+    {
+      "path": "pi/spark.template.jsonc",
+      "mode": "100644",
+      "git_blob": "475289a882f22d364fd0d272cb661135dbd4bbaa"
+    },
+    {
+      "path": "pi/subagents.template.json",
+      "mode": "100644",
+      "git_blob": "30b849024408f270c4ad51cd2ed8d2128d5c7643"
+    },
+    {
+      "path": "pi/themes/Ayu Dark.json",
+      "mode": "100644",
+      "git_blob": "af97180174384d7fa967bd0fb0dd4d04aa86641d"
+    },
+    {
+      "path": "pi/themes/Catppuccin Mocha.json",
+      "mode": "100644",
+      "git_blob": "ad0ea2793bab41e461cb3638b57e296321384d47"
+    },
+    {
+      "path": "pi/themes/Dracula.json",
+      "mode": "100644",
+      "git_blob": "fb43d52d63857ce5b132707366a62a3c5245052a"
+    },
+    {
+      "path": "pi/themes/Everforest Dark.json",
+      "mode": "100644",
+      "git_blob": "aba0fc5a3b623168ef66e7126f5cc80828915b11"
+    },
+    {
+      "path": "pi/themes/Gruvbox Dark.json",
+      "mode": "100644",
+      "git_blob": "84757d5970c1e43ef7045ed9138b27b49b6798ce"
+    },
+    {
+      "path": "pi/themes/Kanagawa Wave.json",
+      "mode": "100644",
+      "git_blob": "6016824a516a1a0f48f83ac36f5de245f7b36dbd"
+    },
+    {
+      "path": "pi/themes/Nord.json",
+      "mode": "100644",
+      "git_blob": "27f9ee5487d827d5dabb7227916051f92c57c9f2"
+    },
+    {
+      "path": "pi/themes/One Dark.json",
+      "mode": "100644",
+      "git_blob": "64b6b92e0002516f077b01bd9209512014e993c4"
+    },
+    {
+      "path": "pi/themes/Rosé Pine.json",
+      "mode": "100644",
+      "git_blob": "7579849eea1ba505752ab0eed864e7bd228fb49e"
+    },
+    {
+      "path": "pi/themes/Tokyo Night.json",
+      "mode": "100644",
+      "git_blob": "5608394505ea896b03ab4eb8517d3c8a5101f8b6"
+    },
+    {
+      "path": "pi/themes/poimandres.json",
+      "mode": "100644",
+      "git_blob": "c9e8e8fd27ad727bfd5b976c5f04b6e093097966"
+    },
+    {
+      "path": "skill/codex-delegate/SKILL.md",
+      "mode": "100644",
+      "git_blob": "ee049be2a640b87d25ea3dd86739c006d828392b"
+    },
+    {
+      "path": "skill/codex-delegate/agents/openai.yaml",
+      "mode": "100644",
+      "git_blob": "f42a37bfc2e7d5e6ba000edec85507443d6cfeb5"
+    },
+    {
+      "path": "skill/codex-delegate/examples/context-artifact-investigate.md",
+      "mode": "100644",
+      "git_blob": "710e64ef4a512035014323eab96c0bdfbbfc66f9"
+    },
+    {
+      "path": "skill/codex-delegate/examples/context-artifact-resume.md",
+      "mode": "100644",
+      "git_blob": "b810f09986e36ce19aef9c8a2b7205ae0065bace"
+    },
+    {
+      "path": "skill/codex-delegate/examples/feedback-processing.md",
+      "mode": "100644",
+      "git_blob": "d8b31bbfd2b8992704429dbf3decd9f83f55de96"
+    },
+    {
+      "path": "skill/codex-delegate/examples/manual-context.md",
+      "mode": "100644",
+      "git_blob": "f482ba132ae9335d235effe4cb9eb469b69b7cf5"
+    },
+    {
+      "path": "skill/codex-delegate/examples/multiturn-conversation.md",
+      "mode": "100644",
+      "git_blob": "ab16b2e6001a7f75af5f9489bd17a8e193ba35f3"
+    },
+    {
+      "path": "skill/codex-delegate/examples/observable-progress.md",
+      "mode": "100644",
+      "git_blob": "fe92fb3bfdbd614f8f077a8f4dc40e344022753e"
+    },
+    {
+      "path": "skill/codex-delegate/examples/simple-delegation.md",
+      "mode": "100644",
+      "git_blob": "a05ac3056a91eb57a3eb0668455352080f358fe1"
+    },
+    {
+      "path": "skill/codex-delegate/references/progress-protocol.md",
+      "mode": "100644",
+      "git_blob": "bc56e97f2e1e06103f22febf84e1d086ed50702f"
+    },
+    {
+      "path": "skill/codex-delegate/scripts/normalize-event.jq",
+      "mode": "100644",
+      "git_blob": "af7f3a5821b7ba441a2aeeafea0688ee12aa9086"
+    },
+    {
+      "path": "skill/codex-delegate/scripts/run-codex.sh",
+      "mode": "100755",
+      "git_blob": "7bbe1c6093a036eb3fe0f533c17d2aa8a3a09803"
+    },
+    {
+      "path": "skill/codex-delegate/tests/fixtures/fake-codex.sh",
+      "mode": "100755",
+      "git_blob": "302583de343211b30d1843ab46076c995cf701a1"
+    },
+    {
+      "path": "skill/codex-delegate/tests/fixtures/read-only-smoke-prompt.txt",
+      "mode": "100644",
+      "git_blob": "e9cab5881cab96f42e76aff0bad90e19a36a2f56"
+    },
+    {
+      "path": "skill/codex-delegate/tests/fixtures/read-only-smoke-resume-prompt.txt",
+      "mode": "100644",
+      "git_blob": "c923c5216eb2edaaaaf6ad6ab291f9161fb97e3e"
+    },
+    {
+      "path": "skill/codex-delegate/tests/test-delegation.sh",
+      "mode": "100755",
+      "git_blob": "f0483d0cfe95638944102475bc4dc8bb5c5c6e8a"
+    },
+    {
+      "path": "skill/codex-delegate/tests/test-multiturn.sh",
+      "mode": "100755",
+      "git_blob": "6f6e1b2a82a9866b8aafbbf39a7318d910ea283c"
+    },
+    {
+      "path": "skill/codex-delegate/tests/test-observe.sh",
+      "mode": "100755",
+      "git_blob": "f1d4d34274ccf3b8d927944b28250718b6289f79"
+    },
+    {
+      "path": "skill/codex-delegate/tests/test-progress.sh",
+      "mode": "100755",
+      "git_blob": "c073b156ad86ea9af8fed0f3abb7f4b847635135"
+    },
+    {
+      "path": "skill/codex-delegate/tests/test-runner.sh",
+      "mode": "100755",
+      "git_blob": "e4c314bbcc04a83485ca7bddbd4a20d45c593170"
+    },
+    {
+      "path": "skill/model-delegate/API.md",
+      "mode": "100644",
+      "git_blob": "af72ddb4317f8ff788de88d8cb879dba5cabe640"
+    },
+    {
+      "path": "skill/model-delegate/README.md",
+      "mode": "100644",
+      "git_blob": "454ef6a02684785fc64f0c7dd8cada96f85b37be"
+    },
+    {
+      "path": "skill/model-delegate/SKILL.md",
+      "mode": "100644",
+      "git_blob": "49e7545b06eb0875ea735cf5a974996031fad599"
+    },
+    {
+      "path": "skill/model-delegate/USAGE.md",
+      "mode": "100644",
+      "git_blob": "42c1828fa45c047d0ce2193e003ce97e24afefcb"
+    },
+    {
+      "path": "skill/model-delegate/schemas/event-v1.json",
+      "mode": "100644",
+      "git_blob": "2295b68119472747e8d074d2ef459c42b1dbb55c"
+    },
+    {
+      "path": "skill/model-delegate/schemas/receipt-v1.json",
+      "mode": "100644",
+      "git_blob": "ee4895f4989944a8cad9ccb29e3074bba280291f"
+    },
+    {
+      "path": "skill/model-delegate/scripts/backends/codex-normalize.jq",
+      "mode": "100644",
+      "git_blob": "2e6e7d49473dfd1b51b90eead76a890a79a20630"
+    },
+    {
+      "path": "skill/model-delegate/scripts/backends/codex.sh",
+      "mode": "100755",
+      "git_blob": "a974bbb41f652b6883efe6e48cbd46ba42b808a8"
+    },
+    {
+      "path": "skill/model-delegate/scripts/backends/pi-normalize.jq",
+      "mode": "100644",
+      "git_blob": "5292882146863f122e0eca0e16dfe36bb91a7496"
+    },
+    {
+      "path": "skill/model-delegate/scripts/backends/pi.sh",
+      "mode": "100644",
+      "git_blob": "696e23b5bb2ba14405c5826c9f182cd01f737e79"
+    },
+    {
+      "path": "skill/model-delegate/scripts/backends/test-fake.sh",
+      "mode": "100644",
+      "git_blob": "8a0f654221a947929a83a26fff741ee21bb6352a"
+    },
+    {
+      "path": "skill/model-delegate/scripts/codex-probe.sh",
+      "mode": "100755",
+      "git_blob": "6e9b25e38f955da67f17d1b1c268d3c9ecbdfc73"
+    },
+    {
+      "path": "skill/model-delegate/scripts/lib/contract.sh",
+      "mode": "100644",
+      "git_blob": "5af68bc729512e24acc7dd0ee18da18acc6f5821"
+    },
+    {
+      "path": "skill/model-delegate/scripts/lib/credentials.sh",
+      "mode": "100644",
+      "git_blob": "6d5c0fa3223a7d63d0f3a2ca77eece5dd4db815e"
+    },
+    {
+      "path": "skill/model-delegate/scripts/lib/memory.sh",
+      "mode": "100644",
+      "git_blob": "10f36e6df7eba3783a251a0daba4e31a7c6aafc3"
+    },
+    {
+      "path": "skill/model-delegate/scripts/lib/retry.sh",
+      "mode": "100644",
+      "git_blob": "5f4d42a62f200f43f71a26f14a4893db3d19d97b"
+    },
+    {
+      "path": "skill/model-delegate/scripts/lib/routing.sh",
+      "mode": "100644",
+      "git_blob": "ec581d49f0f0fb4df05a1188538be93cb45dc90c"
+    },
+    {
+      "path": "skill/model-delegate/scripts/lib/supervisor.sh",
+      "mode": "100644",
+      "git_blob": "3de3c5c1cc6a68c0ddc038307666ad3af3ff89b0"
+    },
+    {
+      "path": "skill/model-delegate/scripts/run-model-fanout.sh",
+      "mode": "100755",
+      "git_blob": "dbbc54b3a927057c287c7885486a6a52973f899d"
+    },
+    {
+      "path": "skill/model-delegate/scripts/run-model.sh",
+      "mode": "100755",
+      "git_blob": "9f013defb8c0808a7c08e49a350b91d2a3ca0707"
+    },
+    {
+      "path": "skill/model-delegate/tests/fixtures/codex/empty-final.jsonl",
+      "mode": "100644",
+      "git_blob": "0bdc96efb0fcca853f00e6d53c901fe4acc152c7"
+    },
+    {
+      "path": "skill/model-delegate/tests/fixtures/codex/malformed.jsonl",
+      "mode": "100644",
+      "git_blob": "151a5ec0af4780dc6d026ae6bb52984790224ba8"
+    },
+    {
+      "path": "skill/model-delegate/tests/fixtures/codex/thread-started.jsonl",
+      "mode": "100644",
+      "git_blob": "c8bd3ab18dcad06bcc4f730b5dec0d27a5fab3f0"
+    },
+    {
+      "path": "skill/model-delegate/tests/fixtures/codex/turn-completed.jsonl",
+      "mode": "100644",
+      "git_blob": "9b94efe8c94111994c494c8c9f6d0feeb866414d"
+    },
+    {
+      "path": "skill/model-delegate/tests/fixtures/codex/turn-failed.jsonl",
+      "mode": "100644",
+      "git_blob": "4dbc21c150142fa95c5b18857c7c2aefeeadd3c0"
+    },
+    {
+      "path": "skill/model-delegate/tests/fixtures/codex/usage.jsonl",
+      "mode": "100644",
+      "git_blob": "3852821afa4764f2cb18f104efb2e1f1245e7a6c"
+    },
+    {
+      "path": "skill/model-delegate/tests/fixtures/fake-backend.sh",
+      "mode": "100755",
+      "git_blob": "e8cef36e82644da23eeb36050a36660967078deb"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-backend-security.sh",
+      "mode": "100755",
+      "git_blob": "965eaabcd6f4fe1b49c9fad829ac443082fb8cff"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-codex-backend.sh",
+      "mode": "100755",
+      "git_blob": "e5f986b6516e91bd57459da27e44d5e6760efb14"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-codex-e2e.sh",
+      "mode": "100755",
+      "git_blob": "7d93a1014970d4aa4e1aa4563857243da45fbbe6"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-concurrency.sh",
+      "mode": "100755",
+      "git_blob": "e025fc2f35a137f0478cdfc1fe6e7fd620aca917"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-contract.sh",
+      "mode": "100755",
+      "git_blob": "c3901e313e418235e68b6b96fd3355d61f9e2424"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-enhancement.sh",
+      "mode": "100755",
+      "git_blob": "a5b2843e44e9fcdcbdabfcd9518566a38b75b34a"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-fanout.sh",
+      "mode": "100755",
+      "git_blob": "3701812642f9b9c5919ac5f46407cf49e08c0ae4"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-host-interop.sh",
+      "mode": "100755",
+      "git_blob": "9ef5fd85409298564fe871969a5105aceaf6070a"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-input-safety.sh",
+      "mode": "100755",
+      "git_blob": "9500d7098ef830cf3e9ee64af38b02fa8c76cbfa"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-jsonl-boundary.sh",
+      "mode": "100755",
+      "git_blob": "7e62871bd9f369efb63a11a6d1e092fbadb1157c"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-memory.sh",
+      "mode": "100755",
+      "git_blob": "aa82227405cde29a49ca84c5c99569bb14616c93"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-parallel-policy.sh",
+      "mode": "100755",
+      "git_blob": "6923aa336a2d68bd59aa8b112cb66e4988a2c60d"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-pi-backend.sh",
+      "mode": "100755",
+      "git_blob": "add461cc599d4b830eae2d787f11c44ac800ec86"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-process-group.sh",
+      "mode": "100755",
+      "git_blob": "4b19a7922dfffc0ddfea9bce54f722361a754e59"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-progress-boundary.sh",
+      "mode": "100755",
+      "git_blob": "976cec6509a9278c4c643c5b049de892d368f2e9"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-resources.sh",
+      "mode": "100755",
+      "git_blob": "49c438b92f411d7028c05fa9cfd76ec04461f8d2"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-retry-matrix.sh",
+      "mode": "100755",
+      "git_blob": "a6b78d49003de39c0e802e1b5095da7ce437be98"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-routing.sh",
+      "mode": "100755",
+      "git_blob": "4849946223c3123673f65b300f28df8f44ac3114"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-schema.sh",
+      "mode": "100755",
+      "git_blob": "00fbd1f6e8501285f3793cfc56f31e8c85883764"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-supervisor-crash.sh",
+      "mode": "100755",
+      "git_blob": "d193954fbdb778a2f576e4390d0b93df0552cf17"
+    },
+    {
+      "path": "skill/model-delegate/tests/test-supervisor.sh",
+      "mode": "100755",
+      "git_blob": "237d01c3eb73de7562769a766358ec71cfbde167"
+    },
+    {
+      "path": "templates/pi/default.template.jsonc",
+      "mode": "100644",
+      "git_blob": "609ccb2d30a0e0265f396964e1ffb0d9984cbbfc"
+    }
+  ],
+  "tree_manifest_sha256": "2e6191641c45e7506581eaaed57178c72ab212d28c0affee7ee4020da5a2dc93",
+  "targets": {
+    "pi": "0.84.4",
+    "subagents": {
+      "version": "0.19.0",
+      "commit": "e955e29c51b7a6cce37e1108cd2d6c57a77e151c",
+      "derived_version": "0.19.0-agentcfg.1"
+    },
+    "node": "24.14.0",
+    "npm": "11.19.1",
+    "bun": "1.4.0",
+    "codex": "0.154.0"
+  }
+}

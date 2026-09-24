@@ -1,0 +1,317 @@
+{
+  "schema_version": 1,
+  "sources": {
+    "pi-subagents": {
+      "kind": "git",
+      "source_path": "agents/pi/packages/subagents-vendor",
+      "package": "@tintinweb/pi-subagents",
+      "version": "0.19.0-agentcfg.1",
+      "license_files": [
+        "LICENSE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests",
+        "test-results",
+        "coverage"
+      ],
+      "commit": "e955e29c51b7a6cce37e1108cd2d6c57a77e151c"
+    },
+    "task-keeper": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/task-keeper",
+      "package": "starter-pi-task-keeper",
+      "version": "0.2.0-agentcfg.1",
+      "license_files": [
+        "LICENSE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests",
+        "test-results",
+        "coverage",
+        "migration"
+      ]
+    },
+    "model-delegate": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/model-delegate",
+      "package": "agentcfg-model-delegate",
+      "version": "0.2.0-agentcfg.1",
+      "license_files": [
+        "LICENSE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests",
+        "test-results",
+        "coverage"
+      ]
+    },
+    "pi-runtime": {
+      "kind": "local",
+      "source_path": "agents/pi/runtime",
+      "package": "@agentcfg/pi-runtime",
+      "version": "1.0.0",
+      "license_files": [
+        "NOTICE.md"
+      ],
+      "exclude": [
+        "tests",
+        "node_modules",
+        ".git"
+      ]
+    },
+    "pi-permissions": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/permission-system-vendor",
+      "package": "@gotgenes/pi-permission-system",
+      "version": "29.3.0-agentcfg.1",
+      "license_files": [
+        "LICENSE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "test",
+        "coverage"
+      ]
+    },
+    "session-yolo": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/session-yolo",
+      "package": "starter-pi-session-yolo",
+      "version": "0.1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests",
+        "test-results",
+        "coverage"
+      ]
+    },
+    "colorful-footer": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/colorful-footer",
+      "package": "starter-pi-colorful-footer",
+      "version": "0.1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests",
+        "test-results",
+        "coverage"
+      ]
+    },
+    "loop-guard": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/loop-guard",
+      "package": "starter-pi-loop-guard",
+      "version": "0.1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests",
+        "test-results",
+        "coverage"
+      ]
+    },
+    "openai-proxy": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/openai-proxy",
+      "package": "starter-pi-openai-proxy",
+      "version": "0.2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests",
+        "test-results",
+        "coverage",
+        "diagnostics.test.mjs",
+        "transport.test.mjs",
+        "routing.test.mjs"
+      ]
+    },
+    "pi-processes": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/processes-vendor",
+      "package": "@aliou/pi-processes",
+      "version": "0.11.1-agentcfg.1",
+      "license_files": [
+        "package.json",
+        "README.md",
+        "NOTICE.agentcfg.md"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "migration",
+        "tests",
+        "coverage"
+      ]
+    },
+    "openspec": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/openspec-resources",
+      "package": "agentcfg-openspec",
+      "version": "1.11.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.md"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests"
+      ]
+    },
+    "pi-rules": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/rules-vendor",
+      "package": "@tigorhutasuhut/pi-rules",
+      "version": "0.6.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests"
+      ]
+    },
+    "superpowers": {
+      "kind": "git",
+      "source_path": "agents/pi/packages/superpowers-vendor",
+      "package": "superpowers",
+      "version": "6.3.0-agentcfg.1",
+      "commit": "b36e0829c6d0140e93cfef2ca599b1b07d4a7797",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests"
+      ]
+    },
+    "pi-btw": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/btw-vendor",
+      "package": "@narumitw/pi-btw",
+      "version": "0.55.3-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests",
+        "dist"
+      ]
+    },
+    "pi-smart-compact": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/smart-compact-vendor",
+      "package": "pi-smart-compact",
+      "version": "9.6.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests"
+      ]
+    },
+    "pi-slopchop": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/slopchop-vendor",
+      "package": "pi-slopchop",
+      "version": "0.10.1-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests"
+      ]
+    },
+    "pi-mcp": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/mcp-vendor",
+      "package": "pi-mcp-adapter",
+      "version": "2.32.1-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests"
+      ]
+    },
+    "pi-readseek": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/readseek-vendor",
+      "package": "pi-readseek",
+      "version": "0.9.16-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests"
+      ]
+    },
+    "pi-web": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/web-vendor",
+      "package": "pi-web-access",
+      "version": "0.27.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests"
+      ]
+    },
+    "pi-todo": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/todo-vendor",
+      "package": "@juicesharp/rpiv-todo",
+      "version": "2.9.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "AGENTCFG-NOTICE.md"
+      ],
+      "exclude": []
+    }
+  }
+}

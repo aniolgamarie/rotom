@@ -1,0 +1,14 @@
+{
+  "name": "starter-pi-session-yolo",
+  "version": "0.1.0",
+  "description": "Session-level YOLO mode overlay for pi-permission-system with /yolo command and hard deny rules",
+  "type": "module",
+  "keywords": ["pi-package", "pi", "pi-coding-agent", "extension", "yolo", "permission"],
+  "private": true,
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}

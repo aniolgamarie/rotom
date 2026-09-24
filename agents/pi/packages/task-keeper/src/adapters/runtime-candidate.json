@@ -1,0 +1,13 @@
+{
+  "version": "0.84.4",
+  "cliSha256": "5406c369954516fb56879d685e082ff9095cd6e06e41af406f394942377fd4bf",
+  "status": "adapter-contract-tests-passed; live-route-certification-separate",
+  "modes": [
+    "rpc",
+    "tui"
+  ],
+  "api": "openai-completions",
+  "nodeVersion": "24.1.0",
+  "platform": "linux",
+  "bundleSha256": "1dfa94d6d88b01237cb5bcd6fbaed13289108ebb76e580806833be228372fd08"
+}

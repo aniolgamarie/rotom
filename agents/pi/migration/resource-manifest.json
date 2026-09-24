@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "source_revision": "c60599df39e6350123f7fb9378cfe63dc5ed814f",
+  "license_path": "agents/pi/migration/STARTER-LICENSE",
+  "files": [
+    {
+      "source_path": "pi/skills/cpp-database-kernel/SKILL.md",
+      "source_git_blob": "384ac9753ef23aeca7ebb9cb495017deec6910a3",
+      "source_mode": "100644",
+      "target_path": "shared/skills/cpp-database-kernel/SKILL.md",
+      "target_sha256": "977bd7868bc537cdc1f5cc444b1019e194578c731df6730c3eb42aa1e1d4483a",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/skills/neovim-plugin-development/SKILL.md",
+      "source_git_blob": "475ef30d798e0c9eb3e50459135e8a29644c9bed",
+      "source_mode": "100644",
+      "target_path": "shared/skills/neovim-plugin-development/SKILL.md",
+      "target_sha256": "c2d4129b8845c8b2529b172fc3fa2dbdad91ddd5737ec088e7817ccc27415865",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/skills/safe-linux-scripting/SKILL.md",
+      "source_git_blob": "3064ce2c73c81508f0140974a54f39354c31ff86",
+      "source_mode": "100644",
+      "target_path": "shared/skills/safe-linux-scripting/SKILL.md",
+      "target_sha256": "dd412371eb1e5f69eb293f0848190ecab10febba175a61fc016c7cbaf74f4c32",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/agents/scout.md",
+      "source_git_blob": "c49efd262f3433a33007d57eca10ae274ef490c5",
+      "source_mode": "100644",
+      "target_path": "agents/pi/roles/scout.md",
+      "target_sha256": "cb997da5bbfaac6f1ee3ca8fca13558a7a8f11ba47c71e00ed4da02c1a1014db",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/agents/reviewer.md",
+      "source_git_blob": "e01712c6fb3dc0438f2c9178f26304d530c55213",
+      "source_mode": "100644",
+      "target_path": "agents/pi/roles/reviewer.md",
+      "target_sha256": "ea58a4d0fe0e690142ef0e5aad6f221b0a5016ed7f7a4da84cda0f4f43be0eb1",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/prompts/commit.md",
+      "source_git_blob": "b96a24c8c667b63428385bfe2a41215169c9815e",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/commit.md",
+      "target_sha256": "42331bee83b28b8813ec2b38fa5e01af935f741c4d8a4a084b65c64171aef11e",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/prompts/debug.md",
+      "source_git_blob": "de6fbf20b969ccdfa51e74c8b2e37d1d941ec5ec",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/debug.md",
+      "target_sha256": "0aa33002b4420d3ad40042504b0f5da09d4726193ab2bb937cd913af8bdb8a82",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/prompts/docs.md",
+      "source_git_blob": "3866b05b40020571e8e08835813c1fe1c0f12096",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/docs.md",
+      "target_sha256": "edcadfab8268b4c966cc133f139981436a77b2dd559013d46eab481c0b062fef",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/prompts/explain.md",
+      "source_git_blob": "a0bbf49369d11c83e391a77f5e566d4553d5e0dc",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/explain.md",
+      "target_sha256": "08cb99ebbec7bbc99b05d2d5822a92349f417fcc42a1e94c1526d72c3263ae26",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/prompts/perf.md",
+      "source_git_blob": "0afe321dc25c2bbec1870365c345722061ea04d9",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/perf.md",
+      "target_sha256": "30063e6a86082afc21dd912058ab62944edcf02a392f807fb674f7940b02933f",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/prompts/plan.md",
+      "source_git_blob": "d0564065e7951b4cfac97c995faa36b89f25a297",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/plan.md",
+      "target_sha256": "b3cd29d5bcbf029c537194849886e235c17e56e00af784c3c9834f42fffab038",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/prompts/pr.md",
+      "source_git_blob": "536106b2570b1b4a5a24ba7e0938931a5841dd47",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/pr.md",
+      "target_sha256": "7ad3c4a8a00fd0640c911b2058e7d485d8b0f3928a2def233c1a645558942c08",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/prompts/refactor.md",
+      "source_git_blob": "8390bc7a895d23c29fa9c1507425d13917271e04",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/refactor.md",
+      "target_sha256": "05a51a0226edfa3fc831b4e1c3881020cd4594c5369fe17afd8ecb16d91e68e9",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/prompts/review.md",
+      "source_git_blob": "d8de4469b3be69c34d07f162668ed4617122bc3c",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/review.md",
+      "target_sha256": "751d482b2fde1c123d04dbaeca92f6e133010e5c9f65535d260f3718fbe0ca75",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/prompts/security.md",
+      "source_git_blob": "395b8d3140181033fbda3fa4e4fa94ac658ffbf4",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/security.md",
+      "target_sha256": "cba9403fe0b82936a8ff8c5f680acb1846d47191e860b183cf51ae5f6d1a374c",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/prompts/test.md",
+      "source_git_blob": "72dadaea7d01f295d2b3a810cc68db60e3b96e74",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/test.md",
+      "target_sha256": "fe4b138c0e448d95d94b4475a3267c03638f5b10cb20f97d38e4364b1f8cc4c7",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/themes/Ayu Dark.json",
+      "source_git_blob": "af97180174384d7fa967bd0fb0dd4d04aa86641d",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/Ayu Dark.json",
+      "target_sha256": "fe08ea68482174be8c825de1b4e00935265908d5928d101a046393c7ed93e65b",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/themes/Catppuccin Mocha.json",
+      "source_git_blob": "ad0ea2793bab41e461cb3638b57e296321384d47",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/Catppuccin Mocha.json",
+      "target_sha256": "5dc750217385750a19aeed04ca6b2717051e1cc70b3876988f078d9bed20587d",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/themes/Dracula.json",
+      "source_git_blob": "fb43d52d63857ce5b132707366a62a3c5245052a",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/Dracula.json",
+      "target_sha256": "04faea0f0591e39261b1b2094cd7cebc8f2958aa36225204115f9ea8e7d9d8e6",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/themes/Everforest Dark.json",
+      "source_git_blob": "aba0fc5a3b623168ef66e7126f5cc80828915b11",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/Everforest Dark.json",
+      "target_sha256": "79c33322346b6359a1efb1514f17a5d44bfe5baf5cdb00a49bebc8162d3c108d",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/themes/Gruvbox Dark.json",
+      "source_git_blob": "84757d5970c1e43ef7045ed9138b27b49b6798ce",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/Gruvbox Dark.json",
+      "target_sha256": "3568e7f3778109668f465bce5deda9d010f4a7a2ea8a70b37a698f17e83d075d",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/themes/Kanagawa Wave.json",
+      "source_git_blob": "6016824a516a1a0f48f83ac36f5de245f7b36dbd",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/Kanagawa Wave.json",
+      "target_sha256": "cb5dc94540f5a4d33222b10d6cbb9986c961b5600fbc1ff8dace9a682bf340ba",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/themes/Nord.json",
+      "source_git_blob": "27f9ee5487d827d5dabb7227916051f92c57c9f2",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/Nord.json",
+      "target_sha256": "c32e9171eaa3db4300aaefc5431d397b49ad60cfb257c9a4f97f269ee8bc554f",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/themes/One Dark.json",
+      "source_git_blob": "64b6b92e0002516f077b01bd9209512014e993c4",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/One Dark.json",
+      "target_sha256": "d4df2262f8c58a08d1eb149b6eb7f21f241f67a144e1379512c7f741c34be74f",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/themes/Rosé Pine.json",
+      "source_git_blob": "7579849eea1ba505752ab0eed864e7bd228fb49e",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/Rosé Pine.json",
+      "target_sha256": "38b35e80362e4c7d4570de067a3d1abe24dc1d316679fec1ec67fad6b6554bf7",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/themes/Tokyo Night.json",
+      "source_git_blob": "5608394505ea896b03ab4eb8517d3c8a5101f8b6",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/Tokyo Night.json",
+      "target_sha256": "f511f0d0d926e407cab34c175ffd2ecac9e6dec379f95422b09a6de27880878e",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/themes/poimandres.json",
+      "source_git_blob": "c9e8e8fd27ad727bfd5b976c5f04b6e093097966",
+      "source_mode": "100644",
+      "target_path": "agents/pi/themes/poimandres.json",
+      "target_sha256": "3d285419b6ab77267681f5aea179eb23d2293562b62170b787690250b3ffd546",
+      "adaptation": "none"
+    },
+    {
+      "source_path": "pi/AGENTS.template.md",
+      "source_git_blob": "21eff8daf005eaf3d2280493cd47fbbed67c7cf9",
+      "source_mode": "100644",
+      "target_path": "agents/pi/templates/AGENTS.template.md",
+      "target_sha256": "d972f59e10d68340be0e44789b0576ff90be3eacbcfb7ce98a1dc1b1a247c185",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/APPEND_SYSTEM.template.md",
+      "source_git_blob": "5e99a7346b48fd27fd0663d1d91423ea8b53c36c",
+      "source_mode": "100644",
+      "target_path": "agents/pi/templates/APPEND_SYSTEM.template.md",
+      "target_sha256": "ede07b5ab54bc266a0974886a1cb44214640611fa92de29c09e8496faf0dcf87",
+      "adaptation": "agentcfg-mode-routing"
+    },
+    {
+      "source_path": "pi/keybindings.template.jsonc",
+      "source_git_blob": "8893374fcfab3a065c94e9de24dae60a352afb62",
+      "source_mode": "100644",
+      "target_path": "agents/pi/templates/keybindings.template.jsonc",
+      "target_sha256": "f1309eeee6ff9d63b40c5e9bc23e3be0610702d17e55858dc149d8e65e43be62",
+      "adaptation": "none"
+    },
+    {
+      "source_path": null,
+      "source_git_blob": null,
+      "source_mode": null,
+      "target_path": "agents/pi/prompts/implement.md",
+      "target_sha256": "082c129b76364ea1f3682d7a4125e52c4ad75a86361b81245a30d9225c43e364",
+      "adaptation": "new-agentcfg-entry"
+    }
+  ],
+  "license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+}

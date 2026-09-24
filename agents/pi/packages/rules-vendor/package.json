@@ -1,0 +1,71 @@
+{
+  "name": "@tigorhutasuhut/pi-rules",
+  "version": "0.6.0-agentcfg.1",
+  "description": "Claude-compatible project rules for Pi agents and subagents",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.js",
+    "check:pack": "npm pack --dry-run --json --ignore-scripts | node -e \"let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const [{files}]=JSON.parse(s);if(!files.some(f=>f.path==='dist/index.js'))throw new Error('dist/index.js missing from npm package')})\"",
+    "check": "npm run typecheck && npm test && npm run check:pack",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "picomatch": "4.0.5",
+    "yaml": "2.9.0",
+    "typebox": "1.1.38",
+    "@agentcfg/pi-runtime": "1.0.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.81.1",
+    "@earendil-works/pi-tui": "0.81.1",
+    "@types/node": "24.3.0",
+    "@types/picomatch": "4.0.2",
+    "typescript": "5.7.3"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "keywords": [
+    "pi-package",
+    "pi",
+    "extension",
+    "rules",
+    "claude-code"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tigorlazuardi/pi-rules.git"
+  },
+  "homepage": "https://github.com/tigorlazuardi/pi-rules#readme",
+  "bugs": "https://github.com/tigorlazuardi/pi-rules/issues",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "pi": {
+    "extensions": [
+      "./dist/index.js"
+    ]
+  }
+}
