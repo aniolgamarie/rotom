@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "status": "software-inputs-frozen",
+  "created_at": "2026-09-20T00:22:22.714608Z",
+  "lock_identity": "c050a526060af559921796181c0cb77f5e32abbae1a6c4bef29be012ddbb7578",
+  "recipe_digest": "a1f595fddbf236e829fbc77ec2911f31b61e0d9c43d70f00f4b41c0489abd46a",
+  "source_digest": "032ab7213a81ad8d35a6b6cba7d1b66fb18258b404d17668735fc50545cb95ec",
+  "source_count": 38,
+  "scope_id": "001-unify-pi-capabilities",
+  "scope_revision": 2,
+  "scope_digest": "d34f3a0d3aaafa1b2ffbdd2b41e49cfd60380055d6b8d78cf65600d1595e81e6",
+  "reviewed_sources": {
+    "agents/pi/migration/resource-manifest.json": "370ca3571849b61aa284a440302e6da5b12150ca3add5c082106e372b0fde2bb",
+    "agents/pi/migration/caller-map.json": "b7fed14cb25e4e04e80a3ad799829997df5a0711c481b30ff8992d7a1ea29cac",
+    "agents/pi/NOTICE.md": "7596a5e9afa72d800a313f69ea2b6b2d56c1c3e7ecb2f3bedc22505d6733d869",
+    "agents/pi/build/recipes.json": "d8aa1894e6523040702479ef85f4dd74c8e0cb7ed96fa64452cad2b6c020d43c",
+    "agents/pi/build/readseek-source.json": "9e936c0f48c3665925fd5ea5820a74f6088a6beb50f6a3f221b25e6952b16030",
+    "agents/pi/packages/todo-vendor/SOURCE.json": "c6e23cf80faa9c05d53a39079dc4f6d15e8f7305761c2f369a27676cd0dda67b"
+  },
+  "source_audit": {
+    "resources_with_matching_digests": 31,
+    "callers_with_existing_targets": 37,
+    "legacy_runtime_dependencies": 0
+  },
+  "observed_runtimes": {
+    "linux-x86_64": {
+      "pi-default": {
+        "engine": "node",
+        "runtime_identity": "4acaa323e5258afc494d1b6a4e46feb9e93fce9bcec0afd0f73a8042601681e7"
+      },
+      "pi-managed": {
+        "engine": "node",
+        "runtime_identity": "ae237aa6cda049db9549ef7e498f4cac4518bc25a17643892e410cd99e60533f"
+      },
+      "pi-codex": {
+        "engine": "node",
+        "runtime_identity": "90cc74b0c0a35cc891d9ed39f48cd1e627c427f83a446c2c6ff219c1912b61fe"
+      },
+      "pi-cursor": {
+        "engine": "bun",
+        "runtime_identity": "c0a600ee0ec4a244fb8e34db8a514f4d2bad62434c835b262fd882382aa9413f"
+      }
+    }
+  },
+  "unverified_platforms": [
+    "linux-arm64",
+    "darwin-arm64",
+    "darwin-x86_64"
+  ],
+  "default_tests": {
+    "report": "/tmp/agentcfg-pi-mock-20260920-frozen-driver.json",
+    "python_passed": 1772,
+    "python_subtests_passed": 7,
+    "node_passed": 325
+  },
+  "release_approved": false,
+  "limitations": [
+    "software input freeze only; unobserved machine and account identities remain unset",
+    "native cold-rebuild and live evidence remain separate"
+  ]
+}

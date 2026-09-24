@@ -1,0 +1,49 @@
+{
+ "schema_version": 1,
+ "status": "software-inputs-frozen",
+ "created_at": "2026-09-21T16:30:00.000000Z",
+ "lock_identity": "32da47998e8388a84f291d217b39f105b294dd1f9676831c5e56a2709a8d28ca",
+ "source_digest": "f636308f0af290f8d4fd2ea9fdb3234624918b5b67d8fae7538a8e8dc1090af2",
+ "scope_id": "001-unify-pi-capabilities",
+ "scope_revision": 3,
+ "scope_digest": "see-pi-scope-r3.json",
+ "reviewed_sources": {
+  "agents/pi/migration/resource-manifest.json": "370ca3571849b61aa284a440302e6da5b12150ca3add5c082106e372b0fde2bb",
+  "agents/pi/migration/caller-map.json": "b7fed14cb25e4e04e80a3ad799829997df5a0711c481b30ff8992d7a1ea29cac",
+  "agents/pi/NOTICE.md": "7596a5e9afa72d800a313f69ea2b6b2d56c1c3e7ecb2f3bedc22505d6733d869",
+  "agents/pi/build/recipes.json": "d8aa1894e6523040702479ef85f4dd74c8e0cb7ed96fa64452cad2b6c020d43c",
+  "agents/pi/build/readseek-source.json": "9e936c0f48c3665925fd5ea5820a74f6088a6beb50f6a3f221b25e6952b16030",
+  "agents/pi/packages/todo-vendor/SOURCE.json": "c6e23cf80faa9c05d53a39079dc4f6d15e8f7305761c2f369a27676cd0dda67b"
+ },
+ "source_audit": {
+  "resources_with_matching_digests": 31,
+  "callers_with_existing_targets": 37,
+  "legacy_runtime_dependencies": 0
+ },
+ "observed_runtimes": {
+  "linux-x86_64": {
+   "pi-codex": {"engine": "node", "runtime_identity": "ca9c96b5247ab97a66448b547c18bcd7973b702c2dd6b231fb211394f009fbea"},
+   "pi-cursor": {"engine": "bun", "runtime_identity": "7cb35fb91b79f4ede3e44bb3042c805d2a242837e41d33057ccec1e7f50521d3"},
+   "pi-default": {"engine": "node", "runtime_identity": "06342bbf9238f49e7fab7761b9df3fdffcfeec49bd589aa582fe50802f3d4af2"},
+   "pi-managed": {"engine": "node", "runtime_identity": "ccb54c740ccf21ca1f4205f6d4264e82cbb1ca03bf92e158134eed6231cd3d86"}
+  }
+ },
+ "unverified_platforms": ["linux-arm64", "darwin-arm64", "darwin-x86_64"],
+ "default_tests": {
+  "report": "docs/acceptance/agentcfg-pi-mock-20260921-32da4799.json",
+  "pytest_passed": 1805,
+  "pytest_subtests_passed": 7,
+  "node_passed": 325
+ },
+ "cold_rebuild": {
+  "evidence": "docs/acceptance/pi-cold-32da4799/",
+  "index": "docs/acceptance/pi-cold-32da4799/index.json",
+  "profiles_passed": ["pi-default", "pi-cursor", "pi-codex", "pi-managed"]
+ },
+ "scope_evidence": {
+  "audit": "docs/acceptance/pi-evidence-audit-32da4799.md",
+  "registration": "scripts/register-pi-evidence.py",
+  "scope_r3": "docs/acceptance/pi-scope-r3.json"
+ },
+ "notes": "相对4c043f8f的增量：T098 darwin执行器（parent-loss/recovery-grants已实现、缺实机验证）、ReadSeek原生验收场景readseek-tools（default/codex全步通过）、vendor交付脚本fetch-pi-assets.py、test atime修复，及readseek原生链路七处接线修复（native_cases清单、激活时序、场景级插件选择与三绑定、独立readseek策略、driver temporary字段、rg选型.git排除、vendor九入口ensureHashInit）。6个linux/all资产vendor化不变。darwin/arm64资产保持下载模式。软件输入冻结不代表所有机器/策略/账号身份均已冻结。"
+}

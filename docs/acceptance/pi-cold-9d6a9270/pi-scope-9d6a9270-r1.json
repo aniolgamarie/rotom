@@ -1,0 +1,6061 @@
+{
+  "schema_version": 1,
+  "scope_id": "001-unify-pi-capabilities",
+  "revision": 1,
+  "created_at": "2026-09-23T10:20:00.000000Z",
+  "items": [
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V11-workflow",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V12-budget",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V14-cancel",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V15-schedule",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-direct.inspect-fix-review",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-direct.second-view",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-proxy.inspect-fix-review",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-proxy.second-view",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "codex",
+      "scenario_id": "pi-codex.live-codex",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "cursor",
+      "scenario_id": "pi-cursor.live-cursor",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "mcp",
+      "scenario_id": "pi-default.live-mcp",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "web",
+      "scenario_id": "pi-default.live-web",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "proxy",
+      "scenario_id": "pi-default.live-proxy",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "terminal",
+      "scenario_id": "pi-default.live-terminal",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V11-workflow",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V12-budget",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V14-cancel",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V15-schedule",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-direct.inspect-fix-review",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-direct.second-view",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-proxy.inspect-fix-review",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-proxy.second-view",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "codex",
+      "scenario_id": "pi-codex.live-codex",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "cursor",
+      "scenario_id": "pi-cursor.live-cursor",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "mcp",
+      "scenario_id": "pi-default.live-mcp",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "web",
+      "scenario_id": "pi-default.live-web",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "proxy",
+      "scenario_id": "pi-default.live-proxy",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "terminal",
+      "scenario_id": "pi-default.live-terminal",
+      "identity": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V11-workflow",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V12-budget",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V14-cancel",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V15-schedule",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-direct.inspect-fix-review",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-direct.second-view",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-proxy.inspect-fix-review",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-proxy.second-view",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "codex",
+      "scenario_id": "pi-codex.live-codex",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "cursor",
+      "scenario_id": "pi-cursor.live-cursor",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "bun"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "mcp",
+      "scenario_id": "pi-default.live-mcp",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "web",
+      "scenario_id": "pi-default.live-web",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "proxy",
+      "scenario_id": "pi-default.live-proxy",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "terminal",
+      "scenario_id": "pi-default.live-terminal",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "arm64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-default.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-default.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-default.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-managed.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-managed.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V11-workflow",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V12-budget",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V14-cancel",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.V15-schedule",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-direct.inspect-fix-review",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-direct.second-view",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-proxy.inspect-fix-review",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "task-keeper",
+      "scenario_id": "pi-managed.live-proxy.second-view",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "必需 Task Keeper 真实模型与双路线场景"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-codex.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-codex.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-codex.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V01-inventory",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V03-dependencies",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V04-launch",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V05-resources",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V08-recovery",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V09-supervision",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V10-manager",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V13-permissions",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V17-optional-software",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "pi-host",
+      "scenario_id": "pi-cursor.V20-cold-rebuild",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V02-schema",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V06-credentials",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V07-migration",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V18-diagnostics",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V19-dsh-compatibility",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "agentcfg-pi",
+      "scenario_id": "pi-cursor.V21-upgrade",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V16-delegate",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V22-control",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V23-batch-progress",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "model-delegate",
+      "scenario_id": "pi-cursor.V24-retirement",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "required",
+      "levels": [
+        "mock",
+        "native"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "规格要求的软件与原生验证"
+    },
+    {
+      "capability_id": "codex",
+      "scenario_id": "pi-codex.live-codex",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "cursor",
+      "scenario_id": "pi-cursor.live-cursor",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "bun"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "mcp",
+      "scenario_id": "pi-default.live-mcp",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "web",
+      "scenario_id": "pi-default.live-web",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "proxy",
+      "scenario_id": "pi-default.live-proxy",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    },
+    {
+      "capability_id": "terminal",
+      "scenario_id": "pi-default.live-terminal",
+      "identity": null,
+      "platform": {
+        "os": "darwin",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "applicability": "selected_optional",
+      "levels": [
+        "live"
+      ],
+      "evidence_paths": [],
+      "selection_reason": "用户明确选择该真实账号／服务验收"
+    }
+  ],
+  "scope_digest": "08242feda8dd622cabccc5134a034e10ea2c7ff73f6cbcd2a3fe3772bc351e9e"
+}

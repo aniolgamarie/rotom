@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "status": "software-inputs-frozen",
+  "created_at": "2026-09-20T02:01:58.584620Z",
+  "lock_identity": "484f07e9f16e070296b88ba24dcf7a5900f9d098ed1d5f43340c4f31b281dd26",
+  "recipe_digest": "c827d8692d720b3ebe4dbfb4570546afb4f1c1282ab23a4b1d06ceb9002ad4e8",
+  "source_digest": "2294e30ff067d5e577dddaba12a1ff3c4f4a6e878a597ca065feb82489ad0ba1",
+  "source_count": 38,
+  "scope_id": "001-unify-pi-capabilities",
+  "scope_revision": 2,
+  "scope_digest": "d34f3a0d3aaafa1b2ffbdd2b41e49cfd60380055d6b8d78cf65600d1595e81e6",
+  "reviewed_sources": {
+    "agents/pi/migration/resource-manifest.json": "370ca3571849b61aa284a440302e6da5b12150ca3add5c082106e372b0fde2bb",
+    "agents/pi/migration/caller-map.json": "b7fed14cb25e4e04e80a3ad799829997df5a0711c481b30ff8992d7a1ea29cac",
+    "agents/pi/NOTICE.md": "7596a5e9afa72d800a313f69ea2b6b2d56c1c3e7ecb2f3bedc22505d6733d869",
+    "agents/pi/build/recipes.json": "d8aa1894e6523040702479ef85f4dd74c8e0cb7ed96fa64452cad2b6c020d43c",
+    "agents/pi/build/readseek-source.json": "9e936c0f48c3665925fd5ea5820a74f6088a6beb50f6a3f221b25e6952b16030",
+    "agents/pi/packages/todo-vendor/SOURCE.json": "c6e23cf80faa9c05d53a39079dc4f6d15e8f7305761c2f369a27676cd0dda67b",
+    "agents/pi/dependencies.json": "c08343fa9099f1b8bf29b4a0e4b4d42dee42f316bdd962b1cfb636713d9c592f"
+  },
+  "source_audit": {
+    "resources_with_matching_digests": 31,
+    "callers_with_existing_targets": 37,
+    "legacy_runtime_dependencies": 0
+  },
+  "observed_runtimes": {
+    "linux-x86_64": {
+      "pi-codex": {
+        "engine": "node",
+        "runtime_identity": "505cf8da578ccbc3758e1155c63f592be5d1bed70e084da5e0e81eef47c4e7ef"
+      },
+      "pi-cursor": {
+        "engine": "bun",
+        "runtime_identity": "3e8b502f092a757b4b10c01b01b0ffa2eac5e469a2bd5f0bd7913fc4129f9ea3"
+      },
+      "pi-default": {
+        "engine": "node",
+        "runtime_identity": "9ee94e7bb1c96499c2448859b102c61639b1ba855587ee2738f1c5a600e3524e"
+      },
+      "pi-managed": {
+        "engine": "node",
+        "runtime_identity": "d20de5864fffe029555de893051be95f9e7a8c2709c5f618cc2ceb5550ed36d0"
+      }
+    }
+  },
+  "unverified_platforms": [
+    "linux-arm64",
+    "darwin-arm64",
+    "darwin-x86_64"
+  ],
+  "default_tests": {
+    "report": "docs/acceptance/agentcfg-pi-mock-20260920-host-namespace.json",
+    "python_passed": 1782,
+    "python_subtests_passed": 7,
+    "node_passed": 325
+  },
+  "release_approved": false,
+  "limitations": [
+    "software input freeze only; unobserved machine and account identities remain unset",
+    "native cold-rebuild and live evidence remain separate"
+  ]
+}

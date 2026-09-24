@@ -1,0 +1,121 @@
+{
+  "case": "cold-rebuild",
+  "lock_identity": "4c043f8fa2f52cc7b198a030c51f814ba937c405da100331ed75bd8a73993424",
+  "platform": "linux-x86_64",
+  "profile": "pi-cursor",
+  "reason": "two-fresh-targets-verified",
+  "schema_version": 1,
+  "status": "passed",
+  "targets": [
+    {
+      "installation": "verified",
+      "lock_identity": "4c043f8fa2f52cc7b198a030c51f814ba937c405da100331ed75bd8a73993424",
+      "native_cases": [
+        {
+          "case": "host-resources",
+          "exit_code": 0,
+          "report": "native/host-resources.json",
+          "status": "passed"
+        },
+        {
+          "case": "migration-conflicts",
+          "exit_code": 0,
+          "report": "native/migration-conflicts.json",
+          "status": "passed"
+        },
+        {
+          "case": "model-delegate-replacement",
+          "exit_code": 0,
+          "report": "native/model-delegate-replacement.json",
+          "status": "passed"
+        },
+        {
+          "case": "budget-permissions",
+          "exit_code": 0,
+          "report": "native/budget-permissions.json",
+          "status": "passed"
+        },
+        {
+          "case": "termination-recovery",
+          "exit_code": 0,
+          "report": "native/termination-recovery.json",
+          "status": "passed"
+        }
+      ],
+      "native_execution": "passed",
+      "runtime_identity": "a74b0add704611b89c1ca942b7203c68697e6d3e45edf1ce1a1cce7e4a93697e",
+      "runtime_root": "/home/weixiaoxian.wxx/.cache/agentcfg-pi-handoff/run.9EvW7wDS/pi-cursor/first/home/native-fixture/instances_root/pi/pi-cursor/runtimes/a74b0add704611b89c1ca942b7203c68697e6d3e45edf1ce1a1cce7e4a93697e",
+      "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938",
+      "steps": [
+        {
+          "exit_code": 0,
+          "step": "python-environment"
+        },
+        {
+          "exit_code": 0,
+          "step": "sync"
+        },
+        {
+          "exit_code": 0,
+          "step": "apply"
+        }
+      ],
+      "target": "first"
+    },
+    {
+      "installation": "verified",
+      "lock_identity": "4c043f8fa2f52cc7b198a030c51f814ba937c405da100331ed75bd8a73993424",
+      "native_cases": [
+        {
+          "case": "host-resources",
+          "exit_code": 0,
+          "report": "native/host-resources.json",
+          "status": "passed"
+        },
+        {
+          "case": "migration-conflicts",
+          "exit_code": 0,
+          "report": "native/migration-conflicts.json",
+          "status": "passed"
+        },
+        {
+          "case": "model-delegate-replacement",
+          "exit_code": 0,
+          "report": "native/model-delegate-replacement.json",
+          "status": "passed"
+        },
+        {
+          "case": "budget-permissions",
+          "exit_code": 0,
+          "report": "native/budget-permissions.json",
+          "status": "passed"
+        },
+        {
+          "case": "termination-recovery",
+          "exit_code": 0,
+          "report": "native/termination-recovery.json",
+          "status": "passed"
+        }
+      ],
+      "native_execution": "passed",
+      "runtime_identity": "a74b0add704611b89c1ca942b7203c68697e6d3e45edf1ce1a1cce7e4a93697e",
+      "runtime_root": "/home/weixiaoxian.wxx/.cache/agentcfg-pi-handoff/run.9EvW7wDS/pi-cursor/第二组 空格路径/home/native-fixture/instances_root/pi/pi-cursor/runtimes/a74b0add704611b89c1ca942b7203c68697e6d3e45edf1ce1a1cce7e4a93697e",
+      "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938",
+      "steps": [
+        {
+          "exit_code": 0,
+          "step": "python-environment"
+        },
+        {
+          "exit_code": 0,
+          "step": "sync"
+        },
+        {
+          "exit_code": 0,
+          "step": "apply"
+        }
+      ],
+      "target": "第二组 空格路径"
+    }
+  ]
+}

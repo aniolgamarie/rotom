@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "purpose": "spec 001 user-authorized software-scope closure",
+  "files": {
+    "README.md": "6b2a150f9e2b675c5ac67567497438e49d875e77d43af24e847e30f0b2aa8c81",
+    "check-release.json": "3c0533294b9cd72f006640c388b8b85db00e62ee180d7a719b1541aa70e74f85",
+    "cli-executions.json": "53eddddaea3717713d3ad849ff1e8b3e64ff9e796140b73d05ebe853aefb1f46",
+    "closure-audit.json": "acc6ccfd44cd7cbfe9858475317328c81d793773080d9398aa5fef418696b7d2",
+    "historical-check-release.json": "652f786a39068abb75ac508b1986d3f9f76909359d7f270cf7f07cc298b919f2",
+    "report-only.json": "3c0533294b9cd72f006640c388b8b85db00e62ee180d7a719b1541aa70e74f85",
+    "scope-amendment.json": "d9f797b6761ab130b891093201733e76bf5defceb89787ae055ccaca420a364a",
+    "scope.json": "116ea78e2b444f1468f54e6ed968617005b9c74d22ede251c43d815fafc08306",
+    "verification.json": "f26973f4b5cacfa23517a6dab9d81af0d027808bdb52088d15b14d68ac44a9fb"
+  },
+  "evidence_archive": "docs/acceptance/pi-cold-9d6a9270/index.json",
+  "evidence_archive_index_sha256": "6ac72bdf385a46f131c89b4aaa998a9df463e761e3db5da43675bd91df2255bd"
+}

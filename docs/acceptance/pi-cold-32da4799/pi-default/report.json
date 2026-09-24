@@ -1,0 +1,145 @@
+{
+  "case": "cold-rebuild",
+  "lock_identity": "32da47998e8388a84f291d217b39f105b294dd1f9676831c5e56a2709a8d28ca",
+  "platform": "linux-x86_64",
+  "profile": "pi-default",
+  "reason": "two-fresh-targets-verified",
+  "schema_version": 1,
+  "status": "passed",
+  "targets": [
+    {
+      "installation": "verified",
+      "lock_identity": "32da47998e8388a84f291d217b39f105b294dd1f9676831c5e56a2709a8d28ca",
+      "native_cases": [
+        {
+          "case": "host-resources",
+          "exit_code": 0,
+          "report": "native/host-resources.json",
+          "status": "passed"
+        },
+        {
+          "case": "migration-conflicts",
+          "exit_code": 0,
+          "report": "native/migration-conflicts.json",
+          "status": "passed"
+        },
+        {
+          "case": "model-delegate-replacement",
+          "exit_code": 0,
+          "report": "native/model-delegate-replacement.json",
+          "status": "passed"
+        },
+        {
+          "case": "budget-permissions",
+          "exit_code": 0,
+          "report": "native/budget-permissions.json",
+          "status": "passed"
+        },
+        {
+          "case": "termination-recovery",
+          "exit_code": 0,
+          "report": "native/termination-recovery.json",
+          "status": "passed"
+        },
+        {
+          "case": "readseek-tools",
+          "exit_code": 0,
+          "report": "native/readseek-tools.json",
+          "status": "passed"
+        },
+        {
+          "case": "optional-services",
+          "exit_code": 0,
+          "report": "native/optional-services.json",
+          "status": "passed"
+        }
+      ],
+      "native_execution": "passed",
+      "runtime_identity": "06342bbf9238f49e7fab7761b9df3fdffcfeec49bd589aa582fe50802f3d4af2",
+      "runtime_root": "/home/weixiaoxian.wxx/.cache/agentcfg-pi-handoff/run2.mSLsYCX7/pi-default/first/home/native-fixture/instances_root/pi/pi-default/runtimes/06342bbf9238f49e7fab7761b9df3fdffcfeec49bd589aa582fe50802f3d4af2",
+      "source_digest": "f636308f0af290f8d4fd2ea9fdb3234624918b5b67d8fae7538a8e8dc1090af2",
+      "steps": [
+        {
+          "exit_code": 0,
+          "step": "python-environment"
+        },
+        {
+          "exit_code": 0,
+          "step": "sync"
+        },
+        {
+          "exit_code": 0,
+          "step": "apply"
+        }
+      ],
+      "target": "first"
+    },
+    {
+      "installation": "verified",
+      "lock_identity": "32da47998e8388a84f291d217b39f105b294dd1f9676831c5e56a2709a8d28ca",
+      "native_cases": [
+        {
+          "case": "host-resources",
+          "exit_code": 0,
+          "report": "native/host-resources.json",
+          "status": "passed"
+        },
+        {
+          "case": "migration-conflicts",
+          "exit_code": 0,
+          "report": "native/migration-conflicts.json",
+          "status": "passed"
+        },
+        {
+          "case": "model-delegate-replacement",
+          "exit_code": 0,
+          "report": "native/model-delegate-replacement.json",
+          "status": "passed"
+        },
+        {
+          "case": "budget-permissions",
+          "exit_code": 0,
+          "report": "native/budget-permissions.json",
+          "status": "passed"
+        },
+        {
+          "case": "termination-recovery",
+          "exit_code": 0,
+          "report": "native/termination-recovery.json",
+          "status": "passed"
+        },
+        {
+          "case": "readseek-tools",
+          "exit_code": 0,
+          "report": "native/readseek-tools.json",
+          "status": "passed"
+        },
+        {
+          "case": "optional-services",
+          "exit_code": 0,
+          "report": "native/optional-services.json",
+          "status": "passed"
+        }
+      ],
+      "native_execution": "passed",
+      "runtime_identity": "06342bbf9238f49e7fab7761b9df3fdffcfeec49bd589aa582fe50802f3d4af2",
+      "runtime_root": "/home/weixiaoxian.wxx/.cache/agentcfg-pi-handoff/run2.mSLsYCX7/pi-default/第二组 空格路径/home/native-fixture/instances_root/pi/pi-default/runtimes/06342bbf9238f49e7fab7761b9df3fdffcfeec49bd589aa582fe50802f3d4af2",
+      "source_digest": "f636308f0af290f8d4fd2ea9fdb3234624918b5b67d8fae7538a8e8dc1090af2",
+      "steps": [
+        {
+          "exit_code": 0,
+          "step": "python-environment"
+        },
+        {
+          "exit_code": 0,
+          "step": "sync"
+        },
+        {
+          "exit_code": 0,
+          "step": "apply"
+        }
+      ],
+      "target": "第二组 空格路径"
+    }
+  ]
+}

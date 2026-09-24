@@ -1,0 +1,24 @@
+node:internal/modules/cjs/loader:1456
+  const err = new Error(message);
+              ^
+
+Error: Cannot find module 'typebox'
+Require stack:
+- /tmp/agentcfg-pi-git-qapqsv/snapshot/tests/fixtures/pi/tooling/package.json
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1456:15)
+    at require.resolve (node:internal/modules/helpers:163:19)
+    at resolve (file:///tmp/agentcfg-pi-git-qapqsv/snapshot/tests/fixtures/pi/mock-guard.mjs:35:126)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at resolveWithHooks (node:internal/modules/customization_hooks:417:10)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:755:14)
+    at #resolve (node:internal/modules/esm/loader:701:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:621:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:160:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:245:17) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/tmp/agentcfg-pi-git-qapqsv/snapshot/tests/fixtures/pi/tooling/package.json'
+  ]
+}
+
+Node.js v24.14.0

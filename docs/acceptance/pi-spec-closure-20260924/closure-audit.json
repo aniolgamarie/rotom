@@ -1,0 +1,19 @@
+{
+  "effective_tasks": 107,
+  "completed_tasks": 107,
+  "transferred_tasks": [
+    "T107",
+    "T108",
+    "T109",
+    "T110",
+    "T111"
+  ],
+  "new_scope_recomputed_exactly": true,
+  "historical_scope_recomputed_exactly": true,
+  "retained_items_unchanged": 81,
+  "transferred_items": 283,
+  "archive_files_unchanged": 349,
+  "ordinary_revision_guard_unchanged": true,
+  "document_links_checked": 12,
+  "broken_links": []
+}

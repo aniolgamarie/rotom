@@ -1,0 +1,133 @@
+{
+  "case": "cold-rebuild",
+  "lock_identity": "4c043f8fa2f52cc7b198a030c51f814ba937c405da100331ed75bd8a73993424",
+  "platform": "linux-x86_64",
+  "profile": "pi-codex",
+  "reason": "two-fresh-targets-verified",
+  "schema_version": 1,
+  "status": "passed",
+  "targets": [
+    {
+      "installation": "verified",
+      "lock_identity": "4c043f8fa2f52cc7b198a030c51f814ba937c405da100331ed75bd8a73993424",
+      "native_cases": [
+        {
+          "case": "host-resources",
+          "exit_code": 0,
+          "report": "native/host-resources.json",
+          "status": "passed"
+        },
+        {
+          "case": "migration-conflicts",
+          "exit_code": 0,
+          "report": "native/migration-conflicts.json",
+          "status": "passed"
+        },
+        {
+          "case": "model-delegate-replacement",
+          "exit_code": 0,
+          "report": "native/model-delegate-replacement.json",
+          "status": "passed"
+        },
+        {
+          "case": "budget-permissions",
+          "exit_code": 0,
+          "report": "native/budget-permissions.json",
+          "status": "passed"
+        },
+        {
+          "case": "termination-recovery",
+          "exit_code": 0,
+          "report": "native/termination-recovery.json",
+          "status": "passed"
+        },
+        {
+          "case": "codex-receipts",
+          "exit_code": 0,
+          "report": "native/codex-receipts.json",
+          "status": "passed"
+        }
+      ],
+      "native_execution": "passed",
+      "runtime_identity": "d519b743818eca85220ef7d52c0e6a2611c588e9bc788ead422571e54d3511e9",
+      "runtime_root": "/home/weixiaoxian.wxx/.cache/agentcfg-pi-handoff/run.9EvW7wDS/pi-codex/first/home/native-fixture/instances_root/pi/pi-codex/runtimes/d519b743818eca85220ef7d52c0e6a2611c588e9bc788ead422571e54d3511e9",
+      "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938",
+      "steps": [
+        {
+          "exit_code": 0,
+          "step": "python-environment"
+        },
+        {
+          "exit_code": 0,
+          "step": "sync"
+        },
+        {
+          "exit_code": 0,
+          "step": "apply"
+        }
+      ],
+      "target": "first"
+    },
+    {
+      "installation": "verified",
+      "lock_identity": "4c043f8fa2f52cc7b198a030c51f814ba937c405da100331ed75bd8a73993424",
+      "native_cases": [
+        {
+          "case": "host-resources",
+          "exit_code": 0,
+          "report": "native/host-resources.json",
+          "status": "passed"
+        },
+        {
+          "case": "migration-conflicts",
+          "exit_code": 0,
+          "report": "native/migration-conflicts.json",
+          "status": "passed"
+        },
+        {
+          "case": "model-delegate-replacement",
+          "exit_code": 0,
+          "report": "native/model-delegate-replacement.json",
+          "status": "passed"
+        },
+        {
+          "case": "budget-permissions",
+          "exit_code": 0,
+          "report": "native/budget-permissions.json",
+          "status": "passed"
+        },
+        {
+          "case": "termination-recovery",
+          "exit_code": 0,
+          "report": "native/termination-recovery.json",
+          "status": "passed"
+        },
+        {
+          "case": "codex-receipts",
+          "exit_code": 0,
+          "report": "native/codex-receipts.json",
+          "status": "passed"
+        }
+      ],
+      "native_execution": "passed",
+      "runtime_identity": "d519b743818eca85220ef7d52c0e6a2611c588e9bc788ead422571e54d3511e9",
+      "runtime_root": "/home/weixiaoxian.wxx/.cache/agentcfg-pi-handoff/run.9EvW7wDS/pi-codex/第二组 空格路径/home/native-fixture/instances_root/pi/pi-codex/runtimes/d519b743818eca85220ef7d52c0e6a2611c588e9bc788ead422571e54d3511e9",
+      "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938",
+      "steps": [
+        {
+          "exit_code": 0,
+          "step": "python-environment"
+        },
+        {
+          "exit_code": 0,
+          "step": "sync"
+        },
+        {
+          "exit_code": 0,
+          "step": "apply"
+        }
+      ],
+      "target": "第二组 空格路径"
+    }
+  ]
+}
