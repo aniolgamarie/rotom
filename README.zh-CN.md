@@ -4,7 +4,9 @@
 
 个人 Agent 配置管理仓库：公共规则、完整技能包、工具模板和依赖锁进入 Git，机器覆盖与 API key 留在仓库外。通过一个入口生成、检查、部署和启动独立实例；每个实例只保留上一版受管配置备份。
 
-首版实现 **DSH + ccch1mneyyy/dsh-TUI**。Pi、Codex CLI 等工具尚未适配；可复用公共核心增加适配器。Codex 订阅和 Cursor 订阅在本项目中指 DSH 内的认证/provider 接入，不等于已实现 Codex/Cursor 配置同步。
+首版实现 **DSH + ccch1mneyyy/dsh-TUI**。Pi 迁移 spec 已按约定范围完成：软件集成、Linux x86_64 四配方 mock/native 验证，以及每配方两个全新 HOME/checkout 路径的冷重建。验收候选为 `9d6a9270`；其他平台与真实账号／服务仍未验证，已转入[独立后续清单](docs/follow-ups/pi-platform-and-live-validation.md)。Pi 中的 Codex 通过 model-delegate 调用官方 CLI，旧 codex-delegate 不作为迁移目标依赖。配置入口见 [Pi 指南](docs/pi.md)，具体范围与结果见 [Pi 支持矩阵](docs/acceptance/pi-support-matrix.md)和 [spec 完成报告](docs/acceptance/pi-spec-closure-20260924/README.md)。
+
+下方新手流程面向 DSH；其中 Codex/Cursor 订阅指 DSH 内的认证/provider 接入。Pi 使用独立配方和实例登录。
 
 **第一次使用请从 [新手使用教程](docs/getting-started.md) 开始。** 教程按实际操作顺序说明准备环境、创建本机文件、安装、部署、登录、日常启动和备份恢复，并解释命令输出。仅使用 Codex/Cursor 订阅时，可以先保留空的 `[secrets]`，不需要照抄下面的私有网关示例。
 
