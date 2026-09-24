@@ -1,0 +1,879 @@
+{
+  "schema_version": 1,
+  "kind": "cold-evidence-index",
+  "lock_identity": "32da47998e8388a84f291d217b39f105b294dd1f9676831c5e56a2709a8d28ca",
+  "profiles": [
+    {
+      "profile": "pi-default",
+      "status": "passed",
+      "targets": [
+        {
+          "target": "first",
+          "installation": "verified",
+          "native_execution": "passed",
+          "runtime_identity": "06342bbf9238f49e7fab7761b9df3fdffcfeec49bd589aa582fe50802f3d4af2",
+          "source_digest": "f636308f0af290f8d4fd2ea9fdb3234624918b5b67d8fae7538a8e8dc1090af2"
+        },
+        {
+          "target": "第二组 空格路径",
+          "installation": "verified",
+          "native_execution": "passed",
+          "runtime_identity": "06342bbf9238f49e7fab7761b9df3fdffcfeec49bd589aa582fe50802f3d4af2",
+          "source_digest": "f636308f0af290f8d4fd2ea9fdb3234624918b5b67d8fae7538a8e8dc1090af2"
+        }
+      ],
+      "files": {
+        "report.json": {
+          "sha256": "fa4897af6856c0e8d8f12f1fdad80fe17e4040b4c47491efdc212e1c3d6aa11c",
+          "size": 4499
+        },
+        "first/0.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/1.stdout": {
+          "sha256": "899f3d6f3b826315a6b955a1cb43c98ff384ef6eadb51bbd87002b6de3f75453",
+          "size": 303
+        },
+        "first/2.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/1.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/0.stderr": {
+          "sha256": "bfceb27d339a385b70f2a65a3c8c8d27cab48192789e363229178dc0f48928c6",
+          "size": 577
+        },
+        "first/2.stdout": {
+          "sha256": "8af4919db23cdce0d29ab4f54291459ff52859812dce1264aa034f592a70b1d9",
+          "size": 14394
+        },
+        "first/native/migration-conflicts.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/budget-permissions.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/model-delegate-replacement.json": {
+          "sha256": "7866e53998021dab1c48817e049ecaa52f67c0bbac1271ee45a2605ded87a2e6",
+          "size": 3535
+        },
+        "first/native/migration-conflicts.json": {
+          "sha256": "cead8614df45dd8b2b5af2bd7b79b1135965102f9e0cfff3d827d320b320d98d",
+          "size": 1653
+        },
+        "first/native/budget-permissions.json": {
+          "sha256": "2741be82e2b1fe5cdad140f7610fbd0fae8c5a21fb3930f921d3ad762135276b",
+          "size": 1486
+        },
+        "first/native/readseek-tools.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/optional-services.json": {
+          "sha256": "6ef47e412199aa1dbe003a4bc8aa87d0c7dea94eeacd72cde9c9455816eacead",
+          "size": 2176
+        },
+        "first/native/optional-services.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/host-resources.json": {
+          "sha256": "b2454e12491c598eef1ea3ec29d9df870a0f63c91d4b7ddc418db1783c9056ab",
+          "size": 1469
+        },
+        "first/native/termination-recovery.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/budget-permissions.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/model-delegate-replacement.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/readseek-tools.json": {
+          "sha256": "abc3fa9705ed0d4131a654739a1fc06d9ba0ca2e377af84101f9cd825278354e",
+          "size": 1717
+        },
+        "first/native/model-delegate-replacement.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/host-resources.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/termination-recovery.json": {
+          "sha256": "6b3fff1df62d1f99dd25daa631d01d7d0967b37cf4346e14eaf07b9f34c4a877",
+          "size": 2732
+        },
+        "first/native/readseek-tools.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/termination-recovery.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/migration-conflicts.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/optional-services.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/host-resources.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/0.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/1.stdout": {
+          "sha256": "3b0b1c0a571091b1612cb2b0e527e29b2014132c18571c9aaf37f59ecf796d18",
+          "size": 320
+        },
+        "第二组 空格路径/2.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/1.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/0.stderr": {
+          "sha256": "23f861518707189b502912793a78b4c1f067a21586e540db8f72ef80843d3a49",
+          "size": 577
+        },
+        "第二组 空格路径/2.stdout": {
+          "sha256": "30605968405ac545c0d850419a89b828238e7ed525dbd54f1df1fb0c68b18e9c",
+          "size": 14411
+        },
+        "第二组 空格路径/native/migration-conflicts.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/budget-permissions.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/model-delegate-replacement.json": {
+          "sha256": "612f59a8d89b4c4fb8b6d23f0618d4111c36670f08d765127d687a3ed5d505f1",
+          "size": 3620
+        },
+        "第二组 空格路径/native/migration-conflicts.json": {
+          "sha256": "8fa3781bd754bf9b34ef0f8bc976bf64c4b44a98e89ea6848f5d6cf1737b2366",
+          "size": 1687
+        },
+        "第二组 空格路径/native/budget-permissions.json": {
+          "sha256": "49b49bb9205bd46082ff8bd9d99068f12e2fcb879b6d4623d2125bea43a97035",
+          "size": 1520
+        },
+        "第二组 空格路径/native/readseek-tools.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/optional-services.json": {
+          "sha256": "3114b710d2a5c5667bde40492629369977014705e4dd80177193fdfcd5e6de01",
+          "size": 2244
+        },
+        "第二组 空格路径/native/optional-services.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/host-resources.json": {
+          "sha256": "25f0cf5ff5ce967bc46386f38e30d3be447f246a7e09241ec90d0ffa4fb1933b",
+          "size": 1503
+        },
+        "第二组 空格路径/native/termination-recovery.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/budget-permissions.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/model-delegate-replacement.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/readseek-tools.json": {
+          "sha256": "423edeaea74d69d725008dec3a65c79027205577cd78c972d8cf0514d13e49c3",
+          "size": 1751
+        },
+        "第二组 空格路径/native/model-delegate-replacement.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/host-resources.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/termination-recovery.json": {
+          "sha256": "764b28ff7502cf290ca1832d5723914f91384d939ef2747359e2dbe94b3c3ce8",
+          "size": 2800
+        },
+        "第二组 空格路径/native/readseek-tools.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/termination-recovery.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/migration-conflicts.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/optional-services.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/host-resources.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        }
+      }
+    },
+    {
+      "profile": "pi-cursor",
+      "status": "passed",
+      "targets": [
+        {
+          "target": "first",
+          "installation": "verified",
+          "native_execution": "passed",
+          "runtime_identity": "a74b0add704611b89c1ca942b7203c68697e6d3e45edf1ce1a1cce7e4a93697e",
+          "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938"
+        },
+        {
+          "target": "第二组 空格路径",
+          "installation": "verified",
+          "native_execution": "passed",
+          "runtime_identity": "a74b0add704611b89c1ca942b7203c68697e6d3e45edf1ce1a1cce7e4a93697e",
+          "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938"
+        }
+      ],
+      "files": {
+        "report.json": {
+          "sha256": "a51b800e2fbc2161e94c4e81ceb20bb07621866ac99533817c630d769d3f9a39",
+          "size": 3832
+        },
+        "first/0.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/1.stdout": {
+          "sha256": "07f443a00ac65dc4cfa107c78fb29471177414d30b5db62a9ecd2cc66e222603",
+          "size": 299
+        },
+        "first/2.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/1.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/0.stderr": {
+          "sha256": "bdce784f4a7c86cc54701193d386a7abe5c6f86dd5507de7b1d6955a4ea7dc3b",
+          "size": 575
+        },
+        "first/2.stdout": {
+          "sha256": "85ca5495b3723235239844a21eaf9eb033f680f81ee25a3864385e94c8212523",
+          "size": 14390
+        },
+        "first/native/migration-conflicts.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/budget-permissions.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/model-delegate-replacement.json": {
+          "sha256": "5c9c117167736a2789712f8d48f54a94a6a9e14f63bd20b91a68a0c6a21e9faa",
+          "size": 2867
+        },
+        "first/native/migration-conflicts.json": {
+          "sha256": "945fe028b9ea5225874d2b10a2b2aaeae0e870c6efde36b7d3911d064c12df41",
+          "size": 1647
+        },
+        "first/native/budget-permissions.json": {
+          "sha256": "e2ff21cd2d9dae3c5385c66aa52a4f0dec189f0b4410fe8b6d7e7d18b5312543",
+          "size": 1480
+        },
+        "first/native/host-resources.json": {
+          "sha256": "97b56411ad1a01d57978e12197d8f0ea854d53283fafd6ba941e1c8e5a14bfca",
+          "size": 1463
+        },
+        "first/native/termination-recovery.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/budget-permissions.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/model-delegate-replacement.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/model-delegate-replacement.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/host-resources.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/termination-recovery.json": {
+          "sha256": "f1a559f2eba529ec4a96930b3f01626a14f592485c25f61e4c1b23b58a3739ae",
+          "size": 2722
+        },
+        "first/native/termination-recovery.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/migration-conflicts.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/host-resources.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/0.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/1.stdout": {
+          "sha256": "96a2b4c150bf799e70382c86d42ad49d69fc8afbf6b2c007e11202c20e0beb16",
+          "size": 316
+        },
+        "第二组 空格路径/2.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/1.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/0.stderr": {
+          "sha256": "09a43489bbba6ec1deda51cb65e22ae71294bcd50554d80fde779b4094980a1d",
+          "size": 576
+        },
+        "第二组 空格路径/2.stdout": {
+          "sha256": "a673d03604aa1f8e0f926fce577832387835d9c0d7f6f6d84cc18b6c8edd847b",
+          "size": 14407
+        },
+        "第二组 空格路径/native/migration-conflicts.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/budget-permissions.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/model-delegate-replacement.json": {
+          "sha256": "a00ddee4a446a209f66efeb85a8d20d922214e99c537d33cce174629958d1700",
+          "size": 2935
+        },
+        "第二组 空格路径/native/migration-conflicts.json": {
+          "sha256": "f1588a1dcb68ff0735c638ee6639acc2046c8e041226bd1895d333bc2626535b",
+          "size": 1681
+        },
+        "第二组 空格路径/native/budget-permissions.json": {
+          "sha256": "382b5bcbc03fb1b36403e78b8b1766863c3eb0ab7eda301a4428494828c39734",
+          "size": 1514
+        },
+        "第二组 空格路径/native/host-resources.json": {
+          "sha256": "4b7d92cff8589447e8c78bb222d51305080bbf253e10d41e65cece1c963754d5",
+          "size": 1497
+        },
+        "第二组 空格路径/native/termination-recovery.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/budget-permissions.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/model-delegate-replacement.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/model-delegate-replacement.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/host-resources.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/termination-recovery.json": {
+          "sha256": "825d48b44525acb8d5b076b0049dcd22ebd131dbafc1b8cf3b3fd72be95b3c98",
+          "size": 2790
+        },
+        "第二组 空格路径/native/termination-recovery.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/migration-conflicts.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/host-resources.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        }
+      }
+    },
+    {
+      "profile": "pi-codex",
+      "status": "passed",
+      "targets": [
+        {
+          "target": "first",
+          "installation": "verified",
+          "native_execution": "passed",
+          "runtime_identity": "d519b743818eca85220ef7d52c0e6a2611c588e9bc788ead422571e54d3511e9",
+          "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938"
+        },
+        {
+          "target": "第二组 空格路径",
+          "installation": "verified",
+          "native_execution": "passed",
+          "runtime_identity": "d519b743818eca85220ef7d52c0e6a2611c588e9bc788ead422571e54d3511e9",
+          "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938"
+        }
+      ],
+      "files": {
+        "report.json": {
+          "sha256": "3df62bfaa01e6eb09439dc472f4fbc54e88b8cad98097f86818320e332f09d5c",
+          "size": 4151
+        },
+        "first/0.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/1.stdout": {
+          "sha256": "b8a90c65ec3d9861901daa865468bf1fd8ee2c294668d74c5ed9f0e759996b47",
+          "size": 296
+        },
+        "first/2.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/1.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/0.stderr": {
+          "sha256": "4157ddc5291c1d4a364b4ec649780c744370e23ba75a5980a178eb87e85b9268",
+          "size": 575
+        },
+        "first/2.stdout": {
+          "sha256": "4f15fa6260e72b9867c0282e428186fce7fe2def78aac54fe4020737d12bc0d1",
+          "size": 14387
+        },
+        "first/native/migration-conflicts.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/budget-permissions.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/model-delegate-replacement.json": {
+          "sha256": "ee51f9204d1ff66d7d793a21d11156a232caba15d6b2ec1963eec2d6473be4d9",
+          "size": 2863
+        },
+        "first/native/migration-conflicts.json": {
+          "sha256": "c0698fc3749a8790f5e8346e630a3ec5929e9b69d6c07ecd969483ebff111804",
+          "size": 1645
+        },
+        "first/native/budget-permissions.json": {
+          "sha256": "c0128cb74130aefcb190aedb6fbbfbbb5173006f639834b18f2a01d14215d77e",
+          "size": 1478
+        },
+        "first/native/codex-receipts.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/readseek-tools.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/codex-receipts.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/codex-receipts.json": {
+          "sha256": "611615141ade163d9bac7363b6d6e04803d2a34dab3fc3025a0b42ee99115585",
+          "size": 2784
+        },
+        "first/native/host-resources.json": {
+          "sha256": "6f1d7730f95a68dde7f63c962377e774c99116f76a7e626aebf701ad74474526",
+          "size": 1461
+        },
+        "first/native/termination-recovery.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/budget-permissions.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/model-delegate-replacement.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/readseek-tools.json": {
+          "sha256": "6e7ff64be287f1a16cf723d56f326e7af2e63dfac90783ff97cb16830c0dbd16",
+          "size": 1711
+        },
+        "first/native/model-delegate-replacement.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/host-resources.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/termination-recovery.json": {
+          "sha256": "9267082dd967a4c5a875f9a898e1668312039f589c53417fe598a53075d0f72e",
+          "size": 2718
+        },
+        "first/native/readseek-tools.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/termination-recovery.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/migration-conflicts.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/host-resources.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/0.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/1.stdout": {
+          "sha256": "77e9ee652aa32d35472b8b9f9c7b2a67346d3f76be1dff1d70271130c10468f6",
+          "size": 313
+        },
+        "第二组 空格路径/2.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/1.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/0.stderr": {
+          "sha256": "0a1fb7f9cbd46fe6067fad7e281ff3e83d86ace2be87b0ed1ea6c58455764c94",
+          "size": 576
+        },
+        "第二组 空格路径/2.stdout": {
+          "sha256": "15f6af664d1343d3f1d707bec7581933a6e4e8bac256024079f35d793aadd925",
+          "size": 14404
+        },
+        "第二组 空格路径/native/migration-conflicts.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/budget-permissions.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/model-delegate-replacement.json": {
+          "sha256": "28544b420c4da858c70eec9c719bd57f01ab2b931ec91ac1b36ba337fa01c572",
+          "size": 2931
+        },
+        "第二组 空格路径/native/migration-conflicts.json": {
+          "sha256": "b2557899ce26da5f133f80c3526685770a15e3c40e0a9df42f0ad54e3fe005d4",
+          "size": 1679
+        },
+        "第二组 空格路径/native/budget-permissions.json": {
+          "sha256": "a2f9fd626e7ee71ca6fa75c3c47e111ac2479d9cf473de4588eaf8316ec0bde0",
+          "size": 1512
+        },
+        "第二组 空格路径/native/codex-receipts.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/readseek-tools.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/codex-receipts.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/codex-receipts.json": {
+          "sha256": "ad0149ad7364db096c9c33696dc0333182a5b84f2c644abaff617758687df569",
+          "size": 2852
+        },
+        "第二组 空格路径/native/host-resources.json": {
+          "sha256": "20ea73f58b38c3ec278cc8793005bb7b76cb13c17273f42857992607dc08731c",
+          "size": 1495
+        },
+        "第二组 空格路径/native/termination-recovery.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/budget-permissions.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/model-delegate-replacement.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/readseek-tools.json": {
+          "sha256": "44dea269cff7f7785264747c9c317dbf6681d94b2ddf27b31990feb68865e44a",
+          "size": 1745
+        },
+        "第二组 空格路径/native/model-delegate-replacement.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/host-resources.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/termination-recovery.json": {
+          "sha256": "bd4bad93615913bc49d1769e18da7dd08cace5c125f5fb7289c54023a36a618f",
+          "size": 2786
+        },
+        "第二组 空格路径/native/readseek-tools.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/termination-recovery.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/migration-conflicts.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/host-resources.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        }
+      }
+    },
+    {
+      "profile": "pi-managed",
+      "status": "passed",
+      "targets": [
+        {
+          "target": "first",
+          "installation": "verified",
+          "native_execution": "passed",
+          "runtime_identity": "c57d22bc1fd755958a92797c39944e53eaf49b3f9212f6bc92cddff716549e27",
+          "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938"
+        },
+        {
+          "target": "第二组 空格路径",
+          "installation": "verified",
+          "native_execution": "passed",
+          "runtime_identity": "c57d22bc1fd755958a92797c39944e53eaf49b3f9212f6bc92cddff716549e27",
+          "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938"
+        }
+      ],
+      "files": {
+        "report.json": {
+          "sha256": "2553e5b855e22ecb9cdf15591e330e315ad444d78bed8fc779d1aca6da9d6c89",
+          "size": 3813
+        },
+        "first/0.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/1.stdout": {
+          "sha256": "8bf1f91d9c7e89629e4e46f24bdce889c2ddf5108918951730cfc53a18c7f9c1",
+          "size": 302
+        },
+        "first/2.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/1.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/0.stderr": {
+          "sha256": "701af688e2feedf3f18c9108d82bcd53fc91603e67627e26c626271ac5c6d3ac",
+          "size": 576
+        },
+        "first/2.stdout": {
+          "sha256": "14dbf9d3f443ff259a061e977a9d02a6287d72a5f84f62e67322f3e26b9f0e6e",
+          "size": 5730
+        },
+        "first/native/migration-conflicts.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/budget-permissions.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/migration-conflicts.json": {
+          "sha256": "ef434e8d72d1be7599b4bc5c8b9bca49f058aabc6be9df3ccf419e9a49e2ca57",
+          "size": 1687
+        },
+        "first/native/budget-permissions.json": {
+          "sha256": "9fd08dd615ff16ab4bf90b534433afcc7853fbd87acb6d652c8746ce3843f108",
+          "size": 2233
+        },
+        "first/native/host-resources.json": {
+          "sha256": "b9a3e53715e948bfe6b235bf3b475b0d3a1fb8698ac54e14e128ca94e0b7df77",
+          "size": 1481
+        },
+        "first/native/termination-recovery.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/budget-permissions.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/taskkeeper-lifecycle.json": {
+          "sha256": "37606273d908e25c15bdd569ebb3c7bacc6f605bae553e05b2a104ec9f1b8920",
+          "size": 8686
+        },
+        "first/native/host-resources.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/termination-recovery.json": {
+          "sha256": "c5b5c5e4706ff49946f07b78976b7cd1da099b91ff51d9b18205491e689f8004",
+          "size": 2683
+        },
+        "first/native/taskkeeper-lifecycle.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/termination-recovery.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/migration-conflicts.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/host-resources.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "first/native/taskkeeper-lifecycle.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/0.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/1.stdout": {
+          "sha256": "a2d7ece45a601395a3899f870e9ec3b2a8849895a525c5dd9c0e46e8a88e7d48",
+          "size": 319
+        },
+        "第二组 空格路径/2.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/1.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/0.stderr": {
+          "sha256": "c879aec7b8b533f5294b65f55d3a5c1c04e322d33e3f79e2822cde9996752dbd",
+          "size": 576
+        },
+        "第二组 空格路径/2.stdout": {
+          "sha256": "11c6f34a3a38cfef8a83675fb41ffde922e045a518f2874d3d82c929694e41da",
+          "size": 5747
+        },
+        "第二组 空格路径/native/migration-conflicts.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/budget-permissions.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/migration-conflicts.json": {
+          "sha256": "277ac954d8a717cd98ce18f218f51229da22d554d6f0256bd719a3acde30debf",
+          "size": 1721
+        },
+        "第二组 空格路径/native/budget-permissions.json": {
+          "sha256": "1f64a9cc16ea23090f7c018de40a681b50cb091e763fafe8e4e452e791d51034",
+          "size": 2284
+        },
+        "第二组 空格路径/native/host-resources.json": {
+          "sha256": "2fa3fae9edde2608007b0f2ac2405a08b10989cc6686b6074fedc2d6288ee289",
+          "size": 1515
+        },
+        "第二组 空格路径/native/termination-recovery.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/budget-permissions.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/taskkeeper-lifecycle.json": {
+          "sha256": "3466a2ab5e7b5d14d54461ef7d499ec49f1c5e2c0f9328dee66c632d33fd56ac",
+          "size": 8890
+        },
+        "第二组 空格路径/native/host-resources.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/termination-recovery.json": {
+          "sha256": "07ea35c3413c40ee998965744a5e2d4c227fdd1278aa93899a83033c352986bc",
+          "size": 2751
+        },
+        "第二组 空格路径/native/taskkeeper-lifecycle.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/termination-recovery.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/migration-conflicts.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/host-resources.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "第二组 空格路径/native/taskkeeper-lifecycle.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        }
+      }
+    }
+  ]
+}

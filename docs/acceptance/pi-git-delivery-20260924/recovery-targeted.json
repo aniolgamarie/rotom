@@ -1,0 +1,98 @@
+[
+  {
+    "attempt": 1,
+    "command": [
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_pi_recovery_protocol_surrogate.py"
+    ],
+    "exit_code": 0,
+    "stdout": "......                                                                   [100%]\n6 passed in 0.92s\n",
+    "stderr": ""
+  },
+  {
+    "attempt": 2,
+    "command": [
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_pi_recovery_protocol_surrogate.py"
+    ],
+    "exit_code": 0,
+    "stdout": "......                                                                   [100%]\n6 passed in 3.29s\n",
+    "stderr": ""
+  },
+  {
+    "attempt": 3,
+    "command": [
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_pi_recovery_protocol_surrogate.py"
+    ],
+    "exit_code": 0,
+    "stdout": "......                                                                   [100%]\n6 passed in 3.22s\n",
+    "stderr": ""
+  },
+  {
+    "attempt": 4,
+    "command": [
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_pi_recovery_protocol_surrogate.py"
+    ],
+    "exit_code": 0,
+    "stdout": "......                                                                   [100%]\n6 passed in 1.09s\n",
+    "stderr": ""
+  },
+  {
+    "attempt": 5,
+    "command": [
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_pi_recovery_protocol_surrogate.py"
+    ],
+    "exit_code": 0,
+    "stdout": "......                                                                   [100%]\n6 passed in 0.99s\n",
+    "stderr": ""
+  },
+  {
+    "attempt": 6,
+    "command": [
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_pi_recovery_protocol_surrogate.py"
+    ],
+    "exit_code": 0,
+    "stdout": "......                                                                   [100%]\n6 passed in 0.99s\n",
+    "stderr": ""
+  }
+]

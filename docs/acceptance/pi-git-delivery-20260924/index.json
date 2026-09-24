@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "files": {
+    "README.md": "ba02490885e261d2e2c17f530c1016c5fd2bf7cf72b214f6074dfab63f49598e",
+    "recovery-targeted.json": "9220bcb2eebf9e31cdb8b2f04691f01b308b2cf25c36387673a537193e0fce37",
+    "snapshot-mock-final.json": "2c6f2a44766ad5ecf579cbe52f89e073351285c65c20726af60bfb8b8016a7b3",
+    "snapshot-mock-final.json.artifacts/node.stderr": "e4866c012633bfd560d5237d97ea5c55d6ac1d0ed1168a1a012c475cde8718ee",
+    "snapshot-mock-final.json.artifacts/node.stdout": "62736aeb44343e5f87335ad2e85f5f2055a18a5540e88b797839debaf9a61451",
+    "snapshot-mock-final.json.artifacts/pytest.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "snapshot-mock-final.json.artifacts/pytest.stdout": "c484d3789c649215139beb60f10f3e30dfdb9293768d28e82be627cb7be7595e",
+    "snapshot-mock.json": "ca38220e3a90fa7fd22042dc4ca82668e28f2a54bf8b35e219b60e13a782f682",
+    "snapshot-mock.json.artifacts/node.stderr": "15de7096b5c3c104c0d2af8aa6d4b7db487ed7a599a8b6a9dacdea7e605889dd",
+    "snapshot-mock.json.artifacts/node.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "snapshot-mock.json.artifacts/pytest.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "snapshot-mock.json.artifacts/pytest.stdout": "990785539520f71ae0e1c68f427e7b9ed6e79a09d6c8c2e0d75aba904d3cf34f"
+  }
+}

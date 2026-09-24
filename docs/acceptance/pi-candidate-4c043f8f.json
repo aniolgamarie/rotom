@@ -1,0 +1,45 @@
+{
+ "schema_version": 1,
+ "status": "software-inputs-frozen",
+ "created_at": "2026-09-21T04:30:00.000000Z",
+ "lock_identity": "4c043f8fa2f52cc7b198a030c51f814ba937c405da100331ed75bd8a73993424",
+ "recipe_digest": "c3cdf314a1113a67be922b4a27423dbd012a76426ea49a89d033ae13f77f96b8",
+ "source_digest": "615713e72cd2803b907957f7e568bb3b0ef567b4ff88f337e8c5919e3b2e1938",
+ "scope_id": "001-unify-pi-capabilities",
+ "scope_revision": 2,
+ "scope_digest": "d34f3a0d3aaafa1b2ffbdd2b41e49cfd60380055d6b8d78cf65600d1595e81e6",
+ "reviewed_sources": {
+  "agents/pi/migration/resource-manifest.json": "370ca3571849b61aa284a440302e6da5b12150ca3add5c082106e372b0fde2bb",
+  "agents/pi/migration/caller-map.json": "b7fed14cb25e4e04e80a3ad799829997df5a0711c481b30ff8992d7a1ea29cac",
+  "agents/pi/NOTICE.md": "7596a5e9afa72d800a313f69ea2b6b2d56c1c3e7ecb2f3bedc22505d6733d869",
+  "agents/pi/build/recipes.json": "d8aa1894e6523040702479ef85f4dd74c8e0cb7ed96fa64452cad2b6c020d43c",
+  "agents/pi/build/readseek-source.json": "9e936c0f48c3665925fd5ea5820a74f6088a6beb50f6a3f221b25e6952b16030",
+  "agents/pi/packages/todo-vendor/SOURCE.json": "c6e23cf80faa9c05d53a39079dc4f6d15e8f7305761c2f369a27676cd0dda67b"
+ },
+ "source_audit": {
+  "resources_with_matching_digests": 31,
+  "callers_with_existing_targets": 37,
+  "legacy_runtime_dependencies": 0
+ },
+ "observed_runtimes": {
+  "linux-x86_64": {
+   "pi-codex": {"engine": "node", "runtime_identity": "d519b743818eca85220ef7d52c0e6a2611c588e9bc788ead422571e54d3511e9"},
+   "pi-cursor": {"engine": "bun", "runtime_identity": "a74b0add704611b89c1ca942b7203c68697e6d3e45edf1ce1a1cce7e4a93697e"},
+   "pi-default": {"engine": "node", "runtime_identity": "00e8a5c71be50756d7149fba51773e978518cf189a742ab60f5f3835cb30d2d4"},
+   "pi-managed": {"engine": "node", "runtime_identity": "c57d22bc1fd755958a92797c39944e53eaf49b3f9212f6bc92cddff716549e27"}
+  }
+ },
+ "unverified_platforms": ["linux-arm64", "darwin-arm64", "darwin-x86_64"],
+ "default_tests": {
+  "report": "docs/acceptance/agentcfg-pi-mock-20260921-4c043f8f.json",
+  "pytest_passed": 1787,
+  "pytest_subtests_passed": 7,
+  "node_passed": 325
+ },
+ "cold_rebuild": {
+  "evidence": "docs/acceptance/pi-cold-4c043f8f/",
+  "index": "docs/acceptance/pi-cold-4c043f8f/index.json",
+  "profiles_passed": ["pi-default", "pi-cursor", "pi-codex", "pi-managed"]
+ },
+ "notes": "相对484f07e9：T098平台验收器接线（darwin能力推导门控、darwin local_runtime slot、MacProcesses显式send_signal契约）与6个linux/all资产vendor_path化（url与固定摘要不变，sync改读locks/pi/vendor并强校验）。vendor归档总增量约1.5GB（含视觉模型）。其余38来源、profile_slices与依赖解析逐字节不变；locks/dsh不变。darwin/arm64资产保持下载模式。软件输入冻结不代表scope中所有机器/策略/模型/账号身份均已冻结。"
+}

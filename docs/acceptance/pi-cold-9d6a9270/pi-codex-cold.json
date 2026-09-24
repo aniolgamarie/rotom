@@ -1,0 +1,152 @@
+{
+  "case": "cold-rebuild",
+  "lock_identity": "9d6a927093f066c9428a5c193a636c4d73c5e64c946d24dc6a08185cf3f0dbf0",
+  "platform": "linux-x86_64",
+  "profile": "pi-codex",
+  "reason": "two-fresh-targets-verified",
+  "schema_version": 1,
+  "status": "passed",
+  "targets": [
+    {
+      "installation": "verified",
+      "lock_identity": "9d6a927093f066c9428a5c193a636c4d73c5e64c946d24dc6a08185cf3f0dbf0",
+      "native_cases": [
+        {
+          "case": "host-resources",
+          "exit_code": 0,
+          "report": "native/host-resources.json",
+          "status": "passed"
+        },
+        {
+          "case": "migration-conflicts",
+          "exit_code": 0,
+          "report": "native/migration-conflicts.json",
+          "status": "passed"
+        },
+        {
+          "case": "model-delegate-replacement",
+          "exit_code": 0,
+          "report": "native/model-delegate-replacement.json",
+          "status": "passed"
+        },
+        {
+          "case": "budget-permissions",
+          "exit_code": 0,
+          "report": "native/budget-permissions.json",
+          "status": "passed"
+        },
+        {
+          "case": "termination-recovery",
+          "exit_code": 0,
+          "report": "native/termination-recovery.json",
+          "status": "passed"
+        },
+        {
+          "case": "readseek-tools",
+          "exit_code": 0,
+          "report": "native/readseek-tools.json",
+          "status": "passed"
+        },
+        {
+          "case": "codex-receipts",
+          "exit_code": 0,
+          "report": "native/codex-receipts.json",
+          "status": "passed"
+        }
+      ],
+      "native_execution": "passed",
+      "runtime_identity": "4b031247290b8e80fbbd0306d44043faf43a611ec03650a3d83d6b6458eb2a01",
+      "runtime_root": "/tmp/pi-cold-9d6a9270/pi-codex/first/home/native-fixture/instances_root/pi/pi-codex/runtimes/4b031247290b8e80fbbd0306d44043faf43a611ec03650a3d83d6b6458eb2a01",
+      "source_digest": "8b6c81207aab0b370bac3e14c880bbf0d39e3799645f063d2155cfa9c5ca128f",
+      "steps": [
+        {
+          "exit_code": 0,
+          "step": "python-environment"
+        },
+        {
+          "exit_code": 0,
+          "step": "sync"
+        },
+        {
+          "exit_code": 0,
+          "step": "apply"
+        }
+      ],
+      "target": "first"
+    },
+    {
+      "installation": "verified",
+      "lock_identity": "9d6a927093f066c9428a5c193a636c4d73c5e64c946d24dc6a08185cf3f0dbf0",
+      "native_cases": [
+        {
+          "case": "host-resources",
+          "exit_code": 0,
+          "report": "native/host-resources.json",
+          "status": "passed"
+        },
+        {
+          "case": "migration-conflicts",
+          "exit_code": 0,
+          "report": "native/migration-conflicts.json",
+          "status": "passed"
+        },
+        {
+          "case": "model-delegate-replacement",
+          "exit_code": 0,
+          "report": "native/model-delegate-replacement.json",
+          "status": "passed"
+        },
+        {
+          "case": "budget-permissions",
+          "exit_code": 0,
+          "report": "native/budget-permissions.json",
+          "status": "passed"
+        },
+        {
+          "case": "termination-recovery",
+          "exit_code": 0,
+          "report": "native/termination-recovery.json",
+          "status": "passed"
+        },
+        {
+          "case": "readseek-tools",
+          "exit_code": 0,
+          "report": "native/readseek-tools.json",
+          "status": "passed"
+        },
+        {
+          "case": "codex-receipts",
+          "exit_code": 0,
+          "report": "native/codex-receipts.json",
+          "status": "passed"
+        }
+      ],
+      "native_execution": "passed",
+      "runtime_identity": "4b031247290b8e80fbbd0306d44043faf43a611ec03650a3d83d6b6458eb2a01",
+      "runtime_root": "/tmp/pi-cold-9d6a9270/pi-codex/第二组 空格路径/home/native-fixture/instances_root/pi/pi-codex/runtimes/4b031247290b8e80fbbd0306d44043faf43a611ec03650a3d83d6b6458eb2a01",
+      "source_digest": "8b6c81207aab0b370bac3e14c880bbf0d39e3799645f063d2155cfa9c5ca128f",
+      "steps": [
+        {
+          "exit_code": 0,
+          "step": "python-environment"
+        },
+        {
+          "exit_code": 0,
+          "step": "sync"
+        },
+        {
+          "exit_code": 0,
+          "step": "apply"
+        }
+      ],
+      "target": "第二组 空格路径"
+    }
+  ],
+  "started_at": "2026-09-23T10:34:32.624653Z",
+  "finished_at": "2026-09-23T11:33:10.086033Z",
+  "command": [
+    "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python",
+    "/data/1/weixiaoxian.wxx/pi-cold-9d6a9270-20260923/tools/driver.py",
+    "pi-codex"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "kind": "first-party-kernel-smoke",
+  "lock_identity": "484f07e9f16e070296b88ba24dcf7a5900f9d098ed1d5f43340c4f31b281dd26",
+  "real_accounts_used": false,
+  "third_party_hosts_used": false,
+  "status": "passed",
+  "checks": [
+    {
+      "name": "stdin-and-detached-descendant",
+      "artifact_directory": "/tmp/agentcfg-host-namespace-smoke-u1e5zjkf",
+      "stdin_preserved": true,
+      "namespace_pid1": true,
+      "detached_descendant_terminated": true
+    },
+    {
+      "name": "inherited-readonly-mount",
+      "artifact_directory": "/tmp/agentcfg-host-inherited-mount-x45tj8z2/writable/agentcfg-host-namespace-smoke-8612rcag",
+      "write_rejected_errno": 30,
+      "sentinel_preserved": true,
+      "termination_verified": true
+    },
+    {
+      "name": "gate-eof",
+      "artifact_directory": "/tmp/agentcfg-host-namespace-smoke-nba94dk8",
+      "exec_prevented": true,
+      "termination_verified": true
+    }
+  ],
+  "files": {
+    "src/agentcfg/pi_pid_namespace.py": "03eb11a7e4a826f03f045f2364c377c8f9abf95b38ff06b1f0d1769c7b3af320",
+    "scripts/pi-namespace-exec.py": "294baa90911e550e7d79ad0bde652e96de90ca38a47dae676abdacaa24c37d1c",
+    "src/agentcfg/pi_host.py": "9d8fa627dd8f100eb8cea88854d1117a261a610b6306725efc5e9e23b6fc3b4f"
+  },
+  "limitations": [
+    "first-party processes only; not a Pi native or live pass"
+  ]
+}

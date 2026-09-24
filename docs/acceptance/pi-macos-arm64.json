@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "kind": "platform-readiness",
+  "platform": {
+    "os": "darwin",
+    "architecture": "arm64"
+  },
+  "status": "not-run",
+  "reason": "No test machine or CI endpoint is available; user explicitly retained this platform as unverified.",
+  "profiles": [
+    "pi-default",
+    "pi-managed",
+    "pi-codex",
+    "pi-cursor"
+  ],
+  "scope_reduced": false,
+  "native_execution": false,
+  "live_execution": false,
+  "release_approved": false,
+  "limitations": [
+    "No platform pass can be inferred from Linux x86_64 or mock tests.",
+    "Platform-specific recovery, parent-loss and local-runtime validation runners remain incomplete (T098)."
+  ]
+}

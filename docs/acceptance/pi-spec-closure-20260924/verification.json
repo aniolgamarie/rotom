@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "archive_sha256_files_verified": 349,
+  "archive_index_sha256": "6ac72bdf385a46f131c89b4aaa998a9df463e761e3db5da43675bd91df2255bd",
+  "historical_report_exact_match": true,
+  "candidate": "9d6a927093f066c9428a5c193a636c4d73c5e64c946d24dc6a08185cf3f0dbf0",
+  "recipe_digest": "85fc15c3babf58e768e2b09c25f7eac031644cac220c60c16d093c87cbb9257b",
+  "lock_read_by": "agentcfg.pi_dependencies.PiBackend.read_lock",
+  "retained_items_unchanged": true,
+  "historical_counts": {
+    "passed": 81,
+    "failed": 0,
+    "not-run": 283,
+    "stale": 0,
+    "not-selected": 0
+  },
+  "new_counts": {
+    "passed": 81,
+    "failed": 0,
+    "not-run": 0,
+    "stale": 0,
+    "not-selected": 0
+  }
+}

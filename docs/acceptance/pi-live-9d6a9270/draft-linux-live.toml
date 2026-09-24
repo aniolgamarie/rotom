@@ -1,0 +1,214 @@
+# agentcfg Pi Linux x86_64 live 验收草案 v2（候选 9d6a9270）
+# 结构层已用 `agentcfg validate` 对四配方验证通过（见 offline-validation.md）。
+# TODO-* 为待用户提供的真实输入；秘密值只在私人 0600 文件填入，不经聊天/仓库。
+# 分层语义：本文件=「结构正确」；填入真实值=「仍缺输入」清零；凭据/登录=「凭据就绪」；
+# 逐项授权+apply+freeze+native 比对后才「允许实际调用」。
+schema_version = 1
+
+[machine]
+id = "obrde.dev-xd3-pi-live"                # 主机名派生，唯一、符合 schema
+default_profile = "pi-default"
+[machine.paths]
+instances_root = "/home/weixiaoxian.wxx/.local/share/agentcfg-pi-live/instances"
+state_root = "/home/weixiaoxian.wxx/.local/state/agentcfg-pi-live"
+cache_root = "/home/weixiaoxian.wxx/.cache/agentcfg-pi-live"
+
+# ── providers ────────────────────────────────────────────────────────────────
+[overrides.providers.main]
+protocol = "openai-compatible"
+base_url = "https://TODO-main-gateway.invalid/v1"   # TODO 真实网关 origin（非秘密）
+auth_kind = "api-key"
+credential_ref = "secret:main_key"
+
+[overrides.providers.codex]                        # 官方 Codex CLI OAuth，实例私有 CODEX_HOME
+protocol = "oauth-dynamic"
+auth_kind = "oauth"
+
+[overrides.providers.cursor]                       # pi-cursor 插件所有，实例私有登录
+protocol = "oauth-dynamic"
+auth_kind = "oauth"
+
+# ── models：main/scout/reviewer 可共用一个条目；second_view 必须独立 ─────────
+[overrides.models.main-chat]
+provider = "main"
+remote_id = "TODO-remote-main"
+input = ["text"]
+# TODO 真实 context_window / max_output_tokens 正整数
+[overrides.models.main-second-view]
+provider = "main"
+remote_id = "TODO-remote-second-view"
+input = ["text"]
+[overrides.models.cursor-main]
+provider = "cursor"
+remote_id = "TODO-remote-cursor"
+input = ["text"]
+
+# ── pi-default：live-mcp / live-web / live-proxy / live-terminal ─────────────
+[overrides.profiles.pi-default]
+providers = ["main"]
+models = ["main-chat", "main-second-view"]
+plugins = ["pi-subagents", "pi-permissions", "model-delegate", "pi-todo", "loop-guard",
+  "colorful-footer", "pi-readseek", "pi-mcp", "pi-web", "openai-proxy"]
+mcp = ["live-mcp-server"]
+
+[overrides.profiles.pi-default.roles]
+main = "main-chat"
+scout = "main-chat"
+reviewer = "main-chat"
+
+[overrides.mcp.live-mcp-server]
+# 形态按真实服务而定：HTTP 则如下；stdio 则改为 command/args 并配 external_tools(command_ref)。
+transport = "streamable-http"
+url = "https://todo-mcp.invalid/service"          # TODO 真实 MCP 端点
+credential_ref = "secret:mcp_token"               # TODO 或 none 认证，视服务而定
+
+[overrides.profiles.pi-default.agent_options.mcp.servers.live-mcp-server]
+transport = "streamable-http"
+network_route = "mcp-direct"
+authentication = "bearer"                         # TODO 与真实服务一致（none/bearer）
+
+[overrides.profiles.pi-default.agent_options.web]
+settings = { provider = "searxng" }              # TODO 真实提供方
+# allow_ranges 的 198.51.100.0/24 是占位 CIDR，换真实网段。
+services = { searxng = { type = "api", network_route = "web-direct", origins = ["https://todo-searxng.invalid"], allow_ranges = ["198.51.100.0/24"] } }
+endpoints = { searxngBaseUrl = "https://todo-searxng.invalid/searxng" }
+
+[overrides.profiles.pi-default.agent_options.network]
+openai_proxy_route = "models-proxy"              # openai-proxy 插件要求显式代理路线
+
+[overrides.profiles.pi-default.agent_options.network.routes.mcp-direct]
+mode = "direct"
+provider_ids = []
+service_ids = ["mcp:live-mcp-server"]
+
+[overrides.profiles.pi-default.agent_options.network.routes.web-direct]
+mode = "direct"
+provider_ids = []
+service_ids = ["web:searxng"]
+
+[overrides.profiles.pi-default.agent_options.network.routes.models-direct]
+mode = "direct"
+provider_ids = ["main"]
+
+# live-proxy：模型请求走显式代理；代理失败显式失败，不静默直连。
+[overrides.profiles.pi-default.agent_options.network.routes.models-proxy]
+mode = "proxy"
+proxy_url = "http://127.0.0.1:8123"              # TODO 真实代理端口
+provider_ids = ["main"]
+credential_ref = "secret:proxy_authorization"     # TODO 若代理需认证（完整头值，私人填入）；无认证则删除本行
+
+[overrides.profiles.pi-default.agent_options.model_delegate]
+enabled = true
+backends = ["pi"]
+allowed_modes = ["review", "investigate"]
+presets = ["general", "context", "challenge", "plan", "research", "review", "scout"]
+max_run_seconds = 1800
+# TODO context_budget_tokens 正整数
+
+# live-terminal：终端服务程序 + 三次确认状态报告
+[overrides.profiles.pi-default.agent_options.agent_state]
+mode = "service"
+executable = "/ABSOLUTE/PRIVATE/TRUSTED_AGENT_REPORT"   # TODO 真实程序绝对路径
+title = "Pi live default"
+timeout_seconds = 10
+
+[overrides.profiles.pi-default.agent_options.terminal]
+notifications = true
+
+# ── pi-managed：Task Keeper live direct/proxy × inspect-fix-review/second-view ─
+[overrides.profiles.pi-managed]
+providers = ["main"]
+models = ["main-chat", "main-second-view"]
+
+[overrides.profiles.pi-managed.roles]
+main = "main-chat"
+task_keeper_reader = "main-chat"
+task_keeper_writer = "main-chat"
+task_keeper_reviewer = "main-chat"
+second_view = "main-second-view"
+
+[overrides.profiles.pi-managed.agent_options.paths.roots.project]
+path = "/home/weixiaoxian.wxx/.local/share/agentcfg-pi-live-9d6a9270/probe-001"
+purpose = "project"
+
+[overrides.profiles.pi-managed.agent_options.permissions]
+policy_ref = "task-keeper-candidate"
+
+[overrides.profiles.pi-managed.agent_options.task_keeper]
+enabled = true
+project_root = "project"
+check_ids = ["live-probe-tests"]
+second_view_enabled = true
+max_second_view_rounds = 2
+# 建议预算（README §2 依据；执行计划确认前视为提案）：
+[overrides.profiles.pi-managed.agent_options.task_keeper.limits]
+active_children = 2
+parallel_readers = 1
+writers_per_job = 1
+model_requests = 24
+model_turns = 12
+wall_seconds = 1800
+
+[overrides.profiles.pi-managed.agent_options.checks.live-probe-tests]
+executable = "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python"   # 含 pytest 9.1.1；仓库可信路径
+args = ["-m", "pytest", "-q", "-p", "no:cacheprovider", "test_live_fixture.py"]
+project_root = "project"
+timeout_seconds = 300
+foreground = true
+kind = "tests"
+parser = "pytest"
+minimum_tests = 1
+inputs = ["test_live_fixture.py"]
+
+[overrides.profiles.pi-managed.agent_options.model_delegate]
+enabled = true
+backends = ["pi"]
+allowed_modes = ["review", "investigate"]
+presets = ["general", "context", "challenge", "plan", "research", "review", "scout"]
+max_run_seconds = 1800
+# TODO context_budget_tokens 正整数
+
+# ── pi-codex：live-codex（官方 CLI + 原生工具；实例登录，不借会话账号）───────
+[overrides.profiles.pi-codex]
+providers = ["main", "codex"]
+models = ["main-chat", "main-second-view"]
+
+[overrides.profiles.pi-codex.roles]
+main = "main-chat"
+scout = "main-chat"
+reviewer = "main-chat"
+
+[overrides.profiles.pi-codex.agent_options.model_delegate]
+enabled = true
+backends = ["pi", "codex"]
+allowed_modes = ["review", "investigate"]
+presets = ["general", "context", "challenge", "plan", "research", "review", "scout"]
+max_run_seconds = 1800
+# TODO context_budget_tokens 正整数
+[overrides.profiles.pi-codex.agent_options.model_delegate.codex]
+model = "TODO-codex-model-id"                    # requested/observed 分开记录；登录经实例 CODEX_HOME
+network_route = "codex-direct"
+mode = "readonly"
+
+[overrides.profiles.pi-codex.agent_options.network.routes.codex-direct]
+mode = "direct"
+provider_ids = ["codex"]
+
+# ── pi-cursor：live-cursor（Bun 宿主 + Cursor 账号；插件在配方内）────────────
+[overrides.profiles.pi-cursor]
+providers = ["cursor"]
+models = ["cursor-main"]
+
+[overrides.profiles.pi-cursor.roles]
+main = "cursor-main"
+scout = "cursor-main"
+reviewer = "cursor-main"
+
+# 端点与 cursor-direct 路线沿用配方默认；如本机需覆盖 [agent_options.cursor] 在此补。
+# 登录走该实例显式 Codex/Cursor 登录入口，不借用其它账号。
+
+# ── 秘密：只留键名；值由私人编辑器填入或走登录流程 ──────────────────────────
+[secrets]
+main_key = ""
+mcp_token = ""
+proxy_authorization = ""

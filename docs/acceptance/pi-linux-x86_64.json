@@ -1,0 +1,58 @@
+{
+ "schema_version": 1,
+ "kind": "platform-validation-rollup",
+ "platform": "linux-x86_64",
+ "status": "passed",
+ "lock_identity": "32da47998e8388a84f291d217b39f105b294dd1f9676831c5e56a2709a8d28ca",
+ "source_digest": "f636308f0af290f8d4fd2ea9fdb3234624918b5b67d8fae7538a8e8dc1090af2",
+ "profiles": [
+  {
+   "profile": "pi-default",
+   "cold_rebuild_status": "passed",
+   "targets": [
+    {"target": "first", "installation": "verified", "native_execution": "passed"},
+    {"target": "第二组 空格路径", "installation": "verified", "native_execution": "passed"}
+   ],
+   "report": "pi-cold-32da4799/pi-default/report.json",
+   "runtime_identity": "06342bbf9238f49e7fab7761b9df3fdffcfeec49bd589aa582fe50802f3d4af2"
+  },
+  {
+   "profile": "pi-cursor",
+   "cold_rebuild_status": "passed",
+   "targets": [
+    {"target": "first", "installation": "verified", "native_execution": "passed"},
+    {"target": "第二组 空格路径", "installation": "verified", "native_execution": "passed"}
+   ],
+   "report": "pi-cold-32da4799/pi-cursor/report.json",
+   "runtime_identity": "7cb35fb91b79f4ede3e44bb3042c805d2a242837e41d33057ccec1e7f50521d3"
+  },
+  {
+   "profile": "pi-codex",
+   "cold_rebuild_status": "passed",
+   "targets": [
+    {"target": "first", "installation": "verified", "native_execution": "passed"},
+    {"target": "第二组 空格路径", "installation": "verified", "native_execution": "passed"}
+   ],
+   "report": "pi-cold-32da4799/pi-codex/report.json",
+   "runtime_identity": "ca9c96b5247ab97a66448b547c18bcd7973b702c2dd6b231fb211394f009fbea"
+  },
+  {
+   "profile": "pi-managed",
+   "cold_rebuild_status": "passed",
+   "targets": [
+    {"target": "first", "installation": "verified", "native_execution": "passed"},
+    {"target": "第二组 空格路径", "installation": "verified", "native_execution": "passed"}
+   ],
+   "report": "pi-cold-32da4799/pi-managed/report.json",
+   "runtime_identity": "ccb54c740ccf21ca1f4205f6d4264e82cbb1ca03bf92e158134eed6231cd3d86"
+  }
+ ],
+ "verified_reclaimed_host_leases": 22,
+ "verified_terminated_v3_process_records": 22,
+ "archived_scenarios_termination_confirmed": 108,
+ "real_accounts_used": false,
+ "scope_evidence_registered": true,
+ "release_approved": false,
+ "blockers": "pi-validation-blockers-32da4799.md",
+ "notes": "四配方双路径冷重建于2026-09-21完成（合成模型与本地服务）。default 7 case组、cursor 5、codex 7（含官方CLI三态）、managed 5（含Task Keeper生命周期）；readseek-tools在default/codex全步通过（八项事实）。宿主租约与v3终止统计为归档前默认目标在盘观测值，48份归档报告的108个场景均带termination_confirmed=true。linux-arm64/darwin平台仍not-run，live待用户配置与项目绑定。"
+}

@@ -1,0 +1,53 @@
+[
+  {
+    "command": [
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python",
+      "-B",
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/scripts/verify-pi.py",
+      "--report-only",
+      "--scope",
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/docs/acceptance/pi-spec-closure-20260924/scope.json",
+      "--evidence-root",
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/docs/acceptance/pi-cold-9d6a9270",
+      "--output",
+      "/tmp/agentcfg-pi-spec-closure-n1a9_fmp/report-only.json"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python",
+      "-B",
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/scripts/verify-pi.py",
+      "--check-release",
+      "--scope",
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/docs/acceptance/pi-spec-closure-20260924/scope.json",
+      "--evidence-root",
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/docs/acceptance/pi-cold-9d6a9270",
+      "--output",
+      "/tmp/agentcfg-pi-spec-closure-n1a9_fmp/check-release.json"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/.venv/bin/python",
+      "-B",
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/scripts/verify-pi.py",
+      "--check-release",
+      "--scope",
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/docs/acceptance/pi-cold-9d6a9270/pi-scope-9d6a9270-r1-r2.json",
+      "--evidence-root",
+      "/data/1/weixiaoxian.wxx/dev_tool/rotom/docs/acceptance/pi-cold-9d6a9270",
+      "--output",
+      "/tmp/agentcfg-pi-spec-closure-n1a9_fmp/historical-check-release.json"
+    ],
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": ""
+  }
+]
