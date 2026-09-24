@@ -1,0 +1,21 @@
+{
+  "package": "pi-readseek",
+  "version": "0.9.16",
+  "resolved": "https://registry.npmjs.org/pi-readseek/-/pi-readseek-0.9.16.tgz",
+  "integrity": "sha512-NqYrw0XdpEH5CpxBRBJpSgUPTj0vIBuxmvReEqjs0L1LUg2IuxEdF/K0Hj6bAOOxjHWZELl2wz4EwFRx0XvqbA==",
+  "files": {
+    "LICENSE": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9",
+    "README.md": "0ba936b5d5585bb4ea243ffa40f8c1149bedc8a8975d42982f87a487be6ecec6",
+    "dist/index.ts": "02c4273cb54d0506ad2f0bdccc6d06ebf4ff882dd8722cc82f9935f0ede2ee00",
+    "package.json": "ccddc196b7eb92e0c63fa0e004ebe1a7c964b339288ac6fa1165e746fa5208ee",
+    "prompts/def.md": "6d39be504e4515e92fe55eaf40cda72809fef28b481344c829534778f025487f",
+    "prompts/digest.md": "b948d47e005529c15f09f8ab7f77b15f2c590b322146195cc88696c3391aaa8b",
+    "prompts/edit.md": "f31207f16215c44b589db78535799d117decdb307c76e834a4d5bfcd46f81baa",
+    "prompts/grep.md": "9efeceb42c75ce767942638780a7f4e66a55be674bc40529b6bbe0f2a28f0e6b",
+    "prompts/refs.md": "ca29e55d678fddc6da2459b86b750e4bce530fe89c8992e42ad419eb8c34b72a",
+    "prompts/rename.md": "41ae6878a6d663a17f7509fb1c820fb89c4c186b0baa74f8603a0d58159e9662",
+    "prompts/search.md": "b6e00300cd4116d8acb2f956e1be82cb8948b2ff8a7d52de1f3ba58f4f710d27",
+    "prompts/view.md": "00f5f341f803155d7e60e3a9bc92628420cc6ffe94f4fb2446e75655c4d9d12f",
+    "prompts/write.md": "34db72ea30c4e13771c3f394e0ed43ab2d057890575b51f9dff72195834d6d31"
+  }
+}

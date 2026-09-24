@@ -1,0 +1,79 @@
+# 私人机器配置的服务绑定示例。替换虚构 endpoint、模型、目录和 secret。
+# MCP 已登记四配方来源；四配方锁已生成，最终候选与实网验收尚待完成，本文件不代表服务已经可用。
+schema_version = 1
+
+[machine]
+id = "pi-services-workstation"
+default_profile = "pi-default"
+
+[overrides.providers.example]
+protocol = "openai-compatible"
+base_url = "https://model.example.invalid/v1"
+auth_kind = "api-key"
+credential_ref = "secret:model_key"
+
+[overrides.models.main]
+provider = "example"
+remote_id = "fictional-exact-model"
+input = ["text"]
+
+[overrides.mcp.documentation]
+transport = "streamable-http"
+url = "https://mcp.example.invalid/service"
+credential_ref = "secret:mcp_token"
+
+[overrides.profiles.pi-default]
+providers = ["example"]
+models = ["main"]
+plugins = ["pi-subagents", "pi-permissions", "model-delegate", "pi-todo", "loop-guard", "colorful-footer", "pi-mcp", "pi-rules", "openspec", "superpowers"]
+mcp = ["documentation"]
+
+[overrides.profiles.pi-default.roles]
+main = "main"
+scout = "main"
+reviewer = "main"
+
+[overrides.profiles.pi-default.agent_options.paths.roots.rules]
+path = "/absolute/path/to/selected-rules"
+purpose = "read"
+
+[overrides.profiles.pi-default.agent_options.rules]
+enabled = true
+root_refs = ["rules"]
+after_commit_nudge = false
+
+[overrides.profiles.pi-default.agent_options.mcp.servers.documentation]
+transport = "streamable-http"
+network_route = "documentation-proxy"
+authentication = "bearer"
+
+[overrides.profiles.pi-default.agent_options.network.routes.documentation-proxy]
+mode = "proxy"
+proxy_url = "http://127.0.0.1:8123"
+provider_ids = []
+service_ids = ["mcp:documentation"]
+# 认证代理需要显式 secret 引用，值为完整 Proxy-Authorization 头值。
+# credential_ref = "secret:proxy_authorization"
+
+[overrides.profiles.pi-default.agent_options.network.routes.models-direct]
+mode = "direct"
+provider_ids = ["example"]
+
+[overrides.profiles.pi-default.agent_options.resources]
+extensions = ["gentle-agent-state"]
+
+[overrides.profiles.pi-default.agent_options.agent_state]
+mode = "osc"
+title = "Pi services"
+
+[secrets]
+model_key = ""
+mcp_token = ""
+
+# 可选：允许已声明 MCP 服务申请模型辅助请求；仍需请求前和结果返回前确认。
+# 此部分代码／mock 已适配，完整 MCP 插件与原生服务验收仍待完成。
+# [overrides.profiles.pi-default.agent_options.mcp.sampling]
+# enabled = true
+# model = "agentcfg-example/fictional-exact-model"
+# max_tokens = 1024
+# auto_approve = false

@@ -1,0 +1,186 @@
+{
+  "name": "@agentcfg/pi-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "exports": {
+    "./managed-types": {
+      "types": "./types/managed-types.d.ts",
+      "default": "./managed-types.ts"
+    },
+    "./managed-bridge": {
+      "types": "./types/managed-bridge.d.ts",
+      "default": "./managed-bridge.ts"
+    },
+    "./managed-results": {
+      "types": "./types/managed-results.d.ts",
+      "default": "./managed-results.ts"
+    },
+    "./permission-policy": {
+      "types": "./types/permission-policy.d.ts",
+      "default": "./permission-policy.ts"
+    },
+    "./metered-transport": "./metered-transport.ts",
+    "./one-shot-schedule": "./one-shot-schedule.ts",
+    "./supervisor-client": "./supervisor-client.ts",
+    "./managed-rpc": {
+      "types": "./types/managed-rpc.d.ts",
+      "default": "./managed-rpc.ts"
+    },
+    "./managed-store": {
+      "types": "./types/managed-store.d.ts",
+      "default": "./managed-store.ts"
+    },
+    "./manager-executor": {
+      "types": "./types/manager-executor.d.ts",
+      "default": "./manager-executor.ts"
+    },
+    "./managed-observation": {
+      "types": "./types/managed-observation.d.ts",
+      "default": "./managed-observation.ts"
+    },
+    "./guarded-tools": {
+      "types": "./types/guarded-tools.d.ts",
+      "default": "./guarded-tools.ts"
+    },
+    "./managed-http-transport": {
+      "types": "./types/managed-http-transport.d.ts",
+      "default": "./managed-http-transport.ts"
+    },
+    "./auxiliary-executor": {
+      "types": "./types/auxiliary-executor.d.ts",
+      "default": "./auxiliary-executor.ts"
+    },
+    "./managed-backend": {
+      "types": "./types/managed-backend.d.ts",
+      "default": "./managed-backend.ts"
+    },
+    "./external-executor": {
+      "types": "./types/external-executor.d.ts",
+      "default": "./external-executor.ts"
+    },
+    "./external-rpc": {
+      "types": "./types/external-rpc.d.ts",
+      "default": "./external-rpc.ts"
+    },
+    "./external-control": {
+      "types": "./types/external-control.d.ts",
+      "default": "./external-control.ts"
+    },
+    "./user-login": {
+      "types": "./types/user-login.d.ts",
+      "default": "./user-login.ts"
+    },
+    "./permission-access": {
+      "types": "./types/permission-access.d.ts",
+      "default": "./permission-access.ts"
+    },
+    "./capability-policy": {
+      "types": "./types/capability-policy.d.ts",
+      "default": "./capability-policy.ts"
+    },
+    "./plugin-model": {
+      "types": "./types/plugin-model.d.ts",
+      "default": "./plugin-model.ts"
+    },
+    "./plugin-settings": {
+      "types": "./types/plugin-settings.d.ts",
+      "default": "./plugin-settings.ts"
+    },
+    "./checkpoints": {
+      "types": "./types/checkpoints.d.ts",
+      "default": "./checkpoints.ts"
+    },
+    "./git-status": {
+      "types": "./types/git-status.d.ts",
+      "default": "./git-status.ts"
+    },
+    "./service-bindings": {
+      "types": "./types/service-bindings.d.ts",
+      "default": "./service-bindings.ts"
+    },
+    "./mcp-stdio": {
+      "types": "./types/mcp-stdio.d.ts",
+      "default": "./mcp-stdio.ts"
+    },
+    "./plugin-storage": {
+      "types": "./types/plugin-storage.d.ts",
+      "default": "./plugin-storage.ts"
+    },
+    "./mcp-http": {
+      "types": "./types/mcp-http.d.ts",
+      "default": "./mcp-http.ts"
+    },
+    "./review-files": {
+      "types": "./types/review-files.d.ts",
+      "default": "./review-files.ts"
+    },
+    "./mcp-script": {
+      "types": "./types/mcp-script.d.ts",
+      "default": "./mcp-script.ts"
+    },
+    "./mcp-tools": {
+      "types": "./types/mcp-tools.d.ts",
+      "default": "./mcp-tools.ts"
+    },
+    "./mcp-listener": {
+      "types": "./types/mcp-listener.d.ts",
+      "default": "./mcp-listener.ts"
+    },
+    "./readseek-context": {
+      "types": "./types/readseek-context.d.ts",
+      "default": "./readseek-context.ts"
+    },
+    "./web-config": {
+      "types": "./types/web-config.d.ts",
+      "default": "./web-config.ts"
+    },
+    "./web-binding": {
+      "types": "./types/web-binding.d.ts",
+      "default": "./web-binding.ts"
+    },
+    "./web-tools": {
+      "types": "./types/web-tools.d.ts",
+      "default": "./web-tools.ts"
+    },
+    "./web-model": {
+      "types": "./types/web-model.d.ts",
+      "default": "./web-model.ts"
+    },
+    "./web-model-auth": {
+      "types": "./types/web-model-auth.d.ts",
+      "default": "./web-model-auth.ts"
+    },
+    "./web-listener": {
+      "types": "./types/web-listener.d.ts",
+      "default": "./web-listener.ts"
+    },
+    "./web-browser": {
+      "types": "./types/web-browser.d.ts",
+      "default": "./web-browser.ts"
+    },
+    "./web-files": {
+      "types": "./types/web-files.d.ts",
+      "default": "./web-files.ts"
+    },
+    "./web-media": {
+      "types": "./types/web-media.d.ts",
+      "default": "./web-media.ts"
+    },
+    "./web-cli": {
+      "types": "./types/web-cli.d.ts",
+      "default": "./web-cli.ts"
+    },
+    "./web-artifact": {
+      "types": "./types/web-artifact.d.ts",
+      "default": "./web-artifact.ts"
+    }
+  },
+  "dependencies": {
+    "http-proxy-agent": "7.0.2",
+    "https-proxy-agent": "7.0.6",
+    "undici": "8.9.0",
+    "marked": "18.0.5"
+  }
+}

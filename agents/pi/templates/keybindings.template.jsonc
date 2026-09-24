@@ -1,0 +1,100 @@
+{
+  // ═════════════════════════════════════════════════════════════════════════
+  // Pi Keybindings 模板 ⌨️
+  // 修改后复制到 ~/.pi/agent/keybindings.json
+  // 重载: /reload 或重启
+  // ═════════════════════════════════════════════════════════════════════════
+  //
+  // 键格式: modifier+key
+  //   modifier: ctrl, shift, alt (可组合)
+  //   key: a-z, 0-9, escape/esc, enter/return, tab, space, backspace,
+  //        delete, insert, home, end, pageUp, pageDown, up, down, left, right,
+  //        f1-f12, 符号键 (` - = [ ] \ ; ' , . / 等)
+  //
+  // 示例: ctrl+c, ctrl+shift+p, alt+left, ctrl+alt+delete
+  // ═════════════════════════════════════════════════════════════════════════
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Editor - 词级移动
+  // ───────────────────────────────────────────────────────────────────────
+
+  "tui.editor.cursorWordLeft": ["alt+left", "ctrl+left", "alt+b"],
+  "tui.editor.cursorWordRight": ["alt+right", "ctrl+right", "alt+f"],
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Editor - 行首/行尾
+  // ───────────────────────────────────────────────────────────────────────
+
+  "tui.editor.cursorLineStart": ["home", "ctrl+a"],
+  "tui.editor.cursorLineEnd": ["end", "ctrl+e"],
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Editor - 删除
+  // ───────────────────────────────────────────────────────────────────────
+
+  "tui.editor.deleteWordBackward": ["ctrl+w", "alt+backspace"],
+  "tui.editor.deleteWordForward": ["alt+d", "alt+delete"],
+  "tui.editor.deleteToLineStart": "ctrl+u",
+  "tui.editor.deleteToLineEnd": "ctrl+k",
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Input
+  // ───────────────────────────────────────────────────────────────────────
+
+  // 换行 (不提交)
+  "tui.input.newLine": "shift+enter",
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Kill Ring (剪贴历史)
+  // ───────────────────────────────────────────────────────────────────────
+
+  "tui.editor.yank": "ctrl+y",
+  "tui.editor.yankPop": "alt+y",
+  "tui.editor.undo": "ctrl+-",
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Application
+  // ───────────────────────────────────────────────────────────────────────
+
+  // 取消/中止
+  "app.interrupt": "escape",
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Models and Thinking
+  // ───────────────────────────────────────────────────────────────────────
+
+  // 模型选择器
+  "app.model.select": "ctrl+l",
+
+  // 循环模型
+  "app.model.cycleForward": "ctrl+p",
+  "app.model.cycleBackward": "shift+ctrl+p",
+
+  // 切换思考级别
+  "app.thinking.cycle": "shift+tab",
+
+  // 折叠/展开思考块
+  "app.thinking.toggle": "ctrl+t",
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Display
+  // ───────────────────────────────────────────────────────────────────────
+
+  // 折叠/展开工具输出
+  "app.tools.expand": "ctrl+o",
+
+  // Follow-up 消息
+  "app.message.followUp": "alt+enter",
+
+  // 取回队列消息
+  "app.message.dequeue": "alt+up",
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Tree Navigation
+  // ───────────────────────────────────────────────────────────────────────
+
+  "app.tree.foldOrUp": ["ctrl+left", "alt+left"],
+  "app.tree.unfoldOrDown": ["ctrl+right", "alt+right"],
+  "app.tree.editLabel": "shift+l",
+  "app.tree.toggleLabelTimestamp": "shift+t"
+}

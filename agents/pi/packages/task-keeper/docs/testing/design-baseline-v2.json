@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 2,
+  "basisRun": "2026-09-08T03-48-50-049Z",
+  "immutableInputs": {
+    "docs/testing/baseline.json": "bb6c79960ab64b8c9dff6b30b9ccec77b6749f560d737b576145eaae23ae2b33",
+    "docs/testing/gap-obligations.csv": "37a8e6066eb524a4bb45b9e0a2196907937ae2325db93658142a809b1f8f4790",
+    "docs/testing/campaigns.json": "a0b2c121e79cbaf3beaa6f83a344273489f149af71ff40d56d4d1c51240af4d1",
+    "docs/testing/campaigns.md": "c08f56860b1f7a3e49941bc1428e7a2183ed3b8b3e2ead05d460d669b805079e",
+    "docs/testing/design-review.json": "dc61e1d4dda00e4ce7cd7554a5f4a9a6bbe16d2ea182d5c77e65ed3e623e4c0e",
+    "docs/testing/current-checkpoint.json": "9f0e15e8a061cce6315c4c5975e0a0af642b0d44cde6c4ba3f25a1abf5308c95",
+    "tests/plan/scenario-test-matrix.csv": "dbe29eb7630ee6f0dcf6ae367551aa47a6fd87e138edc3008f22bfa79520ee9a",
+    "tests/plan/fault-traceability.csv": "d65ff7e7d20e24c71e268240b55296d0685f94ae0cc2995413218bcf3ae9b5d0",
+    "tests/plan/specs/task-keeper-config/spec.md": "a6c295ea70129b3f842954230a484f4e7c98b2bebdf384f87712a94fa9c5e9e3",
+    "tests/plan/specs/task-keeper-evidence/spec.md": "fd8596751d278d568283ef7623add5c2c6b1b92b9718ea2b027d57bab70060cb",
+    "tests/plan/specs/task-keeper-execution/spec.md": "8c9e6a9ffd4850ce18042ee9fef8a8b6b5dbe8f11831a52571a85d54bbd6e51d",
+    "tests/plan/specs/task-keeper-recovery/spec.md": "a22dfe3fed7e676fafbd64520102e3b7d9f15d226240652661bb50d7bfe76763",
+    "tests/plan/specs/task-keeper-routing-budget/spec.md": "85ec1c29b8531df51454c9315648bc9a549ab830978bcb96041288d673787584",
+    "tests/plan/specs/task-keeper-scheduling/spec.md": "44241addc7856c3fb81395e16ab9fe83e9a0897fc7290f1227b8d3a9cb3da0ba",
+    "tests/plan/specs/task-keeper-validation/spec.md": "faf5108251f1a9d5ca1494e9db8150e11f5893889fc1001885d6892942d78977",
+    "tests/plan/specs/task-keeper-workflows/spec.md": "5274a7416d9aefa07e07b3d0af9b4e18a87d5ddefbbda0b3eacc0df17b1636ce"
+  },
+  "scope": "All 713 declared obligation levels; P0-P3=707; current missing=618. No runtime evidence added."
+}

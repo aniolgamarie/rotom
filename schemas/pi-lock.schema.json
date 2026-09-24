@@ -1,0 +1,784 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "adapter_version": {
+      "type": "string",
+      "const": "pi-1"
+    },
+    "recipe_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "toolchains": {
+      "type": "object",
+      "properties": {
+        "node": {
+          "type": "string",
+          "minLength": 1
+        },
+        "npm": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bun": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "node",
+        "npm",
+        "bun"
+      ],
+      "additionalProperties": false
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "linux-x86_64",
+          "linux-arm64",
+          "darwin-x86_64",
+          "darwin-arm64"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "sources": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "npm",
+              "git",
+              "local",
+              "asset"
+            ]
+          },
+          "package": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "resolved": {
+            "type": "string",
+            "minLength": 1
+          },
+          "integrity": {
+            "type": "string",
+            "minLength": 1
+          },
+          "commit": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_path": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+            "minLength": 1
+          },
+          "source_tree_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "archive_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "vendor_path": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+            "minLength": 1
+          },
+          "license_files": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "linux-x86_64",
+              "linux-arm64",
+              "darwin-x86_64",
+              "darwin-arm64",
+              "all"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "pattern": "^https://"
+          },
+          "archive_member": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+            "minLength": 1
+          },
+          "target": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+            "minLength": 1
+          },
+          "license_sources": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+              "minLength": 1
+            },
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^agents/pi/build/licenses/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$"
+            }
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "tar.gz",
+              "raw"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967296
+          }
+        },
+        "required": [
+          "kind",
+          "license_files"
+        ],
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "properties": {
+              "kind": {
+                "const": "npm"
+              }
+            },
+            "required": [
+              "package",
+              "version",
+              "resolved",
+              "integrity"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "commit"
+                  ]
+                },
+                {
+                  "required": [
+                    "source_path"
+                  ]
+                },
+                {
+                  "required": [
+                    "source_tree_digest"
+                  ]
+                },
+                {
+                  "required": [
+                    "archive_digest"
+                  ]
+                },
+                {
+                  "required": [
+                    "vendor_path"
+                  ]
+                },
+                {
+                  "required": [
+                    "platform"
+                  ]
+                },
+                {
+                  "required": [
+                    "url"
+                  ]
+                },
+                {
+                  "required": [
+                    "archive_member"
+                  ]
+                },
+                {
+                  "required": [
+                    "target"
+                  ]
+                },
+                {
+                  "required": [
+                    "format"
+                  ]
+                },
+                {
+                  "required": [
+                    "size"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "local"
+              }
+            },
+            "required": [
+              "package",
+              "version",
+              "source_path",
+              "source_tree_digest",
+              "vendor_path",
+              "archive_digest"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "resolved"
+                  ]
+                },
+                {
+                  "required": [
+                    "integrity"
+                  ]
+                },
+                {
+                  "required": [
+                    "commit"
+                  ]
+                },
+                {
+                  "required": [
+                    "platform"
+                  ]
+                },
+                {
+                  "required": [
+                    "url"
+                  ]
+                },
+                {
+                  "required": [
+                    "archive_member"
+                  ]
+                },
+                {
+                  "required": [
+                    "target"
+                  ]
+                },
+                {
+                  "required": [
+                    "license_sources"
+                  ]
+                },
+                {
+                  "required": [
+                    "format"
+                  ]
+                },
+                {
+                  "required": [
+                    "size"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "git"
+              }
+            },
+            "required": [
+              "package",
+              "version",
+              "commit",
+              "source_path",
+              "source_tree_digest",
+              "vendor_path",
+              "archive_digest"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "resolved"
+                  ]
+                },
+                {
+                  "required": [
+                    "integrity"
+                  ]
+                },
+                {
+                  "required": [
+                    "platform"
+                  ]
+                },
+                {
+                  "required": [
+                    "url"
+                  ]
+                },
+                {
+                  "required": [
+                    "archive_member"
+                  ]
+                },
+                {
+                  "required": [
+                    "target"
+                  ]
+                },
+                {
+                  "required": [
+                    "license_sources"
+                  ]
+                },
+                {
+                  "required": [
+                    "format"
+                  ]
+                },
+                {
+                  "required": [
+                    "size"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "asset"
+              }
+            },
+            "required": [
+              "url",
+              "platform",
+              "archive_digest",
+              "target"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "package"
+                  ]
+                },
+                {
+                  "required": [
+                    "version"
+                  ]
+                },
+                {
+                  "required": [
+                    "resolved"
+                  ]
+                },
+                {
+                  "required": [
+                    "integrity"
+                  ]
+                },
+                {
+                  "required": [
+                    "commit"
+                  ]
+                },
+                {
+                  "required": [
+                    "source_path"
+                  ]
+                },
+                {
+                  "required": [
+                    "source_tree_digest"
+                  ]
+                },
+                {
+                  "required": [
+                    "license_sources"
+                  ]
+                }
+              ]
+            },
+            "anyOf": [
+              {
+                "required": [
+                  "archive_member"
+                ],
+                "properties": {
+                  "format": {
+                    "const": "tar.gz"
+                  },
+                  "platform": {
+                    "enum": [
+                      "linux-x86_64",
+                      "linux-arm64",
+                      "darwin-x86_64",
+                      "darwin-arm64"
+                    ]
+                  }
+                },
+                "not": {
+                  "required": [
+                    "size"
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "format",
+                  "size"
+                ],
+                "properties": {
+                  "format": {
+                    "const": "raw"
+                  },
+                  "platform": {
+                    "const": "all"
+                  }
+                },
+                "not": {
+                  "required": [
+                    "archive_member"
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "profile_slices": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "engine": {
+            "type": "string",
+            "enum": [
+              "node",
+              "bun"
+            ]
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "uniqueItems": true
+          },
+          "package_path": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+            "minLength": 1
+          },
+          "lock_path": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+            "minLength": 1
+          },
+          "package_json_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "package_lock_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "entrypoint": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+            "minLength": 1
+          },
+          "resource_manifest": {
+            "type": "object",
+            "properties": {
+              "extensions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                    },
+                    "capability_id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                    },
+                    "path": {
+                      "type": "string",
+                      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "capability_id",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "uniqueItems": true
+              },
+              "skills": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                    },
+                    "capability_id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                    },
+                    "path": {
+                      "type": "string",
+                      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "capability_id",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "uniqueItems": true
+              },
+              "prompts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                    },
+                    "capability_id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                    },
+                    "path": {
+                      "type": "string",
+                      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "capability_id",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "uniqueItems": true
+              },
+              "themes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                    },
+                    "capability_id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                    },
+                    "path": {
+                      "type": "string",
+                      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "capability_id",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "extensions",
+              "skills",
+              "prompts",
+              "themes"
+            ],
+            "additionalProperties": false
+          },
+          "resource_manifest_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "capability_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "uniqueItems": true
+          },
+          "identity": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "engine",
+          "source_ids",
+          "package_path",
+          "lock_path",
+          "package_json_digest",
+          "package_lock_digest",
+          "entrypoint",
+          "resource_manifest",
+          "resource_manifest_digest",
+          "capability_ids",
+          "identity"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "build_steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+          },
+          "platform": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "uniqueItems": true
+          },
+          "argv": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "input_digests": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "expected_outputs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "output_digests": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "source_ids",
+          "argv",
+          "input_digests",
+          "expected_outputs",
+          "output_digests"
+        ],
+        "additionalProperties": false
+      },
+      "uniqueItems": true
+    },
+    "compatibility": {
+      "type": "object",
+      "properties": {
+        "bridge_version": {
+          "type": "integer",
+          "const": 1
+        }
+      },
+      "required": [
+        "bridge_version"
+      ],
+      "additionalProperties": false
+    },
+    "identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "schema_version",
+    "adapter_version",
+    "recipe_digest",
+    "toolchains",
+    "platforms",
+    "sources",
+    "profile_slices",
+    "build_steps",
+    "compatibility",
+    "identity"
+  ],
+  "additionalProperties": false
+}

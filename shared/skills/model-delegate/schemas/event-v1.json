@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://model-delegate.dev_tool.starter/schemas/event-v1.json",
+  "title": "Model Delegate Event v1",
+  "description": "归一化事件 schema，记录 run 过程中的关键事件",
+  "type": "object",
+  "required": ["schemaVersion", "seq", "runId", "timestamp", "kind", "phase", "summary", "reportable"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1",
+      "description": "Schema 版本，固定为 '1'"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "事件序号，从 1 开始递增"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^run-[0-9]{8}-[0-9]{6}-[0-9]{5}$",
+      "description": "所属 run 的标识符"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "事件发生时间（ISO 8601）"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["started", "activity", "phase_changed", "terminal"],
+      "description": "事件类型"
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["starting", "working", "finalizing"],
+      "description": "当前阶段"
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "事件摘要（不超过 500 字符）"
+    },
+    "reportable": {
+      "type": "boolean",
+      "description": "是否应报告给用户"
+    }
+  },
+  "additionalProperties": false
+}

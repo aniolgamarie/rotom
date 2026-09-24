@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a06b04-a1b2-c3d4-e5f6-789012345678"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"reasoning","message":"Attempting to analyze..."}}
+{"type":"turn.failed","error":"Model request failed: rate limit exceeded"}

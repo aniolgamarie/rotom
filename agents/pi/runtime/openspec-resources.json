@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "upstream_version": "1.11.0",
+  "package": "agentcfg-openspec",
+  "skills": [
+    "skills/openspec-apply-change",
+    "skills/openspec-archive-change",
+    "skills/openspec-bulk-archive-change",
+    "skills/openspec-continue-change",
+    "skills/openspec-explore",
+    "skills/openspec-ff-change",
+    "skills/openspec-new-change",
+    "skills/openspec-onboard",
+    "skills/openspec-propose",
+    "skills/openspec-sync-specs",
+    "skills/openspec-update-change",
+    "skills/openspec-verify-change"
+  ]
+}

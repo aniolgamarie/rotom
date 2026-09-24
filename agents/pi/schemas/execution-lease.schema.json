@@ -1,0 +1,591 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "instance_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lease_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "manager_activation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_nonce": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supervisor_activation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supervisor_process_identity": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "enum": [
+            "linux",
+            "darwin"
+          ]
+        },
+        "boot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pid": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ppid": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pgid": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "start_time": {
+          "type": "string",
+          "minLength": 1
+        },
+        "namespace": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "uid": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "platform",
+        "boot_id",
+        "pid",
+        "ppid",
+        "pgid",
+        "start_time",
+        "namespace",
+        "uid"
+      ],
+      "additionalProperties": false
+    },
+    "task_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "attempt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "parent_execution_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "kind": {
+      "enum": [
+        "host",
+        "worker",
+        "check",
+        "codex",
+        "external"
+      ]
+    },
+    "lock_identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "slice_identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidate_digest": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "process_identity": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "platform": {
+              "enum": [
+                "linux",
+                "darwin"
+              ]
+            },
+            "boot_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pid": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "ppid": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pgid": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "start_time": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "uid": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "platform",
+            "boot_id",
+            "pid",
+            "ppid",
+            "pgid",
+            "start_time",
+            "namespace",
+            "uid"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "process_group_identity": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "platform": {
+              "enum": [
+                "linux",
+                "darwin"
+              ]
+            },
+            "boot_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pid": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "ppid": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pgid": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "start_time": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "uid": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "platform",
+            "boot_id",
+            "pid",
+            "ppid",
+            "pgid",
+            "start_time",
+            "namespace",
+            "uid"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "control_channel_identity": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "state": {
+      "enum": [
+        "allocating",
+        "starting",
+        "running",
+        "cancel_requested",
+        "settled",
+        "reclaimed",
+        "failed",
+        "unknown"
+      ]
+    },
+    "last_sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "stop_requested_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "termination_evidence": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "type": "integer",
+              "const": 1
+            },
+            "kind": {
+              "enum": [
+                "never-started",
+                "terminated"
+              ]
+            },
+            "execution_lease_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "process_identities": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "platform": {
+                    "enum": [
+                      "linux",
+                      "darwin"
+                    ]
+                  },
+                  "boot_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "pid": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "ppid": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "pgid": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "start_time": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "uid": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "platform",
+                  "boot_id",
+                  "pid",
+                  "ppid",
+                  "pgid",
+                  "start_time",
+                  "namespace",
+                  "uid"
+                ],
+                "additionalProperties": false
+              },
+              "uniqueItems": true
+            },
+            "external_work_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "recorded_at": {
+              "type": "string",
+              "minLength": 1
+            },
+            "allocation_journal_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "grant_generation": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "verified": {
+              "const": true
+            },
+            "evidence_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "schema_version",
+            "kind",
+            "execution_lease_id",
+            "process_identities",
+            "external_work_ids",
+            "recorded_at",
+            "allocation_journal_digest",
+            "grant_generation",
+            "verified",
+            "evidence_digest"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "active_external_work_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "grant_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "workspace_write_lease_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "allocation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "planned_workspaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "workspace_key": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "host_boot_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uid": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "worktree_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "git_dir_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "canonical_worktree_identity": {
+            "type": "object",
+            "properties": {
+              "device": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "inode": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "uid": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "device",
+              "inode",
+              "uid"
+            ],
+            "additionalProperties": false
+          },
+          "git_dir_identity": {
+            "type": "object",
+            "properties": {
+              "device": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "inode": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "uid": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "device",
+              "inode",
+              "uid"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "workspace_key",
+          "host_boot_id",
+          "uid",
+          "worktree_path",
+          "git_dir_path",
+          "canonical_worktree_identity",
+          "git_dir_identity"
+        ],
+        "additionalProperties": false
+      },
+      "uniqueItems": true
+    },
+    "allocation_journal_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "spawn_committed": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema_version",
+    "instance_id",
+    "lease_id",
+    "manager_activation_id",
+    "owner_nonce",
+    "supervisor_activation_id",
+    "supervisor_process_identity",
+    "task_id",
+    "attempt_id",
+    "execution_id",
+    "parent_execution_id",
+    "kind",
+    "lock_identity",
+    "slice_identity",
+    "policy_digest",
+    "candidate_digest",
+    "process_identity",
+    "process_group_identity",
+    "control_channel_identity",
+    "state",
+    "last_sequence",
+    "stop_requested_at",
+    "termination_evidence",
+    "active_external_work_ids",
+    "grant_generation",
+    "workspace_write_lease_ids",
+    "allocation_id",
+    "planned_workspaces",
+    "allocation_journal_digest",
+    "spawn_committed"
+  ],
+  "additionalProperties": false
+}

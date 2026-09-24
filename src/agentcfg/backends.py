@@ -5,6 +5,10 @@ from typing import Protocol
 
 
 class DependencyBackend(Protocol):
+  def runtime_identity(self, workspace, lock):
+    """默认沿用旧锁身份；按平台/配方分包的后端显式覆盖。"""
+    return lock.identity
+
   def read_lock(self, repository): ...
   def resolve_lock(self, repository): ...
   def sync(self, workspace, lock): ...

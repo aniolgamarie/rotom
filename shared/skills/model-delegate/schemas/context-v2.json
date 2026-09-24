@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2
+    },
+    "artifact_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+    },
+    "task": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 65536
+    },
+    "scope": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 65536
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 65536
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "properties": {
+        "cwd": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 65536
+        },
+        "candidate_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "cwd",
+        "candidate_digest"
+      ],
+      "additionalProperties": false
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "provisional",
+              "disputed",
+              "stale",
+              "unverified"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "source",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "provisional",
+              "disputed",
+              "stale",
+              "unverified"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "source",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "provisional",
+              "disputed",
+              "stale",
+              "unverified"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "source",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 65536
+      }
+    },
+    "turn": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "max_input_tokens": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "max_input_tokens"
+      ],
+      "additionalProperties": false
+    },
+    "truncated": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "artifact_id",
+    "task",
+    "scope",
+    "constraints",
+    "workspace",
+    "facts",
+    "decisions",
+    "hypotheses",
+    "references",
+    "turn",
+    "budget",
+    "truncated"
+  ],
+  "additionalProperties": false
+}

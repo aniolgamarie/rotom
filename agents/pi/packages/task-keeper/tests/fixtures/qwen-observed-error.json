@@ -1,0 +1,31 @@
+{
+  "id": "observed-qwen-usage",
+  "provenance": {
+    "kind": "observed-native-session-terminal",
+    "collectedAt": "2026-09-08",
+    "modelFamily": "qwen",
+    "api": "openai-completions",
+    "sourceRecordSha256": "807985ed31e712fcd1c8d535ba3888844e9b3d5060dcd8de483f4457d7513b67",
+    "scope": "one redacted historical service binding; no endpoint, account or credential copied",
+    "limitations": [
+      "SDK terminal record, not an independently captured HTTP exchange",
+      "This is not a live test of the current plugin",
+      "Other service families still require their own observations"
+    ]
+  },
+  "terminalError": "429: {\"code\":\"throttling\",\"message\":\"usage allocated quota exceeded. please try again later.\",\"param\":null,\"type\":\"invalid_request_error\"}",
+  "body": {
+    "code": "throttling",
+    "message": "usage allocated quota exceeded. please try again later.",
+    "param": null,
+    "type": "invalid_request_error"
+  },
+  "rules": [
+    {
+      "code": "throttling",
+      "messageIncludes": "usage allocated quota exceeded",
+      "category": "resource_pressure"
+    }
+  ],
+  "expectedCategory": "resource_pressure"
+}

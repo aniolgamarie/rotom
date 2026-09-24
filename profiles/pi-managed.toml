@@ -1,0 +1,57 @@
+schema_version = 1
+id = "pi-managed"
+agent = "pi"
+providers = []
+models = []
+rules = ["chinese", "terminal", "cpp-local-search"]
+skills = ["cpp-database-kernel", "neovim-plugin-development", "safe-linux-scripting", "kernel-orchestrate"]
+plugins = ["pi-subagents", "pi-permissions", "task-keeper"]
+mcp = []
+
+[roles]
+# 模型由本机显式绑定；普通 profile 可先进入 bootstrap 登录。
+
+[agent_options.runtime]
+engine = "node"
+
+[agent_options.resources]
+roles = ["task-keeper-reader", "task-keeper-writer", "task-keeper-reviewer"]
+prompts = ["commit", "debug", "docs", "explain", "implement", "perf", "plan", "pr", "refactor", "review", "security", "test"]
+themes = ["everforest-dark"]
+extensions = []
+
+[agent_options.discovery]
+project_resources = false
+external_skills = []
+
+[agent_options.ui]
+theme = "everforest-dark"
+quiet_startup = true
+hide_thinking = false
+
+[agent_options.permissions]
+policy_ref = "project-default"
+readonly_roots = []
+denied_roots = []
+
+[agent_options.task_keeper]
+enabled = true
+second_view_enabled = false
+max_second_view_rounds = 2
+check_ids = []
+
+[agent_options.task_keeper.limits]
+active_children = 2
+parallel_readers = 1
+writers_per_job = 1
+model_requests = 20
+model_turns = 20
+wall_seconds = 1800
+
+[agent_options.model_delegate]
+enabled = false
+backends = []
+allowed_modes = []
+presets = []
+max_run_seconds = 1800
+context_budget_tokens = 1800

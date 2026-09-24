@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "propertyNames": {
+    "type": "string",
+    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+  },
+  "additionalProperties": {
+    "type": "object",
+    "properties": {
+      "kind": {
+        "type": "string",
+        "enum": [
+          "role",
+          "prompt",
+          "theme",
+          "extension"
+        ]
+      },
+      "path": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$"
+      },
+      "scope": {
+        "type": "string",
+        "enum": [
+          "global",
+          "project"
+        ]
+      },
+      "override": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^\\u0000]+$"
+      },
+      "model_role": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+      },
+      "tools": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+        },
+        "minItems": 0,
+        "uniqueItems": true
+      },
+      "read_roots": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+        },
+        "minItems": 0,
+        "uniqueItems": true
+      },
+      "write_roots": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+        },
+        "minItems": 0,
+        "uniqueItems": true
+      },
+      "nested": {
+        "type": "boolean",
+        "const": false
+      },
+      "thinking": {
+        "type": "string",
+        "enum": [
+          "off",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ]
+      }
+    },
+    "required": [
+      "kind",
+      "path",
+      "scope"
+    ],
+    "additionalProperties": false
+  }
+}

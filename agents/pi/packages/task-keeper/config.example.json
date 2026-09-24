@@ -1,0 +1,252 @@
+{
+  "usage": {
+    "enabled": true,
+    "defaultRangeDays": 30,
+    "priceBooks": []
+  },
+  "secondOpinion": {
+    "enabled": false,
+    "model": null,
+    "profileRef": null,
+    "reviewTask": "Independently inspect the current task, candidate and verification evidence. Identify blocking issues with concrete evidence.",
+    "focus": [],
+    "maxExchanges": 2
+  },
+  "timePolicy": {
+    "timezone": "Asia/Shanghai",
+    "windows": [],
+    "admissionBoundary": "task-start",
+    "missed": "pause"
+  },
+  "modelPolicy": {
+    "automaticSelection": false,
+    "ranking": "ordered",
+    "candidates": [],
+    "preferByTime": [],
+    "defaultPreference": [],
+    "history": {
+      "rangeDays": 30,
+      "minimumVerifiedTasks": 5,
+      "minimumSuccessRate": 0.8
+    }
+  },
+  "quotaBindings": [],
+  "schemaVersion": 7,
+  "enabled": false,
+  "features": {
+    "interactiveRecovery": false,
+    "managedWorkflows": false,
+    "crossProviderFailover": false
+  },
+  "routes": {
+    "primary": {
+      "provider": "YOUR_PROVIDER",
+      "model": "YOUR_MODEL",
+      "accountBinding": "provider:YOUR_PROVIDER",
+      "quotaGroup": "primary-quota",
+      "transportDomain": "primary-transport",
+      "network": "direct",
+      "protected": false,
+      "recoveryPolicy": "legacy-f426f097a8c5e59e"
+    }
+  },
+  "allowedRoutes": [
+    "primary"
+  ],
+  "projectRouteApprovals": {},
+  "executionProfiles": {
+    "interactive": {
+      "tools": [
+        "read",
+        "write",
+        "edit"
+      ],
+      "requiredCapabilities": [
+        "settled",
+        "continuationIdentity",
+        "termination"
+      ],
+      "timeoutMs": 600000,
+      "maxModelTurns": 30,
+      "toolTimeoutMs": 30000,
+      "thinking": "off"
+    },
+    "scout": {
+      "tools": [
+        "read",
+        "grep",
+        "find",
+        "ls"
+      ],
+      "requiredCapabilities": [
+        "events",
+        "termination"
+      ],
+      "timeoutMs": 120000,
+      "maxModelTurns": 12,
+      "toolTimeoutMs": 30000,
+      "thinking": "off"
+    },
+    "worker": {
+      "tools": [
+        "read",
+        "grep",
+        "find",
+        "ls",
+        "write",
+        "edit"
+      ],
+      "requiredCapabilities": [
+        "events",
+        "termination"
+      ],
+      "timeoutMs": 120000,
+      "maxModelTurns": 12,
+      "toolTimeoutMs": 30000,
+      "thinking": "off"
+    },
+    "reviewer": {
+      "tools": [
+        "read",
+        "grep",
+        "find",
+        "ls"
+      ],
+      "requiredCapabilities": [
+        "events",
+        "termination"
+      ],
+      "timeoutMs": 120000,
+      "maxModelTurns": 12,
+      "toolTimeoutMs": 30000,
+      "thinking": "off"
+    }
+  },
+  "roles": {
+    "scout": {
+      "route": "primary",
+      "profileRef": "scout"
+    },
+    "worker": {
+      "route": "primary",
+      "profileRef": "worker"
+    },
+    "reviewer": {
+      "route": "primary",
+      "profileRef": "reviewer"
+    }
+  },
+  "quotaGroups": {
+    "primary-quota": {
+      "classifier": "http",
+      "rules": [],
+      "baseIntervalMs": 60000,
+      "tailIntervalsMs": [
+        60000,
+        120000,
+        300000
+      ]
+    }
+  },
+  "network": {
+    "direct": {
+      "type": "direct"
+    }
+  },
+  "recovery": {
+    "policies": {
+      "defaults": {
+        "quotaBackoff": [
+          "1m",
+          "5m",
+          "15m",
+          "30m",
+          "1h"
+        ],
+        "repeatLast": true,
+        "maxLocalInterval": "1h",
+        "positiveJitterRatio": 0.1,
+        "maxWait": "24h",
+        "requestTimeout": "2m",
+        "maxNetworkAttempts": 2,
+        "unknownReset": "pause",
+        "respectRetryAfter": true,
+        "rules": []
+      },
+      "providers": {},
+      "legacy": {
+        "legacy-f426f097a8c5e59e": {
+          "quotaGroup": "primary-quota"
+        }
+      }
+    },
+    "primaryRoute": "primary",
+    "profileRef": "interactive",
+    "requestTimeoutMs": 120000,
+    "positiveJitterRatio": 0.2,
+    "maxWaitMs": null,
+    "maxNetworkAttempts": 2,
+    "lightCanaryEnabled": false,
+    "chain": []
+  },
+  "limits": {
+    "activeJobsPerRepository": 1,
+    "activeChildrenPerHost": 3,
+    "parallelReaders": 2,
+    "writersPerJob": 1,
+    "heavyVerifiersPerHost": 1,
+    "semanticAttemptsPerImplementationTask": 3,
+    "semanticReplansPerTask": 1,
+    "dispatchedStepsPerJob": 16,
+    "jobsPerWorkScope": 16,
+    "semanticAttemptsPerWorkScope": 3,
+    "dispatchedStepsPerWorkScope": 16
+  },
+  "budget": {
+    "backupAttemptsPerIncident": 4,
+    "protectedAttemptsPerWorkScope": 12,
+    "minimumRequiredStageAttemptReserves": {
+      "independent-review": 1
+    }
+  },
+  "scheduling": {
+    "agingMs": 60000,
+    "priorities": {
+      "inspect": 0,
+      "fix": 0
+    }
+  },
+  "workflow": {
+    "recipes": [
+      "direct"
+    ],
+    "requiredChecks": {
+      "inspect": [
+        "scope-evidence-review"
+      ],
+      "fix": [
+        "build",
+        "focused-tests",
+        "independent-review"
+      ]
+    },
+    "optionalChecks": {
+      "inspect": [],
+      "fix": []
+    },
+    "allowPartial": false,
+    "risk": "unknown",
+    "reuseReviews": true
+  },
+  "verificationBindings": {},
+  "telemetryBindings": {},
+  "advisor": {
+    "mode": "off"
+  },
+  "evidence": {
+    "packetByteBudget": 65536
+  },
+  "storage": {
+    "path": "~/.local/state/pi-task-keeper/runtime.db"
+  }
+}

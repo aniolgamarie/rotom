@@ -1,0 +1,7 @@
+# 禁止业务目录配置、预加载脚本和依赖自动安装参与受管启动。
+preload = []
+env = false
+telemetry = false
+
+[install]
+auto = "disable"

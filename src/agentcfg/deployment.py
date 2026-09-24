@@ -12,6 +12,8 @@ import yaml
 from .adapter import Ownership
 from .config import _credential_name
 from .storage import Conflict, Tree, instance_lock
+from .native_projection import (reference_guard, reverse_change, transition_guard,
+                                validate_change, validate_projection, validate_saved_state)
 
 
 ABSENT = {"present": False}
@@ -154,6 +156,9 @@ def desired_items(candidate):
     item = {"path": target.path, "selector": target.selector,
             "codec": target.serialization, "ownership": target.ownership.value,
             "desired": desired}
+    if target.reference_tokens:
+      item["guard"] = reference_guard(target.reference_tokens)
+      validate_projection(desired, item["guard"])
     result[item_key(item)] = item
   values = list(result.values())
   for index, a in enumerate(values):
@@ -170,7 +175,9 @@ def projection(tree, item):
   if raw is None:
     return ABSENT.copy()
   if item["selector"]:
-    return get_field(parse_native(raw[0], item["codec"]), item["selector"])
+    result = get_field(parse_native(raw[0], item["codec"]), item["selector"])
+    validate_projection(result, item.get("guard"))
+    return result
   return encoded({"bytes": base64.b64encode(raw[0]).decode(), "mode": raw[1]})
 
 
@@ -184,7 +191,9 @@ def read_state(tree):
     state = json.loads(raw[0])
     if state["version"] != 1 or set(state) not in ({"version", "current", "previous"}, {"version", "current", "previous", "owner"}):
       raise ValueError()
-    return normalize_state(state)
+    state = normalize_state(state)
+    validate_saved_state(state)
+    return state
   except Exception:
     raise Conflict("部署状态损坏；不能自动接管") from None
 
@@ -228,6 +237,7 @@ class Plan:
 
 
 def plan(tree, state, candidate, binding, launch):
+  validate_saved_state(state)
   old = state["current"]
   owner = state.get("owner")
   if owner is not None and owner["binding"] != binding:
@@ -240,7 +250,9 @@ def plan(tree, state, candidate, binding, launch):
   for key in sorted(previous.keys() | wanted.keys()):
     spec = deepcopy(wanted.get(key, previous[key] if key in previous else None))
     before = previous.get(key)
-    current = projection(tree, spec)
+    if before is not None and key in wanted and bool(before.get("guard")) != bool(spec.get("guard")):
+      raise Conflict("既有字段的引用保护不能隐式新增或移除")
+    current = projection(tree, before if before is not None else spec)
     baseline = before["baseline"] if before else ABSENT.copy()
     desired = wanted[key]["desired"] if key in wanted else ABSENT.copy()
     if before and any(before[name] != spec[name] for name in ("codec", "ownership", "selector", "path")):
@@ -263,7 +275,8 @@ def plan(tree, state, candidate, binding, launch):
       raw_file = tree.read(spec["path"])
       parents = missing_parents(parse_native(raw_file[0], spec["codec"]) if raw_file else {}, spec["selector"]) if spec["selector"] else []
       changes.append({"item": spec, "before": current, "after": desired,
-                      "created_file": raw_file is None, "created_parents": parents})
+                      "created_file": raw_file is None, "created_parents": parents,
+                      **({"before_guard": before["guard"]} if before and before.get("guard") else {})})
       baseline = desired
     elif same(desired, baseline):
       drift.append(key)
@@ -282,6 +295,9 @@ def write_changes(target, changes, *, reverse=False):
   """按文件合并当前原生数据；恢复时同样逐字段检查，不复制整文件前值。"""
   groups = {}
   for change in changes:
+    validate_change(change)
+    if reverse:
+      change = reverse_change(change)
     groups.setdefault(change["item"]["path"], []).append(change)
   for path, group in groups.items():
     raw = target.read(path)
@@ -292,8 +308,9 @@ def write_changes(target, changes, *, reverse=False):
     mode = 0o600
     for change in group:
       item = change["item"]
-      before, after = (change["after"], change["before"]) if reverse else (change["before"], change["after"])
+      before, after = change["before"], change["after"]
       current = get_field(document, item["selector"]) if item["selector"] else projection(target, item)
+      validate_projection(current, transition_guard(change.get("before_guard"), item.get("guard")))
       if same(current, after):
         continue
       if not same(current, before):
@@ -320,6 +337,9 @@ def recover(target, state):
     return False
   try:
     journal = json.loads(raw[0])
+    validate_saved_state(journal["after_state"])
+    for change in journal["changes"]:
+      validate_change(change)
     committed = same(read_state(state), normalize_state(journal["after_state"]))
   except Exception:
     raise Conflict("恢复记录损坏，停止修改") from None
@@ -330,6 +350,10 @@ def recover(target, state):
 
 
 def transact(target, state, old_state, after_state, changes):
+  validate_saved_state(old_state)
+  validate_saved_state(after_state)
+  for change in changes:
+    validate_change(change)
   journal = {"after_state": after_state, "changes": changes}
   state.write_state("pending.json", json_bytes(journal))
   try:
@@ -370,10 +394,11 @@ def rollback(instance: Path, state_root: Path, binding):
     if old["previous"] is None:
       raise Conflict("没有上一版备份可恢复")
     backup = old["previous"]
-    changes = [{**c, "before": c["after"], "after": c["before"]} for c in backup["changes"]]
+    changes = [reverse_change(c) for c in backup["changes"]]
     # 先检查全部受管项，避免已知冲突时进行部分恢复。
     for change in changes:
-      current = projection(target, change["item"])
+      item = {**change["item"], "guard": transition_guard(change.get("before_guard"), change["item"].get("guard"))}
+      current = projection(target, item)
       if not same(current, change["before"]) and not same(current, change["after"]):
         raise Conflict("受管内容已在部署后修改；恢复冲突")
     after = {"version": 1, "current": backup["current"], "previous": None, "owner": old.get("owner")}

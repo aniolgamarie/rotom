@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+    },
+    "attempt_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+    },
+    "backend": {
+      "type": "string",
+      "enum": [
+        "pi",
+        "codex"
+      ]
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "review",
+        "investigate",
+        "implement"
+      ]
+    },
+    "preset": {
+      "type": "string",
+      "enum": [
+        "general",
+        "context",
+        "challenge",
+        "plan",
+        "research",
+        "review",
+        "scout"
+      ]
+    },
+    "requested_model": {
+      "type": "object",
+      "properties": {
+        "provider_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 65536
+        }
+      },
+      "required": [
+        "provider_id",
+        "model_id"
+      ],
+      "additionalProperties": false
+    },
+    "cwd": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 65536
+    },
+    "worktree_identity": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": [
+        "delegate-readonly",
+        "delegate-write"
+      ]
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "runtime_identity": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "parent_task_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "lease_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+    },
+    "context_artifact_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "workspace_write_lease_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+      }
+    },
+    "workspace_identity_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "grant_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "request_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "instance_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+    },
+    "owner_nonce": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 65536
+    },
+    "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "continuation_of": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "feedback_required": {
+      "type": "boolean"
+    },
+    "candidate_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "execution_boundary": {
+      "type": "string",
+      "enum": [
+        "agentcfg-tools",
+        "native-sandbox"
+      ]
+    },
+    "execution_policy_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "attempt_id",
+    "backend",
+    "mode",
+    "preset",
+    "requested_model",
+    "cwd",
+    "worktree_identity",
+    "execution_mode",
+    "policy_digest",
+    "runtime_identity",
+    "parent_task_id",
+    "lease_id",
+    "context_artifact_id",
+    "workspace_write_lease_ids",
+    "workspace_identity_digest",
+    "grant_generation",
+    "request_digest",
+    "instance_id",
+    "owner_nonce",
+    "timeout_seconds",
+    "continuation_of",
+    "feedback_required",
+    "candidate_digest",
+    "execution_boundary",
+    "execution_policy_digest"
+  ],
+  "additionalProperties": false
+}

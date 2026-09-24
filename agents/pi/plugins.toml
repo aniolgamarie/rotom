@@ -1,0 +1,161 @@
+schema_version = 1
+
+[plugins.pi-mcp]
+package = "pi-mcp-adapter"
+version = "2.32.1-agentcfg.1"
+enabled = true
+requires = ["pi-subagents", "pi-permissions"]
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.openspec]
+package = "agentcfg-openspec"
+version = "1.11.0-agentcfg.1"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.pi-permissions]
+package = "@gotgenes/pi-permission-system"
+version = "29.3.0-agentcfg.1"
+enabled = true
+requires = ["pi-subagents"]
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.pi-web]
+package = "pi-web-access"
+version = "0.27.0-agentcfg.1"
+enabled = true
+requires = ["pi-subagents", "pi-permissions"]
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.pi-readseek]
+package = "pi-readseek"
+version = "0.9.16-agentcfg.1"
+enabled = true
+requires = ["pi-subagents", "pi-permissions"]
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.pi-slopchop]
+package = "pi-slopchop"
+version = "0.10.1-agentcfg.1"
+enabled = true
+requires = ["pi-subagents", "pi-permissions"]
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.pi-subagents]
+package = "@tintinweb/pi-subagents"
+version = "0.19.0-agentcfg.1"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.pi-todo]
+package = "@juicesharp/rpiv-todo"
+version = "2.9.0-agentcfg.1"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.pi-smart-compact]
+package = "pi-smart-compact"
+version = "9.6.0-agentcfg.1"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.pi-cursor]
+package = "@rahularya01/pi-cursor"
+version = "1.4.29"
+enabled = true
+requires = []
+conflicts = ["task-keeper"]
+engines = ["bun"]
+
+[plugins.pi-btw]
+package = "@narumitw/pi-btw"
+version = "0.55.3-agentcfg.1"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.pi-processes]
+package = "@aliou/pi-processes"
+version = "0.11.1-agentcfg.1"
+enabled = true
+requires = ["pi-subagents", "pi-permissions"]
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.pi-rules]
+package = "@tigorhutasuhut/pi-rules"
+version = "0.6.0-agentcfg.1"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.task-keeper]
+package = "starter-pi-task-keeper"
+version = "0.2.0-agentcfg.1"
+enabled = true
+requires = ["pi-subagents"]
+conflicts = []
+engines = ["node"]
+
+[plugins.colorful-footer]
+package = "starter-pi-colorful-footer"
+version = "0.1.0"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.loop-guard]
+package = "starter-pi-loop-guard"
+version = "0.1.0"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.openai-proxy]
+package = "starter-pi-openai-proxy"
+version = "0.2.0"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.session-yolo]
+package = "starter-pi-session-yolo"
+version = "0.1.0"
+enabled = true
+requires = ["pi-permissions"]
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.model-delegate]
+package = "agentcfg-model-delegate"
+version = "0.2.0-agentcfg.1"
+enabled = true
+requires = ["pi-subagents"]
+conflicts = []
+engines = ["node", "bun"]
+
+[plugins.superpowers]
+package = "superpowers"
+version = "6.3.0-agentcfg.1"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]

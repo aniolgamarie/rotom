@@ -1,0 +1,225 @@
+{
+  "readDate": "2026-09-07",
+  "loopArenaCommit": "9311df7194bc6c8afa7836930f40c30fd02ef2ce",
+  "paper": "2608.28281v1",
+  "piSubagentsReference": "v0.66.0",
+  "localRuntimeVerified": false,
+  "sources": [
+    {
+      "id": "S1",
+      "title": "pi-subagents public integration",
+      "url": "https://raw.githubusercontent.com/nicobailon/pi-subagents/v0.66.0/docs/extension-api.md",
+      "evidenceType": "versioned source",
+      "versionScope": "v0.66.0",
+      "verificationNote": "2026-09-07 再次读取公开来源；未进行本机运行时兼容性测试。"
+    },
+    {
+      "id": "S2",
+      "title": "pi-subagents observability",
+      "url": "https://raw.githubusercontent.com/nicobailon/pi-subagents/v0.66.0/docs/observability.md",
+      "evidenceType": "versioned source",
+      "versionScope": "v0.66.0",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S3",
+      "title": "pi-subagents tools and acceptance",
+      "url": "https://raw.githubusercontent.com/nicobailon/pi-subagents/v0.66.0/docs/tool-reference.md",
+      "evidenceType": "versioned source",
+      "versionScope": "v0.66.0",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S4",
+      "title": "pi-subagents model configuration",
+      "url": "https://raw.githubusercontent.com/nicobailon/pi-subagents/v0.66.0/docs/models.md",
+      "evidenceType": "versioned source",
+      "versionScope": "v0.66.0",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S5",
+      "title": "Pi Extensions",
+      "url": "https://pi.dev/docs/latest/extensions",
+      "evidenceType": "official documentation",
+      "versionScope": "mutable; verify installed version",
+      "verificationNote": "2026-09-07 再次读取公开来源；未进行本机运行时兼容性测试。"
+    },
+    {
+      "id": "S6",
+      "title": "阿里云 Coding Plan FAQ",
+      "url": "https://help.aliyun.com/zh/model-studio/coding-plan-faq",
+      "evidenceType": "official documentation",
+      "versionScope": "mutable",
+      "verificationNote": "2026-09-07 再次读取公开来源；未进行本机运行时兼容性测试。"
+    },
+    {
+      "id": "S7",
+      "title": "Codex App Server",
+      "url": "https://developers.openai.com/codex/app-server",
+      "evidenceType": "official documentation",
+      "versionScope": "redirects to https://learn.chatgpt.com/docs/app-server",
+      "verificationNote": "2026-09-07 再次读取公开来源；未进行本机运行时兼容性测试。"
+    },
+    {
+      "id": "S8",
+      "title": "Claude Code model configuration",
+      "url": "https://code.claude.com/docs/en/model-config",
+      "evidenceType": "official documentation",
+      "versionScope": "mutable",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S9",
+      "title": "AWS REL05-BP03 Control and limit retry calls",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_mitigate_interaction_failure_limit_retries.html",
+      "evidenceType": "official engineering guidance",
+      "versionScope": "mutable",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S10",
+      "title": "LoopArena paper v1",
+      "url": "https://arxiv.org/html/2608.28281v1",
+      "evidenceType": "research preprint",
+      "versionScope": "v1; 2026-08-28",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S11",
+      "title": "LoopArena control protocol",
+      "url": "https://raw.githubusercontent.com/AMAP-ML/LoopArena/9311df7194bc6c8afa7836930f40c30fd02ef2ce/docs/protocol.md",
+      "evidenceType": "versioned source",
+      "versionScope": "9311df7194bc6c8afa7836930f40c30fd02ef2ce",
+      "verificationNote": "2026-09-07 再次读取公开来源；未进行本机运行时兼容性测试。"
+    },
+    {
+      "id": "S12",
+      "title": "LoopArena packet compiler",
+      "url": "https://raw.githubusercontent.com/AMAP-ML/LoopArena/9311df7194bc6c8afa7836930f40c30fd02ef2ce/src/looparena/harness/packet_compiler.py",
+      "evidenceType": "versioned source",
+      "versionScope": "9311df7194bc6c8afa7836930f40c30fd02ef2ce",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S13",
+      "title": "LoopArena controller",
+      "url": "https://raw.githubusercontent.com/AMAP-ML/LoopArena/9311df7194bc6c8afa7836930f40c30fd02ef2ce/src/looparena/harness/controller.py",
+      "evidenceType": "versioned source",
+      "versionScope": "9311df7194bc6c8afa7836930f40c30fd02ef2ce",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S14",
+      "title": "LoopArena continuous session",
+      "url": "https://raw.githubusercontent.com/AMAP-ML/LoopArena/9311df7194bc6c8afa7836930f40c30fd02ef2ce/src/looparena/harness/continuous_session.py",
+      "evidenceType": "versioned source",
+      "versionScope": "9311df7194bc6c8afa7836930f40c30fd02ef2ce",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S15",
+      "title": "LoopArena evaluator protocol",
+      "url": "https://raw.githubusercontent.com/AMAP-ML/LoopArena/9311df7194bc6c8afa7836930f40c30fd02ef2ce/src/looparena/harness/evaluator_protocol.py",
+      "evidenceType": "versioned source",
+      "versionScope": "9311df7194bc6c8afa7836930f40c30fd02ef2ce",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S16",
+      "title": "LoopArena Type I construction",
+      "url": "https://raw.githubusercontent.com/AMAP-ML/LoopArena/9311df7194bc6c8afa7836930f40c30fd02ef2ce/benchmarks/type1/README.md",
+      "evidenceType": "versioned source",
+      "versionScope": "9311df7194bc6c8afa7836930f40c30fd02ef2ce",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S17",
+      "title": "LoopArena README / release boundary",
+      "url": "https://raw.githubusercontent.com/AMAP-ML/LoopArena/9311df7194bc6c8afa7836930f40c30fd02ef2ce/README.md",
+      "evidenceType": "versioned source",
+      "versionScope": "9311df7194bc6c8afa7836930f40c30fd02ef2ce",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S18",
+      "title": "Anthropic Building effective agents",
+      "url": "https://www.anthropic.com/engineering/building-effective-agents",
+      "evidenceType": "primary engineering experience",
+      "versionScope": "2024-12-19; historical principles, not latest product spec",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S19",
+      "title": "Anthropic Effective harnesses for long-running agents",
+      "url": "https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents",
+      "evidenceType": "primary engineering experience",
+      "versionScope": "2025-11-26",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S20",
+      "title": "LLMCompiler",
+      "url": "https://proceedings.mlr.press/v235/kim24y.html",
+      "evidenceType": "conference paper",
+      "versionScope": "ICML 2024",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S21",
+      "title": "RouteLLM",
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2025/hash/5503a7c69d48a2f86fc00b3dc09de686-Abstract-Conference.html",
+      "evidenceType": "conference paper",
+      "versionScope": "ICLR 2025",
+      "verificationNote": "承接 v5 的来源索引；具体依赖仍需本机版本锁定和契约测试。"
+    },
+    {
+      "id": "S22",
+      "title": "HydraFusion: Context-Aware Selective Sensor Fusion for Robust and Efficient Autonomous Vehicle Perception",
+      "url": "https://arxiv.org/html/2201.06644v1",
+      "evidenceType": "research paper",
+      "versionScope": "v1; 2022",
+      "adoption": "仅采用情境感知的选择性组合原则；传感器融合不是 LLM 调度实现。",
+      "verificationNote": "2026-09-07 通过公开原始来源复核；未运行相关系统。"
+    },
+    {
+      "id": "S23",
+      "title": "HyDRA: Hybrid Dynamic Routing Architecture for Heterogeneous LLM Pools",
+      "url": "https://arxiv.org/html/2605.17106v2",
+      "evidenceType": "research preprint",
+      "versionScope": "v2; 2026",
+      "adoption": "能力需求与候选模型解耦；硬约束不允许用最小能力缺口替代。",
+      "verificationNote": "2026-09-07 通过公开原始来源复核；未运行相关系统。"
+    },
+    {
+      "id": "S24",
+      "title": "Project HydraFusion: Frontier quality via multi-model orchestration",
+      "url": "https://github.blog/ai-and-ml/github-copilot/project-hydrafusion-frontier-quality-via-multi-model-orchestration/",
+      "evidenceType": "official product engineering article",
+      "versionScope": "2026-09-04 research preview",
+      "adoption": "选择 direct/cascade/critique 的思想；不移植其闭源运行时，不采用其收益数字为产品承诺。",
+      "verificationNote": "2026-09-07 通过公开原始来源复核；未运行相关系统。"
+    },
+    {
+      "id": "S25",
+      "title": "About the rubber duck agent",
+      "url": "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/rubber-duck",
+      "evidenceType": "official documentation",
+      "versionScope": "mutable",
+      "adoption": "独立、具体、有严重程度的第二意见；审查不等于最终验收。",
+      "verificationNote": "2026-09-07 通过公开原始来源复核；未运行相关系统。"
+    },
+    {
+      "id": "S26",
+      "title": "Add presentation-neutral HydraFusion progress reducer, PR #2447",
+      "url": "https://github.com/github/copilot-sdk/pull/2447",
+      "evidenceType": "draft pull request",
+      "versionScope": "查阅时为 Draft；非稳定 API",
+      "adoption": "进度展示采用统一投影，容忍重复/迟到事件；不能用进度终态替代验收，也不删关键错误。",
+      "verificationNote": "2026-09-07 通过公开原始来源复核；未运行相关系统。"
+    }
+  ],
+  "designBaseline": "v6",
+  "loopArenaBenchmarkRun": false,
+  "productionPluginImplemented": false
+}
