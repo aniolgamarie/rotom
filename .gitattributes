@@ -1,2 +1,5 @@
 # Unified diff 的空上下文行必须保留一个空格，不将其当作源码尾随空格。
 locks/dsh/vendor/*.patch -whitespace
+
+# 上游许可证通知按锁定原始字节保存，不改写其历史尾随空格。
+locks/omp/upstream/THIRD-PARTY-NOTICES.txt -whitespace -text

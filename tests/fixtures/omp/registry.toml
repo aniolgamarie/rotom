@@ -1,0 +1,39 @@
+schema_version = 1
+
+[providers.omp-smoke]
+protocol = "openai-compatible"
+auth_kind = "api-key"
+base_url = "https://omp-validation.invalid/v1"
+credential_ref = "secret:omp_smoke_placeholder"
+
+[models.omp-large]
+provider = "omp-smoke"
+remote_id = "large-v1"
+input = ["text", "image"]
+context_window = 100000
+max_output_tokens = 8000
+
+[models.omp-small]
+provider = "omp-smoke"
+remote_id = "small-v1"
+input = ["text"]
+context_window = 32000
+max_output_tokens = 4000
+
+[mcp.echo-stdio]
+transport = "stdio"
+command = "omp-package:echo-mcp"
+args = []
+
+[mcp.echo-http]
+transport = "streamable-http"
+url = "https://omp-validation.invalid/mcp"
+
+[rules.omp-fixture-one]
+path = "tests/fixtures/omp/rules/one.md"
+
+[rules.omp-fixture-two]
+path = "tests/fixtures/omp/rules/two.md"
+
+[skills.full-package]
+path = "tests/fixtures/omp/skills/full-package"

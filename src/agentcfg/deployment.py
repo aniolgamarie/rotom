@@ -159,6 +159,8 @@ def desired_items(candidate):
     if target.reference_tokens:
       item["guard"] = reference_guard(target.reference_tokens)
       validate_projection(desired, item["guard"])
+    from .native_projection import validate_item_guard
+    validate_item_guard(item, desired)
     result[item_key(item)] = item
   values = list(result.values())
   for index, a in enumerate(values):
@@ -171,6 +173,8 @@ def desired_items(candidate):
 
 
 def projection(tree, item):
+  from .native_projection import validate_item_guard
+  validate_item_guard(item, item.get("baseline", item.get("desired", ABSENT)))
   raw = tree.read(item["path"])
   if raw is None:
     return ABSENT.copy()
@@ -391,6 +395,11 @@ def rollback(instance: Path, state_root: Path, binding):
     old = read_state(state)
     if not old["current"] or old["current"]["binding"] != binding:
       raise Conflict("不存在属于当前机器配置的部署")
+    # OMP混合原生文档的认证叶子即使本轮不回滚，也必须保持已声明引用。
+    from .native_projection import is_omp_credential
+    for item in old["current"]["items"].values():
+      if is_omp_credential(item):
+        projection(target, item)
     if old["previous"] is None:
       raise Conflict("没有上一版备份可恢复")
     backup = old["previous"]

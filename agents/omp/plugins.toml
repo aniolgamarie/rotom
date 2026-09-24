@@ -1,0 +1,19 @@
+schema_version = 1
+
+[plugins]
+
+[plugins.rotom-health]
+id = "rotom-health"
+source = "agents/omp/packages/rotom-health"
+entrypoints = ["index.ts"]
+tree_digest = "a382040f693dc402fdca39134a02e4c6ca158b8f23f6a8d495de486b840067ca"
+license = "MIT"
+compatibility = { omp = "v18.3.0" }
+
+[plugins.echo-mcp]
+id = "echo-mcp"
+source = "agents/omp/packages/echo-mcp"
+entrypoints = ["server.py"]
+tree_digest = "c10617b101717ec6ce399da846e165d7a6f1cfb5c2aad02d2f6c405cd187faf4"
+license = "MIT"
+compatibility = { omp = "v18.3.0" }

@@ -124,6 +124,8 @@ def _strict_schema_serialized(serialized: str) -> None:
       # 引用可指向 default 等注解内部；根元 schema 不会把该值当 schema 验证。
       meta.validate(target)
       visit(target)
+    elif "type" not in node and any(key in node for key in ("allOf", "anyOf", "oneOf")):
+      pass
     elif node.get("type") not in ("object", "array", "string", "integer", "number", "boolean", "null"):
       raise ValueError()
     if node.get("type") == "object":

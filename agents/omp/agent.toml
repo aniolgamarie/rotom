@@ -1,0 +1,31 @@
+schema_version = 1
+adapter_version = "omp-1"
+upstream_commit = "62bc57be1b03ef0802a33cf7f5f530e534527531"
+
+[defaults]
+providers = []
+models = []
+rules = []
+skills = []
+plugins = []
+mcp = []
+
+[defaults.agent_options.discovery]
+project_resources = false
+project_roots = []
+
+[defaults.agent_options.resources]
+prompts = []
+themes = []
+
+[resources]
+
+[resources.rotom-review]
+kind = "prompt"
+path = "agents/omp/resources/prompts/rotom-review.md"
+scope = "global"
+
+[resources.rotom-dark]
+kind = "theme"
+path = "agents/omp/resources/themes/rotom-dark.json"
+scope = "global"

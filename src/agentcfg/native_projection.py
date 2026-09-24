@@ -6,19 +6,26 @@ from .storage import Conflict
 
 
 def reference_guard(tokens):
-  if (not isinstance(tokens, (tuple, list)) or not tokens
-      or any(not isinstance(token, str) or not re.fullmatch(r"\$[A-Za-z_][A-Za-z0-9_]*", token) for token in tokens)
+  if not isinstance(tokens, (tuple, list)):
+    raise Conflict("原生引用保护声明无效")
+  from .omp_env import is_generated_name
+  kinds = ({"environment-reference"} if all(isinstance(token, str) and re.fullmatch(r"\$[A-Za-z_][A-Za-z0-9_]*", token) for token in tokens)
+           else {"omp-env-name"} if all(is_generated_name(token) for token in tokens) else set())
+  if (not tokens or not kinds
       or len(set(tokens)) != len(tokens)):
     raise Conflict("原生引用保护声明无效")
-  return {"kind": "environment-reference", "tokens": list(tokens)}
+  return {"kind": next(iter(kinds)), "tokens": list(tokens)}
 
 
 def validate_guard(guard):
   if guard is None:
     return None
-  if not isinstance(guard, dict) or set(guard) != {"kind", "tokens"} or guard["kind"] != "environment-reference":
+  if not isinstance(guard, dict) or set(guard) != {"kind", "tokens"} or guard["kind"] not in ("environment-reference", "omp-env-name"):
     raise Conflict("原生引用保护声明无效")
-  return reference_guard(guard["tokens"])
+  checked = reference_guard(guard["tokens"])
+  if checked["kind"] != guard["kind"]:
+    raise Conflict("原生引用保护声明无效")
+  return checked
 
 
 def validate_projection(value, guard):
@@ -34,6 +41,8 @@ def validate_projection(value, guard):
 
 def transition_guard(before, after):
   first, second = validate_guard(before), validate_guard(after)
+  if first and second and first["kind"] != second["kind"]:
+    raise Conflict("原生引用保护类型不能转换")
   tokens = list(dict.fromkeys((first or {}).get("tokens", []) + (second or {}).get("tokens", [])))
   return reference_guard(tokens) if tokens else None
 
@@ -50,8 +59,8 @@ def validate_saved_state(state):
 
 def validate_change(change):
   validate_item_guard(change["item"], change["after"])
-  if is_pi_credential(change["item"]) and change["before"].get("present") and not change.get("before_guard"):
-    raise Conflict("历史 Pi 认证引用缺少保护声明")
+  if (is_pi_credential(change["item"]) or is_omp_credential(change["item"])) and change["before"].get("present") and not change.get("before_guard"):
+    raise Conflict("历史认证引用缺少保护声明")
   validate_projection(change["before"], change.get("before_guard"))
   validate_projection(change["after"], change["item"].get("guard"))
 
@@ -61,10 +70,26 @@ def is_pi_credential(item):
   return item.get("path") == "pi-home/models.json" and isinstance(selector, str) and selector.startswith("/providers/") and selector.endswith("/apiKey")
 
 
+def is_omp_credential(item):
+  selector = item.get("selector")
+  path = item.get("path")
+  return isinstance(selector, str) and ((isinstance(path, str) and path.endswith("/models.yml") and selector.endswith("/apiKey"))
+    or (isinstance(path, str) and path.endswith("/mcp.json") and
+        (re.fullmatch(r"/mcpServers/[^/]+/env/[^/]+", selector) is not None or selector.endswith("/headers/Authorization"))))
+
+
 def validate_item_guard(item, value):
+  guard = item.get("guard")
+  checked = validate_guard(guard) if guard is not None else None
+  if checked is not None and checked["kind"] == "omp-env-name" and not (is_omp_credential(item) or is_pi_credential(item)):
+    raise Conflict("OMP环境引用只能保护登记的认证叶子")
+  if is_omp_credential(item) and checked is not None and checked["kind"] != "omp-env-name":
+    raise Conflict("OMP认证叶子必须使用omp-env-name保护")
+  if is_pi_credential(item) and checked is not None and checked["kind"] != "environment-reference":
+    raise Conflict("Pi认证叶子必须使用environment-reference保护")
   # 无保护的旧记录不得通过回滚重新引入原生明文凭据。
-  if is_pi_credential(item) and value.get("present") and item.get("guard") is None:
-    raise Conflict("历史 Pi 认证引用缺少保护声明")
+  if (is_pi_credential(item) or is_omp_credential(item)) and value.get("present") and item.get("guard") is None:
+    raise Conflict("历史认证引用缺少保护声明")
 
 
 def reverse_change(change):

@@ -1,5 +1,6 @@
 # Python 环境、缓存和构建产物
 .venv/
+venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -33,6 +34,7 @@ node_modules/
 /secrets.toml
 /.codex/auth.json
 /.pi/agent/auth.json
+/.omp/
 /.env
 /.env.*
 !/.env.example

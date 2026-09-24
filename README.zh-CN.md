@@ -8,6 +8,8 @@
 
 下方新手流程面向 DSH；其中 Codex/Cursor 订阅指 DSH 内的认证/provider 接入。Pi 使用独立配方和实例登录。
 
+OMP管理器集成见[OMP指南](docs/omp.md)和[支持状态](docs/omp-support.md)：固定v18.3.0 standalone，每个配方使用新HOME和独立原生profile，登录重新建立。`omp-default`是日常bootstrap配方；九行虚构验收配方仅在临时验收仓库登记。Linux x64 无账号真实 smoke 已通过；其他平台及真实账号验证已转入[独立遗留](docs/follow-ups/omp-platform-and-live-validation.md)，不属于当前已完成的 OMP spec。
+
 **第一次使用请从 [新手使用教程](docs/getting-started.md) 开始。** 教程按实际操作顺序说明准备环境、创建本机文件、安装、部署、登录、日常启动和备份恢复，并解释命令输出。仅使用 Codex/Cursor 订阅时，可以先保留空的 `[secrets]`，不需要照抄下面的私有网关示例。
 
 已有首版安装的用户请先看 [升级与故障修复说明](docs/operations.md#审查修复后的升级)。本地文件现在会严格检查权限和链接；旧运行包没有文件收据时，退出 DSH 后执行一次 `sync` 重建即可，账号 home 保持不变。
@@ -90,6 +92,7 @@ private_gateway_key = ""
 | `sync` | 消费现有锁并暂存安装或修复损坏包，不更新锁、不启动、不登录 |
 | `apply` | 离线重新计划、备份并部署，不安装依赖 |
 | `run dsh --cwd PATH` | 启动当前部署，保持工作目录，按需注入密钥，不隐式 sync/apply |
+| `usage <原生参数>` | 无前置选择器时透传PATH上的OMP usage，不读local；显式OMP `--profile`使用已部署受管身份，见[两模式说明](docs/omp-usage.md) |
 | `doctor` / `doctor --live` | 默认离线诊断；live 才做声明的服务可达性检查，不自动登录或调用模型 |
 | `capture` | 捕获预览、支持的主题和已声明模型选择，生成合法本地提案，不导出认证数据 |
 | `rollback` | 恢复上一版受管配置；成功后消费该备份 |
@@ -112,6 +115,7 @@ private_gateway_key = ""
 - [日常维护与新增共享资料](docs/operations.md)：包含规则、技能、provider/model 的例子。
 - `maintain-agent-config` 技能随默认 profile 分发，指导 Agent 编写合法本地 TOML、修改模板和校验生成结果；部署仍走管理器的备份/冲突流程。
 - [增加第二个工具](docs/adapters.md)：接口、所有权、原生编解码和验收边界。
+- [OMP配置](docs/omp.md)、[Profile](docs/omp-profiles.md)、[迁入](docs/omp-migration.md)、[依赖](docs/omp-dependencies.md)和[Usage](docs/omp-usage.md)：资源映射、新身份、只读提案和固定运行包。
 
 ## 测试
 
