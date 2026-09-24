@@ -75,6 +75,9 @@ def cmd_plan(args):
   result = plan.public()
   result["sources"] = [{"field": ".".join(path), "source": layer} for path, layer in public_diagnostics(w.resolved)]
   result["dependencies"] = dependency_status(w, lock)
+  identity_report = getattr(w.adapter, "identity_diagnostics", None)
+  if identity_report is not None:
+    result["identity"] = identity_report(w)
   upgrade = getattr(w.adapter, "upgrade_diagnostics", None)
   if upgrade is not None:
     with Tree(w.state_root) as state:
@@ -106,7 +109,7 @@ def migration_plan(args):
 
 def cmd_apply(args):
   w, lock, candidate = prepared(args)
-  guard = getattr(w.adapter, "lifecycle_guard", None)
+  guard = getattr(w.adapter, "apply_lifecycle_guard", None) or getattr(w.adapter, "lifecycle_guard", None)
   with guard(w) if guard else nullcontext():
     result = deployment.apply(w.instance, w.state_root, candidate, w.binding, runtime.record(w, lock))
   return output(w, "apply", result)
@@ -120,6 +123,12 @@ def cmd_rollback(args):
 
 
 def cmd_lock(args):
+  if getattr(args, "agent", None) == "omp":
+    from .omp_dependencies import OmpBackend
+    repository = Path(__file__).resolve().parents[2]
+    OmpBackend().resolve_lock(repository)
+    print(json.dumps({"command": "lock", "agent": "omp", "locked": True}, ensure_ascii=False, sort_keys=True))
+    return 0
   w = workspace(args)
   w.backend.resolve_lock(w.repository)
   return output(w, "lock", {"locked": True})
@@ -133,6 +142,17 @@ def cmd_sync(args):
 def cmd_run(args):
   w = workspace(args)
   return runtime.run(w, cwd=args.cwd.absolute(), arguments=args.passthrough)
+
+
+def cmd_usage(args):
+  from .usage import run_managed
+  return run_managed(workspace(args), args.passthrough)
+
+
+def cmd_inventory(args):
+  from .omp_inventory import write_inventory
+  w = workspace(args)
+  return output(w, "inventory", write_inventory(w, args.source))
 
 
 def cmd_recover(args):
@@ -152,6 +172,9 @@ def cmd_doctor(args):
       "authentication": "not-inspected; use native auth status", "live": False,
       "notes": list(w.adapter.doctor({}))}
   result["required_toolchain"] = w.backend.toolchain(lock)
+  identity_report = getattr(w.adapter, "identity_diagnostics", None)
+  if identity_report is not None:
+    result["identity"] = identity_report(w)
   import sys
   platforms = lock.metadata.get("platforms", {})
   result["platform_evidence"] = platforms.get(sys.platform, "not-recorded") if isinstance(platforms, dict) else "not-recorded"
@@ -185,15 +208,24 @@ def cmd_doctor(args):
 
 def cmd_capture(args):
   w = workspace(args)
-  with Tree(w.instance) as target:
-    # 捕获前使用已部署字段自己的保护声明，不能用当前未部署的引用替代。
-    with Tree(w.state_root) as state:
+  validate_binding = getattr(w.adapter, "validate_runtime_binding", None)
+  guard = getattr(w.adapter, "lifecycle_guard", None) if validate_binding is not None else None
+  with (guard(w) if guard else nullcontext()), Tree(w.state_root) as state:
+    from .storage import instance_lock
+    with instance_lock(state) if validate_binding is not None else nullcontext():
       current = deployment.read_state(state)["current"]
-      if current:
-        for item in current["items"].values():
-          if item.get("guard") is not None:
-            deployment.projection(target, item)
-    projection = w.adapter.capture_projection(target)
+      if validate_binding is not None:
+        if state.read("pending.json") or current is None or current["binding"] != w.binding:
+          raise Conflict("capture需要匹配的已部署身份且无待恢复事务")
+        validate_binding(w, current["launch"].get("adapter_binding"))
+      with Tree(w.instance) as target:
+        # 受管OMP逐项强制分类，删除guard不能让历史秘密叶子进入投影。
+        if current:
+          for item in current["items"].values():
+            if item.get("guard") is not None or validate_binding is not None:
+              deployment.projection(target, item)
+        capture_for = getattr(w.adapter, "capture_projection_for", None)
+        projection = capture_for(w, target) if capture_for is not None else w.adapter.capture_projection(target)
   captured = w.adapter.capture_configuration(projection, w.resolved.data)
   proposal = {"schema_version": 1, "overrides": {"profiles": {w.profile: captured}}}
   from .schema import validate_document

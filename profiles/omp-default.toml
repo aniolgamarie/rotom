@@ -1,0 +1,19 @@
+schema_version = 1
+id = "omp-default"
+agent = "omp"
+providers = []
+models = []
+rules = []
+skills = []
+plugins = []
+mcp = []
+
+[roles]
+
+[agent_options.discovery]
+project_resources = false
+project_roots = []
+
+[agent_options.resources]
+prompts = []
+themes = []

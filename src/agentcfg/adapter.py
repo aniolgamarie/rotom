@@ -72,8 +72,10 @@ class ManagedTarget:
     if not isinstance(self.reference_tokens, tuple):
       raise ContractError("凭据引用声明必须是 tuple")
     if self.reference_tokens:
+      from .omp_env import is_generated_name
       if (self.selector is None or not isinstance(self.reference_tokens, tuple)
-          or any(not isinstance(token, str) or not re.fullmatch(r"\$[A-Za-z_][A-Za-z0-9_]*", token)
+          or any(not isinstance(token, str) or not (re.fullmatch(r"\$[A-Za-z_][A-Za-z0-9_]*", token)
+                 or is_generated_name(token))
                  for token in self.reference_tokens)
           or len(set(self.reference_tokens)) != len(self.reference_tokens)):
         raise ContractError("凭据引用必须声明为字段的唯一环境变量引用")
@@ -176,6 +178,17 @@ class LaunchSpec:
       raise ContractError("普通值与秘密引用不得重复占用环境目标")
 
 
+@dataclass(frozen=True)
+class RenderContext:
+  """显式锁身份及对应运行包根；只用于需要绝对包入口的确定性渲染。"""
+  lock_identity: str
+  runtime_root: Path
+
+  def __post_init__(self):
+    if not _text(self.lock_identity) or not isinstance(self.runtime_root, Path) or not self.runtime_root.is_absolute():
+      raise ContractError("渲染上下文必须绑定明确锁身份与绝对运行包根")
+
+
 Config = TypeVar("Config")
 NativeProjection = TypeVar("NativeProjection")
 CaptureProposal = TypeVar("CaptureProposal")
@@ -250,6 +263,13 @@ class Adapter(ABC, Generic[Config, NativeProjection, CaptureProposal]):
 
   def prepare_runtime(self, workspace, root) -> None:
     return None
+
+  @property
+  def requires_render_context(self) -> bool:
+    return False
+
+  def render_with_context(self, config: Config, context: RenderContext) -> tuple[Artifact, ...]:
+    return self.render(config)
 
   def capture_projection(self, tree):
     raise NotImplementedError("adapter must provide capture_projection")

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "adapter_version", "upstream_commit", "defaults"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "adapter_version": {"type": "string", "const": "omp-1"},
+    "upstream_commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "defaults": {"$ref": "#/$defs/profile"}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1},
+    "ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+    "profile": {"type": "object", "additionalProperties": false,
+      "required": ["providers", "models", "rules", "skills", "plugins", "mcp", "agent_options"],
+      "properties": {
+        "providers": {"$ref": "#/$defs/ids"}, "models": {"$ref": "#/$defs/ids"},
+        "rules": {"$ref": "#/$defs/ids"}, "skills": {"$ref": "#/$defs/ids"},
+        "plugins": {"$ref": "#/$defs/ids"}, "mcp": {"$ref": "#/$defs/ids"},
+        "agent_options": {"type": "object", "additionalProperties": false, "properties": {
+          "discovery": {"type": "object", "additionalProperties": false, "properties": {
+            "project_resources": {"type": "boolean"}, "project_roots": {"$ref": "#/$defs/ids"}}},
+          "resources": {"type": "object", "additionalProperties": false, "properties": {
+            "prompts": {"$ref": "#/$defs/ids"}, "themes": {"$ref": "#/$defs/ids"}}}
+        }}
+      }}
+  }
+}

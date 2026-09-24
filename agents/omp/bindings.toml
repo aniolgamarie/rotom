@@ -1,0 +1,13 @@
+schema_version = 1
+
+[roles]
+default = "default"
+smol = "smol"
+slow = "slow"
+vision = "vision"
+plan = "plan"
+advisor = "advisor"
+
+[mcp_transports]
+stdio = "stdio"
+streamable-http = "http"

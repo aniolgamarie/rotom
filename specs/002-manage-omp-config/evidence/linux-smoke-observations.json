@@ -1,0 +1,203 @@
+{
+  "date": "2026-09-24",
+  "scope": "Linux x64 native smoke only; no login, usage or model requests",
+  "platform": "Linux glibc 2.32 x86_64; Python 3.11.11",
+  "case_root": "/tmp/rotom-omp-smoke-nzudu7uu",
+  "native_tag": "v18.3.0",
+  "native_commit": "62bc57be1b03ef0802a33cf7f5f530e534527531",
+  "binary_sha256": "d2fdaa29affe96e596eb9c78d42f548f1f291df28608631bcc00750a84b94bc3",
+  "temporary_lock": "64e715e7a4fe12742ed5252805a0e1a75f50034f2cc603a6606381e737bc0e43",
+  "observations": {
+    "model_large": true,
+    "model_small": true,
+    "role_smol": true,
+    "model_cycle_small": true,
+    "health": true,
+    "prompt": true,
+    "skill": true,
+    "theme_dark": true,
+    "theme_light": true,
+    "key_cycle": true,
+    "key_history_disabled": true,
+    "mcp_connected": true,
+    "mcp_server": true,
+    "mcp_tool_list": true,
+    "no_model_messages": true
+  },
+  "terminal_excerpts": [
+    "❯ omp-smoke/large-v1 ●                                                                                                                     100k ◫  free",
+    "omp-smoke/small-v1                                                                                                                        32k ◫  free",
+    "ROTOM_OMP_HEALTH_OK",
+    "│ Disabled                                     │ Search prompt history                                                │",
+    "│ Ctrl+P                                       │ Cycle role models (slow/default/smol)                                │",
+    "│ Shift+Ctrl+P                                 │ Cycle role models (backward)                                         │",
+    "● Successfully connected to \"echo-stdio\"",
+    "Server: rotom-echo-mcp v1.0.0",
+    "Available tools:",
+    "• echo",
+    "⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝ ⛝   ⛃ Messages: 0 tokens (0.0%)",
+    "│   Composer           │ ❯ Dark Theme                  rotom-dark                                                                                            █ │",
+    "│   Status Line        │   Light Theme                 rotom-dark                                                                                            █ │",
+    "◀ smol ▶  default ┆ slow",
+    "smol  ◀ default ▶  slow",
+    "✎  rotom-review  对选定更改做只读审查，给出有证据的缺陷与验证建议。 (user)",
+    "❯ ✦ skill:full-package  OMP isolation fixture."
+  ],
+  "raw_evidence": {
+    "lock.stdout": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/lock.stdout",
+      "sha256": "c5d41a53758cb779d8a0188047430355913d9b5798522a8beff5cb7cbd818d6d"
+    },
+    "validate.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/validate.json",
+      "sha256": "e2fafad297aa45762f30a2af3835e44fe42759f602a8186dc039273a158d8384"
+    },
+    "render.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/render.json",
+      "sha256": "54d23789ed41fff8711542e3f0771fd5f358f055729b1f5416ca8ce59dbc017d"
+    },
+    "plan.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/plan.json",
+      "sha256": "fd6318012a85ff972a038b1278ad5cac15c33f3f9937a128a53192d3fd4bd192"
+    },
+    "sync-proxy.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/sync-proxy.json",
+      "sha256": "ade0b164bdba87e4d67c9c66858e683c26706f9a971bdc79a403a0bfe8f7edad"
+    },
+    "apply.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/apply.json",
+      "sha256": "6fdc10d324b70d62a29b6d92703fe1eccd62a44e868034ac0c113e2235a314fc"
+    },
+    "apply-noop.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/apply-noop.json",
+      "sha256": "64bb7ab5754f9bb8ace30ad2abf983f4ed9b2a79c1a664eda9a7d9d79f53a56c"
+    },
+    "native-help-isolated.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/native-help-isolated.json",
+      "sha256": "ee1e4eaa6572e38741e474da2c40ecb4be3405c5717b5ab66245a73d395adf43"
+    },
+    "tui-result.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/first-tui-result.json",
+      "sha256": "61976e0d801f3b944cd5a90d0e8d1e07114fa5c2cfc89b095315fe2cb3cabdc9"
+    },
+    "tui.raw": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/first-tui.raw",
+      "sha256": "12a0761e05ac0bfe14cf0c66c3f8793759c231eded1633c13af8bb68e16691ae"
+    },
+    "tui.trace": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/first-tui.trace",
+      "sha256": "93ca5ba172c1fea94dc293a536183ecf1259b1e23405d25f712f28866f2333cb"
+    },
+    "post-tui-doctor.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/post-tui-doctor.json",
+      "sha256": "7b0ef0e456dc6db77841cd8e99e533cf85084eaae07953d8a0322400487a5bdf"
+    },
+    "diagnostic-lock-diagnostic.stdout": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/lock-diagnostic.stdout",
+      "sha256": "be4289e37056d488d3ccdb132ae16c31cc8645b87564ac1656fbcb387d705d90"
+    },
+    "diagnostic-sync-diagnostic.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/sync-diagnostic.json",
+      "sha256": "d60c24f5862a2d36f10baa7a67bc248e7e031a55df19dd344beb56a432a5e6be"
+    },
+    "diagnostic-apply-diagnostic.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/apply-diagnostic.json",
+      "sha256": "5d5cabb88007ece3ac895d32ae424e10bd84940a4d2dd4df7bd8422a841b2abd"
+    },
+    "diagnostic-tui.raw": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/tui.raw",
+      "sha256": "85746cf8bade2d4df8dfabac9182b63cfa8b444c7d9eb1a6d6a7d569dd969d6e"
+    },
+    "diagnostic-tui.trace": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/tui.trace",
+      "sha256": "88ae6fba9f2106d5bb180ecd52a3b21a5dfcad70f13e05867e8f5f59b89fdfc2"
+    },
+    "diagnostic-tui-events.jsonl": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/tui-events.jsonl",
+      "sha256": "073b45eae44e504fc64cc9744b2ae47ac638a45c49568df1dd7c4ac5e42eb39a"
+    },
+    "diagnostic-tui-result.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/tui-result.json",
+      "sha256": "04ab3672d96ea44dcc1a0e0166e9810a64010dce7af0dd13d7b575f448eb4d4c"
+    },
+    "diagnostic-final-doctor.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/final-doctor.json",
+      "sha256": "0826b161ba99ce80c97f79271fbde8739896e0092b14112a6edfd1318d011614"
+    },
+    "diagnostic-final-doctor.stdout": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/final-doctor.stdout",
+      "sha256": "d054fcd080730f42b699a2d2585483bbddbc5f694e3c6522e658f9e95e6df0f6"
+    },
+    "diagnostic-diagnostic-observations.json": {
+      "path": "/tmp/rotom-omp-smoke-nzudu7uu/logs/diagnostic-observations.json",
+      "sha256": "62fb67be762035e0b5dcf6657e0b0c9b379fa13b69004b052f4cb4201a1bb861"
+    }
+  },
+  "final_formal_lock": "0387bc982c13d768c77cf1be42b0243ebd0fabb0aa0a7ca9048e903d1d1134eb",
+  "final_temporary_lock": "67abdc96435ffc99a0a2977ca7bf911f194080cf5995e89f3e32abed88509223",
+  "final_health_package": "a382040f693dc402fdca39134a02e4c6ca158b8f23f6a8d495de486b840067ca",
+  "diagnostic_observations": {
+    "inspect": {
+      "ruleOne": true,
+      "ruleTwo": true,
+      "fullPackageSkill": true,
+      "main": "omp-smoke/large-v1",
+      "smol": "omp-smoke/small-v1",
+      "theme": "rotom-dark",
+      "mcpToolPresent": true
+    },
+    "mcp_call": true,
+    "zero_model_messages": true
+  },
+  "final_doctor": {
+    "dependencies": "installed",
+    "deployed_dependencies": "installed",
+    "drift": false,
+    "changes_pending": 0,
+    "recovery_pending": false
+  },
+  "deployed_skill_files": {
+    "SKILL.md": {
+      "sha256": "ae5ab2de2edaaf6517a855bc2271159f7c455dcdb9e13c744e310bc34327c912",
+      "executable": false
+    },
+    "scripts/check.sh": {
+      "sha256": "0a5fb2d3a9e42d8cd0cd06a68ffdbc8cdd3e26ad2ec801c47867e457e7433e1a",
+      "executable": true
+    },
+    "references/details.md": {
+      "sha256": "2386e9ad8ae112fecbc76dad99a1b316b0192410768d716fd83d54cc60d9b221",
+      "executable": false
+    }
+  },
+  "process_network_summary": {
+    "first-tui.trace": {
+      "executables": [
+        "/tmp/rotom-omp-smoke-nzudu7uu/repository/agentcfg",
+        "/usr/bin/python3",
+        "/tmp/rotom-omp-smoke-nzudu7uu/repository/.venv/bin/python",
+        "/tmp/rotom-omp-smoke-nzudu7uu/home/.cache/agentcfg/omp/omp-validation/runtimes/64e715e7a4fe12742ed5252805a0e1a75f50034f2cc603a6606381e737bc0e43-linux-x64/bin/omp",
+        "/usr/bin/python3.11",
+        "/usr/bin/python3.11"
+      ],
+      "external_connect_attempts": 900,
+      "external_attempts_blocked": true,
+      "isolated_loopback_probe_attempts": 10,
+      "installer_processes": 0
+    },
+    "tui.trace": {
+      "executables": [
+        "/tmp/rotom-omp-smoke-nzudu7uu/repository/agentcfg",
+        "/usr/bin/python3",
+        "/tmp/rotom-omp-smoke-nzudu7uu/repository/.venv/bin/python",
+        "/tmp/rotom-omp-smoke-nzudu7uu/home/.cache/agentcfg/omp/omp-validation/runtimes/67abdc96435ffc99a0a2977ca7bf911f194080cf5995e89f3e32abed88509223-linux-x64/bin/omp",
+        "/usr/bin/python3.11",
+        "/usr/bin/python3.11"
+      ],
+      "external_connect_attempts": 780,
+      "external_attempts_blocked": true,
+      "isolated_loopback_probe_attempts": 5,
+      "installer_processes": 0
+    }
+  }
+}

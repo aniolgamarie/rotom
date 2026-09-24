@@ -6,12 +6,13 @@ from pathlib import Path
 from .config import AdapterSources, SourceInputs, LocalConfig, load_local, load_sources, resolve_config
 from .dsh import DshAdapter
 from .pi import PiAdapter
+from .omp import OmpAdapter
 from .paths import safe_id
 from .render import render_candidate
 from .schema import AdapterSchemas
 
 
-ADAPTER_TYPES = {"dsh": DshAdapter, "pi": PiAdapter}
+ADAPTER_TYPES = {"dsh": DshAdapter, "pi": PiAdapter, "omp": OmpAdapter}
 
 
 @dataclass
@@ -55,8 +56,18 @@ class Workspace:
     scopes = [target.path for target in self.adapter.managed_targets(self.resolved.data)
               if target.serialization == "skill-directory"]
     skills = {"skill_root": self.repository, "skill_target_root": scopes[0]} if len(scopes) == 1 else {}
+    context = None
+    required = self.adapter.requires_render_context or getattr(self.adapter, "render_context_required", lambda data: False)(self.resolved.data)
+    if required:
+      from .adapter import RenderContext
+      from .runtime import runtime_identity
+      lock = self.backend.read_lock(self.repository)
+      if lock.identity != lock_identity:
+        raise ValueError("候选锁身份与仓库锁不一致")
+      identity = runtime_identity(self, lock)
+      context = RenderContext(lock.identity, self.backend.root(self, identity))
     return render_candidate(self.resolved, adapter=self.adapter, adapter_schemas=self.schemas,
-      lock_identity=lock_identity, **skills)
+      lock_identity=lock_identity, context=context, **skills)
 
 
 def load_workspace(local, profile=None, *, repository=None, proposal=None):
