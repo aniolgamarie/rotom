@@ -472,3 +472,14 @@ def test_schema_content_cache_never_hides_in_place_mutation():
   document["properties"]["flag"]["unsupportedRule"] = True
   with pytest.raises(ValueError):
     schema._strict_schema(document)
+
+
+@pytest.mark.parametrize("definition", [
+  {"prefixItems": [{"type": "string"}]},
+  {"type": ["object", "null"], "oneOf": [{"type": "object", "additionalProperties": False}]},
+])
+def test_composition_does_not_bypass_required_explicit_schema_types(definition):
+  schema, _ = api()
+  # prefixItems 不是联合类型；组合关键字也不能放宽既有显式类型约束。
+  with pytest.raises(ValueError):
+    schema._strict_schema(definition)

@@ -1,0 +1,8 @@
+schema_version = 1
+
+[machine]
+id = "omp-validation"
+default_profile = "omp-validation"
+
+[secrets]
+omp_smoke_placeholder = "rotom-smoke-not-a-secret"

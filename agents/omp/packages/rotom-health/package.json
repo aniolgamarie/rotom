@@ -1,0 +1,7 @@
+{
+  "name": "rotom-omp-health",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT"
+}

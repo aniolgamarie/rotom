@@ -1,0 +1,11 @@
+{
+  "notice": "Synthetic byte-stream cases only; not real OMP account output or provider support evidence.",
+  "cases": [
+    {"name": "no-account", "tail": ["--json"], "stdout": "{\"accounts\":[],\"reports\":[]}\n", "stderr": "No credentials (synthetic)\n", "exit": 0},
+    {"name": "unsupported-domestic", "tail": ["--provider", "zhipu-coding-plan", "--json"], "stdout": "{\"provider\":\"zhipu-coding-plan\",\"status\":\"unsupported\"}\n", "stderr": "", "exit": 1},
+    {"name": "partial-kimi", "tail": ["--provider", "kimi-code", "-j"], "stdout": "{\"provider\":\"kimi-code\",\"limits\":null,\"partial\":true}\n", "stderr": "synthetic partial failure\n", "exit": 7},
+    {"name": "window-zai", "tail": ["--provider=zai", "--history", "--days", "7"], "stdout": "{\"provider\":\"zai\",\"window\":\"synthetic\",\"cached\":true}\n", "stderr": "", "exit": 0},
+    {"name": "oauth-codex", "tail": ["clients", "-p", "openai-codex", "--json"], "stdout": "{\"provider\":\"openai-codex\",\"clients\":[]}\n", "stderr": "", "exit": 0},
+    {"name": "invalidate", "tail": ["invalidate", "--provider", "openai-codex"], "stdout": "synthetic cache invalidated\n", "stderr": "", "exit": 0}
+  ]
+}

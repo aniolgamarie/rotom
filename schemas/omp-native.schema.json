@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {"$ref": "#/$defs/skill-mcp-switch"}, {"$ref": "#/$defs/config-false"},
+    {"$ref": "#/$defs/enabled-providers"}, {"$ref": "#/$defs/disabled-providers"},
+    {"$ref": "#/$defs/marketplace"}, {"$ref": "#/$defs/models"},
+    {"$ref": "#/$defs/keybindings"}, {"$ref": "#/$defs/mcp"}
+  ],
+  "$defs": {
+    "skill-mcp-switch": {"oneOf": [{"$ref": "#/$defs/pi-user"}, {"$ref": "#/$defs/project-toggle"}]},
+    "pi-user": {"type": "object", "additionalProperties": false, "required": ["path", "codec", "selector", "value"], "properties": {
+      "path": {"type": "string", "const": "config.yml"}, "codec": {"type": "string", "const": "yaml"},
+      "selector": {"type": "string", "const": "/skills/enablePiUser"}, "value": {"type": "boolean", "const": true}}},
+    "project-toggle": {"type": "object", "additionalProperties": false, "required": ["path", "codec", "selector", "value"], "properties": {
+      "path": {"type": "string", "const": "config.yml"}, "codec": {"type": "string", "const": "yaml"},
+      "selector": {"type": "string", "enum": ["/skills/enablePiProject", "/mcp/enableProjectConfig"]},
+      "value": {"type": "boolean"}}},
+    "config-false": {"type": "object", "additionalProperties": false, "required": ["path", "codec", "selector", "value"], "properties": {
+      "path": {"type": "string", "const": "config.yml"}, "codec": {"type": "string", "const": "yaml"},
+      "selector": {"type": "string", "enum": ["/startup/checkUpdate", "/autolearn/enabled"]},
+      "value": {"type": "boolean", "const": false}}},
+    "enabled-providers": {"type": "object", "additionalProperties": false, "required": ["path", "codec", "selector", "value"], "properties": {
+      "path": {"type": "string", "const": "config.yml"}, "codec": {"type": "string", "const": "yaml"},
+      "selector": {"type": "string", "const": "/enabledProviders"}, "value": {"type": "array", "items": {"type": "string"}, "maxItems": 0}}},
+    "disabled-providers": {"type": "object", "additionalProperties": false, "required": ["path", "codec", "selector", "value"], "properties": {
+      "path": {"type": "string", "const": "config.yml"}, "codec": {"type": "string", "const": "yaml"},
+      "selector": {"type": "string", "const": "/disabledProviders"},
+      "value": {"type": "array", "items": {"type": "string"}, "minItems": 18, "maxItems": 18, "uniqueItems": true}}},
+    "marketplace": {"type": "object", "additionalProperties": false, "required": ["path", "codec", "selector", "value"], "properties": {
+      "path": {"type": "string", "const": "config.yml"}, "codec": {"type": "string", "const": "yaml"},
+      "selector": {"type": "string", "const": "/marketplace/autoUpdate"}, "value": {"type": "string", "const": "off"}}},
+    "models": {"type": "object", "additionalProperties": false, "required": ["path", "codec", "selector", "value"], "properties": {
+      "path": {"type": "string", "const": "models.yml"}, "codec": {"type": "string", "const": "yaml"},
+      "selector": {"type": "string", "pattern": "^/providers/[^/]+/[^/]+$"},
+      "value": {"oneOf": [{"type": "string"}, {"type": "integer"}, {"type": "array", "items": {"type": "string"}}, {"type": "object", "additionalProperties": false}]}}},
+    "keybindings": {"type": "object", "additionalProperties": false, "required": ["path", "codec", "selector", "value"], "properties": {
+      "path": {"type": "string", "const": "keybindings.yml"}, "codec": {"type": "string", "const": "yaml"},
+      "selector": {"type": "string", "pattern": "^/[^/]+$"},
+      "value": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]}}},
+    "mcp": {"type": "object", "additionalProperties": false, "required": ["path", "codec", "selector", "value"], "properties": {
+      "path": {"type": "string", "const": "mcp.json"}, "codec": {"type": "string", "const": "json"},
+      "selector": {"type": "string", "pattern": "^/mcpServers/[^/]+/.+$"},
+      "value": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]}}}
+  }
+}

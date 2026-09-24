@@ -19,7 +19,7 @@ from jinja2 import StrictUndefined
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 import yaml
 
-from .adapter import Adapter, AdapterDeclaration, Artifact, ManagedTarget, Ownership
+from .adapter import Adapter, AdapterDeclaration, Artifact, ManagedTarget, Ownership, RenderContext
 from .config import (ResolvedConfig, _adapter_policy, _authentication, _credential_url,
                      _machine_layers, _selected)
 from .paths import trusted_source_directory, _open_directory, relative_path
@@ -281,7 +281,7 @@ class RenderCandidate:
 @_redacted
 def render_candidate(resolved: ResolvedConfig, *, adapter: Adapter, adapter_schemas: AdapterSchemas,
                      lock_identity: str, skill_root: Path | None = None,
-                     skill_target_root: str | None = None) -> RenderCandidate:
+                     skill_target_root: str | None = None, context: RenderContext | None = None) -> RenderCandidate:
   """对真实 resolver 的选中结果生成纯候选，adapter 七钩子中的 config 参数仍为 dict。
 
   复查可变结果的严格结构、选择/引用、机器秘密通道及 adapter 策略，不重建来源 catalog，
@@ -301,7 +301,10 @@ def render_candidate(resolved: ResolvedConfig, *, adapter: Adapter, adapter_sche
   data = _selected_data(resolved, adapter_schemas, declaration)
   adapter.validate(deepcopy(data))
   targets = _targets(adapter.managed_targets(deepcopy(data)))
-  artifacts = _artifacts(adapter.render(deepcopy(data)), targets)
+  if context is not None and (type(context) is not RenderContext or context.lock_identity != lock_identity):
+    raise ValueError()
+  artifacts = _artifacts(adapter.render_with_context(deepcopy(data), context) if context is not None
+    else adapter.render(deepcopy(data)), targets)
   scopes = tuple(target for target in targets if target.serialization == "skill-directory")
   if skill_root is not None or skill_target_root is not None:
     if skill_root is None or skill_target_root is None:

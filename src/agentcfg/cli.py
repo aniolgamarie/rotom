@@ -39,6 +39,20 @@ class CLIParser(argparse.ArgumentParser):
 
   def parse_args(self, args=None, namespace=None):
     tokens = list(sys.argv[1:] if args is None else args)
+    # usage拥有自己的全部tail；只解析其前方的管理器选择器。
+    index = 0
+    while index < len(tokens):
+      token = tokens[index]
+      if token in ("--machine", "--local", "--profile"):
+        index += 2
+      elif any(token.startswith(name + "=") for name in ("--machine", "--local", "--profile")):
+        index += 1
+      else:
+        break
+    if index < len(tokens) and tokens[index] == "usage":
+      parsed = super().parse_args(tokens[:index + 1], namespace)
+      parsed.passthrough = tokens[index + 1:]
+      return parsed
     # 先分离原生参数，避免 argparse 把其中的选项或 --help 当作管理器参数。
     separator = tokens.index("--") if "--" in tokens else len(tokens)
     parsed = super().parse_args(tokens[:separator], namespace)
@@ -212,7 +226,7 @@ def build_parser() -> argparse.ArgumentParser:
     lock.add_argument(
         "--agent",
         required=True,
-        choices=["dsh", "pi"],
+        choices=["dsh", "pi", "omp"],
         help="目标工具",
     )
 
@@ -236,7 +250,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument(
         "agent",
-        choices=["dsh", "pi"],
+        choices=["dsh", "pi", "omp"],
         help="目标工具",
     )
     run.add_argument(
@@ -244,6 +258,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="工作目录（默认调用时 cwd）",
     )
+
+    subparsers.add_parser("usage", help="透传OMP原生usage；前置显式profile时使用受管身份")
+    inventory = subparsers.add_parser("inventory", help="只读盘点旧OMP配置，生成私人审阅提案")
+    inventory.add_argument("agent", choices=["omp"])
+    inventory.add_argument("--source", type=Path, required=True, help="明确选择的原生agent目录绝对路径")
 
     # doctor: 诊断
     doctor = subparsers.add_parser(
@@ -327,6 +346,16 @@ def main(argv: list[str] | None = None) -> int:
 
     # 分发命令
     try:
+        if args.command == "usage" and args.profile is None:
+            if args.local is not None or args.machine is not None:
+                from .schema import ConfigError
+                raise ConfigError("usage-machine-selection-requires-explicit-profile")
+            from .usage import run_native
+            return run_native(args.passthrough)
+        if args.command == "lock" and args.agent == "omp":
+            # OMP lock 固定公共配方，不依赖机器/profile/SecretStore；在选择本地配置前分发。
+            from . import commands
+            return commands.cmd_lock(args)
         resolve_selection(args)
         return dispatch(args)
     except InitializationError as error:

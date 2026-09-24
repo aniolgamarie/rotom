@@ -1,6 +1,6 @@
 # 增加第二个 Agent
 
-首版仅注册 DSH。Pi、Codex CLI 是后续适配目标，没有空实现占位。增加工具时复用配置合并、SecretStore、确定性产物、Tree、部署事务、上一版备份和活动锁。
+当前注册 DSH、Pi 和 OMP；各自的支持声明以对应证据为准，OMP见[支持状态](omp-support.md)。增加工具时复用配置合并、SecretStore、确定性产物、Tree、部署事务、上一版备份和活动锁。
 
 ## 适配接口
 
@@ -12,6 +12,7 @@
 | validate | 选中配置的能力、引用及原生映射校验 |
 | managed_targets | 文件/字段/初始化/运行时/包管理器所有权 |
 | render | Artifact 字节；字段 Artifact 只编码期望字段，不带当前整文件 |
+| render_with_context | 需要绝对锁定资源路径时消费显式RenderContext；默认委托render，不将运行目录混入公共配置 |
 | dependency_plan | 明确依赖需求，不安装或隐式解析 |
 | launch_spec | argv、cwd、环境字面值/SecretRef、lock identity |
 | capture | 允许的原生投影转为合法本地覆盖提案 |
@@ -20,6 +21,10 @@
 实际工具还提供 schemas（含已校验文档的 policy/authentication_claims）、capture_projection（安全读取 allowlist）、prepare_runtime（原生包拥有的启动准备）和可选 launch_preflight。参见 `src/agentcfg/dsh.py`；不要把 DSH 原生路径和字段塞回公共 registry。
 
 `Adapter` 为 shared_files、launch_preflight、prepare_runtime 提供空默认实现，capture_configuration 默认委托 capture；需要依赖安装或捕获文件时，应实现 dependency_backend、capture_projection。launch_preflight 返回包含 argv 和 version 的检查项；当前 Node/npm 使用工具链兼容检查（Node 24 另要求至少 24.2.0），其他命令保留精确输出比较，失败时不回显原生输出。
+
+OMP的RenderContext由公共锁推导锁身份和绝对运行目录；首次validate/render/plan不要求该包已经安装。其身份/lifecycle hook绑定物理实例与管理状态，运行时按物理实例→状态→运行包顺序持锁。来源与操作环境在spawn前复查，秘密只由实际需要的操作解析；login/usage/信息操作不要求普通会话的API/MCP秘密。
+
+OMP原生秘密字段使用裸环境变量名，不能套用DSH/Pi的`$VAR`格式。`omp-env-name`守卫按adapter、路径和selector独立分类，并覆盖当前/基线/备份/pending/rollback；删除历史guard不能取消秘密分类。
 
 ## 接入步骤
 

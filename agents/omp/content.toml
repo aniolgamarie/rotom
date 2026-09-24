@@ -1,0 +1,7 @@
+schema_version = 1
+
+[rules.omp-chinese]
+path = "shared/rules/chinese.md"
+
+[rules.omp-terminal]
+path = "shared/rules/terminal.md"

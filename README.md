@@ -8,6 +8,8 @@ The first release implements **DSH + ccch1mneyyy/dsh-TUI**. The Pi migration spe
 
 The getting-started steps below cover DSH. Their Codex/Cursor subscription references describe authentication/provider access within DSH. Pi uses separate profiles and instance logins.
 
+OMP integration is tracked separately in the [OMP guide](docs/omp.md) and [support status](docs/omp-support.md). It uses fixed OMP v18.3.0 standalone packages, a separate HOME and native profile for each recipe, and fresh logins. `omp-default` is a bootstrap recipe; the nine-row fictional validation recipe is installed only in a temporary validation checkout. The Linux x64 no-account native smoke has passed. Other platform and real-account checks are tracked as [separate follow-ups](docs/follow-ups/omp-platform-and-live-validation.md), outside the completed OMP spec.
+
 **First-time users: start with the [Getting Started Guide](docs/getting-started.md).** It walks through environment setup, local file creation, installation, deployment, login, daily startup, and backup/restore in actual operation order, and explains command output. When using only Codex/Cursor subscriptions, you can leave `[secrets]` empty — no need to copy the private-gateway example below.
 
 Existing first-release users: see [Upgrade & Repair Notes](docs/operations.md#审查修复后的升级). Local files now enforce strict permission and link checks; old deployment packages without a file receipt can be rebuilt by running `sync` after exiting DSH — account home directories are preserved.
@@ -90,6 +92,7 @@ Files are 0600, private directories 0700. Objects merge recursively; arrays are 
 | `sync` | Consumes the existing lock; stages installs or repairs damaged packages — does not update the lock, start, or log in |
 | `apply` | Offline re-plan, backup, and deploy — does not install dependencies |
 | `run dsh --cwd PATH` | Launches the current deployment, preserves the working directory, injects secrets on demand; no implicit sync/apply |
+| `usage <native-args>` | Passes through to PATH's `omp usage` without loading local configuration; a preceding explicit OMP `--profile` selects the managed instance ([details](docs/omp-usage.md)) |
 | `doctor` / `doctor --live` | Default: offline diagnostics; `--live` adds declared-service reachability checks — never auto-logs-in or calls models |
 | `capture` | Captures previews, supported themes, and declared model selections; generates a legal local proposal; does not export auth data |
 | `rollback` | Restores the previous managed configuration; consumes that backup on success |
@@ -112,6 +115,7 @@ A running managed instance blocks apply/sync/rollback; the manager does not kill
 - [Daily Maintenance & Adding Shared Content](docs/operations.md): Includes examples for rules, skills, provider/model additions.
 - The `maintain-agent-config` skill ships with the default profile, guiding Agents to write legal local TOML, modify templates, and validate generated results; deployment still goes through the manager's backup/conflict flow.
 - [Adding a Second Tool](docs/adapters.md): Interface, ownership, native encoding, and acceptance boundaries.
+- [OMP Configuration](docs/omp.md), [Profiles](docs/omp-profiles.md), [Dependencies](docs/omp-dependencies.md), and [Usage](docs/omp-usage.md): fixed standalone runtime, isolated native profiles, resource mapping, and transparent usage queries.
 
 ## Testing
 
