@@ -133,3 +133,37 @@ plan 的每个差异、漂移和冲突会带 `target-…` 编号。输出中的 
 4. 运行默认测试和独立无账号 smoke；检查 Node/npm 和各平台证据，再 sync/apply。
 
 Memento、ModLens、MCPLens 和 ModSearch 均不在默认安装中。新增插件必须有实际适配和验证；未实现映射时明确失败，不通过收录清单假装支持。
+
+## Pi 实例维护
+
+Pi 的来源采用、原生字段漂移、凭据引用轮换、配置回滚及活动恢复见
+[Pi 迁移与维护](pi-migration.md)。Task Keeper 本机绑定示例见
+[pi-managed.toml](../examples/pi-managed.toml)。
+
+默认项目策略保持拒绝。需要受管候选写入时，在私人机器配置中显式选择
+`permissions.policy_ref = "task-keeper-candidate"`；此策略只开放 tk_* 读取及 write，
+不能跳过角色根、task grant、秘密路径或 supervisor 写租约检查。
+
+Pi 候选 `9d6a9270` 的完整依赖锁、Linux x86_64 四配方原生与双路径冷重建已通过验收；当前软件 spec 已完成。其他平台和真实账号/服务验证见[独立后续清单](follow-ups/pi-platform-and-live-validation.md)，本节不扩大到未经验证的平台或服务。
+
+### Pi 普通文件工具
+
+普通 read/write/edit/rename/ls/find/grep 通过实例监督者处理；写入和重命名在实际动作前取得公共工作区租约。
+交互批准绑定当前会话、目录和输入；未使用的操作授权五分钟后到期。重命名必须同时允许源、目标，且不覆盖现有目标。
+Linux 使用内核 `renameat2(RENAME_NOREPLACE)`，macOS 使用 `renameatx_np(RENAME_EXCL)`；不支持的平台或文件系统明确失败。
+接口依据：[Linux 头文件](https://github.com/torvalds/linux/blob/master/include/uapi/linux/fs.h)、[Apple 头文件](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/stdio.h)。
+目录查找只扫描授权路径并排除 Git 元数据和链接；本地 ignore 规则目前支持基础模式，不宣称与完整 Git 忽略规则完全一致。
+
+普通命令和外部 editor 还须绑定精确命令。例如在机器覆盖的 `agent_options.external_tools.build` 中声明
+`executable`、`version`、固定 `args`、`project_root`、`read_roots`、`write_roots` 和 `timeout_seconds`。
+工具使用 `agentcfg:build` 选择该绑定；当前选中 policy 须另外允许 bash 的 execute/command_ref=build。
+原始 shell 片段、附加参数、超出配置的超时和只读角色发起命令均被拒绝。默认 policy 没有自动放开命令。
+这些前台命令使用私人临时目录和无网络沙箱；项目读写根与秘密拒绝投影到实际命名空间。
+原生沙箱执行和交互式 editor 行为仍需要独立平台验证。
+
+会话切换、fork、reload、handoff 在还有保护中的子执行或尚未消费的受控结果时拒绝。
+请先查看结果或通过显式取消/恢复流程证明执行已终止，再切换会话；不会通过清空 UI 解除工作区保护。
+
+`agent_options.ui.notifications` 可选择 `auto`、`osc99`、`osc777`、`bell` 或 `off`。
+自动模式对 Kitty 使用 OSC 99，对 Windows Terminal 使用终端铃声，其他终端使用 OSC 777；不再启动脱离监督的 PowerShell toast。
+终端协议是否实际呈现通知属于独立终端验收，发送字节不代表已收到桌面通知。
