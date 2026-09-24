@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "grant_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "instance_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "issuer_activation_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": [
+        "ordinary",
+        "delegate-readonly",
+        "delegate-write"
+      ]
+    },
+    "allowed_tools": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "root_bindings": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^\\u0000]+$"
+          },
+          "identity": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^\\u0000]+$"
+          }
+        },
+        "required": [
+          "path",
+          "identity"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "grant_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "issued_at": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "expires_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000]+$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "grant_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "schema_version",
+    "grant_id",
+    "operation_id",
+    "instance_id",
+    "issuer_activation_id",
+    "execution_mode",
+    "allowed_tools",
+    "root_bindings",
+    "grant_generation",
+    "issued_at",
+    "expires_at",
+    "grant_digest"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,27 @@
+{
+  "name": "superpowers",
+  "version": "6.3.0-agentcfg.1",
+  "description": "Superpowers skills and runtime bootstrap for coding agents",
+  "type": "module",
+  "main": ".pi/extensions/superpowers.ts",
+  "keywords": [
+    "pi-package",
+    "skills",
+    "tdd",
+    "debugging",
+    "collaboration",
+    "workflow"
+  ],
+  "pi": {
+    "extensions": [
+      "./.pi/extensions/superpowers.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@agentcfg/pi-runtime": "1.0.0"
+  }
+}

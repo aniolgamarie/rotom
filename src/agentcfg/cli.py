@@ -197,10 +197,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     # plan: 离线差异计划
-    subparsers.add_parser(
+    plan = subparsers.add_parser(
         "plan",
         help="离线展示脱敏差异/来源/漂移/冲突",
     )
+    plan.add_argument("--from-pi-home", type=Path, help="只读盘点显式旧 Pi home，生成迁移提案")
+    plan.add_argument("--from-starter", type=Path, help="与 --from-pi-home 一起比较显式 starter 来源")
 
     # lock: 依赖锁定
     lock = subparsers.add_parser(
@@ -210,7 +212,7 @@ def build_parser() -> argparse.ArgumentParser:
     lock.add_argument(
         "--agent",
         required=True,
-        choices=["dsh"],
+        choices=["dsh", "pi"],
         help="目标工具",
     )
 
@@ -234,7 +236,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument(
         "agent",
-        choices=["dsh"],
+        choices=["dsh", "pi"],
         help="目标工具",
     )
     run.add_argument(
@@ -265,6 +267,12 @@ def build_parser() -> argparse.ArgumentParser:
         "rollback",
         help="恢复上一版受管配置",
     )
+
+    recover = subparsers.add_parser("recover", help="核对旧Pi执行，或按明确计划停止已归属的执行")
+    recover.add_argument("agent", choices=["pi"])
+    recover.add_argument("--lease", required=True, type=selection_id)
+    recover.add_argument("--stop", action="store_true")
+    recover.add_argument("--expect-plan", metavar="DIGEST")
 
     # project: OpenSpec 项目集成
     project = subparsers.add_parser(

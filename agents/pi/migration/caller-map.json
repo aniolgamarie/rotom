@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "source_revision": "c60599df39e6350123f7fb9378cfe63dc5ed814f",
+  "scope": "All matching files in source-baseline.json at the fixed starter revision",
+  "search_pattern": "codex-delegate|run-codex\\.sh|codex-(context-builder|oracle|planner|researcher|reviewer|scout)|delegate_to_codex|delegate_codex",
+  "entries": [
+    {
+      "source_path": "pi/AGENTS.template.md",
+      "source_blob": "21eff8daf005eaf3d2280493cd47fbbed67c7cf9",
+      "disposition": "replaced",
+      "target_paths": [
+        "agents/pi/templates/AGENTS.template.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/README.md",
+      "source_blob": "719950f53855922831676aee2cea2f29d9e69c93",
+      "disposition": "replaced",
+      "target_paths": [
+        "docs/pi-migration.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/README.md",
+      "source_blob": "c8c31257dc43a069f2754818a82abba29c883f3f",
+      "disposition": "replaced",
+      "target_paths": [
+        "agents/pi/packages/model-delegate/NOTICE.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/agents/codex-context-builder.md",
+      "source_blob": "a89ea3baa1ab6e1667cd6eea387d1e55885c4398",
+      "disposition": "purpose-template",
+      "target_paths": [
+        "shared/skills/model-delegate/presets/context.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/agents/codex-delegate.md",
+      "source_blob": "018ada3e9b2c81b3f1fed7e338cdf474611a7916",
+      "disposition": "purpose-template",
+      "target_paths": [
+        "shared/skills/model-delegate/presets/general.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/agents/codex-oracle.md",
+      "source_blob": "0fa4f23dd5a316051cc9c8ebc4ea8d2f47f69143",
+      "disposition": "purpose-template",
+      "target_paths": [
+        "shared/skills/model-delegate/presets/challenge.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/agents/codex-planner.md",
+      "source_blob": "5b60c11886e23a38a9529dc682e9c20e9403adea",
+      "disposition": "purpose-template",
+      "target_paths": [
+        "shared/skills/model-delegate/presets/plan.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/agents/codex-researcher.md",
+      "source_blob": "3979309c643b15999a7ec48a9be04363f94599dc",
+      "disposition": "purpose-template",
+      "target_paths": [
+        "shared/skills/model-delegate/presets/research.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/agents/codex-reviewer.md",
+      "source_blob": "913d3ca6e48378fb766648abcb323ccd9fa20804",
+      "disposition": "purpose-template",
+      "target_paths": [
+        "shared/skills/model-delegate/presets/review.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/agents/codex-scout.md",
+      "source_blob": "0663fec548ebe8c71678359eee9677c8f854e8aa",
+      "disposition": "purpose-template",
+      "target_paths": [
+        "shared/skills/model-delegate/presets/scout.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/delegation-policy.ts",
+      "source_blob": "f1066b1e05b32aaef96cf795076a1b5f37a4b8da",
+      "disposition": "replaced",
+      "target_paths": [
+        "agents/pi/packages/model-delegate/contract.ts"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/index.ts",
+      "source_blob": "ca17b24855e25abf4da7176c8e2d3804895bc675",
+      "disposition": "replaced",
+      "target_paths": [
+        "agents/pi/packages/model-delegate/index.ts"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/packages/codex-agents/runner.ts",
+      "source_blob": "0637a50663aeefe34e33c312b1f6d8ae2beadc13",
+      "disposition": "replaced",
+      "target_paths": [
+        "agents/pi/packages/model-delegate/runner.ts"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/skills/codex-delegate/SKILL.md",
+      "source_blob": "ee049be2a640b87d25ea3dd86739c006d828392b",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/SKILL.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/skills/codex-delegate/agents/openai.yaml",
+      "source_blob": "f42a37bfc2e7d5e6ba000edec85507443d6cfeb5",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/SKILL.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/skills/codex-delegate/references/progress-protocol.md",
+      "source_blob": "bc56e97f2e1e06103f22febf84e1d086ed50702f",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/references/progress-protocol.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/skills/codex-delegate/scripts/run-codex.sh",
+      "source_blob": "7bbe1c6093a036eb3fe0f533c17d2aa8a3a09803",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/scripts/run-model.sh",
+        "src/agentcfg/model_delegate_cli.py"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/skills/codex-delegate/tests/fixtures/read-only-smoke-prompt.txt",
+      "source_blob": "e9cab5881cab96f42e76aff0bad90e19a36a2f56",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/skills/codex-delegate/tests/test-delegation.sh",
+      "source_blob": "f0483d0cfe95638944102475bc4dc8bb5c5c6e8a",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/skills/codex-delegate/tests/test-multiturn.sh",
+      "source_blob": "6f6e1b2a82a9866b8aafbbf39a7318d910ea283c",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/skills/codex-delegate/tests/test-observe.sh",
+      "source_blob": "f1d4d34274ccf3b8d927944b28250718b6289f79",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/skills/codex-delegate/tests/test-progress.sh",
+      "source_blob": "c073b156ad86ea9af8fed0f3abb7f4b847635135",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "pi/skills/codex-delegate/tests/test-runner.sh",
+      "source_blob": "e4c314bbcc04a83485ca7bddbd4a20d45c593170",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/codex-delegate/SKILL.md",
+      "source_blob": "ee049be2a640b87d25ea3dd86739c006d828392b",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/SKILL.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/codex-delegate/agents/openai.yaml",
+      "source_blob": "f42a37bfc2e7d5e6ba000edec85507443d6cfeb5",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/SKILL.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/codex-delegate/references/progress-protocol.md",
+      "source_blob": "bc56e97f2e1e06103f22febf84e1d086ed50702f",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/references/progress-protocol.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/codex-delegate/scripts/run-codex.sh",
+      "source_blob": "7bbe1c6093a036eb3fe0f533c17d2aa8a3a09803",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/scripts/run-model.sh",
+        "src/agentcfg/model_delegate_cli.py"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/codex-delegate/tests/fixtures/read-only-smoke-prompt.txt",
+      "source_blob": "e9cab5881cab96f42e76aff0bad90e19a36a2f56",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/codex-delegate/tests/test-delegation.sh",
+      "source_blob": "f0483d0cfe95638944102475bc4dc8bb5c5c6e8a",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/codex-delegate/tests/test-multiturn.sh",
+      "source_blob": "6f6e1b2a82a9866b8aafbbf39a7318d910ea283c",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/codex-delegate/tests/test-observe.sh",
+      "source_blob": "f1d4d34274ccf3b8d927944b28250718b6289f79",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/codex-delegate/tests/test-progress.sh",
+      "source_blob": "c073b156ad86ea9af8fed0f3abb7f4b847635135",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/codex-delegate/tests/test-runner.sh",
+      "source_blob": "e4c314bbcc04a83485ca7bddbd4a20d45c593170",
+      "disposition": "source-history-only",
+      "target_paths": [],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/model-delegate/README.md",
+      "source_blob": "454ef6a02684785fc64f0c7dd8cada96f85b37be",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/README.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/model-delegate/SKILL.md",
+      "source_blob": "49e7545b06eb0875ea735cf5a974996031fad599",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/SKILL.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/model-delegate/USAGE.md",
+      "source_blob": "42c1828fa45c047d0ce2193e003ce97e24afefcb",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/USAGE.md"
+      ],
+      "legacy_runtime_dependency": false
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/lib/supervisor.sh",
+      "source_blob": "3de3c5c1cc6a68c0ddc038307666ad3af3ff89b0",
+      "disposition": "replaced",
+      "target_paths": [
+        "shared/skills/model-delegate/scripts/lib/supervisor.sh"
+      ],
+      "legacy_runtime_dependency": false
+    }
+  ],
+  "validation_level": "source-mapping-only",
+  "native_execution": "not-run"
+}

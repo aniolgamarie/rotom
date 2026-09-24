@@ -1,0 +1,140 @@
+{
+  "U": {
+    "title": "单元契约与规则",
+    "steps": [
+      "把该case原触发和批次检查转换为固定输入对象；expected由原规范和本设计常量给出，不调用被测代码生成。",
+      "直接调用targets中的生产纯规则/契约函数，逐一改变一个字段或条件；状态输入只测一条边的决定。",
+      "逐条比较返回值/错误码/动作描述及输入未被改写；生产没有可单测规则接口时记实现依赖，不在fixture复制一份逻辑。"
+    ],
+    "observer": "独立手写真值表、输入前后快照和断言调用记录；动作描述仅证明规则输出，不证明真实HTTP或进程终止。",
+    "artifacts": [
+      "input.json",
+      "expected.json",
+      "actual.json",
+      "assertions.json"
+    ],
+    "forbidden": "不得把fake fetch、构造receipt、模拟process.kill当A/P/E结果；U不承担真实OS崩溃。",
+    "timeout": "每个基本case 5s；不得真实等待quota时间。"
+  },
+  "S": {
+    "title": "可重放状态与事件顺序",
+    "steps": [
+      "从明确的初始scope/incident/job/intent快照开始；用固定wall/monotonic clock、jitter及seed。",
+      "经生产controller/service的状态入口逐一投递本case事件；await用barrier安排两个顺序，记录每个边界而非随机sleep。",
+      "每步核对状态、预算守恒和允许动作，与独立转移表比较；合法解除阻塞后必须有进展。真实发出与进程事实留给A/P/E。"
+    ],
+    "observer": "手写状态转移表＋事件/动作轨迹；依赖可替身，但替身不能为自己的预期结果背书。",
+    "artifacts": [
+      "initial-state.json",
+      "seed.json",
+      "barriers.jsonl",
+      "events.jsonl",
+      "expected-transitions.json",
+      "actual-transitions.json",
+      "assertions.json"
+    ],
+    "forbidden": "Promise并发不是OS竞争；fake cancel成功不证明writer停止。",
+    "timeout": "每个有界序列15s；seed17/41/101/2026各150步，失败保留最小重放序列。"
+  },
+  "A": {
+    "title": "真实Pi/adapter协议边界",
+    "steps": [
+      "启动隔离Pi及锁定adapter，用独立loopback接收器记录原始请求/响应/事件，receiver不导入产品调度决策。",
+      "经实际adapter调用或Pi RPC/PTY触发原case；在SDK重试/序列化/取消边界注入指定响应或barrier。",
+      "比较receiver、原生事件和生效模型/profile事实；每次只改变一个准入条件，并运行全合法正例。"
+    ],
+    "observer": "独立HTTP接收日志或原生IPC/工具物理效果observer＋实际adapter输出；对不发网络的路径明确记录其动作观察方式。",
+    "artifacts": [
+      "runtime-lock.json",
+      "binding-digest.json",
+      "receiver.jsonl",
+      "native-events.jsonl",
+      "effects.jsonl",
+      "assertions.json"
+    ],
+    "forbidden": "不能只调用reducer或mock SDK取得A信用；本地服务不是远端Qwen认证。",
+    "timeout": "每基本case30s，复杂原生子任务最多90s；watchdog只判挂死，不安排竞态。"
+  },
+  "P": {
+    "title": "SQLite与真实OS进程",
+    "steps": [
+      "supervisor创建私有state/workspace，启动独立controller或worker；用IPC确认实际切点和进程启动身份。",
+      "按本case注入竞争、kill、重启、文件故障或真实verifier活动；只操作本次创建的进程和文件。",
+      "在新进程/新SQLite连接读取事实，与receiver/文件副作用及进程存活独立对照；保持unknown直至可证明结算。"
+    ],
+    "observer": "独立SQLite连接＋receiver/现场字节＋supervisor的PID namespace/start ticks/进程组记录；取消ack不是终止oracle。",
+    "artifacts": [
+      "runtime-lock.json",
+      "processes.jsonl",
+      "barriers.jsonl",
+      "db-before.json",
+      "db-after.json",
+      "effects.jsonl",
+      "assertions.json"
+    ],
+    "forbidden": "同进程多个Promise不计跨进程；不得填满真实磁盘或按宽泛进程名清理。",
+    "timeout": "每基本case30s；适用descendant退出测试最多90s且supervisor负责回收。"
+  },
+  "E": {
+    "title": "真实用户或模型入口到最终事实",
+    "steps": [
+      "建立隔离Pi、合成项目、用户配置、可信检查和独立接收器；记录auth/策略/主树/DB基线摘要。",
+      "通过真实/orch、/throttle命令或实际模型kernel_task入口触发本case；生命周期用宿主真实事件；等待明确终态/阻塞，不直接调用私有service方法代替入口。",
+      "逐一对照raw事件→新连接账本→TaskReceipt→父模型下一实际输入→PTY/无UI；另核对真实副作用与主树。确实未产生某层时记录原因，要求该层的case不能记通过。"
+    ],
+    "observer": "用户入口记录＋独立receiver/sentinel＋新连接账本＋回执＋实际父请求与展示捕获；包含断言的observer与产品投影分离。",
+    "artifacts": [
+      "input.jsonl",
+      "runtime-lock.json",
+      "receiver.jsonl",
+      "db-after.json",
+      "receipt.json",
+      "parent-input.redacted.json",
+      "ui.jsonl",
+      "tree-digests.json",
+      "assertions.json"
+    ],
+    "forbidden": "内部测试harness仅可算相应S/A/P；缺产品入口先补实现，不能给E降级。",
+    "timeout": "每基本case90s；长组合拆成独立case，假时钟只控制测试绑定。"
+  },
+  "L": {
+    "title": "实际Qwen绑定的有限验收",
+    "steps": [
+      "要求用户指定provider/model或验收配置、凭证引用、network/profile及总请求上限；缺任何必需项保持needs-live-binding。",
+      "在隔离合成项目和显式验收transport上执行固定长任务；标记一次注入429后交还真实Qwen，禁止密集调用制造真实额度耗尽。",
+      "独立记录每次真实与注入请求、原session/continuation、已完成工具副作用、完整服务终态和回执；正常smoke与恢复认证分别判定。"
+    ],
+    "observer": "具有来源标记的真实服务响应/实际请求账单观察＋合成项目副作用＋版本与模型身份来源；配置model不是实际权重证明。",
+    "artifacts": [
+      "binding-digest.json",
+      "runtime-lock.json",
+      "request-budget.json",
+      "origins.jsonl",
+      "service-response.redacted.json",
+      "receipt.json",
+      "tree-digests.json",
+      "assertions.json"
+    ],
+    "forbidden": "fake credentials/loopback/其他模型不可取得L信用；仅正常成功不算恢复；失败不自动换模型重跑覆盖。",
+    "timeout": "有限deadline和requestTimeout由显式验收profile固定，必须在执行前记录；本轮不运行L。"
+  },
+  "V": {
+    "title": "报告/评测/证据验证器",
+    "steps": [
+      "准备明确的小型计划、实际发现记录或固定评测样本和独立预期报告；产品整套报告只作为待验证输入。",
+      "运行真实报告/校验入口；一次只删除或污染一个ID、层级、断言、来源、lock、变体或工件，对照合法输入。",
+      "比较JSON/CSV/退出码、分母、unknown、延期与失败历史；负向子运行必须被拒绝，不能把合成报告ready当产品ready。"
+    ],
+    "observer": "独立固定算术/集合与预期报告＋真实命令退出码和输出；不使用被测coverage函数生成expected。",
+    "artifacts": [
+      "report-input.json",
+      "expected-report.json",
+      "actual-report.json",
+      "stdout.txt",
+      "negative-result.json",
+      "assertions.json"
+    ],
+    "forbidden": "文档存在/静态检查通过不证明产品故障覆盖；不把未执行shadow或过滤infra后的成绩当收益。",
+    "timeout": "每基本case15s；所有坏输入在内存或隔离副本，不污染正式结果。"
+  }
+}

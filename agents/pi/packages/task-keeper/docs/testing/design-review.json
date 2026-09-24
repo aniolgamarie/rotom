@@ -1,0 +1,53 @@
+{
+  "kind": "design-static-review",
+  "baselineRun": "2026-09-07T23-05-22-890Z",
+  "designCoverage": {
+    "obligationRows": 435,
+    "affectedIds": 216,
+    "campaigns": 33,
+    "unmapped": 0,
+    "duplicates": 0
+  },
+  "runtimeEvidenceAdded": 0,
+  "runtimeMissingUnchanged": 435,
+  "implementationTasks": "63/76",
+  "checks": [
+    "baseline report SHA256 unchanged",
+    "exact missing-set equality, no deletion or addition",
+    "435 unique rows",
+    "216 affected IDs",
+    "scenario-test-matrix.csv baseline hash",
+    "scenario-test-matrix.csv package copy unchanged",
+    "fault-traceability.csv baseline hash",
+    "fault-traceability.csv package copy unchanged",
+    "33 unique campaigns",
+    "proposed file/name identities unique",
+    "case IDs unique",
+    "all 435 source IDs/levels/digests match",
+    "all original WHEN/THEN retained",
+    "all 435 concrete design fields nonempty",
+    "all 435 campaigns and waves match",
+    "all proposed names use correct ID and explicit level",
+    "all proposed files are discoverable top-level names",
+    "no design credited as runtime evidence",
+    "level counts match",
+    "disposition counts match",
+    "six P4 levels kept",
+    "two live bindings kept",
+    "every campaign has missing obligations",
+    "campaign JSON and Markdown procedures/oracles match",
+    "all nine v6 reference checksums unchanged",
+    "8 capability specs",
+    "56 requirements",
+    "126 scenarios",
+    "implementation remains 63/76",
+    "latest runtime pointer unchanged",
+    "runtime baseline remains 126 pass / 435 missing / not ready",
+    "targeted Markdown local links resolve"
+  ],
+  "limitations": [
+    "Static checks verify design completeness, not execution or feature correctness.",
+    "New test designs have not run.",
+    "Live Qwen and P4 dependencies are retained."
+  ]
+}

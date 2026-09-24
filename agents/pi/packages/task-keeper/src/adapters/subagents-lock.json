@@ -1,0 +1,20 @@
+{
+  "version": "0.63.0",
+  "patches": [
+    "required-tools-abort-v1",
+    "recovery-owner-v2",
+    "adapter-probe-v1"
+  ],
+  "files": {
+    "index.ts": "041755786b8a86f41882fb40e92fa679bbcbfb4b58bf3521f41f7165ed3ef106",
+    "package.json": "95111186657e5e1a2f1e62635004408d807462d2a624f0c2b244868370e2905c",
+    "src/api/recovery-owner.ts": "fc5fe9471a20eb7b61b9490a6103f58b7d690858d606934119545b6ae631793c",
+    "src/runs/shared/model-fallback.ts": "21a9825171a1dab3b20ebd45ea149e616371723e89ffd0f2fdb5c12bb18d7ee5",
+    "src/runs/shared/subagent-prompt-runtime.ts": "f8c3ba1a8a75afaba6afd31a905aa5130f4584002ce56ed8f91d29d00de96d53",
+    "src/runs/foreground/execution.ts": "2537ac84edaf9a06f4fa4e78630df16a1dc94049e87db7a15024a523bd00fcab",
+    "src/runs/shared/pi-args.ts": "f1f5b939701d54d31184d72b095e57e6bdc40a3e3848f1a63142d26b24efbfb0",
+    "src/extension/index.ts": "89272ba640d9c8a3593213c963bb12ef008ece102dc6ee611834dfeaf0e51a13",
+    "src/slash/delegation-adapters.ts": "0f7ed4a25013779464023466ae646cc74b0726f7204e92e34f14ef5d03732f6e",
+    "src/api/preflight.ts": "edc2553e701adccfdcbbbfd1cb2d2261150b8e96fd6dc4d976ce1a861ad1b7f6"
+  }
+}

@@ -1,0 +1,2188 @@
+--- /dev/null
++++ b/NOTICE.agentcfg.md
+@@ -0,0 +1,16 @@
++# pi-mcp-adapter in agentcfg
++
++Derived from pi-mcp-adapter 2.32.1 (MIT); SOURCE.json records the original npm integrity and file digests. This fork is 2.32.1-agentcfg.1. The full patch is agents/pi/build/mcp-agentcfg.patch in the source repository.
++
++Configuration comes only from the selected agentcfg manifest. Stdio uses the existing supervisor and AgentManager with a declared command. HTTP/SSE and OAuth use explicit routes and allowed origins; credential commands and OS keyring fallback are not used. Credentials and caches belong to the instance and authentication binding. Old plaintext credentials are neither imported nor deleted.
++
++Sampling uses the constrained ModelRuntime and explicit limits. Scripting uses a supervised private Node process with no direct workspace, account environment or network access. Direct tools and namespace proxies use registered service ownership and main-role admission.
++
++OAuth callbacks and MCP Apps loopback listeners are owned by the existing manager within the supervisor-owned Pi process. Apps host/proxy ports share one record, and shutdown waits for owned requests. Browser origins and permissions need explicit selection. Apps, OAuth and elicitation URLs are handed to the user's browser through terminal links; automatic desktop/Glimpse/global-npm discovery is replaced by this common browser flow. App requests for new agent turns require interactive confirmation.
++
++The source is registered in all four recipes. Final dependency locks, native loading, OS listener behavior, browser UI and live service acceptance remain unverified. Original helper modules retained for source history are not an authorization to run their old discovery or credential paths.
++
++Direct and namespace registrations are bound to their adapter generation and
++runtime. Cleanup from an older generation cannot remove a current registration.
++MCP and Web registrations share tool-name ownership, including reserved native
++and ReadSeek names.
+--- a/agent-dir.ts
++++ b/agent-dir.ts
+@@ -1,68 +1,7 @@
+-import { readFileSync } from "node:fs";
+-import { homedir } from "node:os";
+-import { join, resolve } from "node:path";
+-
+-export function getConfigDirName(): string {
+-  const configDir = readPiConfig()?.configDir;
+-  return typeof configDir === "string" && configDir.trim() ? configDir.trim() : ".pi";
+-}
+-
+-export function getAgentDir(): string {
+-  const piConfig = readPiConfig();
+-  const name = piConfig?.name;
+-  const appName = typeof name === "string" && name.trim() ? name.trim() : "pi";
+-  const configured = process.env[`${appName.toUpperCase()}_CODING_AGENT_DIR`]?.trim();
+-  if (!configured) {
+-    return join(homedir(), getConfigDirName(), "agent");
+-  }
+-  if (configured === "~") {
+-    return homedir();
+-  }
+-  if (configured.startsWith("~/")) {
+-    return resolve(homedir(), configured.slice(2));
+-  }
+-  return resolve(configured);
+-}
+-
+-export function getAgentPath(...segments: string[]): string {
+-  return join(getAgentDir(), ...segments);
+-}
+-
+-/**
+- * What the host calls itself.
+- *
+- * pi supports rebranding through `piConfig.name` in the package.json that its
+- * `getPackageDir()` resolves, and distributions built on pi (arc, tau, …) point
+- * `PI_PACKAGE_DIR` at their own manifest. Read that manifest directly rather
+- * than importing pi: this package deliberately depends on pi-ai and pi-tui
+- * only, and `getAgentDir()` above reads its env var the same self-contained way.
+- *
+- * Falls back to "pi", which is what pi's own APP_NAME resolves to.
+- */
+-function readPiConfig(): { name?: unknown; configDir?: unknown; clientUri?: unknown } | undefined {
+-  const dir = process.env.PI_PACKAGE_DIR?.trim()
+-  if (!dir) return undefined
+-  try {
+-    const manifest = JSON.parse(readFileSync(join(resolve(dir), "package.json"), "utf8")) as {
+-      piConfig?: { name?: unknown; configDir?: unknown; clientUri?: unknown }
+-    }
+-    return manifest.piConfig
+-  } catch {
+-    return undefined
+-  }
+-}
+-
+-export function getAppName(): string {
+-  const name = readPiConfig()?.name
+-  return typeof name === "string" && name.trim() ? name.trim() : "pi"
+-}
+-
+-/**
+- * Home page the host declares for itself, via `piConfig.clientUri` in the same
+- * manifest that carries `piConfig.name`. Only the distribution knows its own
+- * URL, so this is the one place it can come from without guessing.
+- */
+-export function getAppClientUri(): string | undefined {
+-  const uri = readPiConfig()?.clientUri
+-  return typeof uri === "string" && uri.trim() ? uri.trim() : undefined
+-}
++import { join } from "node:path";
++import { pluginAgentDir } from "@agentcfg/pi-runtime/plugin-settings";
++export function getConfigDirName(): string { return ".pi"; }
++export function getAgentDir(): string { return pluginAgentDir(); }
++export function getAgentPath(...segments: string[]): string { return join(getAgentDir(), ...segments); }
++export function getAppName(): string { return "pi"; }
++export function getAppClientUri(): string | undefined { return undefined; }
+--- /dev/null
++++ b/agentcfg-bindings.ts
+@@ -0,0 +1,63 @@
++import { requireOrdinaryHelper } from "@agentcfg/pi-runtime/capability-policy";
++import { digest } from "@agentcfg/pi-runtime/managed-types";
++import { pluginSettings } from "@agentcfg/pi-runtime/plugin-settings";
++import type { McpConfig, ServerDefinition } from "./types.ts";
++function runtime(): any {
++  const current = (globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")];
++  requireOrdinaryHelper(current, "pi-mcp");
++  if (!current.manifest.mcp_config) throw new Error("MCP_BINDINGS_REQUIRED");
++  return current;
++}
++export function declaredMcpConfiguration(): McpConfig {
++  return structuredClone(runtime().manifest.mcp_config);
++}
++export function declaredMcpServer(name: string, definition: ServerDefinition): void {
++  const selected = runtime().manifest.mcp_config.mcpServers[name];
++  if (!selected || selected.command !== definition.command || selected.url !== definition.url
++      || selected.httpTransport !== definition.httpTransport || selected.auth !== definition.auth
++      || selected.bearerTokenEnv !== definition.bearerTokenEnv || definition.socket
++      || JSON.stringify(selected.args ?? []) !== JSON.stringify(definition.args ?? [])
++      || definition.env || definition.pluginDataDir || definition.headers || definition.bearerToken
++      || definition.requestHeadersCommand || JSON.stringify(definition.oauth) !== JSON.stringify(selected.oauth)) throw new Error("MCP_SERVICE_UNSELECTED");
++}
++
++export function declaredOAuthServer(name: string, url: string): ServerDefinition {
++  const selected = runtime().manifest.mcp_config.mcpServers[name];
++  if (!selected || selected.url !== url || selected.auth !== "oauth" || !selected.oauth) throw new Error("MCP_OAUTH_UNSELECTED");
++  return structuredClone(selected);
++}
++
++export function assertOAuthConfiguration(name: string, url: string, config: Record<string, unknown>): void {
++  const selected = declaredOAuthServer(name, url).oauth as Record<string, unknown>;
++  const expected = { ...selected };
++  if (typeof expected.clientSecret === "string") {
++    expected.clientSecret = resolveOAuthClientSecret(expected.clientSecret);
++  }
++  if (Object.keys(config).length !== Object.keys(expected).length
++      || Object.entries(expected).some(([key, value]) => config[key] !== value)) throw new Error("MCP_OAUTH_CONFIG_MISMATCH");
++}
++
++export function resolveOAuthClientSecret(reference: string): string {
++  const match = /^\$\{(AGENTCFG_PI_CREDENTIAL_[A-F0-9]{16})\}$/.exec(reference);
++  const value = match ? process.env[match[1]!] : undefined;
++  if (!value || /[\r\n\0]/.test(value)) throw new Error("MCP_OAUTH_CREDENTIAL_REQUIRED");
++  return value;
++}
++
++export function mcpAuthenticationAccount(name: string): string {
++  // 清理私有凭据不产生辅助模型／网络请求，不因正在关闭的 listener 自身而拒绝清理。
++  const settings = pluginSettings("pi-mcp", "mcp") as { servers?: Record<string, { oauth?: unknown }> };
++  const current = (globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")];
++  const server = current.manifest.mcp_config?.mcpServers?.[name];
++  if (!server || !settings.servers?.[name]) throw new Error("MCP_AUTH_ACCOUNT_UNSELECTED");
++  return "sha256-" + digest({ name, url: server.url ?? null, auth: server.auth ?? false,
++    oauth: server.oauth ?? false, binding: settings.servers[name]?.oauth ?? null });
++}
++
++export function assertOAuthAuthorizationUrl(name: string, url: URL): void {
++  const current = runtime();
++  const definition = current.manifest.mcp_config.mcpServers[name];
++  const binding = current.manifest.options.mcp.servers[name];
++  const origins = [definition?.url, ...(binding?.oauth?.allowed_origins ?? [])].map(value => new URL(value).origin);
++  if (definition?.auth !== "oauth" || url.protocol !== "https:" || url.username || url.password || !origins.includes(url.origin)) throw new Error("MCP_OAUTH_AUTHORIZATION_ORIGIN");
++}
+--- a/elicitation-handler.ts
++++ b/elicitation-handler.ts
+@@ -10,7 +10,13 @@
+ } from "@modelcontextprotocol/client";
+ import { AjvJsonSchemaValidator } from "@modelcontextprotocol/client/validators/ajv";
+ import type { JsonSchemaType } from "@modelcontextprotocol/client";
+-import open from "open";
++import { terminalHyperlink } from "@agentcfg/pi-runtime/service-bindings";
++import { declaredMcpConfiguration } from "./agentcfg-bindings.ts";
++
++function assertElicitationSelected(serverName: string): void {
++  const config = declaredMcpConfiguration();
++  if (config.settings?.elicitation !== true || !Object.hasOwn(config.mcpServers, serverName)) throw new Error("MCP_ELICITATION_NOT_SELECTED");
++}
+ 
+ export type ElicitationValue = string | number | boolean | string[] | undefined;
+ type FormProperty = ElicitRequestFormParams["requestedSchema"]["properties"][string];
+@@ -45,6 +51,7 @@
+   options: ElicitationHandlerOptions,
+   params: ElicitRequestFormParams,
+ ): Promise<ElicitResult> {
++  assertElicitationSelected(options.serverName);
+   const properties = Object.entries(params.requestedSchema.properties);
+   const decision = await options.ui.select(
+     `MCP Input Request\nServer: ${options.serverName}\n\n${params.message}`,
+@@ -69,7 +76,7 @@
+     );
+     if (action === undefined) return { action: "cancel" };
+     if (action === "Decline") return { action: "decline" };
+-    if (action === "Submit") return { action: "accept", content };
++    if (action === "Submit") { assertElicitationSelected(options.serverName); return { action: "accept", content }; }
+ 
+     const labels = properties.map(([name, schema]) => `${schema.title ?? humanizeName(name)} (${name})`);
+     const selected = await options.ui.select("Choose a field to edit", labels);
+@@ -306,6 +313,7 @@
+   options: ElicitationHandlerOptions,
+   params: ElicitRequestURLParams,
+ ): Promise<ElicitResult> {
++  assertElicitationSelected(options.serverName);
+   if (!options.allowUrl) throw new ProtocolError(ProtocolErrorCode.InvalidParams, "URL elicitation is not supported");
+ 
+   let parsed: URL;
+@@ -318,6 +326,7 @@
+     throw new ProtocolError(ProtocolErrorCode.InvalidParams, "URL elicitation only supports HTTP and HTTPS URLs");
+   }
+ 
++  const link = terminalHyperlink(params.url);
+   const decision = await options.ui.select([
+     "MCP Browser Request",
+     `Server: ${options.serverName}`,
+@@ -327,19 +336,20 @@
+     `Host: ${parsed.host}`,
+     `Full URL: ${params.url}`,
+     "",
+-    "Open this URL in your browser?",
+-  ].join("\n"), ["Open", "Decline"]);
++    "Show a terminal link to open in your browser?",
++  ].join("\n"), ["Show link", "Decline"]);
+   if (decision === undefined) return { action: "cancel" };
+   if (decision === "Decline") return { action: "decline" };
+ 
+   try {
+-    await open(params.url);
++    assertElicitationSelected(options.serverName);
++    process.stdout.write(link);
+   } catch (error) {
+-    options.ui.notify(`Could not open MCP elicitation URL: ${error instanceof Error ? error.message : String(error)}`, "error");
++    options.ui.notify("MCP elicitation link could not be displayed.", "error");
+     return { action: "cancel" };
+   }
+   options.onUrlAccepted?.(params.elicitationId);
+-  options.ui.notify("Opened browser for MCP elicitation.", "info");
++  options.ui.notify("Open the displayed link in your browser to continue MCP elicitation.", "info");
+   return { action: "accept" };
+ }
+ 
+--- a/index.ts
++++ b/index.ts
+@@ -1,3 +1,5 @@
++import { declaredMcpConfiguration } from "./agentcfg-bindings.ts";
++import { registerMcpTool, unregisterMcpTool, captureMcpToolOwner } from "@agentcfg/pi-runtime/mcp-tools";
+ import type { AgentToolUpdateCallback, ExtensionAPI, ExtensionContext, ToolInfo } from "@earendil-works/pi-coding-agent";
+ import type { McpExtensionState } from "./state.ts";
+ import type { DirectToolSpec, McpAdapterOptions, McpConfig, PromptMetadata, ServerEntry } from "./types.ts";
+@@ -131,6 +133,7 @@
+ }
+ 
+ function installMcpAdapter(pi: ExtensionAPI, options: McpAdapterOptions) {
++  const toolOwner = captureMcpToolOwner();
+   const sessionConfig = options.config !== undefined ? cloneMcpConfig(options.config) : undefined;
+   const programmaticConfig = sessionConfig !== undefined;
+   let state: McpExtensionState | null = null;
+@@ -183,7 +186,7 @@
+     publishMcpStatusShutdown(currentState.statusEvents);
+ 
+     if (currentState.uiServer) {
+-      currentState.uiServer.close(reason);
++      await currentState.uiServer.close(reason);
+       currentState.uiServer = null;
+     }
+ 
+@@ -220,7 +223,7 @@
+     ? cloneMcpConfig(sessionConfig)
+     : loadMcpConfig(earlyConfigPath);
+   const earlyCache = loadMetadataCache();
+-  const envRaw = process.env.MCP_DIRECT_TOOLS;
++  const envRaw = undefined as string | undefined;
+   const envDirectToolOverride = parseEnvDirectToolOverride(envRaw);
+   const namespaceEnvOverride = resolveNamespaceEnvOverride(envRaw, envDirectToolOverride);
+   const registeredDirectTools = new Map<string, string>();
+@@ -278,7 +281,8 @@
+       ...(config.settings?.strictDirectToolArguments === true
+         ? { prepareArguments: (args: unknown) => prepareDirectToolArguments(spec.inputSchema, args) }
+         : {}),
+-      execute: createDirectToolExecutor(() => state, () => initPromise, spec),
++      execute: registerMcpTool(spec.prefixedName, spec.serverName, spec.originalName,
++        createDirectToolExecutor(() => state, () => initPromise, spec), toolOwner),
+       renderShell: toolRenderShell,
+       renderCall: createMcpDirectToolCallRenderer(spec.prefixedName, toolRenderOptions),
+       renderResult: renderMcpToolResult,
+@@ -309,6 +313,7 @@
+ 
+   function deactivateTools(toolNames: string[]): string[] {
+     if (toolNames.length === 0) return [];
++    for (const name of toolNames) unregisterMcpTool(name, toolOwner);
+     const unregisterTool = (pi as ExtensionAPI & { unregisterTool?: (name: string) => boolean }).unregisterTool;
+     const unregistered = toolNames.filter((toolName) => unregisterTool?.(toolName) === true);
+     const fallbackNames = toolNames.filter((toolName) => !unregistered.includes(toolName));
+@@ -398,6 +403,7 @@
+     activeDirectNames: Set<string> = new Set(registeredDirectTools.keys()),
+   ): void {
+     const result = syncNamespaceProxyTools({
++      toolOwner,
+       config,
+       cache,
+       envOverride: namespaceEnvOverride,
+@@ -704,6 +710,8 @@
+   });
+ 
+   pi.on("session_shutdown", async () => {
++    for (const name of [...registeredDirectTools.keys(), ...registeredNamespaceProxyTools]) unregisterMcpTool(name, toolOwner);
++    registeredDirectTools.clear(); registeredNamespaceProxyTools.clear();
+     ++lifecycleGeneration;
+     const currentState = state;
+     const owner = currentOwner;
+@@ -1287,4 +1295,6 @@
+   return request.result.snapshot;
+ }
+ 
+-export default createMcpAdapter();
++export default function agentcfgMcp(pi: ExtensionAPI) {
++  return createMcpAdapter({ config: declaredMcpConfiguration() })(pi);
++}
+--- a/init.ts
++++ b/init.ts
+@@ -185,7 +185,7 @@
+     completedUiSessions: [],
+     openBrowser: async (url: string) => {
+       owner.throwIfInactive();
+-      await openUrl(pi, url, process.env.BROWSER, owner.signal);
++      await openUrl(pi, url, undefined, owner.signal);
+       owner.throwIfInactive();
+     },
+     ...(ui !== undefined ? { ui } : {}),
+@@ -220,9 +220,9 @@
+     updateStatusBar(state);
+   });
+   owner.addCleanup(() => lifecycle.gracefulShutdown());
+-  owner.addCleanup(() => {
++  owner.addCleanup(async () => {
+     if (state.uiServer) {
+-      state.uiServer.close("runtime_owner_stopped");
++      await state.uiServer.close("runtime_owner_stopped");
+       state.uiServer = null;
+     }
+   });
+--- a/mcp-auth-flow.ts
++++ b/mcp-auth-flow.ts
+@@ -11,7 +11,9 @@
+   UnauthorizedError,
+   type AuthOptions,
+ } from "@modelcontextprotocol/client"
+-import open from "open"
++import { mcpHttpFetch } from "@agentcfg/pi-runtime/mcp-http"
++import { terminalHyperlink } from "@agentcfg/pi-runtime/service-bindings"
++import { declaredOAuthServer, declaredMcpServer, resolveOAuthClientSecret } from "./agentcfg-bindings.ts"
+ import { McpOAuthProvider, type McpOAuthConfig } from "./mcp-oauth-provider.ts"
+ import {
+   ensureCallbackServer,
+@@ -41,6 +43,12 @@
+ import { abortable, throwIfAborted } from "./abort.ts"
+ import { combineAbortSignals, isAbortError } from "./runtime-owner.ts"
+ 
++async function runBoundSdkAuth(provider: McpOAuthProvider, options: AuthOptions) {
++  if (options.skipIssuerMetadataValidation === true) throw new Error("MCP_OAUTH_ISSUER_CHECK_REQUIRED")
++  try { return await runSdkAuth(provider, { ...options, fetchFn: await provider.boundFetch() }) }
++  catch { throw new Error("MCP_OAUTH_REQUEST_FAILED") }
++}
++
+ /** Auth status for a server */
+ export type AuthStatus = "authenticated" | "expired" | "not_authenticated"
+ 
+@@ -168,10 +176,7 @@
+   }
+   if (definition.oauth?.clientSecret !== undefined) {
+     if (typeof definition.oauth.clientSecret !== "string") throw new Error("OAuth clientSecret must be a string")
+-    // Preserve command expressions for the provider; interpolation remains eager for ordinary values.
+-    config.clientSecret = definition.oauth.clientSecret.startsWith("!")
+-      ? definition.oauth.clientSecret
+-      : interpolateEnvVars(definition.oauth.clientSecret)
++    config.clientSecret = resolveOAuthClientSecret(definition.oauth.clientSecret)
+   }
+   if (definition.oauth?.scope !== undefined) {
+     if (typeof definition.oauth.scope !== "string") throw new Error("OAuth scope must be a string")
+@@ -268,7 +273,9 @@
+   return config
+ }
+ 
+-async function probeAuthDiscovery(serverUrl: string, definition?: ServerEntry, signal?: AbortSignal): Promise<AuthDiscovery> {
++async function probeAuthDiscovery(serverName: string, serverUrl: string, definition?: ServerEntry, signal?: AbortSignal): Promise<AuthDiscovery> {
++  declaredOAuthServer(serverName, serverUrl)
++  const fetch = await mcpHttpFetch((globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")], serverName)
+   // Discovery must not execute config commands or send their source text.
+   const discoveryHeaders = definition?.headers
+     ? Object.fromEntries(Object.entries(definition.headers).filter(([, value]) => !value.startsWith("!") || value.startsWith("!!")))
+@@ -306,6 +313,7 @@
+     return {}
+   } finally {
+     clearTimeout(timer)
++    fetch.close()
+   }
+ }
+ 
+@@ -353,7 +361,7 @@
+     throw new Error("OAuth localhost redirectUri must include an explicit numeric port")
+   }
+ 
+-  const callbackHost = hostname === "[::1]" ? "::1" : hostname
++  const callbackHost = hostname === "localhost" ? "127.0.0.1" : hostname === "[::1]" ? "::1" : hostname
+   return { mode: "local", port, callbackHost, callbackPath: url.pathname }
+ }
+ 
+@@ -370,7 +378,8 @@
+   if (isServerDisabled(definition)) throw new Error(`MCP server "${serverName}" is disabled`)
+   const runtime = getRuntime(options)
+   const runtimeState = getRuntimeState(runtime)
+-  const config = definition ? extractOAuthConfig(definition) : {}
++  if (definition) declaredMcpServer(serverName, definition)
++  const config = extractOAuthConfig(declaredOAuthServer(serverName, serverUrl))
+   const authStorageOptions = options.authStorageOptions ?? {}
+   const signal = combineAbortSignals(runtime.signal, options.signal)
+   const generation = runtimeState.generation
+@@ -390,9 +399,9 @@
+       },
+     }, authStorageOptions, runtime.signal)
+     try {
+-      const discovery = applyOAuthConfig(await probeAuthDiscovery(serverUrl, definition, signal), config)
++      const discovery = applyOAuthConfig(await probeAuthDiscovery(serverName, serverUrl, definition, signal), config)
+       throwIfAborted(signal)
+-      const result = await abortable(runSdkAuth(authProvider, { serverUrl, ...discovery }), signal)
++      const result = await abortable(runBoundSdkAuth(authProvider, { serverUrl, ...discovery }), signal)
+       throwIfAborted(signal)
+       if (result !== "AUTHORIZED") {
+         throw new UnauthorizedError("Failed to authorize")
+@@ -415,6 +424,9 @@
+   if (!manualRedirect) {
+     try {
+       await ensureCallbackServer({
++        serverName,
++        signal: runtime.signal,
++        startupSignal: signal,
+         strictPort: Boolean(config.clientId) || config.redirectUri !== undefined,
+         oauthState,
+         reserveState: true,
+@@ -461,9 +473,9 @@
+ 
+     throwIfAborted(signal)
+ 
+-    const discovery = applyOAuthConfig(await probeAuthDiscovery(serverUrl, definition, signal), config)
++    const discovery = applyOAuthConfig(await probeAuthDiscovery(serverName, serverUrl, definition, signal), config)
+     throwIfAborted(signal)
+-    const result = await abortable(runSdkAuth(authProvider, { serverUrl, ...discovery }), signal)
++    const result = await abortable(runBoundSdkAuth(authProvider, { serverUrl, ...discovery }), signal)
+     throwIfAborted(signal)
+     if (result === "AUTHORIZED") {
+       authProvider.deactivate()
+@@ -796,7 +808,7 @@
+       throw new Error(`The OAuth authorization response issuer does not match the discovered issuer for ${serverName}.`)
+     }
+ 
+-    const result = await abortable(runSdkAuth(pendingAuth.authProvider, {
++    const result = await abortable(runBoundSdkAuth(pendingAuth.authProvider, {
+       serverUrl: pendingAuth.serverUrl,
+       authorizationCode: code,
+       ...(iss !== undefined ? { iss } : {}),
+@@ -896,12 +908,8 @@
+       } else {
+         console.log(`MCP Auth: Open this URL to authenticate ${serverName}:\n${authorizationUrl}`)
+       }
+-      try {
+-        await abortable(open(authorizationUrl), signal)
+-      } catch (error) {
+-        if (isAbortError(error, signal)) throw error
+-        console.warn(`MCP Auth: Failed to open browser for ${serverName}; waiting for manual callback`, { error })
+-      }
++      throwIfAborted(signal)
++      process.stdout.write(terminalHyperlink(authorizationUrl))
+ 
+       const authorizationResponse = await waitForAuthorizationResponse(
+         callbackPromise,
+@@ -976,7 +984,7 @@
+     console.log(`MCP Auth: Token expired for ${serverName}, attempting refresh`)
+ 
+     try {
+-      const authProvider = new McpOAuthProvider(serverName, serverUrl, {}, {
++      const authProvider = new McpOAuthProvider(serverName, serverUrl, extractOAuthConfig(declaredOAuthServer(serverName, serverUrl)), {
+         onRedirect: async () => {},
+       }, authStorageOptions, runtime.signal)
+ 
+@@ -988,9 +996,9 @@
+           return null
+         }
+ 
+-        const discovery = await probeAuthDiscovery(serverUrl, undefined, signal)
++        const discovery = await probeAuthDiscovery(serverName, serverUrl, undefined, signal)
+         throwIfAborted(signal)
+-        const result = await abortable(runSdkAuth(authProvider, {
++        const result = await abortable(runBoundSdkAuth(authProvider, {
+           serverUrl,
+           ...discovery,
+           ...(options.skipIssuerMetadataValidation === true ? { skipIssuerMetadataValidation: true } : {}),
+--- a/mcp-auth.ts
++++ b/mcp-auth.ts
+@@ -1,3 +1,5 @@
++import { mcpAuthenticationAccount } from "./agentcfg-bindings.ts";
++import { privatePluginStore } from "@agentcfg/pi-runtime/plugin-storage";
+ /**
+  * MCP Auth Storage Module
+  *
+@@ -121,7 +123,7 @@
+   if (process.platform === 'linux' && causeChainContains(error, /key\s*(?:has been\s*)?revoked|keyrevoked/i)) {
+     return 'OAuth credential store unavailable: the Linux session keyring may be revoked. Start Pi from a fresh login/keyring session and retry.';
+   }
+-  return 'OAuth credential store unavailable. Configure or unlock the OS credential store and retry.';
++  return 'OAuth credential store unavailable. Configure or unlock the instance credential store and retry.';
+ }
+ 
+ interface KeyringEntry {
+@@ -255,11 +257,7 @@
+ }
+ 
+ function getAuthSecretStore(): AuthSecretStore {
+-  if (process.env[TEST_AUTH_STORE_ENV] === 'memory') return memoryAuthSecretStore;
+-  if (process.env[TEST_AUTH_STORE_ENV] === 'sizelimited') return sizeLimitedAuthSecretStore;
+-  if (process.env[TEST_AUTH_STORE_ENV] === 'unavailable') return unavailableAuthSecretStore;
+-  if (process.env[TEST_AUTH_STORE_ENV] === 'keyrevoked') return keyRevokedAuthSecretStore;
+-  return keyringAuthSecretStore;
++  return privatePluginStore("pi-mcp", "mcp-auth");
+ }
+ 
+ function getKeyringEntry(account: string): KeyringEntry {
+@@ -267,7 +265,7 @@
+     KeyringEntryClass ??= loadKeyringEntryClass();
+     return new KeyringEntryClass(AUTH_SECRET_SERVICE, account);
+   } catch (error) {
+-    throw new Error('OAuth secure credential storage is unavailable. Configure the OS credential store and retry authentication.', { cause: error });
++    throw new Error('OAuth secure credential storage is unavailable. Configure the instance credential store and retry authentication.', { cause: error });
+   }
+ }
+ 
+@@ -347,8 +345,8 @@
+ }
+ 
+ function shouldAttemptLinuxKeyringRecovery(error: unknown): boolean {
+-  return isLinuxKeyringRecoveryEnabled()
+-    && causeChainContains(error, /key\s*(?:has been\s*)?revoked|keyrevoked/i);
++  // 实例私有存储失败不能触发系统 keyring 或全局 helper。
++  return false;
+ }
+ 
+ function runLinuxKeyringRecoveryOperation(operation: KeyringRecoveryOperation, account: string, payload?: string): KeyringRecoveryResponse {
+@@ -413,10 +411,8 @@
+   return baseDir ? { baseDir } : {};
+ }
+ 
+-export function getAuthBaseDir(options: AuthStorageOptions = {}): string {
+-  const override = process.env.MCP_OAUTH_DIR?.trim();
+-  if (override) return override;
+-  return options.baseDir ?? getAgentPath('mcp-oauth');
++export function getAuthBaseDir(_options: AuthStorageOptions = {}): string {
++  return getAgentPath("mcp-oauth");
+ }
+ 
+ /**
+@@ -434,7 +430,7 @@
+   if (typeof serverName !== 'string') {
+     throw new Error(`Invalid MCP server name: ${JSON.stringify(serverName)}`);
+   }
+-  return `sha256-${createHash('sha256').update(serverName, 'utf8').digest('hex')}`;
++  return mcpAuthenticationAccount(serverName);
+ }
+ 
+ /**
+@@ -575,7 +571,7 @@
+ function readExistingChunkManifest(store: AuthSecretStore, serverName: string, account: string): AuthEntryChunkManifest | undefined {
+   try {
+     const payload = store.read(account);
+-    return payload === undefined ? undefined : readChunkManifestFromPayload(serverName, payload, 'OS secure credential store');
++    return payload === undefined ? undefined : readChunkManifestFromPayload(serverName, payload, 'instance credential store');
+   } catch {
+     return undefined;
+   }
+@@ -614,13 +610,13 @@
+       return chunk;
+     } catch (error) {
+       throw new OAuthCredentialStoreError(
+-        `Failed to read OAuth credentials for ${serverName} from the OS secure credential store`,
++        `Failed to read OAuth credentials for ${serverName} from the instance credential store`,
+         'read',
+         error,
+       );
+     }
+   });
+-  return parseAuthEntryPayload(serverName, chunks.join(''), 'OS secure credential store chunks');
++  return parseAuthEntryPayload(serverName, chunks.join(''), 'instance credential store chunks');
+ }
+ 
+ function readLegacyAuthEntry(serverName: string, options?: AuthStorageOptions): AuthEntry | undefined {
+@@ -670,7 +666,7 @@
+   } catch (error) {
+     tryRemoveChunkPayloads(store, account, manifest);
+     throw new OAuthCredentialStoreError(
+-      `Failed to write OAuth credentials for ${serverName} to the OS secure credential store`,
++      `Failed to write OAuth credentials for ${serverName} to the instance credential store`,
+       'write',
+       error,
+     );
+@@ -684,10 +680,10 @@
+   // Cache the same normalized shape a fresh persistent-store read returns.
+   const normalized = toAuthEntry(JSON.parse(payload) as unknown);
+   if (!normalized) {
+-    authEntryCache.delete(serverName);
++    authEntryCache.delete(getAuthEntryAccount(serverName));
+     return;
+   }
+-  authEntryCache.set(serverName, cloneAuthEntry(normalized));
++  authEntryCache.set(getAuthEntryAccount(serverName), cloneAuthEntry(normalized));
+ }
+ 
+ function writeSecureAuthEntry(serverName: string, entry: AuthEntry): void {
+@@ -715,27 +711,22 @@
+     payload = store.read(account);
+   } catch (error) {
+     throw new OAuthCredentialStoreError(
+-      `Failed to read OAuth credentials for ${serverName} from the OS secure credential store`,
++      `Failed to read OAuth credentials for ${serverName} from the instance credential store`,
+       'read',
+       error,
+     );
+   }
+ 
+   if (payload !== undefined) {
+-    const manifest = readChunkManifestFromPayload(serverName, payload, 'OS secure credential store');
++    const manifest = readChunkManifestFromPayload(serverName, payload, 'instance credential store');
+     const entry = manifest
+       ? readChunkedAuthEntry(store, serverName, account, manifest)
+-      : parseAuthEntryPayload(serverName, payload, 'OS secure credential store');
+-    removeLegacyAuthEntry(serverName, options);
++      : parseAuthEntryPayload(serverName, payload, 'instance credential store');
+     return entry;
+   }
+ 
+-  const legacyEntry = readLegacyAuthEntry(serverName, options);
+-  if (!legacyEntry) return undefined;
+-  if (behavior.migrateLegacy === false) return legacyEntry;
+-  writeSecureAuthEntryToStore(store, serverName, legacyEntry);
+-  removeLegacyAuthEntry(serverName, options);
+-  return legacyEntry;
++  // 不迁入旧明文目录，不借系统 keyring，也不删除旧账号文件。
++  return undefined;
+ }
+ 
+ function readAuthEntry(
+@@ -746,8 +737,8 @@
+   // Status-only reads deliberately bypass the cache because they do not
+   // migrate legacy entries.
+   const cacheable = behavior.migrateLegacy !== false && isAuthEntryCacheEnabled();
+-  if (cacheable && authEntryCache.has(serverName)) {
+-    return cloneAuthEntry(authEntryCache.get(serverName));
++  if (cacheable && authEntryCache.has(getAuthEntryAccount(serverName))) {
++    return cloneAuthEntry(authEntryCache.get(getAuthEntryAccount(serverName)));
+   }
+ 
+   let entry: AuthEntry | undefined;
+@@ -758,7 +749,7 @@
+     entry = readAuthEntryFromStore(linuxKeyringRecoveryAuthSecretStore, serverName, options, behavior);
+   }
+ 
+-  if (cacheable) authEntryCache.set(serverName, cloneAuthEntry(entry));
++  if (cacheable) authEntryCache.set(getAuthEntryAccount(serverName), cloneAuthEntry(entry));
+   return entry;
+ }
+ 
+@@ -815,7 +806,6 @@
+     entry.serverUrl = serverUrl;
+   }
+   writeSecureAuthEntry(serverName, entry);
+-  removeLegacyAuthEntry(serverName, options);
+ }
+ 
+ /**
+@@ -825,12 +815,12 @@
+   const account = getAuthEntryAccount(serverName);
+   try {
+     const payload = store.read(account);
+-    const manifest = payload === undefined ? undefined : readChunkManifestFromPayload(serverName, payload, 'OS secure credential store');
++    const manifest = payload === undefined ? undefined : readChunkManifestFromPayload(serverName, payload, 'instance credential store');
+     if (manifest) removeChunkPayloads(store, account, manifest);
+     store.remove(account);
+   } catch (error) {
+     throw new OAuthCredentialStoreError(
+-      `Failed to remove OAuth credentials for ${serverName} from the OS secure credential store`,
++      `Failed to remove OAuth credentials for ${serverName} from the instance credential store`,
+       'remove',
+       error,
+     );
+@@ -844,15 +834,14 @@
+     if (!shouldAttemptLinuxKeyringRecovery(error)) throw error;
+     removeAuthEntryFromStore(linuxKeyringRecoveryAuthSecretStore, serverName);
+   }
+-  authEntryCache.delete(serverName);
+-  removeLegacyAuthEntry(serverName, options);
++  authEntryCache.delete(getAuthEntryAccount(serverName));
+ }
+ 
+ /**
+  * Forget a cached entry so the next ordinary read reloads secure storage.
+  */
+ export function invalidateAuthEntryCache(serverName: string): void {
+-  authEntryCache.delete(serverName);
++  authEntryCache.delete(getAuthEntryAccount(serverName));
+ }
+ 
+ /**
+--- a/mcp-callback-server.ts
++++ b/mcp-callback-server.ts
+@@ -1,3 +1,4 @@
++import { listenMcpCallback, closeMcpListener } from "@agentcfg/pi-runtime/mcp-listener"
+ /**
+  * MCP OAuth Callback Server
+  * 
+@@ -189,6 +190,9 @@
+ const CALLBACK_TIMEOUT_MS = 5 * 60 * 1000
+ 
+ interface EnsureCallbackServerOptions {
++  serverName?: string
++  signal?: AbortSignal
++  startupSignal?: AbortSignal
+   strictPort?: boolean
+   port?: number
+   callbackHost?: string
+@@ -204,7 +208,15 @@
+  * Handle incoming HTTP requests to the callback server.
+  */
+ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
+-  const url = new URL(req.url || "/", `http://${req.headers.host}`)
++  let url: URL
++  try {
++    if (req.method !== "GET" || !req.url?.startsWith("/") || req.url.startsWith("//") || req.url.length > 16384) throw new Error()
++    const origin = new URL(`http://${req.headers.host}`)
++    if (!["localhost", "127.0.0.1", "[::1]"].includes(origin.hostname) || Number(origin.port || "80") !== getOAuthCallbackPort()) throw new Error()
++    url = new URL(req.url, "http://callback.invalid")
++  } catch {
++    res.writeHead(400, { "Content-Type": "text/plain" }); res.end("Invalid callback request"); return
++  }
+ 
+   // Only handle the callback path
+   if (url.pathname !== getOAuthCallbackPath()) {
+@@ -331,7 +343,8 @@
+   }
+   let reservedState: string | undefined
+ 
+-  const previousServer = server
++  if (server && !server.listening) server = undefined
++  let previousServer = server
+   const needsStrictRebind = Boolean(previousServer && strictPort && getOAuthCallbackPort() !== requiredPort)
+   const needsHostSwitch = Boolean(previousServer && callbackServerHost !== requestedHost)
+   const needsPathSwitch = Boolean(previousServer && getOAuthCallbackPath() !== requestedPath)
+@@ -360,19 +373,27 @@
+     }
+   }
+ 
++  if (previousServer && (needsStrictRebind || needsHostSwitch)) {
++    await closeMcpListener(previousServer)
++    server = undefined
++    previousServer = undefined
++  }
+   const candidateServer = createServer(handleRequest)
+   const listenPort = strictPort ? requiredPort : 0
++  candidateServer.on("close", () => {
++    if (server !== candidateServer) return
++    server = undefined
++    reservedAuthStates.clear()
++    for (const pending of pendingAuths.values()) {
++      clearTimeout(pending.timeout)
++      pending.reject(new Error("OAuth callback server stopped"))
++    }
++    pendingAuths.clear()
++  })
+ 
+   try {
+-    await new Promise<void>((resolve, reject) => {
+-      candidateServer.once("error", (err) => {
+-        reject(err)
+-      })
+-
+-      candidateServer.listen(listenPort, requestedHost, () => {
+-        resolve()
+-      })
+-    })
++    await listenMcpCallback(candidateServer, { serverName: options.serverName, host: requestedHost,
++      port: listenPort, path: requestedPath, signal: options.signal, startupSignal: options.startupSignal })
+ 
+     if (strictPort) {
+       setOAuthCallbackPort(requiredPort)
+@@ -385,9 +406,7 @@
+     }
+ 
+     if (previousServer && (needsStrictRebind || needsHostSwitch)) {
+-      await new Promise<void>((resolve) => {
+-        previousServer.close(() => resolve())
+-      })
++      await closeMcpListener(previousServer)
+     }
+ 
+     callbackServerHost = requestedHost
+@@ -403,13 +422,11 @@
+       reservedAuthStates.delete(reservedState)
+     }
+     const nodeError = error as NodeJS.ErrnoException
+-    await new Promise<void>((resolve) => {
+-      candidateServer.close(() => resolve())
+-    })
++    await closeMcpListener(candidateServer)
+ 
+     if (strictPort && nodeError.code === "EADDRINUSE") {
+       throw new Error(
+-        `OAuth callback port ${requiredPort} is already in use. Pre-registered OAuth clients require an exact redirect URI; set MCP_OAUTH_CALLBACK_PORT to your registered port or free port ${requiredPort}`,
++        `OAuth callback port ${requiredPort} is already in use. Pre-registered OAuth clients require an exact redirect URI; set agentcfg oauth.redirect_uri to your registered port or free port ${requiredPort}`,
+         { cause: error }
+       )
+     }
+@@ -475,11 +492,7 @@
+     }
+ 
+     if (server) {
+-      await new Promise<void>((resolve) => {
+-        server!.close(() => {
+-          resolve()
+-        })
+-      })
++      await closeMcpListener(server)
+       server = undefined
+     }
+ 
+--- a/mcp-code.ts
++++ b/mcp-code.ts
+@@ -1,6 +1,6 @@
+ import type { ToolInfo } from "@earendil-works/pi-coding-agent";
+ import { formatWithOptions } from "node:util";
+-import { Worker } from "node:worker_threads";
++import { SupervisedScriptWorker } from "@agentcfg/pi-runtime/mcp-script";
+ import { guardMcpOutput, guardedMcpDetails, resolveMcpOutputGuardOptions } from "./mcp-output-guard.ts";
+ import { executeCall } from "./proxy-modes.ts";
+ import { combineAbortSignals } from "./runtime-owner.ts";
+@@ -237,7 +237,8 @@
+     }
+   };
+ 
+-  let worker: Worker | undefined;
++  const pendingDispatches = new Set<Promise<void>>();
++  let worker: SupervisedScriptWorker | undefined;
+   let timer: ReturnType<typeof setTimeout> | undefined;
+   let removeAbortListener = () => {};
+   let errorCode: "timeout" | "aborted" | "script_error" | undefined;
+@@ -248,14 +249,7 @@
+       throw abortReasonError(externalSignal.reason);
+     }
+ 
+-    worker = new Worker(new URL("./mcp-script-worker.mjs", import.meta.url), {
+-      workerData: { code },
+-      env: {},
+-      // The sandbox cannot open files, and the host always terminates this worker.
+-      // Disable Node's unmanaged FD bookkeeping, which emits false warnings when
+-      // short-lived workers are terminated on Node 24.
+-      trackUnmanagedFds: false,
+-    });
++    worker = new SupervisedScriptWorker(code, resolvedTimeoutMs);
+     const activeWorker = worker;
+     const execution = new Promise<void>((resolve, reject) => {
+       let completed = false;
+@@ -278,7 +272,7 @@
+           return;
+         }
+ 
+-        void (async () => {
++        const dispatch = (async () => {
+           let envelope: unknown;
+           if (message.type === "call") {
+             envelope = await callTool(message.path, message.args as Record<string, unknown> | undefined);
+@@ -289,7 +283,9 @@
+           }
+           const response: WorkerResultMessage = { type: "result", id: message.id, envelope };
+           activeWorker.postMessage(response);
+-        })().catch(reject);
++        })();
++        pendingDispatches.add(dispatch);
++        void dispatch.catch(reject).finally(() => pendingDispatches.delete(dispatch));
+       });
+       activeWorker.once("error", reject);
+       activeWorker.once("exit", (code) => {
+@@ -301,7 +297,7 @@
+       timer = setTimeout(() => {
+         callsSnapshot = snapshotCalls();
+         timeoutController.abort(timeoutError);
+-        void activeWorker.terminate();
++        void activeWorker.terminate().catch(() => {});
+         reject(timeoutError);
+       }, resolvedTimeoutMs);
+     });
+@@ -309,7 +305,7 @@
+       ? new Promise<never>((_resolve, reject) => {
+           const onAbort = () => {
+             callsSnapshot = snapshotCalls();
+-            void activeWorker.terminate();
++            void activeWorker.terminate().catch(() => {});
+             reject(abortReasonError(externalSignal.reason));
+           };
+           externalSignal.addEventListener("abort", onAbort, { once: true });
+@@ -339,7 +335,8 @@
+     // A script may finish without awaiting every call; abort leftovers so
+     // parent-side dispatches do not outlive the script.
+     timeoutController.abort(new Error("mcpScript finished"));
+-    await worker?.terminate();
++    try { await worker?.terminate(); }
++    finally { await Promise.allSettled([...pendingDispatches]); }
+   }
+ 
+   // Snapshot before the asynchronous output guard; the terminated worker can no longer emit.
+--- a/mcp-oauth-provider.ts
++++ b/mcp-oauth-provider.ts
+@@ -1,3 +1,5 @@
++import { mcpHttpFetch } from "@agentcfg/pi-runtime/mcp-http";
++import { assertOAuthConfiguration, assertOAuthAuthorizationUrl } from "./agentcfg-bindings.ts";
+ /**
+  * MCP OAuth Provider
+  * 
+@@ -213,9 +215,10 @@
+   metadataUrl: string,
+   serverUrl: string,
+   skipIssuerValidation: boolean,
++  fetchFn: typeof fetch,
+   signal?: AbortSignal,
+ ): Promise<OAuthDiscoveryState> {
+-  const response = await fetch(metadataUrl, {
++  const response = await fetchFn(metadataUrl, {
+     headers: { accept: "application/json" },
+     ...(signal !== undefined ? { signal } : {}),
+   })
+@@ -247,6 +250,24 @@
+  * Implements the OAuthClientProvider interface from the MCP SDK.
+  */
+ export class McpOAuthProvider implements OAuthClientProvider {
++  private oauthFetch?: Awaited<ReturnType<typeof mcpHttpFetch>>;
++  private fetchInitialization?: Promise<Awaited<ReturnType<typeof mcpHttpFetch>>>;
++  async boundFetch(): Promise<typeof fetch> {
++    this.throwIfInactive();
++    this.fetchInitialization ??= mcpHttpFetch((globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")], this.serverName).then(fetch => {
++      if (!this.active) { fetch.close(); throw new Error("MCP_OAUTH_INACTIVE"); }
++      this.oauthFetch = fetch;
++      return fetch;
++    });
++    const bound = await this.fetchInitialization;
++    return (input, init) => {
++      this.throwIfInactive();
++      const request = new Request(input, init);
++      const signal = this.runtimeSignal ? AbortSignal.any([request.signal, this.runtimeSignal]) : request.signal;
++      return bound(request, { signal });
++    };
++  }
++
+   private readonly redirectUrlSnapshot: string | undefined
+   private active = true
+   private flowClientInfo: StoredClientInfo | undefined
+@@ -269,6 +290,7 @@
+     private runtimeSignal?: AbortSignal,
+     initialState?: string,
+   ) {
++    assertOAuthConfiguration(serverName, serverUrl, config as unknown as Record<string, unknown>);
+     this.flowState = initialState
+     this.redirectUrlSnapshot = config.grantType === "client_credentials"
+       ? undefined
+@@ -286,6 +308,7 @@
+ 
+   deactivate(): void {
+     this.active = false
++    this.oauthFetch?.close()
+     this.invalidatedAccessToken = undefined
+     this.invalidatedClientId = undefined
+     this.lastObservedClientId = undefined
+@@ -388,12 +411,8 @@
+           this.storageOptions,
+         )
+       }
+-      const clientSecret = this.config.clientSecret?.startsWith("!")
+-        ? resolveCommandSecret(
+-          this.config.clientSecret,
+-          `MCP server "${this.serverName}" OAuth clientSecret`,
+-        )
+-        : this.config.clientSecret
++      const clientSecret = this.config.clientSecret
++
+       return {
+         client_id: this.config.clientId,
+         client_secret: clientSecret,
+@@ -558,6 +577,7 @@
+    * flow, which library hosts cannot complete in-process.
+    */
+   async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
++    assertOAuthAuthorizationUrl(this.serverName, authorizationUrl);
+     if (this.usesClientCredentials) {
+       throw new Error("redirectToAuthorization is not used for client_credentials flow")
+     }
+@@ -611,6 +631,7 @@
+         this.config.authServerMetadataUrl,
+         this.serverUrl,
+         this.config.skipIssuerMetadataValidation === true,
++        await this.boundFetch(),
+         this.runtimeSignal,
+       )
+     }
+--- a/mcp-probe.ts
++++ b/mcp-probe.ts
+@@ -155,7 +155,7 @@
+   return { kind: "unrecognized" };
+ }
+ 
+-async function probe(url: string | URL, strategy: ProbeStrategy): Promise<ProbeResult> {
++async function probe(url: string | URL, strategy: ProbeStrategy, fetch: typeof globalThis.fetch): Promise<ProbeResult> {
+   const response = await fetch(url, {
+     ...strategy.request,
+     signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+@@ -182,8 +182,8 @@
+ }
+ 
+ /** Makes one unauthenticated metadata-only request to identify an HTTP endpoint's protocol shape. */
+-export async function probeMcpEndpoint(url: string | URL): Promise<McpProbeResult> {
+-  const { response: modernResponse, outcome: modernOutcome } = await probe(url, MODERN_STRATEGY);
++export async function probeMcpEndpoint(url: string | URL, fetch: typeof globalThis.fetch = globalThis.fetch): Promise<McpProbeResult> {
++  const { response: modernResponse, outcome: modernOutcome } = await probe(url, MODERN_STRATEGY, fetch);
+   if (modernOutcome.kind === "mcp") return modernOutcome.result;
+   let ambiguousResult = ambiguousNotMcp(modernResponse);
+ 
+@@ -191,11 +191,11 @@
+     return ambiguousResult ?? notMcp(modernResponse);
+   }
+ 
+-  const { response: postResponse, outcome: postOutcome } = await probe(url, LEGACY_POST_STRATEGY);
++  const { response: postResponse, outcome: postOutcome } = await probe(url, LEGACY_POST_STRATEGY, fetch);
+   if (postOutcome.kind === "mcp") return postOutcome.result;
+   ambiguousResult ??= ambiguousNotMcp(postResponse);
+   if (!POST_ENDPOINT_MISMATCH_STATUSES.has(postResponse.status)) return ambiguousNotMcp(postResponse) ?? ambiguousResult ?? notMcp(postResponse);
+ 
+-  const { response: getResponse, outcome: getOutcome } = await probe(url, LEGACY_SSE_STRATEGY);
++  const { response: getResponse, outcome: getOutcome } = await probe(url, LEGACY_SSE_STRATEGY, fetch);
+   return getOutcome.kind === "mcp" ? getOutcome.result : ambiguousNotMcp(getResponse) ?? ambiguousResult ?? notMcp(getResponse);
+ }
+--- /dev/null
++++ b/mcp-script-process.mjs
+@@ -0,0 +1,157 @@
++import { EventEmitter } from "node:events";
++import { createInterface } from "node:readline";
++const channel = new EventEmitter();
++const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
++let initialized = false;
++const workerData = await new Promise((resolve, reject) => {
++  input.on("line", line => {
++    try {
++      if (Buffer.byteLength(line) > 1024 * 1024) throw Error("MCP_SCRIPT_FRAME_LIMIT");
++      const message = JSON.parse(line);
++      if (message?.jsonrpc !== "2.0") throw Error("MCP_SCRIPT_PROTOCOL");
++      if (!initialized) {
++        if (message.type !== "init" || typeof message.code !== "string" || !message.code.trim()) throw Error("MCP_SCRIPT_INIT");
++        initialized = true; resolve({ code: message.code });
++      } else if (message.type === "result") channel.emit("message", message);
++      else throw Error("MCP_SCRIPT_PROTOCOL");
++    } catch { process.stderr.write("MCP_SCRIPT_PROTOCOL\n"); process.exit(5); }
++  });
++  input.once("close", () => { if (!initialized) reject(Error("MCP_SCRIPT_INIT_MISSING")); });
++});
++const parentPort = {
++  on: (...args) => channel.on(...args),
++  postMessage(message) {
++    const line = JSON.stringify({ ...message, jsonrpc: "2.0" }) + "\n";
++    if (Buffer.byteLength(line) > 1024 * 1024) throw Error("MCP_SCRIPT_FRAME_LIMIT");
++    process.stdout.write(line);
++  },
++};
++import { formatWithOptions } from "node:util";
++import vm from "node:vm";
++
++const TOOLS_ENUMERATION_ERROR = "tools is not enumerable — use tools.search({ query })";
++const RESERVED_TOOL_PROPS = new Set(["then", "catch", "finally", "toJSON", "toString", "valueOf"]);
++
++// Keep this formatting logic in sync with mcp-code.ts; the standalone worker cannot import the TypeScript host module.
++function needsInspectableFormatting(value, stack = new WeakSet()) {
++  if (value === undefined || typeof value === "bigint" || typeof value === "function" || typeof value === "symbol") return true;
++  if (typeof value !== "object" || value === null) return false;
++  if (stack.has(value)) return true;
++  if (value instanceof Map || value instanceof Set || value instanceof WeakMap || value instanceof WeakSet) return true;
++  stack.add(value);
++  try {
++    return Object.values(value).some((entry) => needsInspectableFormatting(entry, stack));
++  } finally {
++    stack.delete(value);
++  }
++}
++
++function formatValue(value) {
++  if (typeof value === "string") return value;
++  try {
++    if (!needsInspectableFormatting(value)) {
++      const json = JSON.stringify(value, null, 2);
++      if (json !== undefined) return json;
++    }
++    return formatWithOptions({ colors: false, depth: 6 }, value);
++  } catch {
++    return "[unserializable value]";
++  }
++}
++
++function toContentBlock(value) {
++  if (typeof value === "object" && value !== null) {
++    if (value.type === "text" && typeof value.text === "string") {
++      return { type: "text", text: value.text };
++    }
++    if (value.type === "image" && typeof value.data === "string" && typeof value.mimeType === "string") {
++      return { type: "image", data: value.data, mimeType: value.mimeType };
++    }
++  }
++  return { type: "text", text: formatValue(value) };
++}
++
++let nextRequestId = 0;
++const pending = new Map();
++
++parentPort.on("message", (message) => {
++  if (message?.type !== "result" || typeof message.id !== "number") return;
++  const resolve = pending.get(message.id);
++  if (!resolve) return;
++  pending.delete(message.id);
++  resolve(message.envelope);
++});
++
++function request(type, payload) {
++  return new Promise((resolve) => {
++    const id = ++nextRequestId;
++    pending.set(id, resolve);
++    parentPort.postMessage({ type, id, ...payload });
++  });
++}
++
++const tools = new Proxy(Object.create(null), {
++  get(_target, property) {
++    if (property === "search") {
++      return async (input) => request("search", { input });
++    }
++    if (property === "call") {
++      return async (path, args) => {
++        // Invalid paths never reach dispatch and therefore never appear in the call trace.
++        if (typeof path !== "string" || path.trim() === "") {
++          return {
++            ok: false,
++            error: {
++              code: "invalid_tool_path",
++              message: "tools.call(path, args) requires a non-empty tool path.",
++            },
++          };
++        }
++        return request("call", { path, args });
++      };
++    }
++    if (property === "describe") {
++      return async (input) => request("describe", { input });
++    }
++    if (typeof property !== "string" || RESERVED_TOOL_PROPS.has(property)) return undefined;
++    return (args) => request("call", { path: property, args });
++  },
++  ownKeys() {
++    throw new Error(TOOLS_ENUMERATION_ERROR);
++  },
++});
++
++const emit = (value) => {
++  parentPort.postMessage({ type: "emit", block: toContentBlock(value) });
++};
++
++const capturedConsole = Object.freeze({
++  log: (...args) => emit(`[console.log] ${formatWithOptions({ colors: false, depth: 4 }, ...args)}`),
++  info: (...args) => emit(`[console.info] ${formatWithOptions({ colors: false, depth: 4 }, ...args)}`),
++  warn: (...args) => emit(`[console.warn] ${formatWithOptions({ colors: false, depth: 4 }, ...args)}`),
++  error: (...args) => emit(`[console.error] ${formatWithOptions({ colors: false, depth: 4 }, ...args)}`),
++  debug: (...args) => emit(`[console.debug] ${formatWithOptions({ colors: false, depth: 4 }, ...args)}`),
++});
++
++void (async () => {
++  try {
++    const context = vm.createContext(Object.assign(Object.create(null), {
++      tools,
++      emit,
++      console: capturedConsole,
++    }), {
++      codeGeneration: { strings: false, wasm: false },
++      name: "mcpScript",
++    });
++    const script = new vm.Script(`(async () => {\n${workerData.code}\n})()`, { filename: "mcpScript.js" });
++    const returnValue = await Promise.resolve(script.runInContext(context));
++    parentPort.postMessage(returnValue === undefined
++      ? { type: "done" }
++      : { type: "done", returnBlock: toContentBlock(returnValue) });
++  } catch (error) {
++    parentPort.postMessage({
++      type: "error",
++      message: error instanceof Error ? error.message : String(error),
++    });
++  }
++})().finally(() => { input.close(); process.stdin.destroy(); });
+--- a/namespace-tools.ts
++++ b/namespace-tools.ts
+@@ -1,4 +1,5 @@
+ import type { AgentToolResult, ExtensionAPI, ToolInfo } from "@earendil-works/pi-coding-agent";
++import { registerMcpNamespace, unregisterMcpTool, type McpToolOwner } from "@agentcfg/pi-runtime/mcp-tools";
+ import { Type } from "typebox";
+ import type { McpExtensionState } from "./state.ts";
+ import { isServerDisabled, type McpConfig } from "./types.ts";
+@@ -155,6 +156,7 @@
+ });
+ 
+ export interface SyncNamespaceProxyToolsInput {
++  toolOwner: McpToolOwner;
+   config: McpConfig | null;
+   cache: MetadataCache | null;
+   envOverride: DirectToolSelectorOverride | null;
+@@ -203,12 +205,12 @@
+     renderShell,
+     renderCall: createNamespaceRenderCall(renderOptions, spec.serverName),
+     renderResult,
+-    execute: namespaceExecute(
++    execute: registerMcpNamespace(spec.toolName, spec.serverName, namespaceExecute(
+       input.getState,
+       input.getInitPromise,
+       spec.serverName,
+       input.getPiTools,
+-    ),
++    ), input.toolOwner),
+   });
+ }
+ 
+@@ -232,6 +234,7 @@
+     unregisterTool?: (name: string) => boolean;
+   }).unregisterTool;
+   for (const stale of staleNames) {
++    unregisterMcpTool(stale, input.toolOwner);
+     if (unregisterTool?.(stale)) deactivated.push(stale);
+   }
+   const activeTools = getActiveToolsForStaleCleanup(input.pi, staleNames);
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "pi-mcp-adapter",
+-  "version": "2.32.1",
++  "version": "2.32.1-agentcfg.1",
+   "description": "MCP (Model Context Protocol) adapter extension for Pi coding agent",
+   "type": "module",
+   "types": "./index.ts",
+@@ -150,7 +150,8 @@
+     "README.md",
+     "CHANGELOG.md",
+     "LICENSE",
+-    "dist"
++    "dist",
++    "mcp-script-process.mjs"
+   ],
+   "dependencies": {
+     "@modelcontextprotocol/client": "2.0.0",
+@@ -164,7 +165,8 @@
+     "recheck": "^4.5.0",
+     "smol-toml": "^1.6.1",
+     "strip-json-comments": "^5.0.3",
+-    "zod": "^3.25.0 || ^4.0.0"
++    "zod": "^3.25.0 || ^4.0.0",
++    "@agentcfg/pi-runtime": "1.0.0"
+   },
+   "peerDependencies": {
+     "@earendil-works/pi-ai": "^0.84.1",
+--- a/sampling-handler.ts
++++ b/sampling-handler.ts
+@@ -1,15 +1,21 @@
+-import { complete } from "@earendil-works/pi-ai/compat";
++import { pluginModelMethod, selectedPluginModel } from "@agentcfg/pi-runtime/plugin-model";
++import { pluginSettings } from "@agentcfg/pi-runtime/plugin-settings";
++const complete = pluginModelMethod("pi-mcp", "complete");
++type SamplingSettings = { enabled: boolean; model?: string; max_tokens?: number; auto_approve?: boolean };
++function samplingSettings(): SamplingSettings | undefined {
++  return (pluginSettings("pi-mcp", "mcp") as { sampling?: SamplingSettings }).sampling;
++}
+ import type { Api, AssistantMessage, Message, Model, ProviderHeaders, TextContent } from "@earendil-works/pi-ai";
+-import { truncateAtWord } from "./utils.ts";
++function truncateAtWord(text: string, limit: number): string { return text.length <= limit ? text : text.slice(0, limit) + "…"; }
+ import { throwIfAborted } from "./abort.ts";
+ import type { ExtensionUIContext, ModelRegistry } from "@earendil-works/pi-coding-agent";
+ import type { Client } from "@modelcontextprotocol/client";
+-import {
+-  type CreateMessageRequest,
+-  type CreateMessageResult,
+-  type ModelPreferences,
+-  type SamplingMessage,
+-  type SamplingMessageContentBlock,
++import type {
++  CreateMessageRequest,
++  CreateMessageResult,
++  ModelPreferences,
++  SamplingMessage,
++  SamplingMessageContentBlock,
+ } from "@modelcontextprotocol/client";
+ 
+ export type SamplingUIContext = Pick<ExtensionUIContext, "confirm">;
+@@ -57,7 +63,12 @@
+   }
+ 
+   const messages = params.messages.map(convertSamplingMessage);
+-  const { model, apiKey, headers } = await resolveSamplingModel(options, params.modelPreferences);
++  const settings = samplingSettings();
++  if (settings?.enabled !== true) throw new Error("MCP_SAMPLING_NOT_SELECTED");
++  const maxTokens = settings.max_tokens ?? 4096;
++  if (!Number.isSafeInteger(params.maxTokens) || params.maxTokens < 1 || params.maxTokens > maxTokens) throw new Error("MCP_SAMPLING_TOKEN_LIMIT");
++  if (messages.length > 128 || Buffer.byteLength(JSON.stringify(params)) > 1024 * 1024) throw new Error("MCP_SAMPLING_INPUT_LIMIT");
++  const { model } = await resolveSamplingModel(options, params.modelPreferences);
+   throwIfAborted(signal);
+   await confirmSampling(
+     options,
+@@ -73,8 +84,6 @@
+       messages,
+     },
+     {
+-      ...(apiKey !== undefined ? { apiKey } : {}),
+-      ...(headers !== undefined ? { headers } : {}),
+       maxTokens: params.maxTokens,
+       ...(params.temperature !== undefined ? { temperature: params.temperature } : {}),
+       ...(params.metadata !== undefined ? { metadata: params.metadata as Record<string, unknown> } : {}),
+@@ -89,6 +98,8 @@
+     "Return MCP sampling response",
+     formatResponseApproval(options.serverName, converted),
+   );
++  throwIfAborted(signal);
++  selectedPluginModel("pi-mcp", settings.model, options.getCurrentModel());
+   return converted;
+ }
+ 
+@@ -132,58 +143,15 @@
+   apiKey?: string;
+   headers?: ProviderHeaders;
+ }> {
+-  const candidates: Model<Api>[] = [];
+-  const availableModels = options.modelRegistry.getAvailable();
+-
+-  for (const hint of modelPreferences?.hints ?? []) {
+-    const normalizedHint = hint.name?.trim().toLowerCase();
+-    if (!normalizedHint) continue;
+-    for (const model of availableModels) {
+-      const searchableNames = [`${model.provider}/${model.id}`, model.id, model.name];
+-      if (searchableNames.some((name) => name.toLowerCase().includes(normalizedHint))) {
+-        addSamplingCandidate(candidates, model);
+-      }
+-    }
+-  }
+-
+-  const currentModel = options.getCurrentModel();
+-  if (currentModel) addSamplingCandidate(candidates, currentModel);
+-
+-  for (const model of availableModels) {
+-    addSamplingCandidate(candidates, model);
+-  }
+-
+-  const errors: string[] = [];
+-  const signal = options.getSignal();
+-  for (const model of candidates) {
+-    throwIfAborted(signal);
+-    const auth = await options.modelRegistry.getApiKeyAndHeaders(model);
+-    throwIfAborted(signal);
+-    if (auth.ok === false) {
+-      errors.push(`${model.provider}/${model.id}: ${auth.error}`);
+-      continue;
+-    }
+-    return {
+-      model,
+-      ...(auth.apiKey !== undefined ? { apiKey: auth.apiKey } : {}),
+-      ...(auth.headers !== undefined ? { headers: auth.headers } : {}),
+-    };
+-  }
+-
+-  if (errors.length > 0) {
+-    throw new Error(`No configured auth for MCP sampling model. ${errors.join("; ")}`);
+-  }
+-  throw new Error("No Pi model is available for MCP sampling");
+-}
+-
+-function addSamplingCandidate(candidates: Model<Api>[], model: Model<Api>): void {
+-  if (!candidates.some((candidate) => candidate.provider === model.provider && candidate.id === model.id)) {
+-    candidates.push(model);
+-  }
++  // 服务端 hints 不能扩大或替换实例明确选择的模型，更不能按可用账号回退。
++  void modelPreferences;
++  const settings = samplingSettings();
++  const model = selectedPluginModel("pi-mcp", settings?.model, options.getCurrentModel());
++  return { model };
+ }
+ 
+ async function confirmSampling(options: SamplingHandlerOptions, title: string, message: string): Promise<void> {
+-  if (options.autoApprove) return;
++  if (options.autoApprove && samplingSettings()?.auto_approve === true) return;
+   if (!options.ui) {
+     throw new Error("MCP sampling requires interactive approval. Set settings.samplingAutoApprove to true to allow it without UI.");
+   }
+@@ -231,10 +199,10 @@
+ 
+ function convertAssistantResult(message: AssistantMessage): CreateMessageResult {
+   if (message.stopReason === "error") {
+-    throw new Error(message.errorMessage ?? "MCP sampling model call failed");
++    throw new Error("MCP_SAMPLING_MODEL_FAILED");
+   }
+   if (message.stopReason === "aborted") {
+-    throw new Error(message.errorMessage ?? "MCP sampling model call was aborted");
++    throw new Error("MCP_SAMPLING_MODEL_ABORTED");
+   }
+ 
+   const text = message.content
+--- a/server-manager.ts
++++ b/server-manager.ts
+@@ -1,3 +1,4 @@
++import { mcpHttpFetch } from "@agentcfg/pi-runtime/mcp-http";
+ import { mkdirSync, statSync } from "node:fs";
+ import { isDeepStrictEqual } from "node:util";
+ import {
+@@ -18,7 +19,8 @@
+   type UrlElicitationRequiredError,
+   type VersionNegotiationOptions,
+ } from "@modelcontextprotocol/client";
+-import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
++import { BoundStdioTransport } from "@agentcfg/pi-runtime/mcp-stdio";
++import { declaredMcpServer } from "./agentcfg-bindings.ts";
+ import { UnixSocketClientTransport } from "./unix-socket-transport.ts";
+ import { probeMcpEndpoint } from "./mcp-probe.ts";
+ import {
+@@ -331,7 +333,7 @@
+     const attemptSignal = combineAbortSignals(ownedSignal, attemptController.signal);
+     const connectionAttempt = this.createConnection(name, definition, attemptSignal, ownedSignal, credentialsInvalidated);
+     const promise = definition.url
+-      ? connectionAttempt.catch(async error => { throw await this.enrichHttpConnectionError(definition, error); })
++      ? connectionAttempt.catch(async error => { throw await this.enrichHttpConnectionError(name, definition, error); })
+       : connectionAttempt;
+     this.connectPromises.set(name, promise);
+     this.connectAttempts.set(name, attemptController);
+@@ -792,43 +794,10 @@
+ 
+     const requestOptions = this.buildRequestOptions(definition, requestSignal);
+ 
++    declaredMcpServer(name, definition);
+     if (definition.command) {
+       client = this.createClient(name, definition);
+-      let command = definition.command;
+-      let args = (definition.args ?? []).map((argument) => interpolateEnvVars(argument));
+-      const cwd = resolveConfigPath(definition.cwd) ?? this.defaultCwd;
+-      if (cwd !== undefined) {
+-        const cwdStats = statSync(cwd, { throwIfNoEntry: false });
+-        if (!cwdStats) throw new Error(`MCP server "${name}" configured cwd does not exist: "${cwd}"`);
+-        if (!cwdStats.isDirectory()) throw new Error(`MCP server "${name}" configured cwd is not a directory: "${cwd}"`);
+-      }
+-
+-      if (command === "npx" || command === "npm") {
+-        const resolved = await resolveNpxBinary(command, args, signal);
+-        if (resolved) {
+-          command = resolved.isJs ? "node" : resolved.binPath;
+-          args = resolved.isJs ? [resolved.binPath, ...resolved.extraArgs] : resolved.extraArgs;
+-          logger.debug(`${name} resolved to ${resolved.binPath} (skipping npm parent)`);
+-        }
+-      }
+-      throwIfAborted(signal);
+-
+-      if (definition.pluginDataDir) mkdirSync(definition.pluginDataDir, { recursive: true });
+-      const stdioTransport = new StdioClientTransport({
+-        command,
+-        args,
+-        env: resolveEnv(definition.env, name, definition.literalEnv === true),
+-        ...(cwd !== undefined ? { cwd } : {}),
+-        stderr: definition.debug ? "inherit" : "pipe",
+-      });
+-      // Keep non-debug child diagnostics available for connection failures without
+-      // retaining an unbounded stream or changing the existing debug behavior.
+-      if (stdioTransport.stderr) {
+-        stdioTransport.stderr.on("data", (chunk: Buffer | string) => {
+-          stderrTail = appendStderrTail(stderrTail, chunk);
+-        });
+-      }
+-      transport = stdioTransport;
++      transport = new BoundStdioTransport((globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")], name);
+     } else if (definition.url) {
+       const httpConnection = await this.connectHttpClient(
+         definition,
+@@ -975,13 +944,17 @@
+     }
+   }
+ 
+-  private async enrichHttpConnectionError(definition: ServerDefinition, error: unknown): Promise<Error> {
++  private async enrichHttpConnectionError(name: string, definition: ServerDefinition, error: unknown): Promise<Error> {
++    if (definition.auth === "oauth") return new Error("MCP_OAUTH_CONNECTION_FAILED");
+     const originalMessage = error instanceof Error ? error.message : String(error);
+     if (isTransientHttpConnectError(error)) {
+       return new Error(`${originalMessage} — endpoint is temporarily unavailable (HTTP 503)`, { cause: error });
+     }
+     try {
+-      const probe = await probeMcpEndpoint(resolveServerUrl(definition)!);
++      const fetch = await mcpHttpFetch((globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")], name);
++      let probe;
++      try { probe = await probeMcpEndpoint(resolveServerUrl(definition)!, fetch); }
++      finally { fetch.close(); }
+       return new Error(`${originalMessage} — probe: ${probe.classification}`, { cause: error });
+     } catch {
+       return error instanceof Error ? error : new Error(originalMessage);
+@@ -1217,9 +1190,7 @@
+     }
+ 
+     const requestInit = Object.keys(headers).length > 0 ? { headers } : undefined;
+-    const requestFetch = definition.requestHeadersCommand
+-      ? createRequestHeadersCommandFetch(definition.requestHeadersCommand)
+-      : undefined;
++    const requestFetch = await mcpHttpFetch((globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")], serverName);
+     const createAuthProvider = (): McpOAuthProvider => new McpOAuthProvider(
+       serverName,
+       serverUrl,
+@@ -1275,6 +1246,8 @@
+       const transport = traceObserver
+         ? wrapTransportWithMcpTrace(baseTransport, serverName, kind, traceObserver)
+         : baseTransport;
++      const originalClose = transport.close.bind(transport);
++      transport.close = async () => { try { await originalClose(); } finally { requestFetch.close(); } };
+       const client = this.createClient(serverName, definition);
+ 
+       try {
+--- a/skills/mcp-scripting/SKILL.md
++++ b/skills/mcp-scripting/SKILL.md
+@@ -37,3 +37,9 @@
+ `tools.search` and `tools.describe` are asynchronous and must be awaited. The default script timeout is 30 seconds; the worker is terminated at the deadline, including for infinite loops. Every invocation still uses normal lazy connection, authentication, output guarding, and approval gates. Result details contain a concise `calls` trace with every search, describe, and call operation; each entry includes its query or path, outcome, and duration.
+ 
+ Use plain JavaScript loops and Promise utilities for composition. Fluent helpers such as `tools.find(...).one()`, `tools.parallel(...)`, and `tools.retry(...)` are not provided.
++
++## agentcfg runtime
++
++In agentcfg, `mcpScript` requires explicit `agent_options.mcp.scripting` selection and a bound Node interpreter. Use it only in an ordinary main session; readonly subagents and managed Task Keeper requests cannot acquire scripting authority through this skill. The script runs in a supervised private process with no direct workspace, account environment or network access. Discover and call only the configured MCP services through `tools`.
++
++Update service, model, credential references and optional features in agentcfg configuration sources, then deploy them. Do not edit generated MCP settings, run credential commands, discover global accounts, or install helpers during a tool call. Cancellation remains unverified until the supervisor confirms termination; do not resend an unknown operation automatically.
+--- a/types.ts
++++ b/types.ts
+@@ -191,7 +191,7 @@
+   toolName: string;
+   viewer?: "browser" | "glimpse" | "suppressed";
+   windowOpen?: boolean;
+-  close: (reason?: string) => void;
++  close: (reason?: string) => Promise<void>;
+   sendToolInput: (args: Record<string, unknown>) => void;
+   sendToolResult: (result: CallToolResult) => void;
+   sendResultPatch: (result: CallToolResult) => void;
+--- a/ui-server.ts
++++ b/ui-server.ts
+@@ -1,3 +1,4 @@
++import { listenMcpApps, closeMcpListener, validateMcpAppResource } from "@agentcfg/pi-runtime/mcp-listener";
+ import http, { type IncomingMessage, type ServerResponse } from "node:http";
+ import fs from "node:fs/promises";
+ import path from "node:path";
+@@ -77,20 +78,23 @@
+   hostContext?: UiHostContext;
+   initialResultPromise?: Promise<CallToolResult>;
+   sessionToken?: string;
++  startupSignal?: AbortSignal;
+   port?: number;
+-  onMessage?: (params: UiMessageParams) => Promise<void> | void;
++  onMessage?: (params: UiMessageParams, signal: AbortSignal) => Promise<void> | void;
+   onContextUpdate?: (params: UiModelContextParams) => Promise<void> | void;
+   onComplete?: (reason: string) => void;
+ }
+ 
+ export async function startUiServer(options: UiServerOptions): Promise<UiServerHandle> {
++  validateMcpAppResource(options.serverName, options.resource);
++  const uiAbort = new AbortController();
++  const pendingRequests = new Set<Promise<void>>();
+   const sessionToken = options.sessionToken ?? randomUUID();
+   const uiResourceToken = randomUUID();
+   const log = logger.child({ 
+     component: "UiServer",
+     server: options.serverName,
+     tool: options.toolName,
+-    session: sessionToken.slice(0, 8),
+   });
+ 
+   log.debug("Starting UI server");
+@@ -173,7 +177,7 @@
+       }
+     }
+ 
+-    await options.onMessage?.(msgParams);
++    await options.onMessage?.(msgParams, uiAbort.signal);
+   };
+ 
+   const touchHeartbeat = () => {
+@@ -276,28 +280,23 @@
+     watchdog = null;
+   };
+ 
+-  const closeListeners = () => {
+-    if (listenersClosed) return;
++  let closing: Promise<void> | undefined;
++  const closeListeners = (): Promise<void> => {
++    if (closing) return closing;
+     listenersClosed = true;
+     stopWatchdog();
+-    if (closeTimer) {
+-      clearTimeout(closeTimer);
+-      closeTimer = null;
+-    }
+-    try {
+-      server?.close();
+-    } catch {}
+-    try {
+-      sandboxProxyServer?.close();
+-    } catch {}
++    uiAbort.abort();
++    if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+     closeSse();
++    closing = server ? closeMcpListener(server) : Promise.resolve();
++    return closing;
+   };
+ 
+   const scheduleListenerClose = () => {
+     if (closeTimer || listenersClosed) return;
+     closeTimer = setTimeout(() => {
+       closeTimer = null;
+-      closeListeners();
++      void closeListeners().catch(() => log.error("MCP UI listener termination unverified"));
+     }, 20);
+     closeTimer.unref();
+   };
+@@ -312,8 +311,9 @@
+     scheduleListenerClose();
+   };
+ 
+-  const hostServer = http.createServer(async (req, res) => {
++  const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+     try {
++      if (completed || uiAbort.signal.aborted) { sendText(res, 410, "UI session closed"); return; }
+       const method = req.method || "GET";
+       const hostHeader = req.headers.host;
+       const url = new URL(req.url || "/", `http://${hostHeader || "127.0.0.1"}`);
+@@ -503,7 +503,7 @@
+               options.serverName,
+               toolMeta,
+               callArgs.arguments,
+-              options.state.owner?.signal,
++              options.state.owner?.signal ? AbortSignal.any([options.state.owner.signal, uiAbort.signal]) : uiAbort.signal,
+               "iframe",
+               approvalMetadata,
+             )
+@@ -541,13 +541,15 @@
+                 },
+                 options.serverName,
+                 async (conn) => {
++                  uiAbort.signal.throwIfAborted();
+                   await options.manager.ensureListen?.(options.serverName, conn);
+-                  return conn.client.callTool(callArgs, options.manager.getRequestOptions?.(options.serverName));
++                  return conn.client.callTool(callArgs, { ...options.manager.getRequestOptions?.(options.serverName), signal: uiAbort.signal });
+                 },
+               )
+             : await (async () => {
++                uiAbort.signal.throwIfAborted();
+                 await options.manager.ensureListen?.(options.serverName, connection);
+-                return connection.client.callTool(callArgs, options.manager.getRequestOptions?.(options.serverName));
++                return connection.client.callTool(callArgs, { ...options.manager.getRequestOptions?.(options.serverName), signal: uiAbort.signal });
+               })();
+           sendJson(res, 200, { ok: true, result });
+         } finally {
+@@ -682,6 +684,11 @@
+       }
+       sendJson(res, status, { ok: false, error: wrapped.message });
+     }
++  };
++  const hostServer = http.createServer((req, res) => {
++    const request = handleRequest(req, res);
++    pendingRequests.add(request);
++    void request.catch(() => {}).finally(() => pendingRequests.delete(request));
+   });
+   server = hostServer;
+ 
+@@ -702,13 +709,10 @@
+   }, WATCHDOG_INTERVAL_MS);
+   watchdog.unref();
+ 
+-  return new Promise((resolve, reject) => {
+-    const candidates = resolvePortCandidates(options.port);
+-    let candidateIndex = 0;
+-
+-    const startSandboxProxy = (parentOrigin: string): Promise<number> => {
++  let parentOrigin = "";
+       const proxy = http.createServer((req, res) => {
+         try {
++          if (!parentOrigin) { sendText(res, 503, "UI starting"); return; }
+           const method = req.method || "GET";
+           const hostHeader = req.headers.host;
+           const url = new URL(req.url || "/", `http://${hostHeader || "127.0.0.1"}`);
+@@ -744,77 +748,19 @@
+           sendJson(res, 500, { ok: false, error: error instanceof Error ? error.message : String(error) });
+         }
+       });
+-      sandboxProxyServer = proxy;
+-
+-      return new Promise((resolveProxy, rejectProxy) => {
+-        const onError = (error: NodeJS.ErrnoException) => {
+-          proxy.off("listening", onListening);
+-          rejectProxy(error);
+-        };
+-        const onListening = () => {
+-          proxy.off("error", onError);
+-          const address = proxy.address();
+-          if (!address || typeof address === "string") {
+-            rejectProxy(new ServerError("invalid sandbox proxy address"));
+-            return;
+-          }
+-          resolveProxy(address.port);
+-        };
+-        proxy.once("error", onError);
+-        proxy.listen(0, "127.0.0.1", onListening);
+-      });
+-    };
+-
+-    const listen = () => {
+-      const candidate = candidates[candidateIndex];
+-      if (candidate === undefined) {
+-        const error = new ServerError("no UI server port candidates available");
+-        closeListeners();
+-        reject(error);
+-        return;
+-      }
+-      hostServer.once("error", onError);
+-      hostServer.listen(candidate, "127.0.0.1", onListening);
+-    };
+-
+-    const onError = (error: NodeJS.ErrnoException) => {
+-      hostServer.off("listening", onListening);
+-      if (error.code === "EADDRINUSE" && candidateIndex < candidates.length - 1) {
+-        candidateIndex += 1;
+-        listen();
+-        return;
+-      }
+-      log.error("Failed to start server", error);
+-      const port = candidates[candidateIndex];
+-      closeListeners();
+-      reject(new ServerError(error.message, {
+-        ...(port !== undefined ? { port } : {}),
+-        cause: error,
+-      }));
+-    };
+-
+-    const onListening = () => {
+-      hostServer.off("error", onError);
+-      const address = hostServer.address();
+-      if (!address || typeof address === "string") {
+-        const err = new ServerError("invalid address");
+-        log.error("Invalid server address", err);
+-        closeListeners();
+-        reject(err);
+-        return;
+-      }
+-
+-      const parentOrigin = `http://localhost:${address.port}`;
+-      void startSandboxProxy(parentOrigin).then((proxyPort) => {
+-        if (completed || listenersClosed) {
+-          closeListeners();
+-          reject(new ServerError("UI session completed before sandbox proxy was ready"));
+-          return;
+-        }
+-        sandboxProxyUrl = `http://localhost:${proxyPort}${SANDBOX_PROXY_PATH}`;
+-        log.debug("Servers started", { port: address.port, proxyPort });
+-        rememberMoshiDiscoveryPort(address.port);
+-
++  sandboxProxyServer = proxy;
++  try {
++    await listenMcpApps(hostServer, proxy, {
++      serverName: options.serverName, port: options.port, signal: options.state?.owner?.signal, startupSignal: options.startupSignal,
++      stop: () => { markCompleted("closed"); uiAbort.abort(); closeSse(); },
++      drain: async () => { await Promise.allSettled([...pendingRequests]); },
++    });
++    if (completed || listenersClosed) throw new ServerError("UI session closed during startup");
++    const address = hostServer.address(), proxyAddress = proxy.address();
++    if (!address || typeof address === "string" || !proxyAddress || typeof proxyAddress === "string") throw new ServerError("MCP UI address unavailable");
++    const proxyPort = proxyAddress.port;
++    parentOrigin = `http://localhost:${address.port}`;
++    sandboxProxyUrl = `http://localhost:${proxyPort}${SANDBOX_PROXY_PATH}`;
+         const handle: UiServerHandle = {
+           url: `http://localhost:${address.port}/?session=${sessionToken}`,
+           port: address.port,
+@@ -823,9 +769,9 @@
+           sessionToken,
+           serverName: options.serverName,
+           toolName: options.toolName,
+-          close: (reason?: string) => {
++          close: async (reason?: string) => {
+             markCompleted(reason ?? "closed");
+-            closeListeners();
++            await closeListeners();
+           },
+           sendToolInput: (args: Record<string, unknown>) => {
+             pushEvent("tool-input", { arguments: args });
+@@ -849,20 +795,11 @@
+           getSessionMessages: () => ({ ...sessionMessages }),
+           getStreamSummary: () => streamSummary ? { ...streamSummary, phases: [...streamSummary.phases] } : undefined,
+         };
+-
+-        resolve(handle);
+-      }).catch((error) => {
+-        log.error("Failed to start sandbox proxy", error instanceof Error ? error : undefined);
+-        closeListeners();
+-        const wrapped = error instanceof ServerError
+-          ? error
+-          : new ServerError(error instanceof Error ? error.message : String(error), { cause: error });
+-        reject(wrapped);
+-      });
+-    };
+-
+-    listen();
+-  });
++    return handle;
++  } catch {
++    await closeListeners();
++    throw new ServerError("MCP UI startup failed");
++  }
+ }
+ 
+ async function parseBody(
+@@ -905,7 +842,8 @@
+       }
+     });
+ 
+-    req.on("error", reject);
++    req.on("error", () => reject(new Error("UI request failed")));
++    req.on("aborted", () => reject(new Error("UI request aborted")));
+   });
+ }
+ 
+--- a/ui-session.ts
++++ b/ui-session.ts
+@@ -1,6 +1,6 @@
+-import { execFile } from "node:child_process";
++import { mcpAppSettings } from "@agentcfg/pi-runtime/mcp-listener";
++import { terminalHyperlink } from "@agentcfg/pi-runtime/service-bindings";
+ import { randomUUID } from "node:crypto";
+-import net from "node:net";
+ import { UrlElicitationRequiredError, type CallToolResult } from "@modelcontextprotocol/client";
+ import type { McpExtensionState } from "./state.ts";
+ import {
+@@ -17,13 +17,11 @@
+ import { logger } from "./logger.ts";
+ import { startUiServer } from "./ui-server.ts";
+ import type { UiServerHandle } from "./types.ts";
+-import { isGlimpseAvailable, openGlimpseWindow } from "./glimpse-ui.ts";
+ import type { SessionRecoveryDeps } from "./session-recovery.ts";
+ import { combineAbortSignals, isAbortError } from "./runtime-owner.ts";
+-import { throwIfAborted } from "./abort.ts";
++import { abortable, throwIfAborted } from "./abort.ts";
+ import { InputRequiredNeedsUiError } from "./errors.ts";
+ 
+-let activeGlimpseWindow: { close(): void } | null = null;
+ 
+ export interface UiSessionRequest {
+   serverName: string;
+@@ -128,75 +126,6 @@
+   };
+ }
+ 
+-async function openInBrowser(state: McpExtensionState, url: string, signal: AbortSignal): Promise<string | null> {
+-  throwIfAborted(signal);
+-  try {
+-    await state.openBrowser(url);
+-    throwIfAborted(signal);
+-    return null;
+-  } catch (error) {
+-    if (isAbortError(error, signal)) throw error;
+-    const message = error instanceof Error ? error.message : String(error);
+-    if (state.owner?.isActive() === false) return null;
+-    state.ui?.notify(`MCP UI browser open failed: ${message}`, "warning");
+-    return message;
+-  }
+-}
+-
+-function isRemoteSession(): boolean {
+-  return Boolean(process.env.SSH_CONNECTION || process.env.SSH_TTY);
+-}
+-
+-function hasActiveRemoteLogin(): Promise<boolean> {
+-  return new Promise((resolve) => {
+-    execFile("who", { encoding: "utf8", timeout: 2000 }, (error, out) => {
+-      if (error) {
+-        resolve(false);
+-        return;
+-      }
+-      resolve(/\(.+\)\s*$/m.test(out));
+-    });
+-  });
+-}
+-
+-function probeMoshiGateway(): Promise<boolean> {
+-  return new Promise((resolve) => {
+-    const socket = net.connect({ host: "127.0.0.1", port: 24543 });
+-    const done = (ok: boolean) => {
+-      socket.destroy();
+-      resolve(ok);
+-    };
+-    socket.setTimeout(300);
+-    socket.once("connect", () => done(true));
+-    socket.once("timeout", () => done(false));
+-    socket.once("error", () => done(false));
+-  });
+-}
+-
+-function remoteAccessHint(opts: { url: string; port: number; proxyPort: number; moshi: boolean; openError: string | null; openedOnHost?: boolean }): string {
+-  const lines = [
+-    opts.openError !== null
+-      ? "Couldn't open MCP UI here. Open it from your own device:"
+-      : opts.openedOnHost
+-        ? "MCP UI opened on this host. If you're controlling this session remotely, open it from your own device:"
+-        : "This looks like a remote session - if no MCP UI appeared, open it from your own device:",
+-    `  ${opts.url}`,
+-  ];
+-  if (opts.openError !== null) {
+-    lines.push(`Browser launch failed: ${opts.openError}`);
+-  }
+-  if (opts.moshi) {
+-    lines.push(
+-      `Moshi: tap the preview button in the terminal title bar and pick this MCP UI server (it must reach ports ${opts.port} and ${opts.proxyPort}).`,
+-    );
+-  }
+-  lines.push(
+-    `SSH: run \`ssh -L ${opts.port}:127.0.0.1:${opts.port} -L ${opts.proxyPort}:127.0.0.1:${opts.proxyPort} <this-host>\` on your local machine, then open the URL above.`,
+-    "mosh can't forward ports - run that ssh command in a separate terminal.",
+-  );
+-  return lines.join("\n");
+-}
+-
+ export async function maybeStartUiSession(
+   state: McpExtensionState,
+   request: UiSessionRequest,
+@@ -209,6 +138,7 @@
+   const runtimeSignal = combineAbortSignals(state.owner?.signal, request.signal) ?? new AbortController().signal;
+ 
+   try {
++    mcpAppSettings(request.serverName);
+     throwIfAborted(runtimeSignal);
+     if (
+       state.uiServer &&
+@@ -292,12 +222,8 @@
+     throwIfAborted(runtimeSignal);
+ 
+     if (state.uiServer) {
+-      state.uiServer.close("replaced");
++      await state.uiServer.close("replaced");
+       state.uiServer = null;
+-    }
+-    if (activeGlimpseWindow) {
+-      activeGlimpseWindow.close();
+-      activeGlimpseWindow = null;
+     }
+ 
+     const streamMode = request.streamMode;
+@@ -327,6 +253,7 @@
+     };
+ 
+     handle = await startUiServer({
++      startupSignal: runtimeSignal,
+       serverName: request.serverName,
+       toolName: request.toolName,
+       toolArgs: streamMode === "stream-first" ? {} : request.toolArgs,
+@@ -338,7 +265,15 @@
+       consentManager: state.consentManager,
+       ...(hostContext !== undefined ? { hostContext } : {}),
+ 
+-      onMessage: (params: UiMessageParams) => {
++      onMessage: async (params: UiMessageParams, signal: AbortSignal) => {
++        if (extractUiPromptText(params) || params.type === "intent" || params.intent) {
++          const description = JSON.stringify(params);
++          if (description.length > 65536) throw new Error("MCP_APP_MESSAGE_LIMIT");
++          if (!state.ui?.confirm) throw new Error("MCP_APP_MESSAGE_APPROVAL_REQUIRED");
++          if (!await abortable(state.ui.confirm("Allow MCP App to request an agent turn?", description), signal)) return;
++          mcpAppSettings(request.serverName);
++          throwIfAborted(signal);
++        }
+         const prompt = extractUiPromptText(params);
+         if (prompt) {
+           if (state.sendMessage) {
+@@ -436,16 +371,12 @@
+           }
+ 
+           state.uiServer = null;
+-          if (activeGlimpseWindow) {
+-            activeGlimpseWindow.close();
+-            activeGlimpseWindow = null;
+-          }
+         }
+       },
+     });
+ 
+     if (state.owner?.isActive() === false || runtimeSignal.aborted) {
+-      handle.close("runtime_owner_stopped");
++      await handle.close("runtime_owner_stopped");
+       throwIfAborted(runtimeSignal);
+       throw new Error("MCP UI session became stale before registration");
+     }
+@@ -471,76 +402,10 @@
+ 
+     state.uiServer = handle;
+ 
+-    const viewerPref = process.env.MCP_UI_VIEWER?.toLowerCase();
+-    const uiSuppressed = viewerPref === "none" || viewerPref === "off" || viewerPref === "disabled";
+-
+-    let viewer: UiSessionViewer = "browser";
+-    let windowOpen = true;
+-    const remoteByEnv = isRemoteSession();
+-
+-    if (uiSuppressed) {
+-      viewer = "suppressed";
+-      windowOpen = false;
+-      state.ui?.notify(
+-        `MCP UI window suppressed (MCP_UI_VIEWER=${viewerPref}). Open manually: ${handle.url}\n` +
+-        `If this session is remote, run ssh -L ${handle.port}:127.0.0.1:${handle.port} -L ${handle.proxyPort}:127.0.0.1:${handle.proxyPort} <this-host> first.`,
+-        "info",
+-      );
+-      log.info("Suppressing MCP UI window (MCP_UI_VIEWER=" + viewerPref + ")", { url: handle.url });
+-    } else {
+-      const remoteLikely = remoteByEnv || await hasActiveRemoteLogin();
+-      const emitRemoteHint = async (openError: string | null, openedOnHost = false) => {
+-        state.ui?.notify(remoteAccessHint({
+-          url: handle.url,
+-          port: handle.port,
+-          proxyPort: handle.proxyPort,
+-          moshi: await probeMoshiGateway(),
+-          openError,
+-          openedOnHost,
+-        }), openError === null ? "info" : "warning");
+-      };
+-      const glimpseDetected = !remoteByEnv && isGlimpseAvailable();
+-      const useGlimpse = !remoteByEnv && (viewerPref === "glimpse" ||
+-        (viewerPref !== "browser" && glimpseDetected));
+-
+-      if (useGlimpse) {
+-        try {
+-          const glimpseHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden}iframe{width:100%;height:100%;border:none}</style></head><body><iframe src="${handle.url}"></iframe></body></html>`;
+-          const glimpseWindow = await openGlimpseWindow(glimpseHtml, {
+-            title: `MCP · ${request.serverName} · ${request.toolName}`,
+-            width: 1000,
+-            height: 800,
+-            onClosed: () => {
+-              if (active) handle.close("glimpse-closed");
+-            },
+-          });
+-          if (state.owner?.isActive() === false || runtimeSignal.aborted) {
+-            glimpseWindow.close();
+-            throwIfAborted(runtimeSignal);
+-            throw new Error("MCP Glimpse window became stale before registration");
+-          }
+-          activeGlimpseWindow = glimpseWindow;
+-          viewer = "glimpse";
+-          if (remoteLikely) {
+-            await emitRemoteHint(null, true);
+-          }
+-        } catch (error) {
+-          log.debug("Glimpse unavailable, using browser", {
+-            error: error instanceof Error ? error.message : String(error),
+-          });
+-          const openError = await openInBrowser(state, handle.url, runtimeSignal);
+-          if (openError !== null || remoteLikely) {
+-            await emitRemoteHint(openError);
+-          }
+-          viewer = "browser";
+-        }
+-      } else {
+-        const openError = await openInBrowser(state, handle.url, runtimeSignal);
+-        if (openError !== null || remoteLikely) {
+-          await emitRemoteHint(openError);
+-        }
+-      }
+-    }
++    const viewer: UiSessionViewer = "browser";
++    const windowOpen = false;
++    process.stdout.write(terminalHyperlink(handle.url));
++    state.ui?.notify(`Open the displayed MCP App link in your browser. For a remote host, forward both loopback ports ${handle.port} and ${handle.proxyPort}.`, "info");
+ 
+     throwIfAborted(runtimeSignal);
+     handle.viewer = viewer;
+@@ -572,10 +437,10 @@
+         if (!active || state.uiServer !== handle) return;
+         handle.sendToolCancelled(reason);
+       },
+-      close: (reason?: string) => {
++      close: async (reason?: string) => {
+         active = false;
+         cleanupListeners();
+-        handle.close(reason);
++        await handle.close(reason);
+       },
+     };
+   } catch (error) {
+--- a/utils.ts
++++ b/utils.ts
+@@ -1,44 +1,17 @@
+ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+-import { spawnSync } from "node:child_process";
+-import { homedir, platform } from "node:os";
+-import { extname, isAbsolute, join } from "node:path";
++import { terminalHyperlink } from "@agentcfg/pi-runtime/service-bindings";
++import { managedSettingWrite } from "@agentcfg/pi-runtime/plugin-settings";
++import { homedir } from "node:os";
++import { join } from "node:path";
+ import type { McpConfig, ServerEntry } from "./types.ts";
+ 
+-async function execOpen(pi: ExtensionAPI, target: string, browser?: string, signal?: AbortSignal) {
+-  const os = platform();
+-
+-  if (os === "darwin") {
+-    if (browser) {
+-      // An absolute executable path (e.g. from $BROWSER) names a launcher
+-      // binary. App bundles still go through `open -a`, which handles them.
+-      return isAbsolute(browser) && extname(browser).toLowerCase() !== ".app"
+-        ? pi.exec(browser, [target], signal ? { signal } : {})
+-        : pi.exec("open", ["-a", browser, target], signal ? { signal } : {});
+-    }
+-    return pi.exec("open", [target], signal ? { signal } : {});
+-  }
+-  if (os === "win32") {
+-    return browser
+-      ? pi.exec("cmd", ["/c", "start", "", browser, target], signal ? { signal } : {})
+-      : pi.exec("cmd", ["/c", "start", "", target], signal ? { signal } : {});
+-  }
+-  return browser
+-    ? pi.exec(browser, [target], signal ? { signal } : {})
+-    : pi.exec("xdg-open", [target], signal ? { signal } : {});
+-}
+-
+-export async function openUrl(pi: ExtensionAPI, url: string, browser?: string, signal?: AbortSignal): Promise<void> {
+-  const result = await execOpen(pi, url, browser, signal);
+-  if (result.code !== 0) {
+-    throw new Error(result.stderr || `Failed to open browser (exit code ${result.code})`);
+-  }
+-}
+-
+-export async function openPath(pi: ExtensionAPI, targetPath: string): Promise<void> {
+-  const result = await execOpen(pi, targetPath);
+-  if (result.code !== 0) {
+-    throw new Error(result.stderr || `Failed to open path (exit code ${result.code})`);
+-  }
++export async function openUrl(_pi: ExtensionAPI, url: string, _browser?: string, signal?: AbortSignal): Promise<void> {
++  signal?.throwIfAborted();
++  process.stdout.write(terminalHyperlink(url));
++}
++
++export async function openPath(_pi: ExtensionAPI, _targetPath: string): Promise<void> {
++  managedSettingWrite();
+ }
+ 
+ export async function parallelLimit<T, R>(
+@@ -122,35 +95,9 @@
+ export function resolveCommandSecret(value: string, context: string): string;
+ export function resolveCommandSecret(value: undefined, context: string): undefined;
+ export function resolveCommandSecret(value: string | undefined, context: string): string | undefined;
+-export function resolveCommandSecret(value: string | undefined, context: string): string | undefined {
+-  if (value === undefined) return undefined;
+-  if (value.startsWith("!!")) return interpolateEnvVars(value.slice(1));
+-  if (!value.startsWith("!")) return interpolateEnvVars(value);
+-
+-  const result = spawnSync(value.slice(1), {
+-    shell: true,
+-    encoding: "utf8",
+-    timeout: COMMAND_SECRET_TIMEOUT_MS,
+-    maxBuffer: COMMAND_SECRET_MAX_OUTPUT_BYTES,
+-    stdio: ["ignore", "pipe", "ignore"],
+-    windowsHide: true,
+-  });
+-  if (result.error) {
+-    const code = (result.error as NodeJS.ErrnoException).code;
+-    const reason = code === "ETIMEDOUT"
+-      ? "command timed out after 10 seconds"
+-      : code === "ENOBUFS"
+-        ? "command output exceeded 1 MiB"
+-        : "command failed to start";
+-    throw new Error(`Failed to resolve ${context}: ${reason}`);
+-  }
+-  if (result.status !== 0) {
+-    throw new Error(`Failed to resolve ${context}: command exited with code ${result.status ?? "unknown"}`);
+-  }
+-
+-  const resolved = result.stdout.trim();
+-  if (!resolved) throw new Error(`Failed to resolve ${context}: command returned empty output`);
+-  return resolved;
++export function resolveCommandSecret(value: string | undefined, _context: string): string | undefined {
++  if (value?.startsWith("!")) throw new Error("MCP_COMMAND_CREDENTIAL_FORBIDDEN");
++  return value;
+ }
+ 
+ /** Resolve command markers in a configured record without mutating the input. */

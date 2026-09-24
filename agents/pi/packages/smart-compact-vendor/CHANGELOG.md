@@ -1,0 +1,881 @@
+# Changelog
+
+## [Unreleased]
+
+## [9.6.0] - 2026-08-31
+
+### Added
+
+- `/smart-compact settings` is now the unified settings surface for every Smart Compact option. Branch-scoped controls remain separate from global defaults; categorized submenus add model selection plus validated numeric, path, pin, and profile-budget editors.
+- Global settings updates preserve unrelated host configuration and use locked atomic writes. Runtime-owned tool, trigger, footer, and project-memory visibility settings apply immediately; other changes apply to the next operation.
+
+### Changed
+
+- Branch policy entries now persist sparse overrides with per-field reset-to-global behavior while retaining compatibility with earlier policy records.
+- Project-memory tools leave the active tool list when the context graph is disabled and restore only tools hidden by that setting when re-enabled, keeping manual `/tools` choices intact.
+
+### Fixed
+
+- Settings loading safely handles invalid roots, isolates cached nested values, merges partial profile overrides with built-ins, and shares numeric limits with the TUI to prevent validation drift.
+- Settings locks are owner-token-safe, never steal from a live slow writer, and clean partial initialization artifacts without deleting a successor's lock.
+- Release audit resolves local peer dependencies through in-workspace symlinks, so `release:check` works under Bun 1.4.0's stricter `file:` path safety; toolchain pin moved 1.3.14 → 1.4.0 (#52).
+
+## [9.5.0] - 2026-08-26
+
+### Added
+
+- `showStatus` supplies a permanent global default for the footer policy status line, with a matching "Footer status" control in `/smart-compact settings`. Disabling it clears the `smart-compact: ...` footer entry (e.g. "manual only") while the policy itself stays fully active; session branches keep restoring their own footer visibility. The default remains on, so existing setups see no change until they opt in.
+
+## [9.4.0] - 2026-08-20
+
+### Added
+
+- `/smart-compact settings` provides branch-scoped TUI controls for agent access and automatic compaction. Agent access defaults to `inherit`, respecting Pi's host tool selection; explicit enable/disable remains available. Hiding agent access removes the `smart_compact` schema and prompt guidance while preserving the manual command, and disabling both controls creates a manual-only session. `agentToolAccess` supplies the permanent global default.
+
+### Fixed
+
+- Context-graph indexing now resolves an awaitable transaction result. Permanent SQLite open/write failures settle once, cannot enter a zero-delay retry storm, and appear as partial persistence in telemetry.
+- Session policy writes roll back runtime tool/status changes when the host cannot append branch state. Tool pipeline and durable-memory failures now throw so Pi records an error result instead of a successful text result.
+- Compaction file evidence uses locale-independent code-point ordering for reproducible prompts across hosts.
+
+## [9.3.1] - 2026-08-15
+
+### Fixed
+
+- **Windows / GUI launches resolve `~/.pi/agent` correctly.** `home()` fell back to `"/tmp"` whenever `HOME` was unset — which is every Windows launch (Windows uses `USERPROFILE`, not `HOME`) and GUI launches that strip the environment. Settings, caches, run-locks, and backups were silently routed to `C:\tmp\.pi\agent`, so `settings.json` configuration (mode, models, thresholds, everything under `smartCompact`) was invisible to the extension. The fallback is now `os.homedir()`, matching how the pi host itself resolves its agent directory. The duplicated pattern in the session-log reader was unified onto the same helper (also fixing its path cache key).
+
+## [9.3.0] - 2026-08-15
+
+### Added
+
+- Release gate now verifies host compatibility (`compat:pi latest`) as part of `release:check`, so upstream format changes surface before shipping instead of failing silently in the field.
+- Backup transparency: when a conversation backup is written with redactions, a notice lists what was redacted (kind and count) so users know a restore will lack that data.
+- Coarse Turkish suffix stemming in the semantic verifier: inflected restatements (`tabloları` → `tablolar`) now count as constraint/decision evidence, ending per-compaction duplicate re-injection of Turkish constraints. The stem guard protects short English words from two-letter suffixes.
+
+### Fixed
+
+- **Zombie open loops**: a bugfix loop is now retired when its source error later appears in `resolvedErrors` (prefix-safe match over normalized truncated summaries, minimum-length guarded). Previously a resolved error's loop contradicted every subsequent summary ("no unresolved errors" + stale loop) until manually overridden, permanently consuming the bounded loop budget.
+- **Goal breadcrumb accumulation**: `Previous goal:` lines are transient — at most the latest goal shift survives a compaction cycle, instead of accumulating up to 20 stale lines that starved real critical context under the 20-item budget.
+- **Secret redaction false positives** no longer corrupt ground truth or backups: key-based redaction requires string values of at least 8 characters (numbers, booleans and nested objects are configuration shapes such as map pins or parser options); the `pin` key no longer counts as secret-bearing; the credential pattern spares dotted environment references (`token: process.env.API_KEY`); payment-card detection requires Luhn validity so epoch timestamps and long numeric IDs survive PII scrubbing. Rejected candidates are no longer counted as redactions.
+- Unreachable retry-loop extraction branch removed: every unresolved error already produced a bugfix loop, so the former "retry" branch could never add anything.
+- Follow-up and blocked-loop deduplication now requires content kinship in addition to message proximity, so a genuine new task phrased within five messages of an error loop is no longer silently dropped.
+- Completion scanning sees past ack-only user nudges ("devam et", "ok", "go ahead"), retiring loops whose completion lands one user turn later.
+- Topic segmentation ignores generic basenames (`index.ts` and friends) as file-shift signals, preventing monorepo churn from shredding the conversation into micro-segments.
+- Provider watchdog scales by the provider's timeout profile (`getProviderCaps().timeoutMultiplier`): slow providers are no longer cut at the raw 15–90s window and silently degraded to deterministic fallback summaries. Explicitly configured watchdog values are never scaled.
+- Flaky lifecycle e2e timeout raised 5s → 20s (actual runtime ~6.5s on slower agents).
+
+### Changed
+
+- Repo-wide formatter pass (arrow parameter parentheses, multiline signature expansion, trailing comma normalization) with verified zero semantic changes.
+- Internal hygiene: `summaryPathLine`/`renderBatchMessage` are module-private again, dead damage-window constants removed.
+
+## [9.2.1] - 2026-08-11
+
+### Fixed
+
+- Retained tails now summarize complete historical tool exchanges whose names are not portable across providers, preventing dotted wrapper or MCP names from making the first post-compaction turn fail provider validation.
+
+## [9.2.0] - 2026-08-11
+
+### Added
+
+- `autoTriggerStrategy: "settled"` can proactively request Pi's normal compact flow after an idle high-pressure agent run. The opt-in handler is session-scoped, queue-aware, deduplicated, and cooled down; it never runs EESV or mutates pending/commit state outside the correlated host lifecycle.
+
+### Fixed
+
+- Settled-triggered compaction reuses tool-staged summaries or runs the existing `session_before_compact` pipeline exactly once, preserving host cancellation, branch provenance, bounded auto budgets, native fallback, and apply-confirmed persistence.
+- Verification failures now record the rejecting `post-synthesis` or `post-state` gate and every typed content-free gap kind, including missing read/deleted files. Invalid and prototype-inherited values are rejected; summary evidence remains absent from telemetry.
+
+## [9.1.0] - 2026-08-11
+
+### Fixed
+
+- Provider-bound messages are recursively redacted before host serialization, secret-bearing object keys redact non-string primitive values, and exploration tool results are redacted and hard-capped before re-entering model context.
+- Native apply now requires matching project/session branch ancestry, automatic hooks forward host cancellation into the shared abort path, stale run-lock leases are reclaimed atomically, and retained state snapshots are capped.
+- Incremental extraction preserves bounded evidence and exact cache payloads; shell mutation tracking covers explicit literal targets without treating arbitrary command text as paths.
+- Canonical summary parsing ignores headings inside fenced code, verifier patches reject truncation and unclosed fences, file-operation provenance is indexed once, and exact done-file checks no longer accept path collisions.
+- Stable normalized goal identities prevent paraphrase-only goal shifts, and task-specific completion evidence can close completed follow-up loops without generic acknowledgements doing so.
+- Zero/invalid context-window metadata follows one safe percentage policy, metrics tail reads honor the actual byte count, and nested `provider/model` identifiers are accepted by command and tool routing.
+
+### Performance
+
+- Window planning and extraction reuse token, tool-call, and referenced-file indexes; exact pruned extraction cache hits bypass recomputation.
+- Batch synthesis uses a bounded worker pool, session-log path discovery is cached, metrics appends yield off the event loop, state ancestry lookup is filename-indexed, and pending-slot newest lookup is constant-time.
+- Context-graph FTS rowids match their content rows, queued same-branch updates refresh in place, SQLite transactions share fail-closed rollback semantics, and one connection is reused per drain.
+
+## [9.0.0] - 2026-08-09
+
+### Changed
+
+- Major hardening release: verified host-correlated apply, strict command/tool inputs, bounded automatic compaction, model-aware output ceilings, branch-scoped continuity, and fail-closed yield and evidence contracts are now enforced end to end.
+
+### Fixed
+
+- Command and tool inputs now share one strict parser. Control tokens are consumed only from the left edge, `--note`/`--` preserve literal notes, file paths are not mistaken for model IDs, and invalid modes or budgets fail explicitly.
+- Verified state is stored as immutable project/session/branch-head snapshots; sibling branches no longer overwrite continuity, loop overrides re-index the updated graph, and synthesis cache keys include every output-affecting run budget.
+- Deleted-file evidence now survives chunk synthesis, fallback assembly, verification, and repair. Modified/deleted paths count only in their canonical sections; unrelated parallel tool calls and substantive assistant constraints are no longer pruned.
+- Every provider transport has an aborting hard deadline, stale filesystem locks are reclaimed asynchronously, backup listing reads bounded headers, and session-log recovery scans large active logs incrementally without a 50 MiB correctness cutoff.
+- Result and approval UI expose generation fallbacks, source-versus-repaired coverage, remaining-gap counts, and the actual summary preview. Project fingerprints count distinct sessions instead of compaction runs.
+- Verification now grounds high-risk completion claims only against successful tool results or deterministic resolved-error/file evidence, removes unsupported assistant-only claims, and builds the quality floor only from deterministic extraction, continuity, and explicit steering.
+- Session-log recovery preserves exact entry/message identity; synthesis cache keys include recovered content and every provider route; full cache values are cloned without sharing nested mutable state.
+- Boundary indexes are integer-canonicalized, exploration arguments reject empty broad matches, extraction evidence is bounded with visible overflow counts, and delayed tool results remain paired under the chunk ceiling.
+- Missing provider usage is conservatively estimated for budgets and telemetry. Budget-driven synthesis fallbacks are recorded explicitly rather than appearing as provider-free success.
+- Scrubbed backups are prepared without I/O and written only after correlated native apply. Partial persistence is reported separately, stale state/temp artifacts are removed, and stage transitions now enforce runtime order and required fields.
+- Manual verified-summary review is enabled by default and excluded from the pipeline deadline; the preview wraps long evidence lines and dashboards hide unavailable quality scores.
+- Cross-process JSONL retention now holds the append/trim lock for the complete transaction, overflow planning accounts for host-only fixed context, and long command failures preserve a bounded error window from the middle of pruned tool output.
+- Single-batch synthesis fallbacks are visible and never cached as clean output; verification refreshes the run-wide LLM-call total; transient tool-probe failures no longer poison capability caches; profile overrides enforce integer and cross-field bounds.
+- Verified-summary review is one scrollable Apply/Cancel screen, unavailable preflight choices explain why Enter is blocked, exact backup payloads materialize only after native apply, and restore forks from the recorded branch leaf or opens an isolated session for legacy backups.
+- Unresolved host sessions stop before pipeline work, branch ancestry snapshots are bounded while retaining compaction state heads, Git-root caching is bounded and expiring, and context-graph directories are normalized to owner-only permissions.
+- Window planning now translates provider output caps through the calibrated local estimator and budgets bounded deterministic repair/state additions, preventing late target rejection after a high-saving run.
+- Secret scrubbing recognizes provider-specific Google/Stripe/GitLab/npm credentials, AWS secret assignments, credential-bearing object keys, and passwords in connection URIs.
+- Incremental extraction caches retain failed-operation signatures, so only the same later operation can resolve a cached error; recent resolved errors remain visible in the continuation summary.
+- Automatic compaction shows live phase progress and is bounded to 60 seconds and four LLM calls before native recovery. Context-graph queue saturation now rejects and reports the newest update instead of silently evicting accepted state.
+- CI actions are pinned to immutable commits, the redundant adversarial rerun was removed from CI, and restore tests delete their temporary HOME directories.
+- Every tracked provider request is clamped to the model's advertised output limit before budget reservation and dispatch. The release check now includes p95 hot-path regression limits and a host-correlated end-to-end auto-compaction/apply lifecycle test.
+
+## [8.0.8] - 2026-08-09
+
+### Fixed
+
+- Modified-file verification now accepts exact normalized paths from canonical `Files Modified` entries before collision-safe suffix matching. Root files that share a basename with nested files, plus top-level generic or short filenames, can be deterministically repaired without weakening the zero-gap verification gate.
+
+## [8.0.7] - 2026-08-08
+
+### Fixed
+
+- Window planning now reserves 25% of the LLM summary allowance for deterministic verification, delta, open-loop, and continuity sections added after synthesis. The reported `29,355t` versus `28,008t` near-target failure now plans a smaller retained tail and lands below the original hard target; the exact post-summary target gate and 10% minimum-saving floor remain fail-closed.
+- Auto risk refinement changes analysis depth without mutating the already-planned profile/output allowance, preventing a late Fast/Balanced/Thorough profile switch from invalidating the target contract. Manual preflight now scans and tokenizes the active branch once for all three mode previews.
+- Continuity now uses the latest substantive user request, parses host-compacted `Goal` sections, ignores acknowledgement-only turns, and treats free-form goal changes as non-destructive breadcrumbs. Prior errors, loops, next actions, and critical context remain active until positive resolution evidence or an explicit override; LLM goal paraphrases cannot silently resolve them.
+- Known transient provider/invocation diagnostics no longer become durable blockers, while project test failures that mention HTTP 429 remain real errors. Initial and merged open-loop state is capped with active, high-priority work ahead of resolved history.
+- File status follows newer successful access/mutation/delete evidence. Existing paths are removed from legacy `deletedFiles` state before persistence, eliminating the three false deletions observed in the v8.0.6 production run.
+- Context-graph facts now use branch-head occurrences and lineage-scoped resolution, preventing equivalent sibling-branch facts from overwriting or closing each other. Schema v1 preserves manual memories while resetting older derived compaction nodes once.
+- Release audit accepts both legacy-array and npm 12 object-shaped `npm pack --json` output, and the unsupported source-only Git install instruction was removed.
+- Result and approval UX now labels `100/100` as post-repair verification coverage, shows the raw source score, and explicitly identifies deterministic safety-fallback runs instead of presenting repaired coverage as raw synthesis quality.
+- Verification now rejects polarity changes symmetrically, and bounded absence never resolves continuity facts.
+- Backups contain the complete selected pre-prune conversation after scrubbing; private artifact directories/files enforce `0700`/`0600`.
+- Project memory fails closed when cwd is exactly HOME or the filesystem root, displays the complete scrubbed value for host confirmation, and caps active manual facts at 500 per project.
+- Continuity and context-graph resolution use full visible branch ancestry; focus participates in synthesis cache identity, and project fingerprints use bounded locked updates.
+- Canary reports total/applied runs and requires non-dry applied telemetry; deterministic green checks never imply `PROMOTE`.
+- Auto timeout remains a cancellation deadline that waits for safe pipeline unwind, and yield failures use the canonical `yield` telemetry kind.
+
+## [8.0.6] - 2026-08-07
+
+### Changed
+
+- Replaced the dense flat `/smart-compact` preflight with a bordered decision card: context pressure, prominent `[M] Change` summary-model route, and side-by-side after-size/saving estimates for exactly Fast, Balanced, and Thorough. The selected plan keeps only outcome, retention, and hard safety guarantees visible; `D` reveals estimator, target, boundary, and route internals.
+- Consolidated execution into three monotonic policies: Fast is the quickest/most compact 10K-tail policy, Balanced is the 20K-tail default, and Thorough is the 30K-tail high-fidelity policy with Explore and optional LLM repair. Legacy `aggressive` inputs map to Fast with a deprecation warning rather than appearing as a fourth mode.
+- Manual runs now show a two-line semantic live brief: the colored Extract → Explore → Synthesize → Verify → Apply chain plus meaningful actions such as topic mapping, batch compression, continuity assembly, deterministic repair, and correlated Apply. Before Apply it explicitly states that the conversation is unchanged.
+- Replaced routine phase toasts and per-batch provider/watchdog warnings with the live brief and content-free aggregated fallback status. Expected single-pass, Explore, batch, and assembly fallbacks no longer print raw provider messages or request IDs; auto-trigger verification failures emit one concise safe-fallback notice instead of evidence-bearing stderr lines. Full diagnostics remain opt-in through `DEBUG=smart-compact`.
+- Fixed deterministic verification of Markdown-prefixed multiline errors (`> npm…`, list/heading prefixes): verification now canonicalizes the source snippet with the same safe one-line transform used by fallback rendering. The captured 259,782-token session replay now plans ~26,267 tokens after, repairs the remaining fabricated-file finding, and reaches 100/100 with 0 gaps even when every synthesis batch uses deterministic fallback.
+
+## [8.0.5] - 2026-08-07
+
+### Fixed
+
+- Verify/continuity rejection no longer emits evidence-bearing findings and then repeats the exception with a full JavaScript stack in the manual UI. Verification and yield failures now render one bounded, content-free line with score/count/kinds or target estimates; full stacks are emitted only when `DEBUG=smart-compact` is explicitly enabled.
+- Unknown provider/native-apply errors collapse multiline text and cap the visible message, preventing the `EESV Verify: Checking` phase from being followed by pages of diagnostic output. Conversation-unchanged guidance remains explicit.
+
+## [8.0.4] - 2026-08-07
+
+### Added
+
+- Manual `/smart-compact` now opens one keyboard-first preflight screen driven by the same calibrated planner used for execution. It shows estimated before/after window pressure, projected net savings, live-tail and summary budgets, soft boundaries that will be summarized, hard safeguards, and an explainable mode recommendation. `D` progressively reveals estimator and boundary details; `M` changes the summary route and recalculates the plan.
+- Semantic progress feedback reports Extract, optional Explore, Synthesize, Verify, and Apply without per-batch toast noise. Final feedback compares the plan with the applied estimate and appears only after Pi confirms the matching `session_compact` run ID.
+- Privacy-safe metrics/details now distinguish projected and applied estimates, yield, retention target, summary budget, relaxed soft-boundary kinds, and hard-boundary adjustment. Post-summary yield rejection has its own content-free failure kind.
+
+### Changed
+
+- Context reduction is now the binding success contract. Recent user turns, pi-toolkit checkpoints, and topical grouping are soft fidelity preferences retained only when they fit the mode budget; complete tool-call/result pairs and zero-gap verification remain hard.
+- Every plan must project at least 10% net savings before any LLM call. After synthesis and continuity repair, the measured summary must still meet the planned target and 10% floor or the run fails closed before staging/apply.
+- `requireApproval: false` no longer shows a redundant second result modal after the user approves the preflight. `requireApproval: true` retains the final verified-summary Apply/Cancel review.
+
+### Fixed
+
+- A long pair of user turns can no longer override an explicit manual tail target and turn a high-yield plan into a misleading low-yield success. The captured 174,797-token production replay now plans 144,588 tokens for compaction and about 30,209 for the live tail instead of retaining 167,352 tokens and saving only 5,764.
+- The configured summary route, not the active context model, is the default hidden-behind-Advanced model in manual preflight. Preview and execution share the same config snapshot, adaptive profile, calibration, and active branch.
+- Mode descriptions, narrow-terminal wrapping, active-versus-summary labels, and success timing now match actual behavior; `Applied` is never reported from an unconfirmed native callback.
+
+## [8.0.3] - 2026-08-07
+
+### Fixed
+
+- Explicit manual `/smart-compact` now uses the absolute adaptive safety tail instead of a context-window percentage target. A 219K-token session on a 1M-token model therefore compacts in `thorough`, `balanced`, or `fast` mode instead of silently doing nothing unless `aggressive` happens to cross the estimator-dependent boundary.
+- Overflow recovery no longer delegates an already-oversized context to native's one-shot summarizer. When reported usage exceeds the active model window (for example 372K tokens after switching to a 272K model), EESV maps measured usage across active messages, summarizes through soft recent-turn/checkpoint protections, and still preserves complete tool-call/result pairs.
+- Low-yield, below-threshold, repeated, too-small, unsafe-boundary, and concurrent manual attempts now warn rather than disappearing silently; protected recent user turns, tool-call/result integrity, and fail-closed verification remain mandatory.
+- Phase 4 deterministic repair now converges through bounded passes and passes only patchable findings. Any zero-gap deterministic fallback replaces unverifiable model output; rejection occurs only when that fallback also cannot verify.
+- Fallback, repair, continuity-ledger, open-loop, delta, and failed-chunk rendering flatten extracted multiline evidence before inserting it into Markdown, preventing diagnostic text from creating forged sections.
+- Semantic contradiction detection now requires concept overlap and ignores shared numeric identifiers, preventing unrelated constraints with anchors such as `release`, `build`, or `2026` from contradicting each other.
+- Long explicit decisions retain their full bounded semantic evidence during repair, and successful shell output that merely contains source-code error words is no longer cataloged as an unresolved command failure.
+- `thorough` mode may use its configured LLM repair for any remaining finding, including a high-score single gap; the repair prompt can remove fabrications and correct polarity instead of only appending text.
+- Verification failures now emit a dedicated privacy-safe telemetry kind with score/count/gap kinds, rather than being collapsed into `internal` without diagnostics.
+- Context graph storage now uses `bun:sqlite` only under Bun and a `node:sqlite` `DatabaseSync` adapter under Pi's Node runtime. The packed-artifact audit executes a real save/recall transaction under Node so this runtime mismatch cannot recur.
+
+## [8.0.2] - 2026-08-07
+
+### Fixed
+
+- Done/error contradiction detection now associates an unresolved error with a completed file only when the error's first line directly identifies that file. Later grep/context output mentioning the filename no longer creates a false contradiction.
+- Legacy source-search output persisted as unresolved errors/open loops by older RCs is filtered on load and before persistence.
+
+## [8.0.1] - 2026-08-07
+
+### Fixed
+
+- Legacy rc.2 continuity state now drops diagnostic `npm error`/`npm notice` text that had been persisted as a user prohibition, both when loaded and before future persistence.
+- Remote registry URLs such as `https://registry.npmjs.org/` are no longer interpreted as local file references.
+- File paths present inside trusted error/constraint/decision/goal continuity evidence are grounded during verification, so deterministically preserved legacy errors cannot create fabricated-file gaps.
+
+## [8.0.0] - 2026-08-07
+
+### Added
+
+- Stable v8 release of the EESV compaction pipeline, scoped continuity and context graph, host-approved project memory, explicit provider routing, telemetry cohorts, damage correlation, and local release dashboards.
+
+### Changed
+
+- Promotes the fully validated `8.0.0-rc.4` tree without runtime changes. The maintainer explicitly accepted promotion while the advisory telemetry report remained `HOLD` for missing rc.4 cohort evidence; post-release defects follow the normal rollback/patch process.
+
+## [8.0.0-rc.4] - 2026-08-07
+
+### Fixed
+
+- Verification now fails closed: a summary with any unresolved verification gap or a score below the verified threshold cannot be staged or applied. Manual runs leave the conversation unchanged; automatic runs fall through to Pi's native compactor.
+- Multiline recap constraints are mined per bullet/line and diagnostic `npm error`/`rg`/`grep` output is excluded, preventing command failures from becoming contradictory release constraints.
+- Unresolved-error coverage now compares normalized whitespace, so wrapped terminal evidence is recognized instead of repeatedly patched and re-reported.
+
+## [8.0.0-rc.3] - 2026-08-07
+
+### Fixed
+
+- Token savings now compare the normalized prefix actually replaced with its replacement summary instead of subtracting a differently scaled raw tail from Pi's measured context. Real tool-heavy sessions no longer report false `0%` savings, and one run's estimator stays stable while shared calibration learns for later runs.
+- Verification grounds file references already present in compacted prose/tool evidence, deduplicates repeated fabricated-file findings, and ignores successful or expected-exit `rg`/`grep` output instead of persisting it as an unresolved error.
+
+## [8.0.0-rc.2] - 2026-08-06
+
+### Fixed
+
+- Durable state, fingerprint, context graph, and success telemetry now commit only after a run-id-correlated native `session_compact`; cancellation, failure, shutdown, and stale generations leave no false success state.
+- Semantic verification detects negated/conditional goal, decision, and constraint inversions, inconsistent blocker placeholders, unresolved-error omissions, and fabricated files; deterministic quality-floor replacement is coverage-aware.
+- Canary promotion now requires ≥85 absolute quality, ≥95% success, and ≥70% run-correlated damage-observation coverage in stable and canary cohorts; Data Confidence and Quality Health remain separate.
+- Provider accounting includes uncached input plus cache reads/writes and reserves concurrent/failed-stream output; cross-process 0600 leases enforce the global run limit.
+- Smart Memory requires real interactive host confirmation, treats recall as untrusted evidence, preserves/deduplicates project-scoped manual facts, and bounds structural graph nodes.
+- Zero-call planning rejects token-dense/tool-heavy windows; synthesis caches include every behavior-affecting route/profile/thinking limit; unused route auth resolves lazily; retention protects the two newest user turns.
+- Provider evaluation uses only explicitly stage-local pre-repair synthesis quality instead of copying one final verifier score into every route.
+- Native continuity survives reload/process gaps in a bounded, locked project/session/branch-scoped handoff; apply-confirmed context-graph indexing is deferred and coalesced off the host compaction hook.
+- Backup retention/restoration ignores foreign files in custom directories, filesystem locks fail closed, and atomic-write documentation no longer claims unimplemented fsync durability.
+- Production runs share only bounded provider capability/token-calibration knowledge; transient probe failures cannot poison the capability cache. Removed the unused automatic LLM retry wrapper.
+
+## [8.0.0-rc.1] - 2026-08-06
+
+### Added
+
+- **Adaptive modes** — `/smart-compact` and the tool now support `auto`, `balanced`, `aggressive`, `fast`, and `thorough` execution policies with finite call and prompt-token ceilings plus observed output-token stop thresholds. Legacy `light` remains a `thorough` alias.
+- **Continuity Ledger** — previous verified summaries and bounded structured state now carry goals, decisions, constraints, unresolved errors, and open loops forward until explicit resolution.
+- **Aggregate prompt budget** — every LLM request reserves estimated input centrally and reconciles against provider usage; `--max-input-tokens` / `max_input_tokens` can override the mode ceiling.
+- **Codex hybrid output limiter** — custom Codex endpoints receive `max_output_tokens`; ChatGPT subscription Codex uses a configurable per-call stream watchdog and visible-output ceiling because its endpoint rejects all server-side output-cap fields.
+- **Smart Recall context graph** — consumed verified state is indexed into a project-isolated, 2,000-node SQLite FTS5 graph with file-reference edges, weighted same-session/branch retrieval, active fact resolution, and bounded `smart_recall` results.
+- **Explicit project memory** — `smart_save_memory` stores deduplicated, user-confirmed durable facts after configured secret/PII scrubbing; `contextGraphEnabled` disables indexing and both memory tools.
+- **Stage-aware provider routing** — Explore, Synthesis, and Verify can use independent explicitly configured models; all default to the selected model and mode changes never reroute providers.
+- **Provider evaluation harness** — schema-v2 per-stage telemetry feeds an advisory context-pressure × tool-density matrix, plus an explicit paid-API scenario probe; neither path edits routing automatically.
+- **Privacy-safe canary telemetry** — aggregate-only exports omit conversation/session/project data, failures use a stable content-free taxonomy, and explicit stable/canary tags drive Hold/Rollback/Promote gates for quality, failures, latency, tokens, fallback, and damage.
+- **Dashboard trust UX** — TUI/text/HTML surfaces now show an auditable Data Confidence score (≥85 target), quality bands and repair gain, stage/provider/model evidence with quality coverage, stable-vs-canary deltas, rollback triggers, and failure taxonomy.
+- **Session-aware run control** — same-session runs serialize, different sessions share a bounded global concurrency of two, pending state is TTL/LRU bounded, and synthesis caches key by session/branch/model/mode.
+- **Native continuity bridge** — after Pi native compaction, scoped continuity is delivered exactly once at the next agent start instead of being lost or repeatedly injected.
+
+### Fixed
+
+- **Runaway token consumption** — compaction windows now use Pi's active, compaction-aware entries instead of re-summarizing append-only session history. Retained tokens are re-counted after anchor/tool-call boundary expansion; non-viable automatic windows fall back to native compaction before any LLM call.
+- **Repeated staged runs** — a same-session pending summary is reused rather than regenerated.
+- **Unbounded LLM amplification** — safe defaults now use at most 8 calls, 3 exploration rounds, minimal per-phase reasoning, no automatic whole-request retries, explicit exploration output caps, and prompt caching for the growing exploration loop.
+- **Calibration skew** — request calibration includes system/tools and cached prompt tokens instead of calibrating message text against incomplete usage.
+- **Oversized synthesis chunks** — `maxChunkTokens` is now enforced by splitting large semantic segments; batch output budgets match the requested 2–4 sentence summaries instead of allocating 1,500 tokens per chunk.
+- **Cross-generation context loss** — absent prior facts are no longer interpreted as deleted; cumulative state is conservatively merged and bounded.
+- **Cross-session/branch contamination** — continuity state now carries project/session/branch ancestry scope with Branch > Session > Project precedence; legacy project-wide state is not injected into unrelated work.
+- **Post-compaction false positives** — one normal file re-read or topic mention no longer counts as damage; repeated re-reads and explicit correction language remain actionable signals.
+
+### Changed
+
+- High-confidence Fast/Aggressive runs can use zero-call deterministic synthesis; the verifier replaces lower-scoring model output with a deterministic quality floor, and Auto planning escalates from continuity/prior-damage risk.
+- Recent-tail retention scales with model context, preserves the two newest user turns when enough history exists, and validates mode-specific post-compaction headroom.
+- Refreshed the development lockfile to Pi `0.84.0`, TypeBox `1.3.11`, and `@types/node` `26.1.2` while preserving Pi host packages as wildcard-only peer dependencies.
+
+## [7.22.0] - 2026-07-15
+
+### Added
+
+- Independent `summaryThinkingLevel` and `segmentationThinkingLevel` settings control per-phase reasoning, including `max`, while preserving provider defaults when unset.
+
+## [7.21.0] - 2026-07-15
+
+### Fixed
+
+- Canonical summary parsing now recognizes canonical H3 headings, merges duplicate sections, and preserves H3-only summaries during state injection.
+- File verification uses collision-aware path needles; one monorepo basename can no longer satisfy multiple modified files.
+- Every deterministic verification gap is repaired regardless of scalar score; typed gaps and repair provenance replace string-prefix policy.
+- Recent-tail and batch planning count structured tool-call arguments with run-scoped provider/model calibration.
+- Access pruning deduplicates only identical tool name + argument signatures; read/search/list evidence no longer collapses by path alone.
+- MCP snake-case edit aliases are classified as mutations without treating ambiguous `path + text` payloads universally as writes.
+- Incremental extraction reconciles cached unresolved errors against successful retries in the new suffix.
+- LLM call counts now come from the run-scoped metrics sink, including probes, retries, failures and patches.
+
+### Added
+
+- High-confidence secret scrubbing at provider, extraction-cache, backup, state and pending-summary boundaries; optional PII scrubbing.
+- Optional fail-closed manual Apply/Cancel approval gate with verification provenance.
+- Exact max-call and max-latency budgets with deterministic degradation, plus `--focus` budget weighting.
+- Online `session_compact` → `message_end` damage monitoring and opt-in adaptive preservation policy.
+- `/smart-compact loops` manager for resolve/reopen, priority and pin/unpin overrides with stable summary identity across runs.
+- Deterministic adversarial EESV release gate (`bun run gate`) covering parser, verification, tools, cache, budgets, scrubbing and damage.
+
+### Changed
+
+- Public README redesigned for npm, GitHub and Pi package surfaces with install-first quick start, progressive EESV documentation, complete configuration, safety/privacy guidance and current recovery/observability flows.
+- Extraction and exploration share one deduplicated fact context; runtime call accounting now comes from the metrics sink instead of inferred round counts.
+- CI and the release checklist now run the adversarial EESV gate.
+
+## [7.20.0] - 2026-07-14
+
+### Fixed
+
+- **Mixed parallel tool calls could lose unrelated edits** — redundant-read and failed-chain pruning deleted an entire assistant message when only one nested tool call was redundant. Pruning now removes individual direct or `multi_tool_use.parallel` blocks while preserving sibling calls, text, and tool-result pairing.
+- **`smart_compact` ignored host cancellation** — the tool now links Pi's `AbortSignal` to the pipeline controller, handles already-aborted calls before authentication, removes listeners in `finally`, and prevents stale pending summaries.
+- **Cross-compaction delta omissions** — removed decisions and resolved errors now count as meaningful changes and render correctly through one shared delta predicate.
+
+### Added
+
+- **Pi version compatibility runner** — `bun run compat:pi [version]` validates an exact or latest Pi release in an isolated temporary workspace without changing the checkout. Daily CI exercises the latest host packages; a package-boundary regression test prevents accidental bundling or version pinning.
+- **Repeatable hot-path benchmark** — `bun run bench` reports median/p95 performance for incremental extraction and pruning.
+
+### Changed
+
+- **Pi core dependency boundary** — `@earendil-works/pi-*` and `typebox` are host-provided wildcard peers only; duplicated versioned development dependencies were removed. The lockfile remains the reproducible local baseline.
+- **Bounded runtime logs** — metrics and damage JSONL logs retain complete trailing records under a 5 MiB cap using the same lock as concurrent appenders.
+- **Metrics UI separation** — text/HTML reporting moved from `utils/cache.ts` to `ui/metrics-report.ts`, reusing shared dashboard formatters; legacy service lifecycle comments now match production's run-scoped DI.
+- **Deferred filesystem maintenance** — extraction-cache cleanup now runs on a later event-loop turn rather than in the microtask queue.
+
+### Performance
+
+- **Incremental extraction** — cache hits no longer build an unused full-history tool-call index. The 5,000-message benchmark reduced the measured median from about 0.133 ms to 0.035 ms on the development machine (~74%).
+
+## [7.19.0] - 2026-07-10
+
+### Fixed
+
+- **Durable state never persisted on auto/tool paths (C1)** — `persistDurableState` only ran from `applyCompaction`'s `onComplete`, which auto-trigger and tool runs never reach (early return on `skipCompact || autoTriggered`). Project fingerprint, compaction state, and the whole cross-compaction delta/damage-baseline chain silently never ran on the most common path. `PendingCompaction` now carries `projectId` + `extraction`, and the new `persistConsumedState` persists exactly once at the `session_before_compact` consume point — the single apply moment shared by all three run types.
+- **UTF-8 corruption in session-log streaming (C2)** — `streamJsonlLines` decoded each 64KB chunk with a bare `toString("utf-8")`; a multi-byte character split across the chunk boundary became U+FFFD and silently failed that line's `JSON.parse`, dropping the message to its truncated branch copy. Now uses `StringDecoder`.
+- **Lock stale-reclaim race (M3)** — two waiters both observing a stale `.lock` could end up co-holding it (`rmdir` of a freshly reclaimed lock). Reclaim now goes through an atomic rename-steal; exactly one thief wins, and a stolen-but-live lock is restored.
+- **Typo'd model arg silently ignored (M5)** — `/smart-compact provider/bad-model` fell back to the current model without warning. Unresolvable model args with a known provider prefix now fail loudly; note tokens like `src/auth.ts` are unaffected.
+- **`BLOCKED_RE` over-matching** — bare `depend` flagged routine "dependency" mentions as high-priority blocked loops; narrowed to `\bdepends? on\b`, added the same min-length/command guard as the follow-up scan, and fixed the `bağlı` diacritic form.
+- **Timeline dropped the newest user requests** — the >30-event trim kept the *first* N requests and clumped errors at the end; now keeps the most recent N and re-sorts chronologically.
+- **Success metric recorded before apply (m8)** — manual runs logged `success` before `ctx.compact()` could still fail, inflating dashboard reliability. Manual outcomes now come from the native compact's own callbacks (`onComplete` → success, `onError` → error); auto/tool runs still record at staging.
+- **Tool `dry_run` reported failure** — the empty pending slot after a dry-run produced "no summary was generated"; now reports the dry run as the success it is.
+- **`createServices` captured the LLM client eagerly** — a `setLlmClient` installed after the bag was created was ignored, breaking the seam's call-time-resolution contract; the bag now holds a lazy delegate.
+
+### Changed
+
+- **Metrics surface migrated to explicit DI** — removed the module-level compatibility shims (`resetMetrics`, `getMetrics`, `resetExtractionCacheStats`) and the hidden `getDefaultServices()` fallbacks on `recordMetric`/`getMetricsSummary`/`appendMetricsLog`/`getExtractionCacheStats`/`cacheOpts`. All consumers pass the run-scoped services bag; the single sanctioned fallback lives at the top of `trackedComplete`.
+- **Backup prune deferral is a real macrotask** — `queueMicrotask` ran before control returned to the event loop, so the readdir+stat scan still blocked the triggering turn; now `setTimeout(0)`.
+- **Perf** — dropped the write-only `prunedToolCallIndex` from `RunContext`; capped `estimateTokens`' Turkish-character scan to the same 8KB sample as the JSON-density check; removed a per-ref Set re-materialization in `verifySummary`.
+
+## [7.18.2] - 2026-07-09
+
+### Fixed
+
+- **Extension load failure after 7.18.1** — 7.18.1 imported `complete` from the `@earendil-works/pi-ai/compat` subpath statically, which is not aliased by some host builds and crashed the extension at load time (`Cannot find module .../dist/index.js/compat`). `complete` is now resolved with a dynamic `import("@earendil-works/pi-ai/compat")` on first use, which is aliased by the host loader and resolves directly in raw node — works in both host and test contexts, and can never break extension loading.
+
+## [7.18.1] - 2026-07-09
+
+### Fixed
+
+- **TUI model selection override** — when `summaryModel` was set in config, picking a different model in the compact picker still ran the configured default; explicit selections (TUI picker / CLI model arg) now win over `config.summaryModel`. Auto-trigger and tool paths still fall back to the configured default.
+
+### Changed
+
+- **Dependencies** — bumped `@earendil-works/*` 0.79.6 → 0.80.3, `typebox` 1.2.16 → 1.3.6, `@types/node` 26.0.1 → 26.1.1, `typescript` 6.0.3 → 7.0.2.
+- **`complete` import** — pi-ai 0.80 removed the standalone `complete()`/`stream()` from the package root; now imported from `@earendil-works/pi-ai/compat` (the host's `ModelRegistry` is itself compat-backed, so this is the extension-correct path until the host's ModelManager migration lands).
+
+## [7.18.0] - 2026-06-26
+
+### Fixed
+
+- **`mergeExtractions` mainGoal corruption** — incremental extraction replaced the original goal with a delta-suffix message; now prefers `base.mainGoal`.
+- **`mergeExtractions` boundary gap** — `lastUserMessages`/`lastErrors` now span the cache boundary instead of dropping base's tail.
+- **`catalogErrors` id-less retry** — retry resolution falls back to tool-name match when the retry call lacks an id.
+- **Pruning hides errors** — short error-containing tool outputs preserved from 800-char truncation (shared `LIKELY_ERROR_RE`).
+- **`computeDelta` collision** — prefix-slice keys collided different items sharing an opening; now full-normalized text.
+- **`smartKeepBoundary` dead regex** — `path="..."` never matched agent output; replaced with toolCall-arg file extraction.
+- **`buildCompactionState` basename** — raw basename → `buildPathNeedles` (generic-basename gate, consistent with `extractOpenLoops`).
+- **`extractNextActions`/`Critical`** — case-sensitive regex → canonical `findSection`.
+- **`CONSTRAINT_PATTERNS`** — `\b` → lookarounds so Turkish-leading chars (`önemli`, `şart`) match.
+- **`verifySummary` fuzzy** — salient-token keyword extraction; error snippet whitespace-normalized.
+- **`estimateTokens` JSON** — density fallback for non-brace-first JSON (capped at 8KB).
+
+### Added
+
+- **`domain/keywords.ts`** — `extractCheckKeywords` (shared by verify + damage).
+- **Centralized constants** — `TRUNC` (truncation budgets), `ID_PREFIX`, `TUNING` (EMA/clamp/confidence), shared durations, `EXTRACTION_CACHE_PREFIX`, `LIKELY_ERROR_RE`.
+
+### Changed
+
+- **Zero inline magic values** — ~70 truncation literals, ID prefixes, confidence scores, TTL duplications (7d×3, 1h×2), and tuning factors centralized into named constants.
+- **`makeCompactSessionId`** — single source (services.ts); cache.ts fallback deduped.
+- **`damage.ts` re-question** — shared `extractCheckKeywords` (threshold relaxed for high-precision salient tokens).
+
+## [7.17.0] - 2026-06-26
+
+### Added
+
+- **Name-agnostic tool classification** (`src/domain/tool-semantics.ts`) — a pure `classifyTool(args)` that classifies a tool call by its argument shape (`mutates` / `accesses` / `executes` / `other`) plus `extractToolPath(args)`. A tool is a write because its arguments carry a content payload, not because its name contains "write" — so this auto-adapts to tools the code has never seen (`hypa_*`, MCP servers, custom extensions) with no name list to maintain.
+
+### Changed
+
+- **Extraction is now name-agnostic.** `trackFileOps`, `catalogErrors`, `segmentTopicsHeuristic` (`utils/extraction.ts`), `get_file_changes` (`phases/explore.ts`), and re-read detection (`utils/damage.ts`) all classify via `classifyTool` instead of substring name matching. Removes the `WRITE/DELETE/READ_TOOL_HINTS` lists, `hasToolHint`, and the hardcoded `=== "bash"` gate. Shell-like tools (`hypa_shell`, …) and path-bearing readers (`hypa_grep`/`find`/`ls`) are now detected correctly by argument shape.
+- **Model resolution deduplicated** (`index.ts`) — the `provider/id` split + `modelRegistry.find` pattern (duplicated three times) is now a single `findModelById` helper; `resolveModelArg` removed.
+- **`SHIFT_RE` Turkish coverage** — the topic-shift cue regex was ASCII-only and silently missed natural Turkish spellings (`şimdi`, `geçelim`, `bakalım`, `yapalım`, `başka`); both spellings now match, consistent with `FOLLOWUP_RE`'s dual-spelling convention.
+- **`CONSTRAINT_PATTERNS` readability** — the Turkish regexes use raw UTF-8 characters instead of `\u00f6`/`\u015f` escapes (the source is UTF-8; the escapes added no value and hurt readability).
+
+### Fixed
+
+- **`trackFileOps` duplicated branch** — the `isTruncated` and `!NO_OP_RE` arms had identical bodies; collapsed into one condition (`isTruncated(resultText) || !NO_OP_RE.test(resultText)`).
+- **Dead locals in `segmentTopicsHeuristic`** — `type` and `primaryFile` were assigned every iteration but never read (the topic push uses `currentType`/`currentPrimaryFile`); removed. Path lookup now uses `extractToolPath`, matching the other consumers.
+
+### Tests
+
+- New `test/tool-semantics.test.ts` covering all four tool classes, the path-only delete/read ambiguity, and `extractToolPath` across key variants. Extraction fixtures updated to realistic content payloads; a regression case proves an unknown tool name (`totally_unknown_mcp_tool`) is still classified correctly. Suite: 501 tests across 43 files.
+
+## [7.16.0] - 2026-06-18
+
+### Added
+
+- **Pinned never-compact context** (`smartCompact.pinPaths`) — file paths that must always survive compaction regardless of what the LLM summary includes. Surfaced in the summary's Files Read via a deterministic, LLM-free `ensurePinnedPaths` step in `buildState`.
+- **Damage auto-remediation** — `detectDamage` now collects the files the agent re-reads after a compaction (`reReadFiles`), persists them as remediation hints, and the *next* compaction re-preserves them (merged with `pinPaths`) so lost context stops being lost twice. Closes the detect → remediate loop.
+- **`/smart-compact restore`** — list, view, and restore backups. `listBackups`/`readBackupContent` make the previously write-only backups browsable; `showRestorePicker` + `showRestoreAction` + `showBackupViewer` provide a TUI; and a true restore forks from the current leaf and re-injects the pre-compaction content as context via `sendMessage` (graceful fallback to view on any failure).
+- `asBranchMessage` / `asSerializableMessages` boundary adapters in `src/infra/ai-messages.ts`, documenting why each cross-package upcast is sound.
+
+### Fixed
+
+- **session-log timestamp** — `normalizeLogMessage` stamped `Date.now()` (the recovery wall-clock) gated on a nonsensical content-shape condition, and dropped `toolName`. Now parses the log entry's real timestamp and preserves `toolName`.
+- **`synthesize` empty-batch guard** — `batches[0]` could be dereferenced when the chunk list was empty; now guarded with a deterministic fallback.
+- **`backupDir` config validation** — the one config key without type validation now rejects non-string values.
+- **result-screen timer** — the `setTimeout` used in the result-screen `Promise.race` is now cleared in a `finally` instead of lingering up to 5s.
+- **negative exploration boundary clamp** — `normalizeBoundaries` now lower-clamps `afterIndex` to 0 (LLMs occasionally emit negative values) and guards `confidence` against non-numeric values.
+- **`computeToolCharPercentage` dead branch** — removed the unreachable `block.content` path (text blocks carry `.text`).
+- **`ctx.ui.notify` invalid type** — restore used `"success"`, which `ctx.ui.notify` does not accept; corrected to `"info"`.
+- **state.ts basename recompute** — the per-error file-attribution basename is now precomputed once instead of recomputed for every (error × file) pair.
+
+### Changed
+
+- **Message cast normalization** — the explore feedback loop now builds native `Message[]` (assistant turns are the real `AssistantMessage` from `trackedComplete`, no longer downcast to `LlmMessage`); `recover`/`persist`/`extract` route through the documented `asBranchMessage`/`asSerializableMessages` adapters. Removes the lossy `as unknown as Message[]` casts and the silent dropping of `usage`/`api`/`provider`/`model`/`stopReason`.
+- **Tools cast normalization** — `EXPLORATION_TOOLS` is now declared as native `Tool[]` using typebox schemas, removing both `as unknown as Parameters<...>["tools"]` casts. Behavior-preserving: every pi-ai provider only serializes the schema, so real typebox schemas are wire-identical to the previous plain JSON-schema objects.
+- `failedChunkSummary` co-located with `assembleFallback` in `phases/synthesize.ts` and exported (was an untested module-private in the step module).
+- `buildExplorationReportFromParsed` parameter narrowed `any` → `unknown` with proper field validation.
+
+### Build
+
+- **pi runtime peers resolved 0.79.4 → 0.79.6** and **typebox 1.2.11 → 1.2.16** in the lockfile. `peerDependencies`/`devDependencies` keep their `*` wildcard ranges per the forward-compatibility policy from 7.15.0.
+
+### Tests
+
+- **+79 tests (414 → 493):** type-guards validators (`isValidSmartCompactDetails`/`sanitizeSmartCompactDetails`), synthesize fallback contracts (`assembleFallback`/`failedChunkSummary`), `ai-messages` adapters, pinned-paths injection, remediation-hints round-trip, backup restore (list/read/build-restore-message), and exploration boundary normalization (negative clamp, confidence guard, non-string mainGoal).
+
+### Docs
+
+- README, ARCHITECTURE, CONTRIBUTING, SECURITY, SUPPORT, RELEASE, and CODE_OF_CONDUCT redesigned; new `docs/assets/banner.svg` hero. CONTRIBUTING drift fixed (`core.ts`/`DEVPLAN.md`/`ROADMAP.md` references removed; repo map updated to the layered architecture).
+
+## [7.15.1] - 2026-06-15
+
+### Fixed
+
+- **Delta section placement** — `injectDeltaSection` contained a dead ternary (`hasOpenLoops ? "next-steps" : "next-steps"`) that made the `hasOpenLoops` computation unreachable, so the "Changes Since Last Compaction" section always anchored before `Next Steps` regardless of whether `Open Loops` was present. The domain layer (`summary-parse.ts`) now supports a structured `SectionPlacement` hint with both `before` and `after` semantics; the delta injector anchors *after* `Open Loops` when present, otherwise *before* `Next Steps`. The new object form is additive — the legacy positional `before` argument remains backward-compatible.
+- **Shadowed catch binding in exploration parser** — `parseExplorationReport` used `e` for both `lastIndexOf("}")` and the per-`catch` error, which compiled but was a confusing trap for future edits. Renamed the loop bounds to `startIdx`/`endIdx` and the catch bindings to `err`.
+- **Defensive guards in LLM-output parsing** — `buildExplorationReportFromParsed` now validates `typeof parsed === "object"` before touching it, so a model that returns a primitive JSON value (`42`, `"ok"`, `true`, `null`) falls back to heuristic boundaries instead of risking a `TypeError`.
+- **Non-negative index guard** — `branchIndexToMsgIndex` (used by anchor-aware keep-boundary resolution) now clamps to `Math.max(0, ...)`, so a future code path that reaches it without a prior message entry can never produce a negative index.
+
+### Changed
+
+- **Typed theme in TUI overlays** — `renderContextBar` and `renderTokenBar` no longer take `theme: any`; they now use the real `Theme` class exported from `@earendil-works/pi-coding-agent`, restoring compile-time type safety over `.fg()` / `.bold()` calls without inventing a parallel local interface.
+
+### Build
+
+- **Pi runtime peers 0.79.4** — `@earendil-works/pi-ai`, `@earendil-works/pi-coding-agent`, and `@earendil-works/pi-tui` resolved from 0.79.0 → 0.79.4. Peer dependency ranges remain wide (`*`).
+- **`typebox` 1.2.11** — Patch upgrade from 1.2.3.
+- **`@types/node` 25.9.3** — Patch upgrade from 25.9.2.
+
+### Docs
+
+- **Architecture tables synchronized** — `ARCHITECTURE.md`'s layer tables now list every `src` module, including previously missing `pending-slot.ts`, `explore-wrap.ts`, `infra/session-identity.ts`, `utils/file-needles.ts`, `utils/file-ref-detect.ts`, and `utils/lru.ts`. README repository-layout tree and module counts updated to match (15 utility modules; 414 tests across 36 files).
+
+### Tests
+
+- **7 new test cases (407 → 414)** covering `upsertSection` before/after placement and legacy back-compat, plus `buildExplorationReportFromParsed` primitive/null guards.
+
+### Chore
+
+- **Ignore npm lockfile** — `.gitignore` now excludes `package-lock.json`; this project uses `bun` and the stray lockfile created by incidental `npm` commands should not be committed.
+
+## [7.15.0] - 2026-06-08
+
+### Changed
+
+- **Wildcard peer/dev dependencies for Pi packages** — `@earendil-works/pi-ai`, `@earendil-works/pi-coding-agent`, `@earendil-works/pi-tui`, and `typebox` now use `*` version ranges in both `peerDependencies` and `devDependencies`, ensuring forward compatibility with all future Pi runtime versions without extension-level pinning. Resolved to 0.79.0 (pi-*) and 1.2.3 (typebox) at install time.
+
+### Fixed
+
+- **Cross-session leak guard** — The pending compaction payload now carries the originating pi session id and is refused if the consuming session does not match. Two pi sessions sharing the same Node process (a common sub-agent setup) can no longer apply each other's prepared summaries. The fallback identifier for sessions that the host cannot resolve is per-call unique (`unresolved:<uuid>`) so two unresolved sessions never collide.
+- **`patchSummary` provider cap** — The verifier's repair LLM call now clamps `maxTokens` to the active provider's true output ceiling instead of a hard-coded 8192, preventing provider-side errors on DeepSeek/MiniMax (cap 4096) and wasted budget elsewhere.
+- **File-reference heuristic** — Verification no longer flags version strings (`v7.13.2`, `0.78.0`), runtime versions (`node 22.19.19`), or package identifiers as "potentially fabricated files". The classifier now rejects SemVer-shaped tokens, requires the last path segment to be a non-version when a slash is present, and otherwise requires a known source/config extension.
+- **Bugfix-loop file attribution** — Unresolved errors are no longer attached to every file in the tree whose basename happens to appear in the error message. Attribution now uses progressively-longer path-suffix needles and skips generic basenames (`index.ts`, `types.ts`, ...) unless the error mentions the full `dir/<basename>` segment.
+- **Auto-trigger notification wording** — The post-pipeline toast no longer claims "Compaction completed" when only the smart summary has been staged (the native compact has not yet run). The wording now reflects whether a payload is pending ("Smart compact prepared in ... — awaiting native /compact") or no payload was produced ("run finished").
+- **LRU promotion correctness** — The session-log cache promotion check now gates on `Map.has`, not `value !== undefined`, so future cache value types that legitimately include `undefined` are still promoted to the most-recent slot.
+
+### Added
+
+- **Encapsulated `PendingSlot` API** — The pending compaction payload now lives in a closure-based factory (`src/app/pending-slot.ts`) with a discriminated `ConsumeResult` (`ok` | `empty` | `expired` | `mismatch`). The slot owns its entire lifecycle (set / consume / clear / expire / mismatch) inside a single file, exposes a side-effect-free `peek()` for read-only display paths, accepts an injectable clock for deterministic tests, and is fully host-agnostic.
+- **Bounded session-log caches with env override** — Both `logPathCache` and `messageMapCache` are now LRU-bounded (default 8 entries). The cap is tunable via the `SMART_COMPACT_LOG_CACHE_MAX` environment variable; invalid values silently fall back to the default so a `.env` typo never disables the cache. LRU helpers extracted to `src/utils/lru.ts` for isolation and reuse.
+- **Single-source-of-truth `VERSION`** — The version literal in `src/constants.ts` is regenerated from `package.json` at `prebuild` time by `scripts/sync-version.ts`. The validator refuses any non-SemVer value, defending the generated source line against an attacker-controlled or merge-corrupted `package.json`. Pure validation/rewrite logic lives in `scripts/sync-version-lib.ts` and is unit-tested without filesystem access.
+- **Test-only resets** — `__resetSessionLogCachesForTests` and `_getMaxEntriesForTests` allow deterministic test setup of the session-log module.
+
+### Changed
+
+- **Pipeline narrowed to `ExtensionContext`** — The smart-compact orchestrator no longer requires `ExtensionCommandContext`; the same code path now serves both interactive commands and the `session_before_compact` event handler with zero `as unknown as` casts. The narrower type makes "the pipeline only touches the shared host surface" a compile-time invariant.
+- **Module-level singletons removed** — The historical `_compactSessionId` cache singleton was redundant with the per-run `services.compactSessionId` and has been deleted. Production callers always flow through the services container; a private `fallbackSessionId()` is retained only for callers that omit `services` entirely.
+- **`extractText` / `flattenToolCallBlock` deduplicated** — The `multi_tool_use.parallel` flatten logic that was previously inlined in three places is now a single module-level helper with a typed `FlatToolCall` interface. `extractText` uses the shared `isTextBlock` type guard rather than inline structural casts.
+- **`Cell<T>` type alias** — Shared mutable single-slot ref cells (`isRunning`, `cancellationOut`) are now typed as `Cell<T>` instead of `{ value: T }` inline literals.
+
+### Performance
+
+- **Pruning single-pass walk** — `pruneRedundant` previously walked the message list up to four times (build kept list, build final list, two `estimateTokens(map+join)` calls) for ~40-60ms of overhead on 5k-message sessions. Now folded into a single forward pass. As a side effect the rewrite **fixes a latent token-accuracy bug**: `estimateTokens` only applies the JSON-shape penalty when the input *starts* with `{`/`[`, so the previous global-string concatenation under-counted JSON-heavy tool outputs. Per-message estimation now reflects the true token count.
+- **Open-loop attribution** — File-needle generation is hoisted out of the inner error loop, eliminating the prior N(errors) × M(files) re-computation.
+
+### Tests
+
+- **115 new test cases (289 → 404)** across seven new files covering `resolveSessionId` (1000-iteration uniqueness loop), `PendingSlot` lifecycle (15 cases including TTL boundary, set overwrite, cross-session mismatch), `lruGet`/`lruSet` (undefined/null value regressions), `getMaxEntries` env override, file-reference heuristic (SemVer rejection integration), file-needle generator (generic-basename gate, length threshold), and `sync-version` SemVer validation (injection vector).
+
+### Build
+
+- **TypeScript 6.0** — Upgraded from 5.9 with no source changes required; the project's `tsconfig.json` was already aligned with every 6.0 mandatory default.
+- **`@earendil-works/pi-*` 0.78.0** — Pi runtime peers upgraded from 0.75.5. Peer dependency ranges remain wide (`*`).
+- **`@types/node` 24 LTS** — Upgraded from 22. Node 25 deliberately skipped (not LTS).
+- **`typebox` 1.1.39** — Patch upgrade.
+
+## [7.13.2] - 2026-05-26
+
+### Changed
+
+- **Package gallery presentation** — Replaced README badge images with plain text links so Pi package pages do not render badges as extra image cards.
+- **Logo asset cleanup** — Replaced the oversized logo with a square transparent icon-only PNG and reduced README display size.
+- **Repository hygiene** — Removed stale audit and archived planning markdown files from the tracked repository.
+- **CI maintenance** — Updated GitHub Actions checkout from v4 to v6.
+
+## [7.13.1] - 2026-05-26
+
+### Fixed
+
+- **Run-scoped service isolation** — Smart compaction runs now create isolated service containers for LLM calls, metrics, extraction-cache stats, token calibration, and provider prompt-cache session ids, reducing cross-run state pollution in concurrent Pi sessions.
+- **Phase timing accuracy** — Prune, extract, explore, and synthesize timings are now measured at their actual phase boundaries instead of adjacent marker calls that could report near-zero durations.
+- **Tool/noise accounting** — Tool character percentages now count only text blocks, avoiding accidental inclusion of provider tool-call fields with text-like payloads.
+- **File operation extraction coverage** — File-change detection now recognizes common patch/create/append/update/apply-style tool names in addition to write/edit/delete/read variants.
+
+### Tests
+
+- Added regression coverage for run-scoped LLM metrics isolation, text-only tool character accounting, and broader file-operation tool matching.
+
+## [7.13.0] - 2026-05-25
+
+### Added
+
+- **Interactive metrics dashboard TUI** — `/smart-compact dashboard` now opens an in-terminal dashboard with overview, latest-run details, current-session runs, recent runs, and an explicit HTML export action.
+- **Dashboard run detail formatting** — Added tested formatter helpers for legacy metrics, empty states, phase timings, compact run descriptions, and bounded percentage display.
+
+### Fixed
+
+- **Provider cache percentage accounting** — Provider prompt-cache hit rates now use an effective prompt-token denominator and are capped at 100%, preventing impossible values such as `572610%` when providers report cached tokens separately from new input tokens.
+- **Verification repair for malformed summaries** — Missing canonical sections are now reported as verification gaps and deterministic repair can create sections such as `## Goal`, `## Progress`, `## Critical Context`, and `## Files Modified` before injecting required facts.
+- **Dashboard comparison noise** — Legacy metrics entries without profile/provider metadata are omitted from profile/provider comparison groups instead of appearing as misleading `unknown` rows.
+
+### Changed
+
+- **Metrics readability** — Result overlays and notifications distinguish prompt, new, and cached input tokens when provider cache reads are present.
+- **Dashboard navigation** — The TUI supports keybinding-aware navigation plus page-up/page-down and home/end scrolling.
+
+## [7.12.5] - 2026-05-23
+
+### Fixed
+
+- **Extraction cache safety** — Incremental extraction now reuses cache only when both the original entry prefix and the pruned-message prefix still match, preventing corrupted merges when pruning changes or when legacy cache entries lack pruning metadata.
+- **Chunk synthesis robustness** — Batch summarization now emits stable `CHUNK N` ids, includes tool-call context in segment text, parses returned sections by chunk id instead of raw position, and falls back to section/chunk previews when the model omits a clean summary line.
+- **Verification result accuracy** — Metrics and result details now use the post-patch verification result after deterministic/LLM repair instead of the pre-patch score.
+- **Auto-trigger overlap guard** — Hard-timeout cleanup no longer resets `isRunning` early while a timed-out compaction is still unwinding, avoiding overlapping background compactions.
+- **Nested parallel tool boundaries** — Keep-boundary protection now understands nested `multi_tool_use.parallel` tool call ids so compaction does not split wrapper calls from kept tool results.
+
+### Changed
+
+- **Extraction-cache observability** — Metrics, dashboard/report rows, notifications, and result overlays now distinguish provider prompt-cache hit rate from deterministic extraction-cache hit rate and record extraction-cache miss reasons.
+- **Pending summary visibility** — Expired pending smart summaries now raise a user-visible warning when discarded.
+
+## [7.12.4] - 2026-05-20
+
+### Fixed
+
+- **Manual command override** — Explicit user-run `/smart-compact` commands now bypass the adaptive `minContextPercent` tier gate, while auto-trigger and agent tool calls still respect it. This keeps cache-protective behavior for agents but preserves user control.
+
+## [7.12.3] - 2026-05-20
+
+### Changed
+
+- **Safer pi-toolkit threshold** — Raised the default `minContextPercent` from 30 to 60 so high `tool=XX%` ratios from pi-auto-context do not trigger smart compaction while actual context usage is still moderate.
+- **Agent guidance** — Updated the `smart_compact` tool description and guidelines to explicitly ignore pi-auto-context `tool=XX%` as a compaction signal and use actual `context=XX%` instead.
+- **Package image metadata** — Switched the package gallery image URL to the stable `main` asset path to avoid version-tag drift.
+
+### Fixed
+
+- **Provider capability mapping** — Added explicit pi-toolkit provider entries for `kimi-coding`, `xiaomi-mimo`, and `crofai` so timeout/concurrency/cache metadata does not fall through to generic defaults.
+- **Open-loop indexing** — Replaced `msgs.indexOf(msg)` with indexed loops in open-loop extraction to avoid O(n²) scans and incorrect source indexes for repeated message references.
+- **Batch summary fallback** — Hardened `summarizeBatch()` so a missing or merged LLM section falls back to the original chunk preview instead of producing an empty segment summary.
+- **Pending summary observability** — Log when an expired pending smart summary is discarded.
+
+## [7.12.2] - 2026-05-20
+
+### Fixed
+
+- **Context threshold guard completion** — Completed the `minContextPercent` guard across config, types, tier selection, core pipeline, tool handler, and tests.
+- **Precise threshold comparison** — `smart_compact` now compares raw context percentage for the guard and uses rounded percentage only for user-facing text.
+
+## [7.12.1] - 2026-05-19
+
+### Fixed
+
+- **Pi package gallery preview** — Added `pi.image` metadata pointing to the packaged logo asset so pi.dev/package listings can render the package image.
+
+## [7.12.0] - 2026-05-19
+
+### Added
+
+- **Performance monitoring report** — Metrics now include run status, method, provider/model, run type, total duration, verification gaps, and phase timings. `/smart-compact metrics` and the `smart_compact` tool's `report` parameter return a profile/provider comparison report for A/B-style evaluation.
+- **Professional local HTML dashboard** — `/smart-compact dashboard` and `smart_compact({ dashboard: true })` write `.cache/smart-compact-report.html` with KPI cards, reliability badges, duration trends, profile/provider comparison tables, phase timing bars, recent-run diagnostics, responsive dark/light styling, and aggregate metrics.
+- **Provider strategy fields** — Provider capabilities now include timeout multipliers, single-pass threshold multipliers, and multimodal support mode. Auto-trigger timeout and single-pass selection adapt to the selected provider.
+- **Multimodal metadata extraction** — The deterministic extractor now preserves image/file/audio/video attachment metadata without embedding binary/base64 payloads in summaries.
+
+### Fixed
+
+- **Manual tool timeout warning** — `smart_compact` tool calls no longer inherit the native auto-trigger timeout. The timeout guard now only applies when Pi's `session_before_compact` hook is trying to prepare a summary before native compaction.
+- **Auto-trigger robustness** — Increased the default `autoTriggerTimeoutMs` from 45s to 120s, cleared the hook timeout timer deterministically, and kept the native fallback warning specific to auto-trigger runs.
+- **Single-pass output budget** — Single-pass compaction now caps `maxTokens` to the selected profile's `summaryBudgetTokens` instead of the provider's maximum output size.
+- **Runtime version drift** — Synced the exported runtime `VERSION` with `package.json` and added a regression test.
+- **Config validation hardening** — Invalid per-profile overrides are now sanitized instead of reaching the compaction pipeline as non-numeric budget values.
+- **Metrics failure observability** — Timeout and unexpected error exits now write metrics entries with `status: "timeout"` or `status: "error"` before rethrowing.
+- **Dashboard hardening** — The local HTML dashboard escapes metric values and the metrics reader skips corrupt JSONL rows instead of dropping the whole report.
+
+### Performance
+
+- **Session log recovery cache** — Session log path lookup and parsed message maps are cached with mtime/size invalidation to avoid repeatedly scanning `~/.pi/agent/sessions` during recovery.
+
+## [7.11.0] - 2026-05-19
+
+### Changed
+
+- **README compatibility guidance** — Added a prominent note documenting conflict-prone extension behavior around compaction hooks, session/branch history, message and tool metadata, tool output rewriting, compaction boundaries, and session log storage. Also clarified that `pi-smart-compact` is recommended alongside `pi-toolkit` for complementary context hygiene and verified compaction.
+
+## [7.10.0] - 2026-05-19
+
+### Added
+
+- **`multi_tool_use.parallel` support** — `buildToolCallIndex()` now flattens nested `tool_uses` from `multi_tool_use.parallel` into synthetic tool-call entries. Reads real `use.id` when present (matching downstream `toolResult.toolCallId`), falls back to deterministic synthetic id. `trackFileOps`, `catalogErrors`, `segmentTopicsHeuristic`, and retry/resolution detection all support nested calls. 6 new tests.
+- **Entry-id cache invalidation** — `CachedExtraction` now stores `firstEntryId` and `lastEntryId`. Cache check in `core.ts` validates `firstEntryId === currentFirstId && lastEntryId === cachedLastMsgId`, so appended-message sessions preserve incremental extraction while pivot/branch changes auto-invalidate. 2 new tests.
+- **Auto-trigger hard timeout** — `index.ts` `session_before_compact` hook now wraps `runSmartCompact` in `Promise.race` with `config.autoTriggerTimeoutMs` (default 45s). If provider ignores `AbortSignal`, hook still returns to native compact on time. `core.ts` guards all side-effects (`pendingRef`, fingerprint, state, metrics) if `timedOut`.
+- **Config validation** — `validateSmartCompactConfig` now validates `autoTriggerTimeoutMs` range (1000–300000 ms). Invalid values are deleted and fallback to default. 8 new tests.
+- **Session log Pi filename format** — `findSessionLogFile` now supports `*_\${sessionId}.jsonl` glob pattern (e.g. `2026-05-19T12-00-00_abc123.jsonl`) in addition to exact match. 3 new tests.
+- **Git-root projectId priority** — `deriveProjectId(cwd, extraction, sessionId)` now prefers git root over file paths, surviving discussion-only sessions. `findGitRoot(cwd)` exported and tested. 3 new tests.
+- **Verbose pipeline diagnostics** — `vlog()` helper in `core.ts` logs tier, convTokens, extraction mode (incremental/full), explore boundaries, chunk topics, verification score, and pipeline completion stats when `/smart-compact verbose` is used.
+- **Rich metrics logging** — `appendMetricsLog` now records `profile`, `tier`, `contextPercent`, `toolPercent`, `tokensBefore`, `tokensSaved`, `pruneSavedTokens`, `chunkCount`, `verificationScore` for regression detection.
+- **Prepublish guard** — `package.json` `prepublishOnly`: `bun run typecheck && bun test && bun run build`.
+
+### Fixed
+
+- **Cache incremental check** — `lastEntryId` now compares against `toCompact[cachedExt.lastMessageIndex]?.id` instead of `toCompact[toCompact.length - 1]?.id`, so appended messages don't falsely invalidate the cache.
+- **catalogErrors retry flatten** — Retry/resolution scan now uses `flattenToolCallBlock()` to detect retries inside `multi_tool_use.parallel`. Previously only flat tool calls were matched.
+- **Segment topic type persistence** — `segmentTopicsHeuristic` now carries the most significant type (`implementation` > `debugging` > `review` > `exploration`) into the final trailing topic instead of defaulting to `exploration`.
+- **Tool-call boundary guard** — `guardToolCallBoundary()` prevents splitting `toolCall`/`toolResult` pairs across compaction boundary, eliminating `"tool_call_id is not found"` errors. 9 new tests.
+- **Session log ID-based alignment** — `resolveCompactionMessages` walks `toCompact` entries by `id` instead of tail-slice, guaranteeing exact 1:1 alignment regardless of pivot/branch changes.
+
+## [7.9.5] - 2026-05-18
+
+### Added
+
+- **pi-toolkit truncation detection + session log fallback** — New `src/utils/session-log.ts` reads the original untruncated conversation from pi-coding-agent's `.jsonl` session log when pi-toolkit's context hook has mutated branch entries (tool results truncated to `…✂N`). `resolveCompactionMessages()` auto-detects truncation and falls back to disk, preserving extraction accuracy. [pi-toolkit](https://github.com/ersintarhan/pi-toolkit) compatible.
+- **Anchor-aware keep boundary** — `smartKeepBoundary()` now accepts branch entries and guarantees the last on-branch pi-toolkit anchor is never compacted out of the keep window. Prevents pivot target loss. 5 test cases in `test/pi-toolkit-truncate.test.ts`.
+- **Tiered compaction** — Context pressure and tool-noise percentage now select pipeline depth automatically:
+  - `none` (< 45% context, < 60% tool): skip compaction entirely — pi-toolkit handles it.
+  - `prune` (45–60% context): deterministic redundancy pruning only, zero LLM calls.
+  - `light` (60–80% context): extract + single-pass, skip exploration.
+  - `full` (> 80% context): complete EESV pipeline.
+- **pi-toolkit status message pruning** — `pruneRedundant()` now detects and removes stale `[pi-auto-context]` status messages, keeping only the latest. Reduces per-turn noise injected by pi-toolkit.
+- **Internal LLM cache disable** — One-shot compaction phases (`explore`, `single-pass`, `batch`, `assemble`, `patch`) now automatically set `cacheRetention: "none"`. Cache write cost (1.25×–2×) is never amortized for internal calls. Centralized in `trackedComplete()` via phase-based `INTERNAL_PHASES` set.
+- **19 pi-toolkit integration tests** — New `test/pi-toolkit-truncate.test.ts` documents and validates truncation behavior, anchor boundary protection, extraction degradation under truncation, and toolCall-level fallback inference.
+
+### Changed
+
+- **Truncate-aware extraction** — `trackFileOps()` treats truncated write/edit results as "modified" (safe default; no-op cannot be verified). `catalogErrors()` adds `FAIL` and `ERROR:` to bash error regex for earlier-match resilience when content is truncated past keywords.
+- **Call-site cleanup** — Removed ~9 inline `cacheOpts()` calls across `explore.ts`, `synthesize.ts`, `verify.ts`. All caching logic now handled centrally by `trackedComplete()`.
+
+### Fixed
+
+- **pi-toolkit truncation data loss** — Before this release, pi-toolkit's context hook (which truncates tool results older than the last anchor) caused pi-smart-compact to extract from corrupted data. Errors, file modifications, and no-op edits were silently mis-detected. Now auto-detected and bypassed via session log.
+
+## [7.9.4] - 2026-05-18
+
+### Changed
+
+- **Fingerprint fixture sanitization** — Removed personal absolute paths from `test/fingerprint.test.ts` and replaced them with neutral helper-generated fixture paths while preserving the absolute-path regression coverage.
+- **No runtime behavior changes** — This is a test-only/docs hygiene patch intended to keep the repository and GitHub source free of personal machine paths.
+
+## [7.9.3] - 2026-05-18
+
+### Changed
+
+- **README refocused** — Rewrote `README.md` as a concise, user-facing overview. It now explains the package in terms of agentic compaction, Kamradt-style chunking, and the EESV pipeline without repo-audit noise or drift-prone implementation snapshots.
+- **Docs cleanup** — `DEVPLAN.md` is now positioned as an archived implementation record, `ROADMAP.md` serves as the live planning document, and new `CONTRIBUTING.md` / `ARCHITECTURE.md` files document contributor workflow and system design.
+- **Version metadata synchronized** — `package.json`, runtime version constants, and generated `dist/` metadata now align on `7.9.3`.
+- **TS script invocation stabilized** — `build` and `typecheck` now use `bun x tsc`, matching the working local invocation more reliably.
+
+## [7.9.1] - 2026-05-17
+
+### Fixed
+
+- **`/smart-compact` race condition** — Added `waitForIdle()` to slash command handler. Previously the command could execute concurrently with agent streaming since extension commands bypass the input queue.
+- **Tool `skipCompact` safety** — `ctx.compact()` internally calls `this.abort()`, which would kill the running agent loop if called from within a tool. Tool path now correctly keeps `skipCompact: true` and caches summary in `pendingRef` for the next natural compact.
+- **Tool context-usage guard** — Tool now checks `getContextUsage()` before running and returns early with token info if context is too small.
+- **Tool description enriched** — Better description and parameter hints so the agent knows when and how to call `smart_compact`.
+
+## [7.9.0] - 2026-05-17
+
+### Fixed
+
+- **40 TypeScript strict-mode errors resolved** — `bunx tsc --noEmit` now passes cleanly with zero errors against latest `@earendil-works/pi-ai`, `pi-coding-agent`, `pi-tui` peer types.
+- **`notify()` level mismatch** — `"success"` is not a valid level in `ExtensionUIContext.notify()`. All instances mapped to `"info"`.
+- **`UserMessage.timestamp` mandatory** — 10 inline message objects across `explore.ts`, `synthesize.ts`, `verify.ts` were missing the required `timestamp: Date.now()` field.
+- **`AgentToolResult.details` mandatory** — All tool return objects in `index.ts` now include explicit `details: undefined`.
+- **`SelectList.selectedIndex` private accessor** — Replaced with `setSelectedIndex()` in `overlays.ts`.
+- **`ThemeColor` union vs arbitrary string** — `theme.fg()` cast to `(c: string, t: string) => string` in overlays for dynamic color lookup.
+- **`CacheAwareOptions` not assignable to `ProviderStreamOptions`** — Added explicit cast in `cache.ts`.
+- **`blocks: unknown` after `Array.isArray`** — Explicit `unknown[]` typing in `extraction.ts` and `pruning.ts`.
+- **`ExtensionContext` vs `ExtensionCommandContext`** — Proper `as unknown as` double-cast in `index.ts` for tool and hook contexts.
+- **`apiKey?: string` (optional) used as `string`** — Extracted `apiKey` and `apiHeaders` as separate non-optional variables after guard check in `core.ts`.
+- **`pendingRef.value` type narrowed to `never`** — TypeScript control flow after `pendingRef.value = null` prevented re-reading after `runSmartCompact`. Fixed with explicit cast.
+
+### Changed
+
+- **`/smart-compact` command now uses `waitForIdle()`** — Prevents race condition when slash command is entered while agent is streaming. Agent finishes current turn before compaction starts.
+- **Tool (`smart_compact`) keeps `skipCompact: true`** — Mid-turn compaction via `ctx.compact()` would abort the running agent loop (`this.abort()` internally). Tool prepares summary in `pendingRef` for the next natural compact to apply.
+- **Tool description enriched** — Better description, parameter descriptions, and context-usage guard help the agent decide when to call smart_compact.
+- **README.md updated** — version 7.9.0, module count 18, line count ~5,091, typecheck status now passing, added `logger.ts` and `type-guards.ts` to source table.
+
+## [7.8.0] - 2026-05-17
+
+### Fixed
+
+- **TTL bug in loadCompactionState** — `Date.now() - 0` was always true, making state files live forever. Now uses `updatedAt` field with `fs.statSync(fp).mtimeMs` fallback for pre-7.8.0 backward compat.
+- **mergeExtractions duplicate modifiedFiles** — same file could appear multiple times after incremental cache merge. Now deduped via `Map<path, entry>`.
+- **deriveProjectId weak hash** — DJB2 hash with 32-bit truncation had collision risk across projects. Replaced with `crypto.createHash('sha256')`.
+- **smartKeepBoundary JSON.stringify** — was serializing entire message objects including metadata, causing false positive boundary matches. Replaced with extractText-style approach.
+- **Removed all `(m: any)` type casts** — 3 instances in core.ts replaced with proper type inference.
+
+### Removed
+
+- **`src/utils/message-blocks.ts`** — 4 functions (`getBlocks`, `isTextBlock`, `isToolCallBlock`, `getToolArgumentString`) never imported anywhere. Entire file deleted.
+- **`extractTextSafe` and `getMessageText`** from `types.ts` — unused dead code chain.
+- **`ToolCallBlock` and `TextBlock` interfaces** from `types.ts` — superseded by `LlmToolCallBlock` and `LlmTextBlock`.
+- **`clearToolSupportCache`** from `explore.ts` — exported but never called. Cache already self-regulates via TTL checks on access.
+- **`extractUserNote` local duplicate** from `index.ts` — now imported from `helpers.ts`.
+- **Unused imports** across 4 files (`isTextBlock`, `isToolCallBlock`, `extractTextSafe`, `buildToolCallIndex`, `CompressionProfile`, `ProfileConfig`, `LlmMessage`).
+
+### Changed
+
+- **`runSmartCompact` signature** — 10 positional parameters replaced with `SmartCompactOptions` interface. All 4 call sites in `index.ts` updated.
+- **Silent catch → `console.error(LOG_PREFIX + ...)`** — all 11 I/O catch blocks now log errors with the shared `LOG_PREFIX` constant.
+- **`buildToolCallIndex` called once** — was called 4× per extraction (`trackFileOps`, `catalogErrors`, `extractDecisions`, `segmentTopicsHeuristic`). Now built once in `extractStructured` and passed via optional `_tcIdx` parameter.
+- **`JSON.stringify` → `extractText`** in synthesize.ts (`estimateChunkTokens`) and explore.ts (`search_conversation`) — avoids serializing metadata, reduces CPU ~15-25%.
+- **`loadConfig` stale cache fix** — catch block now sets `_cfg = fallback` so deleted config files don't serve stale cached values.
+
+### Added
+
+- **`SessionType`** type alias — replaces inline `"implementation" | "review" | "debugging" | "discussion"` union across 5+ files.
+- **`SessionMessageEntry`** in `types.ts` — was duplicated inline in `core.ts` and `helpers.ts`.
+- **Constants**: `LOG_PREFIX`, `MIN_TOKEN_THRESHOLD`, `MAX_EXPLORATION_ROUNDS`, `CONFIG_KEY`, `CONFIG_KEY_ALT`, 11 section name constants (`SECTION_GOAL` etc.).
+- **`ToolCallIndex`** type alias in `extraction.ts` for the reusable tool call index.
+- **`updatedAt`** field in `CompactionState` — enables proper TTL expiry with backward-compat.
+- **`SmartCompactOptions`** interface in `core.ts` — documented API for the main pipeline runner.
+
+## [7.5.0] - 2026-05-17
+
+### Added
+
+- **Redundancy-aware pre-pruning**: New `pruning.ts` module collapses redundant message sequences before compaction — duplicate file reads (keep last), collapsed error chains, agent acknowledgment message removal, long tool output truncation (>800 chars). Reduces compaction input by 15-30%.
+- **Topic-level compression budgeting**: `allocateTopicBudgets()` assigns per-topic token allocations based on priority (critical 2x, high 1.5x), error density, recency weighting, and decision count. Assembly prompt includes budget hints per segment.
+- **Project context fingerprint**: New `fingerprint.ts` module stores lightweight per-project metadata (language, framework, key directories, known files) across sessions. Compaction uses this for better file verification and context injection.
+- **Post-compaction damage detection**: New `damage.ts` module monitors agent behavior after compaction for regression signals — re-reads of compacted files, user complaints, re-questions about compacted topics. Logs damage reports for future analysis.
+- **Compaction preview context**: Project fingerprint and pruning stats are shown in notifications before compaction starts.
+
+### Changed
+
+- Single-pass prompt now includes project context from fingerprint.
+- `preProcessSummaries` accepts optional `budgetTokens` parameter for topic-level budget allocation.
+
+## [7.4.0] - 2026-05-17
+
+### Added
+
+- **Decision propagation**: Batch summarization now injects active decisions from previous segments into each batch prompt, preventing cross-batch decision amnesia and reducing semantic drift.
+- **Deterministic patch**: New `patchDeterministic()` function injects verification gaps directly into the relevant summary sections (files → Files Modified, errors → Critical Context, etc.) without any LLM call.
+- **Lazy verification**: Verification scores ≥ 85 skip patching entirely. Scores 75–84 use deterministic patch only. Scores < 75 fall back to LLM patch only if deterministic patch is insufficient.
+- **Session-aware prompts**: `SESSION_TYPE_INSTRUCTIONS` map provides session-type-specific focus instructions (debugging, implementation, review, discussion) injected into single-pass synthesis.
+- **Immutable Context framing**: Assembly prompt now presents deterministic data as "IMMUTABLE CONTEXT (do not modify)" with explicit rules against fabrication and contradiction.
+- **Metrics memory cap**: `_metrics` array capped at 200 entries (pruning to 100 when exceeded) to prevent memory leaks in long-running processes.
+
+### Changed
+
+- **Renamed**: Extension renamed from `semantic-compact` to `pi-smart-compact`. Command changed from `/compact-semantic` to `/smart-compact`. Tool changed from `semantic_compact` to `smart_compact`. Config key changed from `semanticCompact` to `smartCompact`.
+
+- **Token estimation**: Language-aware (Turkish/CE character penalty) and JSON-aware penalty. Per-provider calibration instead of global shared factor to prevent cross-session bleed.
+- **Verification path matching**: Replaced basename-only `string.includes()` with path suffix array matching to reduce false positives (e.g., "index" no longer matches every file containing "index").
+- **Boundary merging**: LLM boundaries no longer completely override heuristic boundaries. Low-confidence LLM boundaries (confidence < 0.4) are filtered. Remaining LLM boundaries are merged with heuristic boundaries that fill gaps.
+- **Constraint mining**: Added Turkish diacritical character variants (önemli, şart, zorunlu, kesinlikle, asla, sakın) and new Turkish pattern categories (prohibition: yapma/kullanma/asla, preference: tercih/isterim/olsun).
+- **Keep-boundary token calc**: Uses content text instead of JSON.stringify(message) to avoid metadata overhead in token estimation.
+
+### Added
+
+- **Adaptive exploration gate**: Simple sessions (≤3 topics, ≤1 unresolved errors, ≤2 decisions, ≤2 directory groups) skip Phase 2 exploration entirely, saving 3-8 LLM calls.
+- **Tool support cache**: Provider tool support results cached for 30 minutes with TTL-based eviction. Prevents repeated probe calls for known-unsupported providers.
+
+### Fixed
+
+- Constraint regex bug: `önemli` (with ö) now correctly matches alongside `onemli`.
+- `calibrateFromResponse` now requires provider parameter to scope calibration per-provider.
+
+## [7.3.1] - 2025-05-16
+
+### Added
+
+- Full EESV pipeline: Extract → Explore → Synthesize → Verify
+- Deterministic extraction of files, errors, decisions, constraints, topics
+- LLM tool-calling exploration with 6 exploration tools
+- Parallel batch synthesis with provider-aware concurrency
+- Automated verification with coverage checks and hallucination detection
+- Quality score (0-100) and gap patching
+- Incremental compaction cache (1hr TTL, delta extraction)
+- Live progress overlay and detailed result screen
+- Metrics logging (`~/.pi/agent/.cache/compact-metrics.jsonl`)
+- Cache-aware LLM calls with session affinity
+- Three compression profiles: light, balanced, aggressive
+
+### Changed
+
+- Refactored from single 2200-line file to modular `src/` architecture
+- Improved token estimation with provider-specific ratios and EMA calibration
+- Added `LlmMessage` and `StructuredExtraction` types replacing `any`
+
+### Fixed
+
+- Tool loop safety (prevents orphaned tool result errors)
+- No-op edit detection
+- Graceful fallback when models don't support tool calling

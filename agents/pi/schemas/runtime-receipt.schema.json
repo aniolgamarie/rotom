@@ -1,0 +1,334 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "status": {
+      "const": "installed"
+    },
+    "identity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lock_identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "slice_identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "slice": {
+      "type": "object",
+      "properties": {
+        "engine": {
+          "type": "string",
+          "enum": [
+            "node",
+            "bun"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+          },
+          "uniqueItems": true
+        },
+        "package_path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+          "minLength": 1
+        },
+        "lock_path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+          "minLength": 1
+        },
+        "package_json_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "package_lock_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "entrypoint": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+          "minLength": 1
+        },
+        "resource_manifest": {
+          "type": "object",
+          "properties": {
+            "extensions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "capability_id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "capability_id",
+                  "path"
+                ],
+                "additionalProperties": false
+              },
+              "uniqueItems": true
+            },
+            "skills": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "capability_id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "capability_id",
+                  "path"
+                ],
+                "additionalProperties": false
+              },
+              "uniqueItems": true
+            },
+            "prompts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "capability_id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "capability_id",
+                  "path"
+                ],
+                "additionalProperties": false
+              },
+              "uniqueItems": true
+            },
+            "themes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "capability_id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                  },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "capability_id",
+                  "path"
+                ],
+                "additionalProperties": false
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "extensions",
+            "skills",
+            "prompts",
+            "themes"
+          ],
+          "additionalProperties": false
+        },
+        "resource_manifest_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "capability_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+          },
+          "uniqueItems": true
+        },
+        "identity": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "engine",
+        "source_ids",
+        "package_path",
+        "lock_path",
+        "package_json_digest",
+        "package_lock_digest",
+        "entrypoint",
+        "resource_manifest",
+        "resource_manifest_digest",
+        "capability_ids",
+        "identity"
+      ],
+      "additionalProperties": false
+    },
+    "files": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "directory"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "link"
+              },
+              "target": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "kind",
+              "target"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "file"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "mode": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 511
+              }
+            },
+            "required": [
+              "kind",
+              "sha256",
+              "mode"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "linux-x86_64",
+        "linux-arm64",
+        "darwin-x86_64",
+        "darwin-arm64"
+      ]
+    },
+    "toolchains": {
+      "type": "object",
+      "properties": {
+        "node": {
+          "type": "string",
+          "minLength": 1
+        },
+        "npm": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bun": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "node",
+        "npm",
+        "bun"
+      ],
+      "additionalProperties": false
+    },
+    "toolchain_identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "identity",
+    "lock_identity",
+    "slice_identity",
+    "slice",
+    "files",
+    "platform",
+    "toolchains",
+    "toolchain_identity"
+  ]
+}

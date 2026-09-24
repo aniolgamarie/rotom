@@ -1,0 +1,917 @@
+[
+  {
+    "id": "await-orders",
+    "campaigns": [
+      "G18"
+    ],
+    "layers": [
+      "S",
+      "A",
+      "E"
+    ],
+    "axes": {
+      "boundaries": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10"
+      ],
+      "orders": [
+        "revoke-first",
+        "await-first"
+      ],
+      "events": {
+        "R01": [
+          "input",
+          "stop",
+          "binding-change"
+        ],
+        "R02": [
+          "input",
+          "stop",
+          "account-change",
+          "bucket-change"
+        ],
+        "R03": [
+          "input",
+          "pause",
+          "stop",
+          "shutdown"
+        ],
+        "R04": [
+          "input",
+          "stop",
+          "config-change"
+        ],
+        "R05": [
+          "input",
+          "stop",
+          "ownerEpoch-change"
+        ],
+        "R06": [
+          "stop",
+          "reload",
+          "owner-loss"
+        ],
+        "R07": [
+          "input",
+          "stop",
+          "fork",
+          "switch"
+        ],
+        "R08": [
+          "input",
+          "stop",
+          "switch"
+        ],
+        "R09": [
+          "pause",
+          "stop",
+          "dispose"
+        ],
+        "R10": [
+          "stop",
+          "source-change",
+          "acceptance-change"
+        ]
+      }
+    },
+    "cases": [
+      {
+        "id": "R01.input.revoke-first",
+        "input": "auth refresh barrier；input；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R01.input.await-first",
+        "input": "auth refresh barrier；input；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R01.stop.revoke-first",
+        "input": "auth refresh barrier；stop；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R01.stop.await-first",
+        "input": "auth refresh barrier；stop；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R01.binding-change.revoke-first",
+        "input": "auth refresh barrier；binding-change；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R01.binding-change.await-first",
+        "input": "auth refresh barrier；binding-change；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R02.input.revoke-first",
+        "input": "telemetry barrier；input；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R02.input.await-first",
+        "input": "telemetry barrier；input；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R02.stop.revoke-first",
+        "input": "telemetry barrier；stop；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R02.stop.await-first",
+        "input": "telemetry barrier；stop；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R02.account-change.revoke-first",
+        "input": "telemetry barrier；account-change；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R02.account-change.await-first",
+        "input": "telemetry barrier；account-change；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R02.bucket-change.revoke-first",
+        "input": "telemetry barrier；bucket-change；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R02.bucket-change.await-first",
+        "input": "telemetry barrier；bucket-change；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R03.input.revoke-first",
+        "input": "canary barrier；input；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R03.input.await-first",
+        "input": "canary barrier；input；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R03.pause.revoke-first",
+        "input": "canary barrier；pause；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R03.pause.await-first",
+        "input": "canary barrier；pause；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R03.stop.revoke-first",
+        "input": "canary barrier；stop；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R03.stop.await-first",
+        "input": "canary barrier；stop；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R03.shutdown.revoke-first",
+        "input": "canary barrier；shutdown；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R03.shutdown.await-first",
+        "input": "canary barrier；shutdown；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R04.input.revoke-first",
+        "input": "setModel barrier；input；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R04.input.await-first",
+        "input": "setModel barrier；input；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R04.stop.revoke-first",
+        "input": "setModel barrier；stop；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R04.stop.await-first",
+        "input": "setModel barrier；stop；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R04.config-change.revoke-first",
+        "input": "setModel barrier；config-change；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R04.config-change.await-first",
+        "input": "setModel barrier；config-change；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R05.input.revoke-first",
+        "input": "resource/request permit barrier；input；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R05.input.await-first",
+        "input": "resource/request permit barrier；input；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R05.stop.revoke-first",
+        "input": "resource/request permit barrier；stop；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R05.stop.await-first",
+        "input": "resource/request permit barrier；stop；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R05.ownerEpoch-change.revoke-first",
+        "input": "resource/request permit barrier；ownerEpoch-change；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R05.ownerEpoch-change.await-first",
+        "input": "resource/request permit barrier；ownerEpoch-change；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R06.stop.revoke-first",
+        "input": "native accepted/start ack barrier；stop；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R06.stop.await-first",
+        "input": "native accepted/start ack barrier；stop；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R06.reload.revoke-first",
+        "input": "native accepted/start ack barrier；reload；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R06.reload.await-first",
+        "input": "native accepted/start ack barrier；reload；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R06.owner-loss.revoke-first",
+        "input": "native accepted/start ack barrier；owner-loss；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R06.owner-loss.await-first",
+        "input": "native accepted/start ack barrier；owner-loss；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R07.input.revoke-first",
+        "input": "continuation ack barrier；input；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R07.input.await-first",
+        "input": "continuation ack barrier；input；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R07.stop.revoke-first",
+        "input": "continuation ack barrier；stop；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R07.stop.await-first",
+        "input": "continuation ack barrier；stop；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R07.fork.revoke-first",
+        "input": "continuation ack barrier；fork；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R07.fork.await-first",
+        "input": "continuation ack barrier；fork；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R07.switch.revoke-first",
+        "input": "continuation ack barrier；switch；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R07.switch.await-first",
+        "input": "continuation ack barrier；switch；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R08.input.revoke-first",
+        "input": "compact/retry/follow-up settled barrier；input；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R08.input.await-first",
+        "input": "compact/retry/follow-up settled barrier；input；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R08.stop.revoke-first",
+        "input": "compact/retry/follow-up settled barrier；stop；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R08.stop.await-first",
+        "input": "compact/retry/follow-up settled barrier；stop；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R08.switch.revoke-first",
+        "input": "compact/retry/follow-up settled barrier；switch；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R08.switch.await-first",
+        "input": "compact/retry/follow-up settled barrier；switch；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R09.pause.revoke-first",
+        "input": "workspace snapshot barrier；pause；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R09.pause.await-first",
+        "input": "workspace snapshot barrier；pause；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R09.stop.revoke-first",
+        "input": "workspace snapshot barrier；stop；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R09.stop.await-first",
+        "input": "workspace snapshot barrier；stop；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R09.dispose.revoke-first",
+        "input": "workspace snapshot barrier；dispose；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R09.dispose.await-first",
+        "input": "workspace snapshot barrier；dispose；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R10.stop.revoke-first",
+        "input": "verifier/reviewer completion barrier；stop；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R10.stop.await-first",
+        "input": "verifier/reviewer completion barrier；stop；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R10.source-change.revoke-first",
+        "input": "verifier/reviewer completion barrier；source-change；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R10.source-change.await-first",
+        "input": "verifier/reviewer completion barrier；source-change；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R10.acceptance-change.revoke-first",
+        "input": "verifier/reviewer completion barrier；acceptance-change；revoke-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      },
+      {
+        "id": "R10.acceptance-change.await-first",
+        "input": "verifier/reviewer completion barrier；acceptance-change；await-first",
+        "expected": "撤权先到：若尚未实际调用则零发送/零新增写入；await先完成：仅真实发送先于撤权的既有动作可保留，不允许迟到回调追加。unknown占用保留；记录send与revoke独立时间序列。"
+      }
+    ],
+    "scope_note": "每个实际可达边界展开全部指定事件和两个顺序。接口未支持时记录拒绝范围；若原规范要求该成功路径，则保持实现/认证待办，不以拒绝替代成功。"
+  },
+  {
+    "id": "crash-cuts",
+    "campaigns": [
+      "G12"
+    ],
+    "layers": [
+      "S",
+      "A",
+      "P",
+      "E"
+    ],
+    "axes": {
+      "actions": [
+        "start",
+        "continue",
+        "verify"
+      ],
+      "cuts": [
+        "C0",
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ]
+    },
+    "cases": [
+      {
+        "id": "start.C0",
+        "input": "start在C0生产边界触发中断",
+        "expected": "外部动作0；未提交intent/reservation不得发送。"
+      },
+      {
+        "id": "start.C1",
+        "input": "start在C1生产边界触发中断",
+        "expected": "仅明确未发送才可释放或合法重试；发送状态不明则unknown。"
+      },
+      {
+        "id": "start.C2",
+        "input": "start在C2生产边界触发中断",
+        "expected": "接收端已生效，无ack；对账同动作身份，不得重复调用。"
+      },
+      {
+        "id": "start.C3",
+        "input": "start在C3生产边界触发中断",
+        "expected": "ack已到未持久；补记录，不重复外部动作。"
+      },
+      {
+        "id": "start.C4",
+        "input": "start在C4生产边界触发中断",
+        "expected": "物理终态已确认未结算；补结算且预算只记一次。"
+      },
+      {
+        "id": "start.C5",
+        "input": "start在C5生产边界触发中断",
+        "expected": "结算已提交未通知；只补通知，不重执行或重复计费。"
+      },
+      {
+        "id": "continue.C0",
+        "input": "continue在C0生产边界触发中断",
+        "expected": "外部动作0；未提交intent/reservation不得发送。"
+      },
+      {
+        "id": "continue.C1",
+        "input": "continue在C1生产边界触发中断",
+        "expected": "仅明确未发送才可释放或合法重试；发送状态不明则unknown。"
+      },
+      {
+        "id": "continue.C2",
+        "input": "continue在C2生产边界触发中断",
+        "expected": "接收端已生效，无ack；对账同动作身份，不得重复调用。"
+      },
+      {
+        "id": "continue.C3",
+        "input": "continue在C3生产边界触发中断",
+        "expected": "ack已到未持久；补记录，不重复外部动作。"
+      },
+      {
+        "id": "continue.C4",
+        "input": "continue在C4生产边界触发中断",
+        "expected": "物理终态已确认未结算；补结算且预算只记一次。"
+      },
+      {
+        "id": "continue.C5",
+        "input": "continue在C5生产边界触发中断",
+        "expected": "结算已提交未通知；只补通知，不重执行或重复计费。"
+      },
+      {
+        "id": "verify.C0",
+        "input": "verify在C0生产边界触发中断",
+        "expected": "外部动作0；未提交intent/reservation不得发送。"
+      },
+      {
+        "id": "verify.C1",
+        "input": "verify在C1生产边界触发中断",
+        "expected": "仅明确未发送才可释放或合法重试；发送状态不明则unknown。"
+      },
+      {
+        "id": "verify.C2",
+        "input": "verify在C2生产边界触发中断",
+        "expected": "接收端已生效，无ack；对账同动作身份，不得重复调用。"
+      },
+      {
+        "id": "verify.C3",
+        "input": "verify在C3生产边界触发中断",
+        "expected": "ack已到未持久；补记录，不重复外部动作。"
+      },
+      {
+        "id": "verify.C4",
+        "input": "verify在C4生产边界触发中断",
+        "expected": "物理终态已确认未结算；补结算且预算只记一次。"
+      },
+      {
+        "id": "verify.C5",
+        "input": "verify在C5生产边界触发中断",
+        "expected": "结算已提交未通知；只补通知，不重执行或重复计费。"
+      }
+    ],
+    "scope_note": "18个基本轨迹；S只模拟事件决定，A/P/E必须实际生产调用与独立receiver/verifier副作用。不是把store-worker的18次fake调用记为adapter全覆盖。"
+  },
+  {
+    "id": "request-paths",
+    "campaigns": [
+      "G23"
+    ],
+    "layers": [
+      "S",
+      "A",
+      "P"
+    ],
+    "axes": {
+      "paths": [
+        "primary",
+        "native-retry",
+        "summary",
+        "compaction",
+        "child",
+        "parent-helper",
+        "canary"
+      ],
+      "windows": [
+        "allowed",
+        "denied",
+        "cancel-before-gate",
+        "cancel-after-reserve",
+        "cancel-after-recheck",
+        "cancel-after-receiver"
+      ]
+    },
+    "cases": [
+      {
+        "id": "primary.allowed",
+        "input": "支持路径=primary；切点=allowed",
+        "expected": "准入/许可/身份全合法，一次合法请求对应一个requestAttempt。"
+      },
+      {
+        "id": "primary.denied",
+        "input": "支持路径=primary；切点=denied",
+        "expected": "预算或requiredReserve不足，接收端零请求。"
+      },
+      {
+        "id": "primary.cancel-before-gate",
+        "input": "支持路径=primary；切点=cancel-before-gate",
+        "expected": "取消发生在门控前，零发送。"
+      },
+      {
+        "id": "primary.cancel-after-reserve",
+        "input": "支持路径=primary；切点=cancel-after-reserve",
+        "expected": "取消在预留后实际调用前，重查拒绝且仅确证未发送才释放。"
+      },
+      {
+        "id": "primary.cancel-after-recheck",
+        "input": "支持路径=primary；切点=cancel-after-recheck",
+        "expected": "凭证/遥测/最终准入await返回后、fetch调用前取消，仍不得发送。"
+      },
+      {
+        "id": "primary.cancel-after-receiver",
+        "input": "支持路径=primary；切点=cancel-after-receiver",
+        "expected": "接收端已收到后取消，保留已发送事实，终态未知仍预留；迟到完成不追加请求。"
+      },
+      {
+        "id": "native-retry.allowed",
+        "input": "支持路径=native-retry；切点=allowed",
+        "expected": "准入/许可/身份全合法，一次合法请求对应一个requestAttempt。"
+      },
+      {
+        "id": "native-retry.denied",
+        "input": "支持路径=native-retry；切点=denied",
+        "expected": "预算或requiredReserve不足，接收端零请求。"
+      },
+      {
+        "id": "native-retry.cancel-before-gate",
+        "input": "支持路径=native-retry；切点=cancel-before-gate",
+        "expected": "取消发生在门控前，零发送。"
+      },
+      {
+        "id": "native-retry.cancel-after-reserve",
+        "input": "支持路径=native-retry；切点=cancel-after-reserve",
+        "expected": "取消在预留后实际调用前，重查拒绝且仅确证未发送才释放。"
+      },
+      {
+        "id": "native-retry.cancel-after-recheck",
+        "input": "支持路径=native-retry；切点=cancel-after-recheck",
+        "expected": "凭证/遥测/最终准入await返回后、fetch调用前取消，仍不得发送。"
+      },
+      {
+        "id": "native-retry.cancel-after-receiver",
+        "input": "支持路径=native-retry；切点=cancel-after-receiver",
+        "expected": "接收端已收到后取消，保留已发送事实，终态未知仍预留；迟到完成不追加请求。"
+      },
+      {
+        "id": "summary.allowed",
+        "input": "支持路径=summary；切点=allowed",
+        "expected": "准入/许可/身份全合法，一次合法请求对应一个requestAttempt。"
+      },
+      {
+        "id": "summary.denied",
+        "input": "支持路径=summary；切点=denied",
+        "expected": "预算或requiredReserve不足，接收端零请求。"
+      },
+      {
+        "id": "summary.cancel-before-gate",
+        "input": "支持路径=summary；切点=cancel-before-gate",
+        "expected": "取消发生在门控前，零发送。"
+      },
+      {
+        "id": "summary.cancel-after-reserve",
+        "input": "支持路径=summary；切点=cancel-after-reserve",
+        "expected": "取消在预留后实际调用前，重查拒绝且仅确证未发送才释放。"
+      },
+      {
+        "id": "summary.cancel-after-recheck",
+        "input": "支持路径=summary；切点=cancel-after-recheck",
+        "expected": "凭证/遥测/最终准入await返回后、fetch调用前取消，仍不得发送。"
+      },
+      {
+        "id": "summary.cancel-after-receiver",
+        "input": "支持路径=summary；切点=cancel-after-receiver",
+        "expected": "接收端已收到后取消，保留已发送事实，终态未知仍预留；迟到完成不追加请求。"
+      },
+      {
+        "id": "compaction.allowed",
+        "input": "支持路径=compaction；切点=allowed",
+        "expected": "准入/许可/身份全合法，一次合法请求对应一个requestAttempt。"
+      },
+      {
+        "id": "compaction.denied",
+        "input": "支持路径=compaction；切点=denied",
+        "expected": "预算或requiredReserve不足，接收端零请求。"
+      },
+      {
+        "id": "compaction.cancel-before-gate",
+        "input": "支持路径=compaction；切点=cancel-before-gate",
+        "expected": "取消发生在门控前，零发送。"
+      },
+      {
+        "id": "compaction.cancel-after-reserve",
+        "input": "支持路径=compaction；切点=cancel-after-reserve",
+        "expected": "取消在预留后实际调用前，重查拒绝且仅确证未发送才释放。"
+      },
+      {
+        "id": "compaction.cancel-after-recheck",
+        "input": "支持路径=compaction；切点=cancel-after-recheck",
+        "expected": "凭证/遥测/最终准入await返回后、fetch调用前取消，仍不得发送。"
+      },
+      {
+        "id": "compaction.cancel-after-receiver",
+        "input": "支持路径=compaction；切点=cancel-after-receiver",
+        "expected": "接收端已收到后取消，保留已发送事实，终态未知仍预留；迟到完成不追加请求。"
+      },
+      {
+        "id": "child.allowed",
+        "input": "支持路径=child；切点=allowed",
+        "expected": "准入/许可/身份全合法，一次合法请求对应一个requestAttempt。"
+      },
+      {
+        "id": "child.denied",
+        "input": "支持路径=child；切点=denied",
+        "expected": "预算或requiredReserve不足，接收端零请求。"
+      },
+      {
+        "id": "child.cancel-before-gate",
+        "input": "支持路径=child；切点=cancel-before-gate",
+        "expected": "取消发生在门控前，零发送。"
+      },
+      {
+        "id": "child.cancel-after-reserve",
+        "input": "支持路径=child；切点=cancel-after-reserve",
+        "expected": "取消在预留后实际调用前，重查拒绝且仅确证未发送才释放。"
+      },
+      {
+        "id": "child.cancel-after-recheck",
+        "input": "支持路径=child；切点=cancel-after-recheck",
+        "expected": "凭证/遥测/最终准入await返回后、fetch调用前取消，仍不得发送。"
+      },
+      {
+        "id": "child.cancel-after-receiver",
+        "input": "支持路径=child；切点=cancel-after-receiver",
+        "expected": "接收端已收到后取消，保留已发送事实，终态未知仍预留；迟到完成不追加请求。"
+      },
+      {
+        "id": "parent-helper.allowed",
+        "input": "支持路径=parent-helper；切点=allowed",
+        "expected": "准入/许可/身份全合法，一次合法请求对应一个requestAttempt。"
+      },
+      {
+        "id": "parent-helper.denied",
+        "input": "支持路径=parent-helper；切点=denied",
+        "expected": "预算或requiredReserve不足，接收端零请求。"
+      },
+      {
+        "id": "parent-helper.cancel-before-gate",
+        "input": "支持路径=parent-helper；切点=cancel-before-gate",
+        "expected": "取消发生在门控前，零发送。"
+      },
+      {
+        "id": "parent-helper.cancel-after-reserve",
+        "input": "支持路径=parent-helper；切点=cancel-after-reserve",
+        "expected": "取消在预留后实际调用前，重查拒绝且仅确证未发送才释放。"
+      },
+      {
+        "id": "parent-helper.cancel-after-recheck",
+        "input": "支持路径=parent-helper；切点=cancel-after-recheck",
+        "expected": "凭证/遥测/最终准入await返回后、fetch调用前取消，仍不得发送。"
+      },
+      {
+        "id": "parent-helper.cancel-after-receiver",
+        "input": "支持路径=parent-helper；切点=cancel-after-receiver",
+        "expected": "接收端已收到后取消，保留已发送事实，终态未知仍预留；迟到完成不追加请求。"
+      },
+      {
+        "id": "canary.allowed",
+        "input": "支持路径=canary；切点=allowed",
+        "expected": "准入/许可/身份全合法，一次合法请求对应一个requestAttempt。"
+      },
+      {
+        "id": "canary.denied",
+        "input": "支持路径=canary；切点=denied",
+        "expected": "预算或requiredReserve不足，接收端零请求。"
+      },
+      {
+        "id": "canary.cancel-before-gate",
+        "input": "支持路径=canary；切点=cancel-before-gate",
+        "expected": "取消发生在门控前，零发送。"
+      },
+      {
+        "id": "canary.cancel-after-reserve",
+        "input": "支持路径=canary；切点=cancel-after-reserve",
+        "expected": "取消在预留后实际调用前，重查拒绝且仅确证未发送才释放。"
+      },
+      {
+        "id": "canary.cancel-after-recheck",
+        "input": "支持路径=canary；切点=cancel-after-recheck",
+        "expected": "凭证/遥测/最终准入await返回后、fetch调用前取消，仍不得发送。"
+      },
+      {
+        "id": "canary.cancel-after-receiver",
+        "input": "支持路径=canary；切点=cancel-after-receiver",
+        "expected": "接收端已收到后取消，保留已发送事实，终态未知仍预留；迟到完成不追加请求。"
+      }
+    ],
+    "scope_note": "42个路径/窗口组合。不存在预算可控接口的parent helper只能拒绝：allowed行的预期是该路径明确不支持且零请求，同时独立普通用户请求的正例仍需成功。其他未实现的规范成功路径保持待办，不能一律拒绝来取得严格自动兜底认证。"
+  },
+  {
+    "id": "stream-terminals",
+    "campaigns": [
+      "G17",
+      "G23"
+    ],
+    "layers": [
+      "S",
+      "A",
+      "P",
+      "E"
+    ],
+    "axes": {
+      "http": [
+        200
+      ],
+      "terminals": [
+        "complete",
+        "error",
+        "truncated",
+        "timeout"
+      ]
+    },
+    "cases": [
+      {
+        "id": "complete",
+        "input": "HTTP200，流终态=complete",
+        "expected": "完整真实终态后才能确认恢复；一个attempt正确结算。"
+      },
+      {
+        "id": "error",
+        "input": "HTTP200，流终态=error",
+        "expected": "HTTP200但流内error，恢复失败且原错误传播。"
+      },
+      {
+        "id": "truncated",
+        "input": "HTTP200，流终态=truncated",
+        "expected": "缺完整终态，不标恢复；按真实已发状态保留/结算。"
+      },
+      {
+        "id": "timeout",
+        "input": "HTTP200，流终态=timeout",
+        "expected": "有限requestTimeout生效，先终止对账，unknown不立即重发。"
+      }
+    ],
+    "scope_note": "完整成功正例与三类失败分别执行，HTTP状态不能替代SDK流终态。"
+  },
+  {
+    "id": "lifecycle-preservation",
+    "campaigns": [
+      "G01",
+      "G11",
+      "G13"
+    ],
+    "layers": [
+      "P",
+      "E"
+    ],
+    "axes": {
+      "transitions": [
+        "upgrade",
+        "disable",
+        "restart",
+        "rollback"
+      ],
+      "sendFacts": [
+        "not-sent",
+        "terminal-confirmed",
+        "unknown"
+      ]
+    },
+    "cases": [
+      {
+        "id": "upgrade.not-sent",
+        "input": "upgrade时intent为not-sent，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "upgrade.terminal-confirmed",
+        "input": "upgrade时intent为terminal-confirmed，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "upgrade.unknown",
+        "input": "upgrade时intent为unknown，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "disable.not-sent",
+        "input": "disable时intent为not-sent，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "disable.terminal-confirmed",
+        "input": "disable时intent为terminal-confirmed，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "disable.unknown",
+        "input": "disable时intent为unknown，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "restart.not-sent",
+        "input": "restart时intent为not-sent，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "restart.terminal-confirmed",
+        "input": "restart时intent为terminal-confirmed，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "restart.unknown",
+        "input": "restart时intent为unknown，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "rollback.not-sent",
+        "input": "rollback时intent为not-sent，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "rollback.terminal-confirmed",
+        "input": "rollback时intent为terminal-confirmed，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      },
+      {
+        "id": "rollback.unknown",
+        "input": "rollback时intent为unknown，同时保留workspace及累计预算",
+        "expected": "新连接核对所有业务主键/used/reserved/claims/工作区引用；仅确证未发送/终止才相应释放；unknown保持。回退只限同次维护备份，不能覆盖新增事实。"
+      }
+    ],
+    "scope_note": "12个基本组合；升级和回退受已有维护协议约束，不把取消当现场回滚。"
+  }
+]

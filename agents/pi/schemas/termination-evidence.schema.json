@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "kind": {
+      "enum": [
+        "never-started",
+        "terminated"
+      ]
+    },
+    "execution_lease_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "process_identities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "enum": [
+              "linux",
+              "darwin"
+            ]
+          },
+          "boot_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pid": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "ppid": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pgid": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "start_time": {
+            "type": "string",
+            "minLength": 1
+          },
+          "namespace": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "uid": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "platform",
+          "boot_id",
+          "pid",
+          "ppid",
+          "pgid",
+          "start_time",
+          "namespace",
+          "uid"
+        ],
+        "additionalProperties": false
+      },
+      "uniqueItems": true
+    },
+    "external_work_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "recorded_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "allocation_journal_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "grant_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "verified": {
+      "const": true
+    },
+    "evidence_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "schema_version",
+    "kind",
+    "execution_lease_id",
+    "process_identities",
+    "external_work_ids",
+    "recorded_at",
+    "allocation_journal_digest",
+    "grant_generation",
+    "verified",
+    "evidence_digest"
+  ],
+  "additionalProperties": false
+}

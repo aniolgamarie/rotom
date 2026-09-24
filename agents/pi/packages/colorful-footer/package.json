@@ -1,0 +1,14 @@
+{
+  "name": "starter-pi-colorful-footer",
+  "version": "0.1.0",
+  "description": "多彩 statusbar — 每个指标独立着色，信息量与内置 footer 一致",
+  "type": "module",
+  "keywords": ["pi-package", "pi", "pi-coding-agent", "extension", "footer"],
+  "private": true,
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}

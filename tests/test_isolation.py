@@ -26,6 +26,7 @@ def test_isolated_environment_does_not_copy_parent(isolated_environment, monkeyp
     "HOME", "DSH_HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME",
     "XDG_STATE_HOME", "TMPDIR", "TMP", "TEMP", "PATH",
     "PYTHONDONTWRITEBYTECODE", "PYTHONUTF8",
+    "PI_CODING_AGENT_DIR", "PI_CODING_AGENT_SESSION_DIR", "CODEX_HOME",
   }
   assert "ROTOM_PARENT_TEST_CANARY" not in os.environ
   # pytest 在 fixture setup 后写入当前测试名，不是父进程环境继承。

@@ -1,0 +1,65 @@
+# 私人 local.toml 示例。替换虚构模型、路径和检查程序后执行 validate/plan/apply。
+# 将凭据填入私人 local.toml 的 secrets 段；不要提交。真实依赖锁与平台验收仍需完成。
+schema_version = 1
+[machine]
+id = "pi-managed-workstation"
+default_profile = "pi-managed"
+[overrides.providers.example]
+protocol = "openai-compatible"
+base_url = "https://example.invalid/v1"
+auth_kind = "api-key"
+credential_ref = "secret:example_key"
+[overrides.models.worker]
+provider = "example"
+remote_id = "fictional-managed-model"
+input = ["text"]
+context_window = 32768
+max_output_tokens = 4096
+[overrides.profiles.pi-managed]
+providers = ["example"]
+models = ["worker"]
+[overrides.profiles.pi-managed.roles]
+main = "worker"
+task_keeper_reader = "worker"
+task_keeper_writer = "worker"
+task_keeper_reviewer = "worker"
+# 开启第二视角时另设 model，并绑定 second_view；不能依赖默认主模型。
+[overrides.profiles.pi-managed.agent_options.model_settings.worker]
+reasoning = true
+[overrides.profiles.pi-managed.agent_options.paths.roots.project]
+path = "/absolute/path/to/project"
+purpose = "project"
+[overrides.profiles.pi-managed.agent_options.network.routes.direct]
+mode = "direct"
+provider_ids = ["example"]
+# 本机显式选用候选策略；默认 project-default 仍为 deny。
+[overrides.profiles.pi-managed.agent_options.permissions]
+policy_ref = "task-keeper-candidate"
+[overrides.profiles.pi-managed.agent_options.task_keeper]
+enabled = true
+project_root = "project"
+check_ids = ["project-build", "project-tests"]
+second_view_enabled = false
+[overrides.profiles.pi-managed.agent_options.checks.project-build]
+executable = "/absolute/path/to/trusted-build"
+args = ["--foreground"]
+project_root = "project"
+timeout_seconds = 300
+foreground = true
+kind = "build"
+parser = "exit-code"
+minimum_tests = 1
+inputs = ["build-config.json"]
+[overrides.profiles.pi-managed.agent_options.checks.project-tests]
+executable = "/absolute/path/to/trusted-python"
+args = ["-m", "pytest", "-q"]
+project_root = "project"
+timeout_seconds = 300
+foreground = true
+kind = "tests"
+parser = "pytest"
+minimum_tests = 1
+inputs = ["pyproject.toml"]
+
+[secrets]
+example_key = ""

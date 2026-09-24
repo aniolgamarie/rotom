@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from dataclasses import dataclass, field
+from functools import lru_cache
 import json
 from pathlib import Path
 from typing import Callable
@@ -39,6 +40,7 @@ class AdapterPolicy:
   defaults: dict = field(default_factory=dict, repr=False)
   plugins: dict[str, dict] = field(default_factory=dict, repr=False)
   credential_targets: frozenset[str] = field(default_factory=frozenset, repr=False)
+  reserved_environment: frozenset[str] = field(default_factory=frozenset, repr=False)
 
 
 @dataclass(frozen=True)
@@ -54,6 +56,7 @@ class AdapterSchemaBundle:
   validate: Callable[[str, dict], None] = field(repr=False)
   policy: Callable[[dict], AdapterPolicy] | None = field(default=None, repr=False)
   authentication_claims: Callable[[dict], tuple[AuthenticationClaim, ...]] | None = field(default=None, repr=False)
+  validate_selected: Callable[[dict], None] | None = field(default=None, repr=False)
 
 
 @dataclass(frozen=True)
@@ -94,9 +97,18 @@ def _local_target(schema: dict, ref: str) -> dict:
 
 
 def _strict_schema(schema: dict) -> None:
+  # 按内容缓存，调用方原地修改注入 schema 后仍会重新检查；限制缓存大小。
+  _strict_schema_serialized(json.dumps(schema, sort_keys=True, allow_nan=False, separators=(",", ":")))
+
+
+@lru_cache(maxsize=128)
+def _strict_schema_serialized(serialized: str) -> None:
   """仅支持显式类型/本地引用、闭合对象及已列出的 2020-12 关键字。"""
+  schema = json.loads(serialized)
   meta = Draft202012Validator(Draft202012Validator.META_SCHEMA, registry=_LOCAL_REGISTRY,
                               format_checker=Draft202012Validator.FORMAT_CHECKER)
+  # 元 schema 自身递归验证全部子节点，不需在每个节点重新验证整棵子树。
+  meta.validate(schema)
   visited = set()
 
   def visit(node):
@@ -107,9 +119,11 @@ def _strict_schema(schema: dict) -> None:
     visited.add(id(node))
     if "$schema" in node and node["$schema"] != "https://json-schema.org/draft/2020-12/schema":
       raise ValueError()
-    meta.validate(node)
     if "$ref" in node:
-      visit(_local_target(schema, node["$ref"]))
+      target = _local_target(schema, node["$ref"])
+      # 引用可指向 default 等注解内部；根元 schema 不会把该值当 schema 验证。
+      meta.validate(target)
+      visit(target)
     elif node.get("type") not in ("object", "array", "string", "integer", "number", "boolean", "null"):
       raise ValueError()
     if node.get("type") == "object":
@@ -155,7 +169,8 @@ def _bundle(context: AdapterSchemas | None, adapter_id: str | None) -> AdapterSc
     if (not isinstance(result, AdapterSchemaBundle)
         or result.declaration.adapter_id != adapter_id
         or set(result.documents) != set(_ADAPTER_KINDS)
-        or not callable(result.validate)):
+        or not callable(result.validate)
+        or result.validate_selected is not None and not callable(result.validate_selected)):
       raise ValueError()
     for document in result.documents.values():
       _strict_schema(document)

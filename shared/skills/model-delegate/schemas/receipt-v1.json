@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://model-delegate.dev_tool.starter/schemas/receipt-v1.json",
+  "title": "Model Delegate Receipt v1",
+  "description": "终态 receipt schema，记录 run 的最终状态和结果",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "runDir", "status", "terminal", "timestamp", "backend", "cwd", "completion"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1",
+      "description": "Schema 版本，固定为 '1'"
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Run 唯一标识符"
+    },
+    "runDir": {
+      "type": "string",
+      "format": "uri-reference",
+      "description": "Run 目录的绝对路径"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "failed", "cancelled", "timeout", "idle_timeout", "incomplete"],
+      "description": "Run 最终状态"
+    },
+    "terminal": {
+      "type": "boolean",
+      "const": true,
+      "description": "是否为终态 receipt"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Receipt 生成时间（ISO 8601）"
+    },
+    "backend": {
+      "type": "object",
+      "required": ["id", "provider", "model", "resumeToken"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Backend 标识符（如 'pi', 'test-fake'）"
+        },
+        "provider": {
+          "type": "string",
+          "description": "Provider 名称（如 'bailian', 'openai'）"
+        },
+        "model": {
+          "type": "string",
+          "description": "Model 名称（如 'glm-5', 'gpt-4'）"
+        },
+        "resumeToken": {
+          "type": "string",
+          "description": "Resume token（session id），可为空字符串"
+        }
+      },
+      "additionalProperties": false
+    },
+    "cwd": {
+      "type": "string",
+      "format": "uri-reference",
+      "description": "工作目录的绝对路径"
+    },
+    "completion": {
+      "type": "object",
+      "required": ["status", "failure_mode", "resume_token", "resumable", "final_text", "feedback_quality", "usage", "has_agent_end"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["completed", "failed", "cancelled", "incomplete"],
+          "description": "Completion 状态"
+        },
+        "failure_mode": {
+          "type": "string",
+          "enum": ["", "auth", "network", "invalid_input", "protocol", "invalid_output", "cancelled"],
+          "description": "失败模式分类"
+        },
+        "resume_token": {
+          "type": "string",
+          "description": "Resume token"
+        },
+        "resumable": {
+          "type": "boolean",
+          "description": "是否可 resume"
+        },
+        "final_text": {
+          "type": "string",
+          "description": "最终输出文本"
+        },
+        "feedback_quality": {
+          "type": "string",
+          "enum": ["structured", "none"],
+          "description": "Feedback 质量"
+        },
+        "usage": {
+          "type": "object",
+          "description": "Token 使用统计",
+          "properties": {
+            "input": {"type": "integer"},
+            "output": {"type": "integer"},
+            "totalTokens": {"type": "integer"}
+          }
+        },
+        "has_agent_end": {
+          "type": "boolean",
+          "description": "是否收到 agent_end 事件"
+        }
+      },
+      "additionalProperties": false
+    },
+    "resumedFrom": {
+      "type": "string",
+      "format": "uri-reference",
+      "description": "如果是 resume，记录来源 run 目录"
+    }
+  },
+  "additionalProperties": false
+}

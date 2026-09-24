@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 7,
+  "enabled": true,
+  "features": {
+    "interactiveRecovery": true,
+    "managedWorkflows": false,
+    "crossProviderFailover": false
+  },
+  "usage": {
+    "enabled": true
+  },
+  "recovery": {
+    "primaryRoute": null,
+    "profileRef": "interactive"
+  },
+  "executionProfiles": {
+    "interactive": {
+      "tools": [
+        "read",
+        "write",
+        "edit"
+      ],
+      "requiredCapabilities": [
+        "settled",
+        "continuationIdentity",
+        "termination"
+      ],
+      "timeoutMs": 600000,
+      "maxModelTurns": 30,
+      "toolTimeoutMs": 30000,
+      "thinking": "off"
+    }
+  }
+}

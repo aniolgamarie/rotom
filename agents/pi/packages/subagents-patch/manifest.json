@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "source_url": "https://github.com/tintinweb/pi-subagents",
+  "source_commit": "e955e29c51b7a6cce37e1108cd2d6c57a77e151c",
+  "source_version": "0.19.0",
+  "derived_version": "0.19.0-agentcfg.1",
+  "protocol": "agentcfg-managed-executor-v1",
+  "patch": "managed-executor.patch",
+  "patch_sha256": "4321cac1e2a858ffcfbd6b61ff3e00610775ee1aacf89f39282079c4225c2f34",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "before_sha256": "d06e3c3a8b8f6f849ebc929819cbd8140047a16c06635cef9882e5e9ec18c03a",
+      "after_sha256": "bf4197ad0419e3404b07f232f6cc0802183c6225428ea409761a99b2df46cd52"
+    },
+    {
+      "path": "NOTICE.agentcfg.md",
+      "before_sha256": null,
+      "after_sha256": "ceea7dc65837664757e16c480c38bd6f1a9d71fb18df72bb7190f80d1c4e7271"
+    },
+    {
+      "path": "README.md",
+      "before_sha256": "81c3528ba37852ac36b263db3030a8d39c60749d4d387f8c4f71b5179a409823",
+      "after_sha256": "1a4424d54738c6d2e550533da01e7ea32c052e3c78bac13ac571c7e7e79a1009"
+    },
+    {
+      "path": "docs/rpc.md",
+      "before_sha256": "52a312de644b6b9b0512ca53ad1679aa9edb65eda1230b9fcd40c6bbceb4eb52",
+      "after_sha256": "7881e8860468cc157a22ef8cd22f96b29d59930199d403cf2ee0ed4cf8f5878e"
+    },
+    {
+      "path": "docs/workflows.md",
+      "before_sha256": "2e8ddc13f964bfa24cbfbf2279b7d637c8eea9001daa9e69c1291112a73309a7",
+      "after_sha256": "57dd3eb3ed0e432191c7f27b2351b76f9fe4f7b103834c77fba05c973d9eb6c2"
+    },
+    {
+      "path": "package.json",
+      "before_sha256": "200babd811ba6b8d1d46e36fa599869fff0a62ba584469cabdc5b9d8bbb98071",
+      "after_sha256": "41146b89966e6520ebb8ad1f06dc31046d2ab99a7969e6f1be9b15fe25c28805"
+    },
+    {
+      "path": "scripts/test-mock.mjs",
+      "before_sha256": null,
+      "after_sha256": "ae543edd1e9254738adfdbb0a9e0fafca191d878ed575a825a77d47ddb9a2075"
+    },
+    {
+      "path": "scripts/test-native.mjs",
+      "before_sha256": null,
+      "after_sha256": "fe1ca166531374c5f53af2b48c008df945db6c37335a2784068f653a28303c4e"
+    },
+    {
+      "path": "src/agent-manager.ts",
+      "before_sha256": "20c753c13636dc5a2e31f51a4da8144aed04a97e0ad48cc99c7ad988e4451a2a",
+      "after_sha256": "da03e9bdfa87bc8d081fc7d9010926c36524fb9eac94f15c71be3dbbe2791ba9"
+    },
+    {
+      "path": "src/agent-runner.ts",
+      "before_sha256": "88e61481fd627254ff3ac0a27e1991136c41e103fac847dd06444c8ac3d3eab1",
+      "after_sha256": "37ea30692794d8c39732ca041e6509e96460b81ff49e07577600584444963994"
+    },
+    {
+      "path": "src/agent-types.ts",
+      "before_sha256": "1ff6db2d657d78f57cf7619829b319835b9cf9cf7e22dae839239995b4cb6212",
+      "after_sha256": "09275d4d80452cd2dbdd40f83767a0a782375dedd66606b21e4cc294c76655d3"
+    },
+    {
+      "path": "src/agentcfg-config.ts",
+      "before_sha256": null,
+      "after_sha256": "2886a334fd72fa738207145400772183fb798901403abf282b55688433ae83b9"
+    },
+    {
+      "path": "src/agentcfg-managed.ts",
+      "before_sha256": null,
+      "after_sha256": "3c6912e4486fccd2c23a18b84cbb037803d3abced2176f8c7a486a004488c0e4"
+    },
+    {
+      "path": "src/custom-agents.ts",
+      "before_sha256": "23a2403a6c0ce2d6aae6674212796881108fe4775d17667a01f65e29d472dd24",
+      "after_sha256": "6134ef374e79d97a69477bdc3a3c57dd07d9db5bd6fad926bc2187adf8f25608"
+    },
+    {
+      "path": "src/index.ts",
+      "before_sha256": "622d44b11e615ec0509f13e858dcad4a40789e4613c03583930327f15d9ec6a9",
+      "after_sha256": "c712d8757e70d6200a7ab6ab684e342e1c55e8a0573302e916a9265ad5056548"
+    },
+    {
+      "path": "src/model-resolver.ts",
+      "before_sha256": "b3a8dce0b0a0dbe24d0c8f607c81e3e3bde8daf9c5072e39e2b6deb8cbc01beb",
+      "after_sha256": "68ccb7e53374eeddda69d74e2f9dd28aa5b27f645232010bff962a1741f3e7db"
+    },
+    {
+      "path": "src/nested-tools.ts",
+      "before_sha256": "2bf8e6b802baceec391d0d1662cb4b216fdf9a3c02ec7fa12922cc4345c6d5b7",
+      "after_sha256": "aa655eb41220a6218c783c6d0841cc73e34b3219cc6a28faa5e7c22f45de5ffd"
+    },
+    {
+      "path": "src/settings.ts",
+      "before_sha256": "141a17410bfc7632386779d1c599f511cdd7e95b502db35cf6d5a6ce7b6b4ac3",
+      "after_sha256": "f27a78654e86cbf83735de4f475c4434dd46a6ec8aa050d5f060550ea3ea1700"
+    },
+    {
+      "path": "src/worktree.ts",
+      "before_sha256": "60228fee5b2af99737674bf66b998c49dc5edec5fa8f05280ddc0c423c78d69c",
+      "after_sha256": "05c2db1cecd179373bcdaaf0a7ed587c7d1cf4ec83a0b8ac947f7a65a1bd2aa1"
+    }
+  ],
+  "validation": {
+    "mock": "see docs/acceptance/pi-managed-mock.md",
+    "native": "not-run",
+    "live": "not-run"
+  }
+}

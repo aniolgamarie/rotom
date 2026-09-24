@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "default": {
+      "type": "string",
+      "enum": [
+        "deny"
+      ]
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "file",
+              "command"
+            ]
+          },
+          "effect": {
+            "type": "string",
+            "enum": [
+              "allow",
+              "deny"
+            ]
+          },
+          "tool_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "read",
+                "list",
+                "search",
+                "write",
+                "create",
+                "delete",
+                "rename",
+                "execute"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "root_ref": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+          },
+          "relative_path": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$"
+          },
+          "match": {
+            "type": "string",
+            "enum": [
+              "exact",
+              "subtree"
+            ]
+          },
+          "command_ref": {
+            "type": "string",
+            "pattern": "^(check|tool):[a-z][a-z0-9_-]{0,63}$"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "effect",
+          "tool_ids",
+          "operations"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "file"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "root_ref",
+                "relative_path",
+                "match"
+              ],
+              "not": {
+                "required": [
+                  "command_ref"
+                ]
+              },
+              "properties": {
+                "operations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "read",
+                      "list",
+                      "search",
+                      "write",
+                      "create",
+                      "delete",
+                      "rename"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              }
+            },
+            "else": {
+              "required": [
+                "command_ref"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "root_ref"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "relative_path"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "match"
+                    ]
+                  }
+                ]
+              },
+              "properties": {
+                "operations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "execute"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              }
+            }
+          }
+        ]
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "default",
+    "rules"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,10 @@
+schema_version = 1
+[protocols]
+openai-compatible = "openai-completions"
+openai-responses = "openai-responses"
+[oauth.codex]
+route = "openai-codex"
+owner = "pi-native"
+[oauth.cursor]
+route = "cursor"
+owner = "pi-cursor"

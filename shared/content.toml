@@ -11,3 +11,15 @@ path = "shared/rules/cpp-local-search.md"
 path = "shared/skills/repo-navigation"
 [skills.maintain-agent-config]
 path = "shared/skills/maintain-agent-config"
+
+[skills.cpp-database-kernel]
+path = "shared/skills/cpp-database-kernel"
+
+[skills.neovim-plugin-development]
+path = "shared/skills/neovim-plugin-development"
+
+[skills.safe-linux-scripting]
+path = "shared/skills/safe-linux-scripting"
+
+[skills.model-delegate]
+path = "shared/skills/model-delegate"

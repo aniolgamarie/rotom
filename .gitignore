@@ -37,3 +37,45 @@ node_modules/
 /.env.*
 !/.env.example
 !/.env.*.example
+
+# Pi/TypeScript/C 开发产物与临时资料
+coverage/
+*.log
+*.tmp
+*.swp
+*.o
+*.a
+*.so
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.env*
+!.env.example
+!.env.*.example
+# 此目录保存可审阅构建配方/补丁，并非编译输出。
+!agents/pi/build/
+!agents/pi/build/**
+# 固定npm来源提供的可执行分发文件属于vendor源码，必须随仓库迁移。
+!agents/pi/packages/permission-system-vendor/dist/
+!agents/pi/packages/permission-system-vendor/dist/**
+!agents/pi/packages/btw-vendor/dist/
+!agents/pi/packages/btw-vendor/dist/**
+!agents/pi/packages/smart-compact-vendor/dist/
+!agents/pi/packages/smart-compact-vendor/dist/**
+!agents/pi/packages/readseek-vendor/dist/
+!agents/pi/packages/readseek-vendor/dist/**
+!agents/pi/packages/mcp-vendor/dist/
+!agents/pi/packages/mcp-vendor/dist/**
+!agents/pi/packages/rules-vendor/dist/
+!agents/pi/packages/rules-vendor/dist/**
+!agents/pi/packages/openspec-resources/generation-source/dist/
+!agents/pi/packages/openspec-resources/generation-source/dist/**
+
+# 固定 URL 的大型资产由 fetch-pi-assets.py 获取并校验；源码 vendor 包仍入库。
+/locks/pi/vendor/codex-*.tgz
+/locks/pi/vendor/*.gguf
+
+# 本机工具设置和误以字面量 ~ 创建的用户状态目录。
+/.qoder/settings.local.json
+/~/

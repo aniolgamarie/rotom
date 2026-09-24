@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""已冻结的前台检查入口；先验证监督授权，再进入无网络验证器。"""
+
+import argparse
+import json
+import os
+from pathlib import Path
+import sys
+import uuid
+
+# 已密封运行包不能在导入时生成 __pycache__。
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from agentcfg.pi_checks import check_environment, linux_verifier_argv, macos_verifier_policy
+from agentcfg.pi_control import request
+from agentcfg.storage import Tree, ensure_private
+
+
+def main():
+  parser = argparse.ArgumentParser(allow_abbrev=False)
+  parser.add_argument("--input", type=Path, required=True)
+  args = parser.parse_args()
+  with Tree(args.input.parent) as tree:
+    raw = tree.read(args.input.name)
+  value = json.loads(raw[0])
+  if set(value) != {"check", "temporary", "lease_id", "grant_generation", "denied_paths"}:
+    return 2
+  check = value["check"]
+  proof = request(os.environ["AGENTCFG_SUPERVISOR_ENDPOINT"], os.environ["AGENTCFG_SUPERVISOR_CAPABILITY"],
+    {"schema_version": 1, "request_id": uuid.uuid4().hex, "method": "authorize", "args": {"lease_id": value["lease_id"], "grant_generation": value["grant_generation"]}})
+  if not proof.get("ok") or not proof.get("result", {}).get("valid"):
+    return 4
+  temporary = Path(value["temporary"])
+  ensure_private(temporary)
+  if sys.platform == "linux":
+    denied_fds = {}
+    for item in value["denied_paths"]:
+      path = Path(item)
+      if path.is_file() and not path.is_symlink():
+        fd = os.memfd_create("agentcfg-denied", 0)
+        os.set_inheritable(fd, True)
+        denied_fds[str(path)] = fd
+    argv = linux_verifier_argv(check, temporary=temporary, denied_paths=value["denied_paths"], denied_fds=denied_fds)
+  elif sys.platform == "darwin":
+    terminal = os.ttyname(0) if check.get("terminal_size") is not None and os.isatty(0) else None
+    profile = macos_verifier_policy(check, temporary=temporary, denied_paths=value["denied_paths"], terminal_device=terminal)
+    with Tree(temporary) as tree:
+      tree.write_state("check.sb", profile.encode())
+    argv = ("/usr/bin/sandbox-exec", "-f", str(temporary / "check.sb"), *check["argv"])
+  else:
+    return 5
+  os.chdir(check["cwd"])
+  os.execvpe(argv[0], argv, check_environment(check, temporary))
+  return 6
+
+
+if __name__ == "__main__":
+  try:
+    sys.exit(main())
+  except Exception:
+    sys.stderr.write("受管项目检查未执行或验证器失败；请核对授权、冻结绑定与平台能力。\n")
+    sys.exit(5)

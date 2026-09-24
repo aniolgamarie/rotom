@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "package": "@narumitw/pi-btw",
+  "version": "0.55.3",
+  "resolved": "https://registry.npmjs.org/@narumitw/pi-btw/-/pi-btw-0.55.3.tgz",
+  "integrity": "sha512-+rqwFMS7ACuEdvPSsL1g9erfjfo2SV8dCudkKCGjgGFq7MtyQ9+2cl8iPBaMec1ydVG4Reesx0CnayNXJyjT0Q==",
+  "adaptation": "agentcfg-runtime-adapted",
+  "files": [
+    {
+      "source_path": "LICENSE",
+      "source_sha256": "5293e92f073f47012e723990a8605431b438757e9c6eb00c89868b1203e157da",
+      "target_path": "agents/pi/packages/btw-vendor/LICENSE"
+    },
+    {
+      "source_path": "README.md",
+      "source_sha256": "1dc343ef76e5d383fcfd92a1d94306031cbe6111be0c373c39e78f7cb7d4028a",
+      "target_path": "agents/pi/packages/btw-vendor/README.md"
+    },
+    {
+      "source_path": "dist/index.ts",
+      "source_sha256": "28d2dfa17169e6f128dea80d01881c7fd8ccf06cd5ea1970204e863fa48fbd42",
+      "target_path": "agents/pi/packages/btw-vendor/dist/index.ts"
+    },
+    {
+      "source_path": "dist/index.ts.map",
+      "source_sha256": "c8ebd41f27325c0da1cb7e1598383158bcb0e5969d716ff3f42ffbc1e4532282",
+      "target_path": "agents/pi/packages/btw-vendor/dist/index.ts.map"
+    },
+    {
+      "source_path": "package.json",
+      "source_sha256": "cdc1ad7f8b23f505a882c254ea2891eb193cda3aad5fccf558a0966fbbe3ff33",
+      "target_path": "agents/pi/packages/btw-vendor/package.json"
+    },
+    {
+      "source_path": "src/bring-to-main.ts",
+      "source_sha256": "5d9e5a8d3f3a7668570ac9adde6eaf200336342f316c63ec89eb939e56c8afe2",
+      "target_path": "agents/pi/packages/btw-vendor/src/bring-to-main.ts"
+    },
+    {
+      "source_path": "src/btw.ts",
+      "source_sha256": "1e519db38d0c4fdf5a7c9229889917a6ea242886fd702d2424cddf4e0950009f",
+      "target_path": "agents/pi/packages/btw-vendor/src/btw.ts"
+    },
+    {
+      "source_path": "src/fullscreen-ui.ts",
+      "source_sha256": "9e6a3c0e88390553c0ebbc833f82430699718142914f4db97047d094eb0cfe26",
+      "target_path": "agents/pi/packages/btw-vendor/src/fullscreen-ui.ts"
+    },
+    {
+      "source_path": "src/index.ts",
+      "source_sha256": "df1ddaae7a89c0d2fe2dccd9823e1440e93fa976196ec18bbead4641629f0d0e",
+      "target_path": "agents/pi/packages/btw-vendor/src/index.ts"
+    },
+    {
+      "source_path": "src/main-tree-picker.ts",
+      "source_sha256": "a3b6fad052f37808cb952a4a10a8700d5dad47e36940400849109d9833e6b86f",
+      "target_path": "agents/pi/packages/btw-vendor/src/main-tree-picker.ts"
+    },
+    {
+      "source_path": "src/menu.ts",
+      "source_sha256": "f577babe75898e948172b9c977bb6d93cea6197c0ba3c300e278a62d8384eb87",
+      "target_path": "agents/pi/packages/btw-vendor/src/menu.ts"
+    },
+    {
+      "source_path": "src/settings.ts",
+      "source_sha256": "64c6591e93788457ae5210bf5810ff193805f64b3c2b185a59f5c7e56b8b81b3",
+      "target_path": "agents/pi/packages/btw-vendor/src/settings.ts"
+    },
+    {
+      "source_path": "src/side-thread.ts",
+      "source_sha256": "93b2d74557b7c6741b9f0fe8532618d93fc09b7906e80f8cbd5d6706071aacb3",
+      "target_path": "agents/pi/packages/btw-vendor/src/side-thread.ts"
+    },
+    {
+      "source_path": "src/text.ts",
+      "source_sha256": "fcad36e4622239e3b1e83ec8989e13f03985bb073be8b93aa25397e75eb228ae",
+      "target_path": "agents/pi/packages/btw-vendor/src/text.ts"
+    },
+    {
+      "source_path": "src/transcript-pager.ts",
+      "source_sha256": "18f183425f78c559c5cecc9db0616be8af0d9eea4be8c5b43d23b10fd4113a2b",
+      "target_path": "agents/pi/packages/btw-vendor/src/transcript-pager.ts"
+    }
+  ],
+  "target_version": "0.55.3-agentcfg.1",
+  "derivation_patch": "agents/pi/build/btw-agentcfg.patch",
+  "patch_sha256": "adda770c9ba7102ee3e97ccdbf464896a7c4d29fb3388324adcb64ca01a98128",
+  "native_status": "not-run"
+}

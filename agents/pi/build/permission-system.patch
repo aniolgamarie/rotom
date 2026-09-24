@@ -1,0 +1,492 @@
+--- /dev/null
++++ b/NOTICE.agentcfg.md
+@@ -0,0 +1,14 @@
++# agentcfg 派生适配
++
++来源：@gotgenes/pi-permission-system 29.3.0 的 npm integrity 核验归档；原 MIT LICENSE 保留。
++源文件摘要、resolved URL 与 integrity 见 agents/pi/migration/permission-system-manifest.json。
++目标版本29.3.0-agentcfg.1。
++
++- 策略只由 agentcfg 当前实例快照提供，不发现原生全局/项目配置或旧规则目录。
++- 原生 engine 保留提示、service、formatter/extractor 与会话生命周期；每次 tool_call 先过 agentcfg 硬权限检查。
++- yolo只影响提示层，读取同一个会话状态；不能修改角色、任务grant或写租约。
++- 缺策略/缺实际IO能力直接拒绝。原生配置UI不写生成文件，提示修改agentcfg来源。
++- 关闭原生通用输入审计日志，避免把命令/路径中的敏感值写入日志。
++- parser与依赖只从当前冻结运行包解析，不执行 npm root -g。
++
++实际文件/命令执行的监督接线仍在T086进行；这份补丁本身不能作为完整IO通过证据。
+--- a/dist/public.d.ts
++++ b/dist/public.d.ts
+@@ -658,3 +658,5 @@
+ 
+ export { PERMISSIONS_DECISION_CHANNEL, PERMISSIONS_READY_CHANNEL, PERMISSIONS_UI_PROMPT_CHANNEL, getPermissionsService, publishPermissionsService, unpublishPermissionsService };
+ export type { Authorizer, AuthorizerLog, AuthorizerVerdict, ForwardedPromptContext, PermissionCheckResult, PermissionDecisionEvent, PermissionQuery, PermissionState, PermissionUiPromptEvent, PermissionUiPromptSource, PermissionsReadyEvent, PermissionsService, PromptAnnotation, PromptEvidence, PromptPayload, PromptPayloadKind, PromptPermissionDetails, PromptRequestFacts, PromptRequester, ToolInputFormatter };
++
++export declare function getAgentcfgPolicySnapshot(sessionId: string): unknown;
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@gotgenes/pi-permission-system",
+-  "version": "29.3.0",
++  "version": "29.3.0-agentcfg.1",
+   "description": "Permission enforcement extension for the Pi coding agent.",
+   "type": "module",
+   "exports": {
+@@ -94,5 +94,6 @@
+     "measure:wrapper-transparency": "node scripts/measure-wrapper-transparency.mjs",
+     "lint:md": "rumdl check *.md docs/**/*.md",
+     "lint": "biome check . && eslint . && pnpm run lint:md"
+-  }
+-}
+\ No newline at end of file
++  },
++  "private": true
++}
+--- /dev/null
++++ b/src/agentcfg.ts
+@@ -0,0 +1,40 @@
++// agentcfg 是唯一策略来源；原生引擎保留提示与审计接口，但不能扩展硬权限。
++import { join } from "node:path";
++import type { PolicyLoader, ResolvedPolicyPaths } from "./policy-loader";
++import type { ScopeConfig } from "./types";
++
++export function agentcfgRuntime(): any {
++  const runtime = (globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")];
++  if (!runtime?.permissionAccess || runtime.owner?.role !== "manager") throw new Error("AGENTCFG_PERMISSION_CAPABILITY_MISSING");
++  runtime.permissionAccess.require();
++  return runtime;
++}
++
++export class AgentcfgPolicyLoader implements PolicyLoader {
++  loadGlobalConfig(): ScopeConfig { agentcfgRuntime(); return { permission: { "*": "ask" } }; }
++  loadProjectConfig(): ScopeConfig { agentcfgRuntime(); return {}; }
++  loadAgentConfig(): ScopeConfig { agentcfgRuntime(); return {}; }
++  loadProjectAgentConfig(): ScopeConfig { agentcfgRuntime(); return {}; }
++  getConfiguredMcpServerNames(): readonly string[] { return Object.keys(agentcfgRuntime().manifest.options.mcp?.servers ?? {}); }
++  getCacheStamp(): string { const state = agentcfgRuntime().permissionAccess.require(); return state.policy_digest + ":" + state.generation; }
++  getConfigIssues(): string[] { agentcfgRuntime(); return []; }
++  getResolvedPolicyPaths(): ResolvedPolicyPaths {
++    const runtime = agentcfgRuntime(), home = join(runtime.instanceRoot, "pi-home");
++    return { globalConfigPath: join(home, "agentcfg-manifest.json"), globalConfigExists: true,
++      projectConfigPath: null, projectConfigExists: false, agentsDir: join(home, "generated-roles"), agentsDirExists: true,
++      projectAgentsDir: null, projectAgentsDirExists: false };
++  }
++}
++
++export async function agentcfgGate(event: any, ctx: any, nativeGate: () => Promise<any>) {
++  const access = agentcfgRuntime().permissionAccess;
++  const ticket = await access.check(event, ctx);
++  let approved = false;
++  try {
++    const verdict = await nativeGate();
++    if (!verdict?.block) { access.approve(event, ticket, ctx); approved = true; }
++    return verdict;
++  } finally {
++    if (!approved) await agentcfgRuntime().ordinaryOperations?.abort?.(ticket.result);
++  }
++}
+--- a/src/config-store.ts
++++ b/src/config-store.ts
+@@ -1,30 +1,6 @@
+-import {
+-  existsSync,
+-  mkdirSync,
+-  renameSync,
+-  unlinkSync,
+-  writeFileSync,
+-} from "node:fs";
+-import { dirname, normalize } from "node:path";
+-import type {
+-  ExtensionCommandContext,
+-  ExtensionContext,
+-} from "@earendil-works/pi-coding-agent";
+-
+-import { loadAndMergeConfigs, loadUnifiedConfig } from "./config-loader";
+-import {
+-  getGlobalConfigPath,
+-  getLegacyExtensionConfigPath,
+-  getLegacyGlobalPolicyPath,
+-  getLegacyProjectPolicyPath,
+-} from "./config-paths";
+-import { buildResolvedConfigLogEntry } from "./config-reporter";
+-import {
+-  DEFAULT_EXTENSION_CONFIG,
+-  EXTENSION_ROOT,
+-  normalizePermissionSystemConfig,
+-  type PermissionSystemExtensionConfig,
+-} from "./extension-config";
++import { agentcfgRuntime } from "./agentcfg";
++import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
++import { DEFAULT_EXTENSION_CONFIG, type PermissionSystemExtensionConfig } from "./extension-config";
+ import type { ResolvedPolicyPaths } from "./policy-loader";
+ import type { DebugReviewLogger } from "./session-logger";
+ import { syncPermissionSystemStatus } from "./status";
+@@ -81,15 +57,17 @@
+  */
+ export class ConfigStore implements SessionConfigStore, CommandConfigStore {
+   private config: PermissionSystemExtensionConfig;
+-  private lastConfigWarning: string | null = null;
++  private agentcfgContext: ExtensionContext | undefined;
+ 
+-  constructor(private readonly deps: ConfigStoreDeps) {
++  constructor(_deps: ConfigStoreDeps) {
+     this.config = { ...DEFAULT_EXTENSION_CONFIG };
+   }
+ 
+   /** Return the current extension config. */
+   current(): PermissionSystemExtensionConfig {
+-    return this.config;
++    const runtime = agentcfgRuntime(), ctx = this.agentcfgContext;
++    return { ...this.config, debugLog: false, permissionReviewLog: false,
++      yoloMode: ctx ? runtime.permissionAccess.yolo(ctx.sessionManager.getSessionId(), ctx.cwd) : false };
+   }
+ 
+   /**
+@@ -101,37 +79,10 @@
+    * …) cannot loosen the operator's global config (#644).
+    */
+   refresh(ctx: ExtensionContext | undefined, projectTrusted: boolean): void {
+-    const cwd = ctx?.cwd ?? null;
+-    const mergeResult = loadAndMergeConfigs(
+-      this.deps.agentDir,
+-      cwd ?? "",
+-      EXTENSION_ROOT,
+-      { includeProjectScope: projectTrusted },
+-    );
+-    const runtimeConfig = normalizePermissionSystemConfig(mergeResult.merged);
+-    this.config = runtimeConfig;
+-
+-    if (ctx?.hasUI) {
+-      syncPermissionSystemStatus(ctx, runtimeConfig);
+-    }
+-
+-    const warning =
+-      mergeResult.issues.length > 0 ? mergeResult.issues.join("\n") : undefined;
+-
+-    if (warning && warning !== this.lastConfigWarning) {
+-      this.lastConfigWarning = warning;
+-      ctx?.ui.notify(warning, "warning");
+-    } else if (!warning) {
+-      this.lastConfigWarning = null;
+-    }
+-
+-    this.deps.logger.debug("config.loaded", {
+-      warning: warning ?? null,
+-      debugLog: runtimeConfig.debugLog,
+-      permissionReviewLog: runtimeConfig.permissionReviewLog,
+-      yoloMode: runtimeConfig.yoloMode,
+-      projectTrusted,
+-    });
++    agentcfgRuntime();
++    this.agentcfgContext = ctx;
++    this.config = { ...DEFAULT_EXTENSION_CONFIG, debugLog: false, permissionReviewLog: false, yoloMode: false };
++    if (ctx?.hasUI) syncPermissionSystemStatus(ctx, this.current());
+   }
+ 
+   /**
+@@ -144,47 +95,8 @@
+     next: PermissionSystemExtensionConfig,
+     ctx: ExtensionCommandContext,
+   ): void {
+-    const normalized = normalizePermissionSystemConfig(next);
+-    const globalPath = getGlobalConfigPath(this.deps.agentDir);
+-
+-    const existing = loadUnifiedConfig(globalPath);
+-    const merged = {
+-      ...existing.config,
+-      debugLog: normalized.debugLog,
+-      permissionReviewLog: normalized.permissionReviewLog,
+-      yoloMode: normalized.yoloMode,
+-    };
+-
+-    const tmpPath = `${globalPath}.tmp`;
+-    try {
+-      mkdirSync(dirname(globalPath), { recursive: true });
+-      writeFileSync(tmpPath, `${JSON.stringify(merged, null, 2)}\n`, "utf-8");
+-      renameSync(tmpPath, globalPath);
+-    } catch (error) {
+-      try {
+-        if (existsSync(tmpPath)) {
+-          unlinkSync(tmpPath);
+-        }
+-      } catch {
+-        // Ignore cleanup failures.
+-      }
+-      const message = error instanceof Error ? error.message : String(error);
+-      ctx.ui.notify(
+-        `Failed to save permission-system config at '${globalPath}': ${message}`,
+-        "error",
+-      );
+-      return;
+-    }
+-
+-    this.config = normalized;
+-    syncPermissionSystemStatus(ctx, normalized);
+-    this.lastConfigWarning = null;
+-
+-    this.deps.logger.debug("config.saved", {
+-      debugLog: normalized.debugLog,
+-      permissionReviewLog: normalized.permissionReviewLog,
+-      yoloMode: normalized.yoloMode,
+-    });
++    agentcfgRuntime();
++    ctx.ui.notify("AGENTCFG_CONFIGURATION_REQUIRED: edit agentcfg sources, then plan/apply after exiting this instance. Use /yolo for a bounded session prompt override.", "warning");
+   }
+ 
+   /**
+@@ -193,32 +105,6 @@
+    * Equivalent to `logResolvedConfigPaths(runtime)`.
+    */
+   logResolvedPaths(cwd?: string): void {
+-    const policyPaths = this.deps.policyPaths.getResolvedPolicyPaths();
+-    const { agentDir } = this.deps;
+-    const legacyGlobalPolicyDetected = existsSync(
+-      getLegacyGlobalPolicyPath(agentDir),
+-    );
+-    const legacyProjectPolicyDetected = cwd
+-      ? existsSync(getLegacyProjectPolicyPath(cwd))
+-      : false;
+-    const legacyExtConfigPath = getLegacyExtensionConfigPath(EXTENSION_ROOT);
+-    const newGlobalPath = getGlobalConfigPath(agentDir);
+-    const legacyExtensionConfigDetected =
+-      normalize(legacyExtConfigPath) !== normalize(newGlobalPath) &&
+-      existsSync(legacyExtConfigPath);
+-    const entry = buildResolvedConfigLogEntry({
+-      policyPaths,
+-      legacyGlobalPolicyDetected,
+-      legacyProjectPolicyDetected,
+-      legacyExtensionConfigDetected,
+-    });
+-    this.deps.logger.review(
+-      "config.resolved",
+-      entry as unknown as Record<string, unknown>,
+-    );
+-    this.deps.logger.debug(
+-      "config.resolved",
+-      entry as unknown as Record<string, unknown>,
+-    );
++    agentcfgRuntime();
+   }
+ }
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,3 +1,5 @@
++import { AgentcfgPolicyLoader, agentcfgGate, agentcfgRuntime } from "./agentcfg";
++import { assertSessionBoundary } from "@agentcfg/pi-runtime/capability-policy";
+ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+ import { getAgentDir, getPackageDir } from "@earendil-works/pi-coding-agent";
+ import { warmBashParser } from "./access-intent/bash/parser";
+@@ -64,6 +66,8 @@
+ import { ToolInputFormatterRegistry } from "./tool-input-formatter-registry";
+ 
+ export default function piPermissionSystemExtension(pi: ExtensionAPI): void {
++  const runtime = agentcfgRuntime();
++  runtime.ordinaryOperations.install(pi, process.cwd());
+   const agentDir = getAgentDir();
+   // getPackageDir() is Pi's own install dir; auto-allow it for read-only tools
+   // so the agent can read Pi's bundled docs/examples regardless of layout.
+@@ -111,6 +115,7 @@
+ 
+   const permissionManager = new PermissionManager({
+     agentDir,
++    policyLoader: new AgentcfgPolicyLoader(),
+     flavor: hostFlavor,
+     isYoloEnabled,
+   });
+@@ -234,7 +239,7 @@
+   // scope (fail closed); session_start reloads with the real trust decision.
+   configStore.refresh(undefined, false);
+ 
+-  const configPath = getGlobalConfigPath(agentDir);
++  const configPath = permissionManager.getResolvedPolicyPaths().globalConfigPath;
+   registerPermissionSystemCommand(pi, {
+     config: configStore,
+     configPath,
+@@ -363,12 +368,21 @@
+     lifecycle.handleResourcesDiscover(event, ctx),
+   );
+   pi.on("session_shutdown", () => lifecycle.handleSessionShutdown());
++  const beforeTransition = async (_event: unknown, ctx: { hasUI: boolean; ui: { notify(message: string, level: "warning"): void } }) => {
++    try { await assertSessionBoundary(agentcfgRuntime()); }
++    catch {
++      if (ctx.hasUI) ctx.ui.notify("仍有受保护执行或未消费结果；请先查看结果或完成停止恢复。", "warning");
++      return { cancel: true as const };
++    }
++  };
++  pi.on("session_before_switch", beforeTransition);
++  pi.on("session_before_fork", beforeTransition);
+   pi.on("before_agent_start", (event, ctx) => agentPrep.handle(event, ctx));
+   pi.on("input", (event, ctx) => gates.handleInput(event, ctx));
+   pi.on(
+     "tool_call",
+     createFailClosedToolCall(
+-      (event, ctx) => gates.handleToolCall(event, ctx),
++      (event, ctx) => agentcfgGate(event, ctx, () => gates.handleToolCall(event, ctx)),
+       reporter,
+       audit,
+       logger,
+--- a/src/node-modules-discovery.ts
++++ b/src/node-modules-discovery.ts
+@@ -1,76 +1,17 @@
+-import { spawnSync } from "node:child_process";
+-import { existsSync } from "node:fs";
+-import { basename, dirname } from "node:path";
+-import { fileURLToPath } from "node:url";
++// 只定位当前冻结运行包的依赖目录；没有全局 npm 或开发 checkout 兜底。
++import { dirname, basename, join, relative, isAbsolute, sep } from "node:path";
++import { realpathSync } from "node:fs";
+ 
+-/**
+- * Walk up the directory tree from the given file URL until a directory
+- * literally named `node_modules` is found.
+- *
+- * Returns the `node_modules` path, or `null` if the URL cannot be parsed or
+- * no `node_modules` ancestor exists.
+- */
+-function walkUpToNodeModules(fromUrl: string): string | null {
+-  try {
+-    const thisFile = fileURLToPath(fromUrl);
+-    let dir = dirname(thisFile);
+-    while (dir !== dirname(dir)) {
+-      if (basename(dir) === "node_modules") {
+-        return dir;
+-      }
+-      dir = dirname(dir);
+-    }
+-    return null;
+-  } catch {
+-    return null;
++export function discoverGlobalNodeModulesRoot(_fromUrl = import.meta.url): string | null {
++  const runtime = (globalThis as Record<symbol, any>)[Symbol.for("agentcfg.pi.runtime.v1")];
++  if (!runtime) throw new Error("AGENTCFG_RUNTIME_REQUIRED");
++  const root = realpathSync(runtime.runtimeRoot);
++  let path = dirname(realpathSync(join(root, runtime.installed.entrypoint)));
++  while (path !== dirname(path)) {
++    const tail = relative(root, path);
++    if (tail === ".." || tail.startsWith(".." + sep) || isAbsolute(tail)) throw new Error("AGENTCFG_MODULE_BOUNDARY");
++    if (basename(path) === "node_modules") return path;
++    path = dirname(path);
+   }
++  throw new Error("AGENTCFG_MODULE_BOUNDARY");
+ }
+-
+-/**
+- * Run `npm root -g` synchronously and return the trimmed output, or `null` on
+- * any failure (non-zero exit, ENOENT, timeout, non-existent path).
+- *
+- * Only called when the walk-up-from-self strategy fails (i.e. the extension is
+- * running from a local development checkout, not a global install).
+- */
+-function discoverGlobalNodeModulesViaSubprocess(): string | null {
+-  try {
+-    const result = spawnSync("npm", ["root", "-g"], {
+-      encoding: "utf-8",
+-      timeout: 5000,
+-      stdio: ["ignore", "pipe", "ignore"],
+-    });
+-    const root = result.stdout.trim();
+-    if (result.status === 0 && root && existsSync(root)) {
+-      return root;
+-    }
+-    return null;
+-  } catch {
+-    return null;
+-  }
+-}
+-
+-/**
+- * Discover the global node_modules root.
+- *
+- * Strategy 1 (zero-cost, covers all global installs): walk up from
+- * `fromUrl` (defaults to this module's own `import.meta.url`) looking for a
+- * directory named `node_modules`. This works whenever the extension is
+- * installed inside a `node_modules` tree.
+- *
+- * Strategy 2 (subprocess fallback, dev checkout only): when Strategy 1 fails
+- * because the extension is running from a local development checkout with no
+- * `node_modules` ancestor, run `npm root -g` to discover the global root.
+- * Pi installs skills and extensions via `npm` by default, so `npm root -g`
+- * returns the correct root regardless of the user's own project package
+- * manager.
+- *
+- * Returns `null` when both strategies fail — callers must degrade gracefully.
+- */
+-export function discoverGlobalNodeModulesRoot(
+-  fromUrl = import.meta.url,
+-): string | null {
+-  const fromSelf = walkUpToNodeModules(fromUrl);
+-  if (fromSelf) return fromSelf;
+-  return discoverGlobalNodeModulesViaSubprocess();
+-}
+--- a/src/path/path-flavor.ts
++++ b/src/path/path-flavor.ts
+@@ -1,5 +1,7 @@
+-import type { PlatformPath } from "node:path";
+ import { posix as posixPath, win32 as winPath } from "node:path";
++
++// 新版 Node 类型直接导出策略对象；从实际对象推导，避免依赖已移除的类型别名。
++type PlatformPath = typeof posixPath;
+ 
+ import {
+   type BashTokenShape,
+--- a/src/permission-manager.ts
++++ b/src/permission-manager.ts
+@@ -112,6 +112,7 @@
+ 
+ export class PermissionManager implements ScopedPermissionManager {
+   private readonly agentDir: string | undefined;
++  private readonly injectedLoader: boolean;
+   private readonly flavor: PathFlavor;
+   private readonly isYoloEnabled: () => boolean;
+   private loader: PolicyLoader;
+@@ -122,6 +123,7 @@
+ 
+   constructor(options: PermissionManagerOptions = {}) {
+     this.agentDir = options.agentDir;
++    this.injectedLoader = options.policyLoader !== undefined;
+     this.flavor = options.flavor ?? posixPathFlavor;
+     this.isYoloEnabled = options.isYoloEnabled ?? YOLO_DISABLED;
+     this.loader =
+@@ -141,7 +143,7 @@
+    * built with explicit paths), only the cache is cleared.
+    */
+   configureForCwd(cwd: string | undefined | null): void {
+-    if (this.agentDir !== undefined) {
++    if (this.agentDir !== undefined && !this.injectedLoader) {
+       this.loader = new FilePolicyLoader(
+         derivePolicyLoaderOptions(this.agentDir, cwd),
+       );
+--- a/src/service.ts
++++ b/src/service.ts
+@@ -327,3 +327,12 @@
+     services.delete(sessionId);
+   }
+ }
++
++
++/** 当前会话的硬权限快照；缺失时抛错，不能解释成空 deny。 */
++export function getAgentcfgPolicySnapshot(sessionId: string): unknown {
++  if (!getPermissionsService(sessionId)) throw new Error("AGENTCFG_PERMISSION_SERVICE_MISSING");
++  const runtime = (globalThis as Record<symbol, any>)[Symbol.for("agentcfg.pi.runtime.v1")];
++  if (!runtime?.permissionAccess) throw new Error("AGENTCFG_PERMISSION_CAPABILITY_MISSING");
++  return runtime.permissionAccess.parentSnapshot();
++}
+--- /dev/null
++++ b/tsconfig.json
+@@ -0,0 +1,15 @@
++{
++  "compilerOptions": {
++    "target": "ES2023",
++    "module": "ESNext",
++    "moduleResolution": "Bundler",
++    "strict": true,
++    "skipLibCheck": true,
++    "noEmit": true,
++    "allowImportingTsExtensions": true,
++    "esModuleInterop": true,
++    "types": ["node"],
++    "paths": { "#src/*": ["./src/*"] }
++  },
++  "include": ["src/**/*.ts"]
++}

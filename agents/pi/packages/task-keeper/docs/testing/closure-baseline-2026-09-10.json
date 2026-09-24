@@ -1,0 +1,110 @@
+{
+  "auditDate": "2026-09-10",
+  "runtimeRun": "2026-09-09T08-14-09-053Z",
+  "sourceDigest": "6b995121a046d52f166f0847fc1a342aad68e06ac2bf0e938df247dcd83a07f1",
+  "sourceMatchesRuntime": true,
+  "nativeSummary": {
+    "tests": 746,
+    "passed": 746,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "releaseReady": false,
+  "baselineFiles": {
+    "coverage-cases.csv": "17966e8c049d87618dbca1e7a78b2c5a6e3728c5f147924f919a4e1985214c92",
+    "expanded-matrices.json": "e0e8a2eca177f4cef56b24e64997d6d5f4ca344f05a4697e4994b24418d3fd43",
+    "current-checkpoint.json": "9f0e15e8a061cce6315c4c5975e0a0af642b0d44cde6c4ba3f25a1abf5308c95",
+    "design-baseline-v2.json": "a4f5ab05080d2eb0d5d017bfcf9c579e4fb45b57a7a0d97b89e977522e3d8e2d"
+  },
+  "scenarioFaultObligations": {
+    "total": 707,
+    "minimumPresent": 567,
+    "missing": 140,
+    "missingByLayer": {
+      "U": 18,
+      "E": 65,
+      "A": 23,
+      "P": 25,
+      "V": 7,
+      "L": 2
+    }
+  },
+  "expandedMatrix": {
+    "total": 436,
+    "minimumPresent": 123,
+    "missing": 313,
+    "missingByMatrix": {
+      "await-orders": 158,
+      "crash-cuts": 65,
+      "request-paths": 90
+    }
+  },
+  "workPackages": {
+    "W1": {
+      "obligations": 231,
+      "missingObligations": 35,
+      "matrixCells": 0,
+      "missingMatrixCells": 0
+    },
+    "W2": {
+      "obligations": 42,
+      "missingObligations": 15,
+      "matrixCells": 0,
+      "missingMatrixCells": 0
+    },
+    "W3": {
+      "obligations": 182,
+      "missingObligations": 36,
+      "matrixCells": 250,
+      "missingMatrixCells": 173
+    },
+    "W4": {
+      "obligations": 114,
+      "missingObligations": 25,
+      "matrixCells": 36,
+      "missingMatrixCells": 26
+    },
+    "W5": {
+      "obligations": 132,
+      "missingObligations": 23,
+      "matrixCells": 150,
+      "missingMatrixCells": 114
+    },
+    "W6": {
+      "obligations": 6,
+      "missingObligations": 6,
+      "matrixCells": 0,
+      "missingMatrixCells": 0
+    }
+  },
+  "liveDependentObligations": [
+    "VAL-005:A",
+    "VAL-005:E",
+    "VAL-005:L",
+    "VAL-007:A",
+    "VAL-007:E",
+    "VAL-007:L"
+  ],
+  "detailAuditComplete": false,
+  "scopeChangesApplied": false,
+  "newRuntimeEvidence": 0,
+  "note": "All entries are allocated for closure review; allocation and candidate-file matches do not certify assertions or close obligations.",
+  "validation": {
+    "uniqueObligationKeys": 707,
+    "uniqueMatrixKeys": 436,
+    "workPackageAllocationComplete": true,
+    "currentMissingSetsPreserved": true,
+    "frozenDesignFilesUnchanged": true,
+    "v6BundleByteComparisonPassed": true,
+    "currentSourceStillMatchesRuntimeReport": true,
+    "planningLinksExist": true,
+    "openspecStrict": "passed",
+    "designCheck": {
+      "checks": 15,
+      "negativeControls": 14,
+      "passed": true
+    },
+    "runtimeTestsAddedOrRun": 0
+  }
+}

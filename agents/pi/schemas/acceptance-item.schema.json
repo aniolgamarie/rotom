@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "capability_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "identity": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "lock_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "runtime_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "policy_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "resource_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "machine_contract_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "lock_digest",
+            "runtime_digest",
+            "policy_digest",
+            "resource_digest",
+            "machine_contract_digest"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "platform": {
+      "type": "object",
+      "properties": {
+        "os": {
+          "type": "string",
+          "enum": [
+            "linux",
+            "darwin"
+          ]
+        },
+        "architecture": {
+          "type": "string",
+          "enum": [
+            "x86_64",
+            "arm64"
+          ]
+        },
+        "engine": {
+          "type": "string",
+          "enum": [
+            "node",
+            "bun"
+          ]
+        }
+      },
+      "required": [
+        "os",
+        "architecture",
+        "engine"
+      ],
+      "additionalProperties": false
+    },
+    "applicability": {
+      "type": "string",
+      "enum": [
+        "required",
+        "selected_optional",
+        "not_selected"
+      ]
+    },
+    "levels": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "mock",
+          "native",
+          "live"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "evidence_paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "selection_reason": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "capability_id",
+    "scenario_id",
+    "identity",
+    "platform",
+    "applicability",
+    "levels",
+    "evidence_paths",
+    "selection_reason"
+  ],
+  "additionalProperties": false
+}

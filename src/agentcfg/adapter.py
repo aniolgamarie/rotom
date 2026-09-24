@@ -57,6 +57,7 @@ class ManagedTarget:
   ownership: Ownership
   serialization: str
   selector: str | None = field(default=None, repr=False)
+  reference_tokens: tuple[str, ...] = field(default=(), repr=False)
 
   def __post_init__(self):
     relative_path(self.path)
@@ -68,6 +69,14 @@ class ManagedTarget:
       raise ContractError("字段受管目标必须提供 selector")
     if self.ownership not in (Ownership.FIELDS, Ownership.INITIALIZE) and self.selector is not None:
       raise ContractError("此所有权类别不支持字段 selector")
+    if not isinstance(self.reference_tokens, tuple):
+      raise ContractError("凭据引用声明必须是 tuple")
+    if self.reference_tokens:
+      if (self.selector is None or not isinstance(self.reference_tokens, tuple)
+          or any(not isinstance(token, str) or not re.fullmatch(r"\$[A-Za-z_][A-Za-z0-9_]*", token)
+                 for token in self.reference_tokens)
+          or len(set(self.reference_tokens)) != len(self.reference_tokens)):
+        raise ContractError("凭据引用必须声明为字段的唯一环境变量引用")
 
 
 @dataclass(frozen=True)
@@ -147,6 +156,7 @@ class LaunchSpec:
   cwd: Path = field(repr=False)
   lock_identity: str = field(repr=False)
   environment: tuple[EnvironmentBinding, ...] = ()
+  runtime_identity: str | None = field(default=None, repr=False)
 
   def __post_init__(self):
     if (not isinstance(self.argv, tuple) or not self.argv or not _text(self.argv[0])
@@ -156,6 +166,8 @@ class LaunchSpec:
       raise ContractError("启动 cwd 必须由调用方明确解析为绝对路径")
     if not _text(self.lock_identity):
       raise ContractError("启动契约必须声明所需锁身份")
+    if self.runtime_identity is not None and not _text(self.runtime_identity):
+      raise ContractError("运行包身份必须是明确的非空标识")
     if (not isinstance(self.environment, tuple)
         or not all(isinstance(binding, EnvironmentBinding) for binding in self.environment)):
       raise ContractError("环境映射必须为 EnvironmentBinding tuple")
@@ -210,6 +222,16 @@ class Adapter(ABC, Generic[Config, NativeProjection, CaptureProposal]):
   def doctor(self, projection: NativeProjection) -> tuple[str, ...]:
     """返回公开诊断代码；离线且不读取认证文件。"""
 
+  def project_write_guard(self, workspace, project):
+    from contextlib import nullcontext
+    return nullcontext()
+
+  def diagnostic_exit_code(self, capabilities):
+    return 0
+
+  def capability_diagnostics(self, projection):
+    return None
+
   def dependency_backend(self):
     raise NotImplementedError("adapter must provide dependency_backend")
 
@@ -219,6 +241,12 @@ class Adapter(ABC, Generic[Config, NativeProjection, CaptureProposal]):
 
   def launch_preflight(self, lock) -> list[dict]:
     return []
+
+  def launch_preflight_for(self, config, lock) -> list[dict]:
+    return self.launch_preflight(lock)
+
+  def validate_arguments(self, arguments) -> None:
+    return None
 
   def prepare_runtime(self, workspace, root) -> None:
     return None

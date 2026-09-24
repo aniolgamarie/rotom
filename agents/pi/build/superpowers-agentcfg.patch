@@ -1,0 +1,109 @@
+--- a/package.json
++++ b/package.json
+@@ -1,9 +1,9 @@
+ {
+   "name": "superpowers",
+-  "version": "6.3.0",
++  "version": "6.3.0-agentcfg.1",
+   "description": "Superpowers skills and runtime bootstrap for coding agents",
+   "type": "module",
+-  "main": ".opencode/plugins/superpowers.js",
++  "main": ".pi/extensions/superpowers.ts",
+   "keywords": [
+     "pi-package",
+     "skills",
+@@ -19,5 +19,9 @@
+     "skills": [
+       "./skills"
+     ]
++  },
++  "license": "MIT",
++  "dependencies": {
++    "@agentcfg/pi-runtime": "1.0.0"
+   }
+ }
+--- a/.pi/extensions/superpowers.ts
++++ b/.pi/extensions/superpowers.ts
+@@ -1,3 +1,4 @@
++import { mayTransformHistory } from "@agentcfg/pi-runtime/capability-policy";
+ import { readFileSync } from "node:fs";
+ import { dirname, resolve } from "node:path";
+ import { fileURLToPath } from "node:url";
+@@ -16,9 +17,7 @@
+ export default function superpowersPiExtension(pi: ExtensionAPI) {
+ 	let injectBootstrap = true;
+ 
+-	pi.on("resources_discover", async () => ({
+-		skillPaths: [skillsDir],
+-	}));
++	// 所有技能入口由 agentcfg 锁和选择清单提供，不再扩充资源发现。
+ 
+ 	pi.on("session_start", async () => {
+ 		injectBootstrap = true;
+@@ -33,6 +32,8 @@
+ 	});
+ 
+ 	pi.on("context", async (event) => {
++		const runtime = (globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")];
++		if (!mayTransformHistory(runtime) || !runtime.manifest.plugins.includes("superpowers")) return;
+ 		if (!injectBootstrap) return;
+ 		if (event.messages.some(messageContainsBootstrap)) return;
+ 
+@@ -75,8 +76,7 @@
+ </EXTREMELY_IMPORTANT>`;
+ 		return cachedBootstrap;
+ 	} catch {
+-		cachedBootstrap = null;
+-		return null;
++		throw new Error("SUPERPOWERS_BOOTSTRAP_RESOURCE_MISSING");
+ 	}
+ }
+ 
+@@ -86,15 +86,7 @@
+ }
+ 
+ function piToolMapping(): string {
+-	return `## Pi tool mapping
+-
+-Pi has native skills but does not expose Claude Code's \`Skill\` tool. When a Superpowers instruction says to invoke a skill, use Pi's native skill system instead: load the relevant \`SKILL.md\` with \`read\` when the skill applies, or let a human invoke \`/skill:name\` explicitly.
+-
+-Pi's built-in coding tools are lowercase: \`read\`, \`write\`, \`edit\`, \`bash\`, plus optional \`grep\`, \`find\`, and \`ls\`. Use those for the corresponding actions: read a file, create or edit files, run shell commands, search file contents, find files by name, and list directories.
+-
+-Pi does not ship a standard subagent tool. If a subagent tool such as \`subagent\` from \`pi-subagents\` is available, use it for Superpowers subagent workflows. If no subagent tool is available, do the work in this session or explain the missing capability instead of inventing \`Task\` calls.
+-
+-Pi does not ship a standard task-list tool. If an installed todo/task tool is available, use it. Otherwise track work in plan files or a repo-local \`TODO.md\` when task tracking is needed. Treat older \`TodoWrite\` references as this task-tracking action.`;
++  return readFileSync(resolve(skillsDir, "using-superpowers/references/pi-tools.md"), "utf8");
+ }
+ 
+ function messageContainsBootstrap(message: unknown): boolean {
+--- a/skills/using-superpowers/references/pi-tools.md
++++ b/skills/using-superpowers/references/pi-tools.md
+@@ -1,16 +1,18 @@
+-# Pi Tool Mapping
++# Pi / agentcfg Tool Mapping
+ 
+-Skills speak in actions ("dispatch a subagent", "create a todo", "read a file"). On Pi these resolve to the tools below.
++The current agentcfg instructions and selected tools govern every workflow below. A skill does not grant additional tools, write permissions, model access, or permission to launch a service.
+ 
+-| Action skills request | Pi equivalent |
++| Requested action | Available agentcfg route |
+ | --- | --- |
+-| Dispatch a subagent (`Subagent (general-purpose):` template) | Use an installed subagent tool such as `subagent` from `pi-subagents` if available |
+-| Task tracking ("create a todo", "mark complete") | Use an installed todo/task tool if available, otherwise track tasks in the plan or `TODO.md` |
++| Read another skill | Read the selected `SKILL.md` at its discovered path, or use `/skill:name` |
++| Investigate or independently review code | Dispatch an explicitly bound read-only `scout` or fresh `reviewer` through the current `Agent` tool |
++| Implement an ordinary change | The parent implements; a fresh reviewer checks the result |
++| Run a managed implementation | Use `kernel_task` with the configured Task Keeper roles and checks |
++| Delegate to an external backend | Use `model_delegate` with an explicit `pi` or `codex` backend and preset |
++| Track tasks | Use a selected task tool or a plan file in the authorized project |
+ 
+-## Subagents
++Only the installed `@tintinweb/pi-subagents` manager owns child execution. Do not install another manager, invent unavailable tool names, enable nested workflows, or bypass its queue. Ordinary child roles are read-only. External writes require the explicit write workflow and its candidate worktree; a skill's implementer prompt cannot turn a read-only child into a writer.
+ 
+-Pi core does not ship a standard subagent tool. The `pi-subagents` package is a strong optional companion and provides a `subagent` tool with single-agent, chain, parallel, async, forked-context, and resume/status workflows. If no subagent tool is available, do not fabricate `Task` calls; execute sequentially in the current session or explain that the optional subagent capability is not installed.
++Superpowers scripts and relative reference files are preserved. Execute scripts only through configured command bindings and the supervisor. For visual companion servers use an explicitly bound foreground service with its own state and endpoint; do not launch an untracked background server or run the browser opener automatically. If that service is not configured, report the missing binding and continue with the text workflow where applicable.
+ 
+-## Task lists
+-
+-Pi core does not ship a standard task-list tool. If a todo/task extension is installed, use its documented tool. Otherwise use Superpowers plan files, checklists in Markdown, or a repo-local `TODO.md` for task tracking. Older Superpowers docs may refer to `TodoWrite`; treat that as the task-tracking action above.
++Skills and rules are managed in repository sources and machine overrides. Update those sources and redeploy through agentcfg; do not edit generated instance files or install into global home directories. Worktree creation and cleanup must respect active workspace leases and the Task Keeper candidate owner.

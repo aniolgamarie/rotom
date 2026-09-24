@@ -199,7 +199,7 @@ def test_cli_selector_ids_cannot_escape(option, value, capsys):
   assert error.value.code == 2
 
 
-@pytest.mark.parametrize("argv", [["lock", "--agent", "codex"], ["run", "pi"]])
+@pytest.mark.parametrize("argv", [["lock", "--agent", "codex"], ["run", "unsupported"]])
 def test_cli_unsupported_tools_are_actionable(argv, capsys):
   with pytest.raises(SystemExit) as error:
     cli.main(argv)

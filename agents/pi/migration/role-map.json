@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "roles": {
+    "codex-context-builder": {
+      "tool": "model_delegate",
+      "backend": "codex",
+      "preset": "context",
+      "register_legacy_role": false
+    },
+    "codex-delegate": {
+      "tool": "model_delegate",
+      "backend": "codex",
+      "preset": "general",
+      "register_legacy_role": false
+    },
+    "codex-oracle": {
+      "tool": "model_delegate",
+      "backend": "codex",
+      "preset": "challenge",
+      "register_legacy_role": false
+    },
+    "codex-planner": {
+      "tool": "model_delegate",
+      "backend": "codex",
+      "preset": "plan",
+      "register_legacy_role": false
+    },
+    "codex-researcher": {
+      "tool": "model_delegate",
+      "backend": "codex",
+      "preset": "research",
+      "register_legacy_role": false
+    },
+    "codex-reviewer": {
+      "tool": "model_delegate",
+      "backend": "codex",
+      "preset": "review",
+      "register_legacy_role": false
+    },
+    "codex-scout": {
+      "tool": "model_delegate",
+      "backend": "codex",
+      "preset": "scout",
+      "register_legacy_role": false
+    }
+  }
+}

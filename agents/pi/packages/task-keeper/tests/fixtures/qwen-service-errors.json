@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-09-08",
+  "notice": "Documentation-derived semantic cases, synthetic envelopes/identifiers; not service-origin recordings or live Qwen certification.",
+  "sources": {
+    "model-studio": "https://www.alibabacloud.com/help/en/model-studio/error-code",
+    "coding-plan": "https://www.alibabacloud.com/help/en/model-studio/coding-plan-faq",
+    "siliconflow": "https://docs.siliconflow.cn/en/faqs/error-code"
+  },
+  "cases": [
+    {
+      "id": "service-a-resource",
+      "source": "model-studio",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 429,
+      "body": {
+        "error": {
+          "code": "Throttling.AllocationQuota",
+          "message": "Token throughput allocation reached"
+        }
+      },
+      "rules": [
+        {
+          "code": "Throttling.AllocationQuota",
+          "category": "resource_pressure"
+        }
+      ],
+      "expected": "resource_pressure"
+    },
+    {
+      "id": "service-a-frequency",
+      "source": "model-studio",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 429,
+      "body": {
+        "error": {
+          "code": "Throttling.RateQuota",
+          "message": "Request frequency limit reached"
+        }
+      },
+      "rules": [],
+      "expected": "frequency_limit"
+    },
+    {
+      "id": "service-a-usage-current",
+      "source": "coding-plan",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 429,
+      "body": {
+        "error": {
+          "message": "usage allocated quota exceeded"
+        }
+      },
+      "rules": [
+        {
+          "messageIncludes": "usage allocated quota exceeded",
+          "category": "frequency_limit"
+        }
+      ],
+      "expected": "frequency_limit"
+    },
+    {
+      "id": "service-a-hour",
+      "source": "coding-plan",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 429,
+      "body": {
+        "error": {
+          "message": "hour allocated quota exceeded"
+        }
+      },
+      "rules": [
+        {
+          "messageIncludes": "hour allocated quota exceeded",
+          "category": "window_quota"
+        }
+      ],
+      "expected": "window_quota"
+    },
+    {
+      "id": "service-a-week",
+      "source": "coding-plan",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 429,
+      "body": {
+        "error": {
+          "message": "week allocated quota exceeded"
+        }
+      },
+      "rules": [
+        {
+          "messageIncludes": "week allocated quota exceeded",
+          "category": "window_quota"
+        }
+      ],
+      "expected": "window_quota"
+    },
+    {
+      "id": "service-a-month",
+      "source": "coding-plan",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 429,
+      "body": {
+        "error": {
+          "message": "month allocated quota exceeded"
+        }
+      },
+      "rules": [
+        {
+          "messageIncludes": "month allocated quota exceeded",
+          "category": "window_quota"
+        }
+      ],
+      "expected": "window_quota"
+    },
+    {
+      "id": "service-b-frequency",
+      "source": "siliconflow",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 429,
+      "body": {
+        "code": 429001,
+        "message": "Synthetic envelope: RPM limit reached"
+      },
+      "rules": [
+        {
+          "code": "429001",
+          "category": "frequency_limit"
+        }
+      ],
+      "expected": "frequency_limit"
+    },
+    {
+      "id": "service-b-resource",
+      "source": "siliconflow",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 429,
+      "body": {
+        "code": 429002,
+        "message": "Synthetic envelope: TPM limit reached"
+      },
+      "rules": [
+        {
+          "code": "429002",
+          "category": "resource_pressure"
+        }
+      ],
+      "expected": "resource_pressure"
+    },
+    {
+      "id": "service-b-401",
+      "source": "siliconflow",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 401,
+      "body": {
+        "message": "Synthetic service failure"
+      },
+      "rules": [],
+      "expected": "auth_billing_policy"
+    },
+    {
+      "id": "service-b-403",
+      "source": "siliconflow",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 403,
+      "body": {
+        "message": "Synthetic service failure"
+      },
+      "rules": [],
+      "expected": "auth_billing_policy"
+    },
+    {
+      "id": "service-b-503",
+      "source": "siliconflow",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 503,
+      "body": {
+        "message": "Synthetic service failure"
+      },
+      "rules": [],
+      "expected": "network_overload"
+    },
+    {
+      "id": "service-b-504",
+      "source": "siliconflow",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 504,
+      "body": {
+        "message": "Synthetic service failure"
+      },
+      "rules": [],
+      "expected": "network_overload"
+    },
+    {
+      "id": "service-a-context",
+      "source": "coding-plan",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 400,
+      "body": {
+        "error": {
+          "code": "InvalidParameter",
+          "message": "Synthetic input exceeds context bound"
+        }
+      },
+      "rules": [
+        {
+          "code": "InvalidParameter",
+          "category": "context_contract"
+        }
+      ],
+      "expected": "context_contract"
+    },
+    {
+      "id": "unknown-envelope",
+      "source": "siliconflow",
+      "provenance": "documentation-derived; synthetic envelope",
+      "status": 400,
+      "body": {
+        "message": "Unrecognized synthetic condition"
+      },
+      "rules": [],
+      "expected": "other"
+    }
+  ]
+}

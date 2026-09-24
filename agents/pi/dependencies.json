@@ -1,0 +1,753 @@
+{
+  "schema_version": 1,
+  "toolchains": {
+    "node": "v24.14.0",
+    "npm": "11.19.1",
+    "bun": "1.4.0"
+  },
+  "platforms": [
+    "linux-x86_64",
+    "linux-arm64",
+    "darwin-x86_64",
+    "darwin-arm64"
+  ],
+  "sources": {
+    "pi-host": {
+      "kind": "npm",
+      "package": "@earendil-works/pi-coding-agent",
+      "version": "0.84.4",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      },
+      "license_sources": {
+        "LICENSE": "agents/pi/build/licenses/pi-host/LICENSE"
+      }
+    },
+    "pi-subagents": {
+      "kind": "git",
+      "package": "@tintinweb/pi-subagents",
+      "version": "0.19.0-agentcfg.1",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "src/index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-permissions": {
+      "kind": "local",
+      "package": "@gotgenes/pi-permission-system",
+      "version": "29.3.0-agentcfg.1",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "src/index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "task-keeper": {
+      "kind": "local",
+      "package": "starter-pi-task-keeper",
+      "version": "0.2.0-agentcfg.1",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "model-delegate": {
+      "kind": "local",
+      "package": "agentcfg-model-delegate",
+      "version": "0.2.0-agentcfg.1",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-cursor": {
+      "kind": "npm",
+      "package": "@rahularya01/pi-cursor",
+      "version": "1.4.29",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "dist/index.js"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-runtime": {
+      "kind": "local",
+      "package": "@agentcfg/pi-runtime",
+      "version": "1.0.0",
+      "license_files": [
+        "NOTICE.md"
+      ],
+      "resources": {
+        "extensions": [],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-processes": {
+      "kind": "local",
+      "package": "@aliou/pi-processes",
+      "version": "0.11.1-agentcfg.1",
+      "license_files": [
+        "package.json",
+        "README.md",
+        "NOTICE.agentcfg.md"
+      ],
+      "resources": {
+        "extensions": [
+          "extensions/processes/index.ts",
+          "extensions/processes-logs/index.ts",
+          "extensions/processes-dock/index.ts"
+        ],
+        "skills": [
+          "skills/pi-processes"
+        ],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "openspec": {
+      "kind": "local",
+      "package": "agentcfg-openspec",
+      "version": "1.11.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.md"
+      ],
+      "resources": {
+        "extensions": [],
+        "skills": [
+          "skills/openspec-apply-change",
+          "skills/openspec-archive-change",
+          "skills/openspec-bulk-archive-change",
+          "skills/openspec-continue-change",
+          "skills/openspec-explore",
+          "skills/openspec-ff-change",
+          "skills/openspec-new-change",
+          "skills/openspec-onboard",
+          "skills/openspec-propose",
+          "skills/openspec-sync-specs",
+          "skills/openspec-update-change",
+          "skills/openspec-verify-change"
+        ],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-rules": {
+      "kind": "local",
+      "package": "@tigorhutasuhut/pi-rules",
+      "version": "0.6.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "resources": {
+        "extensions": [
+          "dist/index.js"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "codex-darwin-arm64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-aarch64-apple-darwin.tar.gz",
+      "platform": "darwin-arm64",
+      "archive_digest": "344310a0a591c1b192e04feff304321a69907c9498baaac331ca7e16ebcef9d7",
+      "archive_member": "codex-aarch64-apple-darwin",
+      "target": "bin/codex",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ]
+    },
+    "codex-linux-arm64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-aarch64-unknown-linux-musl.tar.gz",
+      "platform": "linux-arm64",
+      "archive_digest": "583b48df32804213bdcd338c2e5adb06b34340821fa757a726cc0a524fa33c27",
+      "archive_member": "codex-aarch64-unknown-linux-musl",
+      "target": "bin/codex",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ]
+    },
+    "codex-darwin-x86_64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-x86_64-apple-darwin.tar.gz",
+      "platform": "darwin-x86_64",
+      "archive_digest": "1219c837d8f813b493a424c125c0038b5d9ca16279bc6d3fe6ce037a3e18a6e7",
+      "archive_member": "codex-x86_64-apple-darwin",
+      "target": "bin/codex",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ]
+    },
+    "codex-linux-x86_64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-x86_64-unknown-linux-musl.tar.gz",
+      "platform": "linux-x86_64",
+      "archive_digest": "d7e18b2597ae8f242f5f31ee9e90deef48dbc9edd634d9868fb6435d08c07f02",
+      "archive_member": "codex-x86_64-unknown-linux-musl",
+      "target": "bin/codex",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ],
+      "vendor_path": "vendor/codex-linux-x86_64-d7e18b2597ae8f242f5f31ee9e90deef48dbc9edd634d9868fb6435d08c07f02.tgz"
+    },
+    "superpowers": {
+      "kind": "git",
+      "package": "superpowers",
+      "version": "6.3.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "resources": {
+        "extensions": [
+          ".pi/extensions/superpowers.ts"
+        ],
+        "skills": [
+          "skills/brainstorming",
+          "skills/dispatching-parallel-agents",
+          "skills/executing-plans",
+          "skills/finishing-a-development-branch",
+          "skills/receiving-code-review",
+          "skills/requesting-code-review",
+          "skills/subagent-driven-development",
+          "skills/systematic-debugging",
+          "skills/test-driven-development",
+          "skills/using-git-worktrees",
+          "skills/using-superpowers",
+          "skills/verification-before-completion",
+          "skills/writing-plans",
+          "skills/writing-skills"
+        ],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "session-yolo": {
+      "kind": "local",
+      "package": "starter-pi-session-yolo",
+      "version": "0.1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "colorful-footer": {
+      "kind": "local",
+      "package": "starter-pi-colorful-footer",
+      "version": "0.1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "loop-guard": {
+      "kind": "local",
+      "package": "starter-pi-loop-guard",
+      "version": "0.1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "openai-proxy": {
+      "kind": "local",
+      "package": "starter-pi-openai-proxy",
+      "version": "0.2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-btw": {
+      "kind": "local",
+      "package": "@narumitw/pi-btw",
+      "version": "0.55.3-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "resources": {
+        "extensions": [
+          "src/index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-smart-compact": {
+      "kind": "local",
+      "package": "pi-smart-compact",
+      "version": "9.6.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "resources": {
+        "extensions": [
+          "dist/index.js"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-slopchop": {
+      "kind": "local",
+      "package": "pi-slopchop",
+      "version": "0.10.1-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "resources": {
+        "extensions": [
+          "src/index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-mcp": {
+      "kind": "local",
+      "package": "pi-mcp-adapter",
+      "version": "2.32.1-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [
+          "skills/mcp-scripting"
+        ],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-readseek": {
+      "kind": "local",
+      "package": "pi-readseek",
+      "version": "0.9.16-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "resources": {
+        "extensions": [
+          "dist/index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "readseek-vision-model": {
+      "kind": "asset",
+      "format": "raw",
+      "platform": "all",
+      "url": "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/52d6c8ffea26cc873ac5ad116f8631268d7eb503/Qwen3VL-2B-Instruct-Q4_K_M.gguf",
+      "archive_digest": "089d75c52f4b7ffc56ba998ffc50aae89fcafc755f9e7208aacca281dca6c2ae",
+      "size": 1107409952,
+      "target": "data/readseek/hub/models--Qwen--Qwen3-VL-2B-Instruct-GGUF/snapshots/52d6c8ffea26cc873ac5ad116f8631268d7eb503/Qwen3VL-2B-Instruct-Q4_K_M.gguf",
+      "license_files": [
+        "agents/pi/build/licenses/readseek-vision/LICENSE",
+        "agents/pi/build/licenses/readseek-vision/SOURCE.json"
+      ],
+      "vendor_path": "vendor/readseek-vision-model-089d75c52f4b7ffc56ba998ffc50aae89fcafc755f9e7208aacca281dca6c2ae.gguf"
+    },
+    "readseek-vision-projector": {
+      "kind": "asset",
+      "format": "raw",
+      "platform": "all",
+      "url": "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/52d6c8ffea26cc873ac5ad116f8631268d7eb503/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf",
+      "archive_digest": "f9a68fabba69c3b81e153367b2c7521030b0fa8bb0de400c9599c8e6725f9c82",
+      "size": 445053216,
+      "target": "data/readseek/hub/models--Qwen--Qwen3-VL-2B-Instruct-GGUF/snapshots/52d6c8ffea26cc873ac5ad116f8631268d7eb503/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf",
+      "license_files": [
+        "agents/pi/build/licenses/readseek-vision/LICENSE",
+        "agents/pi/build/licenses/readseek-vision/SOURCE.json"
+      ],
+      "vendor_path": "vendor/readseek-vision-projector-f9a68fabba69c3b81e153367b2c7521030b0fa8bb0de400c9599c8e6725f9c82.gguf"
+    },
+    "pi-web": {
+      "kind": "local",
+      "package": "pi-web-access",
+      "version": "0.27.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "NOTICE.agentcfg.md"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "codex-bwrap-linux-arm64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/bwrap-aarch64-unknown-linux-musl.tar.gz",
+      "archive_digest": "37c89f161e8a42f9ca51dc4b9f83029579143ca54fcffc54e865f27968b4e01a",
+      "platform": "linux-arm64",
+      "archive_member": "bwrap-aarch64-unknown-linux-musl",
+      "target": "bin/codex-resources/bwrap",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE",
+        "agents/pi/build/licenses/codex-bwrap/LICENSE",
+        "agents/pi/build/licenses/codex-bwrap/COPYING",
+        "agents/pi/build/licenses/codex-bwrap/SOURCE.json"
+      ]
+    },
+    "codex-bwrap-linux-x86_64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/bwrap-x86_64-unknown-linux-musl.tar.gz",
+      "archive_digest": "1e6a0f2802c4199f81e1d3d9a962d64dc274693d8391f02d1f4ab457e57c4c38",
+      "platform": "linux-x86_64",
+      "archive_member": "bwrap-x86_64-unknown-linux-musl",
+      "target": "bin/codex-resources/bwrap",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE",
+        "agents/pi/build/licenses/codex-bwrap/LICENSE",
+        "agents/pi/build/licenses/codex-bwrap/COPYING",
+        "agents/pi/build/licenses/codex-bwrap/SOURCE.json"
+      ],
+      "vendor_path": "vendor/codex-bwrap-linux-x86_64-1e6a0f2802c4199f81e1d3d9a962d64dc274693d8391f02d1f4ab457e57c4c38.tgz"
+    },
+    "codex-code-mode-host-linux-x86_64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-code-mode-host-x86_64-unknown-linux-musl.tar.gz",
+      "archive_digest": "a68df7cca23c6da7cde175677df7de61c73a234add1333a1254b86d641af01f7",
+      "platform": "linux-x86_64",
+      "archive_member": "codex-code-mode-host-x86_64-unknown-linux-musl",
+      "target": "bin/codex-code-mode-host",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ],
+      "vendor_path": "vendor/codex-code-mode-host-linux-x86_64-a68df7cca23c6da7cde175677df7de61c73a234add1333a1254b86d641af01f7.tgz"
+    },
+    "codex-code-mode-host-linux-arm64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-code-mode-host-aarch64-unknown-linux-musl.tar.gz",
+      "archive_digest": "20aefa302c2022b496e32911bf954a5f76c7fd749c6bdb9fbd711e32b66dcbfa",
+      "platform": "linux-arm64",
+      "archive_member": "codex-code-mode-host-aarch64-unknown-linux-musl",
+      "target": "bin/codex-code-mode-host",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ]
+    },
+    "codex-code-mode-host-darwin-x86_64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-code-mode-host-x86_64-apple-darwin.tar.gz",
+      "archive_digest": "a0fa6141e591f44dc2d86a589cfe797212317bfb9fa3a6c73131e4dbb93387fe",
+      "platform": "darwin-x86_64",
+      "archive_member": "codex-code-mode-host-x86_64-apple-darwin",
+      "target": "bin/codex-code-mode-host",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ]
+    },
+    "codex-code-mode-host-darwin-arm64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-code-mode-host-aarch64-apple-darwin.tar.gz",
+      "archive_digest": "500ee2a02ea598ae519052e7d7d8e201d1db01986f30c214ef4143645dc86fad",
+      "platform": "darwin-arm64",
+      "archive_member": "codex-code-mode-host-aarch64-apple-darwin",
+      "target": "bin/codex-code-mode-host",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ]
+    },
+    "codex-responses-api-proxy-linux-x86_64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-responses-api-proxy-x86_64-unknown-linux-musl.tar.gz",
+      "archive_digest": "48ef0c02b6c81480399def382d9ee27f00fdb1b7598f13e2777e49881ec3a0f4",
+      "platform": "linux-x86_64",
+      "archive_member": "codex-responses-api-proxy-x86_64-unknown-linux-musl",
+      "target": "bin/codex-responses-api-proxy",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ],
+      "vendor_path": "vendor/codex-responses-api-proxy-linux-x86_64-48ef0c02b6c81480399def382d9ee27f00fdb1b7598f13e2777e49881ec3a0f4.tgz"
+    },
+    "codex-responses-api-proxy-linux-arm64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-responses-api-proxy-aarch64-unknown-linux-musl.tar.gz",
+      "archive_digest": "442529846abc18269a97ab55e6961efb554a40d6389587540a1b1fa54b110f13",
+      "platform": "linux-arm64",
+      "archive_member": "codex-responses-api-proxy-aarch64-unknown-linux-musl",
+      "target": "bin/codex-responses-api-proxy",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ]
+    },
+    "codex-responses-api-proxy-darwin-x86_64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-responses-api-proxy-x86_64-apple-darwin.tar.gz",
+      "archive_digest": "18088240f41c105d06b43779d77649010e185427f59c4cebcd84a4c5b156a541",
+      "platform": "darwin-x86_64",
+      "archive_member": "codex-responses-api-proxy-x86_64-apple-darwin",
+      "target": "bin/codex-responses-api-proxy",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ]
+    },
+    "codex-responses-api-proxy-darwin-arm64": {
+      "kind": "asset",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.154.0/codex-responses-api-proxy-aarch64-apple-darwin.tar.gz",
+      "archive_digest": "8c39490849013988e66098385f79105c597c6bbbe223f839211eb525f1420418",
+      "platform": "darwin-arm64",
+      "archive_member": "codex-responses-api-proxy-aarch64-apple-darwin",
+      "target": "bin/codex-responses-api-proxy",
+      "license_files": [
+        "agents/pi/build/licenses/codex/LICENSE",
+        "agents/pi/build/licenses/codex/NOTICE"
+      ]
+    },
+    "pi-todo": {
+      "kind": "local",
+      "package": "@juicesharp/rpiv-todo",
+      "version": "2.9.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "AGENTCFG-NOTICE.md"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    }
+  },
+  "profiles": {
+    "pi-cursor": {
+      "engine": "bun",
+      "source_ids": [
+        "pi-host",
+        "pi-runtime",
+        "pi-subagents",
+        "pi-permissions",
+        "model-delegate",
+        "pi-cursor",
+        "pi-processes",
+        "openspec",
+        "pi-rules",
+        "superpowers",
+        "session-yolo",
+        "colorful-footer",
+        "loop-guard",
+        "openai-proxy",
+        "pi-btw",
+        "pi-smart-compact",
+        "pi-slopchop",
+        "pi-mcp",
+        "pi-readseek",
+        "readseek-vision-model",
+        "readseek-vision-projector",
+        "pi-web",
+        "pi-todo",
+        "codex-bwrap-linux-arm64",
+        "codex-bwrap-linux-x86_64"
+      ],
+      "entrypoint": "node_modules/@earendil-works/pi-coding-agent/dist/index.js"
+    },
+    "pi-codex": {
+      "engine": "node",
+      "source_ids": [
+        "pi-host",
+        "pi-runtime",
+        "pi-subagents",
+        "pi-permissions",
+        "model-delegate",
+        "pi-processes",
+        "openspec",
+        "pi-rules",
+        "codex-darwin-arm64",
+        "codex-linux-arm64",
+        "codex-darwin-x86_64",
+        "codex-linux-x86_64",
+        "superpowers",
+        "session-yolo",
+        "colorful-footer",
+        "loop-guard",
+        "openai-proxy",
+        "pi-btw",
+        "pi-smart-compact",
+        "pi-slopchop",
+        "pi-mcp",
+        "pi-readseek",
+        "readseek-vision-model",
+        "readseek-vision-projector",
+        "pi-web",
+        "codex-bwrap-linux-arm64",
+        "codex-bwrap-linux-x86_64",
+        "codex-code-mode-host-linux-x86_64",
+        "codex-code-mode-host-linux-arm64",
+        "codex-code-mode-host-darwin-x86_64",
+        "codex-code-mode-host-darwin-arm64",
+        "codex-responses-api-proxy-linux-x86_64",
+        "codex-responses-api-proxy-linux-arm64",
+        "codex-responses-api-proxy-darwin-x86_64",
+        "codex-responses-api-proxy-darwin-arm64",
+        "pi-todo"
+      ],
+      "entrypoint": "node_modules/@earendil-works/pi-coding-agent/dist/index.js"
+    },
+    "pi-default": {
+      "engine": "node",
+      "source_ids": [
+        "pi-host",
+        "pi-runtime",
+        "pi-subagents",
+        "pi-permissions",
+        "model-delegate",
+        "pi-processes",
+        "openspec",
+        "pi-rules",
+        "superpowers",
+        "session-yolo",
+        "colorful-footer",
+        "loop-guard",
+        "openai-proxy",
+        "pi-btw",
+        "pi-smart-compact",
+        "pi-slopchop",
+        "pi-mcp",
+        "pi-readseek",
+        "readseek-vision-model",
+        "readseek-vision-projector",
+        "pi-web",
+        "pi-todo",
+        "codex-bwrap-linux-arm64",
+        "codex-bwrap-linux-x86_64"
+      ],
+      "entrypoint": "node_modules/@earendil-works/pi-coding-agent/dist/index.js"
+    },
+    "pi-managed": {
+      "engine": "node",
+      "source_ids": [
+        "pi-host",
+        "pi-runtime",
+        "pi-subagents",
+        "pi-permissions",
+        "task-keeper",
+        "pi-processes",
+        "openspec",
+        "pi-rules",
+        "superpowers",
+        "session-yolo",
+        "colorful-footer",
+        "loop-guard",
+        "openai-proxy",
+        "pi-btw",
+        "pi-smart-compact",
+        "pi-slopchop",
+        "pi-mcp",
+        "pi-readseek",
+        "readseek-vision-model",
+        "readseek-vision-projector",
+        "pi-web",
+        "pi-todo",
+        "codex-bwrap-linux-arm64",
+        "codex-bwrap-linux-x86_64"
+      ],
+      "entrypoint": "node_modules/@earendil-works/pi-coding-agent/dist/index.js"
+    }
+  },
+  "build_steps": []
+}

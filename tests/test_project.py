@@ -25,9 +25,11 @@ def test_project_target_only_idempotent_and_conflicts(tmp_path):
   (target / "business.txt").write_text("keep")
   assert apply_generated(target, stage)["changed"] == 2
   skill = target / ".agents/skills/openspec-propose/SKILL.md"
-  before = skill.stat()
-  assert apply_generated(target, stage)["changed"] == 0
-  assert skill.stat() == before
+  # 幂等保证是第二次apply不重写文件；atime会因内容比对读取而合法变化，不能纳入比较。
+  before = (skill.stat().st_mtime_ns, skill.stat().st_ctime_ns, skill.stat().st_size, skill.read_bytes())
+  for _ in range(3):
+    assert apply_generated(target, stage)["changed"] == 0
+    assert (skill.stat().st_mtime_ns, skill.stat().st_ctime_ns, skill.stat().st_size, skill.read_bytes()) == before
   skill.write_text("user modified")
   with pytest.raises(Conflict):
     apply_generated(target, stage)
@@ -57,3 +59,53 @@ def test_nested_git_project_is_rejected_before_generating_files(tmp_path):
   assert not list(child.iterdir())
   (child / ".git").write_text("gitdir: /synthetic/worktree\n")
   validate_project_root(child)
+
+
+def test_partial_project_generation_retries_the_same_intent_without_claiming_foreign_files(tmp_path, monkeypatch):
+  from agentcfg.storage import Tree
+  stage = generated(tmp_path); target = tmp_path / "project"; target.mkdir()
+  original = Tree.replace; calls = []
+  def fail_once(tree, path, data, *args, **kwargs):
+    if tree.root == target and data is not None and path != ".agentcfg-openspec-pending.json":
+      calls.append(path)
+      if len(calls) == 2: raise OSError("fixture disk failure")
+    return original(tree, path, data, *args, **kwargs)
+  monkeypatch.setattr(Tree, "replace", fail_once)
+  with pytest.raises(OSError): apply_generated(target, stage)
+  assert (target / ".agentcfg-openspec-pending.json").is_file()
+  monkeypatch.setattr(Tree, "replace", original)
+  assert apply_generated(target, stage)["changed"] == 2
+  assert not (target / ".agentcfg-openspec-pending.json").exists()
+  assert apply_generated(target, stage)["changed"] == 0
+
+
+def test_project_recovery_refuses_user_edits_after_partial_failure(tmp_path, monkeypatch):
+  from agentcfg.storage import Tree
+  stage = generated(tmp_path); target = tmp_path / "project"; target.mkdir()
+  original = Tree.replace; count = [0]
+  def fail(tree, path, data, *args, **kwargs):
+    if tree.root == target and data is not None:
+      count[0] += 1
+      if count[0] == 2: raise OSError("fixture")
+    return original(tree, path, data, *args, **kwargs)
+  monkeypatch.setattr(Tree, "replace", fail)
+  with pytest.raises(OSError): apply_generated(target, stage)
+  monkeypatch.setattr(Tree, "replace", original)
+  edited = target / ".agents/skills/openspec-propose/SKILL.md"; edited.write_text("user edit")
+  with pytest.raises(Conflict, match="用户修改"): apply_generated(target, stage)
+  assert edited.read_text() == "user edit" and (target / ".agentcfg-openspec-pending.json").exists()
+
+
+def test_pi_project_ownership_uses_protected_git_metadata_and_ignores_forged_public_marker(tmp_path):
+  import hashlib
+  import json
+  stage = generated(tmp_path); target = tmp_path / "project"; target.mkdir()
+  metadata = target / ".git/agentcfg-project"
+  user_file = target / ".agents/skills/openspec-propose/SKILL.md"; user_file.parent.mkdir(parents=True); user_file.write_text("user content")
+  (target / ".agentcfg-openspec.json").write_text(json.dumps({"version": 1, "files": {".agents/skills/openspec-propose/SKILL.md": hashlib.sha256(user_file.read_bytes()).hexdigest()}}))
+  with pytest.raises(Conflict): apply_generated(target, stage, metadata_root=metadata)
+  assert user_file.read_text() == "user content"
+  user_file.unlink()
+  assert apply_generated(target, stage, metadata_root=metadata)["changed"] == 2
+  assert (metadata / ".agentcfg-openspec.json").is_file()
+  assert apply_generated(target, stage, metadata_root=metadata)["changed"] == 0

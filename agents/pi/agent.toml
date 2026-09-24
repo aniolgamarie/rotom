@@ -1,0 +1,365 @@
+schema_version = 1
+adapter_version = "pi-1"
+subagents_commit = "e955e29c51b7a6cce37e1108cd2d6c57a77e151c"
+
+[defaults]
+providers = []
+models = []
+rules = ["chinese", "terminal", "cpp-local-search"]
+skills = ["model-delegate"]
+plugins = ["pi-subagents", "pi-permissions", "model-delegate"]
+mcp = []
+
+[defaults.agent_options.runtime]
+engine = "node"
+
+[defaults.agent_options.resources]
+roles = ["scout", "reviewer"]
+prompts = ["implement", "review", "plan"]
+themes = ["everforest-dark"]
+extensions = []
+
+[defaults.agent_options.ui]
+theme = "everforest-dark"
+quiet_startup = true
+hide_thinking = false
+
+[defaults.agent_options.discovery]
+project_resources = false
+external_skills = []
+
+[defaults.agent_options.task_keeper]
+enabled = false
+second_view_enabled = false
+max_second_view_rounds = 2
+
+[defaults.agent_options.model_delegate]
+enabled = true
+backends = ["pi"]
+allowed_modes = ["review", "investigate"]
+presets = ["general", "context", "challenge", "plan", "research", "review", "scout"]
+max_run_seconds = 1800
+context_budget_tokens = 1800
+
+[defaults.agent_options.permissions]
+policy_ref = "project-default"
+readonly_roots = []
+denied_roots = []
+
+[policies.project-default]
+schema_version = 1
+default = "deny"
+rules = []
+
+# 仅供显式选择的受管候选工具。FilePolicy 仍检查角色、task grant 与写租约。
+[policies.task-keeper-candidate]
+schema_version = 1
+default = "deny"
+[[policies.task-keeper-candidate.rules]]
+id = "candidate-read"
+kind = "file"
+effect = "allow"
+tool_ids = ["tk_read", "tk_grep", "tk_find", "tk_ls", "tk_edit"]
+operations = ["read", "list", "search"]
+root_ref = "project"
+relative_path = "."
+match = "subtree"
+[[policies.task-keeper-candidate.rules]]
+id = "candidate-write"
+kind = "file"
+effect = "allow"
+tool_ids = ["tk_write", "tk_edit"]
+operations = ["write", "create"]
+root_ref = "project"
+relative_path = "."
+match = "subtree"
+
+# 显式选择ReadSeek的普通配方候选策略：在上者基础上附加固定readseek-node外部工具执行授权。
+[policies.readseek-candidate]
+schema_version = 1
+default = "deny"
+[[policies.readseek-candidate.rules]]
+id = "candidate-read"
+kind = "file"
+effect = "allow"
+tool_ids = ["tk_read", "tk_grep", "tk_find", "tk_ls", "tk_edit"]
+operations = ["read", "list", "search"]
+root_ref = "project"
+relative_path = "."
+match = "subtree"
+[[policies.readseek-candidate.rules]]
+id = "candidate-write"
+kind = "file"
+effect = "allow"
+tool_ids = ["tk_write", "tk_edit"]
+operations = ["write", "create"]
+root_ref = "project"
+relative_path = "."
+match = "subtree"
+[[policies.readseek-candidate.rules]]
+id = "candidate-readseek-node"
+kind = "command"
+effect = "allow"
+tool_ids = ["bash"]
+operations = ["execute"]
+command_ref = "tool:readseek-node"
+[[policies.readseek-candidate.rules]]
+id = "candidate-readseek-git"
+kind = "command"
+effect = "allow"
+tool_ids = ["bash"]
+operations = ["execute"]
+command_ref = "tool:readseek-git"
+[[policies.readseek-candidate.rules]]
+id = "candidate-readseek-rg"
+kind = "command"
+effect = "allow"
+tool_ids = ["bash"]
+operations = ["execute"]
+command_ref = "tool:readseek-rg"
+
+# Codex 原生权限按完整文件系统操作授权；写入仍要求显式 worktree 与写租约。
+[policies.delegate-worktree]
+schema_version = 1
+default = "deny"
+[[policies.delegate-worktree.rules]]
+id = "delegate-project-files"
+kind = "file"
+effect = "allow"
+tool_ids = ["read", "grep", "find", "ls", "write", "edit", "rename"]
+operations = ["read", "list", "search", "write", "create", "delete", "rename"]
+root_ref = "project"
+relative_path = "."
+match = "subtree"
+
+# 带ReadSeek验收的Codex委托策略变体：附加固定readseek-node外部工具执行授权。
+[policies.delegate-worktree-readseek]
+schema_version = 1
+default = "deny"
+[[policies.delegate-worktree-readseek.rules]]
+id = "delegate-project-files"
+kind = "file"
+effect = "allow"
+tool_ids = ["read", "grep", "find", "ls", "write", "edit", "rename"]
+operations = ["read", "list", "search", "write", "create", "delete", "rename"]
+root_ref = "project"
+relative_path = "."
+match = "subtree"
+[[policies.delegate-worktree-readseek.rules]]
+id = "delegate-readseek-node"
+kind = "command"
+effect = "allow"
+tool_ids = ["bash"]
+operations = ["execute"]
+command_ref = "tool:readseek-node"
+[[policies.delegate-worktree-readseek.rules]]
+id = "delegate-readseek-git"
+kind = "command"
+effect = "allow"
+tool_ids = ["bash"]
+operations = ["execute"]
+command_ref = "tool:readseek-git"
+[[policies.delegate-worktree-readseek.rules]]
+id = "delegate-readseek-rg"
+kind = "command"
+effect = "allow"
+tool_ids = ["bash"]
+operations = ["execute"]
+command_ref = "tool:readseek-rg"
+
+[resources.scout]
+kind = "role"
+path = "agents/pi/roles/scout.md"
+scope = "global"
+model_role = "scout"
+tools = ["read", "grep", "find", "ls"]
+read_roots = ["project"]
+write_roots = []
+thinking = "medium"
+nested = false
+
+[resources.reviewer]
+kind = "role"
+path = "agents/pi/roles/reviewer.md"
+scope = "global"
+model_role = "reviewer"
+tools = ["read", "grep", "find", "ls"]
+read_roots = ["project"]
+write_roots = []
+thinking = "high"
+nested = false
+
+[resources.task-keeper-reader]
+kind = "role"
+path = "agents/pi/packages/task-keeper/agents/task-keeper-reader.md"
+scope = "global"
+model_role = "task_keeper_reader"
+tools = ["tk_read", "tk_grep", "tk_find", "tk_ls", "structured_output"]
+read_roots = ["project"]
+write_roots = []
+nested = false
+
+[resources.task-keeper-writer]
+kind = "role"
+path = "agents/pi/packages/task-keeper/agents/task-keeper-writer.md"
+scope = "global"
+model_role = "task_keeper_writer"
+tools = ["tk_read", "tk_grep", "tk_find", "tk_ls", "tk_write", "tk_edit", "structured_output"]
+read_roots = ["project"]
+write_roots = ["project"]
+nested = false
+
+[resources.task-keeper-reviewer]
+kind = "role"
+path = "agents/pi/packages/task-keeper/agents/task-keeper-reviewer.md"
+scope = "global"
+model_role = "task_keeper_reviewer"
+tools = ["tk_read", "tk_grep", "tk_find", "tk_ls", "structured_output"]
+read_roots = ["project"]
+write_roots = []
+nested = false
+
+[resources.commit]
+kind = "prompt"
+path = "agents/pi/prompts/commit.md"
+scope = "global"
+
+[resources.debug]
+kind = "prompt"
+path = "agents/pi/prompts/debug.md"
+scope = "global"
+
+[resources.docs]
+kind = "prompt"
+path = "agents/pi/prompts/docs.md"
+scope = "global"
+
+[resources.explain]
+kind = "prompt"
+path = "agents/pi/prompts/explain.md"
+scope = "global"
+
+[resources.implement]
+kind = "prompt"
+path = "agents/pi/prompts/implement.md"
+scope = "global"
+
+[resources.perf]
+kind = "prompt"
+path = "agents/pi/prompts/perf.md"
+scope = "global"
+
+[resources.plan]
+kind = "prompt"
+path = "agents/pi/prompts/plan.md"
+scope = "global"
+
+[resources.pr]
+kind = "prompt"
+path = "agents/pi/prompts/pr.md"
+scope = "global"
+
+[resources.refactor]
+kind = "prompt"
+path = "agents/pi/prompts/refactor.md"
+scope = "global"
+
+[resources.review]
+kind = "prompt"
+path = "agents/pi/prompts/review.md"
+scope = "global"
+
+[resources.security]
+kind = "prompt"
+path = "agents/pi/prompts/security.md"
+scope = "global"
+
+[resources.test]
+kind = "prompt"
+path = "agents/pi/prompts/test.md"
+scope = "global"
+
+[resources.ayu-dark]
+kind = "theme"
+path = "agents/pi/themes/Ayu Dark.json"
+scope = "global"
+
+[resources.catppuccin-mocha]
+kind = "theme"
+path = "agents/pi/themes/Catppuccin Mocha.json"
+scope = "global"
+
+[resources.dracula]
+kind = "theme"
+path = "agents/pi/themes/Dracula.json"
+scope = "global"
+
+[resources.everforest-dark]
+kind = "theme"
+path = "agents/pi/themes/Everforest Dark.json"
+scope = "global"
+
+[resources.gruvbox-dark]
+kind = "theme"
+path = "agents/pi/themes/Gruvbox Dark.json"
+scope = "global"
+
+[resources.kanagawa-wave]
+kind = "theme"
+path = "agents/pi/themes/Kanagawa Wave.json"
+scope = "global"
+
+[resources.nord]
+kind = "theme"
+path = "agents/pi/themes/Nord.json"
+scope = "global"
+
+[resources.one-dark]
+kind = "theme"
+path = "agents/pi/themes/One Dark.json"
+scope = "global"
+
+[resources.rose-pine]
+kind = "theme"
+path = "agents/pi/themes/Rosé Pine.json"
+scope = "global"
+
+[resources.tokyo-night]
+kind = "theme"
+path = "agents/pi/themes/Tokyo Night.json"
+scope = "global"
+
+[resources.poimandres]
+kind = "theme"
+path = "agents/pi/themes/poimandres.json"
+scope = "global"
+
+[resources.dirty-repo-guard]
+kind = "extension"
+path = "agents/pi/extensions/dirty-repo-guard.ts"
+scope = "global"
+
+[resources.exit-command]
+kind = "extension"
+path = "agents/pi/extensions/exit-command.ts"
+scope = "global"
+
+[resources.gentle-agent-state]
+kind = "extension"
+path = "agents/pi/extensions/gentle-agent-state.ts"
+scope = "global"
+
+[resources.git-checkpoint]
+kind = "extension"
+path = "agents/pi/extensions/git-checkpoint.ts"
+scope = "global"
+
+[resources.handoff]
+kind = "extension"
+path = "agents/pi/extensions/handoff.ts"
+scope = "global"
+
+[resources.notify]
+kind = "extension"
+path = "agents/pi/extensions/notify.ts"
+scope = "global"

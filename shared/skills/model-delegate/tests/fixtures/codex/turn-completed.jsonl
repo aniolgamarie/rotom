@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"01a06b03-f9ae-7383-b938-4a3eb4a32a0b"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"reasoning","message":"Analyzing the code structure..."}}
+{"type":"item.completed","item":{"id":"item_1","type":"message","message":"The code looks good. No issues found."}}
+{"type":"turn.completed","usage":{"input_tokens":1234,"output_tokens":567,"total_tokens":1801}}

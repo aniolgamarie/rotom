@@ -1,0 +1,69 @@
+{
+  "name": "pi-readseek",
+  "version": "0.9.16-agentcfg.1",
+  "description": "Pi extension for LINE:HASH-anchored file operations and structural code navigation",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.ts"
+  },
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "hashline",
+    "code-map",
+    "structural-search"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/jarkkojs/readseek.git"
+  },
+  "author": "Maxwell Newman",
+  "license": "Apache-2.0",
+  "pi": {
+    "extensions": [
+      "./dist/index.ts"
+    ]
+  },
+  "files": [
+    "dist/",
+    "prompts/",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "bun build index.ts --outfile dist/index.ts --target=node --packages=external",
+    "prepack": "npm run build",
+    "test": "npm run build && node scripts/vitest-run.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@agentcfg/pi-runtime": "1.0.0",
+    "@jarkkojs/readseek-api": "0.9.16",
+    "diff": "9.0.0",
+    "xxhash-wasm": "1.1.0"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "0.84.4",
+    "@earendil-works/pi-tui": "0.84.4",
+    "@sinclair/typebox": "0.34.48"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "^0.84.2",
+    "@earendil-works/pi-coding-agent": "^0.84.2",
+    "@earendil-works/pi-tui": "^0.84.2",
+    "@sinclair/typebox": "^0.34.48",
+    "@types/node": "^26.1.1",
+    "jiti": "^2.7.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "bugs": {
+    "url": "https://gitlab.com/jarkkojs/readseek/-/issues"
+  },
+  "homepage": "https://gitlab.com/jarkkojs/readseek/-/tree/main/packages/pi-readseek#readme"
+}

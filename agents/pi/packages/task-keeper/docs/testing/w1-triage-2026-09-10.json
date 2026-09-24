@@ -1,0 +1,21 @@
+{
+  "obligations": 707,
+  "matrixCells": 436,
+  "domainChecks": 171,
+  "currentDomainChecks": 168,
+  "deferredDomainChecks": 3,
+  "classes": {
+    "production_unit_contract_review": 16,
+    "reuse_evidence_then_verify_oracles": 526,
+    "boundary_or_implementation_first": 66,
+    "missing_layer_or_observer": 93,
+    "live_binding_required": 6
+  },
+  "matrixClasses": {
+    "reuse_evidence_then_verify_oracles": 123,
+    "missing_cut_observer": 271,
+    "boundary_mapping_first": 42
+  },
+  "closuresAdded": 0,
+  "runtimeEvidenceAdded": 0
+}

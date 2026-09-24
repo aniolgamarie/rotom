@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "source_revision": "c60599df39e6350123f7fb9378cfe63dc5ed814f",
+  "files": [
+    {
+      "source_path": "pi/extensions/dirty-repo-guard.template.ts",
+      "source_git_blob": "5357464ef124b6b9a0ec9ce20f20e24f3482bf5f",
+      "target_path": "agents/pi/extensions/dirty-repo-guard.ts",
+      "import_sha256": "0037a69abdf4cf98181db799bef5bdee8981861315eb82ddab78126c2b0f13c4"
+    },
+    {
+      "source_path": "pi/extensions/exit-command.template.ts",
+      "source_git_blob": "7fcb3f2e90b4c23f345212dea9b56e3912a858fc",
+      "target_path": "agents/pi/extensions/exit-command.ts",
+      "import_sha256": "7ab91f40906ee19ce687328bc4f81480ee1a7f921fdf78e2683dc12762e020b3"
+    },
+    {
+      "source_path": "pi/extensions/gentle-agent-state.template.ts",
+      "source_git_blob": "fff496e0d445bfaf97971591c1ff293a1e5d4464",
+      "target_path": "agents/pi/extensions/gentle-agent-state.ts",
+      "import_sha256": "b4b1cce79e6ef9e4b66c16e2a307b0c4adae4bf8c0dd6f66f19428a724104390"
+    },
+    {
+      "source_path": "pi/extensions/git-checkpoint.template.ts",
+      "source_git_blob": "7ee5e6af88699387e66f377cfd70060c4ce0fb5e",
+      "target_path": "agents/pi/extensions/git-checkpoint.ts",
+      "import_sha256": "cd8741c95ef41d9d267687820ada97f402f962cca8b92200f4a202e4bf68e188"
+    },
+    {
+      "source_path": "pi/extensions/handoff.template.ts",
+      "source_git_blob": "10581dc6e93938eb234d2d05b5d5d76b51e49e9e",
+      "target_path": "agents/pi/extensions/handoff.ts",
+      "import_sha256": "5eeccc49de5348fa5efc61840ff0f6e53758d399b80a08ed8859b401ee8fd0ed"
+    },
+    {
+      "source_path": "pi/extensions/notify.template.ts",
+      "source_git_blob": "f7b1f819adbee1438126d8cc9f6bf0b005acd140",
+      "target_path": "agents/pi/extensions/notify.ts",
+      "import_sha256": "1a0f642402bec7777b2dedefd592627006b2877c0a081efeca472a6165b1e271"
+    },
+    {
+      "source_path": "pi/packages/colorful-footer/README.md",
+      "source_git_blob": "c3a40469aa3948d5c486ec14c0cccc4f15d56d27",
+      "target_path": "agents/pi/packages/colorful-footer/README.md",
+      "import_sha256": "4e99bf44ead4cd656933457661b8fea089c4a2fb4ebf492d54fe3ccd0db51c6c"
+    },
+    {
+      "source_path": "pi/packages/colorful-footer/index.ts",
+      "source_git_blob": "8353581b9807daeb829a62026bab45dba2b4092f",
+      "target_path": "agents/pi/packages/colorful-footer/index.ts",
+      "import_sha256": "367aec9717fdc6ca44c5db66ba4a9d855e33294e4538a5b8f53bdbbbf2439804"
+    },
+    {
+      "source_path": "pi/packages/colorful-footer/package.json",
+      "source_git_blob": "4413ec1d48074b62035e9e5d42dbaef23cce4918",
+      "target_path": "agents/pi/packages/colorful-footer/package.json",
+      "import_sha256": "58b22c7c76253913429ba257cf135540f75328cb69d46aef80c5868eef9a9d10"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/README.md",
+      "source_git_blob": "6471eb1029391e92affc159aaf602cc867841837",
+      "target_path": "agents/pi/packages/loop-guard/README.md",
+      "import_sha256": "81dd1917c028cc4ea4fd357fbe6b30e0a26ff959a2107cee79778a1b9d1bc952"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/action-reference.ts",
+      "source_git_blob": "c47a685fe7b02196f7e774cae970385dc7b8f334",
+      "target_path": "agents/pi/packages/loop-guard/action-reference.ts",
+      "import_sha256": "fa63845a6803aa808e879c25d6c8b0af74701df1054b6fcbacbd658553796ba9"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/advisory.ts",
+      "source_git_blob": "ba579fd034a74aed3588010572971626e1897fc2",
+      "target_path": "agents/pi/packages/loop-guard/advisory.ts",
+      "import_sha256": "b251c7cf89343e81b3ebbf882dddd64e3bcf987b0d19ba91694ca6284b6e1d73"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/config.ts",
+      "source_git_blob": "fe489764ce8ea95db2ac1d975e5f4c7856d23e9b",
+      "target_path": "agents/pi/packages/loop-guard/config.ts",
+      "import_sha256": "034737d7cca1bc47f51e2c49f1c19f43c5261c4eb0d639fc00b0903478ac101b"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/context.ts",
+      "source_git_blob": "3e1763a2dd4e07cba4c07a7c84f7e789daae7cf6",
+      "target_path": "agents/pi/packages/loop-guard/context.ts",
+      "import_sha256": "5ed96dacd8a088db561b8618b3746e11d7ca747f2220fa578fe0222142b1cf17"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/diagnostics.ts",
+      "source_git_blob": "3d55ee231148ebbbfe4a7e8a77de8485e6daca60",
+      "target_path": "agents/pi/packages/loop-guard/diagnostics.ts",
+      "import_sha256": "9412fe83063845195a2bccd420c51a1fe45acf9356016fb053433a39c7f8d101"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/engine.ts",
+      "source_git_blob": "27534e256bd78eb741f302bf540196319fcca3fb",
+      "target_path": "agents/pi/packages/loop-guard/engine.ts",
+      "import_sha256": "c115b332af4447e3b9da9ff4a2a869a697d271725816dd49de7829a6c9111abe"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/explanation.ts",
+      "source_git_blob": "a50831f609c8c9a8b1e9960e6153309a0a06ec0a",
+      "target_path": "agents/pi/packages/loop-guard/explanation.ts",
+      "import_sha256": "488ec0d2cf0122c2e69445226c97934fb78042010fea3f2f6bf7bdadf4903229"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/fingerprint.ts",
+      "source_git_blob": "bc38e74958709e33844e9564da0675b69ab26348",
+      "target_path": "agents/pi/packages/loop-guard/fingerprint.ts",
+      "import_sha256": "65272e3d1a1edf6495880efccd89c508d8ba5c8c27b06959c07c8101e5587a19"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/index.ts",
+      "source_git_blob": "ba120410450f38df495cdda9eb87c2aa159f0ee9",
+      "target_path": "agents/pi/packages/loop-guard/index.ts",
+      "import_sha256": "38971ad0f283bb3b76a6576fc15051e780abf505f78ce2b5a94f888cb8b916b6"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/package.json",
+      "source_git_blob": "69d309e62d44ac32237769909878748488791920",
+      "target_path": "agents/pi/packages/loop-guard/package.json",
+      "import_sha256": "e1bca02a80ae1cf17e5873b1ca5bff58c15d51147b036a05e935e0d133556072"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/persistence.ts",
+      "source_git_blob": "d41f2384bebd51129bb3d94ffe2b2589b367f5ee",
+      "target_path": "agents/pi/packages/loop-guard/persistence.ts",
+      "import_sha256": "85e5b0c8178c1d22d77644fe4ef1f436f9509539c841ed260482d3a3d3a4f633"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/redaction.ts",
+      "source_git_blob": "3d38b0281e13cc431db61188054084a16d4072c3",
+      "target_path": "agents/pi/packages/loop-guard/redaction.ts",
+      "import_sha256": "2442ee12039ed99aedae576a95d5fad2fdf2399b947e105b38791eea39adfa4a"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/renderer.ts",
+      "source_git_blob": "9913ee5f51f01e113774b6fb357a6386fc33d62b",
+      "target_path": "agents/pi/packages/loop-guard/renderer.ts",
+      "import_sha256": "2c74f2f6968e082058bb80d588fded6f59dec3fc573a6c00c2bce459fcc4f5ee"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/terminal-report.ts",
+      "source_git_blob": "ff73eef3b8f6729883d6121358e9c02629debba9",
+      "target_path": "agents/pi/packages/loop-guard/terminal-report.ts",
+      "import_sha256": "026ccf70f9501e4e74d07060cdb761f685c3fb26c8c8414998b618817ee21de7"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/tsconfig.json",
+      "source_git_blob": "644a7236fc256c451a5ab4645f36f19ea11e521d",
+      "target_path": "agents/pi/packages/loop-guard/tsconfig.json",
+      "import_sha256": "10447ab691b0b8a2520066c2d5d569a9c64e132cc414b2502e7b585f68c7b766"
+    },
+    {
+      "source_path": "pi/packages/loop-guard/types.ts",
+      "source_git_blob": "486d076c5a3bb87d311ed0582ae71ae2672f487d",
+      "target_path": "agents/pi/packages/loop-guard/types.ts",
+      "import_sha256": "90dc2135aa4bc24601e0990d83efcb6527888f1116614c18c501785d1ea4b331"
+    },
+    {
+      "source_path": "pi/packages/openai-proxy/README.md",
+      "source_git_blob": "d5c8ec282514f70c889084ea755d3fb5a0c207ac",
+      "target_path": "agents/pi/packages/openai-proxy/README.md",
+      "import_sha256": "c36d08ebf72ea20ced6bd19a34585dc925107a00519543b029f09fc5c90508e5"
+    },
+    {
+      "source_path": "pi/packages/openai-proxy/diagnostics.mjs",
+      "source_git_blob": "fc4325bac876a2cfa337fffce6d2b3958a39ce46",
+      "target_path": "agents/pi/packages/openai-proxy/diagnostics.mjs",
+      "import_sha256": "b7f46813679282883b7892ea054de068c1262414e0376cd8fcfa44295d725c96"
+    },
+    {
+      "source_path": "pi/packages/openai-proxy/diagnostics.test.mjs",
+      "source_git_blob": "6a96681571f25df2ab9141d0308d3f6e58fa3b66",
+      "target_path": "agents/pi/packages/openai-proxy/diagnostics.test.mjs",
+      "import_sha256": "39fe13148e2b4bfc47e929a99ac65719a99b8e997a8f7bf528394939f38979e2"
+    },
+    {
+      "source_path": "pi/packages/openai-proxy/index.ts",
+      "source_git_blob": "c7c60a357747b69f19413f76768b7195363442f9",
+      "target_path": "agents/pi/packages/openai-proxy/index.ts",
+      "import_sha256": "944b6d9573ce8dfe3991bd2786a73ce1fe912cce5349c34ba5eb77dea401692e"
+    },
+    {
+      "source_path": "pi/packages/openai-proxy/package-lock.json",
+      "source_git_blob": "230f43430ffa7a3ab1c510594254989b67a254cd",
+      "target_path": "agents/pi/packages/openai-proxy/package-lock.json",
+      "import_sha256": "88e16f950a217fc5875ac19503371ab07829be987c9e37ce9cfd8400f652a49d"
+    },
+    {
+      "source_path": "pi/packages/openai-proxy/package.json",
+      "source_git_blob": "af70cb1d5ab19332827b2b96374b21606ceb650e",
+      "target_path": "agents/pi/packages/openai-proxy/package.json",
+      "import_sha256": "2792f09251644887ce30cbaa6c4e10c3a1df25cdb422e035a8b3b7b02f3350fe"
+    },
+    {
+      "source_path": "pi/packages/openai-proxy/routing.mjs",
+      "source_git_blob": "dd5fa991977a10b75e2b7bf4b2219721a27bba37",
+      "target_path": "agents/pi/packages/openai-proxy/routing.mjs",
+      "import_sha256": "105eec1b9296ae0ed2122cb20d271feed946e4329ed22e18f6ce10df8f7052d9"
+    },
+    {
+      "source_path": "pi/packages/openai-proxy/routing.test.mjs",
+      "source_git_blob": "3220b0555a181c24ca312b177bf232dd856d76bb",
+      "target_path": "agents/pi/packages/openai-proxy/routing.test.mjs",
+      "import_sha256": "d68f36c2a39b25cb00371fd145c03130b54dc680570bbf6cd6cbcb9d14d64e16"
+    },
+    {
+      "source_path": "pi/packages/openai-proxy/transport.test.mjs",
+      "source_git_blob": "e30b1dfdb7ced3d2bf43594cd17f672f9fae361e",
+      "target_path": "agents/pi/packages/openai-proxy/transport.test.mjs",
+      "import_sha256": "1d8cd86ef9ad8655e7fdd71c1335421656863ff8e2157f6c4c0a526de6dda1c5"
+    },
+    {
+      "source_path": "pi/packages/session-yolo/index.ts",
+      "source_git_blob": "a373fd1d1032308914f52aaf86cc582d37ff61ef",
+      "target_path": "agents/pi/packages/session-yolo/index.ts",
+      "import_sha256": "99bb3385871efd0b29bf2a6bd574cf77ae6f87a6a92f3c95a14853c67e3b5e2b"
+    },
+    {
+      "source_path": "pi/packages/session-yolo/package.json",
+      "source_git_blob": "949327db40d451fe78d7577123dcbcd7cb98e9bc",
+      "target_path": "agents/pi/packages/session-yolo/package.json",
+      "import_sha256": "f3f98e646f4a1537446da49a6d4bf4c0d3a053dabc58b384421f345c13a8be8f"
+    }
+  ]
+}

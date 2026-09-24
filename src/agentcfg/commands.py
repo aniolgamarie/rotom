@@ -1,6 +1,7 @@
 """统一命令入口：显式副作用边界，输出默认脱敏。"""
 
 import json
+from contextlib import nullcontext
 from pathlib import Path
 
 from . import deployment, runtime
@@ -11,7 +12,11 @@ from .workspace import load_workspace
 
 
 def workspace(args):
-  return load_workspace(args.local, args.profile)
+  result = load_workspace(args.local, args.profile)
+  if getattr(args, "agent", result.agent) != result.agent:
+    from .schema import ConfigError
+    raise ConfigError("agent-profile-mismatch")
+  return result
 
 
 def output(w, command, result):
@@ -60,25 +65,58 @@ def current_plan(w, lock, candidate):
 
 
 def cmd_plan(args):
+  if getattr(args, "from_starter", None) is not None and getattr(args, "from_pi_home", None) is None:
+    from .schema import ConfigError
+    raise ConfigError("pi-source-requires-home")
+  if getattr(args, "from_pi_home", None) is not None:
+    return migration_plan(args)
   w, lock, candidate = prepared(args)
   plan = current_plan(w, lock, candidate)
   result = plan.public()
   result["sources"] = [{"field": ".".join(path), "source": layer} for path, layer in public_diagnostics(w.resolved)]
   result["dependencies"] = dependency_status(w, lock)
+  upgrade = getattr(w.adapter, "upgrade_diagnostics", None)
+  if upgrade is not None:
+    with Tree(w.state_root) as state:
+      result["upgrade"] = upgrade({"current": deployment.read_state(state)["current"], "candidate": candidate, "runtime_identity": runtime.runtime_identity(w, lock)})
   result["diagnostics"] = write_diagnostics(w, lock, plan)
   output(w, "plan", result)
   return 4 if plan.conflicts else 0
 
 
+def migration_plan(args):
+  """提案使用有效机器的私人缓存，不依赖尚未安装的 Pi 或虚构适配器。"""
+  from .pi_inventory import build_inventory
+  from .paths import safe_id
+  w = load_workspace(args.local)
+  target_profile = args.profile if args.profile.startswith("pi-") else "pi-default"
+  safe_id(target_profile)
+  report = build_inventory(args.from_pi_home, getattr(args, "from_starter", None), repository=w.repository)
+  overrides = report["proposed_overrides"]
+  if "pi-default" in overrides.get("profiles", {}) and target_profile != "pi-default":
+    overrides["profiles"][target_profile] = overrides["profiles"].pop("pi-default")
+  cache = Path(w.resolved.data["machine"]["paths"]["cache_root"]) / "migration" / target_profile
+  with Tree(cache, create=True) as output_tree:
+    output_tree.write_state("inventory.json", deployment.json_bytes(report))
+  print(json.dumps({"command": "plan", "agent": "pi", "profile": target_profile,
+    "mode": "migration-preview", "items": len(report["items"]), "blockers": len(report["blockers"]),
+    "ready_to_deploy": False, "proposal": str(cache / "inventory.json")}, ensure_ascii=False, sort_keys=True))
+  return 0
+
+
 def cmd_apply(args):
   w, lock, candidate = prepared(args)
-  result = deployment.apply(w.instance, w.state_root, candidate, w.binding, runtime.record(w, lock))
+  guard = getattr(w.adapter, "lifecycle_guard", None)
+  with guard(w) if guard else nullcontext():
+    result = deployment.apply(w.instance, w.state_root, candidate, w.binding, runtime.record(w, lock))
   return output(w, "apply", result)
 
 
 def cmd_rollback(args):
   w = workspace(args)
-  return output(w, "rollback", deployment.rollback(w.instance, w.state_root, w.binding))
+  guard = getattr(w.adapter, "lifecycle_guard", None)
+  with guard(w) if guard else nullcontext():
+    return output(w, "rollback", deployment.rollback(w.instance, w.state_root, w.binding))
 
 
 def cmd_lock(args):
@@ -97,6 +135,12 @@ def cmd_run(args):
   return runtime.run(w, cwd=args.cwd.absolute(), arguments=args.passthrough)
 
 
+def cmd_recover(args):
+  from .pi_recovery import recover
+  w, result = recover(args)
+  return output(w, "recover", result)
+
+
 def cmd_doctor(args):
   w = workspace(args)
   lock = w.backend.read_lock(w.repository)
@@ -109,31 +153,46 @@ def cmd_doctor(args):
       "notes": list(w.adapter.doctor({}))}
   result["required_toolchain"] = w.backend.toolchain(lock)
   import sys
-  result["platform_evidence"] = lock.metadata.get("platforms", {}).get(sys.platform, "not-recorded")
+  platforms = lock.metadata.get("platforms", {})
+  result["platform_evidence"] = platforms.get(sys.platform, "not-recorded") if isinstance(platforms, dict) else "not-recorded"
   if saved["current"] is not None:
-    result["deployed_dependencies"] = w.backend.status(w, saved["current"]["launch"]["lock_identity"])
+    launch = saved["current"]["launch"]
+    result["deployed_dependencies"] = w.backend.status(w, launch.get("runtime_identity", launch["lock_identity"]))
   drift = None
   if result["deployed"] and not result["recovery_pending"]:
     drift = current_plan(w, lock, w.candidate(lock.identity))
     result.update(drift=bool(drift.drift), conflicts=bool(drift.conflicts), changes_pending=len(drift.changes))
   result["diagnostics"] = write_diagnostics(w, lock, drift)
+  capabilities = getattr(w.adapter, "capability_diagnostics", lambda _: None)({"data": w.resolved.data, "repository": w.repository, "deployed": result["deployed"] and not result["recovery_pending"] and not result.get("changes_pending") and not result.get("conflicts"),
+    "dependencies": result["dependencies"], "lock_identity": lock.identity, "runtime_identity": runtime.runtime_identity(w, lock)})
+  if capabilities is not None: result["capabilities"] = capabilities
   if args.live:
-    import urllib.request
-    checks = []
-    for provider in w.resolved.data["providers"].values():
-      if provider["auth_kind"] == "api-key":
-        try:
-          with urllib.request.urlopen(urllib.request.Request(provider["base_url"], method="HEAD"), timeout=5):
-            checks.append("reachable")
-        except Exception:
-          checks.append("unverified")
+    checks = getattr(w.adapter, "live_diagnostics", lambda _: None)(w.resolved.data)
+    if checks is None:
+      import urllib.request
+      checks = []
+      for provider in w.resolved.data["providers"].values():
+        if provider["auth_kind"] == "api-key":
+          try:
+            with urllib.request.urlopen(urllib.request.Request(provider["base_url"], method="HEAD"), timeout=5):
+              checks.append("reachable")
+          except Exception:
+            checks.append("unverified")
     result.update(live=True, service_checks=checks)
-  return output(w, "doctor", result)
+  output(w, "doctor", result)
+  return getattr(w.adapter, "diagnostic_exit_code", lambda _: 0)(capabilities)
 
 
 def cmd_capture(args):
   w = workspace(args)
   with Tree(w.instance) as target:
+    # 捕获前使用已部署字段自己的保护声明，不能用当前未部署的引用替代。
+    with Tree(w.state_root) as state:
+      current = deployment.read_state(state)["current"]
+      if current:
+        for item in current["items"].values():
+          if item.get("guard") is not None:
+            deployment.projection(target, item)
     projection = w.adapter.capture_projection(target)
   captured = w.adapter.capture_configuration(projection, w.resolved.data)
   proposal = {"schema_version": 1, "overrides": {"profiles": {w.profile: captured}}}
@@ -153,7 +212,7 @@ def cmd_project(args):
 
 
 def dependency_status(w, lock):
-  status = w.backend.status(w, lock.identity)
+  status = w.backend.status(w, runtime.runtime_identity(w, lock))
   return "sync-required" if status == "missing" else status
 
 

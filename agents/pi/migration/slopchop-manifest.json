@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "package": "pi-slopchop",
+  "version": "0.10.1",
+  "resolved": "https://registry.npmjs.org/pi-slopchop/-/pi-slopchop-0.10.1.tgz",
+  "integrity": "sha512-BiaC31pmPj/Pauq/muY8K3wTyGwL7T6qkrczSPkeaD7uOHozL/VtjAeBXAtlQubDPlxhy5p24ARy5xsK2/FfaQ==",
+  "adaptation": "agentcfg-runtime-adapted",
+  "files": [
+    {
+      "source_path": "LICENSE",
+      "source_sha256": "e4c13014b80897565601db347b6d0a65c67eee308d97834ce68427c870100e47",
+      "target_path": "agents/pi/packages/slopchop-vendor/LICENSE"
+    },
+    {
+      "source_path": "README.md",
+      "source_sha256": "62dfe2d3c552c5ea7fc95d751ef0f5b21b168573a39f9f2a33db404396a48c6e",
+      "target_path": "agents/pi/packages/slopchop-vendor/README.md"
+    },
+    {
+      "source_path": "package.json",
+      "source_sha256": "8ee3b407fe861ae1bdd957e6bc36e7e5fd86a66c531008f0eb25663c8e3ebdd9",
+      "target_path": "agents/pi/packages/slopchop-vendor/package.json"
+    },
+    {
+      "source_path": "src/diff.ts",
+      "source_sha256": "17b8ca1f725909910a3fa7714bee53f131261c1fce09b3803e0f9fefaadb0ead",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/diff.ts"
+    },
+    {
+      "source_path": "src/git.ts",
+      "source_sha256": "adc9ec7256a97c14eceaa210ff78b1f147dbdef27b84c139f96b85be009fa703",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/git.ts"
+    },
+    {
+      "source_path": "src/index.ts",
+      "source_sha256": "a9b392846ff31a51006b4e3870ce91d7eb680ab945a654333916550d075b941e",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/index.ts"
+    },
+    {
+      "source_path": "src/pi-render.ts",
+      "source_sha256": "0766cecaeba2501c41bd4d53896770a0ba8a379763161a95421663094987f32e",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/pi-render.ts"
+    },
+    {
+      "source_path": "src/prompt.ts",
+      "source_sha256": "16868c3c08263e8aa30ca2041678c45ce5f3b38c9a55cdcdd9adb0536600c5e6",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/prompt.ts"
+    },
+    {
+      "source_path": "src/search.ts",
+      "source_sha256": "ec58f77abaf9108ff1c59b315df8370ba4c057ee088bde87286f9de46b39de06",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/search.ts"
+    },
+    {
+      "source_path": "src/shortcuts.ts",
+      "source_sha256": "2b777a1b8c35b5a4811e41c9faeaf3a06569466539d2e4399704e0458f537b09",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/shortcuts.ts"
+    },
+    {
+      "source_path": "src/state.ts",
+      "source_sha256": "50bd44d9771fa879e0e10f8c03550ab7f05d72afb7d6a2539a967e9fe44f9bd3",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/state.ts"
+    },
+    {
+      "source_path": "src/syntax-highlight.ts",
+      "source_sha256": "17ca27091a6f297b86202d8ac52c3fc0fcfc178785475efd62ab5137433e5a6f",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/syntax-highlight.ts"
+    },
+    {
+      "source_path": "src/theme-highlight.ts",
+      "source_sha256": "a7281b60920fa7334dd4e5a8f795be9a8f990b76f22a7b2b539ec6e2e7766c1a",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/theme-highlight.ts"
+    },
+    {
+      "source_path": "src/types.ts",
+      "source_sha256": "4ba15ddc8352e682e2bb5183f3e7ff6b0591a1fe24b2188d8c09fd45227976aa",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/types.ts"
+    },
+    {
+      "source_path": "src/ui/review-app.ts",
+      "source_sha256": "e2d5bd5cbffd5abdc0244b2c696f351f73d8a10e0227a4e7f4af26a62425a136",
+      "target_path": "agents/pi/packages/slopchop-vendor/src/ui/review-app.ts"
+    }
+  ],
+  "target_version": "0.10.1-agentcfg.1",
+  "patch_path": "agents/pi/build/slopchop-agentcfg.patch",
+  "patch_sha256": "ce12a77db9df0d66ec3c4433ae63fe669982b862f71fe4bea7d947f0f6a8bde7",
+  "native_status": "not-run"
+}

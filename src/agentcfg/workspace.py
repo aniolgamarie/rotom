@@ -5,12 +5,13 @@ from pathlib import Path
 
 from .config import AdapterSources, SourceInputs, LocalConfig, load_local, load_sources, resolve_config
 from .dsh import DshAdapter
+from .pi import PiAdapter
 from .paths import safe_id
 from .render import render_candidate
 from .schema import AdapterSchemas
 
 
-ADAPTER_TYPES = {"dsh": DshAdapter}
+ADAPTER_TYPES = {"dsh": DshAdapter, "pi": PiAdapter}
 
 
 @dataclass

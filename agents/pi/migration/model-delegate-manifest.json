@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "source_revision": "c60599df39e6350123f7fb9378cfe63dc5ed814f",
+  "files": [
+    {
+      "source_path": "skill/model-delegate/API.md",
+      "source_git_blob": "af72ddb4317f8ff788de88d8cb879dba5cabe640",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/API.md",
+      "import_sha256": "49065fb8817a47c0b8121446d352f5a6ed8f80c10fb8395b3d83369368c6c611"
+    },
+    {
+      "source_path": "skill/model-delegate/README.md",
+      "source_git_blob": "454ef6a02684785fc64f0c7dd8cada96f85b37be",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/README.md",
+      "import_sha256": "e7524bfbc4fd008ebd77c27f6c54e8b96dfaed5760870d614832d51687e1e8da"
+    },
+    {
+      "source_path": "skill/model-delegate/SKILL.md",
+      "source_git_blob": "49e7545b06eb0875ea735cf5a974996031fad599",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/SKILL.md",
+      "import_sha256": "6b10942357e5edd2887c0af605d29bf2c5bda13de4f904401b7a53ad81051bb0"
+    },
+    {
+      "source_path": "skill/model-delegate/USAGE.md",
+      "source_git_blob": "42c1828fa45c047d0ce2193e003ce97e24afefcb",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/USAGE.md",
+      "import_sha256": "4f3094394d35b9f41831bd89b733e11d3629ebec0a1638d87e2ebbbda8b566dd"
+    },
+    {
+      "source_path": "skill/model-delegate/schemas/event-v1.json",
+      "source_git_blob": "2295b68119472747e8d074d2ef459c42b1dbb55c",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/schemas/event-v1.json",
+      "import_sha256": "4905ddd044bf5ee34a6d7810f22f0077aafc0790f24448979989a25c7b81f258"
+    },
+    {
+      "source_path": "skill/model-delegate/schemas/receipt-v1.json",
+      "source_git_blob": "ee4895f4989944a8cad9ccb29e3074bba280291f",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/schemas/receipt-v1.json",
+      "import_sha256": "f0f72db3c0c60d90008ecfde6a62e7e0815a3b55e5e069744bebfb646c61d27b"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/backends/codex-normalize.jq",
+      "source_git_blob": "2e6e7d49473dfd1b51b90eead76a890a79a20630",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/scripts/backends/codex-normalize.jq",
+      "import_sha256": "cbbe8404b9ddb4c3d2954ad5a8ff81001595b2290f747bc8e916d909562e9926"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/backends/codex.sh",
+      "source_git_blob": "a974bbb41f652b6883efe6e48cbd46ba42b808a8",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/scripts/backends/codex.sh",
+      "import_sha256": "4cfef17d8feb29e420ad1286a3320fae70e46f2a01d7e2b0ef920a394780794d"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/backends/pi-normalize.jq",
+      "source_git_blob": "5292882146863f122e0eca0e16dfe36bb91a7496",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/scripts/backends/pi-normalize.jq",
+      "import_sha256": "fa909cf2cf252164c588c1260b9f6ac21404affc54865cd72bb2e083666f1adb"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/backends/pi.sh",
+      "source_git_blob": "696e23b5bb2ba14405c5826c9f182cd01f737e79",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/scripts/backends/pi.sh",
+      "import_sha256": "c7b2cd4768284a830fabf4c248507d4d8bfde3a117f5296f70be3d6ac005cfd6"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/backends/test-fake.sh",
+      "source_git_blob": "8a0f654221a947929a83a26fff741ee21bb6352a",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/scripts/backends/test-fake.sh",
+      "import_sha256": "715ad91a1742a667cd2f36b24c9813328c19e3dd0b0129470c9c3b7c1619ffaf"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/codex-probe.sh",
+      "source_git_blob": "6e9b25e38f955da67f17d1b1c268d3c9ecbdfc73",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/scripts/codex-probe.sh",
+      "import_sha256": "ae4b8e216dffce6abd8858681606c7d5f89170849e1d696eb75972b40c95cdbe"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/lib/contract.sh",
+      "source_git_blob": "5af68bc729512e24acc7dd0ee18da18acc6f5821",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/scripts/lib/contract.sh",
+      "import_sha256": "4b40c5c53790875f9bdadda77172c7d0eada764eb0e693010dcc8e5623f1259a"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/lib/credentials.sh",
+      "source_git_blob": "6d5c0fa3223a7d63d0f3a2ca77eece5dd4db815e",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/scripts/lib/credentials.sh",
+      "import_sha256": "c8e280e1b01ebd3842a939eba6bab25e448e0c07cfe18634d86972f5b023abfe"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/lib/memory.sh",
+      "source_git_blob": "10f36e6df7eba3783a251a0daba4e31a7c6aafc3",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/scripts/lib/memory.sh",
+      "import_sha256": "45a7de51688d1161f8afe1f5b1f8d14634e8d3af44efc06003b775939bad2cae"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/lib/retry.sh",
+      "source_git_blob": "5f4d42a62f200f43f71a26f14a4893db3d19d97b",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/scripts/lib/retry.sh",
+      "import_sha256": "4cc432932a1de04396483e55e8c6725052801c7374cf190004e330fed9317527"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/lib/routing.sh",
+      "source_git_blob": "ec581d49f0f0fb4df05a1188538be93cb45dc90c",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/scripts/lib/routing.sh",
+      "import_sha256": "9d8f6c45902f0bbe080de39841bd959c547e677c29e6fda35aa8e6b9d42a61af"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/lib/supervisor.sh",
+      "source_git_blob": "3de3c5c1cc6a68c0ddc038307666ad3af3ff89b0",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/scripts/lib/supervisor.sh",
+      "import_sha256": "c05479d7b899f5dfbd0da20104adbbb2e5ca016a021568d29893e94c71465175"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/run-model-fanout.sh",
+      "source_git_blob": "dbbc54b3a927057c287c7885486a6a52973f899d",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/scripts/run-model-fanout.sh",
+      "import_sha256": "26843b6d4d873219e941e78a4e365c92822973c866320592a8c325fa8b1304eb"
+    },
+    {
+      "source_path": "skill/model-delegate/scripts/run-model.sh",
+      "source_git_blob": "9f013defb8c0808a7c08e49a350b91d2a3ca0707",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/scripts/run-model.sh",
+      "import_sha256": "cb38fad96ffe1bee451882c5de3ad2690e6cd297e21e263aa2d652156f1ede93"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/fixtures/codex/empty-final.jsonl",
+      "source_git_blob": "0bdc96efb0fcca853f00e6d53c901fe4acc152c7",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/tests/fixtures/codex/empty-final.jsonl",
+      "import_sha256": "ce6c5dc82c99c672f91c2459907825ea9c04b164b29a6ba0d874db08e278e33e"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/fixtures/codex/malformed.jsonl",
+      "source_git_blob": "151a5ec0af4780dc6d026ae6bb52984790224ba8",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/tests/fixtures/codex/malformed.jsonl",
+      "import_sha256": "6908c25bceeff44f83570fd6b7b434d79391919fe826dfb4e24e0a046ccdc814"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/fixtures/codex/thread-started.jsonl",
+      "source_git_blob": "c8bd3ab18dcad06bcc4f730b5dec0d27a5fab3f0",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/tests/fixtures/codex/thread-started.jsonl",
+      "import_sha256": "46dc132f10f37b259a45c785bdee55defefa63475a2b0100a8c2e453ea82244f"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/fixtures/codex/turn-completed.jsonl",
+      "source_git_blob": "9b94efe8c94111994c494c8c9f6d0feeb866414d",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/tests/fixtures/codex/turn-completed.jsonl",
+      "import_sha256": "a6c596798e6eaae83f60d8148bf0323827d9a53ebf032d92c258eba6bfe0ad29"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/fixtures/codex/turn-failed.jsonl",
+      "source_git_blob": "4dbc21c150142fa95c5b18857c7c2aefeeadd3c0",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/tests/fixtures/codex/turn-failed.jsonl",
+      "import_sha256": "24600266b596cac3f51d16f93cd6165bc4d3610cd15196f69a247a3e88084811"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/fixtures/codex/usage.jsonl",
+      "source_git_blob": "3852821afa4764f2cb18f104efb2e1f1245e7a6c",
+      "source_mode": "100644",
+      "target_path": "shared/skills/model-delegate/tests/fixtures/codex/usage.jsonl",
+      "import_sha256": "07d0488105470c5919216eb9f1eeddee1f7ef099040221bc39c54adc9257d7c5"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/fixtures/fake-backend.sh",
+      "source_git_blob": "e8cef36e82644da23eeb36050a36660967078deb",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/fixtures/fake-backend.sh",
+      "import_sha256": "4c1246d6c790769eb577f48e534d3730bbf4a8b0f823b2552ac5b275106403c4"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-backend-security.sh",
+      "source_git_blob": "965eaabcd6f4fe1b49c9fad829ac443082fb8cff",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-backend-security.sh",
+      "import_sha256": "83cee43e80350d03d2aa513e6b58d6d52c595001708122e2a38e83dd95f63f07"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-codex-backend.sh",
+      "source_git_blob": "e5f986b6516e91bd57459da27e44d5e6760efb14",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-codex-backend.sh",
+      "import_sha256": "87e92aeaa660359784f00a49f97d43dc1dd33d6e95fcfabd3726ec1564317db1"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-codex-e2e.sh",
+      "source_git_blob": "7d93a1014970d4aa4e1aa4563857243da45fbbe6",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-codex-e2e.sh",
+      "import_sha256": "4c35feca4fbe9cee9f631cdae688b5826bc89d01f2ad329c5a46ea917281b028"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-concurrency.sh",
+      "source_git_blob": "e025fc2f35a137f0478cdfc1fe6e7fd620aca917",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-concurrency.sh",
+      "import_sha256": "4c30c220bbedf714c454fe69949f7ef7c2db78e61d563fc0b245b286c2aa9cfa"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-contract.sh",
+      "source_git_blob": "c3901e313e418235e68b6b96fd3355d61f9e2424",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-contract.sh",
+      "import_sha256": "c7679dee440e1f070b1afc31983fc05a81228686e77f8f9ccf970d07391e8e60"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-enhancement.sh",
+      "source_git_blob": "a5b2843e44e9fcdcbdabfcd9518566a38b75b34a",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-enhancement.sh",
+      "import_sha256": "5667606c7d4f4a59796e9b6806b14e2e774dc6dd07c67eba751c4f69bb7ac2cc"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-fanout.sh",
+      "source_git_blob": "3701812642f9b9c5919ac5f46407cf49e08c0ae4",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-fanout.sh",
+      "import_sha256": "dccc3b34f235f6665566f2b0ee992dc1d0fc6e68e4d7aebaf256e2f2b149bbab"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-host-interop.sh",
+      "source_git_blob": "9ef5fd85409298564fe871969a5105aceaf6070a",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-host-interop.sh",
+      "import_sha256": "038d68ac42ed170df7e874ae169f9d74c59a98fa2558494d2bf1b5808a7e1fe0"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-input-safety.sh",
+      "source_git_blob": "9500d7098ef830cf3e9ee64af38b02fa8c76cbfa",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-input-safety.sh",
+      "import_sha256": "64f860f67ad0fc53b8ac58b9975efd2bbd9f3cc28aceca0056b3c27b65225530"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-jsonl-boundary.sh",
+      "source_git_blob": "7e62871bd9f369efb63a11a6d1e092fbadb1157c",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-jsonl-boundary.sh",
+      "import_sha256": "181458c655ee20431dcb43a6fc61ee31e5da5721b47e384b8074039a24c9f2e8"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-memory.sh",
+      "source_git_blob": "aa82227405cde29a49ca84c5c99569bb14616c93",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-memory.sh",
+      "import_sha256": "457a6b7cabf7c7e10fa4e9492fa7278a76bc62070d6fcd2d9207cfe15b5bd71c"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-parallel-policy.sh",
+      "source_git_blob": "6923aa336a2d68bd59aa8b112cb66e4988a2c60d",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-parallel-policy.sh",
+      "import_sha256": "024116ceb8c1588ae37bdeac011ae526ec8a2d96322714b43739eba334ccb0af"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-pi-backend.sh",
+      "source_git_blob": "add461cc599d4b830eae2d787f11c44ac800ec86",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-pi-backend.sh",
+      "import_sha256": "b6e3c58f3b45166b32d185ec7907b49ebf4e6af2b5b3b43662b4a8b19598e668"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-process-group.sh",
+      "source_git_blob": "4b19a7922dfffc0ddfea9bce54f722361a754e59",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-process-group.sh",
+      "import_sha256": "1697728006f01ae97f02498540ab82d1a812953b7f32a0a108106c37ec42f0cf"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-progress-boundary.sh",
+      "source_git_blob": "976cec6509a9278c4c643c5b049de892d368f2e9",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-progress-boundary.sh",
+      "import_sha256": "e9d0c9b40e8a6dabccf1dbb3e3b7cd1f3809d538fdacbcd2feddb414211d4c17"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-resources.sh",
+      "source_git_blob": "49c438b92f411d7028c05fa9cfd76ec04461f8d2",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-resources.sh",
+      "import_sha256": "b7bb3b01e11fd22c21e7ddee21c659c7a06c74321729aba1783c4450dd927a66"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-retry-matrix.sh",
+      "source_git_blob": "a6b78d49003de39c0e802e1b5095da7ce437be98",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-retry-matrix.sh",
+      "import_sha256": "2636629403f8a721ac15adf22ee38d713a8eada8efe6e237cee28fafba1d4026"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-routing.sh",
+      "source_git_blob": "4849946223c3123673f65b300f28df8f44ac3114",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-routing.sh",
+      "import_sha256": "d8bc9919d02cc6b237518843f4e26ca70b304ce7ac2536b9fb133142affb2a65"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-schema.sh",
+      "source_git_blob": "00fbd1f6e8501285f3793cfc56f31e8c85883764",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-schema.sh",
+      "import_sha256": "328a0fd36eea1f79488ff08f3b5393007e6e1a94f94338a2fefae6dff862c261"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-supervisor-crash.sh",
+      "source_git_blob": "d193954fbdb778a2f576e4390d0b93df0552cf17",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-supervisor-crash.sh",
+      "import_sha256": "ac1de0cb9f790d6818172e522d93ee5fd87f615a589b878db477c792c8172854"
+    },
+    {
+      "source_path": "skill/model-delegate/tests/test-supervisor.sh",
+      "source_git_blob": "237d01c3eb73de7562769a766358ec71cfbde167",
+      "source_mode": "100755",
+      "target_path": "shared/skills/model-delegate/tests/test-supervisor.sh",
+      "import_sha256": "7a4ac014813b7765d22e401691700c231da25395d6a4440165215a1e715a95aa"
+    }
+  ]
+}

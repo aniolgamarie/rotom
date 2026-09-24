@@ -1,0 +1,192 @@
+--- /dev/null
++++ b/NOTICE.agentcfg.md
+@@ -0,0 +1,35 @@
++# agentcfg ReadSeek adaptation
++
++Source: `pi-readseek@0.9.16`, Apache-2.0. Original license, README,
++prompts and distribution are retained. `SOURCE.json` records the original npm
++integrity and per-file hashes; `agents/pi/build/readseek-agentcfg.patch` records
++the changes to the upstream package. The native ReadSeek executable is a
++separate dependency with its own license and platform requirements.
++
++The parent extension retains the nine original tool schemas and renderers.
++Execution is redirected to an agentcfg controller; it fails explicitly when
++that controller is unavailable. `overrideTools` is fixed to an empty list.
++Settings come from explicit instance bindings, without global/project discovery.
++Filesystem previews run only inside an authorized worker snapshot.
++
++An isolated worker receives its native executable, cache root, settings and
++verified session anchors explicitly. It reports anchor events to the parent.
++The parent validates the result and computed file hashes, applies allowed file
++changes through FilePolicy and a persistent mutation journal, and publishes
++anchors only after acceptance. No arbitrary plugin path, shell command or
++implicit binary download is an agent-facing parameter.
++
++Integration status: in progress. The supervised controller and Git/rg selection
++driver are connected and this derived package is declared in all four recipes.
++Native executable projection checks the exact 0.9.16 platform package and binary
++header, without executing it. The native LGPL-2.1-or-later license is retained
++under `agents/pi/build/licenses/readseek` and copied into the installed runtime.
++The exact Qwen3-VL model/projector pair is declared as immutable data assets,
++downloaded only during explicit sync, verified by size/hash and mounted read-only
++at the native cache layout. Model license and revision provenance are retained.
++Private document caches and snapshot paths persist within the same session and
++policy binding; source timestamps are preserved, and another operation cannot
++replace a snapshot while its execution remains active or unverified.
++macOS x86_64 source builds and native/live acceptance remain incomplete. These
++source changes and isolated tests are not evidence of native ReadSeek or Pi
++execution or a finished release.
+--- a/dist/index.ts
++++ b/dist/index.ts
+@@ -1,3 +1,4 @@
++import { readseekWorker, readseekSettings, readseekAvailability, wrapReadseekTool, recordReadseekAnchor } from "@agentcfg/pi-runtime/readseek-context";
+ // src/edit.ts
+ import { readFile as fsReadFile } from "node:fs/promises";
+ import { createPatch } from "diff";
+@@ -2447,13 +2448,11 @@
+   return settings;
+ }
+ function resolveReadSeekJsonSettings() {
+-  const globalResult = readSettingsFile(globalSettingsPath());
+-  const projectResult = readSettingsFile(projectSettingsPath());
+-  return {
+-    settings: mergeSettings(globalResult.settings, projectResult.settings),
+-    warnings: [...globalResult.warnings, ...projectResult.warnings]
+-  };
+-}
++  const result = validateSettings({ readseek: { ...readseekSettings(), overrideTools: [] } }, "agentcfg");
++  if (result.warnings.length) throw new Error("READSEEK_SETTINGS_INVALID");
++  return result;
++}
++
+ function resolveReadSeekImageMode() {
+   return resolveReadSeekJsonSettings().settings.imageMode ?? "auto";
+ }
+@@ -2470,16 +2469,12 @@
+ // src/readseek-client.ts
+ var resolveFromHost = createRequire2(import.meta.url).resolve;
+ function readSeekBinaryPath() {
+-  return resolveReadSeekBinaryOverride() ?? resolveReadSeekBinaryFromPackages(resolveFromHost);
+-}
+-function readSeekBinaryAvailability() {
+-  try {
+-    readSeekBinaryPath();
+-    return { available: true };
+-  } catch (err) {
+-    return { available: false, reason: classifyReadSeekFailure(err).message };
+-  }
+-}
++  const worker = readseekWorker();
++  if (!worker || !readseekAvailability().available) throw new Error("READSEEK_WORKER_REQUIRED");
++  return worker.native_binary;
++}
++function readSeekBinaryAvailability() { return readseekAvailability(); }
++
+ var defaultReadSeekDirInit;
+ function defaultReadSeekDir() {
+   const home = homedir2();
+@@ -2527,11 +2522,11 @@
+   }
+ }
+ async function readSeekInvocationArgs(args) {
+-  if (hasProjectReadSeekDir())
+-    return [...args];
+-  const readSeekDir = await ensureDefaultReadSeekDir();
+-  return readSeekDir ? ["--readseek-dir", readSeekDir, ...args] : [...args];
+-}
++  const worker = readseekWorker();
++  if (!worker?.cache_root) throw new Error("READSEEK_WORKER_REQUIRED");
++  return ["--readseek-dir", worker.cache_root, ...args];
++}
++
+ async function runReadSeekRaw(args, options = {}) {
+   return spawnReadSeekRaw(await readSeekInvocationArgs(args), options);
+ }
+@@ -3245,8 +3240,9 @@
+   return Type.String({ description: PARAM_DESCRIPTIONS.path });
+ }
+ function registerReadSeekTool(pi, tool) {
+-  pi.registerTool(tool);
+-  return tool;
++  const selected = wrapReadseekTool(tool);
++  pi.registerTool(selected);
++  return selected;
+ }
+ 
+ // src/edit.ts
+@@ -4920,6 +4916,7 @@
+   return rel === "" || rel !== "" && !rel.startsWith("..") && !rel.startsWith(sep) && !resolve(rel).startsWith(".." + sep);
+ }
+ function resolveWorkspacePreviewPath(rawPath, cwd, allowMissing) {
++  if (!readseekWorker()) return skip("Changes will be shown with the tool result");
+   if (typeof rawPath !== "string" || rawPath.trim() === "")
+     return { type: "skip", reason: "missing path" };
+   const workspace = realpathSync(cwd);
+@@ -5817,15 +5814,18 @@
+ 
+ // src/session-anchors.ts
+ class SessionAnchors {
+-  #paths = new Set;
++  #paths = new Set(readseekWorker()?.anchors ?? []);
+   markAnchored(absolutePath) {
+     this.#paths.add(absolutePath);
++    recordReadseekAnchor("mark", absolutePath);
+   }
+   forget(absolutePath) {
+     this.#paths.delete(absolutePath);
++    recordReadseekAnchor("forget", absolutePath);
+   }
+   clear() {
+     this.#paths.clear();
++    recordReadseekAnchor("clear");
+   }
+   hasFreshAnchors(absolutePath) {
+     return this.#paths.has(absolutePath);
+@@ -5918,7 +5918,7 @@
+     const problems = warnings.map(formatSettingsWarning);
+     const availability = readSeekBinaryAvailability();
+     if (!availability.available) {
+-      problems.push(`readseek installation is broken: ${availability.reason}`);
++      problems.push(`ReadSeek unavailable: ${availability.reason}`);
+     }
+     for (const problem of problems) {
+       if (ctx.hasUI)
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "pi-readseek",
+-  "version": "0.9.16",
++  "version": "0.9.16-agentcfg.1",
+   "description": "Pi extension for LINE:HASH-anchored file operations and structural code navigation",
+   "type": "module",
+   "exports": {
+@@ -39,14 +39,15 @@
+     "node": ">=20.0.0"
+   },
+   "dependencies": {
+-    "@jarkkojs/readseek-api": "^0.9.16",
+-    "diff": "^9.0.0",
+-    "xxhash-wasm": "^1.1.0"
++    "@agentcfg/pi-runtime": "1.0.0",
++    "@jarkkojs/readseek-api": "0.9.16",
++    "diff": "9.0.0",
++    "xxhash-wasm": "1.1.0"
+   },
+   "peerDependencies": {
+-    "@earendil-works/pi-coding-agent": "*",
+-    "@earendil-works/pi-tui": "*",
+-    "@sinclair/typebox": "*"
++    "@earendil-works/pi-coding-agent": "0.84.4",
++    "@earendil-works/pi-tui": "0.84.4",
++    "@sinclair/typebox": "0.34.48"
+   },
+   "devDependencies": {
+     "@earendil-works/pi-ai": "^0.84.2",
+
+# Addendum 2026-09-21（agentcfg 原生隔离修复，详见 NOTICE.agentcfg.md）：
+# dist/index.ts 的 executeEdit / executeSearch / executeRefs / executeRename /
+# executeDef / executeDigest / executeView 入口各新增首行 `await ensureHashInit();`。
+# 上游仅在共享会话进程内由首个 grep/write 调用隐式完成 xxhash 初始化；
+# agentcfg 每个隔离 worker 进程只执行单个工具，缺初始化的入口在其
+# LINE:HASH 计算处必然失败关闭（"Hash not initialized"）。

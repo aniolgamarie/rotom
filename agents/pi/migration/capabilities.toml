@@ -1,0 +1,1488 @@
+schema_version = 1
+
+[sources.starter]
+kind = "local"
+commit = "c60599df39e6350123f7fb9378cfe63dc5ed814f"
+license_files = []
+
+[sources.pi-upstream]
+kind = "npm"
+version = "0.84.4"
+upstream_url = "https://github.com/earendil-works/pi"
+license_files = []
+
+[[capabilities]]
+id = "pi-host"
+kind = "tool"
+source_id = "pi-upstream"
+entrypoints = ["node_modules/@earendil-works/pi-coding-agent/package.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = []
+home_paths = ["node_modules/@earendil-works/pi-coding-agent/package.json"]
+target_path = "locks/pi"
+disposition = "adapt"
+reason = "locked-host-required"
+package_specs = []
+expected_version = "0.84.4"
+
+[[capabilities]]
+id = "pi-mcp"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/pi-mcp-adapter/package.json"]
+requires = ["pi-host", "pi-subagents", "pi-permissions"]
+conflicts = []
+control_domain = "pi-mcp"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/pi-mcp-adapter/package.json"]
+target_path = "locks/pi"
+disposition = "optional"
+reason = "explicit-services"
+package_specs = ["npm:pi-mcp-adapter@2.32.1"]
+expected_version = "2.32.1"
+
+[[capabilities]]
+id = "openspec"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/@fission-ai/openspec/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "openspec"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/@fission-ai/openspec/package.json"]
+target_path = "locks/pi"
+disposition = "optional"
+reason = "explicit-project-integration"
+package_specs = ["npm:@fission-ai/openspec@1.11.0"]
+expected_version = "1.11.0"
+
+[[capabilities]]
+id = "pi-permissions"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/@gotgenes/pi-permission-system/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "pi-permissions"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/@gotgenes/pi-permission-system/package.json"]
+target_path = "locks/pi"
+disposition = "adapt"
+reason = "parent-policy-bridge"
+package_specs = ["npm:@gotgenes/pi-permission-system@29.3.0"]
+expected_version = "29.3.0"
+
+[[capabilities]]
+id = "pi-web"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/pi-web-access/package.json"]
+requires = ["pi-host", "pi-subagents", "pi-permissions"]
+conflicts = []
+control_domain = "pi-web"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/pi-web-access/package.json"]
+target_path = "locks/pi"
+disposition = "optional"
+reason = "explicit-network"
+package_specs = ["npm:pi-web-access@0.27.0"]
+expected_version = "0.27.0"
+
+[[capabilities]]
+id = "pi-readseek"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/pi-readseek/package.json"]
+requires = ["pi-host", "pi-subagents", "pi-permissions"]
+conflicts = []
+control_domain = "pi-readseek"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/pi-readseek/package.json"]
+target_path = "locks/pi"
+disposition = "adapt"
+reason = "writes-must-not-override-readonly"
+package_specs = ["npm:pi-readseek@0.9.16"]
+expected_version = "0.9.16"
+
+[[capabilities]]
+id = "pi-slopchop"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/pi-slopchop/package.json"]
+requires = ["pi-host", "pi-subagents", "pi-permissions"]
+conflicts = []
+control_domain = "pi-slopchop"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/pi-slopchop/package.json"]
+target_path = "locks/pi"
+disposition = "adapt"
+reason = "editor-workspace-ownership"
+package_specs = ["npm:pi-slopchop@0.10.1"]
+expected_version = "0.10.1"
+
+[[capabilities]]
+id = "pi-subagents"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/@tintinweb/pi-subagents/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "pi-subagents"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/@tintinweb/pi-subagents/package.json"]
+target_path = "locks/pi"
+disposition = "adapt"
+reason = "single-manager-with-managed-executor"
+package_specs = ["npm:@tintinweb/pi-subagents@0.19.0"]
+expected_version = "0.19.0"
+
+[[capabilities]]
+id = "pi-todo"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/@juicesharp/rpiv-todo/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "pi-todo"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/@juicesharp/rpiv-todo/package.json"]
+target_path = "locks/pi"
+disposition = "keep"
+reason = "ordinary-todo-not-task-budget"
+package_specs = ["npm:@juicesharp/rpiv-todo@2.9.0"]
+expected_version = "2.9.0"
+
+[[capabilities]]
+id = "pi-smart-compact"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/pi-smart-compact/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "pi-smart-compact"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/pi-smart-compact/package.json"]
+target_path = "locks/pi"
+disposition = "adapt"
+reason = "single-compaction-owner"
+package_specs = ["npm:pi-smart-compact@9.6.0"]
+expected_version = "9.6.0"
+
+[[capabilities]]
+id = "pi-cursor"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/@rahularya01/pi-cursor/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "pi-cursor"
+supported_engines = ["bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/@rahularya01/pi-cursor/package.json"]
+target_path = "locks/pi"
+disposition = "optional"
+reason = "bun-only-ordinary"
+package_specs = ["npm:@rahularya01/pi-cursor@1.4.29"]
+expected_version = "1.4.29"
+
+[[capabilities]]
+id = "pi-btw"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/@narumitw/pi-btw/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "pi-btw"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/@narumitw/pi-btw/package.json"]
+target_path = "locks/pi"
+disposition = "optional"
+reason = "no-unbudgeted-managed-helper"
+package_specs = ["npm:@narumitw/pi-btw@0.55.3"]
+expected_version = "0.55.3"
+
+[[capabilities]]
+id = "pi-processes"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/@aliou/pi-processes/package.json"]
+requires = ["pi-host", "pi-subagents", "pi-permissions"]
+conflicts = []
+control_domain = "pi-processes"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/@aliou/pi-processes/package.json"]
+target_path = "locks/pi"
+disposition = "adapt"
+reason = "supervised-external-work"
+package_specs = ["npm:@aliou/pi-processes@0.11.1"]
+expected_version = "0.11.1"
+
+[[capabilities]]
+id = "pi-rules"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/@tigorhutasuhut/pi-rules/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "pi-rules"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["npm/node_modules/@tigorhutasuhut/pi-rules/package.json"]
+target_path = "locks/pi"
+disposition = "adapt"
+reason = "explicit-rule-roots"
+package_specs = ["npm:@tigorhutasuhut/pi-rules@0.6.0"]
+expected_version = "0.6.0"
+
+[[capabilities]]
+id = "superpowers"
+kind = "skill"
+source_id = "starter"
+entrypoints = []
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = []
+target_path = "shared/skills"
+disposition = "optional"
+reason = "explicit-complete-skill-pack"
+package_specs = ["git:github.com/obra/superpowers#b36e0829c6d0140e93cfef2ca599b1b07d4a7797"]
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-subagents"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["npm/node_modules/pi-subagents/package.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = []
+home_paths = ["npm/node_modules/pi-subagents/package.json"]
+target_path = ""
+disposition = "exclude"
+reason = "old-manager-not-loaded"
+package_specs = ["npm:pi-subagents@0.63.0"]
+expected_version = "0.63.0"
+
+[[capabilities]]
+id = "task-keeper"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["packages/task-keeper/package.json"]
+requires = ["pi-host", "pi-subagents"]
+conflicts = []
+control_domain = "task-keeper"
+supported_engines = ["node"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/task-keeper/package.json"]
+home_paths = ["packages/task-keeper/package.json"]
+target_path = "agents/pi/packages/task-keeper"
+disposition = "adapt"
+reason = "new-manager-required"
+package_specs = []
+expected_version = "0.1.0"
+
+[[capabilities]]
+id = "colorful-footer"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["packages/colorful-footer/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "colorful-footer"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/colorful-footer/package.json"]
+home_paths = ["packages/colorful-footer/package.json"]
+target_path = "agents/pi/packages/colorful-footer"
+disposition = "adapt"
+reason = "display-real-authority-state"
+package_specs = []
+expected_version = "0.1.0"
+
+[[capabilities]]
+id = "loop-guard"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["packages/loop-guard/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "loop-guard"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/loop-guard/package.json"]
+home_paths = ["packages/loop-guard/package.json"]
+target_path = "agents/pi/packages/loop-guard"
+disposition = "adapt"
+reason = "single-recovery-owner"
+package_specs = []
+expected_version = "0.1.0"
+
+[[capabilities]]
+id = "openai-proxy"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["packages/openai-proxy/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "openai-proxy"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/openai-proxy/package.json"]
+home_paths = ["packages/openai-proxy/package.json"]
+target_path = "agents/pi/packages/openai-proxy"
+disposition = "optional"
+reason = "machine-network-route"
+package_specs = []
+expected_version = "0.2.0"
+
+[[capabilities]]
+id = "session-yolo"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["packages/session-yolo/package.json"]
+requires = ["pi-host"]
+conflicts = []
+control_domain = "session-yolo"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/session-yolo/package.json"]
+home_paths = ["packages/session-yolo/package.json"]
+target_path = "agents/pi/packages/session-yolo"
+disposition = "adapt"
+reason = "real-policy-session-override"
+package_specs = []
+expected_version = "0.1.0"
+
+[[capabilities]]
+id = "model-delegate"
+kind = "skill"
+source_id = "starter"
+entrypoints = ["skills/model-delegate/SKILL.md"]
+requires = ["pi-host", "pi-subagents"]
+conflicts = []
+control_domain = "external-delegation"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["skill/model-delegate/SKILL.md"]
+home_paths = ["skills/model-delegate/SKILL.md"]
+target_path = "shared/skills/model-delegate"
+disposition = "adapt"
+reason = "replace-codex-delegate-completely"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "model-delegate-bridge"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["packages/model-delegate/package.json"]
+requires = ["model-delegate"]
+conflicts = []
+control_domain = "external-delegation"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = []
+home_paths = ["packages/model-delegate/package.json"]
+target_path = "agents/pi/packages/model-delegate"
+disposition = "adapt"
+reason = "new-unified-tool"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-codex-agents"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["packages/codex-agents/package.json"]
+requires = ["model-delegate"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/codex-agents/package.json"]
+home_paths = ["packages/codex-agents/package.json"]
+target_path = "agents/pi/packages/model-delegate"
+disposition = "replace"
+reason = "unified-model-delegate"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-codex-delegate"
+kind = "skill"
+source_id = "starter"
+entrypoints = ["skills/codex-delegate/SKILL.md"]
+requires = ["model-delegate"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["skill/codex-delegate/SKILL.md", "pi/skills/codex-delegate/SKILL.md"]
+home_paths = ["skills/codex-delegate/SKILL.md"]
+target_path = "shared/skills/model-delegate"
+disposition = "replace"
+reason = "unified-model-delegate"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "skill-cpp-database-kernel"
+kind = "skill"
+source_id = "starter"
+entrypoints = ["skills/cpp-database-kernel/SKILL.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/skills/cpp-database-kernel/SKILL.md"]
+home_paths = ["skills/cpp-database-kernel/SKILL.md"]
+target_path = "shared/skills/cpp-database-kernel"
+disposition = "keep"
+reason = "explicit-domain-skill"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "skill-neovim-plugin-development"
+kind = "skill"
+source_id = "starter"
+entrypoints = ["skills/neovim-plugin-development/SKILL.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/skills/neovim-plugin-development/SKILL.md"]
+home_paths = ["skills/neovim-plugin-development/SKILL.md"]
+target_path = "shared/skills/neovim-plugin-development"
+disposition = "keep"
+reason = "explicit-domain-skill"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "skill-safe-linux-scripting"
+kind = "skill"
+source_id = "starter"
+entrypoints = ["skills/safe-linux-scripting/SKILL.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/skills/safe-linux-scripting/SKILL.md"]
+home_paths = ["skills/safe-linux-scripting/SKILL.md"]
+target_path = "shared/skills/safe-linux-scripting"
+disposition = "keep"
+reason = "explicit-domain-skill"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "role-scout"
+kind = "role"
+source_id = "starter"
+entrypoints = ["agents/scout.md"]
+requires = ["pi-subagents"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/agents/scout.md"]
+home_paths = ["agents/scout.md"]
+target_path = "agents/pi/roles/scout.md"
+disposition = "adapt"
+reason = "fresh-readonly-role"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "role-reviewer"
+kind = "role"
+source_id = "starter"
+entrypoints = ["agents/reviewer.md"]
+requires = ["pi-subagents"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/agents/reviewer.md"]
+home_paths = ["agents/reviewer.md"]
+target_path = "agents/pi/roles/reviewer.md"
+disposition = "adapt"
+reason = "fresh-readonly-role"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "role-task-keeper-reader"
+kind = "role"
+source_id = "starter"
+entrypoints = ["packages/task-keeper/agents/task-keeper-reader.md"]
+requires = ["task-keeper"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/task-keeper/agents/task-keeper-reader.md"]
+home_paths = ["packages/task-keeper/agents/task-keeper-reader.md"]
+target_path = "agents/pi/packages/task-keeper/agents/task-keeper-reader.md"
+disposition = "adapt"
+reason = "managed-role-not-ordinary"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "role-task-keeper-writer"
+kind = "role"
+source_id = "starter"
+entrypoints = ["packages/task-keeper/agents/task-keeper-writer.md"]
+requires = ["task-keeper"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/task-keeper/agents/task-keeper-writer.md"]
+home_paths = ["packages/task-keeper/agents/task-keeper-writer.md"]
+target_path = "agents/pi/packages/task-keeper/agents/task-keeper-writer.md"
+disposition = "adapt"
+reason = "managed-role-not-ordinary"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "role-task-keeper-reviewer"
+kind = "role"
+source_id = "starter"
+entrypoints = ["packages/task-keeper/agents/task-keeper-reviewer.md"]
+requires = ["task-keeper"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/task-keeper/agents/task-keeper-reviewer.md"]
+home_paths = ["packages/task-keeper/agents/task-keeper-reviewer.md"]
+target_path = "agents/pi/packages/task-keeper/agents/task-keeper-reviewer.md"
+disposition = "adapt"
+reason = "managed-role-not-ordinary"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "kernel-orchestrate"
+kind = "skill"
+source_id = "starter"
+entrypoints = ["packages/task-keeper/skills/kernel-orchestrate/SKILL.md"]
+requires = ["task-keeper"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/task-keeper/skills/kernel-orchestrate/SKILL.md"]
+home_paths = ["packages/task-keeper/skills/kernel-orchestrate/SKILL.md"]
+target_path = "agents/pi/packages/task-keeper/skills/kernel-orchestrate"
+disposition = "adapt"
+reason = "managed-interface"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-role-codex-context-builder"
+kind = "role"
+source_id = "starter"
+entrypoints = ["packages/codex-agents/agents/codex-context-builder.md"]
+requires = ["model-delegate"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/codex-agents/agents/codex-context-builder.md"]
+home_paths = ["packages/codex-agents/agents/codex-context-builder.md"]
+target_path = "shared/skills/model-delegate/presets/context.md"
+disposition = "merge"
+reason = "role-becomes-purpose-template"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-role-codex-delegate"
+kind = "role"
+source_id = "starter"
+entrypoints = ["packages/codex-agents/agents/codex-delegate.md"]
+requires = ["model-delegate"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/codex-agents/agents/codex-delegate.md"]
+home_paths = ["packages/codex-agents/agents/codex-delegate.md"]
+target_path = "shared/skills/model-delegate/presets/general.md"
+disposition = "merge"
+reason = "role-becomes-purpose-template"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-role-codex-oracle"
+kind = "role"
+source_id = "starter"
+entrypoints = ["packages/codex-agents/agents/codex-oracle.md"]
+requires = ["model-delegate"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/codex-agents/agents/codex-oracle.md"]
+home_paths = ["packages/codex-agents/agents/codex-oracle.md"]
+target_path = "shared/skills/model-delegate/presets/challenge.md"
+disposition = "merge"
+reason = "role-becomes-purpose-template"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-role-codex-planner"
+kind = "role"
+source_id = "starter"
+entrypoints = ["packages/codex-agents/agents/codex-planner.md"]
+requires = ["model-delegate"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/codex-agents/agents/codex-planner.md"]
+home_paths = ["packages/codex-agents/agents/codex-planner.md"]
+target_path = "shared/skills/model-delegate/presets/plan.md"
+disposition = "merge"
+reason = "role-becomes-purpose-template"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-role-codex-researcher"
+kind = "role"
+source_id = "starter"
+entrypoints = ["packages/codex-agents/agents/codex-researcher.md"]
+requires = ["model-delegate"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/codex-agents/agents/codex-researcher.md"]
+home_paths = ["packages/codex-agents/agents/codex-researcher.md"]
+target_path = "shared/skills/model-delegate/presets/research.md"
+disposition = "merge"
+reason = "role-becomes-purpose-template"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-role-codex-reviewer"
+kind = "role"
+source_id = "starter"
+entrypoints = ["packages/codex-agents/agents/codex-reviewer.md"]
+requires = ["model-delegate"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/codex-agents/agents/codex-reviewer.md"]
+home_paths = ["packages/codex-agents/agents/codex-reviewer.md"]
+target_path = "shared/skills/model-delegate/presets/review.md"
+disposition = "merge"
+reason = "role-becomes-purpose-template"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-role-codex-scout"
+kind = "role"
+source_id = "starter"
+entrypoints = ["packages/codex-agents/agents/codex-scout.md"]
+requires = ["model-delegate"]
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/packages/codex-agents/agents/codex-scout.md"]
+home_paths = ["packages/codex-agents/agents/codex-scout.md"]
+target_path = "shared/skills/model-delegate/presets/scout.md"
+disposition = "merge"
+reason = "role-becomes-purpose-template"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-commit"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/commit.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/commit.md"]
+home_paths = ["prompts/commit.md"]
+target_path = "agents/pi/prompts/commit.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-debug"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/debug.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/debug.md"]
+home_paths = ["prompts/debug.md"]
+target_path = "agents/pi/prompts/debug.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-docs"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/docs.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/docs.md"]
+home_paths = ["prompts/docs.md"]
+target_path = "agents/pi/prompts/docs.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-explain"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/explain.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/explain.md"]
+home_paths = ["prompts/explain.md"]
+target_path = "agents/pi/prompts/explain.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-implement"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/implement.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = []
+home_paths = ["prompts/implement.md"]
+target_path = "agents/pi/prompts/implement.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-perf"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/perf.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/perf.md"]
+home_paths = ["prompts/perf.md"]
+target_path = "agents/pi/prompts/perf.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-plan"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/plan.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/plan.md"]
+home_paths = ["prompts/plan.md"]
+target_path = "agents/pi/prompts/plan.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-pr"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/pr.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/pr.md"]
+home_paths = ["prompts/pr.md"]
+target_path = "agents/pi/prompts/pr.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-refactor"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/refactor.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/refactor.md"]
+home_paths = ["prompts/refactor.md"]
+target_path = "agents/pi/prompts/refactor.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-review"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/review.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/review.md"]
+home_paths = ["prompts/review.md"]
+target_path = "agents/pi/prompts/review.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-security"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/security.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/security.md"]
+home_paths = ["prompts/security.md"]
+target_path = "agents/pi/prompts/security.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "prompt-test"
+kind = "prompt"
+source_id = "starter"
+entrypoints = ["prompts/test.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/prompts/test.md"]
+home_paths = ["prompts/test.md"]
+target_path = "agents/pi/prompts/test.md"
+disposition = "adapt"
+reason = "ordinary-and-managed-routing"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-ayu-dark"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/Ayu Dark.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/Ayu Dark.json"]
+home_paths = ["themes/Ayu Dark.json"]
+target_path = "agents/pi/themes/Ayu Dark.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-catppuccin-mocha"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/Catppuccin Mocha.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/Catppuccin Mocha.json"]
+home_paths = ["themes/Catppuccin Mocha.json"]
+target_path = "agents/pi/themes/Catppuccin Mocha.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-dracula"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/Dracula.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/Dracula.json"]
+home_paths = ["themes/Dracula.json"]
+target_path = "agents/pi/themes/Dracula.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-everforest-dark"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/Everforest Dark.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/Everforest Dark.json"]
+home_paths = ["themes/Everforest Dark.json"]
+target_path = "agents/pi/themes/Everforest Dark.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-gruvbox-dark"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/Gruvbox Dark.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/Gruvbox Dark.json"]
+home_paths = ["themes/Gruvbox Dark.json"]
+target_path = "agents/pi/themes/Gruvbox Dark.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-kanagawa-wave"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/Kanagawa Wave.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/Kanagawa Wave.json"]
+home_paths = ["themes/Kanagawa Wave.json"]
+target_path = "agents/pi/themes/Kanagawa Wave.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-nord"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/Nord.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/Nord.json"]
+home_paths = ["themes/Nord.json"]
+target_path = "agents/pi/themes/Nord.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-one-dark"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/One Dark.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/One Dark.json"]
+home_paths = ["themes/One Dark.json"]
+target_path = "agents/pi/themes/One Dark.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-rose-pine"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/Rosé Pine.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/Rosé Pine.json"]
+home_paths = ["themes/Rosé Pine.json"]
+target_path = "agents/pi/themes/Rosé Pine.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-tokyo-night"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/Tokyo Night.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/Tokyo Night.json"]
+home_paths = ["themes/Tokyo Night.json"]
+target_path = "agents/pi/themes/Tokyo Night.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "theme-poimandres"
+kind = "theme"
+source_id = "starter"
+entrypoints = ["themes/poimandres.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/themes/poimandres.json"]
+home_paths = ["themes/poimandres.json"]
+target_path = "agents/pi/themes/poimandres.json"
+disposition = "keep"
+reason = "explicit-theme"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "extension-dirty-repo-guard"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["extensions/dirty-repo-guard.ts"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/extensions/dirty-repo-guard.template.ts"]
+home_paths = ["extensions/dirty-repo-guard.ts"]
+target_path = "agents/pi/extensions/dirty-repo-guard.ts"
+disposition = "adapt"
+reason = "explicit-control-and-external-requirements"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "extension-exit-command"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["extensions/exit-command.ts"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/extensions/exit-command.template.ts"]
+home_paths = ["extensions/exit-command.ts"]
+target_path = "agents/pi/extensions/exit-command.ts"
+disposition = "adapt"
+reason = "explicit-control-and-external-requirements"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "extension-gentle-agent-state"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["extensions/gentle-agent-state.ts"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/extensions/gentle-agent-state.template.ts"]
+home_paths = ["extensions/gentle-agent-state.ts"]
+target_path = "agents/pi/extensions/gentle-agent-state.ts"
+disposition = "optional"
+reason = "explicit-control-and-external-requirements"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "extension-git-checkpoint"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["extensions/git-checkpoint.ts"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/extensions/git-checkpoint.template.ts"]
+home_paths = ["extensions/git-checkpoint.ts"]
+target_path = "agents/pi/extensions/git-checkpoint.ts"
+disposition = "optional"
+reason = "explicit-control-and-external-requirements"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "extension-handoff"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["extensions/handoff.ts"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/extensions/handoff.template.ts"]
+home_paths = ["extensions/handoff.ts"]
+target_path = "agents/pi/extensions/handoff.ts"
+disposition = "adapt"
+reason = "explicit-control-and-external-requirements"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "extension-notify"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["extensions/notify.ts"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/extensions/notify.template.ts"]
+home_paths = ["extensions/notify.ts"]
+target_path = "agents/pi/extensions/notify.ts"
+disposition = "optional"
+reason = "explicit-control-and-external-requirements"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "config-settings"
+kind = "configuration"
+source_id = "starter"
+entrypoints = ["settings.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["templates/pi/default.template.jsonc"]
+home_paths = ["settings.json"]
+target_path = "agents/pi/templates"
+disposition = "adapt"
+reason = "nonsecret-projection-and-ownership"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "config-models"
+kind = "configuration"
+source_id = "starter"
+entrypoints = ["models.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/models.template.jsonc"]
+home_paths = ["models.json"]
+target_path = "agents/pi/templates"
+disposition = "adapt"
+reason = "nonsecret-projection-and-ownership"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "config-keybindings"
+kind = "configuration"
+source_id = "starter"
+entrypoints = ["keybindings.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/keybindings.template.jsonc"]
+home_paths = ["keybindings.json"]
+target_path = "agents/pi/templates"
+disposition = "adapt"
+reason = "nonsecret-projection-and-ownership"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "config-subagents-config"
+kind = "configuration"
+source_id = "starter"
+entrypoints = ["subagents.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/subagents.template.json"]
+home_paths = ["subagents.json"]
+target_path = "agents/pi/templates"
+disposition = "adapt"
+reason = "nonsecret-projection-and-ownership"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "config-global-rules"
+kind = "configuration"
+source_id = "starter"
+entrypoints = ["AGENTS.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/AGENTS.template.md"]
+home_paths = ["AGENTS.md"]
+target_path = "agents/pi/templates"
+disposition = "adapt"
+reason = "nonsecret-projection-and-ownership"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "config-append-system"
+kind = "configuration"
+source_id = "starter"
+entrypoints = ["APPEND_SYSTEM.md"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/APPEND_SYSTEM.template.md"]
+home_paths = ["APPEND_SYSTEM.md"]
+target_path = "agents/pi/templates"
+disposition = "adapt"
+reason = "nonsecret-projection-and-ownership"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "config-mcp"
+kind = "configuration"
+source_id = "starter"
+entrypoints = ["mcp.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/mcp.template.jsonc"]
+home_paths = ["mcp.json"]
+target_path = "agents/pi/templates"
+disposition = "adapt"
+reason = "nonsecret-projection-and-ownership"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-plan-mode"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["extensions/plan-mode/index.ts"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/extensions/plan-mode/index.template.ts"]
+home_paths = ["extensions/plan-mode/index.ts"]
+target_path = ""
+disposition = "exclude"
+reason = "not-in-current-sync"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-spark"
+kind = "configuration"
+source_id = "starter"
+entrypoints = ["spark.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = ["pi/spark.template.jsonc"]
+home_paths = ["spark.json"]
+target_path = ""
+disposition = "exclude"
+reason = "not-selected-plugin"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "external-herdr"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["extensions/herdr-agent-state.ts"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = []
+home_paths = ["extensions/herdr-agent-state.ts"]
+target_path = ""
+disposition = "exclude"
+reason = "external-owner"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-rpiv-mirror"
+kind = "plugin"
+source_id = "starter"
+entrypoints = ["packages/rpiv-todo/package.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = []
+home_paths = ["packages/rpiv-todo/package.json"]
+target_path = ""
+disposition = "exclude"
+reason = "duplicate-package"
+package_specs = []
+expected_version = ""
+
+[[capabilities]]
+id = "legacy-subagent-config"
+kind = "configuration"
+source_id = "starter"
+entrypoints = ["extensions/subagent/config.json"]
+requires = []
+conflicts = []
+control_domain = "resource"
+supported_engines = ["node", "bun"]
+evidence_cases = ["V01", "V05"]
+source_paths = []
+home_paths = ["extensions/subagent/config.json"]
+target_path = ""
+disposition = "exclude"
+reason = "old-manager-config"
+package_specs = []
+expected_version = ""

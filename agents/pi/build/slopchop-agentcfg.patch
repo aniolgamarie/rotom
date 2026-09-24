@@ -1,0 +1,463 @@
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "pi-slopchop",
+-  "version": "0.10.1",
++  "version": "0.10.1-agentcfg.1",
+   "type": "module",
+   "description": "Terminal-native code review and annotation workflow for the Pi coding agent.",
+   "author": "Rob Zolkos <rob@zolkos.com>",
+--- a/src/git.ts
++++ b/src/git.ts
+@@ -1,4 +1,4 @@
+-import { open, readFile, stat } from "node:fs/promises";
++import { reviewGit, readReviewFile, statReviewFile } from "@agentcfg/pi-runtime/review-files";
+ import { extname, join, posix } from "node:path";
+ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+ import type { ChangeStatus, ReviewFile, ReviewFileComparison, ReviewFileContents, ReviewScope, ReviewSubmoduleByScope, ReviewSubmoduleInfo } from "./types.js";
+@@ -39,7 +39,7 @@
+ }
+ 
+ async function runGit(pi: ExtensionAPI, repoRoot: string, args: string[]): Promise<string> {
+-  const result = await pi.exec("git", args, { cwd: repoRoot });
++  const result = await reviewGit(repoRoot, args);
+   if (result.code !== 0) {
+     const message = result.stderr.trim() || result.stdout.trim() || `git ${args.join(" ")} failed`;
+     throw new Error(message);
+@@ -48,7 +48,7 @@
+ }
+ 
+ async function runGitAllowFailure(pi: ExtensionAPI, repoRoot: string, args: string[]): Promise<string> {
+-  const result = await pi.exec("git", args, { cwd: repoRoot });
++  const result = await reviewGit(repoRoot, args);
+   if (result.code !== 0) return "";
+   return result.stdout;
+ }
+@@ -57,7 +57,7 @@
+ const LARGE_DIFF_MAX_CHANGED_LINES = 20_000;
+ 
+ export async function getRepoRoot(pi: ExtensionAPI, cwd: string): Promise<string> {
+-  const result = await pi.exec("git", ["rev-parse", "--show-toplevel"], { cwd });
++  const result = await reviewGit(cwd, ["rev-parse", "--show-toplevel"]);
+   if (result.code !== 0) {
+     throw new Error("Not inside a git repository.");
+   }
+@@ -65,56 +65,31 @@
+ }
+ 
+ async function hasHead(pi: ExtensionAPI, repoRoot: string): Promise<boolean> {
+-  const result = await pi.exec("git", ["rev-parse", "--verify", "HEAD"], { cwd: repoRoot });
++  const result = await reviewGit(repoRoot, ["rev-parse", "--verify", "--quiet", "HEAD"]);
+   return result.code === 0;
+ }
+ 
++function nulFields(output: string): string[] {
++  if (output === "") return [];
++  if (!output.endsWith("\0")) throw new Error("GIT_REVIEW_OUTPUT_TRUNCATED");
++  return output.slice(0, -1).split("\0");
++}
+ export function parseNameStatus(output: string): ChangedPath[] {
+-  const lines = output
+-    .split(/\r?\n/)
+-    .map((line) => line.trim())
+-    .filter((line) => line.length > 0);
+-
+-  const changes: ChangedPath[] = [];
+-
+-  for (const line of lines) {
+-    const parts = line.split("\t");
+-    const rawStatus = parts[0] ?? "";
+-    const code = rawStatus[0];
+-
+-    if (code === "R") {
+-      const oldPath = parts[1] ?? null;
+-      const newPath = parts[2] ?? null;
+-      if (oldPath != null && newPath != null) {
+-        changes.push({ status: "renamed", oldPath, newPath });
+-      }
+-      continue;
+-    }
+-
+-    if (code === "M") {
+-      const path = parts[1] ?? null;
+-      if (path != null) changes.push({ status: "modified", oldPath: path, newPath: path });
+-      continue;
+-    }
+-
+-    if (code === "A") {
+-      const path = parts[1] ?? null;
+-      if (path != null) changes.push({ status: "added", oldPath: null, newPath: path });
+-      continue;
+-    }
+-
+-    if (code === "D") {
+-      const path = parts[1] ?? null;
+-      if (path != null) changes.push({ status: "deleted", oldPath: path, newPath: null });
+-    }
+-  }
+-
++  const fields = nulFields(output), changes: ChangedPath[] = [];
++  for (let index = 0; index < fields.length;) {
++    const status = parseRawStatus(fields[index++] ?? "");
++    if (!status) throw new Error("GIT_REVIEW_STATUS_UNSUPPORTED");
++    const oldPath = fields[index++];
++    const newPath = status === "renamed" ? fields[index++] : oldPath;
++    if (!oldPath || !newPath) throw new Error("GIT_REVIEW_OUTPUT_INVALID");
++    changes.push({ status, oldPath: status === "added" ? null : oldPath, newPath: status === "deleted" ? null : newPath });
++  }
+   return changes;
+ }
+ 
+ function parseRawStatus(rawStatus: string): ChangeStatus | null {
+   const code = rawStatus[0];
+-  if (code === "M" || code === "T") return "modified";
++  if (code === "M" || code === "T" || code === "U") return "modified";
+   if (code === "A") return "added";
+   if (code === "D") return "deleted";
+   if (code === "R") return "renamed";
+@@ -122,12 +97,12 @@
+ }
+ 
+ export function parseRawDiff(output: string): RawDiffChange[] {
+-  const fields = output.split("\0").filter((field) => field.length > 0);
++  const fields = nulFields(output);
+   const changes: RawDiffChange[] = [];
+ 
+   for (let index = 0; index < fields.length;) {
+     const header = fields[index++];
+-    if (header == null || !header.startsWith(":")) continue;
++    if (header == null || !header.startsWith(":")) throw new Error("GIT_REVIEW_OUTPUT_INVALID");
+ 
+     const parts = header.slice(1).split(" ");
+     const oldMode = parts[0] ?? "";
+@@ -136,11 +111,11 @@
+     const newSha = parts[3] ?? "";
+     const rawStatus = parts[4] ?? "";
+     const status = parseRawStatus(rawStatus);
+-    if (status == null) continue;
++    if (status == null) throw new Error("GIT_REVIEW_STATUS_UNSUPPORTED");
+ 
+     const oldPath = fields[index++] ?? null;
+     const newPath = status === "renamed" ? fields[index++] ?? null : oldPath;
+-    if (oldPath == null) continue;
++    if (!oldPath || !newPath) throw new Error("GIT_REVIEW_OUTPUT_INVALID");
+ 
+     changes.push({
+       status,
+@@ -157,18 +132,15 @@
+ }
+ 
+ export function parseUntrackedPaths(output: string): ChangedPath[] {
+-  return output
+-    .split(/\r?\n/)
+-    .map((line) => line.trim())
+-    .filter((line) => line.length > 0)
+-    .map((path) => ({ status: "added" as const, oldPath: null, newPath: path }));
+-}
+-
++  return nulFields(output).map(path => {
++    if (!path) throw new Error("GIT_REVIEW_OUTPUT_INVALID");
++    return { status: "added", oldPath: null, newPath: path };
++  });
++}
+ function parseTrackedPaths(output: string): string[] {
+-  return output
+-    .split(/\r?\n/)
+-    .map((line) => line.trim())
+-    .filter((line) => line.length > 0);
++  const paths = nulFields(output);
++  if (paths.some(path => !path)) throw new Error("GIT_REVIEW_OUTPUT_INVALID");
++  return paths;
+ }
+ 
+ export function mergeChangedPaths(tracked: ChangedPath[], untracked: ChangedPath[]): ChangedPath[] {
+@@ -203,19 +175,19 @@
+ }
+ 
+ export function parseNumStat(output: string): Map<string, ChangeStats> {
+-  const stats = new Map<string, ChangeStats>();
+-
+-  for (const line of output.split(/\r?\n/)) {
+-    if (line.trim().length === 0) continue;
+-    const parts = line.split("\t");
+-    const rawPath = parts.slice(2).join("\t");
+-    if (rawPath.length === 0) continue;
+-    stats.set(normalizeGitPath(normalizeNumStatPath(rawPath)), {
+-      additions: parseStatCount(parts[0]),
+-      deletions: parseStatCount(parts[1]),
+-    });
+-  }
+-
++  const stats = new Map<string, ChangeStats>(), fields = nulFields(output);
++  for (let index = 0; index < fields.length;) {
++    const header = fields[index++], first = header.indexOf("\t"), second = header.indexOf("\t", first + 1);
++    if (first < 1 || second < 0) throw new Error("GIT_REVIEW_OUTPUT_INVALID");
++    const added = header.slice(0, first), deleted = header.slice(first + 1, second);
++    if (!/^(?:[0-9]+|-)$/.test(added) || !/^(?:[0-9]+|-)$/.test(deleted)) throw new Error("GIT_REVIEW_OUTPUT_INVALID");
++    let path = header.slice(second + 1);
++    if (!path) {
++      const oldPath = fields[index++]; path = fields[index++];
++      if (!oldPath || !path) throw new Error("GIT_REVIEW_OUTPUT_INVALID");
++    }
++    stats.set(normalizeGitPath(path), { additions: parseStatCount(added), deletions: parseStatCount(deleted) });
++  }
+   return stats;
+ }
+ 
+@@ -228,13 +200,7 @@
+ }
+ 
+ async function getWorkingTreeFileSize(repoRoot: string, path: string | null | undefined): Promise<number | null> {
+-  if (path == null) return null;
+-  try {
+-    const result = await stat(join(repoRoot, path));
+-    return result.isFile() ? result.size : null;
+-  } catch {
+-    return null;
+-  }
++  return path == null ? null : (await statReviewFile(join(repoRoot, path))).size;
+ }
+ 
+ async function isLargeWorkingTreeFile(repoRoot: string, path: string | null | undefined): Promise<boolean> {
+@@ -248,39 +214,16 @@
+ }
+ 
+ async function countLinesInFileWithLimit(path: string, maxBytes: number, maxLines: number): Promise<BoundedLineCount> {
+-  let handle: Awaited<ReturnType<typeof open>> | null = null;
+-
+-  try {
+-    const fileStat = await stat(path);
+-    handle = await open(path, "r");
+-    const buffer = Buffer.alloc(Math.min(64 * 1024, Math.max(1, maxBytes)));
+-    let position = 0;
+-    let lineCount = 0;
+-    let lastByte: number | undefined;
+-
+-    while (position < maxBytes && lineCount <= maxLines) {
+-      const bytesToRead = Math.min(buffer.length, maxBytes - position);
+-      const { bytesRead } = await handle.read(buffer, 0, bytesToRead, position);
+-      if (bytesRead === 0) break;
+-
+-      position += bytesRead;
+-      for (let index = 0; index < bytesRead; index += 1) {
+-        lastByte = buffer[index];
+-        if (lastByte === 0x0a) lineCount += 1;
+-        if (lineCount > maxLines) break;
+-      }
+-    }
+-
+-    const countedLines = lastByte !== undefined && lastByte !== 0x0a ? lineCount + 1 : lineCount;
+-    return {
+-      complete: position >= fileStat.size && countedLines <= maxLines,
+-      lines: countedLines,
+-    };
+-  } catch {
+-    return { complete: true, lines: 0 };
+-  } finally {
+-    await handle?.close().catch(() => undefined);
+-  }
++  const size = (await statReviewFile(path)).size;
++  if (size > 16 * 1024 * 1024) return { complete: false, lines: 0 };
++  const content = await readReviewFile(path), end = Math.min(content.length, maxBytes);
++  let position = 0, lines = 0, last: number | undefined;
++  while (position < end && lines <= maxLines) {
++    last = content[position++];
++    if (last === 10) lines++;
++  }
++  if (last !== undefined && last !== 10) lines++;
++  return { complete: position >= content.length && lines <= maxLines, lines };
+ }
+ 
+ async function getUntrackedFileStats(repoRoot: string, path: string): Promise<{ stats: ChangeStats; isTooLarge: boolean }> {
+@@ -363,17 +306,13 @@
+ }
+ 
+ async function getRevisionContent(pi: ExtensionAPI, repoRoot: string, revision: string, path: string): Promise<string> {
+-  const result = await pi.exec("git", ["show", `${revision}:${path}`], { cwd: repoRoot });
++  const result = await reviewGit(repoRoot, ["show", `${revision}:${path}`]);
+   if (result.code !== 0) return "";
+   return result.stdout;
+ }
+ 
+ async function getWorkingTreeContent(repoRoot: string, path: string): Promise<string> {
+-  try {
+-    return await readFile(join(repoRoot, path), "utf8");
+-  } catch {
+-    return "";
+-  }
++  return new TextDecoder("utf8", { fatal: true }).decode(await readReviewFile(join(repoRoot, path)));
+ }
+ 
+ export function isReviewableFilePath(path: string): boolean {
+@@ -446,7 +385,7 @@
+ }
+ 
+ async function getNestedRepoRoot(pi: ExtensionAPI, parentRepoRoot: string, submodulePath: string): Promise<{ repoRoot: string } | { unavailableReason: string }> {
+-  const result = await pi.exec("git", ["rev-parse", "--show-toplevel"], { cwd: join(parentRepoRoot, submodulePath) });
++  const result = await reviewGit(join(parentRepoRoot, submodulePath), ["rev-parse", "--show-toplevel"]);
+   if (result.code !== 0) return { unavailableReason: "submodule is not initialized locally" };
+ 
+   const repoRoot = result.stdout.trim();
+@@ -598,7 +537,7 @@
+ 
+ async function getFirstExistingRef(pi: ExtensionAPI, repoRoot: string, refs: string[]): Promise<string | null> {
+   for (const ref of refs) {
+-    const result = await pi.exec("git", ["rev-parse", "--verify", "--quiet", ref], { cwd: repoRoot });
++    const result = await reviewGit(repoRoot, ["rev-parse", "--verify", "--quiet", ref]);
+     if (result.code === 0) return ref;
+   }
+   return null;
+@@ -614,7 +553,7 @@
+ async function getBranchBaseRevision(pi: ExtensionAPI, repoRoot: string): Promise<string | null> {
+   const defaultBranch = await getDefaultBranchRef(pi, repoRoot);
+   if (defaultBranch == null) return null;
+-  const result = await pi.exec("git", ["merge-base", defaultBranch, "HEAD"], { cwd: repoRoot });
++  const result = await reviewGit(repoRoot, ["merge-base", defaultBranch, "HEAD"]);
+   if (result.code !== 0) return null;
+   return result.stdout.trim() || null;
+ }
+--- a/src/shortcuts.ts
++++ b/src/shortcuts.ts
+@@ -1,6 +1,4 @@
+-import { existsSync, readFileSync } from "node:fs";
+-import { join } from "node:path";
+-import { getAgentDir } from "@earendil-works/pi-coding-agent";
++import { pluginSettings } from "@agentcfg/pi-runtime/plugin-settings";
+ import type { KeyId } from "@earendil-works/pi-tui";
+ import type { CommentIntent } from "./types.js";
+ 
+@@ -222,26 +220,11 @@
+ }
+ 
+ export function getShortcutConfigPath(): string {
+-  return join(getAgentDir(), "extensions", CONFIG_FILE_NAME);
+-}
+-
++  return "agentcfg:slopchop.shortcuts";
++}
+ export function loadCommentShortcuts(): LoadedCommentShortcuts {
+-  const path = getShortcutConfigPath();
+-  if (!existsSync(path)) {
+-    return { shortcuts: BUILTIN_COMMENT_SHORTCUTS, globalShortcut: DEFAULT_GLOBAL_SHORTCUT, warnings: [], path };
+-  }
+-
+-  try {
+-    const config = JSON.parse(readFileSync(path, "utf8")) as unknown;
+-    const parsed = parseShortcutConfig(config);
+-    return { shortcuts: parsed.shortcuts, globalShortcut: parsed.globalShortcut, warnings: parsed.warnings, path };
+-  } catch (error) {
+-    const message = error instanceof Error ? error.message : String(error);
+-    return {
+-      shortcuts: BUILTIN_COMMENT_SHORTCUTS,
+-      globalShortcut: DEFAULT_GLOBAL_SHORTCUT,
+-      warnings: [`Could not read shortcut config at ${path}: ${message}`],
+-      path,
+-    };
+-  }
+-}
++  const config = pluginSettings("pi-slopchop", "slopchop").shortcuts ?? {};
++  const parsed = parseShortcutConfig(config);
++  if (parsed.warnings.length) throw new Error("SLOPCHOP_SHORTCUT_CONFIG_INVALID");
++  return { ...parsed, path: getShortcutConfigPath() };
++}
+--- a/src/ui/review-app.ts
++++ b/src/ui/review-app.ts
+@@ -1,4 +1,4 @@
+-import { spawn } from "node:child_process";
++import { runReviewEditor } from "@agentcfg/pi-runtime/review-files";
+ import { join } from "node:path";
+ import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+ import { Editor, type EditorTheme, Key, matchesKey, truncateToWidth, visibleWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
+@@ -113,28 +113,6 @@
+   return pathPrefix == null || pathPrefix.length === 0 ? fileId : `${pathPrefix}::${fileId}`;
+ }
+ 
+-function shellQuote(value: string): string {
+-  return `'${value.replace(/'/g, `'\\''`)}'`;
+-}
+-
+-export function buildEditorLaunchCommand(editorCommand: string, filePath: string, line: number): string {
+-  const lineNumber = Math.max(1, Math.floor(line));
+-  return `${editorCommand.trim() || "vi"} +${lineNumber} -- ${shellQuote(filePath)}`;
+-}
+-
+-function runShellCommand(command: string, cwd: string): Promise<number | null> {
+-  return new Promise((resolve, reject) => {
+-    const child = spawn(command, {
+-      cwd,
+-      env: process.env,
+-      shell: true,
+-      stdio: "inherit",
+-    });
+-
+-    child.once("error", reject);
+-    child.once("close", (code) => resolve(code));
+-  });
+-}
+ 
+ export function getEditorLineForTarget(diff: StructuredDiff, target: ReviewLineTarget): number {
+   if (target.side === "added") return target.line;
+@@ -485,7 +463,7 @@
+       "←/→ choose side in side-by-side view",
+       "Ctrl+d/u half-page • gg/G top/bottom",
+       "n/p next/previous hunk",
+-      "t templates • o open in $EDITOR",
++      "t templates • o open in agentcfg editor",
+       "f fix line • d/c discuss line",
+       "e edit • x delete • l file • a all",
+     ],
+@@ -1493,14 +1471,14 @@
+     }
+ 
+     if (!file.hasWorkingTreeFile) {
+-      this.setMessage("Cannot open this file in $EDITOR because it does not exist in the working tree.");
++      this.setMessage("Cannot open this file in agentcfg editor because it does not exist in the working tree.");
+       this.requestRender();
+       return;
+     }
+ 
+     const target = getSelectedLineTarget(this.state, file.id, this.state.activeScope);
+     if (target == null) {
+-      this.setMessage("No selectable diff line to open in $EDITOR.");
++      this.setMessage("No selectable diff line to open in agentcfg editor.");
+       this.requestRender();
+       return;
+     }
+@@ -1513,23 +1491,21 @@
+     }
+ 
+     const editorLine = getEditorLineForTarget(diff, target);
+-    const editorCommand = (process.env.EDITOR || process.env.VISUAL || "vi").trim() || "vi";
+     const filePath = join(this.repoRoot, file.path);
+-    const command = buildEditorLaunchCommand(editorCommand, filePath, editorLine);
+ 
+     this.externalEditorOpen = true;
+-    this.setMessage(`Opening ${file.path}:${editorLine} in $EDITOR…`);
++    this.setMessage(`Opening ${file.path}:${editorLine} in agentcfg editor…`);
+     this.requestRender();
+ 
+     try {
+       this.setMouseTracking(false);
+       if (typeof this.tui.stop === "function") this.tui.stop();
+       if (typeof this.tui.terminal?.clearScreen === "function") this.tui.terminal.clearScreen();
+-      const code = await runShellCommand(command, this.repoRoot);
+-      this.setMessage(code === 0 ? `Returned from $EDITOR at ${file.path}:${editorLine}.` : `$EDITOR exited with code ${code ?? "unknown"}.`);
++      const code = await runReviewEditor(filePath, editorLine, this.repoRoot);
++      this.setMessage(code === 0 ? `Returned from agentcfg editor at ${file.path}:${editorLine}.` : `agentcfg editor exited with code ${code ?? "unknown"}.`);
+     } catch (error) {
+       const message = error instanceof Error ? error.message : String(error);
+-      this.setMessage(`Could not open $EDITOR: ${message}`);
++      this.setMessage(`Could not open agentcfg editor: ${message}`);
+     } finally {
+       this.externalEditorOpen = false;
+       this.invalidateEntry(file.id, this.state.activeScope);
+@@ -2476,7 +2452,7 @@
+           ? `Search: ${this.searchBuffer}`
+           : this.editTarget != null
+             ? `Editing ${formatIntentLabel(this.editTarget.intent).toLowerCase()} comment`
+-            : `${formatFocusStatus(this.state.focus)} • ${layoutStatus}Tab focus • / search • t templates • v diff view • ? help • 1/2/3 scopes • h ${this.commentsHidden ? "show" : "hide"} comments • o open in $EDITOR • s submit${this.frameStack.length > 0 ? ` • ${GO_BACK_SHORTCUT} return` : ""} • Esc exit • Ctrl+C exit`);
++            : `${formatFocusStatus(this.state.focus)} • ${layoutStatus}Tab focus • / search • t templates • v diff view • ? help • 1/2/3 scopes • h ${this.commentsHidden ? "show" : "hide"} comments • o open in agentcfg editor • s submit${this.frameStack.length > 0 ? ` • ${GO_BACK_SHORTCUT} return` : ""} • Esc exit • Ctrl+C exit`);
+ 
+     const scopeTabs = SEARCHABLE_SCOPES.map((scope, index) => {
+       const active = this.state.activeScope === scope;

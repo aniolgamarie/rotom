@@ -203,10 +203,13 @@ def _selected_data(resolved: ResolvedConfig, schemas: AdapterSchemas, declaratio
       or any(not path.startswith("/") for path in machine["paths"].values())):
     raise ValueError()
   # 已解析路径全部存在，不读取环境默认值；复用机器秘密通道及字面路径校验。
-  _, normalized_machine = _machine_layers(machine, policy.credential_targets)
+  _, normalized_machine = _machine_layers(machine, policy.credential_targets,
+    reserved_environment=policy.reserved_environment)
   if normalized_machine != machine:
     raise ValueError()
   bundle.validate("resolved", deepcopy(data))
+  if bundle.validate_selected is not None:
+    bundle.validate_selected(deepcopy(data))
   _authentication(bundle, data)
   return data
 
@@ -216,7 +219,7 @@ def _target(target: ManagedTarget) -> ManagedTarget:
       or type(target.serialization) is not str
       or target.selector is not None and type(target.selector) is not str):
     raise ValueError()
-  return ManagedTarget(target.path, target.ownership, target.serialization, target.selector)
+  return ManagedTarget(target.path, target.ownership, target.serialization, target.selector, target.reference_tokens)
 
 
 def _target_key(target: ManagedTarget):
@@ -259,7 +262,8 @@ def _artifacts(values, targets: tuple[ManagedTarget, ...]) -> tuple[Artifact, ..
 
 def _target_data(target: ManagedTarget) -> dict:
   return {"path": target.path, "ownership": target.ownership.value,
-          "serialization": target.serialization, "selector": target.selector}
+          "serialization": target.serialization, "selector": target.selector,
+          **({"reference_tokens": list(target.reference_tokens)} if target.reference_tokens else {})}
 
 
 @dataclass(frozen=True)

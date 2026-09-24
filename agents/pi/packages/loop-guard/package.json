@@ -1,0 +1,34 @@
+{
+  "name": "starter-pi-loop-guard",
+  "version": "0.1.0",
+  "description": "Loop guard extension for Pi that detects repeated tool calls, failures, and assistant response loops.",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-coding-agent",
+    "extension",
+    "loop-guard"
+  ],
+  "private": true,
+  "scripts": {
+    "test": "node --test ../../../tests/pi/loop_guard_*.test.mjs",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-agent-core": "0.84.1",
+    "@earendil-works/pi-coding-agent": "0.84.1",
+    "@earendil-works/pi-tui": "0.84.1",
+    "@types/node": "24.12.4",
+    "typescript": "5.9.3"
+  }
+}

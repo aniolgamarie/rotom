@@ -1,0 +1,1793 @@
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -6,6 +6,9 @@
+ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+ 
+ ## [Unreleased]
++
++### Changed
++- **agentcfg 派生构建**：所有执行后端共用一个有界管理者，角色与设置来自 agentcfg；受管协议保留持久幂等和终止证明。关闭上游自动发现、嵌套、脚本工作流与调度，详见 NOTICE.agentcfg.md。
+ 
+ ### Fixed
+ - **The workflow stand-down now recognises a lowercase `workflow` tool** ([#283](https://github.com/tintinweb/pi-subagents/issues/283) — thanks [@zampierilucas](https://github.com/zampierilucas)). The match is exact on purpose, and the set held `Workflow` and `SubagentWorkflow` only, so `@quintinshaw/pi-dynamic-workflows` — which registers lowercase `workflow` — never tripped it: with `workflowsEnabled` unset, both orchestrators reached the model and nothing warned. Adding the third name is the whole fix; exactness is kept, so a `list_workflows` still cannot take the feature down.
+--- /dev/null
++++ b/NOTICE.agentcfg.md
+@@ -0,0 +1,26 @@
++# agentcfg 派生构建说明
++
++来源：`https://github.com/tintinweb/pi-subagents`，固定提交
++`e955e29c51b7a6cce37e1108cd2d6c57a77e151c`，MIT 许可证见 LICENSE。
++派生版本 `0.19.0-agentcfg.1`，固定 Pi 0.84.4。
++
++- 普通 session、managed-process、短期 external 任务使用同一 AgentManager，执行并发上限 2。
++- 同进程 listener 和专用准入的长期 MCP stdio 服务作为 resource，由该 manager 持有生命周期；最多 16 个活动资源。
++  resource 只能通过内部 executor 入口登记，普通 Agent/RPC 无法指定此分类；MCP 服务仍受同一 supervisor 监督并独立限额，关闭未知仍阻止会话切换。
++- 已知普通 IO 与同进程资源不被误判为 Task Keeper 模型工作；managed、未知执行及未知取消继续阻止普通辅助模型调用。
++- 禁用上游 scheduling、workflows、nesting、bypassQueue 和自建 worktree；配置由 agentcfg 管理。
++- 只加载 launcher 编译的明确角色清单；受管角色不进入普通 Agent/RPC 注册表。
++- 模型必须精确匹配 provider/model；不支持模糊匹配或 provider fallback。
++- managed-executor-v1 通道为 `agentcfg:subagents:managed:*`；协议及私人事务存储由
++  `@agentcfg/pi-runtime` 提供。worker/transport 不可用时能力检查失败，不按版本号假定就绪。
++- 受管结果只能经 owner 对应的 get_result/consume；取消应答不视为物理终止，未知工作占位保留。
++- 默认 test 只运行隔离 mock。上游真实宿主测试必须独立授权并传入 --allow-host。
++
++原始 README/docs/test 作为来源说明与待适配用例保留；其中上游安装命令和默认行为
++不适用于 agentcfg 运行包。统一部署入口为仓库根目录的 agentcfg。
++补丁和逐文件身份位于相邻 subagents-patch/；没有原生或账号通过证据。
++
++The external executor v2 adapter uses the same manager and durable owner checks; its source is in @agentcfg/pi-runtime. Native/backend certification remains separate.
++
++普通 Web 辅助模型可绑定所属资源操作；该关联仅允许同一操作继续其已授权 IO。
++模型仍占任务槽，不允许其他操作、managed/session 执行或取消未知记录借用该关联绕过 helper 门控。
+--- a/README.md
++++ b/README.md
+@@ -1,3 +1,5 @@
++> agentcfg 派生构建：先读 [运行边界](NOTICE.agentcfg.md)。以下保留上游参考；动态发现、嵌套、调度与脚本工作流在此构建中关闭。
++
+ # @tintinweb/pi-subagents
+ 
+ A [pi](https://pi.dev) extension that brings **Claude Code-style autonomous sub-agents and workflow orchestration** to pi. Spawn specialized agents that run in isolated sessions — each with its own tools, system prompt, model, and thinking level. Run them in the background (the default) or block on them, steer them mid-run, resume completed sessions, and define your own custom agent types. When the orchestration shouldn't be improvised, hand a deterministic JavaScript script to the `SubagentWorkflow` tool — `agent()`, `parallel()`, `pipeline()` — and scripts written for Claude Code's `Workflow` tool run here unchanged.
+--- a/docs/rpc.md
++++ b/docs/rpc.md
+@@ -1,3 +1,5 @@
++> agentcfg 派生构建：先读 [运行边界](../NOTICE.agentcfg.md)。以下保留上游参考；动态发现、嵌套、调度与脚本工作流在此构建中关闭。
++
+ # Driving subagents from another extension
+ 
+ Another pi extension can spawn a subagent, listen for subagent completion, read the result and stop the run — all over the `pi.events` bus, without importing this package directly. Four request/reply channels (`subagents:rpc:ping`, `subagents:rpc:spawn`, `subagents:rpc:stop`, `subagents:rpc:consume`), eleven lifecycle events, and one in-process registry at `Symbol.for("pi-subagents:manager")`.
+@@ -181,3 +183,14 @@
+ Read it for the shape of the whole loop: waiting on `subagents:ready`, keeping an id-keyed map of outstanding spawns, resolving each from the `subagents:completed` / `subagents:failed` handler, and consuming the result in the same synchronous handler that reports it.
+ 
+ If what you want is many coordinated agents rather than one, hand a script to [`SubagentWorkflow`](workflows.md) instead of fanning out over `subagents:rpc:spawn` — and note that a workflow's agents are not yours: they emit no lifecycle events, and `subagents:rpc:stop` refuses them.
++
++
++## agentcfg external executor v2
++
++The agentcfg build attaches `agentcfg:subagents:external:v2:` to the existing AgentManager.
++Operations are `submit_delegate`, `get_delegate_result`, `cancel_delegate`, and `submit_batch`.
++All envelopes are closed and bound to the current instance/owner. The manager's existing capacity
++includes session, managed-process and external execution. A cancel acknowledgment keeps the slot
++until the supervisor proves physical reclamation. Lost submission responses are not retried.
++Task Keeper managed scopes cannot invoke this unmetered external backend.
++Batch records only reference explicitly submitted runs; this interface adds no independent scheduler.
+--- a/docs/workflows.md
++++ b/docs/workflows.md
+@@ -1,3 +1,5 @@
++> agentcfg 派生构建：先读 [运行边界](../NOTICE.agentcfg.md)。以下保留上游参考；动态发现、嵌套、调度与脚本工作流在此构建中关闭。
++
+ # Scripted workflows
+ 
+ A workflow is a small JavaScript program that spawns and coordinates many subagents: fan out over a list, push every item through the same stages, verify each result, return a summary. It runs in the background and reports as it goes.
+--- a/package.json
++++ b/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "@tintinweb/pi-subagents",
+-  "version": "0.19.0",
+-  "description": "A pi extension that brings Claude Code-like sub-agents and workflow orchestration to pi — parallel execution, live widget, fleet view, custom agent types, mid-run steering, dynamic workflows, Claude Code compatibility, look and feel.",
++  "version": "0.19.0-agentcfg.1",
++  "description": "A pi extension that brings Claude Code-like sub-agents and workflow orchestration to pi \u2014 parallel execution, live widget, fleet view, custom agent types, mid-run steering, dynamic workflows, Claude Code compatibility, look and feel.",
+   "author": "tintinweb",
+   "license": "MIT",
+   "repository": {
+@@ -24,35 +24,38 @@
+     "autonomous"
+   ],
+   "peerDependencies": {
+-    "@earendil-works/pi-ai": ">=0.84.0",
+-    "@earendil-works/pi-coding-agent": ">=0.84.0",
+-    "@earendil-works/pi-tui": ">=0.84.0"
++    "@earendil-works/pi-ai": "0.84.4",
++    "@earendil-works/pi-coding-agent": "0.84.4",
++    "@earendil-works/pi-tui": "0.84.4"
+   },
+   "dependencies": {
+     "@sinclair/typebox": "^0.34.49",
+     "croner": "^10.0.1",
+     "nanoid": "^5.1.16",
+-    "typebox": "^1.3.7"
++    "typebox": "^1.3.7",
++    "@agentcfg/pi-runtime": "1.0.0"
+   },
+   "scripts": {
+     "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc",
+     "prepublishOnly": "npm run lint && npm run typecheck && npm run test && npm run build",
+-    "test": "vitest run",
+-    "test:watch": "vitest",
+-    "test:e2e": "vitest run e2e --reporter=verbose",
++    "test": "node scripts/test-mock.mjs",
++    "test:watch": "node scripts/test-native.mjs",
++    "test:e2e": "node scripts/test-native.mjs",
+     "typecheck": "tsc --noEmit",
+     "lint": "biome check src/ test/",
+     "lint:fix": "biome check --fix src/ test/",
+     "check": "npm run lint && npm run typecheck && npm run test",
+-    "test:coverage": "vitest run --coverage",
++    "test:coverage": "node scripts/test-mock.mjs",
+     "bench": "vitest bench",
+-    "bench:ab": "node test/perf/ab.mjs"
++    "bench:ab": "node test/perf/ab.mjs",
++    "test:mock": "node scripts/test-mock.mjs",
++    "test:native": "node scripts/test-native.mjs"
+   },
+   "devDependencies": {
+     "@biomejs/biome": "^2.4.14",
+-    "@earendil-works/pi-ai": "0.84.2",
+-    "@earendil-works/pi-coding-agent": "0.84.2",
+-    "@earendil-works/pi-tui": "0.84.2",
++    "@earendil-works/pi-ai": "0.84.4",
++    "@earendil-works/pi-coding-agent": "0.84.4",
++    "@earendil-works/pi-tui": "0.84.4",
+     "@types/node": "^25.5.0",
+     "@vitest/coverage-istanbul": "^4.1.10",
+     "typescript": "^6.0.0",
+@@ -64,5 +67,10 @@
+     ],
+     "video": "https://github.com/tintinweb/pi-subagents/raw/master/media/demo.mp4",
+     "image": "https://github.com/tintinweb/pi-subagents/raw/master/media/screenshot.png"
++  },
++  "type": "module",
++  "private": true,
++  "engines": {
++    "node": ">=24.14.0 <25"
+   }
+ }
+--- /dev/null
++++ b/scripts/test-mock.mjs
+@@ -0,0 +1,8 @@
++// 只运行明确列出的隔离 mock；不执行上游 e2e。
++import { spawnSync } from "node:child_process";
++import { dirname, resolve } from "node:path";
++import { fileURLToPath } from "node:url";
++const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../..");
++const names = ["agent-manager", "manager-config", "manager-executor", "managed-bridge", "managed-store-rpc"];
++const result = spawnSync(process.execPath, [resolve(root, "scripts/test-pi-mock.mjs"), ...names.map(name => `agents/pi/runtime/tests/${name}.test.ts`)], { cwd: root, stdio: "inherit" });
++process.exit(result.status ?? 1);
+--- /dev/null
++++ b/scripts/test-native.mjs
+@@ -0,0 +1,7 @@
++// 宿主测试独立授权；缺少显式标志时在 import/进程创建之前拒绝。
++import { spawnSync } from "node:child_process";
++import { fileURLToPath } from "node:url";
++if (process.argv[2] !== "--allow-host") { process.stderr.write("Native tests require explicit --allow-host authorization.\n"); process.exit(2); }
++const entry = fileURLToPath(new URL("../node_modules/vitest/vitest.mjs", import.meta.url));
++const result = spawnSync(process.execPath, [entry, "run", ...process.argv.slice(3)], { stdio: "inherit" });
++process.exit(result.status ?? 1);
+--- a/src/agent-manager.ts
++++ b/src/agent-manager.ts
+@@ -1,17 +1,6 @@
+ /**
+- * agent-manager.ts — Tracks agents, background execution, resume support.
+- *
+- * There are two independent concurrency pools, never one:
+- *
+- * - Background (`maxConcurrent`, default 10) bounds detached agents.
+- * - Foreground (`maxConcurrentForeground`, default 0 = unlimited) bounds
+- *   agents a caller is blocking on inline — `spawnAndWait`.
+- *
+- * Independent by design: a foreground agent blocks the parent anyway, so
+- * charging it to the background pool would let a saturated pool starve the main
+- * session of work it could have done itself. Excess agents in either pool are
+- * queued and auto-started as slots free up. Nested children take no slot in
+- * either — see `occupiesPoolSlot` / `occupiesForegroundSlot`.
++ * agentcfg 派生管理者：普通 session、managed-process 与 external 共用一条队列和总量上限。
++ * 上游的前台/后台计数仅用于展示与槽位归还，不允许 nesting/workflow/bypassQueue 绕过。
+  */
+ 
+ import { randomUUID } from "node:crypto";
+@@ -19,13 +8,41 @@
+ import { isAbsolute } from "node:path";
+ import type { Model } from "@earendil-works/pi-ai";
+ import type { AgentSession, ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+-import { resumeAgent, runAgent, type ToolActivity } from "./agent-runner.js";
++import type { resumeAgent as ResumeAgent, runAgent as RunAgent, ToolActivity } from "./agent-runner.js";
++
++// 普通 session 后端由 extension factory 注入；管理者本身不加载 SDK 或第二管理者。
++let runAgent: typeof RunAgent = async () => { throw new Error("AGENTCFG_SESSION_BACKEND_MISSING"); };
++let resumeAgent: typeof ResumeAgent = async () => { throw new Error("AGENTCFG_SESSION_BACKEND_MISSING"); };
++export function bindSessionBackend(backend: { runAgent: typeof RunAgent; resumeAgent: typeof ResumeAgent }): void {
++  runAgent = backend.runAgent;
++  resumeAgent = backend.resumeAgent;
++}
++
++const AGENTCFG_EXECUTOR: unique symbol = Symbol("agentcfg-executor-v1");
++export interface AgentcfgExecutionResult {
++  response_text: string;
++  terminal_status: "completed" | "failed" | "canceled" | "timeout";
++  termination_confirmed: boolean;
++  external_work_empty: boolean;
++}
++export interface AgentcfgExecutor {
++  readonly manager_run_id?: string;
++  kind: "session" | "managed-process" | "external" | "resource";
++  /** 只用于已受监督的普通 IO 执行；managed/session 不得改变预算分类。 */
++  activity?: "io" | "model";
++  /** 普通辅助模型所属的资源操作；不改变执行槽位或建立嵌套 agent。 */
++  service_owner_run_id?: string;
++  execute(managerRunId: string): Promise<AgentcfgExecutionResult>;
++  cancel(): Promise<AgentcfgExecutionResult | undefined>;
++  detach?(): void;
++}
++
+ import { assignHandle, handleBase } from "./mention.js";
+ import { describeModel } from "./model-resolver.js";
+ import type { AgentInvocation, AgentRecord, AgentTombstone, IsolationMode, MentionResolution, SubagentType, ThinkingLevel } from "./types.js";
+ import { addUsage, type LifetimeUsage } from "./usage.js";
+ import type { CompiledSchema } from "./workflow/json-schema.js";
+-import { cleanupWorktree, createWorktree, isWorktreeIsolationEnabled, pruneWorktrees, } from "./worktree.js";
++import { cleanupWorktree, createWorktree, isWorktreeIsolationEnabled, } from "./worktree.js";
+ 
+ export type OnAgentComplete = (record: AgentRecord) => void;
+ export type OnAgentStart = (record: AgentRecord) => void;
+@@ -52,7 +69,7 @@
+  * have silently queued the tail of exactly the parallel fan-outs the `Agent`
+  * tool description tells the model to send.
+  */
+-const DEFAULT_MAX_CONCURRENT = 10;
++const DEFAULT_MAX_CONCURRENT = 2;
+ 
+ /**
+  * Default max concurrent foreground (blocking) agents — `0` = unlimited, the
+@@ -64,7 +81,7 @@
+  * it bounded — chiefly local models, where parallel agents thrash the prompt
+  * cache (#253) — opt in; everyone else keeps today's behaviour exactly.
+  */
+-const DEFAULT_MAX_CONCURRENT_FOREGROUND = 0;
++const DEFAULT_MAX_CONCURRENT_FOREGROUND = 2;
+ 
+ /**
+  * How many evicted agents stay addressable by name. Only a bound on memory —
+@@ -93,21 +110,6 @@
+   if (!isDirectory) {
+     throw new Error(`SpawnOptions.cwd is not a directory: "${cwd}"`);
+   }
+-}
+-
+-/**
+- * Whether a record occupies one of the `maxConcurrent` background slots.
+- * Nested children don't: their parent already holds a slot, so counting (and
+- * therefore queueing) them would deadlock a parent that waits on its own child.
+- *
+- * Note this bounds nothing horizontally — the depth cap limits how DEEP nesting
+- * goes, not how WIDE. A parent's only limit on concurrent children is that each
+- * spawn costs it a turn, which is unbounded when max turns is unlimited.
+- */
+-function occupiesPoolSlot(
+-  record: Pick<AgentRecord, "isBackground" | "parentAgentId" | "workflowId">,
+-): boolean {
+-  return !!record.isBackground && isTopLevelAgent(record);
+ }
+ 
+ /**
+@@ -125,36 +127,6 @@
+   return record.parentAgentId === undefined && record.workflowId === undefined;
+ }
+ 
+-/**
+- * Whether a record occupies one of the `maxConcurrentForeground` slots.
+- *
+- * Keyed on `blocking` — a caller awaiting this record inline — rather than on
+- * `isBackground === false`, because `spawn()` is also the funnel for DETACHED
+- * starts (cross-extension RPC, `@handle` mentions, the registry) that may pass
+- * `isBackground: false` and are documented to run immediately regardless. Those
+- * block nobody, so bounding them buys nothing and would park a record with no
+- * one waiting to release it.
+- *
+- * Nested children are excluded for the same reason as `occupiesPoolSlot`, and
+- * more sharply: their parent is blocked *awaiting them*, so queueing a child
+- * behind its own parent is a guaranteed deadlock rather than a possible one.
+- * Enforced here rather than at the call site so no caller can reintroduce it.
+- *
+- * A workflow's children go out through `spawnAndWait` and so are `blocking`
+- * too, and are excluded on the same `isTopLevelAgent` test as the background
+- * pool: the run already caps how many of its agents run at once, and charging
+- * them here as well would let one fan-out queue behind a limit meant for the
+- * session's own work.
+- *
+- * Like the background pool this bounds width at the top level only — a parent's
+- * own fan-out is limited by nothing but its turn budget.
+- */
+-function occupiesForegroundSlot(
+-  record: Pick<AgentRecord, "blocking" | "parentAgentId" | "workflowId">,
+-): boolean {
+-  return !!record.blocking && isTopLevelAgent(record);
+-}
+-
+ /** Which concurrency pool a spawn is charged to, if any. */
+ type Pool = "background" | "foreground";
+ 
+@@ -167,6 +139,7 @@
+ }
+ 
+ interface SpawnOptions {
++  [AGENTCFG_EXECUTOR]?: AgentcfgExecutor;
+   description: string;
+   /**
+    * Optional memorable name for this instance, becoming a second handle
+@@ -383,6 +356,11 @@
+    * startup failure so a late `awaitStartup` still sees it.
+    */
+   private startups = new Map<string, Promise<void>>();
++  private agentcfgExecutors = new Map<string, AgentcfgExecutor>();
++  private agentcfgSlots = new Map<string, Pool | undefined>();
++  private agentcfgCancelRequested = new Set<string>();
++  private agentcfgSettled = new Set<string>();
++  private agentcfgCompletions = new Map<string, (result: string) => void>();
+ 
+   /**
+    * Evicted agents that can still be reached by name, keyed by handle. Outlives
+@@ -423,6 +401,7 @@
+     this.onStart = onStart;
+     this.onCompact = onCompact;
+     this.onUsage = onUsage;
++    if (!Number.isInteger(maxConcurrent) || maxConcurrent < 1 || maxConcurrent > 2) throw new Error("AGENTCFG_CONCURRENCY_LIMIT");
+     this.maxConcurrent = maxConcurrent;
+     // Cleanup completed agents after 10 minutes (but keep sessions for resume)
+     this.cleanupInterval = setInterval(() => this.cleanup(), 60_000);
+@@ -431,7 +410,8 @@
+ 
+   /** Update the max concurrent background agents limit. */
+   setMaxConcurrent(n: number) {
+-    this.maxConcurrent = Math.max(1, n);
++    if (!Number.isInteger(n) || n < 1 || n > 2) throw new Error("AGENTCFG_CONCURRENCY_LIMIT");
++    this.maxConcurrent = n;
+     // Start queued agents if the new limit allows
+     this.drainQueue();
+   }
+@@ -443,7 +423,8 @@
+   /** Update the max concurrent foreground (blocking) agents limit. 0 = unlimited. */
+   setMaxConcurrentForeground(n: number) {
+     // Floor 0, not 1: unlimited is a meaningful value here and the default.
+-    this.maxConcurrentForeground = Math.max(0, n);
++    if (!Number.isInteger(n) || n < 1 || n > 2) throw new Error("AGENTCFG_CONCURRENCY_LIMIT");
++    this.maxConcurrentForeground = n;
+     // Start queued agents if the new limit allows — including everything, when
+     // the limit is cleared back to unlimited mid-run.
+     this.drainQueue();
+@@ -466,15 +447,16 @@
+    * is pinned in `test/foreground-concurrency.test.ts`.
+    */
+   private poolFor(record: AgentRecord): Pool | undefined {
+-    if (occupiesPoolSlot(record)) return "background";
+-    if (this.maxConcurrentForeground > 0 && occupiesForegroundSlot(record)) return "foreground";
+-    return undefined;
++    // 资源和专用准入的服务不占任务槽；仍保留在同一 manager 的取消/关闭/会话屏障内。
++    if (this.agentcfgExecutors.get(record.id)?.kind === "resource") return undefined;
++    return record.isBackground ? "background" : "foreground";
+   }
+ 
+   private poolHasRoom(pool: Pool): boolean {
+-    return pool === "background"
+-      ? this.runningBackground < this.maxConcurrent
+-      : this.maxConcurrentForeground === 0 || this.runningForeground < this.maxConcurrentForeground;
++    // 两种前台/后台展示共享同一个物理并发上限。
++    return this.runningBackground + this.runningForeground < 2 && (pool === "background"
++      ? this.runningBackground < Math.min(2, this.maxConcurrent)
++      : this.runningForeground < Math.max(1, Math.min(2, this.maxConcurrentForeground)));
+   }
+ 
+   /**
+@@ -493,12 +475,17 @@
+     prompt: string,
+     options: SpawnOptions,
+   ): string {
++    if (options.bypassQueue || options.parentAgentId || options.workflowId || (options.depth ?? 1) > 1
++        || options.isolation === "worktree" || options.resumeSessionFile || options.configCwd
++        || Object.hasOwn(options, "agentcfgExecution")) throw new Error("AGENTCFG_SPAWN_FORBIDDEN");
++    if (String(type).startsWith("task-keeper-") && !options[AGENTCFG_EXECUTOR]) throw new Error("AGENTCFG_MANAGED_DESCRIPTOR_REQUIRED");
+     // Validate before the queue branch — a queued spawn should fail at the
+     // call, not minutes later at drain. Throw (not warn): programmatic callers
+     // can fix and retry; the RPC layer converts throws into error envelopes.
+     assertValidSpawnCwd(options.cwd);
+ 
+-    const id = randomUUID().slice(0, 17);
++    const id = options[AGENTCFG_EXECUTOR]?.manager_run_id ?? randomUUID().slice(0, 17);
++    if (!/^[a-zA-Z0-9_-]{1,128}$/.test(id) || this.agents.has(id)) throw new Error("AGENTCFG_RUN_IDENTITY");
+     const abortController = new AbortController();
+     const record: AgentRecord = {
+       id,
+@@ -543,6 +530,10 @@
+       rootSessionId: options.rootSessionId,
+     };
+     this.agents.set(id, record);
++    if (options[AGENTCFG_EXECUTOR]) {
++      this.agentcfgExecutors.set(id, options[AGENTCFG_EXECUTOR]!);
++      record.promise = new Promise<string>(resolve => this.agentcfgCompletions.set(id, resolve));
++    }
+     // After the insert, so `takenHandles()` already counts this record's own
+     // handle — a spawn named after its own type gets `explore-2`, not a
+     // duplicate `explore` that would make resolution ambiguous.
+@@ -595,6 +586,7 @@
+   private armQueuedAbort(id: string, signal?: AbortSignal): boolean {
+     if (signal === undefined) return true;
+     if (signal.aborted) {
++      if (this.agentcfgExecutors.has(id)) { void this.cancelControlled(id); return false; }
+       const record = this.agents.get(id);
+       if (record) {
+         record.status = "stopped";
+@@ -702,6 +694,21 @@
+     if (pool === "background") this.runningBackground++;
+     else if (pool === "foreground") this.runningForeground++;
+ 
++    const controlled = this.agentcfgExecutors.get(id);
++    if (controlled) {
++      this.agentcfgSlots.set(id, pool);
++      try { this.onStart?.(record); } catch { /* UI 回调不能删除执行归属或阻止监督启动。 */ }
++      const cancel = () => { void this.cancelControlled(id); };
++      record.abortController!.signal.addEventListener("abort", cancel, { once: true });
++      if (options.signal?.aborted) { record.abortController!.abort(); return; }
++      else options.signal?.addEventListener("abort", () => record.abortController!.abort(), { once: true });
++      void Promise.resolve().then(() => controlled.execute(id)).then(result => this.settleControlled(id, result)).catch(() => {
++        record.error = "AGENTCFG_EXECUTION_UNKNOWN";
++      });
++      options.onSpawned?.(id);
++      return;
++    }
++
+     // Worktree isolation: try to create a temporary git worktree. Strict —
+     // fail loud if not possible (no silent fallback to main tree). Done BEFORE
+     // the run is kicked off so a failure doesn't leave a half-running agent.
+@@ -741,7 +748,7 @@
+       }
+     }
+ 
+-    this.onStart?.(record);
++    try { this.onStart?.(record); } catch { /* UI 回调不拥有调度状态。 */ }
+ 
+     // Wire parent abort signal to stop the subagent when the parent is interrupted
+     let detachParentSignal: (() => void) | undefined;
+@@ -966,7 +973,7 @@
+    *   the release disagree with the acquire.
+    */
+   private settleRun(record: AgentRecord, guardCallback: boolean, pool: Pool | undefined): void {
+-    if (!record.isBackground) record.resultConsumed = true;
++    if (!record.isBackground && !this.agentcfgExecutors.has(record.id)) record.resultConsumed = true;
+     if (pool === "background") this.runningBackground--;
+     else if (pool === "foreground") this.runningForeground--;
+ 
+@@ -1111,102 +1118,30 @@
+     options?: ResumeOptions,
+   ): Promise<AgentRecord | undefined> {
+     const record = this.agents.get(id);
++    if (this.agentcfgExecutors.has(id)) throw new Error("AGENTCFG_FRESH_ATTEMPT_REQUIRED");
+     if (!record?.session) return undefined;
+ 
+-    // Background resume: settle asynchronously and notify on completion exactly
+-    // like a background spawn, returning immediately with the record still
+-    // "running" — or "queued" when at the concurrency limit. Previously
+-    // run_in_background was ignored on resume (the Agent tool's resume branch
+-    // returned before its background branch, and resume() only ever awaited
+-    // inline), so a resumed agent always blocked the caller until it finished.
+-    if (options?.isBackground) {
+-      // Never re-enter a run that is still in flight. Detaching means the caller
+-      // gets control back while the record stays "running", so nothing stops the
+-      // model from resuming the same agent again. Starting a second run would
+-      // overwrite record.abortController — orphaning the live run beyond the
+-      // reach of `/agents` stop and abortAll() — double-count the pool slot, and
+-      // then reject from session.prompt() with "Agent is already processing",
+-      // whose settle path would abort the LIVE run's children and report a
+-      // failure for a run that is still going. Refuse instead, leaving the
+-      // record untouched; the caller decides whether to wait or steer.
+-      if (record.status === "running" || record.status === "queued") return undefined;
+-
+-      record.isBackground = true;
+-      record.resultConsumed = false;
+-      record.result = undefined;
+-      record.error = undefined;
+-      record.completedAt = undefined;
+-      record.status = "queued";
+-
+-      const start = () => this.startResume(id, record, prompt, signal, options);
+-      if (occupiesPoolSlot(record) && !this.poolHasRoom("background")) {
+-        // At the concurrency limit — queue it, drains when a slot frees. A
+-        // detached resume has no inline caller, hence nothing to release. The
+-        // queue is shared with spawns, whose startup is async, so entries are
+-        // promise-shaped even though a resume starts synchronously; failures
+-        // land on the record here, since drainQueue no longer catches.
+-        this.queue.push({
+-          id,
+-          pool: "background",
+-          start: async () => {
+-            try {
+-              start();
+-            } catch (err) {
+-              record.status = "error";
+-              record.error = err instanceof Error ? err.message : String(err);
+-              record.completedAt = Date.now();
+-              this.onComplete?.(record);
+-            }
+-          },
+-          release: () => {},
+-        });
+-      } else {
+-        start();
+-      }
+-      return record;
+-    }
+-
+-    // Foreground resume: run inline and return the settled record.
+-    record.status = "running";
+-    record.startedAt = Date.now();
+-    record.completedAt = undefined;
++    if (record.status === "running" || record.status === "queued") return undefined;
++    record.isBackground = options?.isBackground ?? false;
++    record.resultConsumed = false;
+     record.result = undefined;
+     record.error = undefined;
+-
+-    try {
+-      const { text, failure } = await resumeAgent(record.session, prompt, {
+-        onToolActivity: (activity) => {
+-          if (activity.type === "end") record.toolUses++;
+-          options?.onToolActivity?.(activity);
+-        },
+-        onAssistantUsage: (usage) => {
+-          addUsage(record.lifetimeUsage, usage);
+-          this.onUsage?.(record, usage);
+-          options?.onAssistantUsage?.(usage);
+-        },
+-        onCompaction: (info) => {
+-          record.compactionCount++;
+-          this.onCompact?.(record, info);
+-          options?.onCompaction?.(info);
+-        },
+-        signal,
+-      });
+-      // Same contract as the spawn path (#144): a failed final turn is an
+-      // error, not a completion — but the resumed text stays available.
+-      record.status = failure ? "error" : "completed";
+-      if (failure) record.error = failure;
+-      record.result = text;
+-      record.completedAt = Date.now();
+-    } catch (err) {
+-      record.status = "error";
+-      record.error = err instanceof Error ? err.message : String(err);
+-      record.completedAt = Date.now();
+-    }
+-
+-    // Same contract as the spawn settle paths: children spawned during the
+-    // resumed turn must not outlive it — nothing else can see or reach them.
+-    this.abortOwnedChildren(id);
+-
++    record.completedAt = undefined;
++    record.status = "queued";
++    const pool = this.poolFor(record);
++    if (pool === undefined) throw new Error("AGENTCFG_FRESH_ATTEMPT_REQUIRED");
++    let release!: () => void;
++    const gate = new Promise<void>(resolve => { release = resolve; });
++    const start = async () => {
++      try { this.startResume(id, record, prompt, signal, options ?? {}); }
++      finally { release(); }
++    };
++    if (!this.armQueuedAbort(id, signal)) return record;
++    if (!this.poolHasRoom(pool)) {
++      record.startGate = gate;
++      this.queue.push({ id, pool, start, release });
++    } else { await start(); }
++    if (!record.isBackground) { await gate; await record.promise; }
+     return record;
+   }
+ 
+@@ -1228,8 +1163,10 @@
+ 
+     record.status = "running";
+     record.startedAt = Date.now();
+-    if (occupiesPoolSlot(record)) this.runningBackground++;
+-    this.onStart?.(record);
++    const pool = this.poolFor(record);
++    if (pool === "background") this.runningBackground++;
++    else this.runningForeground++;
++    try { this.onStart?.(record); } catch { /* UI 回调不拥有调度状态。 */ }
+ 
+     // Fresh abort controller so /agents stop and steering target THIS run rather
+     // than the previous one's settled controller.
+@@ -1260,12 +1197,10 @@
+       }
+       // Children spawned during the resumed turn must not outlive it.
+       this.abortOwnedChildren(id);
+-      if (occupiesPoolSlot(record)) this.runningBackground--;
+-      try { this.onComplete?.(record); } catch { /* ignore completion side-effect errors */ }
+-      this.drainQueue();
++      this.settleRun(record, true, pool);
+     };
+ 
+-    const promise = resumeAgent(record.session, prompt, {
++    const promise = Promise.resolve().then(() => resumeAgent(record.session!, prompt, {
+       onToolActivity: (activity) => {
+         if (activity.type === "end") record.toolUses++;
+         options.onToolActivity?.(activity);
+@@ -1281,7 +1216,7 @@
+         options.onCompaction?.(info);
+       },
+       signal: abortController.signal,
+-    })
++    }))
+       .then(({ text, failure }) => {
+         // Don't overwrite status if externally stopped via abort().
+         if (record.status !== "stopped") {
+@@ -1317,6 +1252,7 @@
+    * (unknown id, or no longer running/queued).
+    */
+   steer(id: string, message: string): boolean {
++    if (this.agentcfgExecutors.has(id)) return false;
+     const record = this.agents.get(id);
+     if (!record) return false;
+     if (record.status !== "running" && record.status !== "queued") return false;
+@@ -1407,6 +1343,11 @@
+   abort(id: string): boolean {
+     const record = this.agents.get(id);
+     if (!record) return false;
++    if (this.agentcfgExecutors.has(id)) {
++      this.dequeue(entry => entry.id === id);
++      void this.cancelControlled(id);
++      return true;
++    }
+ 
+     // Remove from queue if queued. No decrement — the slot was never taken —
+     // and no onComplete, matching what a queued background abort has always
+@@ -1427,6 +1368,11 @@
+ 
+   /** Dispose a record's session and remove it from the map. */
+   private removeRecord(id: string, record: AgentRecord): void {
++    if (this.agentcfgExecutors.has(id) && (!record.resultConsumed || !this.agentcfgSettled.has(id))) return;
++    this.agentcfgExecutors.delete(id);
++    this.agentcfgCancelRequested.delete(id);
++    this.agentcfgSettled.delete(id);
++    this.agentcfgCompletions.delete(id);
+     this.tombstone(record);
+     const session = record.session;
+     // Detached before the shutdown starts, so the record leaves the map at once and
+@@ -1504,27 +1450,91 @@
+     );
+   }
+ 
++  blocksOrdinaryHelpers(serviceRunId?: string | null): boolean {
++    const owner = serviceRunId ? this.agents.get(serviceRunId) : undefined;
++    const ownedResource = Boolean(owner && owner.status === "running" && !owner.error
++      && !this.agentcfgCancelRequested.has(owner.id) && this.agentcfgExecutors.get(owner.id)?.kind === "resource");
++    return [...this.agents.values()].some(record => {
++      if (!["running", "queued"].includes(record.status)) return false;
++      if (record.error || this.agentcfgCancelRequested.has(record.id)) return true;
++      const executor = this.agentcfgExecutors.get(record.id);
++      if (ownedResource && executor?.kind === "external" && executor.activity === "model" && executor.service_owner_run_id === serviceRunId) return false;
++      return !(executor?.kind === "resource" || executor?.kind === "external" && executor.activity === "io");
++    });
++  }
++
++
++  spawnWithExecutor(pi: ExtensionAPI, ctx: ExtensionContext, type: string, prompt: string,
++    executor: AgentcfgExecutor, options: { description: string; cwd: string; isBackground?: boolean }): string {
++    if (!["session", "managed-process", "external", "resource"].includes(executor.kind) || typeof executor.execute !== "function" || typeof executor.cancel !== "function"
++        || executor.activity !== undefined && (executor.kind !== "external" || !["io", "model"].includes(executor.activity))) {
++      throw new Error("AGENTCFG_EXECUTOR_INVALID");
++    }
++    if (executor.service_owner_run_id !== undefined) {
++      const owner = this.agents.get(executor.service_owner_run_id);
++      if (executor.kind !== "external" || executor.activity !== "model" || !owner || owner.status !== "running" || owner.error
++          || this.agentcfgCancelRequested.has(owner.id) || this.agentcfgExecutors.get(owner.id)?.kind !== "resource") {
++        throw new Error("AGENTCFG_SERVICE_OWNER_INVALID");
++      }
++    }
++    if (executor.kind === "resource" && [...this.agents.values()].filter(record => ["running", "queued"].includes(record.status)
++      && this.agentcfgExecutors.get(record.id)?.kind === "resource").length >= 16) throw new Error("AGENTCFG_RESOURCE_LIMIT");
++    return this.spawn(pi, ctx, type, prompt, { ...options, [AGENTCFG_EXECUTOR]: Object.freeze({ ...executor }),
++      inheritContext: false, depth: 1, isBackground: options.isBackground ?? true });
++  }
++
++  isControlled(id: string): boolean { return this.agentcfgExecutors.has(id); }
++
++  settleControlled(id: string, result: AgentcfgExecutionResult): boolean {
++    const record = this.agents.get(id);
++    if (!record || !this.agentcfgExecutors.has(id)) throw new Error("AGENTCFG_EXECUTION_UNKNOWN");
++    if (this.agentcfgSettled.has(id)) return true;
++    if (!result || result.termination_confirmed !== true || result.external_work_empty !== true) {
++      record.error = "AGENTCFG_TERMINATION_UNKNOWN";
++      return false;
++    }
++    const success = result.terminal_status === "completed" && typeof result.response_text === "string" && result.response_text.trim().length > 0;
++    record.status = success ? "completed" : result.terminal_status === "canceled" ? "stopped" : "error";
++    record.error = success ? undefined : "AGENTCFG_EXECUTION_FAILED";
++    record.result = typeof result.response_text === "string" ? result.response_text : "";
++    record.completedAt = Date.now();
++    this.agentcfgSettled.add(id);
++    const pool = this.agentcfgSlots.get(id);
++    this.agentcfgSlots.delete(id);
++    this.settleRun(record, true, pool);
++    this.agentcfgCompletions.get(id)?.(record.result);
++    return true;
++  }
++
++  consumeControlled(id: string): void {
++    const record = this.agents.get(id);
++    if (!record || !this.agentcfgSettled.has(id)) throw new Error("AGENTCFG_EVIDENCE_NOT_READY");
++    record.resultConsumed = true;
++  }
++
++  removeConsumedControlled(id: string): void {
++    if (!this.agentcfgExecutors.has(id)) throw new Error("AGENTCFG_EXECUTION_UNKNOWN");
++    this.removeRecord(id, this.agents.get(id)!);
++  }
++
++  private async cancelControlled(id: string): Promise<void> {
++    if (this.agentcfgSettled.has(id)) return;
++    this.agentcfgCancelRequested.add(id);
++    try {
++      const result = await this.agentcfgExecutors.get(id)?.cancel();
++      if (result) this.settleControlled(id, result);
++    } catch {
++      const record = this.agents.get(id);
++      if (record) record.error = "AGENTCFG_TERMINATION_UNKNOWN";
++    }
++  }
++
+   /** Abort all running and queued agents immediately. */
+   abortAll(): number {
++    // 取消意图不能替代物理终止证明；所有路径复用单条取消协议。
+     let count = 0;
+-    // Clear queued agents first
+-    for (const queued of this.queue) {
+-      const record = this.agents.get(queued.id);
+-      if (record) {
+-        record.status = "stopped";
+-        record.completedAt = Date.now();
+-        count++;
+-      }
+-    }
+-    this.dequeue(() => true);
+-    // Abort running agents
+-    for (const record of this.agents.values()) {
+-      if (record.status === "running") {
+-        record.abortController?.abort();
+-        record.status = "stopped";
+-        record.completedAt = Date.now();
+-        count++;
+-      }
++    for (const record of [...this.agents.values()]) {
++      if ((record.status === "running" || record.status === "queued") && this.abort(record.id)) count++;
+     }
+     return count;
+   }
+@@ -1554,24 +1564,19 @@
+    *   cannot be reached through a stored spawn argument at shutdown. Omitting
+    *   it (tests, teardown of a manager that never spawned) skips the prune.
+    */
+-  async dispose(pi?: ExtensionAPI): Promise<void> {
++  async dispose(_pi?: ExtensionAPI): Promise<void> {
+     clearInterval(this.cleanupInterval);
+     // Clear queue — via dequeue, so anyone blocked in spawnAndWait is woken
+     // rather than left awaiting a gate nothing will ever resolve.
+     this.dequeue(() => true);
+     const sessions = [...this.agents.values()].map(record => record.session);
+-    this.agents.clear();
+-    this.startups.clear();
+-    if (pi) {
+-      // Prune any orphaned git worktrees (crash recovery). Detached: dispose runs
+-      // on the shutdown path, which cannot wait for git. Started before the awaited
+-      // shutdown below rather than after it, so the git calls have that window to
+-      // finish in instead of racing the process exit that follows.
+-      const prune = (repo: string) => { pruneWorktrees(pi, repo).catch(() => {}); };
+-      prune(process.cwd());
+-      // Also prune repos that caller-supplied cwds created worktrees in — a clean
+-      // exit with in-flight agents would otherwise leave stale registrations there.
+-      for (const repo of this.worktreeRepos) prune(repo);
++    for (const id of this.agents.keys()) {
++      if (this.agentcfgExecutors.has(id)) {
++        this.agentcfgExecutors.get(id)?.detach?.();
++        continue;
++      }
++      this.agents.delete(id);
++      this.startups.delete(id);
+     }
+     // Awaited, unlike the eviction path: pi awaits this extension's `session_shutdown`
+     // handler and the process exits right after it returns, so anything left unawaited
+--- a/src/agent-runner.ts
++++ b/src/agent-runner.ts
+@@ -995,7 +995,8 @@
+     ...(parentModelRuntime !== undefined && { modelRuntime: parentModelRuntime as never }),
+     model,
+     tools: sessionTools,
+-    customTools: [...nestedTools, ...structuredTools],
++    noTools: "builtin",
++    customTools: [...((globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")]?.ordinaryOperations?.tools(effectiveCwd, type) ?? []), ...nestedTools, ...structuredTools],
+     resourceLoader: loader,
+   };
+   if (sessionExcludeTools) {
+--- a/src/agent-types.ts
++++ b/src/agent-types.ts
+@@ -25,13 +25,13 @@
+ const agents = new Map<string, AgentConfig>();
+ 
+ /** When true, DEFAULT_AGENTS are skipped during registration. */
+-let disableDefaults = false;
++let disableDefaults = true;
+ 
+ /** Check whether default agents are disabled. */
+ export function isDefaultsDisabled(): boolean { return disableDefaults; }
+ 
+ /** Set whether default agents are disabled. */
+-export function setDefaultsDisabled(b: boolean): void { disableDefaults = b; }
++export function setDefaultsDisabled(b: boolean): void { if (!b) throw new Error("AGENTCFG_DEFAULT_ROLES_DISABLED"); disableDefaults = true; }
+ 
+ /** `fallbackSubagent` value that disables the fallback entirely (strict dispatch). */
+ export const NO_FALLBACK = "none";
+@@ -45,13 +45,13 @@
+  * Module state rather than an index.ts closure because every caller-supplied
+  * spawn path needs it — the Agent tool, the scheduler, and cross-extension RPC.
+  */
+-let fallbackSubagent: string | undefined;
++let fallbackSubagent: string | undefined = "none";
+ 
+ /** Get the configured fallback agent type. undefined = general-purpose. */
+ export function getFallbackSubagent(): string | undefined { return fallbackSubagent; }
+ 
+ /** Set the configured fallback agent type. undefined = general-purpose. */
+-export function setFallbackSubagent(v: string | undefined): void { fallbackSubagent = v; }
++export function setFallbackSubagent(v: string | undefined): void { if (v !== NO_FALLBACK) throw new Error("AGENTCFG_ROLE_FALLBACK_DISABLED"); fallbackSubagent = v; }
+ 
+ /**
+  * Build a registry map: DEFAULT_AGENTS first (unless disabled via settings),
+--- /dev/null
++++ b/src/agentcfg-config.ts
+@@ -0,0 +1,68 @@
++// 派生管理者只读取 launcher 传入的清单，不发现全局/项目角色或设置。
++import { createHash } from "node:crypto";
++import { closeSync, constants, fstatSync, openSync, readFileSync, realpathSync } from "node:fs";
++
++export const RUNTIME_KEY = Symbol.for("agentcfg.pi.runtime.v1");
++export const MANAGER_KEY = Symbol.for("pi-subagents:manager");
++export const BRIDGE_KEY = Symbol.for("agentcfg.pi.managed.v1");
++
++export function runtimeContext(): any {
++  const context = (globalThis as any)[RUNTIME_KEY];
++  if (!context || context.owner?.role !== "manager" || !context.supervisor) throw new Error("AGENTCFG_MANAGER_CONTEXT_REQUIRED");
++  return context;
++}
++
++export function assertSingleManager(): void {
++  runtimeContext();
++  if ((globalThis as any)[MANAGER_KEY] !== undefined || (globalThis as any)[BRIDGE_KEY] !== undefined) {
++    throw new Error("AGENTCFG_MANAGER_LISTENER_CONFLICT");
++  }
++}
++
++export function controlledSettings() {
++  runtimeContext();
++  return { disableDefaultAgents: true, fallbackSubagent: "none", maxSubagentDepth: 0,
++    maxConcurrent: 2, maxConcurrentForeground: 2, workflowsEnabled: false,
++    schedulingEnabled: false, worktreeIsolation: false, strictAgentFiles: true,
++    rememberAgents: false, scopeModels: true };
++}
++
++export function assertOrdinaryOptions(options: Record<string, unknown>): void {
++  const allowed = new Set(["description", "model", "maxTurns", "thinkingLevel", "inheritContext", "isolated", "isBackground",
++    "joinMode", "outputTranscript", "outputFile", "name", "cwd", "isolation", "signal"]);
++  const forbidden = ["parentAgentId", "workflowId", "depth", "maxSubagentDepth", "configCwd", "rootSessionId",
++    "resumeSessionFile", "reclaim", "blocking", "bypassQueue", "agentcfgExecution", "executor", "descriptor", "owner_nonce"];
++  if (Object.keys(options).some(key => !allowed.has(key)) || forbidden.some(key => Object.hasOwn(options, key)) || Object.getOwnPropertySymbols(options).length) {
++    throw new Error("AGENTCFG_SPAWN_FORBIDDEN");
++  }
++}
++
++export function loadControlledRoles(parse: (text: string) => { body: string }, managed = false): Map<string, any> {
++  const context = runtimeContext();
++  const snapshot = context.roleManifest;
++  if (snapshot?.schema_version !== 1 || !Array.isArray(snapshot.roles)) throw new Error("AGENTCFG_ROLE_MANIFEST_REQUIRED");
++  const roles = new Map<string, any>();
++  for (const role of snapshot.roles) {
++    if (typeof role.managed !== "boolean" || roles.has(role.id)) throw new Error("AGENTCFG_ROLE_INVALID");
++    const binding = context.manifest.role_bindings[role.id];
++    if (!binding || JSON.stringify(binding.model) !== JSON.stringify(role.model)
++        || JSON.stringify(binding.tools) !== JSON.stringify(role.tools) || binding.managed !== role.managed) throw new Error("AGENTCFG_ROLE_INVALID");
++    // 所有角色都核对内容，不能让隐藏的 managed 角色污染另一份注册表。
++    if (realpathSync(role.path) !== role.path) throw new Error("AGENTCFG_ROLE_PATH");
++    const fd = openSync(role.path, constants.O_RDONLY | constants.O_NOFOLLOW);
++    let content: string;
++    try {
++      const info = fstatSync(fd);
++      if (!info.isFile() || info.nlink !== 1 || info.uid !== process.getuid!() || (info.mode & 0o777) !== 0o600) throw new Error("AGENTCFG_ROLE_PATH");
++      content = readFileSync(fd, "utf8");
++    } finally { closeSync(fd); }
++    if (createHash("sha256").update(content).digest("hex") !== role.compiled_digest) throw new Error("AGENTCFG_ROLE_CHANGED");
++    if (role.managed !== managed) continue;
++    roles.set(role.id, { name: role.id, description: "agentcfg role " + role.id,
++      builtinToolNames: [...role.tools], extSelectors: [], extensions: false, skills: false,
++      allowedSubagents: false, inheritContext: false, memory: false, persistSession: false, isolation: "off",
++      promptMode: "replace", systemPrompt: parse(content).body.trim(),
++      model: role.model.provider + "/" + role.model.model, thinking: binding.thinking, source: "global", sourcePath: role.path, enabled: true });
++  }
++  return roles;
++}
+--- /dev/null
++++ b/src/agentcfg-managed.ts
+@@ -0,0 +1,62 @@
++// 将 managed-executor-v1 绑定到 factory 已创建的管理者，绝不另建调度器。
++
++import { join } from "node:path";
++import { externalControl } from "@agentcfg/pi-runtime/external-control";
++import { ExternalBridge } from "@agentcfg/pi-runtime/external-executor";
++import { registerExternalRpc } from "@agentcfg/pi-runtime/external-rpc";
++import { ManagedBridge } from "@agentcfg/pi-runtime/managed-bridge";
++import { listenerCount, registerManagedRpc } from "@agentcfg/pi-runtime/managed-rpc";
++import { ManagedStore } from "@agentcfg/pi-runtime/managed-store";
++import { reject } from "@agentcfg/pi-runtime/managed-types";
++import { ManagerExecutor } from "@agentcfg/pi-runtime/manager-executor";
++import type { AgentManager } from "./agent-manager.js";
++import { BRIDGE_KEY, runtimeContext } from "./agentcfg-config.js";
++
++export function attachManaged(manager: AgentManager, pi: any, getContext: () => any) {
++  if ((globalThis as any)[BRIDGE_KEY] !== undefined || listenerCount(pi.events)) reject("MANAGER_LISTENER_CONFLICT", 5);
++  const context = runtimeContext();
++  const owner = { instance_id: context.owner.instance_id, manager_activation_id: context.owner.manager_activation_id, owner_nonce: context.owner.owner_nonce };
++  const authorize = async () => {
++    const current = await context.supervisor.call("handshake", {});
++    if (current.manager_activation_id !== owner.manager_activation_id || current.owner_nonce !== owner.owner_nonce
++        || current.runtime_identity !== context.installed.runtime_identity) reject("OWNER_MISMATCH", 4);
++  };
++  const external = context.manifest.options.model_delegate?.enabled ? new ExternalBridge({ runtime: context, manager, pi, getContext,
++    store: new ManagedStore({ root: join(context.instanceRoot, "pi-home", "model-delegate", "manager"), owner, authorize }) }) : null;
++  const offExternal = external ? registerExternalRpc(pi.events, external) : () => {};
++  const control = external ? externalControl({ runtime: context, bridge: external,
++    root: join(context.instanceRoot, "pi-home", "model-delegate", "manager") }) : Promise.resolve(null);
++  // 失败时没有可用批次端点；拒绝隐藏的独立 fanout 执行。
++  void control.catch(() => {});
++  const closeExternal = async () => { offExternal(); const stop = await control.catch(() => null); await stop?.(); await external?.close(); };
++  const backend = context.managedBackend;
++  // 未完成 worker/transport 认证的运行包不能靠补丁版本号宣称能力存在。
++  if (!backend) {
++    const fail = () => reject("CAPABILITY_MISSING", 5);
++    const unavailable = { handshake: fail, preflight: fail, dispatch: fail, inspect: fail, get_result: fail, cancelAttempt: fail, reconcile: fail, consume: fail };
++    const off = registerManagedRpc(pi.events, unavailable);
++    const entry = Object.freeze({ manager, external, pi, getContext, available: false });
++    (globalThis as any)[BRIDGE_KEY] = entry;
++    return async () => { off(); await closeExternal(); if ((globalThis as any)[BRIDGE_KEY] === entry) delete (globalThis as any)[BRIDGE_KEY]; };
++  }
++  const store = new ManagedStore({ root: join(context.instanceRoot, "pi-home", "managed-executions"), owner,
++    authorize: async () => {
++      const current = await context.supervisor.call("handshake", {});
++      if (current.manager_activation_id !== owner.manager_activation_id || current.owner_nonce !== owner.owner_nonce
++          || current.runtime_identity !== context.installed.runtime_identity) reject("OWNER_MISMATCH", 4);
++    } });
++  const executor = new ManagerExecutor({ manager, backend, store, pi, context: getContext });
++  const bridge = new ManagedBridge({ owner, store, executor, resolve: (descriptor, options) => backend.resolve(descriptor, options),
++    runtime: { identity: context.installed.runtime_identity, slice_identity: context.installed.slice_identity, capabilities: backend.capabilities },
++    listeners: () => listenerCount(pi.events) });
++  backend.bindBridge(bridge, owner);
++  const off = registerManagedRpc(pi.events, bridge);
++  const entry = Object.freeze({ manager, bridge, external, pi, getContext, available: true });
++  (globalThis as any)[BRIDGE_KEY] = entry;
++  return async () => {
++    off(); await closeExternal();
++    if ((globalThis as any)[BRIDGE_KEY] === entry) delete (globalThis as any)[BRIDGE_KEY];
++    await store.close();
++    backend.unbindBridge(bridge);
++  };
++}
+--- a/src/custom-agents.ts
++++ b/src/custom-agents.ts
+@@ -1,324 +1,12 @@
+-/**
+- * custom-agents.ts — Load user-defined agents from project (.pi/agents/, plus the shared .agents/agents/ workspace) and global ($PI_CODING_AGENT_DIR/agents/, default ~/.pi/agent/agents/) locations.
+- */
++// agentcfg 使用显式角色快照；项目或全局目录发现已由迁移方案替换。
++import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
++import { loadControlledRoles } from "./agentcfg-config.js";
++import type { AgentConfig } from "./types.js";
+ 
+-import { existsSync, readdirSync, readFileSync } from "node:fs";
+-import { basename, join } from "node:path";
+-import { getAgentDir, parseFrontmatter } from "@earendil-works/pi-coding-agent";
+-import { BUILTIN_TOOL_NAMES } from "./agent-types.js";
+-import type { AgentConfig, IsolationMode, MemoryScope, ThinkingLevel } from "./types.js";
+-
+-/**
+- * The one thing a declared `name:` may not contain, matching Claude Code
+- * exactly: it reserves `:` for plugin-scoped identifiers (`my-plugin:reviewer`)
+- * and refuses to load a file whose name uses one.
+- *
+- * Nothing else is rejected. Claude Code's docs describe names as "lowercase
+- * letters and hyphens", but that is guidance — the only stated load failure is
+- * the colon, so `name: Code Reviewer` must work here too. (The stricter
+- * letters/digits/underscore/hyphen regex in Claude Code applies to the Agent
+- * tool's spawn-time `name` parameter, which is a different field.) Mixed case
+- * has to be allowed regardless: the built-in types `Explore` and `Plan` use it,
+- * and a file must be able to override one.
+- */
+-const RESERVED_IN_TYPE = ":";
+-
+-/**
+- * Scan for custom agent .md files from multiple locations.
+- * Discovery hierarchy (higher priority wins):
+- *   1. Project:   <cwd>/.pi/agents/*.md (authoritative — also where /agents writes)
+- *   2. Workspace: <cwd>/.agents/agents/*.md (shared cross-tool .agents workspace, read-only)
+- *   3. Global:    $PI_CODING_AGENT_DIR/agents/*.md (default: ~/.pi/agent/agents/*.md)
+- *
+- * Project-level agents override global ones with the same name. On a name clash
+- * between the two project locations, .pi/agents wins — .pi stays the project
+- * authority; .agents/agents is an additional read location.
+- * Any name is allowed — names matching defaults (e.g. "Explore") override them.
+- *
+- * An agent's type comes from its frontmatter `name:`, falling back to the
+- * filename — Claude Code's rule, where "the filename doesn't have to match".
+- * Because the type is now declared rather than derived from a unique path, two
+- * files can claim the same one; the later load wins, as it always has for a
+- * filename clash, and `warnSkippedOverride` reports the substitution.
+- */
+-export function loadCustomAgents(cwd: string, strict = false): Map<string, AgentConfig> {
+-  const globalDir = join(getAgentDir(), "agents");
+-  const workspaceProjectDir = join(cwd, ".agents", "agents");
+-  const projectDir = join(cwd, ".pi", "agents");
+-
+-  const agents = new Map<string, AgentConfig>();
+-  loadFromDir(globalDir, agents, "global", strict);            // lowest priority
+-  loadFromDir(workspaceProjectDir, agents, "project", strict); // shared workspace
+-  loadFromDir(projectDir, agents, "project", strict);          // highest priority (overwrites)
+-
+-  warnedLastLoad = warnedThisLoad;
+-  warnedThisLoad = new Set();
+-  return agents;
++export function loadCustomAgents(_cwd: string, _strict = false): Map<string, AgentConfig> {
++  return loadControlledRoles(parseAgentFrontmatter);
+ }
+ 
+-/** Load agent configs from a directory into the map. */
+-function loadFromDir(dir: string, agents: Map<string, AgentConfig>, source: "project" | "global", strict: boolean): void {
+-  if (!existsSync(dir)) return;
+-
+-  let files: string[];
+-  try {
+-    files = readdirSync(dir).filter(f => f.endsWith(".md"));
+-  } catch {
+-    return;
+-  }
+-
+-  for (const file of files) {
+-    const filenameType = basename(file, ".md");
+-
+-    const path = join(dir, file);
+-
+-    const parsed = readAgentFile(path, strict);
+-    if (!parsed) {
+-      warnSkippedOverride(filenameType, agents);
+-      continue;
+-    }
+-    const { frontmatter: fm, body } = parsed;
+-
+-    // Claude Code's rule: `name:` IS the agent type, and the filename need not
+-    // match. Absent, the filename stands in — Claude Code requires the field,
+-    // but most files here predate it and must keep loading.
+-    const declared = str(fm.name)?.trim();
+-    if (declared?.includes(RESERVED_IN_TYPE)) {
+-      // Refusing beats silently substituting: the file would otherwise load
+-      // under its filename, so `Agent({subagent_type})` would succeed against
+-      // an agent whose declared identity nothing honoured.
+-      warnIfNew(
+-        `Agent file ${path} declares name "${declared}", which contains "${RESERVED_IN_TYPE}" — reserved for `
+-        + "plugin-scoped identifiers. Rename it, or move the label to `display_name:`. Skipping.",
+-      );
+-      // No `warnSkippedOverride`: this file would have registered under its
+-      // *declared* name, which nothing else can hold (a colon keeps it out of
+-      // the registry), so it shadowed nothing. Passing the filename instead
+-      // would report a substitution of an unrelated agent that never happened.
+-      continue;
+-    }
+-    // `||`, not `??`: a quoted empty or all-whitespace `name:` would otherwise
+-    // register the agent under the empty type — unspawnable, and it takes the
+-    // filename-derived one down with it.
+-    const name = declared || filenameType;
+-
+-    const { builtinToolNames, extSelectors } = parseToolsField(fm.tools);
+-
+-    agents.set(name, {
+-      name,
+-      // Only `display_name` now: `name` is the type, and `getConfig` already
+-      // falls back to the type when no label is set — so a Claude Code file
+-      // with `name: code-reviewer` still badges as "code-reviewer".
+-      displayName: str(fm.display_name),
+-      color: str(fm.color),
+-      description: str(fm.description) ?? name,
+-      builtinToolNames,
+-      extSelectors,
+-      disallowedTools: csvListOptional(fm.disallowed_tools),
+-      extensions: inheritField(fm.extensions ?? fm.inherit_extensions),
+-      excludeExtensions: csvListOptional(fm.exclude_extensions),
+-      skills: inheritField(fm.skills ?? fm.inherit_skills),
+-      model: str(fm.model),
+-      thinking: str(fm.thinking) as ThinkingLevel | undefined,
+-      maxTurns: nonNegativeInt(fm.max_turns),
+-      persistSession: fm.persist_session != null ? fm.persist_session === true : undefined,
+-      outputTranscript: fm.output_transcript != null ? fm.output_transcript !== false : undefined,
+-      sessionDir: str(fm.session_dir),
+-      allowedSubagents: parseAllowedSubagents(fm.allowed_subagents),
+-      systemPrompt: body.trim(),
+-      promptMode: fm.prompt_mode === "append" ? "append" : "replace",
+-      inheritContext: fm.inherit_context != null ? fm.inherit_context === true : undefined,
+-      runInBackground: fm.run_in_background != null ? fm.run_in_background === true : undefined,
+-      isolated: fm.isolated != null ? fm.isolated === true : undefined,
+-      memory: parseMemory(fm.memory),
+-      isolation: parseIsolation(fm.isolation),
+-      enabled: fm.enabled !== false,  // default true; explicitly false disables
+-      source,
+-      sourcePath: path,
+-    });
+-  }
+-}
+-
+-/**
+- * Read and parse one agent file, or warn and return undefined for the caller to
+- * skip. One bad file must not take the whole extension down with it — an
+- * unparseable `.md` used to abort activation, so pi exited before the TUI.
+- *
+- * The path is as much of the fix as the recovery: a bare YAML error ("line 2,
+- * column 14") is unactionable when agents come from three directories at once,
+- * and the only other symptom is `Unknown agent type`, which reads like a typo.
+- *
+- * Under `strict` the same failure rethrows, still naming the path, so callers
+- * that opted into failing closed stop rather than run a substituted agent.
+- */
+-/**
+- * Parse an agent file's frontmatter, tolerating a leading UTF-8 BOM.
+- *
+- * Editors across the Windows/CJK world write UTF-8 with a BOM by default, and
+- * pi's parser did not look past one before 0.84.3: the fence never matched, so
+- * the frontmatter came back empty and the *whole file* — YAML and all — became
+- * the body. An agent authored that way silently lost every field. `tools: none`
+- * going missing is the sharp edge: the agent registers with the default
+- * toolset rather than none, which is a wider grant than its author wrote.
+- *
+- * Stripped here rather than detected per pi version, because this is the only
+- * place agent files are read and the BOM is a file-encoding artifact, not
+- * content — normalising it at the boundary keeps one behaviour across the whole
+- * supported peer range instead of forking on what happens to be installed.
+- */
+ export function parseAgentFrontmatter<T extends Record<string, unknown>>(content: string): { frontmatter: T; body: string } {
+   return parseFrontmatter<T>(content.startsWith("\uFEFF") ? content.slice(1) : content);
+ }
+-
+-function readAgentFile(path: string, strict: boolean): { frontmatter: Record<string, unknown>; body: string } | undefined {
+-  try {
+-    return parseAgentFrontmatter<Record<string, unknown>>(readFileSync(path, "utf-8"));
+-  } catch (err) {
+-    const reason = err instanceof Error ? err.message : String(err);
+-    if (strict) throw new Error(`${path}: ${reason}`);
+-    warnIfNew(`Skipping agent file ${path}: ${reason}`);
+-    return undefined;
+-  }
+-}
+-
+-/**
+- * A skipped file that was overriding an already-loaded agent leaves the name
+- * pointing at a *different* file — its own prompt, model and tools. Nothing
+- * downstream can flag that: unlike an unknown type, the `Agent` call succeeds.
+- */
+-function warnSkippedOverride(name: string, agents: Map<string, AgentConfig>): void {
+-  const surviving = agents.get(name);
+-  // Nothing shadowed, or what it shadowed is disabled: dispatch refuses the type
+-  // either way (see resolveEnabledTypeIn), so there is no substitution to report.
+-  if (!surviving?.sourcePath || surviving.enabled === false) return;
+-  warnIfNew(`Agent "${name}" now loads from ${surviving.sourcePath} instead`);
+-}
+-
+-let warnedLastLoad = new Set<string>();
+-let warnedThisLoad = new Set<string>();
+-
+-/**
+- * Agents reload on activation and again on every `Agent` call, so an unchanged
+- * problem would re-warn all session — over a painted TUI, since pi does not
+- * redirect console output. Compare against the previous load rather than every
+- * load ever, so a file that is fixed and then broken again still reports.
+- */
+-function warnIfNew(message: string): void {
+-  warnedThisLoad.add(message);
+-  if (warnedLastLoad.has(message)) return;
+-  console.warn(`[pi-subagents] ${message}`);
+-}
+-
+-// ---- Field parsers ----
+-// All follow the same convention: omitted → default, "none"/empty → nothing, value → exact.
+-
+-/** Extract a string or undefined. */
+-function str(val: unknown): string | undefined {
+-  return typeof val === "string" ? val : undefined;
+-}
+-
+-/** Extract a non-negative integer or undefined. 0 means unlimited for max_turns. */
+-function nonNegativeInt(val: unknown): number | undefined {
+-  return typeof val === "number" && val >= 0 ? val : undefined;
+-}
+-
+-/**
+- * Parse a raw CSV field value into items, or undefined if absent/empty/"none".
+- */
+-function parseCsvField(val: unknown): string[] | undefined {
+-  if (val === undefined || val === null) return undefined;
+-  const s = String(val).trim();
+-  if (!s || s === "none") return undefined;
+-  const items = s.split(",").map(t => t.trim()).filter(Boolean);
+-  return items.length > 0 ? items : undefined;
+-}
+-
+-/**
+- * Parse the nested-delegation allowlist. Single field, default-off:
+- * omitted/empty/"none"/`false` → undefined (no nested tools); "all"/"*"/`true`
+- * → "all" (any enabled agent); csv → only the listed types.
+- *
+- * Booleans are accepted because `extensions:`/`skills:` take them and users
+- * generalize: without this, YAML's `true` stringifies into an agent type
+- * literally named "true", so the tools appear and every spawn is refused.
+- */
+-function parseAllowedSubagents(val: unknown): "all" | string[] | undefined {
+-  if (typeof val === "boolean") return val ? "all" : undefined;
+-  const items = parseCsvField(val);
+-  if (!items) return undefined;
+-  return items.some(i => i === "*" || i.toLowerCase() === "all") ? "all" : items;
+-}
+-
+-/**
+- * Parse a comma-separated list field with defaults.
+- * omitted → defaults; "none"/empty → []; csv → listed items.
+- */
+-function csvList(val: unknown, defaults: string[]): string[] {
+-  if (val === undefined || val === null) return defaults;
+-  return parseCsvField(val) ?? [];
+-}
+-
+-/**
+- * Partition the `tools:` CSV into the built-in tool allowlist and raw `ext:` selectors.
+- * `*` (and the case-insensitive alias `all`, for `tools: all`) expands to all
+- * built-ins; plain entries are built-in names; `ext:` entries are extension-tool
+- * selectors parsed later by the runner. omitted → all built-ins, no selectors.
+- * `tools:` present with only `ext:` entries → zero built-ins (use `*`).
+- */
+-function parseToolsField(val: unknown): { builtinToolNames: string[]; extSelectors: string[] | undefined } {
+-  const entries = csvList(val, BUILTIN_TOOL_NAMES);
+-  const isWildcard = (e: string) => e === "*" || e.toLowerCase() === "all";
+-  const hasWildcard = entries.some(isWildcard);
+-  const plain = entries.filter(e => !isWildcard(e) && !e.startsWith("ext:"));
+-  const extEntries = entries.filter(e => e.startsWith("ext:"));
+-  return {
+-    builtinToolNames: hasWildcard ? [...new Set([...BUILTIN_TOOL_NAMES, ...plain])] : plain,
+-    extSelectors: extEntries.length > 0 ? extEntries : undefined,
+-  };
+-}
+-
+-/**
+- * Parse an optional comma-separated list field.
+- * omitted → undefined; "none"/empty → undefined; csv → listed items.
+- */
+-function csvListOptional(val: unknown): string[] | undefined {
+-  return parseCsvField(val);
+-}
+-
+-/**
+- * Parse a memory scope field.
+- * omitted → undefined; "user"/"project"/"local" → MemoryScope.
+- */
+-function parseMemory(val: unknown): MemoryScope | undefined {
+-  if (val === "user" || val === "project" || val === "local") return val;
+-  return undefined;
+-}
+-
+-/**
+- * Parse the `isolation` frontmatter field.
+- *
+- * `off` is kept as a value rather than folded into `undefined` because the two
+- * do not mean the same thing here: agent config outranks tool-call params, so
+- * `off` vetoes a caller's `worktree` while an absent field lets it through.
+- *
+- * pi's frontmatter parser is not YAML 1.1 — bare `off` and `no` arrive as
+- * strings and only `false` becomes a boolean — so all three spellings are
+- * accepted rather than leaving an author's intent silently dropped. Anything
+- * else stays `undefined`, as before.
+- */
+-function parseIsolation(val: unknown): IsolationMode | undefined {
+-  if (val === "worktree") return "worktree";
+-  if (val === "off" || val === "none" || val === "no" || val === false) return "off";
+-  return undefined;
+-}
+-
+-/**
+- * Parse an inherit field (extensions, skills).
+- * omitted/true → true (inherit all); false/"none"/empty → false; csv → listed names.
+- */
+-function inheritField(val: unknown): true | string[] | false {
+-  if (val === undefined || val === null || val === true) return true;
+-  if (val === false || val === "none") return false;
+-  const items = csvList(val, []);
+-  return items.length > 0 ? items : false;
+-}
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,3 +1,5 @@
++import { assertOrdinaryOptions, assertSingleManager, MANAGER_KEY } from "./agentcfg-config.js";
++import { attachManaged } from "./agentcfg-managed.js";
+ /**
+  * pi-agents — A pi extension providing Claude Code-style autonomous sub-agents.
+  *
+@@ -18,8 +20,8 @@
+ import { abortable } from "./abortable.js";
+ import { hasAgentBadge, renderAgentName } from "./agent-color.js";
+ import { buildNewAgentFile, disableInContent, enableInContent, isEmptyStub, locateAgentFile, personalAgentsDir, projectAgentsDir, serializeAgentFile } from "./agent-file-toggle.js";
+-import { AgentManager, isTopLevelAgent } from "./agent-manager.js";
+-import { getAgentConversation, getDefaultMaxTurns, getGraceTurns, getRememberAgents, normalizeMaxTurns, resolveEffectiveMaxTurns, SUBAGENT_TOOL_NAMES, setDefaultMaxTurns, setGraceTurns, setRememberAgents, steerAgent } from "./agent-runner.js";
++import { AgentManager, bindSessionBackend, isTopLevelAgent } from "./agent-manager.js";
++import { getAgentConversation, getDefaultMaxTurns, getGraceTurns, getRememberAgents, normalizeMaxTurns, resolveEffectiveMaxTurns, resumeAgent, runAgent, SUBAGENT_TOOL_NAMES, setDefaultMaxTurns, setGraceTurns, setRememberAgents, steerAgent } from "./agent-runner.js";
+ import { BUILTIN_TOOL_NAMES, getAgentConfig, getAllTypes, getAvailableTypes, getConfig, getFallbackSubagent, isDefaultsDisabled, NO_FALLBACK, registerAgents, resolveSpawnType, resolveType, setDefaultsDisabled, setFallbackSubagent } from "./agent-types.js";
+ import { inChildSessionContext } from "./child-context.js";
+ import { type RpcHandle, registerRpcHandlers } from "./cross-extension-rpc.js";
+@@ -303,6 +305,10 @@
+   // would create another manager and leak handlers. Nested orchestration is
+   // injected as scoped custom tools by the existing manager instead.
+   if (inChildSessionContext()) return;
++  assertSingleManager();
++  bindSessionBackend({ runAgent, resumeAgent });
++  setDefaultsDisabled(true);
++  setFallbackSubagent(NO_FALLBACK);
+ 
+   // ---- Register custom notification renderer ----
+   pi.registerMessageRenderer<NotificationDetails>(
+@@ -566,6 +572,7 @@
+ 
+   // Background completion: route through group join or send individual nudge
+   const manager = new AgentManager((record) => {
++    if (manager.isControlled(record.id)) { widget.update(); return; }
+     // Owned children — nested, or a workflow's — report only through their
+     // owner: the parent's scoped tools, or the workflow's card, notification
+     // and dialog. Keep them out of top-level lifecycle, transcript,
+@@ -656,7 +663,7 @@
+   // child manager — and the child's shutdown would then delete the root
+   // session's entry. The first activation (the root session) wins; child
+   // activations leave it alone.
+-  const MANAGER_KEY = Symbol.for("pi-subagents:manager");
++
+   // Process-external callers may supply arbitrary options. Nested ownership and
+   // config-root metadata are internal capabilities issued only by scoped tools.
+   /**
+@@ -697,27 +704,7 @@
+ 
+   const spawnTopLevel = (piRef: any, ctxRef: any, type: string, prompt: string, options: any) => {
+     const safeOptions = { ...(options ?? {}) };
+-    delete safeOptions.parentAgentId;
+-    // Internal too: a forged value would hide an RPC-spawned agent inside
+-    // someone else's workflow, and take it out of the concurrency pool with it.
+-    delete safeOptions.workflowId;
+-    delete safeOptions.depth;
+-    delete safeOptions.maxSubagentDepth;
+-    delete safeOptions.configCwd;
+-    // Also internal: it names a transcript directory, so a forged value would
+-    // be a path-traversal primitive.
+-    delete safeOptions.rootSessionId;
+-    // Worse than rootSessionId: this one names a file to OPEN and replay as a
+-    // conversation. Only the mention dispatcher may set it, and only from a
+-    // path this extension itself recorded — never from anything a caller sent.
+-    delete safeOptions.resumeSessionFile;
+-    // Bypasses handle allocation, so a forged value would duplicate a live
+-    // agent's name and make `@handle` ambiguous. Same rule: dispatcher only.
+-    delete safeOptions.reclaim;
+-    // Every spawn through here is DETACHED — the caller gets an id back and
+-    // awaits nothing. A forged `blocking` would charge it to the foreground
+-    // pool and could defer it behind a queue whose gate nobody is holding.
+-    delete safeOptions.blocking;
++    assertOrdinaryOptions(safeOptions);
+     return spawnResolved(piRef, ctxRef, type, prompt, safeOptions);
+   };
+ 
+@@ -730,9 +717,9 @@
+    */
+   const resolveAgentRef = (ref: string): AgentRecord | undefined => {
+     const byId = manager.getRecord(ref);
+-    if (byId) return byId;
++    if (byId) return manager.isControlled(byId.id) ? undefined : byId;
+     const resolved = manager.resolveMention(ref);
+-    return resolved?.kind === "live" ? resolved.record : undefined;
++    return resolved?.kind === "live" && !manager.isControlled(resolved.record.id) ? resolved.record : undefined;
+   };
+ 
+   const registryEntry = {
+@@ -741,7 +728,7 @@
+     spawn: spawnTopLevel,
+     getRecord: (id: string) => {
+       const record = manager.getRecord(id);
+-      return record !== undefined && isTopLevelAgent(record) ? record : undefined;
++      return record !== undefined && !manager.isControlled(id) && isTopLevelAgent(record) ? record : undefined;
+     },
+   };
+   const ownsManagerRegistry = (globalThis as any)[MANAGER_KEY] === undefined;
+@@ -751,6 +738,10 @@
+ 
+   // --- Cross-extension RPC via pi.events ---
+   let currentCtx: ExtensionContext | undefined;
++  const detachManaged = attachManaged(manager, pi, () => {
++    if (!currentCtx) throw new Error("AGENTCFG_SESSION_NOT_READY");
++    return currentCtx;
++  });
+   // RPC handlers + the `subagents:ready` broadcast are wired on `session_start`
+   // (a bound lifecycle event), not at factory time. pi runs every extension
+   // factory before the `extensions:` filter and only fires lifecycle events for
+@@ -803,7 +794,7 @@
+         manager: {
+           spawn: spawnTopLevel,
+           awaitStartup: (id) => manager.awaitStartup(id),
+-          getRecord: (id) => manager.getRecord(id),
++          getRecord: (id) => manager.isControlled(id) ? undefined : manager.getRecord(id),
+           // Unguarded on purpose: the stop handler now runs the top-level check
+           // itself off `getRecord`, and reports the refusal instead of the
+           // "Agent not found" a false from here used to be read as.
+@@ -911,6 +902,7 @@
+ 
+     if (resolved?.kind === "live") {
+       const record = resolved.record;
++      if (manager.isControlled(record.id)) return { action: "handled" };
+       const target = `@${record.alias ?? record.handle ?? mention.handle}`;
+ 
+       if (record.status === "running" || record.status === "queued") {
+@@ -1120,6 +1112,7 @@
+     // pi awaits this handler, and the process exits right after — unawaited, those
+     // handlers would never run. Internally bounded, so a hung one can't strand quit.
+     await manager.dispose(pi);
++    await detachManaged();
+   });
+ 
+   // Live widget: show running agents above editor.
+@@ -1176,9 +1169,9 @@
+   // → Settings short-circuit the menu entry + the execute-time addJob path
+   // immediately, but the schema-level removal only takes effect on next
+   // extension load (next pi session). Documented in CHANGELOG/README.
+-  let schedulingEnabled = true;
++  let schedulingEnabled = false;
+   function isSchedulingEnabled(): boolean { return schedulingEnabled; }
+-  function setSchedulingEnabled(b: boolean) { schedulingEnabled = b; }
++  function setSchedulingEnabled(b: boolean) { if (b) throw new Error("AGENTCFG_SCHEDULING_DISABLED"); schedulingEnabled = false; }
+ 
+   // Master switch for scripted workflows. Defaults to ON. Off means the
+   // `SubagentWorkflow` tool is never registered: the model is not told the
+@@ -1191,12 +1184,13 @@
+   // is what `resolveWorkflowCollisions` checks before yielding to another
+   // extension's workflow tool: a default may be overridden by what else is
+   // loaded, an explicit choice may not.
+-  let workflowsEnabled = true;
++  let workflowsEnabled = false;
+   let workflowsPinned = false;
+   function isWorkflowsEnabled(): boolean { return workflowsEnabled; }
+   function isWorkflowsPinned(): boolean { return workflowsPinned; }
+   function setWorkflowsEnabled(b: boolean) {
+-    workflowsEnabled = b;
++    if (b) throw new Error("AGENTCFG_WORKFLOWS_DISABLED");
++    workflowsEnabled = false;
+     workflowsPinned = true;
+   }
+ 
+--- a/src/model-resolver.ts
++++ b/src/model-resolver.ts
+@@ -41,78 +41,11 @@
+   input: string,
+   registry: ModelRegistry,
+ ): any | string {
+-  // Available models (those with auth configured)
+-  const all = (registry.getAvailable?.() ?? registry.getAll()) as ModelEntry[];
+-  const availableSet = new Set(all.map(m => `${m.provider}/${m.id}`.toLowerCase()));
+-
+-  // 1. Exact match: "provider/modelId" — only if available (has auth)
+-  const slashIdx = input.indexOf("/");
+-  if (slashIdx !== -1) {
+-    const provider = input.slice(0, slashIdx);
+-    const modelId = input.slice(slashIdx + 1);
+-    if (availableSet.has(input.toLowerCase())) {
+-      const found = registry.find(provider, modelId);
+-      if (found) return found;
+-    }
+-  }
+-
+-  // 2. Fuzzy match against available models. Normalize separators so cosmetic
+-  // punctuation differences still match — e.g. "claude-haiku-4.5" and
+-  // "claude-haiku-4-5" (dot vs dash in the version) resolve to the same model.
+-  const normalize = (s: string) => s.toLowerCase().replace(/\./g, "-");
+-  const query = normalize(input);
+-
+-  // Score each model: prefer exact id match > id contains > name contains > provider+id contains
+-  let bestMatch: ModelEntry | undefined;
+-  let bestScore = 0;
+-
+-  for (const m of all) {
+-    const id = normalize(m.id);
+-    const name = normalize(m.name);
+-    const full = normalize(`${m.provider}/${m.id}`);
+-
+-    let score = 0;
+-    if (id === query || full === query) {
+-      score = 100; // exact
+-    } else if (id.includes(query) || full.includes(query)) {
+-      score = 60 + (query.length / id.length) * 30; // substring, prefer tighter matches
+-    } else if (name.includes(query)) {
+-      score = 40 + (query.length / name.length) * 20;
+-    } else if (
+-      // A trailing date-stamp token (e.g. "20251001") is optional, so a
+-      // date-pinned config like "claude-haiku-4-5-20251001" still matches an
+-      // undated registry id like "claude-haiku-4-5".
+-      query
+-        .split(/[\s\-/]+/)
+-        .every(part => /^\d{8}$/.test(part) || id.includes(part) || name.includes(part) || m.provider.toLowerCase().includes(part))
+-    ) {
+-      score = 20; // all parts present somewhere
+-    }
+-
+-    if (score > bestScore) {
+-      bestScore = score;
+-      bestMatch = m;
+-    }
+-  }
+-
+-  if (bestMatch && bestScore >= 20) {
+-    const found = registry.find(bestMatch.provider, bestMatch.id);
+-    if (found) return found;
+-  }
+-
+-  // 3. Provider fallback: a "provider/modelId" query that didn't match under the
+-  // named provider (exact or fuzzy above) retries against all providers. The
+-  // named provider is preferred when present; this only kicks in when it isn't,
+-  // so the same model from another provider beats falling back to "inherit".
+-  if (slashIdx !== -1) {
+-    const bare = resolveModel(input.slice(slashIdx + 1), registry);
+-    if (typeof bare !== "string") return bare;
+-  }
+-
+-  // 4. No match — list available models
+-  const modelList = all
+-    .map(m => `  ${m.provider}/${m.id}`)
+-    .sort()
+-    .join("\n");
+-  return `Model not found: "${input}".\n\nAvailable models:\n${modelList}`;
++  const slash = input.indexOf("/");
++  if (slash <= 0 || slash === input.length - 1) return "AGENTCFG_EXACT_MODEL_REQUIRED";
++  const provider = input.slice(0, slash), id = input.slice(slash + 1);
++  const available = registry.getAvailable?.() ?? registry.getAll();
++  if (!available.some((model: ModelEntry) => model.provider === provider && model.id === id)) return "AGENTCFG_MODEL_UNAVAILABLE";
++  const found = registry.find(provider, id);
++  return found?.provider === provider && found?.id === id ? found : "AGENTCFG_MODEL_UNAVAILABLE";
+ }
+--- a/src/nested-tools.ts
++++ b/src/nested-tools.ts
+@@ -42,10 +42,10 @@
+  * `subagents.json` (`maxSubagentDepth`). Read when a subagent session is built,
+  * so a change applies to sessions started after it.
+  */
+-let maxSubagentDepth = 2;
++let maxSubagentDepth = 0;
+ 
+ export function getMaxSubagentDepth(): number { return maxSubagentDepth; }
+-export function setMaxSubagentDepth(n: number): void { maxSubagentDepth = Math.max(0, Math.floor(n)); }
++export function setMaxSubagentDepth(n: number): void { if (n !== 0) throw new Error("AGENTCFG_NESTING_DISABLED"); maxSubagentDepth = 0; }
+ 
+ const NESTED_TOOL_NAMES = ["Agent", "get_subagent_result", "steer_subagent"] as const;
+ 
+--- a/src/settings.ts
++++ b/src/settings.ts
+@@ -1,11 +1,8 @@
++import { controlledSettings } from "./agentcfg-config.js";
+ // Persistence for pi-subagents operational settings.
+ // - Global:  ~/.pi/agent/subagents.json (via getAgentDir()) — manual defaults, never written here
+ // - Project: <cwd>/.pi/subagents.json — written by /agents → Settings; overrides global on load
+ 
+-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+-import { dirname, join } from "node:path";
+-import { getAgentDir } from "@earendil-works/pi-coding-agent";
+-import { NO_FALLBACK } from "./agent-types.js";
+ import type { AgentMentionMode, JoinMode, ViewerMarkdownMode, WidgetMode } from "./types.js";
+ 
+ export interface SubagentsSettings {
+@@ -337,160 +334,9 @@
+ /** Emit callback — a subset of `pi.events.emit` to keep helpers testable. */
+ export type SettingsEmit = (event: string, payload: unknown) => void;
+ 
+-const VALID_JOIN_MODES: ReadonlySet<string> = new Set<JoinMode>(["async", "group", "smart"]);
+-const VALID_TOOL_DESCRIPTION_MODES: ReadonlySet<string> = new Set<ToolDescriptionMode>(["full", "compact", "custom"]);
+-const VALID_WIDGET_MODES: ReadonlySet<string> = new Set<WidgetMode>(["all", "background", "off"]);
+-const VALID_VIEWER_MARKDOWN_MODES: ReadonlySet<string> = new Set<ViewerMarkdownMode>(["off", "assistant", "all"]);
+-const VALID_AGENT_MENTION_MODES: ReadonlySet<string> = new Set<AgentMentionMode>(["model", "direct", "off"]);
+-
+-// Sanity ceilings — prevent hand-edited configs from asking for values that
+-// make no operational sense (e.g. 1e6 concurrent subagents). Permissive enough
+-// that any realistic power-user setting passes through.
+-const MAX_CONCURRENT_CEILING = 1024;
+-const MAX_TURNS_CEILING = 10_000;
+-const GRACE_TURNS_CEILING = 1_000;
+-const SUBAGENT_DEPTH_CEILING = 16;
+-
+-/** Drop fields that don't match the expected shape. Silent — garbage becomes absent. */
+-function sanitize(raw: unknown): SubagentsSettings {
+-  if (!raw || typeof raw !== "object") return {};
+-  const r = raw as Record<string, unknown>;
+-  const out: SubagentsSettings = {};
+-  if (
+-    Number.isInteger(r.maxConcurrent) &&
+-    (r.maxConcurrent as number) >= 1 &&
+-    (r.maxConcurrent as number) <= MAX_CONCURRENT_CEILING
+-  ) {
+-    out.maxConcurrent = r.maxConcurrent as number;
+-  }
+-  // Floor 0, not 1 like maxConcurrent above: 0 is the documented "unlimited"
+-  // value and the default, so dropping it would silently be unrepresentable.
+-  if (
+-    Number.isInteger(r.maxConcurrentForeground) &&
+-    (r.maxConcurrentForeground as number) >= 0 &&
+-    (r.maxConcurrentForeground as number) <= MAX_CONCURRENT_CEILING
+-  ) {
+-    out.maxConcurrentForeground = r.maxConcurrentForeground as number;
+-  }
+-  if (
+-    Number.isInteger(r.defaultMaxTurns) &&
+-    (r.defaultMaxTurns as number) >= 0 &&
+-    (r.defaultMaxTurns as number) <= MAX_TURNS_CEILING
+-  ) {
+-    out.defaultMaxTurns = r.defaultMaxTurns as number;
+-  }
+-  if (
+-    Number.isInteger(r.graceTurns) &&
+-    (r.graceTurns as number) >= 1 &&
+-    (r.graceTurns as number) <= GRACE_TURNS_CEILING
+-  ) {
+-    out.graceTurns = r.graceTurns as number;
+-  }
+-  if (
+-    Number.isInteger(r.maxSubagentDepth) &&
+-    (r.maxSubagentDepth as number) >= 0 &&
+-    (r.maxSubagentDepth as number) <= SUBAGENT_DEPTH_CEILING
+-  ) {
+-    out.maxSubagentDepth = r.maxSubagentDepth as number;
+-  }
+-  if (typeof r.defaultJoinMode === "string" && VALID_JOIN_MODES.has(r.defaultJoinMode)) {
+-    out.defaultJoinMode = r.defaultJoinMode as JoinMode;
+-  }
+-  if (typeof r.backgroundByDefault === "boolean") {
+-    out.backgroundByDefault = r.backgroundByDefault;
+-  }
+-  if (typeof r.schedulingEnabled === "boolean") {
+-    out.schedulingEnabled = r.schedulingEnabled;
+-  }
+-  if (typeof r.scopeModels === "boolean") {
+-    out.scopeModels = r.scopeModels;
+-  }
+-  if (typeof r.strictAgentFiles === "boolean") {
+-    out.strictAgentFiles = r.strictAgentFiles;
+-  }
+-  if (typeof r.disableDefaultAgents === "boolean") {
+-    out.disableDefaultAgents = r.disableDefaultAgents;
+-  }
+-  if (typeof r.toolDescriptionMode === "string" && VALID_TOOL_DESCRIPTION_MODES.has(r.toolDescriptionMode)) {
+-    out.toolDescriptionMode = r.toolDescriptionMode as ToolDescriptionMode;
+-  }
+-  if (typeof r.fleetView === "boolean") {
+-    out.fleetView = r.fleetView;
+-  }
+-  // Was a boolean before the `model` mode existed. A hand-written or
+-  // previously-written `true` means "on", which is now the default `model`.
+-  if (typeof r.agentMentions === "boolean") {
+-    out.agentMentions = r.agentMentions ? "model" : "off";
+-  } else if (typeof r.agentMentions === "string" && VALID_AGENT_MENTION_MODES.has(r.agentMentions)) {
+-    out.agentMentions = r.agentMentions as AgentMentionMode;
+-  }
+-  if (typeof r.rememberAgents === "boolean") {
+-    out.rememberAgents = r.rememberAgents;
+-  }
+-  if (typeof r.widgetMode === "string" && VALID_WIDGET_MODES.has(r.widgetMode)) {
+-    out.widgetMode = r.widgetMode as WidgetMode;
+-  }
+-  if (typeof r.outputTranscript === "boolean") {
+-    out.outputTranscript = r.outputTranscript;
+-  }
+-  if (typeof r.worktreeIsolation === "boolean") {
+-    out.worktreeIsolation = r.worktreeIsolation;
+-  }
+-  if (typeof r.reportUsage === "boolean") {
+-    out.reportUsage = r.reportUsage;
+-  }
+-  if (typeof r.showCost === "boolean") {
+-    out.showCost = r.showCost;
+-  }
+-  if (typeof r.showModel === "boolean") {
+-    out.showModel = r.showModel;
+-  }
+-  if (typeof r.viewerMarkdown === "string" && VALID_VIEWER_MARKDOWN_MODES.has(r.viewerMarkdown)) {
+-    out.viewerMarkdown = r.viewerMarkdown as ViewerMarkdownMode;
+-  }
+-  if (typeof r.workflowsEnabled === "boolean") {
+-    out.workflowsEnabled = r.workflowsEnabled;
+-  }
+-  if (r.fallbackSubagent === false) {
+-    // The only non-string spelling worth accepting: a boolean would otherwise be
+-    // dropped, silently leaving the PERMISSIVE default in place. Every string is
+-    // an agent name except the `none` sentinel, which the resolver recognizes —
+-    // so a mistaken "off" fails loudly at dispatch instead of meaning something
+-    // different here than it does there.
+-    out.fallbackSubagent = NO_FALLBACK;
+-  } else if (typeof r.fallbackSubagent === "string" && r.fallbackSubagent.trim()) {
+-    out.fallbackSubagent = r.fallbackSubagent.trim();
+-  }
+-  return out;
+-}
+-
+-function globalPath(): string {
+-  return join(getAgentDir(), "subagents.json");
+-}
+-
+-function projectPath(cwd: string): string {
+-  return join(cwd, ".pi", "subagents.json");
+-}
+-
+-/**
+- * Read a settings file. Missing file is silent (returns `{}`). A file that
+- * exists but can't be parsed emits a warning to stderr so users aren't
+- * silently reverted to defaults — and still returns `{}` so startup proceeds.
+- */
+-function readSettingsFile(path: string): SubagentsSettings {
+-  if (!existsSync(path)) return {};
+-  try {
+-    return sanitize(JSON.parse(readFileSync(path, "utf-8")));
+-  } catch (err) {
+-    const reason = err instanceof Error ? err.message : String(err);
+-    console.warn(`[pi-subagents] Ignoring malformed settings at ${path}: ${reason}`);
+-    return {};
+-  }
+-}
+-
+ /** Load merged settings: global provides defaults, project overrides. */
+-export function loadSettings(cwd: string = process.cwd()): SubagentsSettings {
+-  return { ...readSettingsFile(globalPath()), ...readSettingsFile(projectPath(cwd)) };
++export function loadSettings(_cwd: string = process.cwd()): SubagentsSettings {
++  return controlledSettings();
+ }
+ 
+ /**
+@@ -498,15 +344,8 @@
+  * Returns `true` on success, `false` if the write (or mkdir) failed so the
+  * caller can surface a warning — persistence isn't fatal but isn't silent.
+  */
+-export function saveSettings(s: SubagentsSettings, cwd: string = process.cwd()): boolean {
+-  const path = projectPath(cwd);
+-  try {
+-    mkdirSync(dirname(path), { recursive: true });
+-    writeFileSync(path, JSON.stringify(s, null, 2), "utf-8");
+-    return true;
+-  } catch {
+-    return false;
+-  }
++export function saveSettings(_s: SubagentsSettings, _cwd: string = process.cwd()): boolean {
++  throw new Error("AGENTCFG_SETTINGS_MANAGED_USE_AGENTCFG");
+ }
+ 
+ /** Apply persisted settings to the in-memory state via caller-supplied setters. */
+--- a/src/worktree.ts
++++ b/src/worktree.ts
+@@ -42,10 +42,11 @@
+  * disk (#184), turning it off means no caller can create one, whatever it
+  * passes.
+  */
+-let worktreeIsolationEnabled = true;
++let worktreeIsolationEnabled = false;
+ 
+ export function setWorktreeIsolationEnabled(enabled: boolean): void {
+-  worktreeIsolationEnabled = enabled;
++  if (enabled) throw new Error("AGENTCFG_MANAGER_WORKTREE_DISABLED");
++  worktreeIsolationEnabled = false;
+ }
+ 
+ export function isWorktreeIsolationEnabled(): boolean {

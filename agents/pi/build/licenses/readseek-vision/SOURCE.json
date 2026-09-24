@@ -1,0 +1,8 @@
+{
+  "license": "apache-2.0",
+  "model_repository": "Qwen/Qwen3-VL-2B-Instruct-GGUF",
+  "revision": "52d6c8ffea26cc873ac5ad116f8631268d7eb503",
+  "license_declaration_url": "https://huggingface.co/api/models/Qwen/Qwen3-VL-2B-Instruct-GGUF/revision/52d6c8ffea26cc873ac5ad116f8631268d7eb503",
+  "license_text_url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+  "license_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+}
