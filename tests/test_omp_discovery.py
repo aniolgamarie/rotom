@@ -5,7 +5,7 @@ import pytest
 
 from agentcfg import deployment, runtime
 from agentcfg.omp import OmpAdapter
-from agentcfg.omp_discovery import DISABLED_PROVIDERS, SourcePolicy, assert_native_sources, inspect_project_sources
+from agentcfg.omp_discovery import DISABLED_PROVIDERS, IGNORED_PROVIDER_SOURCES, SourcePolicy, assert_native_sources, inspect_project_sources
 from agentcfg.omp_identity import native_identity
 from agentcfg.schema import ConfigError
 from agentcfg.storage import Conflict
@@ -18,7 +18,7 @@ from test_omp_runtime_foundation import clear_omp_identity_environment, runtime_
 def stable_discovery_names(monkeypatch, tmp_path):
   # 宿主/tmp中的测试编排目录不是合成项目的一部分；保留本组实际覆盖的固定入口。
   monkeypatch.setattr("agentcfg.omp_discovery.DISCOVERY_NAMES",
-    (".omp", ".agent", "AGENTS.md", "TITLE_SYSTEM.md", ".env"))
+    (".omp", "TITLE_SYSTEM.md", ".env"))
   monkeypatch.setattr("agentcfg.omp_discovery.source_present",
     lambda path: (path == tmp_path or path.is_relative_to(tmp_path)) and (path.exists() or path.is_symlink()))
 
@@ -57,8 +57,8 @@ def test_declared_root_does_not_hide_generic_source_above_it(tmp_path):
     inspect_project_sources(cwd, policy(root), managed_mcp_ids=())
 
 
-@pytest.mark.parametrize("relative", [".env", "AGENTS.md", ".omp/settings.json", ".omp/prompts/x.md",
-  ".omp/extensions/x.ts", ".omp/RULES.md"])
+@pytest.mark.parametrize("relative", [".env", "TITLE_SYSTEM.md", ".omp/settings.json", ".omp/prompts/x.md",
+  ".omp/extensions/x.ts", ".omp/hooks/x.ts", ".omp/tools/x.ts", ".omp/agents/x.md", ".omp/RULES.md"])
 def test_project_opt_in_does_not_allow_generic_dotenv_or_unsupported_omp_sources(tmp_path, relative):
   project = tmp_path / "project"
   path = project / relative
@@ -66,6 +66,26 @@ def test_project_opt_in_does_not_allow_generic_dotenv_or_unsupported_omp_sources
   path.write_text("sentinel")
   with pytest.raises(Conflict):
     inspect_project_sources(project, policy(project), managed_mcp_ids=())
+
+
+def test_disabled_provider_containers_are_ignored_without_reading_contents(tmp_path, monkeypatch):
+  assert IGNORED_PROVIDER_SOURCES == (".agent", ".agents", ".claude", ".codex", ".gemini",
+    "AGENTS.md", "CLAUDE.md", "GEMINI.md")
+  project = tmp_path / "project"
+  paths = (project / ".agents/skills/foreign/SKILL.md", project / ".codex/config.toml",
+    project / ".claude/settings.json", project / "AGENTS.md", project / "CLAUDE.md", project / "GEMINI.md")
+  for path in paths:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("api_key=MUST_NOT_BE_READ")
+  original = Path.read_bytes
+  def guarded(path):
+    if any(path == item or path.is_relative_to(item.parent) for item in paths):
+      raise AssertionError("disabled provider content must not be read")
+    return original(path)
+  monkeypatch.setattr(Path, "read_bytes", guarded)
+  disabled = SourcePolicy.from_options({"project_resources": False, "project_roots": []})
+  assert inspect_project_sources(project, disabled, managed_mcp_ids=()) == ()
+  assert inspect_project_sources(project, policy(project), managed_mcp_ids=()) == ()
 
 
 def test_project_root_must_be_cwd_or_ancestor_and_links_are_rejected(tmp_path):

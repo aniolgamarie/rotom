@@ -15,6 +15,7 @@ from .schema import AdapterPolicy, AdapterSchemaBundle, AdapterSchemas, Authenti
 from .omp_identity import lifecycle_guard, native_identity
 from .omp_discovery import DISABLED_PROVIDERS, SourcePolicy, assert_native_sources, inspect_project_sources
 from .omp_env import generated_name
+from .omp_settings import RUNTIME, PROVIDER_OPTIONS, MODEL_OPTIONS, ROLE_THINKING, runtime_values, validate_options
 from .render import render_rules
 from .paths import relative_path
 
@@ -28,7 +29,10 @@ STRINGS = {"type": "array", "items": STRING, "uniqueItems": True}
 VERSION = {"type": "integer", "const": 1}
 KEY_BINDING = {"oneOf": [STRING, STRINGS]}
 OPTIONS = closed({"discovery": closed({"project_resources": {"type": "boolean"}, "project_roots": STRINGS}),
-                  "resources": closed({"prompts": STRINGS, "themes": STRINGS}),
+                  "resources": closed({"prompts": STRINGS, "themes": STRINGS, "agents": STRINGS}),
+                  "runtime": RUNTIME, "provider_options": PROVIDER_OPTIONS, "model_options": MODEL_OPTIONS,
+                  "role_thinking": ROLE_THINKING,
+                  "tiny_model": {"type": "string", "const": "local/lfm2.5-230m"},
                   "ui": closed({"theme_dark": STRING, "theme_light": STRING,
                                 "keybindings": {"type": "object", "additionalProperties": KEY_BINDING}}),
                   "mcp": {"type": "object", "additionalProperties": closed({"environment_refs": {
@@ -48,11 +52,11 @@ NATIVE_SUBCOMMANDS = {"launch", "acp", "auth-broker", "auth-gateway", "agents", 
 WORKER_SELECTORS = {"__omp_worker_blob_broker", "__omp_worker_computer", "__omp_worker_daemon_broker",
   "__omp_worker_lsp_mux", "__omp_worker_stats_activity", "__omp_worker_terminal_output"}
 CALLER_IDENTITY_ENV = {"OMP_PROFILE", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "PI_PROFILE",
-  "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_SESSION_DIR", "PI_CODING_AGENT_SESSION_DIR"}
+  "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_CONFIG_FILES", "PI_SESSION_DIR", "PI_CODING_AGENT_SESSION_DIR"}
 ALLOWED_VALUELESS = {"--help", "-h", "--version", "-v", "--no-title", "--print", "-p"}
 ALLOWED_VALUE_OPTIONS = {"--provider", "--model", "--smol", "--slow", "--plan", "--thinking", "--service-tier", "--max-time"}
-ROLE_MAP = {"main": "default", "smol": "smol", "slow": "slow", "vision": "vision", "plan": "plan", "advisor": "advisor"}
-PROTOCOL_MAP = {"openai-compatible": "openai-completions", "openai-responses": "openai-responses"}
+ROLE_MAP = {"main": "default", "smol": "smol", "slow": "slow", "vision": "vision", "plan": "plan", "advisor": "advisor", "task": "task"}
+PROTOCOL_MAP = {"openai-compatible": "openai-completions", "openai-responses": "openai-responses", "anthropic-messages": "anthropic-messages"}
 KEYBINDING_ACTIONS = {"app.model.cycleForward", "app.history.search"}
 ENV_EXPANSION = re.compile(r"\$\{[^}]+\}")
 
@@ -208,9 +212,11 @@ def _native_model_providers(data):
       model = data["models"][model_id]
       if model["provider"] == provider_id:
         models.append({"name": model_id, "id": model["remote_id"], "contextWindow": model["context_window"],
-          "maxTokens": model["max_output_tokens"], "input": model["input"]})
+          "maxTokens": model["max_output_tokens"], "input": model["input"],
+          **data["profile"].get("agent_options", {}).get("model_options", {}).get(model_id, {})})
     result[native] = {"baseUrl": provider["base_url"], "api": PROTOCOL_MAP[provider["protocol"]],
-      "apiKey": generated_name("provider", provider_id, "key", claimed=claimed), "models": models}
+      "apiKey": generated_name("provider", provider_id, "key", claimed=claimed), "models": models,
+      **data["profile"].get("agent_options", {}).get("provider_options", {}).get(provider_id, {})}
   return result
 
 
@@ -219,7 +225,7 @@ def _resource_bytes(repository, definition, kind):
     path = relative_path(definition["path"])
     if definition != {"kind": kind, "path": definition["path"], "scope": "global"}:
       raise ValueError()
-    expected = Path("agents/omp/resources") / ("prompts" if kind == "prompt" else "themes")
+    expected = Path("agents/omp/resources") / {"prompt": "prompts", "theme": "themes", "agent": "agents"}[kind]
     if not path.is_relative_to(expected):
       raise ValueError()
     from .storage import Tree
@@ -290,6 +296,7 @@ class OmpAdapter(Adapter):
     profile = data["profile"]
     if profile["agent"] != "omp":
       raise ConfigError("omp-profile-agent")
+    validate_options(data)
     selected = set(data.get("providers", {}))
     if selected & set(DISABLED_PROVIDERS):
       raise ConfigError("omp-disabled-provider-conflict")
@@ -348,11 +355,14 @@ class OmpAdapter(Adapter):
     options = profile.get("agent_options", {})
     catalog = data.get("adapter_documents", {}).get("agent", {}).get("resources", {})
     resources = options.get("resources", {})
-    for kind, plural in (("prompt", "prompts"), ("theme", "themes")):
+    for kind, plural in (("prompt", "prompts"), ("theme", "themes"), ("agent", "agents")):
       for resource_id in resources.get(plural, []):
         if resource_id not in catalog or catalog[resource_id].get("kind") != kind:
           raise ConfigError("omp-resource-reference")
         content = _resource_bytes(self.repository, catalog[resource_id], kind)
+        if kind == "agent":
+          from .omp_settings import validate_agent
+          validate_agent(content, resource_id, data)
         if kind == "theme":
           theme = _validate_theme(content)
           if theme.get("name") != resource_id:
@@ -399,7 +409,7 @@ class OmpAdapter(Adapter):
             "entrypoints": actual["entrypoints"], "tree_digest": actual["tree_digest"], "license": actual["license"],
             "compatibility": {"omp": TAG}}):
           raise ConfigError("omp-package-catalog-integrity")
-    protected = {"HOME", "OMP_PROFILE", "OMP_AUTH_BROKER", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "PI_PROFILE", "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_SESSION_DIR",
+    protected = {"HOME", "OMP_PROFILE", "OMP_AUTH_BROKER", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "PI_PROFILE", "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_CONFIG_FILES", "PI_SESSION_DIR",
                  "PI_CODING_AGENT_SESSION_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"}
     machine_env = data["machine"].get("environment", {})
     if protected & (set(machine_env.get("inherit", [])) | set(machine_env.get("values", {}))):
@@ -424,6 +434,11 @@ class OmpAdapter(Adapter):
           (generated_name("provider", provider_id, "key", claimed=claimed),)),
         ManagedTarget(base + "/models.yml", Ownership.FIELDS, "yaml", prefix + "/models"),
       ))
+    for provider_id, provider in sorted(data.get("providers", {}).items()):
+      if provider["protocol"] != "oauth-dynamic":
+        for key in data["profile"].get("agent_options", {}).get("provider_options", {}).get(provider_id, {}):
+          targets.append(ManagedTarget(base + "/models.yml", Ownership.FIELDS, "yaml",
+            "/providers/" + _pointer(_native_provider_id(provider_id, provider)) + "/" + key))
     for role in sorted(data["profile"].get("roles", {})):
       targets.append(ManagedTarget(base + "/config.yml", Ownership.FIELDS, "yaml", "/modelRoles/" + ROLE_MAP[role]))
     if data["profile"].get("rules"):
@@ -432,6 +447,10 @@ class OmpAdapter(Adapter):
       targets.append(ManagedTarget(base + "/skills", Ownership.FILE, "skill-directory"))
     options = data["profile"].get("agent_options", {})
     resources = options.get("resources", {})
+    for key in runtime_values(options):
+      targets.append(ManagedTarget(base + "/config.yml", Ownership.FIELDS, "yaml", "/" + key))
+    for resource_id in resources.get("agents", []):
+      targets.append(ManagedTarget(f"{base}/agents/{resource_id}.md", Ownership.FILE, "bytes"))
     for resource_id in resources.get("prompts", []):
       targets.append(ManagedTarget(f"{base}/prompts/{resource_id}.md", Ownership.FILE, "bytes"))
     for resource_id in resources.get("themes", []):
@@ -496,6 +515,9 @@ class OmpAdapter(Adapter):
     for role, model_id in sorted(data["profile"].get("roles", {}).items()):
       model = data["models"][model_id]
       native = _native_provider_id(model["provider"], data["providers"][model["provider"]]) + "/" + model["remote_id"]
+      level = data["profile"].get("agent_options", {}).get("role_thinking", {}).get(role)
+      if level:
+        native += ":" + level
       selector = "/modelRoles/" + ROLE_MAP[role]
       artifacts.append(Artifact(by_key[(base + "/config.yml", selector)], json.dumps(native).encode()))
     if data["profile"].get("rules"):
@@ -503,6 +525,12 @@ class OmpAdapter(Adapter):
       artifacts.append(Artifact(by_key[(base + "/RULES.md", None)], render_rules(self.repository, rules, {})))
     options = data["profile"].get("agent_options", {})
     catalog = data.get("adapter_documents", {}).get("agent", {}).get("resources", {})
+    for key, value in runtime_values(options).items():
+      artifacts.append(Artifact(by_key[(base + "/config.yml", "/" + key)],
+        json.dumps(value, ensure_ascii=False, sort_keys=True).encode()))
+    for resource_id in options.get("resources", {}).get("agents", []):
+      artifacts.append(Artifact(by_key[(f"{base}/agents/{resource_id}.md", None)],
+        _resource_bytes(self.repository, catalog[resource_id], "agent")))
     for resource_id in options.get("resources", {}).get("prompts", []):
       target = by_key[(f"{base}/prompts/{resource_id}.md", None)]
       artifacts.append(Artifact(target, _resource_bytes(self.repository, catalog[resource_id], "prompt")))
@@ -833,18 +861,35 @@ class OmpAdapter(Adapter):
       result["agent_options"] = {"ui": ui}
     native_roles = projection.get("modelRoles", {})
     roles = {}
+    role_thinking = {}
     if isinstance(native_roles, dict):
       inverse_roles = {native: public for public, native in ROLE_MAP.items()}
       for native_role, value in native_roles.items():
         if native_role not in inverse_roles:
           continue
-        matches = [model_id for model_id, model in data["models"].items()
-          if _native_provider_id(model["provider"], data["providers"][model["provider"]]) + "/" + model["remote_id"] == value]
+        if not isinstance(value, str):
+          raise ConfigError("omp-capture-model")
+        candidates = {}
+        for model_id, model in data["models"].items():
+          selector = _native_provider_id(model["provider"], data["providers"][model["provider"]]) + "/" + model["remote_id"]
+          candidates.setdefault(selector, []).append(model_id)
+        level = None
+        if value not in candidates:
+          from .omp_settings import THINKING
+          value, separator, level = value.rpartition(":")
+          if not separator or level not in THINKING["enum"]:
+            raise ConfigError("omp-capture-model")
+        matches = candidates.get(value, [])
         if len(matches) != 1 or matches[0] not in data["profile"]["models"]:
           raise ConfigError("omp-capture-model")
-        roles[inverse_roles[native_role]] = matches[0]
+        model_id = matches[0]
+        roles[inverse_roles[native_role]] = model_id
+        if level:
+          role_thinking[inverse_roles[native_role]] = level
     if roles:
       result["roles"] = roles
+    if role_thinking:
+      result.setdefault("agent_options", {})["role_thinking"] = role_thinking
     return result
 
   def doctor(self, projection):
@@ -855,7 +900,7 @@ class OmpAdapter(Adapter):
 
   def schemas(self):
     defaults = closed({key: STRINGS for key in ("providers", "models", "rules", "skills", "plugins", "mcp")} | {"agent_options": OPTIONS})
-    resource = closed({"kind": {"type": "string", "enum": ["prompt", "theme"]}, "path": STRING,
+    resource = closed({"kind": {"type": "string", "enum": ["prompt", "theme", "agent"]}, "path": STRING,
                        "scope": {"type": "string", "const": "global"}}, ("kind", "path", "scope"))
     package = closed({"id": STRING, "source": STRING, "entrypoints": STRINGS,
       "tree_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "license": STRING,
@@ -874,7 +919,7 @@ class OmpAdapter(Adapter):
     }
     bundle = AdapterSchemaBundle(self.declaration, documents, OPTIONS,
       lambda kind, value: self.validate(value) if kind == "resolved" else None,
-      policy=lambda docs: AdapterPolicy(deepcopy(docs["agent"]["defaults"]), deepcopy(docs["plugins"]["plugins"]), frozenset(), frozenset({"OMP_PROFILE", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "HOME", "PI_PROFILE", "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_SESSION_DIR", "PI_CODING_AGENT_SESSION_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"})),
+      policy=lambda docs: AdapterPolicy(deepcopy(docs["agent"]["defaults"]), deepcopy(docs["plugins"]["plugins"]), frozenset(), frozenset({"OMP_PROFILE", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "HOME", "PI_PROFILE", "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_CONFIG_FILES", "PI_SESSION_DIR", "PI_CODING_AGENT_SESSION_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"})),
       authentication_claims=lambda data: tuple(AuthenticationClaim(provider_id,
         "omp-native-profile" if provider["auth_kind"] == "oauth" else "omp-environment")
         for provider_id, provider in sorted(data["providers"].items())))
