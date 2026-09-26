@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Delegate"
+  short_description: "Delegate bounded Codex work with observable progress"
+  default_prompt: "Use $codex-delegate to delegate this bounded task to Codex and report verified progress."

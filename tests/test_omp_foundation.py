@@ -139,8 +139,8 @@ def test_keybinding_schema_preserves_string_and_empty_array(tmp_path):
 def test_checked_in_omp_schemas_use_supported_strict_subset():
   agent = _read_schema("omp-agent")
   assert agent["additionalProperties"] is False
-  resources = agent["$defs"]["profile"]["properties"]["agent_options"]["properties"]["resources"]["properties"]
-  assert set(resources) == {"prompts", "themes"}
+  resources = agent["properties"]["defaults"]["properties"]["agent_options"]["properties"]["resources"]["properties"]
+  assert set(resources) == {"prompts", "themes", "agents"}
   native = _read_schema("omp-native")
   assert len(native["oneOf"]) == 8
   assert native["$defs"]["keybindings"]["properties"]["path"]["const"] == "keybindings.yml"

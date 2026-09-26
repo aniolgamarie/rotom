@@ -9,15 +9,15 @@ from urllib.parse import parse_qsl, urlsplit
 from .storage import Conflict
 import yaml
 
-DISCOVERY_NAMES = (".omp", ".agent", ".agents", ".claude", ".codex", ".gemini",
-  "AGENTS.md", "CLAUDE.md", "GEMINI.md", "TITLE_SYSTEM.md",
-  ".env", ".env.local", ".env.development", ".env.production", ".env.test")
+IGNORED_PROVIDER_SOURCES = (".agent", ".agents", ".claude", ".codex", ".gemini",
+  "AGENTS.md", "CLAUDE.md", "GEMINI.md")
+DISCOVERY_NAMES = (".omp", "TITLE_SYSTEM.md", ".env", ".env.local", ".env.development", ".env.production", ".env.test")
 DISABLED_PROVIDERS = ("agent-plugins", "agents-md", "claude-md", "claude", "claude-plugins", "cline", "agents", "codex", "cursor",
   "gemini", "opencode", "github", "mcp-json", "omp-plugins", "skillshare", "ssh-json", "vscode", "windsurf")
 DOTENV_NAMES = (".env", ".env.local", ".env.development", ".env.production", ".env.test")
 NATIVE_PROFILE_SOURCES = ("settings.json", "config.yml", "models.yml", "RULES.md", "AGENTS.md", "TITLE_SYSTEM.md",
   "SYSTEM.md", "SYSTEM_TEMPLATE.md", "APPEND_SYSTEM.md", "PERSONALITY.md", "rules", "skills", "prompts", "extensions", "hooks", "tools",
-  "mcp.json", ".mcp.json")
+  "mcp.json", ".mcp.json", "agents", "themes")
 NATIVE_ROOT_PATTERNS = (tuple("$HOME/" + name for name in DOTENV_NAMES) + ("$HOME/.omp/.env",)
   + tuple("$ACTIVE_AGENT/" + name for name in DOTENV_NAMES)
   + tuple("$ACTIVE_AGENT/" + name for name in NATIVE_PROFILE_SOURCES)
@@ -34,6 +34,8 @@ NATIVE_SETTING_CONTROLS = {
 
 def discovery_manifest():
   return {"version": 1, "ancestors": list(DISCOVERY_NAMES), "nativeRoots": list(NATIVE_ROOT_PATTERNS),
+    "ignoredProviderSources": {"paths": list(IGNORED_PROVIDER_SOURCES),
+      "reason": "all-loading-providers-disabled-before-discovery"},
     "disabledProviders": list(DISABLED_PROVIDERS),
     "nativeControls": {key: list(value) for key, value in NATIVE_SETTING_CONTROLS.items()},
     "authBroker": "disabled", "gateway": "disabled"}
@@ -70,7 +72,7 @@ def assert_clean_sources(cwd, allowed=()):
     for name in DISCOVERY_NAMES:
       candidate = current / name
       if (candidate.exists() or candidate.is_symlink()) and candidate.resolve() not in allowed:
-        raise Conflict("OMP检测到未声明的项目配置来源")
+        raise Conflict(f"OMP检测到未声明的项目配置来源: {candidate}")
     if current == current.parent:
       break
     current = current.parent
@@ -177,14 +179,14 @@ def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=
         continue
       candidate = directory / name
       if source_present(candidate):
-        raise Conflict("OMP检测到未声明的项目配置来源")
+        raise Conflict(f"OMP检测到未声明的项目配置来源: {candidate}")
     omp = directory / ".omp"
     if ".omp" not in DISCOVERY_NAMES:
       continue
     if not source_present(omp):
       continue
     if omp.is_symlink() or not omp.is_dir() or not policy.project_resources:
-      raise Conflict("OMP检测到未声明的项目配置来源")
+      raise Conflict(f"OMP检测到未声明的项目配置来源: {omp}")
     allowed = set()
     if directory in roots:
       allowed.add("skills")
@@ -192,7 +194,7 @@ def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=
       allowed.update(("mcp.json", ".mcp.json"))
     children = list(omp.iterdir())
     if any(child.name not in allowed for child in children):
-      raise Conflict("OMP检测到未声明的项目配置来源")
+      raise Conflict(f"OMP检测到未声明的项目配置来源: {omp}（仅允许声明的skills/MCP）")
     skills = omp / "skills"
     if source_present(skills):
       reports.extend(_skill_reports(skills))
@@ -259,7 +261,7 @@ def assert_native_sources(identity, allowed=(), mcp_shape=None, project_resource
           raise ValueError()
       for feature in ("memory", "tiny", "speech", "browser", "eval"):
         section = value.get(feature)
-        if section not in (None, False, {"enabled": False}):
+        if section not in (None, False, {"enabled": False}) and not (feature == "memory" and section == {"backend": "off"}):
           raise ValueError()
         if any(key.startswith(feature + ".") for key in value):
           raise ValueError()

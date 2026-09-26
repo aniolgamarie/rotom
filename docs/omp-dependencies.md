@@ -15,11 +15,11 @@ OMP 使用固定官方 standalone，管理器不安装系统 Bun/Node、不运�
 日常机器消费已经审阅的正式锁：
 
 ```sh
-./agentcfg --local /private/local.toml --profile omp-default sync
-./agentcfg --local /private/local.toml --profile omp-default apply
+./agentcfg --local /private/local.toml --profile omp-kernel sync
+./agentcfg --local /private/local.toml --profile omp-kernel apply
 ```
 
-`sync` 只操作该 agent/profile 的私人 cache。按内容寻址的下载缓存通过摘要校验后，可以离线复用；缺少缓存时仅下载锁中指定来源。运行包位于 `<cache>/runtimes/<lock-and-platform-identity>`，不在实例 HOME 中，因此先 sync 再首次 apply 不会接管一个预先创建的原生环境。
+`sync` 只操作该 agent/profile 的私人 cache。按内容寻址的下载缓存通过摘要校验后，可以离线复用；缺少缓存时仅下载锁中指定来源。下载流先进入同一 cache 的 `.part`，对瞬态超时、连接错误、HTTP 408/429/5xx 和短读最多尝试三次；严格核对 206 `Content-Range`，遇 200 安全地从零重写。完整长度及 SHA256 匹配后才原子发布。运行包位于 `<cache>/runtimes/<lock-and-platform-identity>`，不在实例 HOME 中，因此先 sync 再首次 apply 不会接管一个预先创建的原生环境。
 
 所有文件先写入私人 stage，核对正文、执行位、目录形状、入口与 receipt 后激活。更新锁得到另一内容身份，已部署配置仍指向原身份，不会自动跟随新包；需要显式审阅并 apply。损坏包修复使用排他包租约，正在运行的包受共享租约保护。
 
@@ -37,6 +37,21 @@ receipt 记录实际平台、锁身份、来源及二进制摘要、安装路径
 
 配置 rollback 只恢复上一配置，不降低宿主版本、不迁移认证数据库；旧配置与当前可核验运行包不匹配时，后续 run 返回 5，需显式处理依赖与部署。
 
+## 下载中断诊断
+
+下载中断后，保持同一个 local/profile 和 cache 路径，再次执行同一 `sync`。安全 partial 会保留；服务端支持正确 Range 时从现有进度续传。已完整且摘要正确的 cache 不访问网络；损坏的完整 cache 会移除并重新获取一次。
+
+错误信息只包含 `category`、`attempt` 和 `progress`，不回显可能含凭据的 URL。可按以下顺序处理：
+
+1. 检查私人 cache 所在 Linux 文件系统的可用空间、目录属主和 0700 权限；WSL 不要默认使用 `/mnt/c`。
+2. 对 `timeout`、`connection`、`http-408`、`http-429`、`http-5xx` 或 `short-read`，保留 `.part` 并重跑 `sync`。单次命令已有三次有限尝试，不会无限重试。
+3. `content-range` 或 `range-reset` 表示响应与请求的安全续传边界不一致；记录错误类别、平台和网络/代理环境，再排查中间代理或服务端。不要手工拼接 partial。
+4. `integrity`、`size-limit` 或 `cache-write` 需要检查锁定资产、磁盘和权限。不要手工改摘要、替换锁定 URL 或把 `.part` 重命名为完成文件。
+
+下一次 `sync` 复用同一内容寻址 cache；删除 cache 会失去续传进度，通常不应作为第一步。
+
+这里的下载诊断针对正式锁中的 OMP standalone 和锁维护输入。`omp-kernel` 模型会话访问的是公共 catalog 登记的企业 TokensFlow 网关；该网关不可达、key 无效或 provider 返回错误时，不应归类为 `sync` 下载故障。网关端点需要变更时，应通过私人 local 的 provider `base_url` override 明确审阅兼容性，不能把当前模型 ID 和协议暗自换到厂商官方端点。
+
 ## 平台和证据
 
-目标为 Linux glibc x64/arm64 与 macOS x64/arm64；musl、Windows 和未知架构返回 5。隔离平台替身只验证选择和拒绝规则。当前没有真实 OMP smoke、真实账号或 macOS 环境通过证据，详见 [基础测试](../specs/002-manage-omp-config/evidence/foundation.md)；后续支持声明按实际平台独立记录。
+目标为 Linux glibc x64/arm64 与 macOS x64/arm64；musl、Windows 和未知架构返回 5。隔离平台替身只验证选择和拒绝规则。Linux glibc x64 已有[真实无账号 smoke](../specs/002-manage-omp-config/evidence/linux-smoke.md)；WSL、Linux arm64、macOS、真实账号和真实模型调用不能由该证据推定通过，后续支持声明按实际平台独立记录。

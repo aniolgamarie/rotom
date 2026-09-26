@@ -6,7 +6,7 @@
 
 | 项目 | rotom 配方 | OMP 原生 profile |
 |---|---|---|
-| 名称 | 公共 profile ID，例如 `omp-default` | `rotom-` 加配方 ID 的 SHA256 前 24 位 |
+| 名称 | 公共 profile ID，例如 `omp-kernel` | `rotom-` 加配方 ID 的 SHA256 前 24 位 |
 | 管理内容 | 所选公共资源及本机覆盖 | 原生配置、该环境的登录、会话和缓存 |
 | 选择入口 | `agentcfg --profile ID` | 由受管启动 argv 的前置 `--profile NAME` 传入 |
 | 所有权 | machine/local/state 绑定到物理实例 | 位于该实例独立 HOME 内 |
@@ -38,12 +38,12 @@ OMP 对 XDG 目录有存在性选择：若出现 `<XDG_CATEGORY>/omp/profiles/<n
 
 ## 来源政策
 
-默认禁止自动加载未声明的项目/外部配置。检查范围包含 cwd 的所有祖先；把工作目录移到含 `.omp`、`.agents` 或 dotenv 的目录下仍可能触发冲突。错误只显示来源类型与非秘密路径，处理方式是审阅并通过正式声明纳入允许资源，或选择没有冲突来源的工作目录。
+默认禁止自动加载未声明的项目/外部配置。检查范围包含 cwd 的所有祖先。普通仓库中的 `.agents/.agent/.claude/.codex/.gemini` 及顶层 `AGENTS.md/CLAUDE.md/GEMINI.md` 对应已禁用 provider，允许存在但不读取正文；它们本身不会触发冲突。`.omp` 原生目录、dotenv、SYSTEM/TITLE/APPEND_SYSTEM 等仍是实际发现入口，未声明时会被拒绝。错误只显示来源类型与非秘密路径，处理方式是审阅并通过正式声明纳入允许资源，或选择没有冲突来源的工作目录。
 
 需要项目技能或项目 MCP 时，在私人 local 的既有配方覆盖中设置：
 
 ```toml
-[overrides.profiles.omp-default.agent_options.discovery]
+[overrides.profiles.omp-kernel.agent_options.discovery]
 project_resources = true
 project_roots = ["/absolute/project"]
 ```
@@ -52,7 +52,7 @@ project_roots = ["/absolute/project"]
 
 原生技能从cwd向祖先发现`.omp/skills`；native MCP只读取cwd的`.omp/mcp.json`或`.omp/.mcp.json`。声明根不截断其上方的来源检查，两个MCP文件同时出现视为歧义。MCP仅允许无凭据HTTPS，或精确锁定Python和echo脚本的绝对命令；不接受env/header/auth/oauth/cwd覆盖或环境占位符。项目资源保持只读，报告只有路径和摘要。
 
-例如先在公共`profiles/`登记`omp-work`和`omp-personal`两份OMP配方后，分别使用`--profile omp-work`和`--profile omp-personal`选择。它们得到不同实例和native name；用另一local或state_root指向已有物理实例会返回4。local只覆盖已登记ID，不能临时创建同名环境绕过归属。
+正式日常配方 `omp-kernel` 的完整 WSL 步骤见[专页](omp-kernel.md)。例如另在公共 `profiles/` 登记 `omp-work` 和 `omp-personal` 两份 OMP 配方后，分别使用 `--profile omp-work` 和 `--profile omp-personal` 选择。它们得到不同实例和 native name；用另一 local 或 state_root 指向已有物理实例会返回 4。local 只覆盖已登记 ID，不能临时创建同名环境绕过归属，也不会逐字复制旧 HOME、账号或会话。
 
 ## 生命周期和互斥
 

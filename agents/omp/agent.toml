@@ -1,31 +1,63 @@
-schema_version = 1
-adapter_version = "omp-1"
-upstream_commit = "62bc57be1b03ef0802a33cf7f5f530e534527531"
+"schema_version" = 1
+"adapter_version" = "omp-1"
+"upstream_commit" = "62bc57be1b03ef0802a33cf7f5f530e534527531"
 
-[defaults]
-providers = []
-models = []
-rules = []
-skills = []
-plugins = []
-mcp = []
+["defaults"]
+"providers" = []
+"models" = []
+"rules" = []
+"skills" = []
+"plugins" = []
+"mcp" = []
 
-[defaults.agent_options.discovery]
-project_resources = false
-project_roots = []
+["defaults"."agent_options"]
 
-[defaults.agent_options.resources]
-prompts = []
-themes = []
+["defaults"."agent_options"."discovery"]
+"project_resources" = false
+"project_roots" = []
 
-[resources]
+["defaults"."agent_options"."resources"]
+"prompts" = []
+"themes" = []
 
-[resources.rotom-review]
-kind = "prompt"
-path = "agents/omp/resources/prompts/rotom-review.md"
-scope = "global"
+["resources"]
 
-[resources.rotom-dark]
-kind = "theme"
-path = "agents/omp/resources/themes/rotom-dark.json"
-scope = "global"
+["resources"."rotom-review"]
+"kind" = "prompt"
+"path" = "agents/omp/resources/prompts/rotom-review.md"
+"scope" = "global"
+
+["resources"."rotom-dark"]
+"kind" = "theme"
+"path" = "agents/omp/resources/themes/rotom-dark.json"
+"scope" = "global"
+
+["resources"."reviewer"]
+"kind" = "agent"
+"path" = "agents/omp/resources/agents/reviewer.md"
+"scope" = "global"
+
+["resources"."scout"]
+"kind" = "agent"
+"path" = "agents/omp/resources/agents/scout.md"
+"scope" = "global"
+
+["resources"."security-reviewer"]
+"kind" = "agent"
+"path" = "agents/omp/resources/agents/security-reviewer.md"
+"scope" = "global"
+
+["resources"."sonic"]
+"kind" = "agent"
+"path" = "agents/omp/resources/agents/sonic.md"
+"scope" = "global"
+
+["resources"."task"]
+"kind" = "agent"
+"path" = "agents/omp/resources/agents/task.md"
+"scope" = "global"
+
+["resources"."kanagawa"]
+"kind" = "theme"
+"path" = "agents/omp/resources/themes/kanagawa.json"
+"scope" = "global"
