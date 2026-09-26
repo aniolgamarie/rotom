@@ -1,7 +1,105 @@
-schema_version = 1
+"schema_version" = 1
 
-[rules.omp-chinese]
-path = "shared/rules/chinese.md"
+["rules"]
 
-[rules.omp-terminal]
-path = "shared/rules/terminal.md"
+["rules"."omp-chinese"]
+"path" = "shared/rules/chinese.md"
+
+["rules"."omp-terminal"]
+"path" = "shared/rules/terminal.md"
+
+["rules"."omp-kernel-confirmation"]
+"path" = "agents/omp/resources/rules/confirmation-before-action.md"
+
+["providers"]
+
+["providers"."kimi_tf"]
+"protocol" = "openai-compatible"
+"auth_kind" = "api-key"
+"base_url" = "https://work.oceanbase-dev.com/tokensflow/api/v1"
+"credential_ref" = "secret:omp_kimi_tf_key"
+
+["providers"."zhipu_tf"]
+"protocol" = "anthropic-messages"
+"auth_kind" = "api-key"
+"base_url" = "https://work.oceanbase-dev.com/tokensflow/api/anthropic"
+"credential_ref" = "secret:omp_zhipu_tf_key"
+
+["models"]
+
+["models"."omp-kimi_tf-kimi-for-coding"]
+"provider" = "kimi_tf"
+"remote_id" = "kimi-for-coding"
+"input" = ["text"]
+"context_window" = 1048576
+"max_output_tokens" = 131072
+
+["models"."omp-kimi_tf-k3"]
+"provider" = "kimi_tf"
+"remote_id" = "k3"
+"input" = ["text"]
+"context_window" = 1048576
+"max_output_tokens" = 131072
+
+["models"."omp-kimi_tf-k3-256k"]
+"provider" = "kimi_tf"
+"remote_id" = "k3-256k"
+"input" = ["text"]
+"context_window" = 262144
+"max_output_tokens" = 65536
+
+["models"."omp-kimi_tf-kimi-for-coding-highspeed"]
+"provider" = "kimi_tf"
+"remote_id" = "kimi-for-coding-highspeed"
+"input" = ["text"]
+"context_window" = 262144
+"max_output_tokens" = 65536
+
+["models"."omp-zhipu_tf-glm-5.3"]
+"provider" = "zhipu_tf"
+"remote_id" = "glm-5.3"
+"input" = ["text"]
+"context_window" = 1048576
+"max_output_tokens" = 131072
+
+["models"."omp-zhipu_tf-glm-5.3-flash"]
+"provider" = "zhipu_tf"
+"remote_id" = "glm-5.3-flash"
+"input" = ["text", "image"]
+"context_window" = 1048576
+"max_output_tokens" = 131072
+
+["models"."omp-zhipu_tf-glm-5.2"]
+"provider" = "zhipu_tf"
+"remote_id" = "glm-5.2"
+"input" = ["text"]
+"context_window" = 1048576
+"max_output_tokens" = 131072
+
+["models"."omp-zhipu_tf-glm-5.1"]
+"provider" = "zhipu_tf"
+"remote_id" = "glm-5.1"
+"input" = ["text"]
+"context_window" = 200000
+"max_output_tokens" = 131072
+
+["models"."omp-zhipu_tf-glm-5-turbo"]
+"provider" = "zhipu_tf"
+"remote_id" = "glm-5-turbo"
+"input" = ["text"]
+"context_window" = 204800
+"max_output_tokens" = 131072
+
+["skills"]
+
+["skills"."omp-kernel-codex-delegate"]
+"path" = "agents/omp/resources/skills/codex-delegate"
+
+["skills"."omp-kernel-cpp-database-kernel"]
+"path" = "agents/omp/resources/skills/cpp-database-kernel"
+
+["skills"."omp-kernel-neovim-plugin-development"]
+"path" = "agents/omp/resources/skills/neovim-plugin-development"
+
+["skills"."omp-kernel-safe-linux-scripting"]
+"path" = "agents/omp/resources/skills/safe-linux-scripting"

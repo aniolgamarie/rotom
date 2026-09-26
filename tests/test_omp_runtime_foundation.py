@@ -73,7 +73,7 @@ def test_discovery_manifest_has_exact_disabled_count():
   assert DISABLED_PROVIDERS[-1] == "windsurf"
   repository = Path(__file__).resolve().parents[1]
   manifest = json.loads((repository / "agents/omp/discovery-manifest.json").read_bytes())
-  assert len(NATIVE_ROOT_PATTERNS) == 49
+  assert len(NATIVE_ROOT_PATTERNS) == 53
   assert manifest == discovery_manifest()
   for required in ("$ACTIVE_AGENT/SYSTEM.md", "$DEFAULT_AGENT/SYSTEM_TEMPLATE.md",
       "$ACTIVE_AGENT/PERSONALITY.md", "$DEFAULT_AGENT/PERSONALITY.md",
@@ -81,7 +81,8 @@ def test_discovery_manifest_has_exact_disabled_count():
     assert required in NATIVE_ROOT_PATTERNS
   assert set(manifest["nativeControls"]["configExact"]) >= {"/extensions", "/skills/enablePiProject"}
   assert set(manifest["nativeControls"]["configForbidden"]) >= {"/skills/customDirectories", "/auth/broker"}
-  assert manifest_digest() == "20faec67ce8ebadae48e3222dbc207f5a503ab483b09d7432db59ff0089e9afd"
+  assert manifest["ignoredProviderSources"]["reason"] == "all-loading-providers-disabled-before-discovery"
+  assert manifest_digest() == "02346cb407b1c92e534fa28d73ce262aa5b65dd7722b610110b6ed7580659324"
 
 
 def test_source_policy_rejects_roots_when_project_resources_are_off(tmp_path):

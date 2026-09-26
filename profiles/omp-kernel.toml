@@ -1,0 +1,229 @@
+"schema_version" = 1
+"id" = "omp-kernel"
+"agent" = "omp"
+"providers" = ["kimi_tf", "zhipu_tf"]
+"models" = ["omp-kimi_tf-kimi-for-coding", "omp-kimi_tf-k3", "omp-kimi_tf-k3-256k", "omp-kimi_tf-kimi-for-coding-highspeed", "omp-zhipu_tf-glm-5.3", "omp-zhipu_tf-glm-5.3-flash", "omp-zhipu_tf-glm-5.2", "omp-zhipu_tf-glm-5.1", "omp-zhipu_tf-glm-5-turbo"]
+"rules" = ["omp-kernel-confirmation"]
+"skills" = ["omp-kernel-codex-delegate", "omp-kernel-cpp-database-kernel", "omp-kernel-neovim-plugin-development", "omp-kernel-safe-linux-scripting"]
+"plugins" = []
+"mcp" = []
+
+["roles"]
+"main" = "omp-kimi_tf-kimi-for-coding"
+"smol" = "omp-zhipu_tf-glm-5.3-flash"
+"slow" = "omp-kimi_tf-k3"
+"plan" = "omp-zhipu_tf-glm-5.3"
+"task" = "omp-kimi_tf-kimi-for-coding"
+
+["agent_options"]
+"tiny_model" = "local/lfm2.5-230m"
+
+["agent_options"."discovery"]
+"project_resources" = false
+"project_roots" = []
+
+["agent_options"."resources"]
+"prompts" = []
+"themes" = ["kanagawa"]
+"agents" = ["reviewer", "scout", "security-reviewer", "sonic", "task"]
+
+["agent_options"."ui"]
+"theme_dark" = "kanagawa"
+
+["agent_options"."runtime"]
+"cycleOrder" = ["default", "smol", "slow"]
+"symbolPreset" = "nerd"
+"setupVersion" = 2
+
+["agent_options"."runtime"."retry"]
+"modelFallback" = true
+
+["agent_options"."runtime"."retry"."fallbackChains"]
+"default" = ["kimi_tf/k3:high", "zhipu_tf/glm-5.2:medium"]
+"smol" = ["zhipu_tf/glm-5.1:low", "kimi_tf/kimi-for-coding-highspeed:low"]
+"slow" = ["zhipu_tf/glm-5.3:high", "zhipu_tf/glm-5.2:high"]
+"plan" = ["zhipu_tf/glm-5.2:high", "kimi_tf/k3:high"]
+
+["agent_options"."runtime"."tools"]
+"approvalMode" = "write"
+
+["agent_options"."runtime"."tools"."approval"]
+"read" = "allow"
+"grep" = "allow"
+"glob" = "allow"
+"bash" = "prompt"
+
+["agent_options"."runtime"."bash"]
+"allowCompoundCommands" = false
+"patterns" = [{ "match" = "rm -rf /", "approval" = "deny" }, { "match" = "rm -rf /*", "approval" = "deny" }, { "match" = "rm -rf ~", "approval" = "deny" }, { "match" = "rm -rf ~/*", "approval" = "deny" }, { "match" = "sudo rm -rf *", "approval" = "deny" }, { "match" = "mkfs*", "approval" = "deny" }, { "match" = "dd if=*", "approval" = "deny" }, { "match" = "find * -delete", "approval" = "deny" }, { "match" = "find * -exec rm*", "approval" = "deny" }, { "match" = "curl * | sh", "approval" = "deny" }, { "match" = "curl * | bash", "approval" = "deny" }, { "match" = "wget * | sh", "approval" = "deny" }, { "match" = "wget * | bash", "approval" = "deny" }, { "match" = "git push --force*", "approval" = "deny" }, { "match" = "git push * --force", "approval" = "deny" }, { "match" = "git push -f *", "approval" = "deny" }, { "match" = "git push * -f", "approval" = "deny" }, { "match" = "git reset --hard*", "approval" = "deny" }, { "match" = "ob-make -j*", "approval" = "deny" }, { "match" = "ob-make --jobs*", "approval" = "deny" }, { "match" = "make", "approval" = "deny" }, { "match" = "make *", "approval" = "deny" }, { "match" = "ninja", "approval" = "deny" }, { "match" = "ninja *", "approval" = "deny" }, { "match" = "cmake --build *", "approval" = "deny" }, { "match" = "rm *build_release/*", "approval" = "deny" }, { "match" = "rm -rf *build_release/*", "approval" = "deny" }, { "match" = "unlink *build_release/*", "approval" = "deny" }, { "match" = "find *build_release* -delete", "approval" = "deny" }, { "match" = "find *build_release* -exec rm*", "approval" = "deny" }, { "match" = "ls *", "approval" = "allow" }, { "match" = "ls", "approval" = "allow" }, { "match" = "pwd", "approval" = "allow" }, { "match" = "cd *", "approval" = "allow" }, { "match" = "cat *", "approval" = "allow" }, { "match" = "head *", "approval" = "allow" }, { "match" = "tail *", "approval" = "allow" }, { "match" = "wc *", "approval" = "allow" }, { "match" = "file *", "approval" = "allow" }, { "match" = "stat *", "approval" = "allow" }, { "match" = "du *", "approval" = "allow" }, { "match" = "df *", "approval" = "allow" }, { "match" = "git status*", "approval" = "allow" }, { "match" = "git log*", "approval" = "allow" }, { "match" = "git diff*", "approval" = "allow" }, { "match" = "git show*", "approval" = "allow" }, { "match" = "git branch", "approval" = "allow" }, { "match" = "git branch -v", "approval" = "allow" }, { "match" = "git rev-parse *", "approval" = "allow" }, { "match" = "git ls-files*", "approval" = "allow" }, { "match" = "ob-make", "approval" = "allow" }, { "match" = "git push*", "approval" = "prompt" }, { "match" = "git checkout *", "approval" = "prompt" }, { "match" = "git clean*", "approval" = "prompt" }, { "match" = "git branch -D *", "approval" = "prompt" }, { "match" = "git restore *", "approval" = "prompt" }, { "match" = "ob-make *", "approval" = "prompt" }, { "match" = "sudo *", "approval" = "prompt" }, { "match" = "kill *", "approval" = "prompt" }, { "match" = "killall *", "approval" = "prompt" }, { "match" = "pkill *", "approval" = "prompt" }, { "match" = "docker rm*", "approval" = "prompt" }, { "match" = "docker rmi*", "approval" = "prompt" }, { "match" = "docker system prune*", "approval" = "prompt" }, { "match" = "npm publish*", "approval" = "prompt" }, { "match" = "pip install *", "approval" = "prompt" }, { "match" = "pip3 install *", "approval" = "prompt" }, { "match" = "find close_modules/hotspot_group_commit -type f", "approval" = "allow" }, { "match" = "which *", "approval" = "allow" }, { "match" = "test -e *", "approval" = "allow" }, { "match" = "test -f *", "approval" = "allow" }, { "match" = "test -d *", "approval" = "allow" }, { "match" = "git grep -O*", "approval" = "prompt" }, { "match" = "git grep --open-files-in-pager*", "approval" = "prompt" }, { "match" = "git grep --open*", "approval" = "prompt" }, { "match" = "git grep *", "approval" = "allow" }]
+
+["agent_options"."runtime"."bashInterceptor"]
+"enabled" = true
+"patterns" = [{ "pattern" = "^\\s*(cat|head|tail|less|more)\\s+", "tool" = "read", "message" = "Use the `read` tool instead of cat/head/tail." }, { "pattern" = "^\\s*(grep|rg|ripgrep|ag|ack)\\s+", "tool" = "grep", "message" = "Use the `grep` tool instead of grep/rg." }, { "pattern" = "^\\s*(find|fd|locate)\\s+.*(-name|-iname|-type|--type|-glob)", "tool" = "glob", "message" = "Use the `glob` tool instead of find/fd." }, { "pattern" = "^\\s*sed\\s+(-i|--in-place)", "tool" = "edit", "message" = "Use the `edit` tool instead of sed -i." }, { "pattern" = "^\\s*nohup\\s+|(?<!&)\\&\\s*$", "tool" = "hub", "message" = "Use the `hub` tool (op:\"start\") so the process stays observable." }]
+
+["agent_options"."runtime"."task"]
+"maxConcurrency" = 1
+"maxRecursionDepth" = 1
+"showResolvedModelBadge" = true
+
+["agent_options"."runtime"."compaction"]
+"handoffSaveToDisk" = true
+
+["agent_options"."runtime"."memories"]
+"enabled" = false
+
+["agent_options"."runtime"."memory"]
+"backend" = "off"
+
+["agent_options"."runtime"."lsp"]
+"enabled" = true
+"lazy" = true
+"formatOnWrite" = false
+"diagnosticsOnWrite" = true
+"diagnosticsOnEdit" = false
+
+["agent_options"."runtime"."statusLine"]
+"preset" = "custom"
+"separator" = "powerline-thin"
+"contextLine" = "embedded"
+"sessionAccent" = true
+"showHookStatus" = true
+"compactThinkingLevel" = false
+"leftSegments" = ["model", "context_pct", "token_rate", "time_spent"]
+"rightSegments" = ["session_name", "path", "git", "mode", "token_total", "cache_hit"]
+
+["agent_options"."runtime"."statusLine"."segmentOptions"]
+
+["agent_options"."runtime"."statusLine"."segmentOptions"."model"]
+"showThinkingLevel" = true
+
+["agent_options"."runtime"."statusLine"."segmentOptions"."path"]
+"abbreviate" = true
+"stripWorkPrefix" = true
+"maxLength" = 18
+
+["agent_options"."runtime"."display"]
+"hideToolActivity" = true
+"showTokenUsage" = true
+"showTurnTime" = true
+"cacheMissMarker" = true
+
+["agent_options"."runtime"."composer"]
+"shape" = "box"
+
+["agent_options"."runtime"."tui"]
+"vimMode" = true
+
+["agent_options"."role_thinking"]
+"main" = "high"
+"smol" = "low"
+"slow" = "high"
+"plan" = "high"
+"task" = "high"
+
+["agent_options"."provider_options"]
+
+["agent_options"."provider_options"."kimi_tf"]
+"name" = "Kimi(TokensFlow)"
+
+["agent_options"."provider_options"."kimi_tf"."compat"]
+"supportsDeveloperRole" = false
+"supportsReasoningEffort" = true
+
+["agent_options"."provider_options"."zhipu_tf"]
+"name" = "智谱(TokensFlow Anthropic)"
+
+["agent_options"."provider_options"."zhipu_tf"."compat"]
+"supportsDeveloperRole" = false
+
+["agent_options"."model_options"]
+
+["agent_options"."model_options"."omp-kimi_tf-kimi-for-coding"]
+"name" = "Kimi For Coding (K2.8 Preview)"
+"reasoning" = true
+
+["agent_options"."model_options"."omp-kimi_tf-kimi-for-coding"."cost"]
+"input" = 1.0
+"output" = 4.0
+"cacheRead" = 0.4
+"cacheWrite" = 1.0
+
+["agent_options"."model_options"."omp-kimi_tf-k3"]
+"name" = "Kimi K3"
+"reasoning" = true
+
+["agent_options"."model_options"."omp-kimi_tf-k3"."cost"]
+"input" = 3.0
+"output" = 15.0
+"cacheRead" = 0.3
+"cacheWrite" = 3.0
+
+["agent_options"."model_options"."omp-kimi_tf-k3-256k"]
+"name" = "Kimi K3 256K"
+"reasoning" = true
+
+["agent_options"."model_options"."omp-kimi_tf-k3-256k"."cost"]
+"input" = 3.0
+"output" = 15.0
+"cacheRead" = 0.3
+"cacheWrite" = 3.0
+
+["agent_options"."model_options"."omp-kimi_tf-kimi-for-coding-highspeed"]
+"name" = "Kimi For Coding Highspeed"
+"reasoning" = true
+
+["agent_options"."model_options"."omp-kimi_tf-kimi-for-coding-highspeed"."cost"]
+"input" = 1.9
+"output" = 8.0
+"cacheRead" = 0.38
+"cacheWrite" = 1.9
+
+["agent_options"."model_options"."omp-zhipu_tf-glm-5.3"]
+"name" = "GLM-5.3"
+"reasoning" = true
+
+["agent_options"."model_options"."omp-zhipu_tf-glm-5.3"."cost"]
+"input" = 1.4
+"output" = 4.4
+"cacheRead" = 0.28
+"cacheWrite" = 1.4
+
+["agent_options"."model_options"."omp-zhipu_tf-glm-5.3-flash"]
+"name" = "GLM-5.3 Flash"
+"reasoning" = true
+
+["agent_options"."model_options"."omp-zhipu_tf-glm-5.3-flash"."cost"]
+"input" = 0.075
+"output" = 0.25
+"cacheRead" = 0.015
+"cacheWrite" = 0.075
+
+["agent_options"."model_options"."omp-zhipu_tf-glm-5.2"]
+"name" = "GLM-5.2"
+"reasoning" = true
+
+["agent_options"."model_options"."omp-zhipu_tf-glm-5.2"."cost"]
+"input" = 0.98
+"output" = 3.08
+"cacheRead" = 0.2
+"cacheWrite" = 0.98
+
+["agent_options"."model_options"."omp-zhipu_tf-glm-5.1"]
+"name" = "GLM-5.1"
+"reasoning" = true
+
+["agent_options"."model_options"."omp-zhipu_tf-glm-5.1"."cost"]
+"input" = 1.4
+"output" = 4.4
+"cacheRead" = 0.26
+"cacheWrite" = 1.4
+
+["agent_options"."model_options"."omp-zhipu_tf-glm-5-turbo"]
+"name" = "GLM-5 Turbo"
+"reasoning" = true
+
+["agent_options"."model_options"."omp-zhipu_tf-glm-5-turbo"."cost"]
+"input" = 0.98
+"output" = 3.08
+"cacheRead" = 0.2
+"cacheWrite" = 0.98

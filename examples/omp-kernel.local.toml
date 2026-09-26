@@ -1,0 +1,33 @@
+# 复制到仓库外的 WSL Linux 文件系统后填写；不要在本文件提交真实密钥。
+# 建议目录权限 0700、文件权限 0600。~ 按当前 WSL HOME 展开一次。
+schema_version = 1
+
+[machine]
+id = "wsl-omp-kernel"
+default_profile = "omp-kernel"
+
+[machine.paths]
+instances_root = "~/agentcfg-omp/instances"
+state_root = "~/agentcfg-omp/state"
+cache_root = "~/agentcfg-omp/cache"
+
+[machine.environment]
+inherit = []
+
+# runner 默认让 Codex child 直接连接。机器需要代理时才取消下一表注释；
+# 只写无凭据的proxy origin，不要包含userinfo、token、query或fragment。
+# [machine.environment.values]
+# CODEX_DELEGATE_PROXY_URL = "http://127.0.0.1:10808"
+
+# 公共 catalog 默认使用当前企业 TokensFlow 网关。只有机器确实需要兼容镜像时，
+# 才在私人 local 取消以下注释并填写；不要暗自换成模型ID或协议不兼容的官方端点。
+# [overrides.providers.kimi_tf]
+# base_url = "https://compatible-private-gateway.example/v1"
+#
+# [overrides.providers.zhipu_tf]
+# base_url = "https://compatible-private-gateway.example/anthropic"
+
+# 这两个值只存在于仓库外私人文件。空值允许离线检查，但 run 会以退出码 3 拒绝。
+[secrets]
+omp_kimi_tf_key = ""
+omp_zhipu_tf_key = ""

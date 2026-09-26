@@ -16,7 +16,6 @@ import sys
 import tarfile
 import tempfile
 import tomllib
-import urllib.request
 import uuid
 
 from jsonschema import Draft202012Validator
@@ -86,14 +85,8 @@ def _read(tree, path):
 
 
 def _download(url):
-  from .config import _credential_url
-  if not url.startswith("https://") or _credential_url(url):
-    raise DependencyError("OMP依赖来源URL无效")
-  try:
-    with urllib.request.urlopen(url, timeout=60) as response:
-      return response.read()
-  except Exception:
-    raise DependencyError("OMP固定来源下载失败；未激活运行包") from None
+  from .omp_download import download_bytes
+  return download_bytes(url)
 
 
 def interpreter_identity(requirements):
@@ -348,9 +341,12 @@ class OmpBackend:
       if raw[1] != 0o600 or json.loads(raw[0]) != receipt:
         raise ValueError()
       for name, (digest, mode) in expected.items():
-        raw = _read(tree, name)
-        if sha(raw[0]) != digest or raw[1] != mode:
-          raise ValueError()
+        with tree.open_read(name) as (stream, info):
+          checksum = hashlib.sha256()
+          while chunk := stream.read(1024 * 1024):
+            checksum.update(chunk)
+          if checksum.hexdigest() != digest or stat.S_IMODE(info.st_mode) != mode:
+            raise ValueError()
 
   def status(self, workspace, identity):
     root = self.root(workspace, identity)
@@ -419,13 +415,9 @@ class OmpBackend:
       if self.status(workspace, identity) == "installed":
         return {"status": "installed", "identity": identity}
       asset = lock.metadata["assets"][platform_id()]
-      with Tree(workspace.cache / "downloads", create=True) as cache:
-        cached = cache.read(asset["sha256"])
-        content = cached[0] if cached else _download(asset["url"])
-        if sha(content) != asset["sha256"]:
-          raise DependencyError("OMP缓存资产摘要不匹配；未激活运行包")
-        if cached is None:
-          cache.write_new(asset["sha256"], content)
+      from .omp_download import ensure_cached_asset
+      downloads = workspace.cache / "downloads"
+      ensure_cached_asset(downloads, asset["url"], asset["sha256"])
       ensure_private(root.parent)
       stage = Path(tempfile.mkdtemp(prefix=".stage-", dir=root.parent))
       old = root.parent / (".previous-" + uuid.uuid4().hex)
@@ -433,7 +425,22 @@ class OmpBackend:
       try:
         receipt = self._receipt(workspace, lock, identity)
         with Tree(stage) as target, Tree(workspace.repository, private=False) as source:
-          target.replace("bin/omp", content, 0o700, expected=None)
+          # 大型二进制从已校验cache流式写入私有stage，避免WSL安装阶段整包驻内存。
+          with Tree(downloads) as cache, cache.open_read(asset["sha256"]) as (binary, info):
+            if stat.S_IMODE(info.st_mode) != 0o600:
+              raise DependencyError("OMP下载缓存权限无效")
+            with target.parent("bin/omp", create=True) as (parent, name):
+              fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o700, dir_fd=parent)
+              with os.fdopen(fd, "wb") as output:
+                checksum = hashlib.sha256()
+                while chunk := binary.read(1024 * 1024):
+                  output.write(chunk)
+                  checksum.update(chunk)
+                output.flush()
+                os.fsync(output.fileno())
+              os.fsync(parent)
+            if checksum.hexdigest() != asset["sha256"]:
+              raise DependencyError("OMP缓存资产摘要不匹配；未激活运行包")
           for entry in lock.metadata["resources"]:
             raw = _read(source, entry["path"])
             if sha(raw[0]) != entry["sha256"] or bool(raw[1] & 0o111) != entry["executable"]:

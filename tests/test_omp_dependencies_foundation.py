@@ -129,9 +129,12 @@ def test_runtime_lease_blocks_sync_mutation(locked):
   assert not workspace.instance.exists()
 
 
-def test_corrupt_cache_does_not_activate(locked):
+def test_corrupt_cache_does_not_activate_when_repair_download_fails(locked, monkeypatch):
   workspace, _, _, content = locked
   (workspace.cache / "downloads" / hashed(content)).write_bytes(b"wrong")
+  monkeypatch.setattr("agentcfg.omp_download.urllib.request.urlopen",
+    lambda *args, **kwargs: (_ for _ in ()).throw(OSError("offline")))
+  monkeypatch.setattr("agentcfg.omp_download.time.sleep", lambda _: None)
   backend = dep.OmpBackend()
   lock = backend.read_lock(workspace.repository)
   with pytest.raises(DependencyError):
@@ -160,7 +163,7 @@ def test_download_failure_keeps_previous_runtime(locked, monkeypatch):
   (workspace.cache / "downloads" / hashed(content)).unlink()
   def unavailable(*args, **kwargs):
     raise OSError("not a credential")
-  monkeypatch.setattr(dep.urllib.request, "urlopen", unavailable)
+  monkeypatch.setattr("agentcfg.omp_download.urllib.request.urlopen", unavailable)
   with pytest.raises(DependencyError):
     backend.sync(workspace, lock)
   assert (root / "bin/omp").read_bytes() == b"damaged-old"
@@ -250,3 +253,18 @@ def test_sync_recovers_interrupted_activation_before_rebuilding(locked):
   assert not journal.exists()
   assert not old.exists()
   assert not stage.exists()
+
+
+def test_install_and_status_stream_binary_without_tree_read(locked, monkeypatch):
+  workspace, _, _, content = locked
+  original = dep.Tree.read
+
+  def bounded_read(tree, path, **kwargs):
+    assert str(path) not in ("bin/omp", hashed(content)), "standalone must use bounded stream reads"
+    return original(tree, path, **kwargs)
+
+  monkeypatch.setattr(dep.Tree, "read", bounded_read)
+  backend = dep.OmpBackend()
+  lock = backend.read_lock(workspace.repository)
+  result = backend.sync(workspace, lock)
+  assert backend.status(workspace, result["identity"]) == "installed"

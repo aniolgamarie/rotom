@@ -1,0 +1,24 @@
+Mode: investigate
+Working directory: repository root supplied by the runner
+Scope:
+- skill/codex-delegate/scripts/run-codex.sh
+- skill/codex-delegate/scripts/normalize-event.jq
+- skill/codex-delegate/tests/test-observe.sh
+- skill/codex-delegate/references/progress-protocol.md
+
+Task:
+Perform a controlled read-only audit of the foreground observe progress contract. Check that the implementation and tests agree on whole JSON records, cursor stability, heartbeat behavior, terminal-receipt ordering, cancellation, and child-only proxy scope.
+
+Acceptance criteria:
+1. Inspect the runner and normalizer without modifying any file.
+2. Before verification, emit one safe single-line semantic checkpoint beginning exactly with `CODEX_PROGRESS: ` and stating the completed inspection outcome and the next phase.
+3. After that checkpoint, run `bash -lc 'sleep 4'` as a read-only quiet-period probe.
+4. Use read-only commands to compare the focused test and protocol with the implementation.
+5. Return a final status, concise findings, verification performed, and unresolved risks under 2 KiB.
+
+Constraints:
+- Read-only. Do not edit, create, delete, or format repository files.
+- Do not delegate, create another workflow, or split this into timer-driven turns.
+- Do not expose private reasoning, full file contents, raw diffs, or complete command output.
+- Do not put credentials, authorization headers, code fences, diffs, multiline text, or private source content in the checkpoint.
+- Do not invent percentages.

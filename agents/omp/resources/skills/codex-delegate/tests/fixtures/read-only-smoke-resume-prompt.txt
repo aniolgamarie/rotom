@@ -1,0 +1,5 @@
+Continue the existing read-only audit, but do not run any more commands.
+
+Using only the evidence already gathered in this thread, return the requested final
+status, concise findings, verification performed, and unresolved risks under 2 KiB.
+Do not modify files, delegate work, or repeat the audit.

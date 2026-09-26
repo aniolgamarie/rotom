@@ -10,6 +10,8 @@
 
 OMP管理器集成见[OMP指南](docs/omp.md)和[支持状态](docs/omp-support.md)：固定v18.3.0 standalone，每个配方使用新HOME和独立原生profile，登录重新建立。`omp-default`是日常bootstrap配方；九行虚构验收配方仅在临时验收仓库登记。Linux x64 无账号真实 smoke 已通过；其他平台及真实账号验证已转入[独立遗留](docs/follow-ups/omp-platform-and-live-validation.md)，不属于当前已完成的 OMP spec。
 
+日常复刻本机 kernel 配置请使用 [`omp-kernel`](docs/omp-kernel.md)：包含模型、审批策略、主题、原生子代理和完整技能；另附 WSL 配置步骤。`omp-default` 仅作空白 bootstrap 模板。
+
 **第一次使用请从 [新手使用教程](docs/getting-started.md) 开始。** 教程按实际操作顺序说明准备环境、创建本机文件、安装、部署、登录、日常启动和备份恢复，并解释命令输出。仅使用 Codex/Cursor 订阅时，可以先保留空的 `[secrets]`，不需要照抄下面的私有网关示例。
 
 已有首版安装的用户请先看 [升级与故障修复说明](docs/operations.md#审查修复后的升级)。本地文件现在会严格检查权限和链接；旧运行包没有文件收据时，退出 DSH 后执行一次 `sync` 重建即可，账号 home 保持不变。
