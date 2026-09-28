@@ -10,6 +10,8 @@ The getting-started steps below cover DSH. Their Codex/Cursor subscription refer
 
 OMP integration is tracked separately in the [OMP guide](docs/omp.md) and [support status](docs/omp-support.md). It uses fixed OMP v18.3.0 standalone packages, a separate HOME and native profile for each recipe, and fresh logins. `omp-default` is a bootstrap recipe; the nine-row fictional validation recipe is installed only in a temporary validation checkout. The Linux x64 no-account native smoke has passed. Other platform and real-account checks are tracked as [separate follow-ups](docs/follow-ups/omp-platform-and-live-validation.md), outside the completed OMP spec.
 
+Terminal and proxy configuration is managed separately by [`./termcfg`](docs/termcfg.md). It previews and backs up selected zsh, tmux, and mihomo public files before copying them; core and plugin downloads and mihomo service actions are explicit commands. See the guide for private configuration, recovery, and isolated verification status.
+
 Use [`omp-kernel`](docs/omp-kernel.md) to reproduce the reviewed kernel configuration, including models, approval policies, theme, native agents, and complete skills. The guide includes WSL setup; `omp-default` remains an empty bootstrap template.
 
 **First-time users: start with the [Getting Started Guide](docs/getting-started.md).** It walks through environment setup, local file creation, installation, deployment, login, daily startup, and backup/restore in actual operation order, and explains command output. When using only Codex/Cursor subscriptions, you can leave `[secrets]` empty — no need to copy the private-gateway example below.

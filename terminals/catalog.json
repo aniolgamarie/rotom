@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "targets": [
+    {"id": "zshrc", "component": "zsh", "source": "terminals/zsh/zshrc.zsh", "destination": ".zshrc", "sha256": "b06b44e11a3c7c878c839377d5847d1e18d0c96a2affe45993d3003ff1fe6f77", "mode": "0644"},
+    {"id": "zshenv", "component": "zsh", "source": "terminals/zsh/zshenv", "destination": ".zshenv", "sha256": "8562c1d37720a5eff17f0459a52e37f368621d7736c5f212e906df7ae0c8bda4", "mode": "0600"},
+    {"id": "tmux-conf", "component": "tmux", "source": "terminals/tmux/tmux.conf", "destination": ".tmux.conf", "sha256": "a395e77ffa110f88b5303f44dc09e2e3ae61f58dd5baea1f653ea63286725e96", "mode": "0644"},
+    {"id": "tmux-fzf-window", "component": "tmux", "source": "terminals/tmux/scripts/fzf-window.sh", "destination": ".config/tmux/scripts/fzf-window.sh", "sha256": "ee2e4cdf5aa12e612a5f61ed3aa8589bc845c25df178cd8ece3db6ef91e5412b", "mode": "0700"},
+    {"id": "mihomo-base", "component": "mihomo", "source": "terminals/mihomo/base.yaml", "destination": ".config/termcfg/mihomo/base.yaml", "sha256": "1d011c4b6c1254e83d9793cca54dd689f815078294cdf5914b2a7e365027e855", "mode": "0644"},
+    {"id": "mihomo-mgr", "component": "mihomo", "source": "terminals/mihomo/mihomo-mgr.py", "destination": ".local/bin/mihomo-mgr", "sha256": "f71a5cd2427b4a1bc36daf7989f359b5ef0e31184a9b7b7f00852afe3b3383f3", "mode": "0700"}
+  ]
+}

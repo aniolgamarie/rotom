@@ -15,6 +15,17 @@ import tempfile
 import pytest
 
 
+@pytest.fixture
+def fake_terminal_commands(isolated_environment):
+  """仅供 termcfg 隔离测试识别，不执行真实 zsh/tmux。"""
+  directory = isolated_environment.root / "empty-bin"
+  for name in ("zsh", "tmux", "fzf"):
+    path = directory / name
+    path.write_text("#!/bin/sh\nexit 99\n")
+    path.chmod(0o700)
+  return directory
+
+
 _REAL_POPEN = subprocess.Popen
 _ENTRY = Path(__file__).resolve().parents[1] / "agentcfg"
 

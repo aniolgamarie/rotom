@@ -1,0 +1,5 @@
+# 虚构示例；真实路径由 init-local 在私人 XDG 配置目录创建。
+machine_id = "example-machine"
+target_home = "/home/example-user"
+private_state_root = "/home/example-user/.local/state/termcfg/machines/example-machine"
+components = ["zsh", "tmux", "mihomo"]
