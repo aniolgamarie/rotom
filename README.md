@@ -30,21 +30,16 @@ Three commands cover the basics: `sync` installs software, `apply` deploys confi
 git clone <your-repo-url> rotom
 cd rotom
 uv sync --locked
-./agentcfg init-local --machine workstation
+./agentcfg profiles
+./agentcfg init-local
 
-# Edit ~/.config/agentcfg/machines/workstation.toml with your editor.
-# When XDG_CONFIG_HOME is set, the file lives under $XDG_CONFIG_HOME/agentcfg/machines/.
-./agentcfg --machine workstation validate
-./agentcfg --machine workstation plan
-./agentcfg --machine workstation sync
-./agentcfg --machine workstation apply
-./agentcfg --machine workstation doctor
-./agentcfg --machine workstation run dsh --cwd /path/to/worktree
+./agentcfg setup
+./agentcfg run --cwd /path/to/worktree
 ```
 
-The default recipe selects the Codex/Cursor subscription entry. It contains no fabricated OAuth endpoints or model IDs, and does not require a DeepSeek key. You can complete validate → render → sync → apply first, then log in via the native TUI; actual model calls still need a user account.
+The default recipe selects the Codex/Cursor subscription entry. It contains no fabricated OAuth endpoints or model IDs, and does not require a DeepSeek key. `setup` previews, syncs locked dependencies (possibly using the network), and deploys. Stage progress and failure locations appear on stderr. Log in through the native TUI before making model calls. `model presets` lists official direct DeepSeek, Kimi, and GLM endpoints and sourced pricing; `model enable` adds a selected preset after securely collecting its API key. `model status` also checks models already selected by a profile. A missing model API key warns at launch but does not block the host; that model and fallbacks using it remain unavailable until the key is supplied. Use `model add` for a new private API-key model; other custom configurations can be edited in the private TOML file.
 
-Public selectors precede subcommands: `--machine NAME` or `--local PATH` (mutually exclusive), `--profile ID` optional. Default machine is `default`; default profile comes from the local file, falling back to `dsh-default`. `init-local --machine NAME` is the reserved initialization form — repeating it does not overwrite files.
+Public selectors precede subcommands: `--machine NAME` or `--local PATH` (mutually exclusive), `--profile ID` optional. Default machine is `default`; default profile comes from the local file, falling back to `dsh-default`. `init-local` creates the `default` machine, or accepts `--machine NAME --profile ID` for a named machine and recipe. Repeating it does not overwrite files.
 
 ## Local File
 
@@ -86,21 +81,28 @@ Files are 0600, private directories 0700. Objects merge recursively; arrays are 
 
 | Command | Behavior |
 |---|---|
-| `init-local --machine NAME` | Creates an empty-secrets local file; does not overwrite |
+| `profiles` | Lists registered profile IDs and their agents without loading local configuration |
+| `init-local [--machine NAME] [--profile ID]` | Creates an empty-secrets local file; does not overwrite |
+| `setup` | Redacted preview, locked dependency sync, and deployment; stops on conflicts, drift, or pending recovery |
 | `validate` | Offline schema, reference, adapter, and full-lock validation |
 | `render` | Offline generation; writes only to private cache — field intent is not a full native settings file |
 | `plan` | Offline redacted diff with location IDs; private cache stores concrete field positions, not targets |
 | `lock --agent dsh` | Explicit online resolution of the full dependency lock; review lock & vendor diffs on upgrade |
 | `sync` | Consumes the existing lock; stages installs or repairs damaged packages — does not update the lock, start, or log in |
 | `apply` | Offline re-plan, backup, and deploy — does not install dependencies |
-| `run dsh --cwd PATH` | Launches the current deployment, preserves the working directory, injects secrets on demand; no implicit sync/apply |
+| `run [dsh] --cwd PATH` | Launches the current deployment; the agent can be inferred from the profile; no implicit sync/apply |
 | `usage <native-args>` | Passes through to PATH's `omp usage` without loading local configuration; a preceding explicit OMP `--profile` selects the managed instance ([details](docs/omp-usage.md)) |
 | `doctor` / `doctor --live` | Default: offline diagnostics; `--live` adds declared-service reachability checks — never auto-logs-in or calls models |
+| `model add` | Interactively adds a private API-key provider, model, and role binding; atomically writes the private machine file after confirmation |
+| `model presets` | Lists shared official DeepSeek, Kimi, and GLM endpoints, capabilities, capacity, and sourced pricing without a machine file |
+| `model status` | Shows the current profile's selected providers, models, roles, and whether each API key is set; never prints key values |
+| `model enable deepseek\|kimi\|glm` | Enables a shared model for the selected profile after securely entering its API key; unselected presets never block startup |
+| `doctor --input` | All agents: caller terminal and offline interaction readiness; OMP also reports structured event-loop stalls, without recording keystrokes |
 | `capture` | Captures previews, supported themes, and declared model selections; generates a legal local proposal; does not export auth data |
 | `rollback` | Restores the previous managed configuration; consumes that backup on success |
 | `project init openspec --path PATH` | Initializes a specific project with the locked CLI; pre-checks conflicts |
 
-Optional native parameters are passed via `run dsh --cwd PATH -- <native-args>` — `--` is the separator and is not forwarded to DSH. Exit codes: 0 success, 2 argument/config/lock error, 3 required key missing, 4 conflict/active lock/recovery pending, 5 dependency or native check failure, 6 IO/internal failure; after a successful launch the native process exit code is preserved.
+Optional native parameters are passed via `run dsh --cwd PATH -- <native-args>` — `--` is the separator and is not forwarded to DSH. Exit codes: 0 success, 2 argument/config/lock error, 3 required MCP/service credential missing, 4 conflict/active lock/recovery pending, 5 dependency or native check failure, 6 IO/internal failure. Missing model API keys produce a warning; after a successful launch the native process exit code is preserved.
 
 ## Backup & Runtime State
 

@@ -73,7 +73,7 @@ def test_cursor_readseek_with_independent_node(monkeypatch):
   monkeypatch.setenv("PATH", "/bin:/usr/bin:/home/weixiaoxian.wxx/.nvm/versions/node/v24.1.0/bin")
   # 恢复 subprocess.Popen 以检查 Node 版本（subprocess.run 内部使用 Popen）
   import subprocess as _sp
-  import tests.conftest as _conftest
+  import conftest as _conftest
   monkeypatch.setattr(_sp, "Popen", _conftest._REAL_POPEN)
   
   if not Path(REAL_RG).exists():
@@ -261,7 +261,7 @@ def test_cursor_readseek_keeps_cursor_plugin_and_endpoint(monkeypatch):
   """ReadSeek接线只能给cursor追加pi-readseek；不得整表替换剥离cursor provider所有者pi-cursor插件。"""
   monkeypatch.setenv("PATH", "/bin:/usr/bin:/home/weixiaoxian.wxx/.nvm/versions/node/v24.1.0/bin")
   import subprocess as _sp
-  import tests.conftest as _conftest
+  import conftest as _conftest
   monkeypatch.setattr(_sp, "Popen", _conftest._REAL_POPEN)
   if not Path(REAL_RG).exists() or not Path(REAL_NODE).exists():
     pytest.skip("rg/Node未安装")

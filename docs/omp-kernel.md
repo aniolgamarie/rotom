@@ -32,7 +32,7 @@ install -m 600 examples/omp-kernel.local.toml "$OMP_LOCAL"
 ${EDITOR:-vi} "$OMP_LOCAL"
 ```
 
-填写 `[secrets]` 中的 `omp_kimi_tf_key` 和 `omp_zhipu_tf_key`。公共 provider 只保存 `secret:` 引用；实际值只从这个私人文件按需解析。两者都是自定义 API provider key，不需要运行 `login openai-codex`。空值仍可执行离线检查，启动需要相应模型时会返回 3。
+按实际使用情况填写 `[secrets]` 中的 `omp_kimi_tf_key` 和 `omp_zhipu_tf_key`；暂时没有的 key 可以留空。公共 provider 只保存 `secret:` 引用；实际值只从这个私人文件按需解析。两者都是自定义 API provider key，不需要运行 `login openai-codex`。缺少其中一个或两个 key 时，`agentcfg run` 会提示缺失数量并继续启动 OMP；对应模型及依赖它的 fallback 在填写 key 前无法调用。使用 `./agentcfg --local "$OMP_LOCAL" --profile omp-kernel model status` 查看当前配置中的已选 provider、模型、角色和 key 是否已填写；配置修改后还需 `apply` 才会更新已部署的模型选择。
 
 两个默认 `base_url` 是随非秘密 catalog 迁入的企业 TokensFlow 网关。机器需要使用其他兼容网关时，可在私人 local 的 `overrides.providers.kimi_tf.base_url` 或 `overrides.providers.zhipu_tf.base_url` 显式覆盖；示例文件附有注释模板。不要直接换成同名厂商官方端点：当前模型 ID、OpenAI-compatible/Anthropic Messages 协议及 key 语义未必兼容。
 
@@ -43,16 +43,15 @@ ${EDITOR:-vi} "$OMP_LOCAL"
 ```sh
 OMP_WORKSPACE="$HOME/src/your-project"
 
-./agentcfg --local "$OMP_LOCAL" --profile omp-kernel validate
-./agentcfg --local "$OMP_LOCAL" --profile omp-kernel render
-./agentcfg --local "$OMP_LOCAL" --profile omp-kernel sync
-./agentcfg --local "$OMP_LOCAL" --profile omp-kernel plan
-./agentcfg --local "$OMP_LOCAL" --profile omp-kernel apply
-./agentcfg --local "$OMP_LOCAL" --profile omp-kernel doctor
-./agentcfg --local "$OMP_LOCAL" --profile omp-kernel run omp --cwd "$OMP_WORKSPACE"
+./agentcfg --local "$OMP_LOCAL" --profile omp-kernel setup
+./agentcfg --local "$OMP_LOCAL" --profile omp-kernel run --cwd "$OMP_WORKSPACE"
 ```
 
-`validate` 和 `render` 先检查公共来源及候选原生产物。`sync` 获取正式锁指定的 standalone，`plan` 展示部署差异，`apply` 才修改新实例，`doctor` 随后检查部署和运行包。`run` 不隐式下载、部署或读取 PATH 中的全局 OMP。普通受管会话自动加入 `--no-title`，因此不会启动自动标题模型请求。
+`setup` 先脱敏预览，再获取正式锁指定的 standalone（缺失时可能联网），重新检查后部署。需要分步审阅时使用 `validate`、`plan`、`sync`、`apply`、`doctor`；`render` 是可选的缓存生成步骤。`run` 不隐式下载、部署或读取 PATH 中的全局 OMP。普通受管会话自动加入 `--no-title`，因此不会启动自动标题模型请求。
+
+`omp-kernel` 启用 Vim 输入模式，状态栏左侧显示 `INSERT` 或 `NORMAL`。按 `Esc` 进入 `NORMAL` 后，普通字符不会进入输入框；按 `i` 返回 `INSERT`。状态栏中的 `mode` 段表示其他会话模式，Vim 输入状态由新增的 `vim` 段显示。
+
+若在 `INSERT` 状态仍感觉输入卡顿，可从另一个终端运行 `./agentcfg --local "$OMP_LOCAL" --profile omp-kernel doctor --input`。`input_diagnostics.diagnostic_terminal` 只描述运行诊断命令的终端是否为 TTY、规范/回显标志，不代表卡顿的 OMP 终端；`input_diagnostics.readiness` 是所有工具共用的离线就绪检查；`input_diagnostics.host_events` 中的 OMP 事件来自受管日志，仅包含最近的 `ui.loop-blocked` 时间、PID、阻塞时长、CPU 时长和阶段，不读取或输出按键内容与日志正文。若状态为 `NORMAL`，先按 `i`；若为 `INSERT` 且有同时间阻塞事件，可据事件阶段继续定位；无事件也不能据此断定终端没有收到按键。
 
 日常可省略显式 `--profile omp-kernel`，因为私人 local 已设置默认值；故障排查和变更审阅时建议继续显式写出。
 

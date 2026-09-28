@@ -12,6 +12,18 @@ from agentcfg.paths import (
 )
 
 
+def test_concurrent_private_directory_creation_rechecks_new_path(tmp_path, monkeypatch):
+  from agentcfg import storage
+
+  def competing_create(parent, name):
+    os.mkdir(name, 0o700, dir_fd=parent)
+    raise FileExistsError(name)
+
+  monkeypatch.setattr(storage, "_create_directory", competing_create)
+  storage.ensure_private(tmp_path / "created-by-peer")
+  assert stat.S_IMODE((tmp_path / "created-by-peer").stat().st_mode) == 0o700
+
+
 @pytest.mark.parametrize("value", ["", ".", "..", "/absolute", "a/b", "a\\b", "x\x00", "x\n", "x\x7f"])
 def test_safe_id_rejects_escape(value):
   with pytest.raises(PathError):
