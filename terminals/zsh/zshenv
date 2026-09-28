@@ -1,0 +1,4 @@
+# termcfg 管理整个 .zshenv；私人变量请移入独立的 0600 文件。
+if [[ -f "$HOME/.config/termcfg/zshenv.local" ]]; then
+  source "$HOME/.config/termcfg/zshenv.local"
+fi

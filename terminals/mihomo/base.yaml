@@ -1,0 +1,6 @@
+# 公开基础配置；订阅、控制密钥和有效配置仅存私人运行目录。
+mixed-port: 7890
+allow-lan: false
+mode: rule
+log-level: warning
+external-controller: "127.0.0.1:9090"
