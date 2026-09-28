@@ -183,13 +183,16 @@ def installed(workspace, lock):
   return runtime_packages.status(runtime_root(workspace, lock), lock.identity) == "installed"
 
 
-def sync(workspace, lock, adapter_id="dsh"):
+def sync(workspace, lock, adapter_id="dsh", *, progress=None):
+  announce = progress or (lambda stage: None)
+  announce("检查运行包")
   with Tree(workspace.state_root, create=True) as state, instance_lock(state):
     if state.read("pending.json"):
       raise Conflict("存在待恢复部署；请先 apply/rollback，恢复完成前不能 sync")
     runtime_packages.recover_repair(runtime_root(workspace, lock), lock.identity)
     if installed(workspace, lock):
       return {"installed": True, "changed": False}
+    announce("准备安装")
     ensure_private(workspace.instance)
     ensure_private(workspace.cache / "npm")
     roots = workspace.instance / "runtimes"
@@ -201,6 +204,7 @@ def sync(workspace, lock, adapter_id="dsh"):
     env.update(npm_config_cache=str(workspace.cache / "npm"), npm_config_userconfig=str(home / "user.npmrc"),
                npm_config_globalconfig=str(home / "global.npmrc"))
     try:
+      announce("检查 Node/npm 工具链")
       ensure_compatible_toolchain("Node", lock.metadata["node"],
                                   checked(["node", "--version"], cwd=stage, env=env))
       ensure_compatible_toolchain("npm", lock.metadata["npm"],
@@ -208,9 +212,11 @@ def sync(workspace, lock, adapter_id="dsh"):
       (stage / "package.json").write_bytes(lock.package)
       (stage / "package-lock.json").write_bytes(lock.resolution)
       copy_vendors(workspace.repository, stage, lock.package, adapter_id)
+      announce("安装锁定依赖")
       checked(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=stage, env=env)
       if (stage / "package-lock.json").read_bytes() != lock.resolution:
         raise DependencyError("安装过程修改了锁，拒绝激活")
+      announce("校验安装结果")
       checked(["npm", "ls", "--omit=dev", "--all", "--json"], cwd=stage, env=env)
       # 唯一审核过的安装步骤：修复已打包 node-pty spawn-helper 的执行位，不编译/联网。
       helper = stage / "node_modules/@deepseek-ai/dsh-subprocess-local/scripts/ensure-spawn-helper.mjs"
@@ -222,6 +228,7 @@ def sync(workspace, lock, adapter_id="dsh"):
         if not (stage / "node_modules" / required).is_file():
           raise DependencyError("安装结果缺少锁定配方所需文件")
       runtime_packages.seal(stage, lock.identity)
+      announce("激活运行包")
       final = runtime_root(workspace, lock)
       runtime_packages.activate(stage, final, lock.identity)
     except BaseException:

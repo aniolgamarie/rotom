@@ -97,7 +97,7 @@ input = ["text"]
 
 plan 的每个差异、漂移和冲突会带 `target-…` 编号。输出中的 `diagnostics` 指向私人缓存的 `locations.json`；用本地编辑器打开，按相同编号查找具体产物路径和字段 selector。文件不保存字段值，但路径可能包含私有模型名称，不要公开整份文件。
 
-缺密钥报错带 `credential-…` 编号。执行同一机器/profile 的 doctor，再在其 `diagnostics` 文件查对应 `secret:` 引用，然后只填写本地 `[secrets]` 中那一项。定位信息包含当前来源和已部署契约引用，因此未 apply 的改选不会让你找错实际启动所需的 key。文件中不含密钥值，也不读取 OAuth。
+必需的 MCP/服务密钥缺失时报错带 `credential-…` 编号。执行同一机器/profile 的 doctor，再在其 `diagnostics` 文件查对应 `secret:` 引用，然后只填写本地 `[secrets]` 中那一项。模型 API key 缺失时，`run` 给出警告并继续启动；用同一机器/profile 的 `model status` 查看当前配置的已选模型路线和 key 状态，调用相应模型前填写。`doctor` 的定位信息包含当前来源和已部署契约引用，因此未 apply 的改选不会让你找错实际启动所需的 key。文件中不含密钥值，也不读取 OAuth。
 
 ## 审查修复后的升级
 

@@ -7,3 +7,41 @@ auth_kind = "oauth"
 [providers.cursor]
 protocol = "oauth-dynamic"
 auth_kind = "oauth"
+
+# 官方直连 API 预设。各协议使用独立 provider ID，共享同一个私人密钥引用。
+[providers.deepseek_openai]
+protocol = "openai-compatible"
+auth_kind = "api-key"
+base_url = "https://api.deepseek.com"
+credential_ref = "secret:deepseek_key"
+omp_auth_header = true
+
+[providers.deepseek_anthropic]
+protocol = "anthropic-messages"
+auth_kind = "api-key"
+base_url = "https://api.deepseek.com/anthropic"
+credential_ref = "secret:deepseek_key"
+
+[providers.kimi_openai]
+protocol = "openai-compatible"
+auth_kind = "api-key"
+base_url = "https://api.moonshot.cn/v1"
+credential_ref = "secret:kimi_key"
+
+[providers.kimi_anthropic]
+protocol = "anthropic-messages"
+auth_kind = "api-key"
+base_url = "https://api.moonshot.cn/anthropic"
+credential_ref = "secret:kimi_key"
+
+[providers.glm_openai]
+protocol = "openai-compatible"
+auth_kind = "api-key"
+base_url = "https://open.bigmodel.cn/api/paas/v4/"
+credential_ref = "secret:glm_key"
+
+[providers.glm_anthropic]
+protocol = "anthropic-messages"
+auth_kind = "api-key"
+base_url = "https://open.bigmodel.cn/api/anthropic"
+credential_ref = "secret:glm_key"

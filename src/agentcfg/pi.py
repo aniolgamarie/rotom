@@ -284,6 +284,11 @@ class PiAdapter(Adapter):
         if model["provider"] != identity:
           continue
         native = {"id": model["remote_id"], "input": model["input"]}
+        if "name" in model:
+          native["name"] = model["name"]
+        if "reasoning" in model:
+          native["reasoning"] = model["reasoning"]
+        native.update(deepcopy(model.get("native", {}).get("pi", {})))
         for key, target in (("context_window", "contextWindow"), ("max_output_tokens", "maxTokens")):
           if key in model:
             native[target] = model[key]
@@ -474,7 +479,7 @@ class PiAdapter(Adapter):
       }.items())
     for key, provider in data["providers"].items():
       if provider["auth_kind"] == "api-key":
-        env.append(EnvironmentBinding(key_variable(key), SecretRef(provider["credential_ref"])))
+        env.append(EnvironmentBinding(key_variable(key), SecretRef(provider["credential_ref"]), required=False))
     for key, service in data["mcp"].items():
       if service.get("credential_ref"):
         env.append(EnvironmentBinding(key_variable("mcp:" + key), SecretRef(service["credential_ref"])))

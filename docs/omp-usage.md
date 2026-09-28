@@ -21,7 +21,7 @@
 ./agentcfg --local /private/local.toml --profile omp-default usage -- --json
 ```
 
-底层 argv 为 `<locked-omp> --profile <native-name> usage <tail>`，cwd 为实例 HOME。它沿受管 run 的所有权、pending、配置引用、来源与运行包门禁，持有相同实例锁；与同实例 run 互斥。查询只使用该身份所需环境及原生保存的认证，不因无关 provider/MCP secret 缺失而阻塞。
+底层 argv 为 `<locked-omp> --profile <native-name> usage <tail>`，cwd 为实例 HOME。它沿受管 run 的所有权、pending、配置引用、来源与运行包门禁，持有相同的共享运行租约；可与同实例受管 run 并行，配置写入仍需等待会话退出。查询只使用该身份所需环境及原生保存的认证，不因无关 provider/MCP secret 缺失而阻塞。
 
 只给 `--local` 或 `--machine` 而不给 `--profile` 返回 2；显式选择 DSH/Pi 配方也返回 2。管理器不猜测目标配方、不自动选择 OMP，也不跨受管 profile 聚合。
 

@@ -124,7 +124,7 @@ def test_agent_profile_mismatch_fails_before_installer(tmp_path, monkeypatch):
   assert cli.main(["--local", str(local), "run", "dsh"]) == 2
 
 
-def test_pi_missing_secret_and_damaged_runtime_fail_before_host(tmp_path, monkeypatch, fake_subprocess):
+def test_pi_missing_model_key_still_launches_and_damaged_runtime_fails(tmp_path, monkeypatch, fake_subprocess, capsys):
   import agentcfg.pi_dependencies as dependencies
   local, w = fixture_workspace(tmp_path, monkeypatch)
   monkeypatch.setattr(dependencies, "checked", fake_installer([]))
@@ -133,13 +133,16 @@ def test_pi_missing_secret_and_damaged_runtime_fail_before_host(tmp_path, monkey
   assert cli.main([*args, "apply"]) == 0
   local.write_text(local.read_text().replace('fixture="synthetic-fixture-secret"', 'fixture=""'))
   fake_subprocess.queue(returncode=0, stdout="v24.14.0")
-  assert cli.main([*args, "run", "pi"]) == 3
-  assert len(fake_subprocess.calls) == 1
+  fake_subprocess.queue(returncode=0)
+  assert cli.main([*args, "run", "pi"]) == 0
+  assert "可选模型凭据未配置" in capsys.readouterr().err
+  assert "synthetic-fixture-secret" not in fake_subprocess.calls[-1]["env"].values()
+  assert len(fake_subprocess.calls) == 2
   lock = w.backend.read_lock(w.repository)
   identity = w.backend.runtime_identity(w, lock)
   (w.backend.root(w, identity) / lock.metadata["profile_slices"][w.profile]["entrypoint"]).unlink()
   assert cli.main([*args, "run", "pi"]) == 5
-  assert len(fake_subprocess.calls) == 1
+  assert len(fake_subprocess.calls) == 2
 
 
 def test_pi_run_rejects_literal_credential_drift_without_host(tmp_path, monkeypatch, fake_subprocess, capsys):

@@ -423,6 +423,7 @@
       "showHookStatus": true,
       "compactThinkingLevel": false,
       "leftSegments": [
+        "vim",
         "model",
         "context_pct",
         "token_rate",

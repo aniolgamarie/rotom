@@ -30,21 +30,18 @@ OMP管理器集成见[OMP指南](docs/omp.md)和[支持状态](docs/omp-support.
 git clone <你的仓库地址> rotom
 cd rotom
 uv sync --locked
-./agentcfg init-local --machine workstation
+./agentcfg profiles
+./agentcfg init-local
 
-# 用编辑器填写 ~/.config/agentcfg/machines/workstation.toml。
-# 设置 XDG_CONFIG_HOME 时，文件位于该目录的 agentcfg/machines/ 下。
-./agentcfg --machine workstation validate
-./agentcfg --machine workstation plan
-./agentcfg --machine workstation sync
-./agentcfg --machine workstation apply
-./agentcfg --machine workstation doctor
-./agentcfg --machine workstation run dsh --cwd /path/to/worktree
+./agentcfg setup
+./agentcfg run --cwd /path/to/worktree
 ```
 
-默认配方选择 Codex/Cursor 订阅入口，没有虚构的 OAuth endpoint 或 model ID，也不要求 DeepSeek key。可以先完成 validate/render/sync/apply，再在原生 TUI 登录；实际模型调用仍需要用户账号。
+默认配方选择 Codex/Cursor 订阅入口，没有虚构的 OAuth endpoint 或 model ID，也不要求 DeepSeek key。`setup` 先预览，再同步锁定依赖（缺失时可能联网）并部署；阶段进度和失败位置显示在标准错误。在原生 TUI 登录后才能实际调用模型。新增私有 API-key 模型可用 `model add`；其他自定义配置可编辑私人 TOML。
 
-公共选择器位于子命令前：`--machine NAME` 或 `--local PATH` 二选一，`--profile ID` 可选。缺省机器为 `default`，缺省 profile 来自本地文件，随后回落到 `dsh-default`。`init-local --machine NAME` 是保留的初始化形式，重复执行不会覆盖文件。
+三家官方直连预设可用 `./agentcfg model presets` 查看容量、能力、计价和双协议地址；填入 key 后用 `./agentcfg model enable deepseek|kimi|glm` 为当前 profile 启用。`model status` 列出当前 profile 已选模型和 key 状态，包括 profile 自带的模型。缺少模型 key 不阻止工具启动，但对应模型及依赖它的 fallback 在填写 key 前无法调用；未启用的预设也不影响启动。详见[本地配置](docs/local-config.md)。
+
+公共选择器位于子命令前：`--machine NAME` 或 `--local PATH` 二选一，`--profile ID` 可选。缺省机器为 `default`，缺省 profile 来自本地文件，随后回落到 `dsh-default`。`init-local` 默认创建 `default` 机器；也可用 `init-local --machine NAME --profile ID` 指定名称和配方。重复执行不会覆盖文件。
 
 ## 本地文件
 
@@ -86,21 +83,28 @@ private_gateway_key = ""
 
 | 命令 | 行为 |
 |---|---|
-| `init-local --machine NAME` | 创建空密钥本地文件，不覆盖 |
+| `profiles` | 列出可选 profile 和所属工具，无需本地配置 |
+| `init-local [--machine NAME] [--profile ID]` | 创建空密钥本地文件，不覆盖 |
+| `setup` | 脱敏预览后同步锁定依赖并部署；有冲突、漂移或待恢复事务时停止 |
 | `validate` | 离线校验 schema、引用、适配与完整锁 |
 | `render` | 离线生成，只写私人缓存；字段意图不是整份原生 settings |
 | `plan` | 离线显示脱敏差异和定位编号；私人缓存保存具体字段定位，不写目标 |
 | `lock --agent dsh` | 显式联网解析完整依赖；升级时审查锁与 vendor 差异 |
 | `sync` | 消费现有锁并暂存安装或修复损坏包，不更新锁、不启动、不登录 |
 | `apply` | 离线重新计划、备份并部署，不安装依赖 |
-| `run dsh --cwd PATH` | 启动当前部署，保持工作目录，按需注入密钥，不隐式 sync/apply |
+| `run [dsh] --cwd PATH` | 启动当前部署；可由 profile 推断工具，不隐式 sync/apply |
 | `usage <原生参数>` | 无前置选择器时透传PATH上的OMP usage，不读local；显式OMP `--profile`使用已部署受管身份，见[两模式说明](docs/omp-usage.md) |
 | `doctor` / `doctor --live` | 默认离线诊断；live 才做声明的服务可达性检查，不自动登录或调用模型 |
+| `model add` | 交互新增私有 API-key provider、model 和角色绑定，确认后原子写入私人机器文件 |
+| `model presets` | 无需机器文件即可查看三家官方直连预设、容量、能力、价格及来源 |
+| `model status` | 查看当前 profile 已选 provider、模型、角色和 key 是否已填写，不显示 key 值 |
+| `model enable deepseek\|kimi\|glm` | 填写隐藏 API key 后为当前 profile 启用公共预设；未启用的预设不影响启动 |
+| `doctor --input` | 所有工具均报告诊断终端与离线交互就绪状态；OMP 另汇总结构化阻塞事件，不记录按键 |
 | `capture` | 捕获预览、支持的主题和已声明模型选择，生成合法本地提案，不导出认证数据 |
 | `rollback` | 恢复上一版受管配置；成功后消费该备份 |
 | `project init openspec --path PATH` | 使用锁定 CLI 仅初始化指定项目，预检查冲突 |
 
-可选原生参数通过 `run dsh --cwd PATH -- <原生参数>` 传递，`--` 是分界，不会传给 DSH。退出码：0 成功，2 参数/配置/锁错误，3 所需密钥缺失，4 冲突/活动锁/恢复待处理，5 依赖或原生检查失败，6 IO/内部失败；成功启动后保留原生进程退出结果。
+可选原生参数通过 `run dsh --cwd PATH -- <原生参数>` 传递，`--` 是分界，不会传给 DSH。退出码：0 成功，2 参数/配置/锁错误，3 必需的 MCP/服务密钥缺失，4 冲突/活动锁/恢复待处理，5 依赖或原生检查失败，6 IO/内部失败；模型 API key 缺失只提示，成功启动后保留原生进程退出结果。
 
 ## 备份和运行状态
 

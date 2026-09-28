@@ -266,12 +266,14 @@ class PiBackend:
     from .pi_vendor import resolve_lock
     return resolve_lock(Path(repository))
 
-  def sync(self, workspace, lock):
+  def sync(self, workspace, lock, *, progress=None):
     from .pi_lifecycle import guard
     with guard(workspace):
-      return self._sync(workspace, lock)
+      return self._sync(workspace, lock, progress=progress)
 
-  def _sync(self, workspace, lock):
+  def _sync(self, workspace, lock, *, progress=None):
+    announce = progress or (lambda stage: None)
+    announce("检查锁与运行包")
     from .pi_runtime_packages import activate, recover_repair, seal
     identity = self.runtime_identity(workspace, lock)
     if platform_id() not in lock.metadata["platforms"]:
@@ -302,13 +304,16 @@ class PiBackend:
         from .pi_vendor import npm_environment
         env = npm_environment(home)
         tools = ("node", "npm", "bun") if piece["engine"] == "bun" else ("node", "npm")
+        announce("检查工具链")
         for name in tools:
           expected = lock.metadata["toolchains"][name]
           actual = checked([name, "--version"], cwd=stage, env=env)
           if actual != expected:
             raise DependencyError("Pi锁要求精确工具链版本；尚未安装运行包")
         package_root = stage / Path(piece["package_path"]).parent
+        announce("安装锁定依赖")
         checked(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=package_root, env=env)
+        announce("校验构建产物")
         for step in lock.metadata["build_steps"]:
           if step["platform"] not in ("all", platform_id()) or not set(step["source_ids"]) <= set(piece["source_ids"]):
             continue
@@ -334,5 +339,6 @@ class PiBackend:
           seal(stage, identity, lock.identity, piece, toolchains=lock.metadata["toolchains"])
         except Conflict:
           raise DependencyError("Pi安装未包含完整必要运行资源，旧运行包保持不变") from None
+        announce("激活运行包")
         activate(stage, final, identity)
       return {"installed": True, "identity": identity}

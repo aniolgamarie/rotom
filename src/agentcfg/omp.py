@@ -213,9 +213,12 @@ def _native_model_providers(data):
       if model["provider"] == provider_id:
         models.append({"name": model_id, "id": model["remote_id"], "contextWindow": model["context_window"],
           "maxTokens": model["max_output_tokens"], "input": model["input"],
+          **({"reasoning": model["reasoning"]} if "reasoning" in model else {}),
+          **deepcopy(model.get("native", {}).get("omp", {})),
           **data["profile"].get("agent_options", {}).get("model_options", {}).get(model_id, {})})
     result[native] = {"baseUrl": provider["base_url"], "api": PROTOCOL_MAP[provider["protocol"]],
       "apiKey": generated_name("provider", provider_id, "key", claimed=claimed), "models": models,
+      **({"authHeader": provider["omp_auth_header"]} if "omp_auth_header" in provider else {}),
       **data["profile"].get("agent_options", {}).get("provider_options", {}).get(provider_id, {})}
   return result
 
@@ -434,6 +437,8 @@ class OmpAdapter(Adapter):
           (generated_name("provider", provider_id, "key", claimed=claimed),)),
         ManagedTarget(base + "/models.yml", Ownership.FIELDS, "yaml", prefix + "/models"),
       ))
+      if "omp_auth_header" in provider:
+        targets.append(ManagedTarget(base + "/models.yml", Ownership.FIELDS, "yaml", prefix + "/authHeader"))
     for provider_id, provider in sorted(data.get("providers", {}).items()):
       if provider["protocol"] != "oauth-dynamic":
         for key in data["profile"].get("agent_options", {}).get("provider_options", {}).get(provider_id, {}):
@@ -595,8 +600,17 @@ class OmpAdapter(Adapter):
   def lifecycle_guard(self, workspace):
     return lifecycle_guard(workspace, create=False)
 
+  def run_lifecycle_guard(self, workspace):
+    return lifecycle_guard(workspace, shared=True)
+
+  shared_run_lease = True
+
   def apply_lifecycle_guard(self, workspace):
     return lifecycle_guard(workspace, create=True)
+
+  def pre_sync_preflight(self, workspace):
+    from .omp_identity import preflight_setup
+    preflight_setup(workspace)
 
   def validate_arguments(self, arguments):
     validate_managed_argv(arguments)
@@ -714,7 +728,7 @@ class OmpAdapter(Adapter):
     identity = native_identity(data["profile"]["id"], instance_root)
     claimed = {}
     secrets = [EnvironmentBinding(generated_name("provider", provider_id, "key", claimed=claimed),
-      SecretRef(provider["credential_ref"])) for provider_id, provider in sorted(data.get("providers", {}).items())
+      SecretRef(provider["credential_ref"]), required=False) for provider_id, provider in sorted(data.get("providers", {}).items())
       if provider.get("protocol") in PROTOCOL_MAP]
     options = data["profile"].get("agent_options", {})
     for server_id, server in sorted(data.get("mcp", {}).items()):

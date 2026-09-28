@@ -42,7 +42,11 @@ def ensure_private(path: Path):
         info = os.fstat(fd)
         if (info.st_uid != os.geteuid() or info.st_mode & 0o022) and not info.st_mode & stat.S_ISVTX:
           raise Conflict("不能在不安全目录下创建私人容器")
-        child = _create_directory(fd, name)
+        try:
+          child = _create_directory(fd, name)
+        except FileExistsError:
+          # 并发运行可能刚创建相同容器；重新打开后仍执行属主/权限检查。
+          child = _open_directory(fd, name)
       os.close(fd)
       fd = child
       _check_ancestor(fd)
@@ -227,8 +231,8 @@ class Tree:
 
 
 @contextmanager
-def instance_lock(state: Tree):
-  """锁持有期间禁止 apply/sync/rollback/run 并发；不替换或删除锁文件。"""
+def instance_lock(state: Tree, *, shared=False):
+  """运行可共享读租约；配置写入仍独占，不替换或删除锁文件。"""
   with state.parent("instance.lock") as (parent, name):
     fd = os.open(name, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=parent)
   try:
@@ -237,7 +241,7 @@ def instance_lock(state: Tree):
         or info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != 0o600):
       raise Conflict("实例锁文件不安全")
     try:
-      fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+      fcntl.flock(fd, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
     except OSError as error:
       if error.errno in (errno.EAGAIN, errno.EACCES):
         raise Conflict("实例正在运行或有其他操作；退出后重试") from None

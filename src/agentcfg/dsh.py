@@ -196,7 +196,7 @@ class DshAdapter(Adapter):
       environment.append(EnvironmentBinding("DSH_TUI_DISABLE_TERMINAL_IMAGES", "1"))
     for key, provider in data["providers"].items():
       if provider["auth_kind"] == "api-key":
-        environment.append(EnvironmentBinding(env_name("KEY", key), SecretRef(provider["credential_ref"])))
+        environment.append(EnvironmentBinding(env_name("KEY", key), SecretRef(provider["credential_ref"]), required=False))
     for key, server in data["mcp"].items():
       if "credential_ref" in server:
         environment.append(EnvironmentBinding(env_name("MCP", key), SecretRef(server["credential_ref"])))

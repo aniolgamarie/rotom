@@ -53,6 +53,20 @@ def test_run_keeps_deployed_selection_uses_current_secret_and_cwd(tmp_path, fake
   assert CANARY.encode() not in (w.state_root / "deployment.json").read_bytes()
 
 
+def test_missing_selected_model_key_does_not_block_host_launch(tmp_path, fake_subprocess, capsys, prepared_runtime):
+  path = tmp_path / "local.toml"
+  local_file(path, used="")
+  w = load_workspace(path)
+  lock = read_lock(w.repository)
+  deployment.apply(w.instance, w.state_root, w.candidate(lock.identity), w.binding, runtime.record(w, lock))
+  prepared_runtime(w, lock)
+  fake_subprocess.queue(returncode=0, stdout="v24.2.0")
+  fake_subprocess.queue(returncode=0)
+  assert runtime.run(w, cwd=tmp_path) == 0
+  assert env_name("KEY", "one") not in fake_subprocess.calls[-1]["env"]
+  assert "1 个可选模型凭据未配置" in capsys.readouterr().err
+
+
 @pytest.mark.parametrize("actual", ["v24.1.0", "v25.0.0", "v24.2.0\nsynthetic-private-token"])
 def test_run_rejects_incompatible_node_before_launch(tmp_path, fake_subprocess, prepared_runtime, actual):
   path = tmp_path / "local.toml"

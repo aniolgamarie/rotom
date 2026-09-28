@@ -5,6 +5,7 @@ from contextlib import nullcontext
 import json
 from pathlib import Path
 import subprocess
+import sys
 
 from .adapter import EnvironmentBinding, LaunchSpec, SecretRef
 from .deployment import read_state, recover
@@ -59,8 +60,9 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
   operation_guard = getattr(workspace.adapter, "operation_guard", None)
   if operation_guard is not None:
     operation_guard(workspace, effective_cwd, arguments)
-  lifecycle = getattr(workspace.adapter, "lifecycle_guard", None)
-  with (lifecycle(workspace) if lifecycle else nullcontext()) as lifecycle_fd, Tree(workspace.state_root, create=True) as state, instance_lock(state) as lease, Tree(workspace.instance) as target:
+  lifecycle = getattr(workspace.adapter, "run_lifecycle_guard", None) or getattr(workspace.adapter, "lifecycle_guard", None)
+  shared = getattr(workspace.adapter, "shared_run_lease", False)
+  with (lifecycle(workspace) if lifecycle else nullcontext()) as lifecycle_fd, Tree(workspace.state_root, create=True) as state, instance_lock(state, shared=shared) as lease, Tree(workspace.instance) as target:
     if state.read("pending.json"):
       raise Conflict("存在待恢复部署，请先 apply/rollback 恢复后再启动")
     current = read_state(state)["current"]
@@ -111,6 +113,13 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
       validate_environment = getattr(workspace.adapter, "validate_operation_environment", None)
       if validate_environment is not None:
         validate_environment(workspace, spec=spec)
+      optional = {item.value.reference for item in spec.environment
+        if isinstance(item.value, SecretRef) and not item.required}
+      missing = sum(workspace.secret_store.resolve(SecretRef(reference), required=False) is None
+        for reference in optional)
+      if missing:
+        print(f"run: {missing} 个可选模型凭据未配置；工具继续启动，相应模型调用前需填写 key。"
+          "可运行 ./agentcfg model status 查看路线。", file=sys.stderr)
       env = launch_environment(spec, contract["machine"], workspace.secret_store)
       import os
       env["PATH"] = os.pathsep.join([*(str(path) for path in workspace.backend.executable_paths(root)), env.get("PATH", "")])

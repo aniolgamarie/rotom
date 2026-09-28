@@ -91,8 +91,16 @@ def _preflight_existing_instance(workspace, expected):
       raise Conflict("OMP实例非空且没有可核验所有者")
 
 
+def preflight_setup(workspace):
+  """同步依赖前只读检查已知身份冲突；apply 时仍在锁内重检。"""
+  _preflight_existing_instance(workspace, ownership(workspace))
+  validate_layout(native_identity(workspace.profile, workspace.instance))
+
+
 @contextmanager
-def lifecycle_guard(workspace, *, create=False):
+def lifecycle_guard(workspace, *, create=False, shared=False):
+  if create and shared:
+    raise ValueError("OMP所有权创建不得使用共享租约")
   expected = ownership(workspace)
   if create:
     _preflight_existing_instance(workspace, expected)
@@ -115,7 +123,7 @@ def lifecycle_guard(workspace, *, create=False):
       raise Conflict("OMP物理实例锁身份或权限无效")
     try:
       try:
-        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(fd, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
       except OSError as error:
         if error.errno in (errno.EACCES, errno.EAGAIN):
           raise Conflict("OMP实例已有活动进程") from None

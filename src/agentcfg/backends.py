@@ -35,9 +35,9 @@ class DshBackend:
     return resolve_lock(repository, adapter_id=self.adapter_id,
                         expected_adapter_version=self.adapter_version)
 
-  def sync(self, workspace, lock):
+  def sync(self, workspace, lock, *, progress=None):
     from .dependencies import sync
-    return sync(workspace, lock, self.adapter_id)
+    return sync(workspace, lock, self.adapter_id, progress=progress)
 
   def root(self, workspace, identity):
     from .paths import safe_id

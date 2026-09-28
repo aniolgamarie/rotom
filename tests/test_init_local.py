@@ -35,7 +35,7 @@ def test_init_local_creates_schema_valid_private_file_without_catalog(isolated_e
   assert document == {
     "schema_version": 1,
     "machine": {"id": "work", "default_profile": "dsh-default"},
-    "secrets": {},
+    "secrets": {"deepseek_key": "", "kimi_key": "", "glm_key": ""},
   }
   validate_document("local", document)
   local, secrets = load_local(path)

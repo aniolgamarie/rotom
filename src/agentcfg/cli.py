@@ -64,6 +64,14 @@ class CLIParser(argparse.ArgumentParser):
       getattr(parsed, name) is not None for name in ("machine", "local", "profile")
     ):
       self.fail("init-local 仅使用子命令后的 --machine；全局选择器不适用")
+    if parsed.command == "profiles" and any(
+      getattr(parsed, name) is not None for name in ("machine", "local", "profile")
+    ):
+      self.fail("profiles 列出整个仓库的配方，不接受机器或 profile 选择器")
+    if parsed.command == "model" and parsed.model_command == "presets" and any(
+      getattr(parsed, name) is not None for name in ("machine", "local", "profile")
+    ):
+      self.fail("model presets 列出公共目录，不接受机器或 profile 选择器")
     return parsed
 
 
@@ -109,8 +117,10 @@ def local_path(value):
 
 def resolve_selection(args):
   """只解析选择所需元数据；完整 schema 和秘密 resolver 由后续任务负责。"""
+  if args.command == "model" and args.model_command == "presets":
+    return
   if args.command == "init-local":
-    args.machine = args.init_machine
+    args.machine = args.init_machine or "default"
     try:
       root = configured_path(os.environ.get("XDG_CONFIG_HOME") or "~/.config")
     except PathError:
@@ -194,9 +204,27 @@ def build_parser() -> argparse.ArgumentParser:
         action=UniqueSelector,
         type=selection_id,
         metavar="NAME",
-        required=True,
-        help="机器名称（init-local 专用参数）",
+        help="机器名称（默认 default）",
     )
+    init_local.add_argument(
+        "--profile",
+        dest="init_profile",
+        type=selection_id,
+        metavar="ID",
+        default="dsh-default",
+        help="新机器的默认 profile（默认 dsh-default）",
+    )
+
+    subparsers.add_parser("profiles", help="列出仓库登记的 profile，无需本地配置")
+    subparsers.add_parser("setup", help="预览、同步依赖并部署选中的 profile")
+    model = subparsers.add_parser("model", help="查看公共预设，启用官方模型，或添加私有模型")
+    model_sub = model.add_subparsers(dest="model_command", required=True)
+    model_sub.add_parser("add", help="新增 provider、model 与角色绑定并校验私人配置")
+    model_sub.add_parser("presets", help="列出 DeepSeek、Kimi、GLM 公共模型和官方计价")
+    model_sub.add_parser("status", help="检查当前 profile 已选模型的密钥就绪状态，不显示密钥")
+    enable = model_sub.add_parser("enable", help="为当前 profile 启用官方模型；缺密钥时隐藏输入")
+    enable.add_argument("preset", choices=("deepseek", "kimi", "glm"))
+    enable.add_argument("--protocol", choices=("openai", "anthropic"), help="覆盖工具默认协议")
 
     # validate: 离线校验
     subparsers.add_parser(
@@ -250,8 +278,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument(
         "agent",
+        nargs="?",
         choices=["dsh", "pi", "omp"],
-        help="目标工具",
+        help="目标工具（可省略，由 profile 推断）",
     )
     run.add_argument(
         "--cwd",
@@ -273,6 +302,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--live",
         action="store_true",
         help="允许网络检查",
+    )
+    doctor.add_argument(
+        "--input",
+        action="store_true",
+        help="所有后端报告终端和离线就绪状态；OMP 另汇总结构化输入阻塞日志，不读取按键",
     )
 
     # capture: 捕获提案
@@ -346,6 +380,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # 分发命令
     try:
+        if args.command == "profiles":
+            from . import commands
+            return commands.cmd_profiles(args)
         if args.command == "usage" and args.profile is None:
             if args.local is not None or args.machine is not None:
                 from .schema import ConfigError
@@ -359,14 +396,23 @@ def main(argv: list[str] | None = None) -> int:
         resolve_selection(args)
         return dispatch(args)
     except InitializationError as error:
-        print(f"init-local: {error}", file=sys.stderr)
+        if args.command == "profiles":
+            print("profiles: 仓库配方登记无效；请检查 profiles/ 下的 TOML", file=sys.stderr)
+        else:
+            print(f"{args.command}: {error}", file=sys.stderr)
         return error.exit_code
     except SelectionError as error:
+        from .progress import failure_context
+        failure_context(args, EXIT_USAGE)
         print(f"配置错误: {error}", file=sys.stderr)
         return EXIT_USAGE
     except KeyboardInterrupt:
+        from .progress import failure_context
+        failure_context(args, 130, interrupted=True)
         return 130
     except OSError:
+        from .progress import failure_context
+        failure_context(args, EXIT_INTERNAL)
         print("文件系统操作失败；请检查所选文件及目录的访问权限", file=sys.stderr)
         return EXIT_INTERNAL
     except Exception as error:
@@ -375,8 +421,12 @@ def main(argv: list[str] | None = None) -> int:
         from .storage import StateError
         from .render import RenderError
         if isinstance(error, (ConfigError, CredentialError, StateError, RenderError)):
+            from .progress import failure_context
+            failure_context(args, error.exit_code)
             print(str(error), file=sys.stderr)
             return error.exit_code
+        from .progress import failure_context
+        failure_context(args, EXIT_INTERNAL)
         print("内部操作失败；请检查配置并报告脱敏复现步骤", file=sys.stderr)
         return EXIT_INTERNAL
 

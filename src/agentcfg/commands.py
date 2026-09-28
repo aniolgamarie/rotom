@@ -1,19 +1,23 @@
 """统一命令入口：显式副作用边界，输出默认脱敏。"""
 
 import json
+import inspect
 from contextlib import nullcontext
 from pathlib import Path
+import sys
 
 from . import deployment, runtime
 from .config import public_diagnostics
 from .local import initialize_local
+from .progress import Progress, failure_context
+from .schema import ConfigError
 from .storage import Conflict, Tree
 from .workspace import load_workspace
 
 
 def workspace(args):
   result = load_workspace(args.local, args.profile)
-  if getattr(args, "agent", result.agent) != result.agent:
+  if getattr(args, "agent", None) not in (None, result.agent):
     from .schema import ConfigError
     raise ConfigError("agent-profile-mismatch")
   return result
@@ -26,9 +30,29 @@ def output(w, command, result):
 
 
 def cmd_init_local(args):
-  initialize_local(args.machine, config_home=args.local.parent.parent.parent)
-  print("init-local: 已创建空密钥本地配置；使用前仍需校验所选 profile")
+  initialize_local(args.machine, config_home=args.local.parent.parent.parent, profile_id=args.init_profile)
+  from shlex import quote
+  selector = "" if args.machine == "default" else f"--machine {quote(args.machine)} "
+  print(f"init-local: 已创建空密钥本地配置；默认 profile 为 {args.init_profile}；下一步: ./agentcfg {selector}setup")
   return 0
+
+
+def cmd_profiles(args):
+  from .local import available_profiles
+  for profile_id, agent in available_profiles():
+    print(f"{profile_id}\t{agent}")
+  return 0
+
+
+def cmd_model(args):
+  from .model_wizard import add_model, enable_preset, list_presets, model_status
+  if args.model_command == "presets":
+    return list_presets(args)
+  if args.model_command == "status":
+    return model_status(args)
+  if args.model_command == "enable":
+    return enable_preset(args)
+  return add_model(args)
 
 
 def prepared(args):
@@ -38,12 +62,14 @@ def prepared(args):
 
 
 def cmd_validate(args):
+  Progress("validate", args).stage("校验配置、引用与锁", hint="doctor")
   w, lock, candidate = prepared(args)
   return output(w, "validate", {"valid": True, "artifacts": len(candidate.artifacts),
     "profiles_checked": w.resolved.validated_profiles, "credentials": "not-checked-offline"})
 
 
 def cmd_render(args):
+  Progress("render", args).stage("校验并生成原生产物", hint="validate")
   w, lock, candidate = prepared(args)
   with Tree(w.cache / "rendered" / candidate.generation, create=True) as cache:
     for artifact in candidate.artifacts:
@@ -65,6 +91,7 @@ def current_plan(w, lock, candidate):
 
 
 def cmd_plan(args):
+  Progress("plan", args).stage("检查配置与部署差异", hint="doctor")
   if getattr(args, "from_starter", None) is not None and getattr(args, "from_pi_home", None) is None:
     from .schema import ConfigError
     raise ConfigError("pi-source-requires-home")
@@ -108,11 +135,62 @@ def migration_plan(args):
 
 
 def cmd_apply(args):
+  Progress("apply", args).stage("复核并部署配置", hint="plan")
   w, lock, candidate = prepared(args)
+  return output(w, "apply", apply_candidate(w, lock, candidate))
+
+
+def apply_candidate(w, lock, candidate, *, expected_plan=None):
   guard = getattr(w.adapter, "apply_lifecycle_guard", None) or getattr(w.adapter, "lifecycle_guard", None)
   with guard(w) if guard else nullcontext():
-    result = deployment.apply(w.instance, w.state_root, candidate, w.binding, runtime.record(w, lock))
-  return output(w, "apply", result)
+    return deployment.apply(w.instance, w.state_root, candidate, w.binding, runtime.record(w, lock),
+      expected_plan=expected_plan)
+
+
+def sync_backend(w, lock, progress):
+  """可选进度能力；旧扩展后端继续使用原有双参数 sync 契约。"""
+  action = w.backend.sync
+  try:
+    parameters = inspect.signature(action).parameters
+  except (TypeError, ValueError):
+    parameters = {}
+  if "progress" in parameters or any(item.kind is inspect.Parameter.VAR_KEYWORD for item in parameters.values()):
+    return action(w, lock, progress=progress)
+  progress("检查运行包")
+  return action(w, lock)
+
+
+def cmd_setup(args):
+  progress = Progress("setup", args)
+  progress.stage("校验配置与锁", hint="validate")
+  w, lock, candidate = prepared(args)
+  progress.stage("预览部署差异", hint="plan")
+  preview = current_plan(w, lock, candidate)
+  summary = preview.public()
+  print(f"预览 {w.agent}/{w.profile}: {summary['changes']} 项变更，{summary['drift']} 项漂移，{summary['conflicts']} 项冲突", flush=True)
+  if preview.conflicts or preview.drift:
+    failure_context(args, 4)
+    print("setup 已停止：存在冲突或漂移", file=sys.stderr)
+    return 4
+  pre_sync_preflight = getattr(w.adapter, "pre_sync_preflight", None)
+  if pre_sync_preflight is not None:
+    pre_sync_preflight(w)
+  progress.stage("同步依赖（缺失时可能联网）", hint="doctor")
+  with progress.heartbeat():
+    sync_backend(w, lock, progress.sync_stage)
+  # 同步期间来源或目标可能改变；重新读取并比对预览，再进入 apply 的写入门禁。
+  progress.stage("复核配置与部署计划", hint="plan")
+  current, current_lock, current_candidate = prepared(args)
+  updated = current_plan(current, current_lock, current_candidate)
+  if (current_candidate.generation != candidate.generation or current_lock.identity != lock.identity
+      or updated.public() != summary):
+    failure_context(args, 4)
+    print("setup 已停止：同步期间配置或目标发生变化；请重新运行 setup", file=sys.stderr)
+    return 4
+  progress.stage("写入部署", hint="plan")
+  result = apply_candidate(current, current_lock, current_candidate, expected_plan=updated)
+  print(f"部署完成 {current.agent}/{current.profile}: {result['changes']} 项变更；现在可以运行 run", flush=True)
+  return 0
 
 
 def cmd_rollback(args):
@@ -135,13 +213,23 @@ def cmd_lock(args):
 
 
 def cmd_sync(args):
+  progress = Progress("sync", args)
+  progress.stage("校验配置与锁", hint="validate")
   w = workspace(args)
-  return output(w, "sync", w.backend.sync(w, w.backend.read_lock(w.repository)))
+  lock = w.backend.read_lock(w.repository)
+  progress.stage("同步依赖", hint="doctor")
+  with progress.heartbeat():
+    result = sync_backend(w, lock, progress.sync_stage)
+  return output(w, "sync", result)
 
 
 def cmd_run(args):
+  Progress("run", args).stage("检查部署、依赖与启动条件", hint="doctor")
   w = workspace(args)
-  return runtime.run(w, cwd=args.cwd.absolute(), arguments=args.passthrough)
+  code = runtime.run(w, cwd=args.cwd.absolute(), arguments=args.passthrough)
+  if code:
+    print(f"run: 原生进程已退出（退出码 {code}）；可运行 ./agentcfg doctor 检查离线状态", file=sys.stderr)
+  return code
 
 
 def cmd_usage(args):
@@ -162,8 +250,27 @@ def cmd_recover(args):
 
 
 def cmd_doctor(args):
+  Progress("doctor", args).stage("检查配置、部署与依赖", hint="plan")
   w = workspace(args)
-  lock = w.backend.read_lock(w.repository)
+  try:
+    lock = w.backend.read_lock(w.repository)
+  except ConfigError:
+    with Tree(w.state_root) as state:
+      saved = deployment.read_state(state)
+      result = {"deployed": saved["current"] is not None,
+        "recovery_pending": state.read("pending.json") is not None,
+        "dependencies": "unknown", "lock": "missing-or-invalid",
+        "authentication": "not-inspected; use native auth status", "live": False,
+        "readiness": {"status": "action-required", "blockers": ["lock-missing-or-invalid"],
+          "next_commands": [f"lock --agent {w.agent}"], "authentication": "not-inspected"}}
+    if getattr(args, "input", False):
+      from .interaction_diagnostics import terminal_state
+      result["input_diagnostics"] = {"diagnostic_terminal": terminal_state(),
+        "readiness": result["readiness"], "host_events": {"status": "not-checked", "reason": "先修复依赖锁"},
+        "note": "终端标志只描述诊断进程；不记录按键"}
+    output(w, "doctor", result)
+    print(f"doctor: 依赖锁缺失或校验失败（退出码 2）；检查后运行 ./agentcfg lock --agent {w.agent}", file=sys.stderr)
+    return 2
   with Tree(w.state_root) as state:
     saved = deployment.read_state(state)
     result = {"deployed": saved["current"] is not None, "previous_backup": saved["previous"] is not None,
@@ -175,18 +282,18 @@ def cmd_doctor(args):
   identity_report = getattr(w.adapter, "identity_diagnostics", None)
   if identity_report is not None:
     result["identity"] = identity_report(w)
-  import sys
   platforms = lock.metadata.get("platforms", {})
   result["platform_evidence"] = platforms.get(sys.platform, "not-recorded") if isinstance(platforms, dict) else "not-recorded"
   if saved["current"] is not None:
     launch = saved["current"]["launch"]
+    result["deployed_runtime_matches_current"] = launch.get("runtime_identity", launch["lock_identity"]) == runtime.runtime_identity(w, lock)
     result["deployed_dependencies"] = w.backend.status(w, launch.get("runtime_identity", launch["lock_identity"]))
   drift = None
   if result["deployed"] and not result["recovery_pending"]:
     drift = current_plan(w, lock, w.candidate(lock.identity))
     result.update(drift=bool(drift.drift), conflicts=bool(drift.conflicts), changes_pending=len(drift.changes))
   result["diagnostics"] = write_diagnostics(w, lock, drift)
-  capabilities = getattr(w.adapter, "capability_diagnostics", lambda _: None)({"data": w.resolved.data, "repository": w.repository, "deployed": result["deployed"] and not result["recovery_pending"] and not result.get("changes_pending") and not result.get("conflicts"),
+  capabilities = getattr(w.adapter, "capability_diagnostics", lambda _: None)({"data": w.resolved.data, "repository": w.repository, "deployed": result["deployed"] and not result["recovery_pending"] and not result.get("changes_pending") and not result.get("conflicts") and not result.get("drift"),
     "dependencies": result["dependencies"], "lock_identity": lock.identity, "runtime_identity": runtime.runtime_identity(w, lock)})
   if capabilities is not None: result["capabilities"] = capabilities
   if args.live:
@@ -202,6 +309,12 @@ def cmd_doctor(args):
           except Exception:
             checks.append("unverified")
     result.update(live=True, service_checks=checks)
+  if getattr(args, "input", False):
+    from .interaction_diagnostics import inspect
+    result["input_diagnostics"] = inspect(w, result)
+  else:
+    from .interaction_diagnostics import readiness
+    result["readiness"] = readiness(result)
   output(w, "doctor", result)
   return getattr(w.adapter, "diagnostic_exit_code", lambda _: 0)(capabilities)
 

@@ -1,2 +1,105 @@
-# OAuth 模型目录由插件在登录后发现；不编造静态 model ID。
 schema_version = 1
+# OAuth 模型目录由插件在登录后发现；不编造静态 model ID。
+# 以下是官方直连 API 公共预设；不在 profile 中选择时无需密钥。
+
+[models.deepseek_flash_openai]
+provider = "deepseek_openai"
+remote_id = "deepseek-flash"
+name = "DeepSeek V4.1 Flash"
+input = ["text", "image"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1000000
+max_output_tokens = 384000
+source = "https://api-docs.deepseek.com/quick_start/pricing/"
+
+[models.deepseek_flash_openai.pricing]
+currency = "USD"
+per_tokens = 1000000
+source = "https://api-docs.deepseek.com/quick_start/pricing/"
+checked_on = "2026-09-27"
+schedule = "Peak: Monday-Friday 01:00-04:00 and 06:00-10:00 UTC; other times off-peak"
+standard = {input = 0.30, output = 1.20, cache_read = 0.006}
+off_peak = {input = 0.15, output = 0.60, cache_read = 0.003}
+
+[models.deepseek_flash_openai.native.pi.compat]
+requiresReasoningContentOnAssistantMessages = true
+thinkingFormat = "deepseek"
+reasoningEffortMap = {minimal = "high", low = "high", medium = "high", high = "high", xhigh = "max"}
+
+[models.deepseek_flash_openai.native.omp.thinking]
+minLevel = "high"
+maxLevel = "xhigh"
+mode = "effort"
+
+[models.deepseek_flash_openai.native.omp.compat]
+supportsDeveloperRole = false
+supportsReasoningEffort = true
+maxTokensField = "max_tokens"
+reasoningEffortMap = {high = "high", xhigh = "max"}
+supportsToolChoice = false
+requiresReasoningContentForToolCalls = true
+requiresAssistantContentForToolCalls = true
+extraBody = {thinking = {type = "enabled"}}
+
+[models.deepseek_flash_anthropic]
+provider = "deepseek_anthropic"
+remote_id = "deepseek-flash"
+name = "DeepSeek V4.1 Flash"
+input = ["text", "image"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1000000
+max_output_tokens = 384000
+source = "https://api-docs.deepseek.com/quick_start/pricing/"
+pricing = {currency = "USD", per_tokens = 1000000, source = "https://api-docs.deepseek.com/quick_start/pricing/", checked_on = "2026-09-27", schedule = "Peak: Monday-Friday 01:00-04:00 and 06:00-10:00 UTC; other times off-peak", standard = {input = 0.30, output = 1.20, cache_read = 0.006}, off_peak = {input = 0.15, output = 0.60, cache_read = 0.003}}
+
+[models.kimi_k3_openai]
+provider = "kimi_openai"
+remote_id = "kimi-k3"
+name = "Kimi K3"
+input = ["text", "image"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1000000
+max_output_tokens = 131072
+max_output_supported = 1048576
+source = "https://platform.kimi.com/docs/guide/kimi-k3-quickstart"
+pricing = {currency = "CNY", per_tokens = 1000000, source = "https://platform.kimi.com/", checked_on = "2026-09-27", standard = {input = 20.0, output = 100.0, cache_read = 2.0, cache_write = 20.0}}
+
+[models.kimi_k3_anthropic]
+provider = "kimi_anthropic"
+remote_id = "kimi-k3"
+name = "Kimi K3"
+input = ["text", "image"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1000000
+max_output_tokens = 131072
+max_output_supported = 1048576
+source = "https://platform.kimi.com/docs/guide/kimi-k3-quickstart"
+pricing = {currency = "CNY", per_tokens = 1000000, source = "https://platform.kimi.com/", checked_on = "2026-09-27", standard = {input = 20.0, output = 100.0, cache_read = 2.0, cache_write = 20.0}}
+
+[models.glm_53_openai]
+provider = "glm_openai"
+remote_id = "glm-5.3"
+name = "GLM-5.3"
+input = ["text"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1000000
+max_output_tokens = 131072
+source = "https://docs.bigmodel.cn/cn/guide/models/text/glm-5.3"
+pricing = {currency = "CNY", per_tokens = 1000000, source = "https://docs.bigmodel.cn/cn/guide/start/pricing", checked_on = "2026-09-27", standard = {input = 8.0, output = 28.0, cache_read = 2.0}}
+
+[models.glm_53_anthropic]
+provider = "glm_anthropic"
+remote_id = "glm-5.3"
+name = "GLM-5.3"
+input = ["text"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1000000
+max_output_tokens = 131072
+source = "https://docs.bigmodel.cn/cn/guide/models/text/glm-5.3"
+pricing = {currency = "CNY", per_tokens = 1000000, source = "https://docs.bigmodel.cn/cn/guide/start/pricing", checked_on = "2026-09-27", standard = {input = 8.0, output = 28.0, cache_read = 2.0}}
