@@ -370,12 +370,14 @@ def transact(target, state, old_state, after_state, changes):
   recover(target, state)
 
 
-def apply(instance: Path, state_root: Path, candidate, binding, launch):
+def apply(instance: Path, state_root: Path, candidate, binding, launch, *, expected_plan=None):
   with Tree(state_root, create=True) as state, instance_lock(state):
     with Tree(instance, create=True) as target:
       recover(target, state)
       old = read_state(state)
       change = plan(target, old, candidate, binding, launch)
+      if expected_plan is not None and change != expected_plan:
+        raise Conflict("预览后部署状态已变化；请重新运行 setup")
       if change.conflicts:
         raise Conflict("部署有未接管目标或双方修改冲突；请先查看 plan")
       if same(old["current"], change.current) and not change.changes:

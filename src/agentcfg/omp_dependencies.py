@@ -403,7 +403,9 @@ class OmpBackend:
         os.fsync(tree.fd)
       tree.replace(name, None, expected=raw[2])
 
-  def sync(self, workspace, lock):
+  def sync(self, workspace, lock, *, progress=None):
+    announce = progress or (lambda stage: None)
+    announce("检查锁与运行包")
     # 从受信仓库重读，防止调用者用伪造的内存对象绕过锁完整性。
     current = self.read_lock(workspace.repository)
     if current != lock:
@@ -417,7 +419,9 @@ class OmpBackend:
       asset = lock.metadata["assets"][platform_id()]
       from .omp_download import ensure_cached_asset
       downloads = workspace.cache / "downloads"
+      announce("获取锁定资产")
       ensure_cached_asset(downloads, asset["url"], asset["sha256"])
+      announce("校验并暂存运行包")
       ensure_private(root.parent)
       stage = Path(tempfile.mkdtemp(prefix=".stage-", dir=root.parent))
       old = root.parent / (".previous-" + uuid.uuid4().hex)
@@ -448,6 +452,7 @@ class OmpBackend:
             target.replace(entry["target"], raw[0], 0o700 if entry["executable"] else 0o600, expected=None)
           target.write_new(".agentcfg-receipt.json", json_bytes(receipt))
         self._verify(stage, receipt, lock)
+        announce("激活运行包")
         with Tree(root.parent) as activation:
           journal_name = ".pending-" + identity + ".json"
           activation.write_new(journal_name, json_bytes({"version": 1, "identity": identity,

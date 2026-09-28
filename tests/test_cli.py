@@ -178,7 +178,7 @@ def test_cli_missing_default_never_scans(monkeypatch, tmp_path, capsys):
   ["--local", "one", "init-local", "--machine", "two"],
   ["--profile", "one", "init-local", "--machine", "two"],
   ["init-local", "--machine", "one", "--machine=two"],
-  ["init-local"], ["--machine", "one", "init-local"],
+  ["--machine", "one", "init-local"],
   ["validate", "--machine", "one"], ["--mach", "one", "validate"],
   ["project"], ["project", "init", "openspec"],
   ["run", "dsh", "--unknown"], ["run", "dsh", "native-without-separator"],

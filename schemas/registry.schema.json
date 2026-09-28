@@ -22,7 +22,8 @@
         "protocol": {"$ref": "#/$defs/text"},
         "base_url": {"$ref": "#/$defs/text"},
         "auth_kind": {"$ref": "#/$defs/text"},
-        "credential_ref": {"$ref": "#/$defs/secret"}
+        "credential_ref": {"$ref": "#/$defs/secret"},
+        "omp_auth_header": {"type": "boolean"}
       }
     },
     "model": {
@@ -33,8 +34,84 @@
         "remote_id": {"$ref": "#/$defs/text"},
         "context_window": {"type": "integer", "minimum": 1},
         "max_output_tokens": {"type": "integer", "minimum": 1},
+        "max_output_supported": {"type": "integer", "minimum": 1},
         "source": {"$ref": "#/$defs/text"},
+        "name": {"$ref": "#/$defs/text"},
+        "reasoning": {"type": "boolean"},
+        "reasoning_efforts": {"type": "array", "items": {"type": "string", "enum": ["low", "high", "max"]}, "uniqueItems": true},
+        "pricing": {"$ref": "#/$defs/pricing"},
+        "native": {"$ref": "#/$defs/native_model"},
         "input": {"type": "array", "items": {"$ref": "#/$defs/text"}, "uniqueItems": true}
+      }
+    },
+    "price_rates": {
+      "type": "object", "additionalProperties": false,
+      "required": ["input", "output"],
+      "properties": {
+        "input": {"type": "number", "minimum": 0},
+        "output": {"type": "number", "minimum": 0},
+        "cache_read": {"type": "number", "minimum": 0},
+        "cache_write": {"type": "number", "minimum": 0}
+      }
+    },
+    "pricing": {
+      "type": "object", "additionalProperties": false,
+      "required": ["currency", "per_tokens", "source", "checked_on", "standard"],
+      "dependentRequired": {"off_peak": ["schedule"]},
+      "properties": {
+        "currency": {"type": "string", "enum": ["USD", "CNY"]},
+        "per_tokens": {"type": "integer", "const": 1000000},
+        "source": {"$ref": "#/$defs/text"},
+        "checked_on": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "standard": {"$ref": "#/$defs/price_rates"},
+        "off_peak": {"$ref": "#/$defs/price_rates"},
+        "schedule": {"$ref": "#/$defs/text"}
+      }
+    },
+    "native_model": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "pi": {"type": "object", "additionalProperties": false, "properties": {
+          "compat": {"type": "object", "additionalProperties": false, "properties": {
+            "requiresReasoningContentOnAssistantMessages": {"type": "boolean"},
+            "thinkingFormat": {"type": "string", "enum": ["deepseek"]},
+            "reasoningEffortMap": {"type": "object", "additionalProperties": false, "properties": {
+              "minimal": {"type": "string", "enum": ["low", "high", "max"]},
+              "low": {"type": "string", "enum": ["low", "high", "max"]},
+              "medium": {"type": "string", "enum": ["low", "high", "max"]},
+              "high": {"type": "string", "enum": ["low", "high", "max"]},
+              "xhigh": {"type": "string", "enum": ["low", "high", "max"]},
+              "max": {"type": "string", "enum": ["low", "high", "max"]}
+            }}
+          }}
+        }},
+        "omp": {"type": "object", "additionalProperties": false, "properties": {
+          "thinking": {"type": "object", "additionalProperties": false, "properties": {
+            "minLevel": {"$ref": "#/$defs/text"}, "maxLevel": {"$ref": "#/$defs/text"},
+            "mode": {"type": "string", "enum": ["effort"]}
+          }},
+          "compat": {"type": "object", "additionalProperties": false, "properties": {
+            "supportsDeveloperRole": {"type": "boolean"},
+            "supportsReasoningEffort": {"type": "boolean"},
+            "maxTokensField": {"type": "string", "enum": ["max_tokens"]},
+            "reasoningEffortMap": {"type": "object", "additionalProperties": false, "properties": {
+              "minimal": {"type": "string", "enum": ["low", "high", "max"]},
+              "low": {"type": "string", "enum": ["low", "high", "max"]},
+              "medium": {"type": "string", "enum": ["low", "high", "max"]},
+              "high": {"type": "string", "enum": ["low", "high", "max"]},
+              "xhigh": {"type": "string", "enum": ["low", "high", "max"]},
+              "max": {"type": "string", "enum": ["low", "high", "max"]}
+            }},
+            "supportsToolChoice": {"type": "boolean"},
+            "requiresReasoningContentForToolCalls": {"type": "boolean"},
+            "requiresAssistantContentForToolCalls": {"type": "boolean"},
+            "extraBody": {"type": "object", "additionalProperties": false, "properties": {
+              "thinking": {"type": "object", "additionalProperties": false, "properties": {
+                "type": {"type": "string", "enum": ["enabled"]}
+              }}
+            }}
+          }}
+        }}
       }
     },
     "mcp": {

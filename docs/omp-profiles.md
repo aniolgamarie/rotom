@@ -58,6 +58,8 @@ project_roots = ["/absolute/project"]
 
 validate/render 只构造候选身份与配置意图；首次 plan 可比较空状态，不要求运行包或已部署 binding。首次 apply 创建并持久化新身份。run、capture、rollback 和受管 usage 必须使用已部署身份。
 
-同一物理实例先取得实例锁，再取得管理状态锁。运行期间持锁到子进程退出；活动实例返回 4，管理器不终止进程抢占。换一个 state_root、local 或 machine 不能绕过归属接管同一目录。
+同一物理实例先取得实例锁，再取得管理状态锁。多个受管 run/usage 使用共享租约，可以在同一配方下启动不同前台会话；apply、rollback、capture 等配置操作使用独占租约，运行期间遇到活动会话返回 4。锁持有到子进程退出，管理器不终止进程抢占。换一个 state_root、local 或 machine 不能绕过归属接管同一目录。并行会话共用该配方的原生 HOME/profile，不应让两个进程同时恢复或编辑同一会话。
+
+本机 Linux x64 的断网双 PTY 验证及其限制见[并行会话记录](omp-parallel-smoke-2026-09-27.md)。
 
 出现 pending 后，先处理报告的冲突，再由显式 apply/rollback 恢复该实例自己的配置事务。`recover pi` 属于 Pi 专用运行租约恢复，不用于 OMP。

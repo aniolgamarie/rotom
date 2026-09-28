@@ -8,7 +8,7 @@ rotom 配方定义选用的公共模型、角色、规则、技能和 OMP 资源
 
 每个实例还有独立 HOME，因为 OMP 的部分设施位于原生 profile 之外。原生配置放在 `<instance>/user-home/.omp/profiles/<native-name>/agent`。管理器设置 HOME/XDG，不接受使用者指定原生 profile 名、旧 agentDir 或任意设置路径；不复制现有登录或会话。
 
-修改同一个实例的命令和受管启动共用物理实例锁；更换管理状态目录不能接管已有实例。切换配方会切换账号和会话范围，原配方的数据保留原位。
+修改同一个实例的命令和受管启动共用物理实例锁；多个运行会话使用共享租约，配置修改使用独占租约。更换管理状态目录不能接管已有实例。切换配方会切换账号和会话范围，原配方的数据保留原位。
 
 ## 配置来源
 
@@ -30,16 +30,11 @@ rotom 配方定义选用的公共模型、角色、规则、技能和 OMP 资源
 日常使用从正式 [`omp-kernel`](omp-kernel.md) 配方开始；`omp-default` 只作为无静态模型的 bootstrap 配方。全局选择参数位于子命令之前。先准备仓库 `.venv` 与权限为 0600 的私人机器文件，再使用统一入口：
 
 ```sh
-./agentcfg --local /private/local.toml --profile omp-kernel validate
-./agentcfg --local /private/local.toml --profile omp-kernel render
-./agentcfg --local /private/local.toml --profile omp-kernel sync
-./agentcfg --local /private/local.toml --profile omp-kernel plan
-./agentcfg --local /private/local.toml --profile omp-kernel apply
-./agentcfg --local /private/local.toml --profile omp-kernel doctor
-./agentcfg --local /private/local.toml --profile omp-kernel run omp --cwd /absolute/project
+./agentcfg --local /private/local.toml --profile omp-kernel setup
+./agentcfg --local /private/local.toml --profile omp-kernel run --cwd /absolute/project
 ```
 
-`validate/render/plan/apply` 与默认 `doctor` 离线，不启动 OMP。`sync` 消费已审阅锁，取得并验证运行包，不部署、登录或启动宿主。维护依赖时才显式执行 `./agentcfg lock --agent omp`。`run` 不隐式安装或部署，也不回退到 PATH 的全局 OMP。
+`setup` 先离线预览，有冲突或漂移时停止；随后 `sync` 消费已审阅锁，取得并验证运行包（可能联网），再重新检查并部署。需要逐项审阅时可分别执行 `validate`、`plan`、`sync`、`apply`、`doctor`；`render` 是可选的缓存生成步骤。维护依赖时才显式执行 `./agentcfg lock --agent omp`。`run` 不隐式安装或部署，也不回退到 PATH 的全局 OMP。
 
 `omp-kernel` 的自定义 API provider 使用私人 key，不需要原生账号登录。`omp-default` 是无静态模型的 bootstrap 配方；需要 OpenAI Codex 原生登录时使用同一受管身份：
 

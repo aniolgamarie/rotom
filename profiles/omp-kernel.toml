@@ -89,7 +89,7 @@
 "sessionAccent" = true
 "showHookStatus" = true
 "compactThinkingLevel" = false
-"leftSegments" = ["model", "context_pct", "token_rate", "time_spent"]
+"leftSegments" = ["vim", "model", "context_pct", "token_rate", "time_spent"]
 "rightSegments" = ["session_name", "path", "git", "mode", "token_total", "cache_hit"]
 
 ["agent_options"."runtime"."statusLine"."segmentOptions"]

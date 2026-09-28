@@ -14,7 +14,7 @@ from agentcfg.omp_discovery import DISABLED_PROVIDERS, NATIVE_ROOT_PATTERNS, Sou
 from agentcfg.omp_identity import native_identity
 from agentcfg.omp_identity import lifecycle_guard
 from agentcfg.schema import ConfigError
-from agentcfg.storage import Conflict
+from agentcfg.storage import Conflict, Tree, instance_lock
 from agentcfg.omp import OmpAdapter, CALLER_IDENTITY_ENV
 from agentcfg.render import RenderCandidate
 from agentcfg.secrets import SecretStore, CredentialError
@@ -175,6 +175,23 @@ def test_physical_owner_is_created_only_by_apply_guard_and_binds_state(tmp_path)
       pass
 
 
+def test_omp_parallel_run_leases_block_configuration_writes(tmp_path):
+  workspace = workspace_for(tmp_path)
+  with lifecycle_guard(workspace, create=True):
+    pass
+  with Tree(workspace.state_root, create=True) as state:
+    with lifecycle_guard(workspace, shared=True), instance_lock(state, shared=True):
+      with lifecycle_guard(workspace, shared=True), instance_lock(state, shared=True):
+        with pytest.raises(Conflict, match="活动"):
+          with lifecycle_guard(workspace):
+            pass
+        with pytest.raises(Conflict, match="实例正在运行"):
+          with instance_lock(state):
+            pass
+    with lifecycle_guard(workspace), instance_lock(state):
+      pass
+
+
 def test_physical_lock_mode_is_checked_before_owner(tmp_path):
   workspace = workspace_for(tmp_path)
   with lifecycle_guard(workspace, create=True):
@@ -282,6 +299,29 @@ def test_runtime_integration_holds_three_leases_and_preserves_exit(tmp_path, mon
   assert fake_subprocess.calls[0]["argv"][-1] == "--no-title"
   fake_subprocess.queue(returncode=-9)
   assert runtime.run(workspace, cwd=cwd) == 137
+
+
+def test_two_omp_runs_can_share_deployed_instance(tmp_path, monkeypatch):
+  clear_omp_identity_environment(monkeypatch)
+  isolate_runtime_discovery(monkeypatch)
+  workspace, _ = runtime_workspace(tmp_path)
+  first = tmp_path / "first"
+  second = tmp_path / "second"
+  first.mkdir()
+  second.mkdir()
+
+  def second_run(w, spec, env, lease, contract, *, lifecycle_fd):
+    assert spec.cwd == second
+    with pytest.raises(Conflict, match="活动"):
+      with w.adapter.apply_lifecycle_guard(w):
+        pass
+    return 0
+
+  def first_run(w, spec, env, lease, contract, *, lifecycle_fd):
+    assert spec.cwd == first
+    return runtime.run(w, cwd=second, launch_operation=second_run)
+
+  assert runtime.run(workspace, cwd=first, launch_operation=first_run) == 0
 
 
 def test_runtime_rejects_missing_owner_pending_package_and_secret(tmp_path, monkeypatch, fake_subprocess):

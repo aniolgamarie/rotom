@@ -47,10 +47,9 @@ uv sync --locked
 
 ```sh
 ./agentcfg init-local --machine workstation
-nvim "${XDG_CONFIG_HOME:-$HOME/.config}/agentcfg/machines/workstation.toml"
 ```
 
-初始化成功时会提示已创建本地配置。文件已存在则不会覆盖，直接打开原文件编辑即可。没有 nvim 时用自己熟悉的文本编辑器。
+初始化成功时会提示已创建本地配置。文件已存在则不会覆盖。默认 `dsh-default` 已适合 Codex/Cursor 订阅入口，可以直接进入下一步。若要用其他配方，先运行 `./agentcfg profiles` 查看 ID，再在初始化时加 `--profile ID`；已有文件可用编辑器调整 `machine.default_profile`。
 
 **只使用 Codex/Cursor 订阅时，文件可以保持如下内容。** `editor` 是可选项；新增时要放在 `[machine]` 内、`[secrets]` 前。
 
@@ -64,25 +63,28 @@ default_profile = "dsh-default"
 editor = "nvim"
 
 [secrets]
+deepseek_key = ""
+kimi_key = ""
+glm_key = ""
 ```
 
 订阅登录稍后在 DSH 内完成，空 `[secrets]` 不影响生成和部署。无需填写 DeepSeek key，也不要把 Codex 订阅登录信息当作 OpenAI API key 填在这里。
 
-如果使用百炼或私有 API，按 [本地配置参考](local-config.md#私有网关示例) 添加 provider、model、选择列表和密钥；地址和模型 ID 必须来自你的服务。示例中的 `example.invalid` 和 `fictional-*` 是虚构数据，不能直接调用。已有文件只修改需要的表，不要整份覆盖。
+如果使用百炼或私有 API，可以运行 `./agentcfg --machine workstation model add`，在终端内一次填写 provider、model、角色及必需的密钥；向导校验后展示脱敏摘要，确认才写入。地址、模型 ID 和容量必须来自你的服务。也可按 [本地配置参考](local-config.md#私有网关示例) 手动编辑。示例中的 `example.invalid` 和 `fictional-*` 是虚构数据，不能直接调用。
+
+DeepSeek、Kimi、GLM 官方直连预设可先用 `./agentcfg model presets` 查看，再以 `./agentcfg --machine workstation model enable kimi` 等命令填入私人 key 后启用。没有 key 时无需启用，现有订阅入口仍能启动。预设记录 OpenAI/Anthropic 地址、能力、容量和带来源的价格快照；价格不等同于实际账单，详见[本地配置参考](local-config.md)。
 
 机器文件保存在仓库外，初始化权限是 0600；不要提交到 Git。它可以包含 API key，也可以包含这台机器独有的路径和模型。所有字段说明见 [本地配置参考](local-config.md)。
 
 ## 3. 检查、安装和部署
 
-在仓库目录依次执行；某一步失败时，先解决它，再继续下一步：
+在仓库目录执行一条命令。它先预览变化；发现冲突、漂移或待恢复事务会在安装前停止。预览通过后同步已锁定的依赖（缺失时可能联网），再重新检查并部署：
 
 ```sh
-./agentcfg --machine workstation validate
-./agentcfg --machine workstation plan
-./agentcfg --machine workstation sync
-./agentcfg --machine workstation apply
-./agentcfg --machine workstation doctor
+./agentcfg --machine workstation setup
 ```
+
+需要逐项审阅或排障时，仍可分别执行 `validate`、`plan`、`sync`、`apply`、`doctor`：
 
 | 操作 | 做什么 | 怎样理解结果 |
 |---|---|---|
@@ -90,9 +92,10 @@ editor = "nvim"
 | `plan` | 预览将改哪些配置，不写入实例 | 首次 `changes` 大于 0 正常；`conflicts` 应为 0；`sync-required` 表示尚需安装依赖 |
 | `sync` | 按已有锁安装 DSH、插件和 OpenSpec，可能联网 | 完成后依赖可用；不会登录或启动 DSH |
 | `apply` | 将配置部署到独立实例，并保留上一版受管内容 | 会重新检查冲突；你执行该命令就表示应用本次配置 |
-| `doctor` | 离线检查部署、依赖和备份状态 | 正常部署应有 `deployed: true`、`dependencies: "installed"`、`recovery_pending: false` |
+| `doctor` | 离线检查部署、依赖和备份状态，适用于 DSH、Pi、OMP | `readiness` 给出阻塞项和下一条命令；不代表已登录或模型可调用 |
+| `doctor --input` | 补充诊断命令所在终端的标志与离线交互就绪信息 | OMP 另报告受管事件循环阻塞日志；DSH/Pi 明确标记无受管事件源，不读取按键 |
 
-命令当前输出 JSON，一行可能较长。关注上表字段即可。`authentication: "not-inspected; use native auth status"` 表示管理器没有查看账号数据，不是登录失败。检查命令之后可以单独执行 `echo $?`；`0` 表示该命令成功。
+`setup` 在标准输出给出简短摘要；`setup` 和 `sync` 的阶段进度写到标准错误，安装耗时较长时会定时提示已等待时间。校验、预览、部署、启动及模型向导也显示当前阶段；失败时显示所在步骤、退出码和建议执行的诊断命令。分步命令保留标准输出的 JSON 供脚本使用；进度不会打印安装器原始日志、参数或密钥。`doctor` 的 `authentication: "not-inspected; use native auth status"` 表示管理器没有查看账号数据，不是登录失败。
 
 首次使用不需要执行 `lock`，仓库已经带有依赖锁；`lock` 用于开发维护或明确升级版本。也不必单独执行 `render`，`plan/apply` 会计算需要的产物。
 
@@ -101,7 +104,7 @@ editor = "nvim"
 将下面路径换成你希望 Agent 操作的项目目录，路径有空格时保留引号：
 
 ```sh
-./agentcfg --machine workstation run dsh --cwd "/你的项目绝对路径"
+./agentcfg --machine workstation run --cwd "/你的项目绝对路径"
 ```
 
 该路径必须存在。`--cwd` 决定 DSH 操作哪个项目；不要为了方便填 rotom 路径，除非你确实要维护 rotom。日常启动仍用这条命令，无需每次 sync/apply。
@@ -174,7 +177,7 @@ editor = "nvim"
 | 机器文件不存在 | 检查 `--machine` 名称是否与初始化一致；初始化后不要漏写它，否则默认找 `default` |
 | Node/npm 版本不符 | 按第 1 步的命令对应要求选用版本；生成锁必须精确匹配 |
 | 配置或引用错误，退出码 2 | 根据报错字段检查 TOML，对照本地配置参考；不要把 DSH 原生 YAML 填进去 |
-| 所需凭据缺失，退出码 3 | 在所选机器文件的 `[secrets]` 填写对应 API key；订阅账号走 DSH 内登录 |
+| 必需的服务凭据缺失，退出码 3 | 在所选机器文件的 `[secrets]` 填写相应 MCP/服务密钥；用 `model status` 查看模型 key 状态。模型 key 缺失只提示，不阻止工具启动；调用该模型前仍需填写。订阅账号走原生工具内登录 |
 | 冲突、活动实例或恢复待处理，退出码 4 | 先退出 DSH，查看 plan/doctor；保留冲突文件，按日常维护文档处理 |
 | 缺运行包、doctor 显示 damaged 或依赖失败，退出码 5 | 退出实例，检查工具链及安装网络，重新 sync 暂存修复；账号目录保持不变 |
 | Cursor 代理端口占用 | 退出重复实例；确需多实例时按 DSH 文档配置不同 `cursor_port` |

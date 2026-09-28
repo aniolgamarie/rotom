@@ -121,7 +121,7 @@ def test_native_config_overlay_environment_is_rejected(tmp_path, monkeypatch, ch
 
 
 def test_complete_kernel_runs_from_repo_with_only_declared_secret_environment(
-    tmp_path, monkeypatch, fake_subprocess):
+    tmp_path, monkeypatch, fake_subprocess, capsys):
   from types import SimpleNamespace
   from agentcfg import runtime
   from agentcfg.secrets import SecretStore
@@ -146,13 +146,19 @@ def test_complete_kernel_runs_from_repo_with_only_declared_secret_environment(
   assert sorted(value for key, value in call["env"].items() if key.startswith("AGENTCFG_OMP_PROVIDER_")) == [
     "synthetic-kimi", "synthetic-zhipu"]
   assert "PI_CONFIG_FILES" not in call["env"]
+  workspace.secret_store = SecretStore({"omp_kimi_tf_key": "synthetic-kimi"})
+  fake_subprocess.queue(returncode=0)
+  assert runtime.run(workspace, cwd=REPO) == 0
+  second = fake_subprocess.calls[-1]["env"]
+  assert sorted(value for key, value in second.items() if key.startswith("AGENTCFG_OMP_PROVIDER_")) == ["synthetic-kimi"]
+  assert "1 个可选模型凭据未配置" in capsys.readouterr().err
   # 实际agent权限文件一旦漂移，必须在第二次spawn前拒绝。
   from agentcfg.storage import Conflict
   agent = native_identity(workspace.profile, workspace.instance).agent_dir / "agents/task.md"
   agent.write_text(agent.read_text() + "\nchanged permission instructions\n")
   with pytest.raises(Conflict):
     runtime.run(workspace, cwd=REPO)
-  assert len(fake_subprocess.calls) == 1
+  assert len(fake_subprocess.calls) == 2
 
 
 def test_capture_distinguishes_model_id_colon_from_thinking_suffix():
