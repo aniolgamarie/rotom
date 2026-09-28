@@ -1,0 +1,1570 @@
+{
+  "assets": {
+    "tmux": [
+      {
+        "archive": "tar.gz",
+        "commit": "e261deb1b47614eed3400089ce7197dc68acc4eb",
+        "entry": "tpm",
+        "id": "tpm",
+        "platform": "all",
+        "repo": "tmux-plugins/tpm",
+        "resources": [
+          {
+            "mode": "0600",
+            "path": ".gitattributes",
+            "sha256": "d16954fc0a22322322211582b29812fb6c80a7a0892b766fbebf0ac109e767e6"
+          },
+          {
+            "mode": "0600",
+            "path": ".gitignore",
+            "sha256": "2c377105a04853933e322cb06b7edc687f69548e6ac96a0526f5a21c1745d0e9"
+          },
+          {
+            "mode": "0600",
+            "path": ".gitmodules",
+            "sha256": "56a2927ff6b5349c3330a786b3c73c31f825b283aff3c495860d45d62d4b2191"
+          },
+          {
+            "mode": "0600",
+            "path": ".travis.yml",
+            "sha256": "669995c8d66be62f7b70296fdcdd6051ab751299ce22099f5246972c84f77796"
+          },
+          {
+            "mode": "0600",
+            "path": "CHANGELOG.md",
+            "sha256": "d69ecd63c58efef82437724269fad6c649b3c24dbe80a6b75eef75cc5e63b1d1"
+          },
+          {
+            "mode": "0600",
+            "path": "HOW_TO_PLUGIN.md",
+            "sha256": "a066a7a89bb3b0fb0a6dd47cc55b9433e66b19d4fb2c94baffd6aced30ebdfc3"
+          },
+          {
+            "mode": "0600",
+            "path": "LICENSE.md",
+            "sha256": "9666a6ef8615a5a5e3d942a93000ce5d7c3f752c530819afef5a20e18e030a17"
+          },
+          {
+            "mode": "0600",
+            "path": "README.md",
+            "sha256": "a5e5987af0803dbaa34816bce11780dbea70d1276247e4961e73e45ff852c295"
+          },
+          {
+            "mode": "0700",
+            "path": "bin/clean_plugins",
+            "sha256": "68a6d98af2c46dd2daea411e82d3c9e743bee8dd34074a8b61cefcdcc7498af8"
+          },
+          {
+            "mode": "0700",
+            "path": "bin/install_plugins",
+            "sha256": "896a2eb1acbb0734e755cd57689780829392435c60cf9e1cd9266709716f6685"
+          },
+          {
+            "mode": "0700",
+            "path": "bin/update_plugins",
+            "sha256": "604b4f9e1f8839d33f98d873478b6d2a381b2dc741fe66f926474f5e38214a21"
+          },
+          {
+            "mode": "0700",
+            "path": "bindings/clean_plugins",
+            "sha256": "85b5b6e74e2b4daa032b8939f00e7a0a2bd1153408ddfb74622a6d1fa77f9d93"
+          },
+          {
+            "mode": "0700",
+            "path": "bindings/install_plugins",
+            "sha256": "2e4b44779daa4ac0f53875f1a50d42f32e4585ce705563256920983e04a6b582"
+          },
+          {
+            "mode": "0700",
+            "path": "bindings/update_plugins",
+            "sha256": "067e791b16948828264fec91580d51ad81fc61106679ad0c8c236a24c6cb772a"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/automatic_tpm_installation.md",
+            "sha256": "51845238e606c375b2f0906e4b9f8edb6bff5e28a15101dbcd3fda750b8c740a"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/changing_plugins_install_dir.md",
+            "sha256": "d88d349f3ba678434c1e3ce2fd1962e6a18df436a816e4454cf818cb494229e0"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/how_to_create_plugin.md",
+            "sha256": "8e807e1e040e54d2b98fc6fe75f332930e6e1304fc93803c577c88d8d02c672b"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/managing_plugins_via_cmd_line.md",
+            "sha256": "3a73655bd868962fe8b408201aa9379c7303693b1c61f98f64e8126c46c5a631"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/tpm_not_working.md",
+            "sha256": "8fd102f3b481457393db288c0004e278c1f9ca45a51f379aaf95042df6d6a543"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/check_tmux_version.sh",
+            "sha256": "49e2b2874bbc5b64bf225ac51239c923d965aa8e85528d7850870ee5e1daa421"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/clean_plugins.sh",
+            "sha256": "a5dff271b15ff1e161609b3ed0ecf92cef80e62408af535d6f7420be11135939"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/helpers/plugin_functions.sh",
+            "sha256": "f56ad97623921b5ad4058e3710441518d851112d3fd46fbe2eca958a945a7ac4"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/helpers/shell_echo_functions.sh",
+            "sha256": "16cc28a52ee5a7fb220bd62266021e074d47d56056cd041ff08eade1dd6e325f"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/helpers/tmux_echo_functions.sh",
+            "sha256": "59fd0ea1ff8f9584168e793a2377eafddb6616f4438da7c5eb214eb0786d5e48"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/helpers/tmux_utils.sh",
+            "sha256": "08ce6f8e988a77b168ebdafa1fa5e8ffffe8d6cf85651c8346f51e4dc295e559"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/helpers/utility.sh",
+            "sha256": "d56f5b62eea4e43b605b3c57f0a0739f99d7ad04c226afc0b0d528f909e78a25"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/install_plugins.sh",
+            "sha256": "34b8428939fd7de4871c237e38e3fca13e82693ad8ae1c4c7afdaa5e587f2081"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/source_plugins.sh",
+            "sha256": "be981ffc651cbcd7896e8310a5e2ea473cde69e31a43e3d8f0ebcf2ed7eb8e1f"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/update_plugin.sh",
+            "sha256": "4a4868b21aff886bbd24ed5070eb9c7d17bc5d9f3b41680e5eae2eec6d193759"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/update_plugin_prompt_handler.sh",
+            "sha256": "c568d3f5ce614a61a122d248768c8327adb0bb7602062909df991f22b685b698"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/variables.sh",
+            "sha256": "4209ab8a22399b675bf049bb7e238c5237deec1d894ee206b357013b13841548"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/expect_failed_plugin_download",
+            "sha256": "00449d31f407b9126f24248830f0aeb2a5f2d69331e886cc70fc2a2616717b70"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/expect_successful_clean_plugins",
+            "sha256": "c5eaa2fa1416608af8b92c19f257e978a140ad1610ff57a16fc415fcafd12732"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/expect_successful_multiple_plugins_download",
+            "sha256": "f4d037c576f6dbd8b87d4dc9a72e52e89a21763afb522fd2749c5f9ff56ef5db"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/expect_successful_plugin_download",
+            "sha256": "58f9baae1cabf122579975f16cc1be5f9df6ece792ae4c7b240835e4ffdcadbe"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/expect_successful_update_of_a_single_plugin",
+            "sha256": "41345878ac5a57320d812778df1eb8777f2943f5a73d79536bfb636ca5579633"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/expect_successful_update_of_all_plugins",
+            "sha256": "f0c8579df6dc300f82054098e7d237e4f81ac13226fd68cc65bf22c9be38194b"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/helpers/tpm.sh",
+            "sha256": "f3ebba43671b246621401fc8a573e6c54e6261a7199985d7491bedf25bf61f8f"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/test_plugin_clean.sh",
+            "sha256": "506d11d5217daf04bc06f451db3174d93e701446769cdf55c8fe5b50c56cdea4"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/test_plugin_installation.sh",
+            "sha256": "e591fcfff4cf114c1d590a2321641ab1a175be39b4db936e79a26df18e293eca"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/test_plugin_installation_legacy.sh",
+            "sha256": "9bc8cc6917e7c73b3f58cac26f18c859e8e7629b49374fc5c771fcf69a2a4197"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/test_plugin_sourcing.sh",
+            "sha256": "eda38e1e005d446f0b78cccf63b0c997a96001c10285fa115ceb11ded2c87bc5"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/test_plugin_update.sh",
+            "sha256": "eec3013b71855027fc988f2a90f1d87f4f408ee99d768c8e22f1fc0fe22f6faa"
+          },
+          {
+            "mode": "0700",
+            "path": "tpm",
+            "sha256": "d1d034032f9231c34a2cef32fb603118d06e4a4fe89f4bd662c3fca93717cdfc"
+          }
+        ],
+        "sha256": "72d92c512270d4857e27519ac97b92a52cf149afe4d92f26860c710f60bbbe37",
+        "size": 15547,
+        "url": "https://codeload.github.com/tmux-plugins/tpm/tar.gz/e261deb1b47614eed3400089ce7197dc68acc4eb"
+      },
+      {
+        "archive": "tar.gz",
+        "commit": "25cb91f42d020f675bb0a2ce3fbd3a5d96119efa",
+        "entry": "sensible.tmux",
+        "id": "tmux-sensible",
+        "platform": "all",
+        "repo": "tmux-plugins/tmux-sensible",
+        "resources": [
+          {
+            "mode": "0600",
+            "path": ".gitattributes",
+            "sha256": "119361b9a20f846bcf4a69894b13ffec0dadddc03c5e6563e5d393d9442d33f7"
+          },
+          {
+            "mode": "0600",
+            "path": "CHANGELOG.md",
+            "sha256": "00368279aebbf903205a81bf0631296f6899e06f75e38be7d134f68ea844ee0c"
+          },
+          {
+            "mode": "0600",
+            "path": "LICENSE.md",
+            "sha256": "feb349cbcc419a7ee2abbe58aeddb6911a02d52a0525105cf3839ac92444aa1d"
+          },
+          {
+            "mode": "0600",
+            "path": "README.md",
+            "sha256": "aeecaa7d4c03ddad6d49ab78415471ce4db05e36381d3c06337821199d8a1974"
+          },
+          {
+            "mode": "0700",
+            "path": "sensible.tmux",
+            "sha256": "c9f03ba0cb149f458cf4e50a06c56ad861ca1bf2f3b102a5ec80ab3acdfa9c92"
+          }
+        ],
+        "sha256": "0af1e1eb7139ded74fe03c1ebba7fb4533f5c7d345e42b73f718a9d822d88903",
+        "size": 4501,
+        "url": "https://codeload.github.com/tmux-plugins/tmux-sensible/tar.gz/25cb91f42d020f675bb0a2ce3fbd3a5d96119efa"
+      },
+      {
+        "archive": "tar.gz",
+        "commit": "bcb110d754ab2417de824c464730c412a3eb2769",
+        "entry": "cpu.tmux",
+        "id": "tmux-cpu",
+        "platform": "all",
+        "repo": "tmux-plugins/tmux-cpu",
+        "resources": [
+          {
+            "mode": "0600",
+            "path": ".editorconfig",
+            "sha256": "64bcaea1fd38b5e949607704d03d726d8d879fb269b41cf95d818e0d0809a0a6"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/workflows/check.yml",
+            "sha256": "418cba9effaa0f1762fbc904f53980a24f6aad57c78701ae6981340743d936f5"
+          },
+          {
+            "mode": "0600",
+            "path": ".mailmap",
+            "sha256": "fbf75864506b77a3c78fc6351fce9de0eeb0a7374e6920cf53991af319ade0d6"
+          },
+          {
+            "mode": "0600",
+            "path": "LICENSE",
+            "sha256": "50a3e2f84f866849737a7ce0310311221759303b36fbe8b68e47302b1b3314fc"
+          },
+          {
+            "mode": "0600",
+            "path": "README.md",
+            "sha256": "a6a3411cb2197c6c151c8650004b570d5ebbc0695a233558038ef9344208235a"
+          },
+          {
+            "mode": "0700",
+            "path": "cpu.tmux",
+            "sha256": "39465f177f4948495c4058bb223d0e3d8799d033f5c431bf6a1fadf53961e31f"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/high_bg.png",
+            "sha256": "a3696d614078f6ef569b006d60418167b2bd30a61f1830f3e676a7e17b8a4d5f"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/high_fg.png",
+            "sha256": "ef3f0645833268a8a7d1a290dae1920daaf63d0fa47d0da4fbf257614754a12c"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/high_icon.png",
+            "sha256": "d7a2b7f00045a4b596e0abfba5901d340b4c52658733abff6b460dba1bbeaaa4"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/low_bg.png",
+            "sha256": "398e315dbaa8c10e123a68d872f9a5e0c3dac43b2b3a1dbece7bea24c9c30129"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/low_fg.png",
+            "sha256": "8a1a5c8295c2ec8736a536df99c512f4059d9efc09f3ffa9176e20a31d73556f"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/low_icon.png",
+            "sha256": "9d16a0382d1722e74bde82d12aca5407da840e6df8a2090bbb4890fb778ecaa3"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/medium_bg.png",
+            "sha256": "d9ec5c2503a3ecacc76a2b5ce841272bbe2a1eba114a5688508e79ba6d08ea5c"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/medium_fg.png",
+            "sha256": "4636a248a980ac01fab45a9d8a54ddcb2527e2ba38bcbf056bba97391252b504"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/medium_icon.png",
+            "sha256": "33f434c5a4ed70c7583f835ad2dc17cf5e0363e6e4fdb3a5402e35a42f99dc87"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/cpu_bg_color.sh",
+            "sha256": "b516333ca283a9594f305782e5b49170d8fd99d45593981523a661b9350a6c7a"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/cpu_fg_color.sh",
+            "sha256": "af22a9164ff302be916b4d1b69d40e3b38db166ab24763c3dadd03c0a9a95591"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/cpu_icon.sh",
+            "sha256": "e200dd84f4c34de480bf98f466e7cfe58ec90a2d0848a2882171713117e1a8a3"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/cpu_percentage.sh",
+            "sha256": "c356ee2759548ee5383b4625539437057acf0a1f5b0b1a231aa05c41ced16721"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/cpu_temp.sh",
+            "sha256": "815ce0310904a5ced8844d950ad65cf4ea22fa35d79c00e2c271e7153566021c"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/cpu_temp_bg_color.sh",
+            "sha256": "13e7ec462badd560732f22ce219fa91f337e67756bd8c8f6397100015ba43d76"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/cpu_temp_fg_color.sh",
+            "sha256": "d6720a86b13089ad302b90c57f30b6ddef63399cc553fa090910907b0c7c80f2"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/cpu_temp_icon.sh",
+            "sha256": "56466a0616d7b6f5cc85140e2462efb676d73e41c6198a0ff59c6d2950b8f7df"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gpu_bg_color.sh",
+            "sha256": "f45c755fa59334b09b5571678e200124a109f38951474847384592fc65c36a51"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gpu_fg_color.sh",
+            "sha256": "20df428450b05c8429255d060addaf64e98910f5c069e856b5c53f405c28b1a2"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gpu_icon.sh",
+            "sha256": "b68a20b38e8ad20f5b4ba10fd511983c1a2bc49446511b129e83037fbe8f203a"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gpu_percentage.sh",
+            "sha256": "5ad14bfa7a39960106c3fe399c9004dae054a10033f9fb3a9cf5eb5e5178e7d7"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gpu_temp.sh",
+            "sha256": "7a7d47512dccb2b7f3caf1011316c8f5a0a6df6ecff7e3fb524a9b7a2985789a"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gpu_temp_bg_color.sh",
+            "sha256": "a39e60891aad43408eddeff1777d897270f9de472dfebac7dfe01824a72ddd9c"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gpu_temp_fg_color.sh",
+            "sha256": "da0c14c3f796d0bdbbe07379302232a8cd36abdedcade2e90cd207145fda31e7"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gpu_temp_icon.sh",
+            "sha256": "da976cf437a59d5361eab4c31a28765edbb6e909cc4fc1e2ceefb7f2b6303254"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gram_bg_color.sh",
+            "sha256": "773c763abba2ec72c2e204b4d16cdecbd5081cd1714ca7f8eef6d84289d8ef8e"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gram_fg_color.sh",
+            "sha256": "cd30b91cfb1b16e17b6ebbb8933be1a4d7079b57794b6c2f8edc0899c3482085"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gram_icon.sh",
+            "sha256": "b38526843bd8de95fe22e69c35b24237b0494bfd3a9c21161f1d0ea3a427d018"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/gram_percentage.sh",
+            "sha256": "ba7f5471b6f77e8de6a7dc95e5f154fcc5784069a57dbb12e60ba07aef30095b"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/helpers.sh",
+            "sha256": "cd448c8d93c67eb20b1dac823d0a68ae0f482f5ad777887e81eea4842c0923f2"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/ram_bg_color.sh",
+            "sha256": "0bf7d7aa761296250e3ef0459b29e73a48373666bf13424b536353e5049eb293"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/ram_fg_color.sh",
+            "sha256": "072a371d4ca7942bc663947bc68e40b4751dff01c3c158ca09d79a2b40aec9b8"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/ram_icon.sh",
+            "sha256": "66e17f37ecf4423aa64be2f1e31c0cdb9d4159e1faf6b12a2d08e7ea7141e8cc"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/ram_percentage.sh",
+            "sha256": "a64458ff6bec284c373c4ac5844e247c7b47a41ef39c96ac685ed797e08a3ec7"
+          }
+        ],
+        "sha256": "340219f97e506b0b5e2a4e263f73f8646dbb5e21834f2e61acf6353ba2d32340",
+        "size": 18091,
+        "url": "https://codeload.github.com/tmux-plugins/tmux-cpu/tar.gz/bcb110d754ab2417de824c464730c412a3eb2769"
+      },
+      {
+        "archive": "tar.gz",
+        "commit": "32b760f6652f2305dfef0acd444afc311cf5c077",
+        "entry": "pain_control.tmux",
+        "id": "tmux-pain-control",
+        "platform": "all",
+        "repo": "tmux-plugins/tmux-pain-control",
+        "resources": [
+          {
+            "mode": "0600",
+            "path": ".gitattributes",
+            "sha256": "fb3dcf25c036de826d320cf0665b865d523d3c79e5340cb52c9a103c3391952f"
+          },
+          {
+            "mode": "0600",
+            "path": "CHANGELOG.md",
+            "sha256": "5c1e2512e13abaa6485cf44e1acee2ee9595aaf3e845ac307ffd55b6a539c1ed"
+          },
+          {
+            "mode": "0600",
+            "path": "LICENSE.md",
+            "sha256": "feb349cbcc419a7ee2abbe58aeddb6911a02d52a0525105cf3839ac92444aa1d"
+          },
+          {
+            "mode": "0600",
+            "path": "README.md",
+            "sha256": "104fa1f2a80b7b1bea0696ee4c6367e1cabe07d3720de83d8098d5355dea44be"
+          },
+          {
+            "mode": "0700",
+            "path": "pain_control.tmux",
+            "sha256": "8d073e976563596039b83714c83acdda4773faf97860cce884e954c2bcf27302"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/pane_navigation.gif",
+            "sha256": "44251653a6920c13595900c88dae807f6e706a9258d67d899e9fd2fb8cf2f1ba"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/pane_resizing.gif",
+            "sha256": "c86a2f3de446bae752a6d3c24b322474cd573930d01235245ca2d0b7204cfe4f"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/pane_resizing.psd",
+            "sha256": "127655fdfaed3e189dc1d7665b35d710197a523ec19174262feb88ed3200fa36"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/pane_splitting.gif",
+            "sha256": "1b0a7f247e8e1cda3ecf70d54defa70652e2e9da5c27eb6cf7fc6f2dd3c0dd15"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/pane_splitting.psd",
+            "sha256": "5e0a916bd093cf5b90a7b59329b546655d50cc4aa8247104ccb318bb1562ecd9"
+          }
+        ],
+        "sha256": "11cadc167192527bfe044e8d466d8faa52336f86f4a705d4f59c960ea66fda74",
+        "size": 108539,
+        "url": "https://codeload.github.com/tmux-plugins/tmux-pain-control/tar.gz/32b760f6652f2305dfef0acd444afc311cf5c077"
+      },
+      {
+        "archive": "tar.gz",
+        "commit": "acfd36e4fcba99f8310a7dfb432111c242fe7392",
+        "entry": "yank.tmux",
+        "id": "tmux-yank",
+        "platform": "all",
+        "repo": "tmux-plugins/tmux-yank",
+        "resources": [
+          {
+            "mode": "0600",
+            "path": ".editorconfig",
+            "sha256": "855ffc1478c7732d872daa55df97c04e931e7cb7758ffd7291d50b5cfe19ae21"
+          },
+          {
+            "mode": "0600",
+            "path": ".gitattributes",
+            "sha256": "45103c5c5db93110f9faf4c8b7645b9572a205ef3b0d0530c5cde4be0a368f45"
+          },
+          {
+            "mode": "0600",
+            "path": ".gitignore",
+            "sha256": "d97c263d44a33954979f9582146bf8d4cc1d9bf9959a9059aeb58afd01bebaea"
+          },
+          {
+            "mode": "0600",
+            "path": ".travis.yml",
+            "sha256": "49af3d99bd8e5307dd598af9774d1d045d88e303f4675a79ece98966e0082009"
+          },
+          {
+            "mode": "0600",
+            "path": "CHANGELOG.md",
+            "sha256": "b23bcc052e4b87118004f0b6d966c1e8da191b93efdeb0f449bf4933b16da1d7"
+          },
+          {
+            "mode": "0600",
+            "path": "LICENSE.md",
+            "sha256": "6899297d88ae5b9d95f9447382eb9873870d0d5ff4a9367547c238152bd2d808"
+          },
+          {
+            "mode": "0600",
+            "path": "README.md",
+            "sha256": "465dd873e676b06d6851c813e17332235b8e9b240534a19e43f7251da9ab121b"
+          },
+          {
+            "mode": "0600",
+            "path": "Vagrantfile",
+            "sha256": "9bfaa3e0ef3f38feefe13e6a75ca678f9627912015385f8b16b2cf35eded3d8d"
+          },
+          {
+            "mode": "0600",
+            "path": "_config.yml",
+            "sha256": "89500f4d9d2bb727f973ace596b9ea2e58553acd80c41d95c3c2658f45095560"
+          },
+          {
+            "mode": "0700",
+            "path": "citest",
+            "sha256": "769bf1c55c87b8ed1a8e5c22db91d667fdc693e2b9237bc487bc02009132cc69"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/copy_line.sh",
+            "sha256": "9afb282c63cdebdd5397a3847e744bd9a95940bdccc8f5e42a73689ed43dfe0d"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/copy_pane_pwd.sh",
+            "sha256": "ed93e3b8496c463b2f8d1cf6b28f0da70c7b128843baee99db2c1c2111e7a9d6"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/helpers.sh",
+            "sha256": "875e435eef3b90261a30945dad6de0fddb6481a4da02d9c4c68652d2a9464f86"
+          },
+          {
+            "mode": "0600",
+            "path": "vagrant_provisioning.sh",
+            "sha256": "80f1bfabc81b715d3e26726595cf71c39f14021fd445326ce7bbb6b6ce41e17b"
+          },
+          {
+            "mode": "0600",
+            "path": "video/README.md",
+            "sha256": "2deae810933c81a19019cec73e700e04754a4ebc32f3faadbcf86002b708d1ef"
+          },
+          {
+            "mode": "0600",
+            "path": "video/screencast_img.png",
+            "sha256": "0d2a9ed82c44f90cf13c927cf4b079be233fcf3c9e8b300cd6a1a196b231748e"
+          },
+          {
+            "mode": "0600",
+            "path": "video/script.md",
+            "sha256": "8b2be3472569a21d73ffa7134cd80f04b9f4601640042c6fc8d8a0f057695ec5"
+          },
+          {
+            "mode": "0700",
+            "path": "yank.tmux",
+            "sha256": "054dda1d1aeae55744c3e34f6e824bf741b35051db6007b878fe32fb2eb0402a"
+          }
+        ],
+        "sha256": "702c4f164fee51c70798264917e9c53854c2e357ddf6f1982ed89dba563d4e84",
+        "size": 65003,
+        "url": "https://codeload.github.com/tmux-plugins/tmux-yank/tar.gz/acfd36e4fcba99f8310a7dfb432111c242fe7392"
+      },
+      {
+        "archive": "tar.gz",
+        "commit": "06cbb4ecd3a0a918ce355c70dc56d79debd455c7",
+        "entry": "prefix_highlight.tmux",
+        "id": "tmux-prefix-highlight",
+        "platform": "all",
+        "repo": "tmux-plugins/tmux-prefix-highlight",
+        "resources": [
+          {
+            "mode": "0600",
+            "path": "LICENSE",
+            "sha256": "2fa82cda172e9c10fe94b941785cdb236e0dd71eae6d5e3f245c741770a2f321"
+          },
+          {
+            "mode": "0600",
+            "path": "README.md",
+            "sha256": "58216ba4bae9cc30103eb1ce619ccb8e8f5be42939e732e3e1569e9df241e44c"
+          },
+          {
+            "mode": "0700",
+            "path": "prefix_highlight.tmux",
+            "sha256": "30fd34eca77f1ed77c79e2f25ca999cec425eb034e3bac60ebe8749ca31fce77"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/prefix_off.png",
+            "sha256": "bf1682c47a59689015ed7ec21da12317836690688c59690cda708890f135385a"
+          },
+          {
+            "mode": "0600",
+            "path": "screenshots/prefix_on.png",
+            "sha256": "a0ab419fb0da611ba2fd032bd6c68a14fe053e726bc665ca4d5bfee2b83fcb75"
+          }
+        ],
+        "sha256": "51434dfb6c0e8450f620246850eb547437431f48ee6bce50d6df215bc97fafb2",
+        "size": 24213,
+        "url": "https://codeload.github.com/tmux-plugins/tmux-prefix-highlight/tar.gz/06cbb4ecd3a0a918ce355c70dc56d79debd455c7"
+      },
+      {
+        "archive": "tar.gz",
+        "commit": "58abb615971cb617821e2e7e41c660334f55a92d",
+        "entry": "net_speed.tmux",
+        "id": "tmux-net-speed",
+        "platform": "all",
+        "repo": "tmux-plugins/tmux-net-speed",
+        "resources": [
+          {
+            "mode": "0600",
+            "path": "LICENSE",
+            "sha256": "b92606647147c7a8ec013eebff2f124fb0083a82b9d8061fddb184dbdb68467d"
+          },
+          {
+            "mode": "0600",
+            "path": "README.md",
+            "sha256": "577fed83cf3ee328cab5b8bdd19e1384d219e9361f3ca4850272f657c8e21e0a"
+          },
+          {
+            "mode": "0700",
+            "path": "init.sh",
+            "sha256": "7e262922aef313b505f0c7a65020322be8c57564f706a5231ad7d1cadec9b866"
+          },
+          {
+            "mode": "0700",
+            "path": "net_speed.tmux",
+            "sha256": "95ad04f4ac5d49a326903e9e78d46bddc5d42bbd9cb32f4915d101d097d7a4b8"
+          },
+          {
+            "mode": "0700",
+            "path": "run-tests.sh",
+            "sha256": "2e5ff7639725f77e9650302419be3640fc6f4e1b3d75928512b564805d173143"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/download_speed.sh",
+            "sha256": "6e3f3360507b717d78fb2b3a6ef16cc173c4df12e4d3c805c315dece06561b13"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/helpers.sh",
+            "sha256": "0f16cc6ec30abf4785ae230dcef2d4e87737f0f67d82351afeb1b72660652ee4"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/net_speed.sh",
+            "sha256": "713c3bbbe4ebd1243a136da45213cfdb37a01fc033504f12555b7465033cc032"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/upload_speed.sh",
+            "sha256": "b1f60ebba28ec137dcacf22794cb993868a6ea13c779cccc4e26e4ff6386888f"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/suites/helpers.test.sh",
+            "sha256": "d3f158283593706696fdf3f2270eb45229d79933dd709d0574ed95e364d66213"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/test_utils.sh",
+            "sha256": "c1e70382128bde9f1b4826144ffcd03ecc42232e2201dcbd8abde6532512b805"
+          }
+        ],
+        "sha256": "0ab58cc9ff158b43fe1455dfa7f0d40521c8d4bd8a0897821c12de18861e095d",
+        "size": 4725,
+        "url": "https://codeload.github.com/tmux-plugins/tmux-net-speed/tar.gz/58abb615971cb617821e2e7e41c660334f55a92d"
+      },
+      {
+        "archive": "tar.gz",
+        "commit": "cff343cf9e81983d3da0c8562b01616f12e8d548",
+        "entry": "resurrect.tmux",
+        "id": "tmux-resurrect",
+        "platform": "all",
+        "repo": "tmux-plugins/tmux-resurrect",
+        "resources": [
+          {
+            "mode": "0600",
+            "path": ".gitattributes",
+            "sha256": "0fa1036e6591d0436e37e99661157d7d390a622a9e3cc5f6318dfcb88a15a530"
+          },
+          {
+            "mode": "0600",
+            "path": ".gitignore",
+            "sha256": "3e8fb404b6f7e72681fabb3d6179100b6deabba1222f123c4700a85ff10376dc"
+          },
+          {
+            "mode": "0600",
+            "path": ".gitmodules",
+            "sha256": "56a2927ff6b5349c3330a786b3c73c31f825b283aff3c495860d45d62d4b2191"
+          },
+          {
+            "mode": "0600",
+            "path": ".travis.yml",
+            "sha256": "29656f659c19b7ff71d79e41dcaf0649abb9f0826cd0d32332d43b7f3f94cc64"
+          },
+          {
+            "mode": "0600",
+            "path": "CHANGELOG.md",
+            "sha256": "2b7c983c943ba8c1c39d01d195ac83ced3cd504b6cbaa2fa8128f9b474584d35"
+          },
+          {
+            "mode": "0600",
+            "path": "CONTRIBUTING.md",
+            "sha256": "82e377205170623600663bf8457a6bc195671cba59286f67b3a3fc615a55b75c"
+          },
+          {
+            "mode": "0600",
+            "path": "LICENSE.md",
+            "sha256": "feb349cbcc419a7ee2abbe58aeddb6911a02d52a0525105cf3839ac92444aa1d"
+          },
+          {
+            "mode": "0600",
+            "path": "README.md",
+            "sha256": "42728ce8ad65105631fcaac0d31f804f7d81adfd75b1445f56b7899eada0be1c"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/custom_key_bindings.md",
+            "sha256": "03eb0490d39b284f1abf3774a688d12d09488e96c8418e73e2c1af72dee18cd4"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/hooks.md",
+            "sha256": "aed4601ff1bfbfd3f136ac2b6c36f3a80e8ffa153511366e51901dc7c3ed4ce3"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/migrating_from_tmuxinator.md",
+            "sha256": "fd2e21f24999ec12a7d3fcf8610ddc575e0d936f65726fae8b6274465d2adc3c"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/restoring_bash_history.md",
+            "sha256": "1f462af5ca6e7c2faf0e2a382c5741e59cfb8e93d3b6c4cfc3756081d1371d81"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/restoring_pane_contents.md",
+            "sha256": "63ad709a04122fbad34d490475e71a5234c2076cb4cfe3ff90a1b91a221512bc"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/restoring_previously_saved_environment.md",
+            "sha256": "75941fe533474d10c703c4919855e615796c86177b4e3cdc5b635dfe8d8ac2e6"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/restoring_programs.md",
+            "sha256": "eb2bb6ed684fd7707971f9c55e527c2db3faafca3c01d9e6f55dfda8a23c2ebc"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/restoring_vim_and_neovim_sessions.md",
+            "sha256": "c52771cde9dd98806c46c504e9db569306f3a6948443b49c694e6e2eec4e2a72"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/save_dir.md",
+            "sha256": "b5c6520a50b6438dc7d97332142c3a9b6b75aa9eb8d4c78b0c8c23e7fab5bb31"
+          },
+          {
+            "mode": "0700",
+            "path": "resurrect.tmux",
+            "sha256": "abe708daca6c00985a400e8a24bad0483be79658ca8f498fee7115cca3d5354e"
+          },
+          {
+            "mode": "0700",
+            "path": "save_command_strategies/gdb.sh",
+            "sha256": "bdb7d980e555ee2f35bdeb2720fd06b29d54f7b76d0114fccdacf328495cc752"
+          },
+          {
+            "mode": "0700",
+            "path": "save_command_strategies/linux_procfs.sh",
+            "sha256": "6948ec0181a16633649e11248807c9f67570abbc660f26fd3843c319d90dae93"
+          },
+          {
+            "mode": "0700",
+            "path": "save_command_strategies/pgrep.sh",
+            "sha256": "3bb36b361a5663dedbeb5d96a82faa3ad1c67d8d0905e70b2857a99ed0ae63d8"
+          },
+          {
+            "mode": "0700",
+            "path": "save_command_strategies/ps.sh",
+            "sha256": "0f66020b3841dd378f66b024b86533a7b953d0b165f461bacec98942332a897b"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/check_tmux_version.sh",
+            "sha256": "49e2b2874bbc5b64bf225ac51239c923d965aa8e85528d7850870ee5e1daa421"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/helpers.sh",
+            "sha256": "9c2ec8a6741bc16d5eca21933c98190775b579e8bf5f7c8f8cce833b04ff52de"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/process_restore_helpers.sh",
+            "sha256": "815e2206035ca3214bf5850d75787b214ca080109d405d86ba3ba334141972ab"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/restore.exp",
+            "sha256": "e10057a728a9a195a11f8986c92b7caa1482f0415213b5abf49cd2b9306e30c0"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/restore.sh",
+            "sha256": "e90213fe22e672c56fe8c8ab4bfe9522fb405683d81367ab91c497dc5886ffc0"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/save.sh",
+            "sha256": "987dee1b48f38498ad06bdd0bf7bba763cd2422ec807b8cba1388692025b07ff"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/spinner_helpers.sh",
+            "sha256": "e5b08ebde7803faf441a262d9e3743f39c4f2c76b66140b9d09ba04e40a9abcf"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/tmux_spinner.sh",
+            "sha256": "4173914dae6fe65e2ab44153c2168acd1e36105d8966a1f7101ae27f1e7989ac"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/variables.sh",
+            "sha256": "6d58958f561c40ebe08be33a3f10e176f124828758c909cc4ef536fe27e4683f"
+          },
+          {
+            "mode": "0700",
+            "path": "strategies/irb_default_strategy.sh",
+            "sha256": "ccae5ca5df853b378db6960c565e1b49f99dc5222748a93612ba834b836425f4"
+          },
+          {
+            "mode": "0700",
+            "path": "strategies/mosh-client_default_strategy.sh",
+            "sha256": "20108475e5969fa54cb4b8e97bc5854eb64dca1dcd73d5339585a74ca30ed55c"
+          },
+          {
+            "mode": "0700",
+            "path": "strategies/nvim_session.sh",
+            "sha256": "be8a56715ac9c881ba7ea02880d4447b63335e48f6f34f77c4ca9ebf3008562d"
+          },
+          {
+            "mode": "0700",
+            "path": "strategies/vim_session.sh",
+            "sha256": "add7ee8b0241ea077d7954868ee8b3d26df2f44cfc6b320a527f6af710b0991c"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/fixtures/restore_file.txt",
+            "sha256": "cfe705cc3c1f5c9cdc2b852671b41ffb0ef7463ab3793189101d7e82d352a9fd"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/fixtures/save_file.txt",
+            "sha256": "5691aed1245c20254eea0e3937ef7486d4d6ff54ce860514ab3be243904b53bd"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/helpers/create_and_save_tmux_test_environment.exp",
+            "sha256": "24f3eed36ee89336bca8a758280bdf68c1239524d7cca605a9706f733573d94d"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/helpers/expect_helpers.exp",
+            "sha256": "2975836b1b4d11c6ba3d4479254c0506548614d48d917277d3d45ab812d9bd4c"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/helpers/restore_and_save_tmux_test_environment.exp",
+            "sha256": "4e1dab0e4ae9327cd6add7b48ea144194bb4b6be0215f74354c50f8317cd604c"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/helpers/resurrect_helpers.sh",
+            "sha256": "7c95b21a1453b4b6516e551cc064ed0004ddf53fa3de86cf30f9390dab49796c"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/test_resurrect_restore.sh",
+            "sha256": "f7ba85e0fb2e6255b936884ebb7c19c377d100fe4bd84074f5232201881c7053"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/test_resurrect_save.sh",
+            "sha256": "d4265efbcf8727e14ce3a3819e9ec2343a0b5dd025b80d0f0fe0610bfa2312ea"
+          },
+          {
+            "mode": "0600",
+            "path": "video/issue_vid.png",
+            "sha256": "ab4cc57f84187b247a41b4ff25b4647c64843d416b0d9799f8589327441de6bc"
+          },
+          {
+            "mode": "0600",
+            "path": "video/screencast_img.png",
+            "sha256": "e6e38ddcf172fa1db17d2bea19f0cf59da6e062444991f3ce4e988af03b31809"
+          },
+          {
+            "mode": "0600",
+            "path": "video/script.md",
+            "sha256": "1a4f2d3ee32cd8c6cc847953d203094a711400c4bba35de518e8fd31e0ffb2e4"
+          }
+        ],
+        "sha256": "9f1dda18554291ee7f8a0f499e2af90bbadc2ebceb7a995bb13b76529fe0c5c9",
+        "size": 213649,
+        "url": "https://codeload.github.com/tmux-plugins/tmux-resurrect/tar.gz/cff343cf9e81983d3da0c8562b01616f12e8d548"
+      },
+      {
+        "archive": "tar.gz",
+        "commit": "0698e8f4b17d6454c71bf5212895ec055c578da0",
+        "entry": "continuum.tmux",
+        "id": "tmux-continuum",
+        "platform": "all",
+        "repo": "tmux-plugins/tmux-continuum",
+        "resources": [
+          {
+            "mode": "0600",
+            "path": ".gitattributes",
+            "sha256": "119361b9a20f846bcf4a69894b13ffec0dadddc03c5e6563e5d393d9442d33f7"
+          },
+          {
+            "mode": "0600",
+            "path": "CHANGELOG.md",
+            "sha256": "ca8ef92faf8760017a5e5420a1875158ac8f5f30b298d5399900dd4e967c9730"
+          },
+          {
+            "mode": "0600",
+            "path": "CONTRIBUTING.md",
+            "sha256": "06ccbc0adda57acd2b01be05f0369f2a14c270565bf8f9b972fdda7993285524"
+          },
+          {
+            "mode": "0600",
+            "path": "LICENSE.md",
+            "sha256": "bc393afbc6edbf020d3c02384b19be0c39da9964de50f6837464f8a4253f74d5"
+          },
+          {
+            "mode": "0600",
+            "path": "README.md",
+            "sha256": "b546ed0c6d5636c3cfd50c64d8a14aacd8d839846b81f2dee1717bc75aba25bf"
+          },
+          {
+            "mode": "0700",
+            "path": "continuum.tmux",
+            "sha256": "d38d73c754cbfe6d59a283de55ad3529b1cda4ba7edaa4b6491644d02001f34e"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/automatic_start.md",
+            "sha256": "da7ac6c4d98f3000dec272503785d9d288b124e03c51223b06fb3a0340d95990"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/continuum_status.md",
+            "sha256": "3f5db2104ba1a60b7ee952e1ec192d89be89d955797fb9d3990eebd7687c649a"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/faq.md",
+            "sha256": "34ce35acc5680f919ed0efe1ff93a74609dceb2592e6fd6c6bd5f28f2dc0a8fc"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/multiple_tmux_servers.md",
+            "sha256": "4ed94fe5fa2dfab630e0d2942a0ec189e6cd636a3f0ec04914a24f0504c82cd1"
+          },
+          {
+            "mode": "0600",
+            "path": "docs/systemd_details.md",
+            "sha256": "60ba46868a2731591c1ade21dd73e262ca3f552c9be8472ac0c681a784dec937"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/check_tmux_version.sh",
+            "sha256": "7cd0d941c361d46e91fbcd28cc25204ec5deb8fd11b07b721a70e0acb025ae10"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/continuum_restore.sh",
+            "sha256": "9fb9e890b2b7cdb9a4429138d1854c5379e7c29ece732fc22cd01da6feb19bb7"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/continuum_save.sh",
+            "sha256": "08d1e7269c552a0914499d40f2305346559d22285d7ea79fd9b8e6818f79a647"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/continuum_status.sh",
+            "sha256": "2fa6911fc9d22d9378ed194ca0147c7ff0c0ada8a3e7d41fce6656cca03a97ea"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/handle_tmux_automatic_start.sh",
+            "sha256": "8f6c21aa83e154b94476b5221d3ad1d029132fdbae37277c1c6bb8539e9308bb"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/handle_tmux_automatic_start/osx_alacritty_start_tmux.sh",
+            "sha256": "7bd0496b31446b0b305ab2b89f83965e6e1b2ae67bf251d6c731cbe60c2d421f"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/handle_tmux_automatic_start/osx_disable.sh",
+            "sha256": "095d688cad0398763e92e3760b9a48e3e9f8dd70216e5c7a2d00cf2d514da66e"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/handle_tmux_automatic_start/osx_enable.sh",
+            "sha256": "54eecb2e958334b3df40140a58f8313f7a971db66c71755e29fc7629130847ca"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/handle_tmux_automatic_start/osx_iterm_start_tmux.sh",
+            "sha256": "7a8efa2f91fd6b968c9f68b1448bc24d3446034ed68f1ff17a2ef90c056fc980"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/handle_tmux_automatic_start/osx_kitty_start_tmux.sh",
+            "sha256": "f0e580e60ebca146b7056a545c490d1dfddb66ed7f7670ee2cf69e0b39fa890e"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/handle_tmux_automatic_start/osx_terminal_start_tmux.sh",
+            "sha256": "db919420df52155655209828daab4d7c6285cc65bc47ce801fd224403fccff23"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/handle_tmux_automatic_start/systemd_disable.sh",
+            "sha256": "abc6dc05259b62afd54ab9c1c82fe0456a0c75b66f3cba3c4f49520e627de92b"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/handle_tmux_automatic_start/systemd_enable.sh",
+            "sha256": "59c314d814e71ae5ccf77cbef6adb7d43d708284b691c4a9a49ddc68f91bd865"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/helpers.sh",
+            "sha256": "c4227964f1e2fa5d8b130b911831212aa822180497877d2bbfcf2296a6858c25"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/shared.sh",
+            "sha256": "08966a0ed800ee667fcaa02fe575672988994ab20b7172c8057fa3d724260ea0"
+          },
+          {
+            "mode": "0600",
+            "path": "scripts/variables.sh",
+            "sha256": "4864f0b0d56ebd32f19fd3e9e482d5144b10ab590f871e0cbe0a2af77a020f07"
+          }
+        ],
+        "sha256": "a1b9a2f0715163472ca713679204a1ca55d3f845cf1c659ae04222db3553424f",
+        "size": 11277,
+        "url": "https://codeload.github.com/tmux-plugins/tmux-continuum/tar.gz/0698e8f4b17d6454c71bf5212895ec055c578da0"
+      }
+    ],
+    "zsh": [
+      {
+        "archive": "tar.gz",
+        "commit": "c182cc5d0d72c960ab8320d48723e9169a46f1f2",
+        "entry": "zinit.zsh",
+        "id": "zinit",
+        "platform": "all",
+        "repo": "zdharma-continuum/zinit",
+        "resources": [
+          {
+            "mode": "0600",
+            "path": ".dockerignore",
+            "sha256": "8c403dc83ebd2077edb1ec76d246daa1c834d508ec87618473e3df7792f4035d"
+          },
+          {
+            "mode": "0600",
+            "path": ".gitattributes",
+            "sha256": "7d36cfa9245b80e97f201fecb21583abc6cc848ae3f35f8a545c0c84551dc9a3"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/CODEOWNERS",
+            "sha256": "80386bd1b14341f502c7032ae262c94da034423195e60c8859ac1cacb96b27d6"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/ISSUE_TEMPLATE/bug-report.yml",
+            "sha256": "30a6748279d8474fa9f3b1f42d861bde14f4e6b70b86e874741b5cdcdf5ee31d"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/ISSUE_TEMPLATE/config.yml",
+            "sha256": "6dab6450e3f488bcd4a2cf4b6c7c14b024c6cb50f8317450e61b55315da2a1ac"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/ISSUE_TEMPLATE/documentation.yml",
+            "sha256": "2c26fc91337c05818fc9f6dea15dc207cdcd7d0613a66d33ef338353dbe0cf89"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/ISSUE_TEMPLATE/feature-request.yml",
+            "sha256": "7b09e8c655b7418afd3ba7c4952a07223a0415e697d3e9b97b635c948b6c5d34"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/ISSUE_TEMPLATE/maintenance.yml",
+            "sha256": "efbe2a0c40443709eaba709223165b4a5c02fd2ba644a4c74d395dc87428f9c9"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/dependabot.yaml",
+            "sha256": "523c3135f43d071f6ce04e339465cd8d2fdba50ba2116c96cbd944084766a1de"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/labeler.yml",
+            "sha256": "7dc40af0c8e3a763eafccd503bddb67be3ab85400a5c406ec523b8dc077ac09d"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/stale.yml",
+            "sha256": "d9b9455a0edb66c98e2de4888f64968770439f558e9c0cb942f168665ec62cd7"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/workflows/bump-homebrew-formula.yml",
+            "sha256": "2f6591886b039cd2520e8bb5ed7b5f24f10bfc0a3fb1610a0a1dacc1864c3a07"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/workflows/containers.yaml",
+            "sha256": "3467bac38ba01f1860be5d615b77a66ec43f4e35917f7b96af36c235f2fdb331"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/workflows/documentation.yaml",
+            "sha256": "3f18ed90b417de6536d5d61a0def0db98676e8cb35e2e09bb0192f20a3b085fc"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/workflows/installer.yaml.disabled",
+            "sha256": "cc9f092618524f4cc92cb4844a60191682880be09bebc7faab7b3e35b6382863"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/workflows/labeler.yaml",
+            "sha256": "1ec89e3ceea1c289fe9f847bd1b01383a2d64d7588880bb528e0dcc7fdd065e2"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/workflows/linting.yaml",
+            "sha256": "d7146de44eedf2032278a010681ad36d1bf44de8aed5d283f503cfef00361dc7"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/workflows/release.yml",
+            "sha256": "3d2be1200e26ae16fe234b7ef91d1df2f47b2429d3d0e22446d6ccb349e3a7ff"
+          },
+          {
+            "mode": "0600",
+            "path": ".github/workflows/tests.yaml",
+            "sha256": "b25b215b77d7cb6cfe62869386ea5f31c7d5cccdd023495a07da48a0d1436a37"
+          },
+          {
+            "mode": "0600",
+            "path": ".gitignore",
+            "sha256": "b51d1e028374f4dc1e00173cdeff77afa93322e0cb6e8b0f8e1623d8b17907d2"
+          },
+          {
+            "mode": "0600",
+            "path": ".releaserc.json",
+            "sha256": "df971c86b9aab620931f7892a89a24b6b8015f1fa8cb9479b40d4906cfebd083"
+          },
+          {
+            "mode": "0600",
+            "path": ".zunit.yml",
+            "sha256": "a13b4f93a28beb80f9643ed6aea292034becf08439c32b161031c7c566859db4"
+          },
+          {
+            "mode": "0600",
+            "path": "CHANGELOG.md",
+            "sha256": "86ac0a09fe6b380a9796f50d5a5750c543d3d5fc1bc71987d5e848a5c7e60685"
+          },
+          {
+            "mode": "0600",
+            "path": "CODE_OF_CONDUCT.md",
+            "sha256": "8d75027097aa2c4049fb7bc05a54d65dffebcc53b07797af4658c42493259aee"
+          },
+          {
+            "mode": "0600",
+            "path": "LICENSE",
+            "sha256": "9d47ab1d2f16d2f6cc9931b41ff1b72528e612fa09a5d89b5356ea4c5d5a4e10"
+          },
+          {
+            "mode": "0600",
+            "path": "Makefile",
+            "sha256": "01bc3a018730ff8fe1d290893f6e828bddfb4aaddd9fd1848712dd356c39ea21"
+          },
+          {
+            "mode": "0600",
+            "path": "README.md",
+            "sha256": "55382c81f388b26f98685bfe52d842338e57cf204980118782182a8d892fb63e"
+          },
+          {
+            "mode": "0600",
+            "path": "VERSION",
+            "sha256": "94d83ccbb569a55bb3ab8e477730032f40e26cf9ff5697ab432dde12c1e7157f"
+          },
+          {
+            "mode": "0600",
+            "path": "_zinit",
+            "sha256": "4885b96547ba84c0ae72cbd4c0211515b44cf44ce31c41f8d05843b232127590"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/CHANGELOG.md",
+            "sha256": "e822b498fc358b639ae3f1ff7afd22636351e7b2e4b830b53b903b196c2941b4"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/HACKING.md",
+            "sha256": "e769917c44feabfacb46497fdfba85624ce37e5cbb86842a2e4b5e56b83719ad"
+          },
+          {
+            "mode": "0700",
+            "path": "doc/img/m.png",
+            "sha256": "73c7f824f60576604b77fa4d78fdcc0e922c52130ededa29f6b461e5be447c18"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/img/update.png",
+            "sha256": "94f65213c7f84b46e22354d156f6d1187392c0424fee803ebcdd5ce4aac9d029"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/img/zplugin.png",
+            "sha256": "29648671fb45342b98679d715cb795917bf5a226cf0c0d83cd369b787d517412"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/img/zplugin.svg",
+            "sha256": "f241105bb1e855e04f3c4c9d244df0b6eac94f3f9ac979c0372aa8503963323a"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/img/zplugin_refcard.png",
+            "sha256": "ce10d4496d74828a7ae0b7ae8f90767906aa60bf04046f86c1c849449cc905b3"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/img/zplugin_refcard.svg",
+            "sha256": "42d12deedb2d4c9d53969bd8b774a10154479f000c231d4dea7efe0374c2618f"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/zinit.1",
+            "sha256": "48428e5207dfd6a94247a62e3f0ff6caa95572d56ef780d6bc1125074570e940"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/zsdoc/Makefile",
+            "sha256": "f70aadc2ee64278f1344db7f9e926d8145b9ff0f354ba09e688de412c3c155d7"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/zsdoc/README.md",
+            "sha256": "ca93dae1d46c04329c55386605b377fd306a43a1c25de4f42644551bd9fd6cf4"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/zsdoc/zinit-additional.zsh.adoc",
+            "sha256": "ba904990488f8eeae9bf477ae6e83df7fec3979b34afa96ee93c0ea98b5a8f92"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/zsdoc/zinit-autoload.zsh.adoc",
+            "sha256": "3c3baaff94d82329fbc392d24cbb1c1f81428f53fe4361a5f3a135bda9fb6e16"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/zsdoc/zinit-install.zsh.adoc",
+            "sha256": "0372388cbe5d71b25a02d0a4dad7693aa8d13819890f26b9816934372aca184c"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/zsdoc/zinit-side.zsh.adoc",
+            "sha256": "9c63bdc7f9132bbbf8412bc515ad9a0c7c703ddd19a3aeb58b9eb4925ec947de"
+          },
+          {
+            "mode": "0600",
+            "path": "doc/zsdoc/zinit.zsh.adoc",
+            "sha256": "3b3f8aa75b3d3ef52f8293b29708761fe6207b58c420482c98523e2480c0940d"
+          },
+          {
+            "mode": "0600",
+            "path": "docker/Dockerfile",
+            "sha256": "2156aed9f4ee81f1713bc61cac067b8085f97067d77e762cba0ba0c498ad7d3c"
+          },
+          {
+            "mode": "0600",
+            "path": "docker/init.zsh",
+            "sha256": "3fc6c532aae01475c24eb3c71367f170943cb9d51b0f61b6e5e4e67407fdf664"
+          },
+          {
+            "mode": "0600",
+            "path": "docker/utils.zsh",
+            "sha256": "c295d54c58e4e1bbb56701d79b47320fed8b6610f0636c2c11e9d8233cd4d89e"
+          },
+          {
+            "mode": "0600",
+            "path": "docker/zshenv",
+            "sha256": "c436d56219f31fbde4349cdbfe2dd9f0d6ffea66b2a94e03bb832fc34be04236"
+          },
+          {
+            "mode": "0600",
+            "path": "docker/zshrc",
+            "sha256": "140719d904f90b8c735c59a33c3c29f33ddf1e33dc3c3ca54fee24b7cf0d3561"
+          },
+          {
+            "mode": "0600",
+            "path": "docker/zshrc-fancy",
+            "sha256": "6cd84436bb20161a177ea734f9fef2f1a06dbe1d6010c9a87d0c208970082438"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/docker-build.sh",
+            "sha256": "f997755c994f4605ab3419f2265e653edd885ebe33af3a6878668956bfc50fe2"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/docker-run.sh",
+            "sha256": "ee06e1c39d8bf84c90bc1894b4fdf389d7812d9f28db544a88e11b88f196cc81"
+          },
+          {
+            "mode": "0700",
+            "path": "scripts/install.sh",
+            "sha256": "f08d2bf2b41106924db1c0b4ef561becf5b1228598b777b3ad9d5029fae94757"
+          },
+          {
+            "mode": "0700",
+            "path": "share/git-process-output.zsh",
+            "sha256": "8cfb0b8adf20a877156b35829c8110ead490c8b4f5b6c945526e7c950f38e77f"
+          },
+          {
+            "mode": "0700",
+            "path": "share/rpm2cpio.zsh",
+            "sha256": "2870613a3de9a1a530ff054900c019116805ddca32e340772bce650eb7a174c2"
+          },
+          {
+            "mode": "0700",
+            "path": "share/template-plugin/template-script",
+            "sha256": "faa14251134367772c263ad51eeea5bd7eb4820c717180e10190f2e333780810"
+          },
+          {
+            "mode": "0600",
+            "path": "share/template-plugin/zsh.gitignore",
+            "sha256": "2ee46b4597f58f4e6fec11def199fa2eb7e72ba9bc6b2ff7b0006c6e09b7eb03"
+          },
+          {
+            "mode": "0600",
+            "path": "share/zsh.ctags",
+            "sha256": "c1f7e4cef82a5dc4e10a30167e1fd625d666e0edf0696da5d39486978a3b9eb3"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/_output/.gitkeep",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/_support/annex_test_assertions",
+            "sha256": "0ce9e78568c00894d7b446714b14fde9d2f12f1c31b0e021c0e5a539e1d65c85"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/_support/bootstrap",
+            "sha256": "0848755d3d3c76563369ac1b80f50bca41cf039efb36037120b0a9e9413a8249"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/_support/gen-ghr-test",
+            "sha256": "92949bf9d74ab3510fba02a6ab76f056b7e448a24aac3f17c1cd67c87de6080e"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/_support/self_update_fixtures",
+            "sha256": "e2a4c7ed1571e3ac67e5a3bdd2220252e9506760098f0bfa799507d2ca135e10"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/annexes.zunit",
+            "sha256": "15da946a7ec3ba5d9ea6231c76c5f3e086c6c267a464b343410bc566fa3a14e9"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/commands.zunit",
+            "sha256": "15803b781ea7ed33fb5e1d5df3d00645fa7229a4b8bec71ecbf767ac7e72b5c4"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/compile.zunit",
+            "sha256": "0d3e00547a4594fe8efc57fbf65cf6e35adb54097f2f5a3d25fc12662f5e7314"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/config-zstyle.zunit",
+            "sha256": "d22f51bec083bdda7902d388c02a4e67fd7427a381d8b34d480c3246f80995bd"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/gh-r.zunit",
+            "sha256": "10cc9ad640b0a587ff11048c4a27aefcef2d9d891f54877e9b06fba96a76a105"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/hook-handler.zunit",
+            "sha256": "8853b8975cae612bddaa37c5e71dc95d8d51e203e45130201a04123a2dcd8118"
+          },
+          {
+            "mode": "0600",
+            "path": "tests/ice-validation.zunit",
+            "sha256": "f8beea4787e1896ea3eecec1af7812337d849472c76462fbd1cbe3c498c9977d"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/ices.zunit",
+            "sha256": "8bb82ef6069a3e4b6a34613dee627b66791c05970d79672350cdcba6d89f662b"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/plugins.zunit",
+            "sha256": "5be51547ef6927f332df757eb692f8590176d9f57846df77540832c13e60488e"
+          },
+          {
+            "mode": "0700",
+            "path": "tests/snippets.zunit",
+            "sha256": "c7a1fc352759692d03033a2d4611e3fbb29175037f05d730ffc6a4edca771d4d"
+          },
+          {
+            "mode": "0600",
+            "path": "zi-browse-symbol",
+            "sha256": "98d171b9ac63f5ce574e54a3e04f20e4b7aca6ff4d35ea38a4c6627790b8c1e8"
+          },
+          {
+            "mode": "0600",
+            "path": "zinit-additional.zsh",
+            "sha256": "e0f1f52eb819bcb53bc345bbf64a46c1303ff8e4031bf37f01394104a30257a0"
+          },
+          {
+            "mode": "0600",
+            "path": "zinit-autoload.zsh",
+            "sha256": "220886c844da29010e74802e5fce4799e5439790a1f70a86585212920e4839a8"
+          },
+          {
+            "mode": "0600",
+            "path": "zinit-install.zsh",
+            "sha256": "743094c713d30a21fa46e106fbe49490e678867c01a447af4552e8283584cba0"
+          },
+          {
+            "mode": "0600",
+            "path": "zinit-side.zsh",
+            "sha256": "b85fa43853e576569312354f31ffe77d970d87c5bc0e023abbbe00091211eb63"
+          },
+          {
+            "mode": "0600",
+            "path": "zinit.zsh",
+            "sha256": "5d48e3dc633fa3f1ce3687c09dc2c939311aa029f1a57f0ed6ed685eec38abd2"
+          }
+        ],
+        "sha256": "d412a0755fbc21b46e84217dd38bdb4ecfc67223603f5204c720c28820f9c73f",
+        "size": 335707,
+        "url": "https://codeload.github.com/zdharma-continuum/zinit/tar.gz/c182cc5d0d72c960ab8320d48723e9169a46f1f2"
+      }
+    ]
+  },
+  "component": "plugins",
+  "version": 1
+}

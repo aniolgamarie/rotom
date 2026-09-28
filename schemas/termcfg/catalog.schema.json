@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "termcfg public source catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "targets"],
+  "properties": {
+    "version": {"const": 1},
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "component", "source", "destination", "sha256", "mode"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$"},
+          "component": {"enum": ["zsh", "tmux", "mihomo"]},
+          "source": {"type": "string", "minLength": 1},
+          "destination": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "mode": {"enum": ["0600", "0700", "0644"]}
+        }
+      }
+    }
+  }
+}

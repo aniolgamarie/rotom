@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "termcfg private non-secret state",
+  "type": "object", "additionalProperties": false,
+  "required": ["version", "machine_id", "selected_core", "public_config_identity", "pending_core_effect", "pending_config_effect", "targets", "previous"],
+  "properties": {
+    "version": {"const": 1},
+    "machine_id": {"type": "string"},
+    "selected_core": {"type": ["string", "null"]},
+    "public_config_identity": {"type": ["string", "null"]},
+    "pending_core_effect": {"type": "boolean"},
+    "pending_config_effect": {"type": "boolean"},
+    "targets": {"type": "object", "additionalProperties": {"$ref": "#/$defs/record"}},
+    "previous": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": {"$ref": "#/$defs/backup"}}}
+  },
+  "$defs": {
+    "identity": {"type": "object", "additionalProperties": false, "required": ["kind"], "properties": {
+      "kind": {"enum": ["absent", "file", "symlink"]}, "uid": {"type": "integer"}, "dev": {"type": "integer"}, "ino": {"type": "integer"}, "mode": {"type": "integer"}, "mtime_ns": {"type": "integer"}, "size": {"type": "integer"}, "digest": {"type": "string"}, "link": {"type": "string"}
+    }},
+    "record": {"type": "object", "additionalProperties": false, "required": ["component", "after", "source_digest"], "properties": {
+      "component": {"enum": ["zsh", "tmux", "mihomo"]}, "after": {"$ref": "#/$defs/identity"}, "source_digest": {"type": "string"}
+    }},
+    "journal": {"type": "object", "additionalProperties": false,
+      "required": ["version", "kind", "transaction_id", "phase", "plan_id", "state_before", "items"],
+      "properties": {
+        "version": {"const": 1},
+        "kind": {"enum": ["apply", "rollback"]},
+        "transaction_id": {"type": "string", "pattern": "^[a-f0-9]{32}$"},
+        "phase": {"enum": ["prepared", "backed_up", "writing", "committed", "recovery_pending", "recovered"]},
+        "plan_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "state_before": {"type": "object"},
+        "items": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+          "required": ["target_id", "component", "relative", "before", "desired", "mode", "backup", "after", "stage"],
+          "properties": {
+            "target_id": {"type": "string"}, "component": {"enum": ["zsh", "tmux", "mihomo"]},
+            "relative": {"type": "string"}, "before": {"$ref": "#/$defs/identity"},
+            "desired": {"type": ["string", "null"]}, "mode": {"type": ["integer", "null"]},
+            "backup": {"anyOf": [{"$ref": "#/$defs/backup"}, {"type": "null"}]},
+            "intended_after": {"anyOf": [{"$ref": "#/$defs/identity"}, {"type": "null"}]},
+            "recovery_intended": {"$ref": "#/$defs/identity"},
+            "expected_restore": {"$ref": "#/$defs/identity"},
+            "after": {"anyOf": [{"$ref": "#/$defs/identity"}, {"type": "null"}]},
+            "stage": {"enum": ["pending", "verified", "recovered"]}
+          }
+        }}
+      }
+    },
+    "backup": {"type": "object", "additionalProperties": false, "required": ["before", "path"], "properties": {
+      "before": {"$ref": "#/$defs/identity"}, "path": {"type": ["string", "null"]}, "digest": {"type": ["string", "null"]}
+      ,"managed_before": {"type": "boolean"}, "prior_source_digest": {"type": ["string", "null"]}
+    }}
+  }
+}
