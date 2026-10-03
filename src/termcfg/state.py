@@ -37,9 +37,13 @@ def journal_file(machine: MachineSelection) -> Path:
   return machine.private_state_root / "journal.json"
 
 
-def require_no_pending_recovery(machine: MachineSelection) -> None:
+def journal_exists(machine: MachineSelection) -> bool:
   path = journal_file(machine)
-  if path.exists() or path.is_symlink():
+  return path.exists() or path.is_symlink()
+
+
+def require_no_pending_recovery(machine: MachineSelection) -> None:
+  if journal_exists(machine):
     raise TermcfgError(4, "recovery_pending", "./termcfg recover")
 
 
