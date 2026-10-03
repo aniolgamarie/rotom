@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-02",
+  "status": "completed",
+  "driftField": "/modelRoles/default",
+  "beforeConfigured": "cursor/kimi-k3-high:high",
+  "afterConfigured": "cursor/kimi-k3:high",
+  "nativeDefault": "cursor/kimi-k3:high",
+  "otherLocalConfigurationFieldsUnchanged": true,
+  "hideToolActivity": false,
+  "approvalSidecarMatchesConfiguration": true,
+  "startupAdmissionCwd": "/data/1/weixiaoxian.wxx/test_tool/group_commit_leader_switch",
+  "startupAdmissionPassed": true,
+  "startupAdmissionHostSpawned": false,
+  "paidModelRequests": 0,
+  "runtimeVersion": "v18.4.5",
+  "upstreamSourceModified": false,
+  "failedPendingDecision": false,
+  "unverified": [
+    "real Cursor inference"
+  ]
+}
