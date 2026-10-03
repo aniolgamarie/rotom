@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "scope": "six diagnostic calls before final compatibility fix; not final evaluation",
+  "outboundRequests": 6,
+  "commandExecutions": 0,
+  "rows": [
+    {
+      "requestId": "evaluation-coreference-001",
+      "outboundSequence": 1,
+      "httpStatus": 200,
+      "latencyMs": 17832,
+      "finishReason": "length",
+      "usage": {
+        "prompt_tokens": 919,
+        "completion_tokens": 512,
+        "total_tokens": 1431,
+        "completion_tokens_details": {
+          "reasoning_tokens": 509
+        }
+      },
+      "contentBytes": 0,
+      "responseSha256": "92263a56bf328aee4b784e935a590eb102195c9106ec1e0c0f96b1634e196697",
+      "productionEquivalent": false
+    },
+    {
+      "requestId": "evaluation-coreference-002",
+      "outboundSequence": 2,
+      "httpStatus": 200,
+      "latencyMs": 14256,
+      "finishReason": "stop",
+      "usage": {
+        "prompt_tokens": 932,
+        "completion_tokens": 491,
+        "total_tokens": 1423,
+        "cached_tokens": 256,
+        "completion_tokens_details": {
+          "reasoning_tokens": 315
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        }
+      },
+      "contentBytes": 552,
+      "responseSha256": "26dad6f86bd258d667ac160d59312fd3cb93b544b3ac8fc8140b1098c9820299",
+      "productionEquivalent": false
+    },
+    {
+      "requestId": "evaluation-coreference-003",
+      "outboundSequence": 3,
+      "httpStatus": 200,
+      "latencyMs": 15897,
+      "finishReason": "length",
+      "usage": {
+        "prompt_tokens": 913,
+        "completion_tokens": 512,
+        "total_tokens": 1425,
+        "cached_tokens": 256,
+        "completion_tokens_details": {
+          "reasoning_tokens": 509
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        }
+      },
+      "contentBytes": 0,
+      "responseSha256": "fa8e37387d956dd1212cecb45b8931652e89d2bc5e7cf76a720377c03a12754e",
+      "productionEquivalent": false
+    },
+    {
+      "requestId": "evaluation-coreference-004",
+      "outboundSequence": 4,
+      "httpStatus": 200,
+      "latencyMs": 10448,
+      "finishReason": "stop",
+      "usage": {
+        "prompt_tokens": 913,
+        "completion_tokens": 504,
+        "total_tokens": 1417,
+        "cached_tokens": 256,
+        "completion_tokens_details": {
+          "reasoning_tokens": 287
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        }
+      },
+      "contentBytes": 594,
+      "responseSha256": "a2a7d66bf80e7ef0a1c052541a015d1664a55f739fadfa2c1f0f5a5659b6934a",
+      "productionEquivalent": false
+    },
+    {
+      "requestId": "evaluation-wirecheck-coreference-001",
+      "outboundSequence": 5,
+      "httpStatus": 200,
+      "latencyMs": 14435,
+      "finishReason": "length",
+      "usage": {
+        "prompt_tokens": 921,
+        "completion_tokens": 512,
+        "total_tokens": 1433,
+        "cached_tokens": 256,
+        "completion_tokens_details": {
+          "reasoning_tokens": 509
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        }
+      },
+      "contentBytes": 0,
+      "responseSha256": "7d9ccc13b18b0061dcce68838c2e593d0ca125843fb99a2331df0bf5feb331e1",
+      "productionEquivalent": true
+    },
+    {
+      "requestId": "evaluation-wirecheck-coreference-002",
+      "outboundSequence": 6,
+      "httpStatus": 200,
+      "latencyMs": 7559,
+      "finishReason": "length",
+      "usage": {
+        "prompt_tokens": 934,
+        "completion_tokens": 512,
+        "total_tokens": 1446,
+        "cached_tokens": 256,
+        "completion_tokens_details": {
+          "reasoning_tokens": 509
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        }
+      },
+      "contentBytes": 0,
+      "responseSha256": "ce5d9a47bb5b89525d13f9160da84e2b77547d716bf9d20b105d95abfa540f8e",
+      "productionEquivalent": true
+    }
+  ],
+  "supplementalPostThinkingFix": {
+    "outcomeMatches": 4,
+    "cases": 4,
+    "strictValid": 4,
+    "citationSemanticsPassed": false,
+    "citationFailureCase": "coreference-001",
+    "observedQuote": "ository. Plea"
+  },
+  "interruptedOriginal": {
+    "outbound": 6,
+    "cachedReturned": 5,
+    "unverifiableOutbound": 1,
+    "completeReport": false
+  },
+  "totalOutboundBeforeT079": 16
+}

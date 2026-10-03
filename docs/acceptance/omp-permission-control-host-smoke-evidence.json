@@ -1,0 +1,4024 @@
+{
+  "artifactSha256": "e4071c28800a5a2f35460c156d8660e3e66e50dc4d8461db743ab1993abc9772",
+  "runtimeIdentity": "c2ddebe42741fe49b7ac5e87d24b3df9e42f85150f8bfaad80b83f732fec4ea3",
+  "scope": "real-host-limited-model-smoke; not frozen model evaluation",
+  "lifecycle": {
+    "initial": {
+      "configuredMode": "smart",
+      "activeMode": "smart",
+      "modeSource": "profile-default",
+      "generation": 2,
+      "reviewer": "kimi_tf/kimi-for-coding",
+      "reviewerSource": "session-default",
+      "fallback": "local/lfm2.5-230m",
+      "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+      "fallbackHealth": "unavailable",
+      "coverage": {
+        "tool": "bash",
+        "session": "main",
+        "shell": "bash",
+        "platform": "linux",
+        "backend": "native",
+        "execution": "foreground",
+        "eligible": false,
+        "reasons": [
+          "unknown-target"
+        ]
+      },
+      "executionLimits": [
+        "unknown-target"
+      ],
+      "nativeProtection": {
+        "bashPrompt": true,
+        "denyPreserved": true,
+        "commandPromptPreserved": true,
+        "criticalSafetyPreserved": true,
+        "taskPrompt": true,
+        "evalPrompt": true,
+        "noYolo": true
+      },
+      "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+      "bridge": {
+        "abi": "permission-control/v1",
+        "health": "healthy",
+        "identityVerified": true
+      },
+      "policyVersion": "79e2f1afa7d715747f4005567f342fed00d0063e14b169fb68324bd483fdb82b",
+      "pending": "none",
+      "unverified": [
+        "real-model-quality",
+        "real-host-smoke",
+        "non-linux-platforms"
+      ]
+    },
+    "manual": {
+      "configuredMode": "smart",
+      "activeMode": "manual",
+      "modeSource": "session-command",
+      "generation": 3,
+      "reviewer": "kimi_tf/kimi-for-coding",
+      "reviewerSource": "session-default",
+      "fallback": "local/lfm2.5-230m",
+      "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+      "fallbackHealth": "unavailable",
+      "coverage": {
+        "tool": "bash",
+        "session": "main",
+        "shell": "bash",
+        "platform": "linux",
+        "backend": "native",
+        "execution": "foreground",
+        "eligible": false,
+        "reasons": [
+          "unknown-target"
+        ]
+      },
+      "executionLimits": [
+        "unknown-target"
+      ],
+      "nativeProtection": {
+        "bashPrompt": true,
+        "denyPreserved": true,
+        "commandPromptPreserved": true,
+        "criticalSafetyPreserved": true,
+        "taskPrompt": true,
+        "evalPrompt": true,
+        "noYolo": true
+      },
+      "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+      "bridge": {
+        "abi": "permission-control/v1",
+        "health": "healthy",
+        "identityVerified": true
+      },
+      "policyVersion": "79e2f1afa7d715747f4005567f342fed00d0063e14b169fb68324bd483fdb82b",
+      "pending": "none",
+      "unverified": [
+        "real-model-quality",
+        "real-host-smoke",
+        "non-linux-platforms"
+      ]
+    },
+    "new": {
+      "configuredMode": "smart",
+      "activeMode": "smart",
+      "modeSource": "profile-default",
+      "generation": 1,
+      "reviewer": "kimi_tf/kimi-for-coding",
+      "reviewerSource": "session-default",
+      "fallback": "local/lfm2.5-230m",
+      "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+      "fallbackHealth": "unavailable",
+      "coverage": {
+        "tool": "bash",
+        "session": "main",
+        "shell": "bash",
+        "platform": "linux",
+        "backend": "native",
+        "execution": "foreground",
+        "eligible": false,
+        "reasons": [
+          "unknown-target"
+        ]
+      },
+      "executionLimits": [
+        "unknown-target"
+      ],
+      "nativeProtection": {
+        "bashPrompt": true,
+        "denyPreserved": true,
+        "commandPromptPreserved": true,
+        "criticalSafetyPreserved": true,
+        "taskPrompt": true,
+        "evalPrompt": true,
+        "noYolo": true
+      },
+      "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+      "bridge": {
+        "abi": "permission-control/v1",
+        "health": "healthy",
+        "identityVerified": true
+      },
+      "policyVersion": "79e2f1afa7d715747f4005567f342fed00d0063e14b169fb68324bd483fdb82b",
+      "pending": "none",
+      "unverified": [
+        "real-model-quality",
+        "real-host-smoke",
+        "non-linux-platforms"
+      ]
+    },
+    "resume": {
+      "configuredMode": "smart",
+      "activeMode": "smart",
+      "modeSource": "profile-default",
+      "generation": 1,
+      "reviewer": "kimi_tf/kimi-for-coding",
+      "reviewerSource": "session-default",
+      "fallback": "local/lfm2.5-230m",
+      "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+      "fallbackHealth": "unavailable",
+      "coverage": {
+        "tool": "bash",
+        "session": "main",
+        "shell": "bash",
+        "platform": "linux",
+        "backend": "native",
+        "execution": "foreground",
+        "eligible": false,
+        "reasons": [
+          "unknown-target"
+        ]
+      },
+      "executionLimits": [
+        "unknown-target"
+      ],
+      "nativeProtection": {
+        "bashPrompt": true,
+        "denyPreserved": true,
+        "commandPromptPreserved": true,
+        "criticalSafetyPreserved": true,
+        "taskPrompt": true,
+        "evalPrompt": true,
+        "noYolo": true
+      },
+      "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+      "bridge": {
+        "abi": "permission-control/v1",
+        "health": "healthy",
+        "identityVerified": true
+      },
+      "policyVersion": "79e2f1afa7d715747f4005567f342fed00d0063e14b169fb68324bd483fdb82b",
+      "pending": "none",
+      "unverified": [
+        "real-model-quality",
+        "real-host-smoke",
+        "non-linux-platforms"
+      ]
+    },
+    "exit": 0,
+    "realModelCalls": 0
+  },
+  "transport": {
+    "events": [
+      {
+        "code": "CLIENT_DISCONNECTED",
+        "durationMs": 4628,
+        "outboundSequence": 1,
+        "status": 499
+      },
+      {
+        "code": "CLIENT_DISCONNECTED",
+        "durationMs": 3036,
+        "outboundSequence": 2,
+        "status": 499
+      },
+      {
+        "code": "CLIENT_DISCONNECTED",
+        "durationMs": 2943,
+        "outboundSequence": 3,
+        "status": 499
+      },
+      {
+        "code": "RELAY_BUDGET_EXHAUSTED",
+        "durationMs": 1,
+        "outboundSequence": null,
+        "status": 400
+      }
+    ],
+    "localRequests": 4,
+    "outboundRequests": 3,
+    "status": "running"
+  },
+  "permissionAudit": [
+    {
+      "schema_version": 1,
+      "request_id": "tool_cNa13SJ1gfLawiA3lDwJTTmu",
+      "decision_id": "841c167a-e808-4e50-b962-1f0106fe8693",
+      "operation_digest": "9d81d7ce2173396a13992f63e10fa080df9f297fef87679670214813dbc8daae",
+      "outcome": "ask",
+      "source": "native-protection",
+      "reason_code": "UNKNOWN_EFFECT",
+      "active_mode": "smart",
+      "policy_version": "555838df30bdcc3b0881dbc9944d57d1254abeed75f6039f9746f0fe92ada51b",
+      "actual_reviewer": "not-called",
+      "reviewer_source": "not-called",
+      "fallback_configured": true,
+      "fallback_called": false,
+      "coverage": "manual-required",
+      "coverage_reasons": [
+        "startup-script"
+      ],
+      "health": {
+        "bridge": "healthy",
+        "model": "not-called",
+        "tiny": "not-called"
+      },
+      "primary_calls": 0,
+      "tiny_calls": 0,
+      "permit": "pending",
+      "human": {
+        "human_decision_id": "e7bdc499-9ddd-4c42-9484-d4fcac049d85",
+        "ask_decision_id": "841c167a-e808-4e50-b962-1f0106fe8693",
+        "source": "human",
+        "outcome": "allow"
+      },
+      "elapsed_bucket": "over-30s"
+    },
+    {
+      "schema_version": 1,
+      "request_id": "tool_cNa13SJ1gfLawiA3lDwJTTmu",
+      "decision_id": "841c167a-e808-4e50-b962-1f0106fe8693",
+      "operation_digest": "9d81d7ce2173396a13992f63e10fa080df9f297fef87679670214813dbc8daae",
+      "outcome": "ask",
+      "source": "native-protection",
+      "reason_code": "UNKNOWN_EFFECT",
+      "active_mode": "smart",
+      "policy_version": "555838df30bdcc3b0881dbc9944d57d1254abeed75f6039f9746f0fe92ada51b",
+      "actual_reviewer": "not-called",
+      "reviewer_source": "not-called",
+      "fallback_configured": true,
+      "fallback_called": false,
+      "coverage": "manual-required",
+      "coverage_reasons": [
+        "startup-script"
+      ],
+      "health": {
+        "bridge": "healthy",
+        "model": "not-called",
+        "tiny": "not-called"
+      },
+      "primary_calls": 0,
+      "tiny_calls": 0,
+      "permit": "consumed",
+      "human": {
+        "human_decision_id": "e7bdc499-9ddd-4c42-9484-d4fcac049d85",
+        "ask_decision_id": "841c167a-e808-4e50-b962-1f0106fe8693",
+        "source": "human",
+        "outcome": "allow"
+      },
+      "elapsed_bucket": "over-30s"
+    },
+    {
+      "schema_version": 1,
+      "request_id": "tool_JaXPXGt1Atyuyx0getYOp1f9",
+      "decision_id": "e1726e4c-5da3-44c1-a103-d188a191fe64",
+      "operation_digest": "7a0ba5061e64693646187c0601e3ea08d583d8c3cb59c30db6b3532df3f2e7d2",
+      "outcome": "ask",
+      "source": "native-protection",
+      "reason_code": "UNKNOWN_EFFECT",
+      "active_mode": "smart",
+      "policy_version": "555838df30bdcc3b0881dbc9944d57d1254abeed75f6039f9746f0fe92ada51b",
+      "actual_reviewer": "not-called",
+      "reviewer_source": "not-called",
+      "fallback_configured": true,
+      "fallback_called": false,
+      "coverage": "manual-required",
+      "coverage_reasons": [
+        "startup-script"
+      ],
+      "health": {
+        "bridge": "healthy",
+        "model": "not-called",
+        "tiny": "not-called"
+      },
+      "primary_calls": 0,
+      "tiny_calls": 0,
+      "permit": "pending",
+      "human": {
+        "human_decision_id": "ec6de1d3-c195-4a1c-bfea-65f231f7b10d",
+        "ask_decision_id": "e1726e4c-5da3-44c1-a103-d188a191fe64",
+        "source": "human",
+        "outcome": "allow"
+      },
+      "elapsed_bucket": "over-30s"
+    },
+    {
+      "schema_version": 1,
+      "request_id": "tool_JaXPXGt1Atyuyx0getYOp1f9",
+      "decision_id": "e1726e4c-5da3-44c1-a103-d188a191fe64",
+      "operation_digest": "7a0ba5061e64693646187c0601e3ea08d583d8c3cb59c30db6b3532df3f2e7d2",
+      "outcome": "ask",
+      "source": "native-protection",
+      "reason_code": "UNKNOWN_EFFECT",
+      "active_mode": "smart",
+      "policy_version": "555838df30bdcc3b0881dbc9944d57d1254abeed75f6039f9746f0fe92ada51b",
+      "actual_reviewer": "not-called",
+      "reviewer_source": "not-called",
+      "fallback_configured": true,
+      "fallback_called": false,
+      "coverage": "manual-required",
+      "coverage_reasons": [
+        "startup-script"
+      ],
+      "health": {
+        "bridge": "healthy",
+        "model": "not-called",
+        "tiny": "not-called"
+      },
+      "primary_calls": 0,
+      "tiny_calls": 0,
+      "permit": "consumed",
+      "human": {
+        "human_decision_id": "ec6de1d3-c195-4a1c-bfea-65f231f7b10d",
+        "ask_decision_id": "e1726e4c-5da3-44c1-a103-d188a191fe64",
+        "source": "human",
+        "outcome": "allow"
+      },
+      "elapsed_bucket": "over-30s"
+    },
+    {
+      "schema_version": 1,
+      "request_id": "tool_iQkgn8Fb7DJFvmMQwkSolayT",
+      "decision_id": "49d24adb-8da3-41a7-be42-d9029ff234f8",
+      "operation_digest": "9d81d7ce2173396a13992f63e10fa080df9f297fef87679670214813dbc8daae",
+      "outcome": "ask",
+      "source": "native-protection",
+      "reason_code": "UNKNOWN_EFFECT",
+      "active_mode": "smart",
+      "policy_version": "555838df30bdcc3b0881dbc9944d57d1254abeed75f6039f9746f0fe92ada51b",
+      "actual_reviewer": "not-called",
+      "reviewer_source": "not-called",
+      "fallback_configured": true,
+      "fallback_called": false,
+      "coverage": "manual-required",
+      "coverage_reasons": [
+        "startup-script"
+      ],
+      "health": {
+        "bridge": "healthy",
+        "model": "not-called",
+        "tiny": "not-called"
+      },
+      "primary_calls": 0,
+      "tiny_calls": 0,
+      "permit": "pending",
+      "human": {
+        "human_decision_id": "34930b4b-c39e-403a-8b18-46643aa6697f",
+        "ask_decision_id": "49d24adb-8da3-41a7-be42-d9029ff234f8",
+        "source": "human",
+        "outcome": "allow"
+      },
+      "elapsed_bucket": "over-30s"
+    },
+    {
+      "schema_version": 1,
+      "request_id": "tool_iQkgn8Fb7DJFvmMQwkSolayT",
+      "decision_id": "49d24adb-8da3-41a7-be42-d9029ff234f8",
+      "operation_digest": "9d81d7ce2173396a13992f63e10fa080df9f297fef87679670214813dbc8daae",
+      "outcome": "ask",
+      "source": "native-protection",
+      "reason_code": "UNKNOWN_EFFECT",
+      "active_mode": "smart",
+      "policy_version": "555838df30bdcc3b0881dbc9944d57d1254abeed75f6039f9746f0fe92ada51b",
+      "actual_reviewer": "not-called",
+      "reviewer_source": "not-called",
+      "fallback_configured": true,
+      "fallback_called": false,
+      "coverage": "manual-required",
+      "coverage_reasons": [
+        "startup-script"
+      ],
+      "health": {
+        "bridge": "healthy",
+        "model": "not-called",
+        "tiny": "not-called"
+      },
+      "primary_calls": 0,
+      "tiny_calls": 0,
+      "permit": "consumed",
+      "human": {
+        "human_decision_id": "34930b4b-c39e-403a-8b18-46643aa6697f",
+        "ask_decision_id": "49d24adb-8da3-41a7-be42-d9029ff234f8",
+        "source": "human",
+        "outcome": "allow"
+      },
+      "elapsed_bucket": "over-30s"
+    }
+  ],
+  "verdict": "T072 passed within Linux x64 real-host/scripted-review scope; T073 real reviewer quality not evaluated",
+  "warmFixAttempt": {
+    "runtimeIdentity": "fa94bd4c6db06a16526f4b84624cdec4af1be145ea2bbd50d59fee0bc1ece15b",
+    "assetSha256": "95076aa2e3a4de29ff43d846474a9f03e30f2ce720d5414c75a2c9278a047684",
+    "lifecycle": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "2978f8435b30c9ebeb5e1c46a2ad8d211a1837b1e79eef3e3d46eb806f303785",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "manual": {
+        "configuredMode": "smart",
+        "activeMode": "manual",
+        "modeSource": "session-command",
+        "generation": 3,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "2978f8435b30c9ebeb5e1c46a2ad8d211a1837b1e79eef3e3d46eb806f303785",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "new": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "2978f8435b30c9ebeb5e1c46a2ad8d211a1837b1e79eef3e3d46eb806f303785",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "resume": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "2978f8435b30c9ebeb5e1c46a2ad8d211a1837b1e79eef3e3d46eb806f303785",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "exit": 0,
+      "realModelCalls": 0
+    },
+    "scriptedCounts": {
+      "allowedCommand": "pwd",
+      "mainFixtureRequests": 2,
+      "result": "main-scripted",
+      "reviewFixtureRequests": 0,
+      "totalRequests": 2
+    },
+    "audit": [
+      {
+        "schema_version": 1,
+        "request_id": "scripted-pwd-1",
+        "decision_id": "19bd1eb4-030c-48ad-9f84-8cf2aa88e3e9",
+        "operation_digest": "2239b1c0e763105ba9ccc3053fa29833924a79f0e575d7277a0a3ba442d4c367",
+        "outcome": "ask",
+        "source": "reviewer",
+        "reason_code": "POLICY_MISMATCH",
+        "active_mode": "smart",
+        "policy_version": "c8dadee0e02941c6ec21fc22cd3c027141d907543e44a58c587d440b8ad13e2c",
+        "actual_reviewer": "not-called",
+        "reviewer_source": "not-called",
+        "fallback_configured": true,
+        "fallback_called": false,
+        "coverage": "eligible",
+        "coverage_reasons": [],
+        "health": {
+          "bridge": "healthy",
+          "model": "not-called",
+          "tiny": "not-called"
+        },
+        "primary_calls": 0,
+        "tiny_calls": 0,
+        "permit": "none",
+        "human": {
+          "human_decision_id": "2f3a5290-3716-4eb1-b9a6-8fdd8a026928",
+          "ask_decision_id": "19bd1eb4-030c-48ad-9f84-8cf2aa88e3e9",
+          "source": "human",
+          "outcome": "deny"
+        },
+        "elapsed_bucket": "5-25s"
+      }
+    ]
+  },
+  "initialFieldsScope": "historical intermediate lifecycle and three real main-model requests; final delivery is under finalVerification",
+  "finalVerification": {
+    "sessionFile": "2026-09-29T15-42-07-962Z_01a0edd4-985a-7580-80a6-e0b0ef893657.jsonl",
+    "audit": [
+      {
+        "schema_version": 1,
+        "request_id": "scripted-pwd-4",
+        "decision_id": "a676a031-f937-40f4-ab07-c31996581f72",
+        "operation_digest": "65ae5444ee137f5f04b759a0a411ae91e330152de6f63615007cc106bea0fa78",
+        "outcome": "allow",
+        "source": "reviewer",
+        "reason_code": "LOW_RISK_AUTHORIZED",
+        "active_mode": "smart",
+        "policy_version": "55d4fccbb7de443fd4c6581ca6aa9784c8f7e5eafa862ffcc527f60dba20b6fd",
+        "actual_reviewer": "kimi_tf/kimi-for-coding",
+        "reviewer_source": "session-default",
+        "fallback_configured": true,
+        "fallback_called": false,
+        "coverage": "eligible",
+        "coverage_reasons": [],
+        "health": {
+          "bridge": "healthy",
+          "model": "healthy",
+          "tiny": "not-called"
+        },
+        "primary_calls": 1,
+        "tiny_calls": 0,
+        "permit": "pending",
+        "user_message_ids": [
+          "f345513f-b783-4ae5-b6d8-3f63642f4f74"
+        ],
+        "elapsed_bucket": "under-1s"
+      },
+      {
+        "schema_version": 1,
+        "request_id": "scripted-pwd-4",
+        "decision_id": "a676a031-f937-40f4-ab07-c31996581f72",
+        "operation_digest": "65ae5444ee137f5f04b759a0a411ae91e330152de6f63615007cc106bea0fa78",
+        "outcome": "allow",
+        "source": "reviewer",
+        "reason_code": "LOW_RISK_AUTHORIZED",
+        "active_mode": "smart",
+        "policy_version": "55d4fccbb7de443fd4c6581ca6aa9784c8f7e5eafa862ffcc527f60dba20b6fd",
+        "actual_reviewer": "kimi_tf/kimi-for-coding",
+        "reviewer_source": "session-default",
+        "fallback_configured": true,
+        "fallback_called": false,
+        "coverage": "eligible",
+        "coverage_reasons": [],
+        "health": {
+          "bridge": "healthy",
+          "model": "healthy",
+          "tiny": "not-called"
+        },
+        "primary_calls": 1,
+        "tiny_calls": 0,
+        "permit": "consumed",
+        "user_message_ids": [
+          "f345513f-b783-4ae5-b6d8-3f63642f4f74"
+        ],
+        "elapsed_bucket": "under-1s"
+      }
+    ],
+    "toolResultCount": 1,
+    "toolOutput": [
+      {
+        "type": "text",
+        "text": "/var/tmp/rotom-permission-smoke-work-20260929\n\n\nWall time: 0.00 seconds"
+      }
+    ],
+    "lifecycle": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9670446b8b5c7474e9962a8fde0617800aecd28f8d9a79f8101b8cf4f3bb28af",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "manual": {
+        "configuredMode": "smart",
+        "activeMode": "manual",
+        "modeSource": "session-command",
+        "generation": 3,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9670446b8b5c7474e9962a8fde0617800aecd28f8d9a79f8101b8cf4f3bb28af",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "new": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9670446b8b5c7474e9962a8fde0617800aecd28f8d9a79f8101b8cf4f3bb28af",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "resume": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9670446b8b5c7474e9962a8fde0617800aecd28f8d9a79f8101b8cf4f3bb28af",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "exit": 0,
+      "realModelCalls": 0
+    },
+    "scripted": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "55d4fccbb7de443fd4c6581ca6aa9784c8f7e5eafa862ffcc527f60dba20b6fd",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "final": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 5,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": true,
+          "reasons": []
+        },
+        "executionLimits": [],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "55d4fccbb7de443fd4c6581ca6aa9784c8f7e5eafa862ffcc527f60dba20b6fd",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "counts": {
+        "allowedCommand": "pwd",
+        "mainFixtureRequests": 4,
+        "result": "main-scripted",
+        "reviewFixtureRequests": 2,
+        "totalRequests": 6
+      },
+      "exit": 0,
+      "externalModelRequests": 0
+    },
+    "runtimeIdentity": "bf6f18b45fc80c177f6644e96366b978bb3d524b0d476664d228e4a7de48bc08",
+    "identities": {
+      "asset": "da436eff28dab0d72249e5a3c69f7e3f56e693f6b739e3069ac11fa274e66f83",
+      "manifest": "7c6caa302f43d5c8637aa3b58383c01d65f5bbf55df329f8580a97d1f42d3bbb",
+      "receipt": "9b77413bc042be76b46e57dd1b7a6b9b9ed3da3424f8693f3cd17ad56c1cbb1c",
+      "runtime": "bf6f18b45fc80c177f6644e96366b978bb3d524b0d476664d228e4a7de48bc08"
+    },
+    "providerKind": "deterministic-loopback-fixture; not real-model inference",
+    "lastRunRequests": {
+      "mainFixture": 2,
+      "reviewFixture": 1,
+      "externalModel": 0
+    },
+    "totalAuthorizedRealModelRequests": 3,
+    "missingPlugin": "manager pre-spawn blocked, exit 5; original bytes restored",
+    "rollback": {
+      "exit": 0,
+      "restored": 4,
+      "defaultMode": "smart",
+      "modelFallback": true,
+      "dummyKeyRemoved": true,
+      "pendingRemoved": true
+    },
+    "scriptSha256": {
+      "scripted-provider.py": "6cb1da3d079e3568b5df715646e9428943745b69fa62745979020803581e2a86",
+      "scripted-smoke.py": "06bac56edd04919e931d4b3947d9d14b84a11280289baa8dcd0e552baa67a9bf",
+      "lifecycle-smoke.py": "a0d99dfdd55fe859b1c2aecf79be5040b0760ff9c7ef45679cb5d4a507f372da"
+    },
+    "postRollbackLifecycle": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9670446b8b5c7474e9962a8fde0617800aecd28f8d9a79f8101b8cf4f3bb28af",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "manual": {
+        "configuredMode": "smart",
+        "activeMode": "manual",
+        "modeSource": "session-command",
+        "generation": 3,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9670446b8b5c7474e9962a8fde0617800aecd28f8d9a79f8101b8cf4f3bb28af",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "new": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9670446b8b5c7474e9962a8fde0617800aecd28f8d9a79f8101b8cf4f3bb28af",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "resume": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9670446b8b5c7474e9962a8fde0617800aecd28f8d9a79f8101b8cf4f3bb28af",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "exit": 0,
+      "realModelCalls": 0
+    }
+  },
+  "evaluationHarnessDelivery20260930": {
+    "scope": "new evaluator and report only; production reviewer/policy/host patches unchanged",
+    "assetSha256": "cacb2a43945f8e05a25986208d7cc672afd8f1032ad17a834ff8e1e2e7dc8c7c",
+    "runtimeIdentity": "28e85f1f871fabd39fbf3882f654c630df53ce384a4e851ec688e439358e3107",
+    "lifecycle": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "3a8fdf562397f370362b4c00bc17cf332beccce3136edc09759cc42a0ae5d085",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "manual": {
+        "configuredMode": "smart",
+        "activeMode": "manual",
+        "modeSource": "session-command",
+        "generation": 3,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "3a8fdf562397f370362b4c00bc17cf332beccce3136edc09759cc42a0ae5d085",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "new": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "3a8fdf562397f370362b4c00bc17cf332beccce3136edc09759cc42a0ae5d085",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "resume": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "3a8fdf562397f370362b4c00bc17cf332beccce3136edc09759cc42a0ae5d085",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "exit": 0,
+      "realModelCalls": 0
+    },
+    "paidModelCalls": 0,
+    "regression": {
+      "passed": 103,
+      "seconds": 104.39,
+      "log": "/tmp/rotom-permission-eval-final-pytest.log"
+    },
+    "historicalEvidencePreserved": true
+  },
+  "kimiCompatibilityDelivery20260930": {
+    "assetSha256": "6e76b95f5a03a252946e2bd81245880960a23708f6b50ce54ced266d62cb0b17",
+    "runtimeIdentity": "c16d3c89f1bb9f03d63edb9355883d5943420b3d1b82781300898f764fa09598",
+    "lifecycle": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "fa8d7b0c639e2b8c9ebb851891f267b88a060721a008ffeb7c871b5a16c12d54",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "manual": {
+        "configuredMode": "smart",
+        "activeMode": "manual",
+        "modeSource": "session-command",
+        "generation": 3,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "fa8d7b0c639e2b8c9ebb851891f267b88a060721a008ffeb7c871b5a16c12d54",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "new": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "fa8d7b0c639e2b8c9ebb851891f267b88a060721a008ffeb7c871b5a16c12d54",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "resume": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "fa8d7b0c639e2b8c9ebb851891f267b88a060721a008ffeb7c871b5a16c12d54",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "exit": 0,
+      "realModelCalls": 0
+    },
+    "paidModelCalls": 0,
+    "productionReviewIntegration": {
+      "passed": 13,
+      "assertions": 119
+    },
+    "pluginTests": {
+      "passed": 264,
+      "assertions": 964
+    }
+  },
+  "fullMessageEvidenceDelivery20260930": {
+    "assetSha256": "d12934cb53383e70103aaf937b9b7475efbabc3cf50b3be9fb244355d76ec786",
+    "runtimeIdentity": "fcdf5e32046deec53295f3590a87f12b9a2e3d415ff241af348b0be930d0f3d0",
+    "lifecycle": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9b6ab8fb67d058eed4fb2397d2705c3a3d4f4c0f3ce471dac1caed8193318699",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "manual": {
+        "configuredMode": "smart",
+        "activeMode": "manual",
+        "modeSource": "session-command",
+        "generation": 3,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9b6ab8fb67d058eed4fb2397d2705c3a3d4f4c0f3ce471dac1caed8193318699",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "new": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9b6ab8fb67d058eed4fb2397d2705c3a3d4f4c0f3ce471dac1caed8193318699",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "resume": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "9b6ab8fb67d058eed4fb2397d2705c3a3d4f4c0f3ce471dac1caed8193318699",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "exit": 0,
+      "realModelCalls": 0
+    },
+    "scripted": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "4420714d82766782341d6d25680ec33e1e229a588e4300515b27a12280d99cca",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "final": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 5,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": true,
+          "reasons": []
+        },
+        "executionLimits": [],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "4420714d82766782341d6d25680ec33e1e229a588e4300515b27a12280d99cca",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "counts": {
+        "allowedCommand": "pwd",
+        "mainFixtureRequests": 2,
+        "result": "main-scripted",
+        "reviewFixtureRequests": 1,
+        "totalRequests": 3
+      },
+      "exit": 0,
+      "externalModelRequests": 0
+    },
+    "permitEvidence": {
+      "sessionFile": "2026-09-30T00-28-23-722Z_01a0efb6-672a-7193-9a75-58cfd96e5d0a.jsonl",
+      "audit": [
+        {
+          "schema_version": 1,
+          "request_id": "scripted-pwd-1",
+          "decision_id": "e29a1d53-5d6a-4fe7-9c83-e16d95d732c8",
+          "operation_digest": "12d0d68f920a54f4966df9347940cbdb37e532d11471efd0d1c85193086496a5",
+          "outcome": "allow",
+          "source": "reviewer",
+          "reason_code": "LOW_RISK_AUTHORIZED",
+          "active_mode": "smart",
+          "policy_version": "4420714d82766782341d6d25680ec33e1e229a588e4300515b27a12280d99cca",
+          "actual_reviewer": "kimi_tf/kimi-for-coding",
+          "reviewer_source": "session-default",
+          "fallback_configured": true,
+          "fallback_called": false,
+          "coverage": "eligible",
+          "coverage_reasons": [],
+          "health": {
+            "bridge": "healthy",
+            "model": "healthy",
+            "tiny": "not-called"
+          },
+          "primary_calls": 1,
+          "tiny_calls": 0,
+          "permit": "pending",
+          "user_message_ids": [
+            "140fbe36-12b5-4b7f-9152-7c4be062261e"
+          ],
+          "elapsed_bucket": "under-1s"
+        },
+        {
+          "schema_version": 1,
+          "request_id": "scripted-pwd-1",
+          "decision_id": "e29a1d53-5d6a-4fe7-9c83-e16d95d732c8",
+          "operation_digest": "12d0d68f920a54f4966df9347940cbdb37e532d11471efd0d1c85193086496a5",
+          "outcome": "allow",
+          "source": "reviewer",
+          "reason_code": "LOW_RISK_AUTHORIZED",
+          "active_mode": "smart",
+          "policy_version": "4420714d82766782341d6d25680ec33e1e229a588e4300515b27a12280d99cca",
+          "actual_reviewer": "kimi_tf/kimi-for-coding",
+          "reviewer_source": "session-default",
+          "fallback_configured": true,
+          "fallback_called": false,
+          "coverage": "eligible",
+          "coverage_reasons": [],
+          "health": {
+            "bridge": "healthy",
+            "model": "healthy",
+            "tiny": "not-called"
+          },
+          "primary_calls": 1,
+          "tiny_calls": 0,
+          "permit": "consumed",
+          "user_message_ids": [
+            "140fbe36-12b5-4b7f-9152-7c4be062261e"
+          ],
+          "elapsed_bucket": "under-1s"
+        }
+      ],
+      "toolResultCount": 1,
+      "toolOutput": [
+        {
+          "type": "text",
+          "text": "/var/tmp/rotom-permission-smoke-work-20260929\n\n\nWall time: 0.00 seconds"
+        }
+      ],
+      "lifecycle": {
+        "initial": {
+          "configuredMode": "smart",
+          "activeMode": "smart",
+          "modeSource": "profile-default",
+          "generation": 2,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": false,
+            "reasons": [
+              "unknown-target"
+            ]
+          },
+          "executionLimits": [
+            "unknown-target"
+          ],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "9b6ab8fb67d058eed4fb2397d2705c3a3d4f4c0f3ce471dac1caed8193318699",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "manual": {
+          "configuredMode": "smart",
+          "activeMode": "manual",
+          "modeSource": "session-command",
+          "generation": 3,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": false,
+            "reasons": [
+              "unknown-target"
+            ]
+          },
+          "executionLimits": [
+            "unknown-target"
+          ],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "9b6ab8fb67d058eed4fb2397d2705c3a3d4f4c0f3ce471dac1caed8193318699",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "new": {
+          "configuredMode": "smart",
+          "activeMode": "smart",
+          "modeSource": "profile-default",
+          "generation": 1,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": false,
+            "reasons": [
+              "unknown-target"
+            ]
+          },
+          "executionLimits": [
+            "unknown-target"
+          ],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "9b6ab8fb67d058eed4fb2397d2705c3a3d4f4c0f3ce471dac1caed8193318699",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "resume": {
+          "configuredMode": "smart",
+          "activeMode": "smart",
+          "modeSource": "profile-default",
+          "generation": 1,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": false,
+            "reasons": [
+              "unknown-target"
+            ]
+          },
+          "executionLimits": [
+            "unknown-target"
+          ],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "9b6ab8fb67d058eed4fb2397d2705c3a3d4f4c0f3ce471dac1caed8193318699",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "exit": 0,
+        "realModelCalls": 0
+      },
+      "scripted": {
+        "initial": {
+          "configuredMode": "smart",
+          "activeMode": "smart",
+          "modeSource": "profile-default",
+          "generation": 2,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": false,
+            "reasons": [
+              "unknown-target"
+            ]
+          },
+          "executionLimits": [
+            "unknown-target"
+          ],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "4420714d82766782341d6d25680ec33e1e229a588e4300515b27a12280d99cca",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "final": {
+          "configuredMode": "smart",
+          "activeMode": "smart",
+          "modeSource": "profile-default",
+          "generation": 5,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": true,
+            "reasons": []
+          },
+          "executionLimits": [],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "4420714d82766782341d6d25680ec33e1e229a588e4300515b27a12280d99cca",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "counts": {
+          "allowedCommand": "pwd",
+          "mainFixtureRequests": 2,
+          "result": "main-scripted",
+          "reviewFixtureRequests": 1,
+          "totalRequests": 3
+        },
+        "exit": 0,
+        "externalModelRequests": 0
+      },
+      "runtimeIdentity": "fcdf5e32046deec53295f3590a87f12b9a2e3d415ff241af348b0be930d0f3d0"
+    },
+    "rollback": "restored=4; smart/default fallback restored; dummy key removed; pending absent",
+    "externalModelRequests": 0,
+    "pluginTests": {
+      "passed": 269,
+      "assertions": 972
+    },
+    "strictTypecheck": "passed",
+    "scope": "actual final host; reviewer response from local fixture; not real-model-quality",
+    "regression": {
+      "passed": 103,
+      "seconds": 87.97,
+      "log": "/tmp/rotom-permission-full-evidence-final-pytest.log"
+    },
+    "missingPlugin": "pre-spawn blocked exit 5; restored in finally"
+  },
+  "referencePolicyDelivery20260930": {
+    "runtimeIdentity": "b1566c3e211f0dbd71d1849509a7f3b10bb27651602f1ca6fc5b51bd1f7ccbe4",
+    "asset": {
+      "cacheKey": "sha256/3ab701bfa0d496e72e9f5725b2077a0241a4e9cc4603d091fcf10761be2c2556",
+      "sha256": "3ab701bfa0d496e72e9f5725b2077a0241a4e9cc4603d091fcf10761be2c2556",
+      "size": 367269064
+    },
+    "pluginDigest": "430bad7398aeb47748a5bf9871558c923a62a949a1888efbc5520824c5416113",
+    "manifestIdentity": "174930267033f5320936677f7e192bdb1a85e2b86f77a860f608f231038f9f46",
+    "upstreamIdentity": "969b7e6052eb4020cf27ffaecdacf4abc25bbaf98dbf4e05ba8d114410c027d5",
+    "receiptDigest": "5531d437a5cf1699805c9d352041a528d8c910ad856b8ebbe2b8e596f243e22e",
+    "lifecycle": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "c26ff693f236d368b97e2cac0719f9c3e697c11c4e4d987d0f947b27d81be23b",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "manual": {
+        "configuredMode": "smart",
+        "activeMode": "manual",
+        "modeSource": "session-command",
+        "generation": 3,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "c26ff693f236d368b97e2cac0719f9c3e697c11c4e4d987d0f947b27d81be23b",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "new": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "c26ff693f236d368b97e2cac0719f9c3e697c11c4e4d987d0f947b27d81be23b",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "resume": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "c26ff693f236d368b97e2cac0719f9c3e697c11c4e4d987d0f947b27d81be23b",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "exit": 0,
+      "realModelCalls": 0
+    },
+    "scriptedPermitEvidence": {
+      "sessionFile": "2026-09-30T02-09-41-326Z_01a0f013-23ce-728f-bba0-2cebcee9059e.jsonl",
+      "audit": [
+        {
+          "schema_version": 1,
+          "request_id": "scripted-pwd-1",
+          "decision_id": "4f96a4c8-879a-47d1-8c43-fe653a7f8f0d",
+          "operation_digest": "3d8c65b887151bcca76bc570d5550d8b6a25c5811d93ae94eb8bfa2abb99c884",
+          "outcome": "allow",
+          "source": "reviewer",
+          "reason_code": "LOW_RISK_AUTHORIZED",
+          "active_mode": "smart",
+          "policy_version": "2f6dccd76075a9a9ec848736359398651b151d2d52e0b6dd634920a8c6e70ced",
+          "actual_reviewer": "kimi_tf/kimi-for-coding",
+          "reviewer_source": "session-default",
+          "fallback_configured": true,
+          "fallback_called": false,
+          "coverage": "eligible",
+          "coverage_reasons": [],
+          "health": {
+            "bridge": "healthy",
+            "model": "healthy",
+            "tiny": "not-called"
+          },
+          "primary_calls": 1,
+          "tiny_calls": 0,
+          "permit": "pending",
+          "user_message_ids": [
+            "26de8ad1-2c66-4711-83cf-33a90ef20c3a"
+          ],
+          "elapsed_bucket": "under-1s"
+        },
+        {
+          "schema_version": 1,
+          "request_id": "scripted-pwd-1",
+          "decision_id": "4f96a4c8-879a-47d1-8c43-fe653a7f8f0d",
+          "operation_digest": "3d8c65b887151bcca76bc570d5550d8b6a25c5811d93ae94eb8bfa2abb99c884",
+          "outcome": "allow",
+          "source": "reviewer",
+          "reason_code": "LOW_RISK_AUTHORIZED",
+          "active_mode": "smart",
+          "policy_version": "2f6dccd76075a9a9ec848736359398651b151d2d52e0b6dd634920a8c6e70ced",
+          "actual_reviewer": "kimi_tf/kimi-for-coding",
+          "reviewer_source": "session-default",
+          "fallback_configured": true,
+          "fallback_called": false,
+          "coverage": "eligible",
+          "coverage_reasons": [],
+          "health": {
+            "bridge": "healthy",
+            "model": "healthy",
+            "tiny": "not-called"
+          },
+          "primary_calls": 1,
+          "tiny_calls": 0,
+          "permit": "consumed",
+          "user_message_ids": [
+            "26de8ad1-2c66-4711-83cf-33a90ef20c3a"
+          ],
+          "elapsed_bucket": "under-1s"
+        }
+      ],
+      "toolResultCount": 1,
+      "toolOutput": [
+        {
+          "type": "text",
+          "text": "/var/tmp/rotom-permission-smoke-work-20260929\n\n\nWall time: 0.00 seconds"
+        }
+      ],
+      "lifecycle": {
+        "initial": {
+          "configuredMode": "smart",
+          "activeMode": "smart",
+          "modeSource": "profile-default",
+          "generation": 2,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": false,
+            "reasons": [
+              "unknown-target"
+            ]
+          },
+          "executionLimits": [
+            "unknown-target"
+          ],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "c26ff693f236d368b97e2cac0719f9c3e697c11c4e4d987d0f947b27d81be23b",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "manual": {
+          "configuredMode": "smart",
+          "activeMode": "manual",
+          "modeSource": "session-command",
+          "generation": 3,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": false,
+            "reasons": [
+              "unknown-target"
+            ]
+          },
+          "executionLimits": [
+            "unknown-target"
+          ],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "c26ff693f236d368b97e2cac0719f9c3e697c11c4e4d987d0f947b27d81be23b",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "new": {
+          "configuredMode": "smart",
+          "activeMode": "smart",
+          "modeSource": "profile-default",
+          "generation": 1,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": false,
+            "reasons": [
+              "unknown-target"
+            ]
+          },
+          "executionLimits": [
+            "unknown-target"
+          ],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "c26ff693f236d368b97e2cac0719f9c3e697c11c4e4d987d0f947b27d81be23b",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "resume": {
+          "configuredMode": "smart",
+          "activeMode": "smart",
+          "modeSource": "profile-default",
+          "generation": 1,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": false,
+            "reasons": [
+              "unknown-target"
+            ]
+          },
+          "executionLimits": [
+            "unknown-target"
+          ],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "c26ff693f236d368b97e2cac0719f9c3e697c11c4e4d987d0f947b27d81be23b",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "exit": 0,
+        "realModelCalls": 0
+      },
+      "scripted": {
+        "initial": {
+          "configuredMode": "smart",
+          "activeMode": "smart",
+          "modeSource": "profile-default",
+          "generation": 2,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": false,
+            "reasons": [
+              "unknown-target"
+            ]
+          },
+          "executionLimits": [
+            "unknown-target"
+          ],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "2f6dccd76075a9a9ec848736359398651b151d2d52e0b6dd634920a8c6e70ced",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "final": {
+          "configuredMode": "smart",
+          "activeMode": "smart",
+          "modeSource": "profile-default",
+          "generation": 5,
+          "reviewer": "kimi_tf/kimi-for-coding",
+          "reviewerSource": "session-default",
+          "fallback": "local/lfm2.5-230m",
+          "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+          "fallbackHealth": "unavailable",
+          "coverage": {
+            "tool": "bash",
+            "session": "main",
+            "shell": "bash",
+            "platform": "linux",
+            "backend": "native",
+            "execution": "foreground",
+            "eligible": true,
+            "reasons": []
+          },
+          "executionLimits": [],
+          "nativeProtection": {
+            "bashPrompt": true,
+            "denyPreserved": true,
+            "commandPromptPreserved": true,
+            "criticalSafetyPreserved": true,
+            "taskPrompt": true,
+            "evalPrompt": true,
+            "noYolo": true
+          },
+          "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+          "bridge": {
+            "abi": "permission-control/v1",
+            "health": "healthy",
+            "identityVerified": true
+          },
+          "policyVersion": "2f6dccd76075a9a9ec848736359398651b151d2d52e0b6dd634920a8c6e70ced",
+          "pending": "none",
+          "unverified": [
+            "real-model-quality",
+            "real-host-smoke",
+            "non-linux-platforms"
+          ]
+        },
+        "counts": {
+          "allowedCommand": "pwd",
+          "mainFixtureRequests": 2,
+          "result": "main-scripted",
+          "reviewFixtureRequests": 1,
+          "totalRequests": 3
+        },
+        "exit": 0,
+        "externalModelRequests": 0
+      },
+      "runtimeIdentity": "b1566c3e211f0dbd71d1849509a7f3b10bb27651602f1ca6fc5b51bd1f7ccbe4"
+    },
+    "rollback": "restored 4; default smart and fallback restored; dummy key removed; no pending",
+    "missingPlugin": "blocked pre-spawn exit 5; original bytes restored in finally",
+    "externalModelRequests": 0,
+    "scope": "final actual Linux x64 host and local fixture reviewer; distinct from real reviewer quality",
+    "contractRegression": {
+      "passed": 61,
+      "assertions": 98,
+      "strictTypecheck": "passed"
+    },
+    "materializedRegression": {
+      "passed": 151,
+      "seconds": 66.79,
+      "log": "/tmp/rotom-permission-reference-fix-final-pytest.log",
+      "files": [
+        "tests/test_omp_permission_control.py",
+        "tests/test_omp_permission_runtime.py",
+        "tests/test_omp_permission_build_inputs.py"
+      ],
+      "scope": "temporary HOME and fake host/transport; network blocked; native host smoke separate"
+    },
+    "coreSuite": {
+      "tests": 270,
+      "execution": "materialized pytest test_permission_typescript_core",
+      "result": "passed"
+    }
+  },
+  "convergenceDelivery20260930": {
+    "date": "2026-09-30",
+    "tasks": [
+      "T081",
+      "T082"
+    ],
+    "status": "complete",
+    "runtimeIdentity": "36c0e8a46da3999b4eee73edc0121117fd284f2880bc7784ba36189946854e0f",
+    "asset": {
+      "cacheKey": "sha256/ada205aeec0cd2aefbb4c2d0b00d924ba2d9360395159fdd76f2c6a56a128f41",
+      "sha256": "ada205aeec0cd2aefbb4c2d0b00d924ba2d9360395159fdd76f2c6a56a128f41",
+      "size": 367281352
+    },
+    "pluginDigest": "430bad7398aeb47748a5bf9871558c923a62a949a1888efbc5520824c5416113",
+    "manifestIdentity": "f3a274d2c593851d17101d57a8aca6c5705994655f6b93755f356d258918af2f",
+    "upstreamIdentity": "969b7e6052eb4020cf27ffaecdacf4abc25bbaf98dbf4e05ba8d114410c027d5",
+    "receiptDigest": "f5ab42e0d4ef6997d0f13bed74d97945190e0a6dbb149ce6d94808bf85269da3",
+    "patches": [
+      {
+        "path": "agents/omp/patches/permission-control/0001-host-bridge.patch",
+        "sha256": "f5478d8c128a92e19fc5ff46269a6cf6743dc8fc7c20389211c676afe605ce94"
+      },
+      {
+        "path": "agents/omp/patches/permission-control/0002-installed-only-tiny.patch",
+        "sha256": "be830a4238d67d840621dc4503e342679f625f8aed3e86af1a9cdf515089f508"
+      }
+    ],
+    "lifecycle": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "41aa69222e2f773c0ff332c30b64e017ef9b07d0a7e197231f6fbbaaa71b6ad4",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "manual": {
+        "configuredMode": "smart",
+        "activeMode": "manual",
+        "modeSource": "session-command",
+        "generation": 3,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "41aa69222e2f773c0ff332c30b64e017ef9b07d0a7e197231f6fbbaaa71b6ad4",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "new": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "41aa69222e2f773c0ff332c30b64e017ef9b07d0a7e197231f6fbbaaa71b6ad4",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "resume": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerSource": "session-default",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "41aa69222e2f773c0ff332c30b64e017ef9b07d0a7e197231f6fbbaaa71b6ad4",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "exit": 0,
+      "realModelCalls": 0
+    },
+    "scriptedPermitEvidence": {
+      "status": "passed",
+      "sessionId": "01a0f061-4754-71e3-aad8-61397c143719",
+      "sessionFile": "/tmp/rotom-permission-convergence-host-20260930/instances/omp/omp-kernel/user-home/.omp/profiles/rotom-9f4ab30f8f021fc711a1b22b/agent/sessions/--var-tmp-rotom-permission-smoke-work-20260929--/2026-09-30T03-35-02-228Z_01a0f061-4754-71e3-aad8-61397c143719.jsonl",
+      "runtimeIdentity": "36c0e8a46da3999b4eee73edc0121117fd284f2880bc7784ba36189946854e0f",
+      "audits": [
+        {
+          "schema_version": 1,
+          "request_id": "scripted-pwd-1",
+          "decision_id": "a03e1508-1c8d-4db8-93e4-6f74af8ffdc6",
+          "operation_digest": "09f36de951940a14e8dcdfc4953c26fbbaf58b25e20abe240dc652d56fc12df4",
+          "outcome": "allow",
+          "source": "reviewer",
+          "reason_code": "LOW_RISK_AUTHORIZED",
+          "active_mode": "smart",
+          "policy_version": "41aa69222e2f773c0ff332c30b64e017ef9b07d0a7e197231f6fbbaaa71b6ad4",
+          "actual_reviewer": "kimi_tf/kimi-for-coding",
+          "reviewer_source": "session-default",
+          "fallback_configured": true,
+          "fallback_called": false,
+          "coverage": "eligible",
+          "coverage_reasons": [],
+          "health": {
+            "bridge": "healthy",
+            "model": "healthy",
+            "tiny": "not-called"
+          },
+          "primary_calls": 1,
+          "tiny_calls": 0,
+          "permit": "pending",
+          "user_message_ids": [
+            "25c621cd-6c29-47ab-8ea7-eb0b1b1f096e"
+          ],
+          "elapsed_bucket": "under-1s"
+        },
+        {
+          "schema_version": 1,
+          "request_id": "scripted-pwd-1",
+          "decision_id": "a03e1508-1c8d-4db8-93e4-6f74af8ffdc6",
+          "operation_digest": "09f36de951940a14e8dcdfc4953c26fbbaf58b25e20abe240dc652d56fc12df4",
+          "outcome": "allow",
+          "source": "reviewer",
+          "reason_code": "LOW_RISK_AUTHORIZED",
+          "active_mode": "smart",
+          "policy_version": "41aa69222e2f773c0ff332c30b64e017ef9b07d0a7e197231f6fbbaaa71b6ad4",
+          "actual_reviewer": "kimi_tf/kimi-for-coding",
+          "reviewer_source": "session-default",
+          "fallback_configured": true,
+          "fallback_called": false,
+          "coverage": "eligible",
+          "coverage_reasons": [],
+          "health": {
+            "bridge": "healthy",
+            "model": "healthy",
+            "tiny": "not-called"
+          },
+          "primary_calls": 1,
+          "tiny_calls": 0,
+          "permit": "consumed",
+          "user_message_ids": [
+            "25c621cd-6c29-47ab-8ea7-eb0b1b1f096e"
+          ],
+          "elapsed_bucket": "under-1s"
+        }
+      ],
+      "successfulToolResults": 1,
+      "humanApprovals": 0,
+      "externalModelRequests": 0
+    },
+    "fixtureCounts": {
+      "allowedCommand": "pwd",
+      "mainFixtureRequests": 2,
+      "result": "main-scripted",
+      "reviewFixtureRequests": 1,
+      "totalRequests": 3
+    },
+    "hostSteps": [
+      {
+        "script": "prepare.py",
+        "exit": 0,
+        "elapsedSeconds": 8.933,
+        "log": "/tmp/rotom-permission-convergence-host-20260930/prepare.py.log"
+      },
+      {
+        "script": "prepare-scripted.py",
+        "exit": 0,
+        "elapsedSeconds": 5.027,
+        "log": "/tmp/rotom-permission-convergence-host-20260930/prepare-scripted.py.log"
+      },
+      {
+        "script": "scripted-smoke.py",
+        "exit": 0,
+        "elapsedSeconds": 14.251,
+        "log": "/tmp/rotom-permission-convergence-host-20260930/scripted-smoke.py.log"
+      },
+      {
+        "script": "verify-session.py",
+        "exit": 0,
+        "elapsedSeconds": 0.065,
+        "log": "/tmp/rotom-permission-convergence-host-20260930/verify-session.py.log"
+      },
+      {
+        "script": "lifecycle-smoke.py",
+        "exit": 0,
+        "elapsedSeconds": 18.772,
+        "log": "/tmp/rotom-permission-convergence-host-20260930/lifecycle-smoke.py.log"
+      },
+      {
+        "script": "missing-plugin-smoke.py",
+        "exit": 0,
+        "elapsedSeconds": 4.322,
+        "log": "/tmp/rotom-permission-convergence-host-20260930/missing-plugin-smoke.py.log"
+      },
+      {
+        "script": "rollback-model.py",
+        "exit": 0,
+        "elapsedSeconds": 3.621,
+        "log": "/tmp/rotom-permission-convergence-host-20260930/rollback-model.py.log"
+      }
+    ],
+    "missingPlugin": {
+      "exit": 5,
+      "preSpawn": true,
+      "originalBytesRestored": true
+    },
+    "rollback": {
+      "exit": 0,
+      "restored": 4,
+      "defaultSmartRestored": true,
+      "modelFallbackRestored": true,
+      "dummyKeyRemoved": true,
+      "pendingAbsent": true
+    },
+    "materializedRegression": {
+      "command": ".venv/bin/python -m pytest -q tests/test_omp_permission_control.py tests/test_omp_permission_runtime.py tests/test_omp_permission_build_inputs.py tests/test_omp_kernel.py::test_kernel_deployment_preserves_reviewed_native_configuration --omp-build-source /tmp/rotom-omp-plan/commit.tar.gz --omp-tool-cache /tmp/rotom-omp-build-inputs/tools --omp-dependency-cache /tmp/rotom-omp-build-inputs/dependencies --basetemp /tmp/rotom-permission-convergence-final-pytest",
+      "passed": 152,
+      "seconds": 71.68,
+      "skipped": 0,
+      "scope": "required three groups151 plus kernel rendering1"
+    },
+    "bridge": {
+      "passed": 37,
+      "failed": 0,
+      "assertions": 287,
+      "seconds": 1.13
+    },
+    "typecheck": {
+      "command": "locked Bun run check:types in pristine materialized coding-agent",
+      "exit": 0
+    },
+    "formatCheck": {
+      "command": "oxfmt --check four affected materialized files",
+      "exit": 0
+    },
+    "tdd": {
+      "auditBeforeRepair": {
+        "passed": 31,
+        "failed": 4
+      },
+      "statusBeforeRepair": {
+        "passed": 0,
+        "failed": 1,
+        "observation": "authoritative review-b, cached review-a"
+      }
+    },
+    "externalModelRequests": 0,
+    "paidRequestLedgerUnchanged": true,
+    "frozenFixtureBytesUnchanged": true,
+    "modelResponseBytesUnchanged": true,
+    "dailyLocalSha256Unchanged": true,
+    "dailyCacheAndDeploymentUntouched": true,
+    "fixtureProviderStopped": true,
+    "unverified": [
+      "actual tiny inference",
+      "actual interceptor extension chain and long tasks",
+      "other platforms",
+      "quality outside frozen evaluation"
+    ],
+    "executionModels": {
+      "implementation": "gpt-5.6-sol / medium",
+      "evidenceScout": "gpt-5.6-luna / medium",
+      "primary": "critical decisions and final acceptance"
+    }
+  },
+  "remoteFallbackDelivery20260930": {
+    "date": "2026-09-30",
+    "tasks": [
+      "T084",
+      "T085",
+      "T086",
+      "T087"
+    ],
+    "status": "complete",
+    "runtimeIdentity": "06e42249ac791b39fd66d7a5d30c5988742eea876fa38ba19178d6adf018ebe2",
+    "asset": {
+      "cacheKey": "sha256/0fe58d4af126d162979efe3188b0a11d3f35b4a52f01049d7c4ac8871b63fa86",
+      "sha256": "0fe58d4af126d162979efe3188b0a11d3f35b4a52f01049d7c4ac8871b63fa86",
+      "size": 367318216
+    },
+    "pluginDigest": "4511e7cdb9efb312029acfff93f0f6fe73cc5c3c018325c25756f9fd7eea040d",
+    "manifestIdentity": "dce490890453ccff4165ece76a460fb9cbf23756cdb553c3fd7fe8d72bbb815e",
+    "upstreamIdentity": "60d399dd4b0a2f2265d117d17b9e566669b64ca1413d4dc0fac66487165b9521",
+    "receiptDigest": "f0716c84316192f349253d68247ba4bcfc455f41218816efe79675952df4a0ac",
+    "patches": [
+      {
+        "path": "agents/omp/patches/permission-control/0001-host-bridge.patch",
+        "sha256": "45a0fcbdd4092161cbc3c14ac8b40a323928cd4dc915538e2cbee7f6ead8e51f"
+      },
+      {
+        "path": "agents/omp/patches/permission-control/0002-installed-only-tiny.patch",
+        "sha256": "c34d02d19941e09ca507e67164f5b8d37a67e991b6ed96ab51dca2b67ece33da"
+      }
+    ],
+    "lifecycle": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerHealth": "ready",
+        "reviewerSource": "session-default",
+        "remoteFallback": "zhipu_tf/glm-5.3-flash",
+        "remoteFallbackHealth": "ready",
+        "remoteFallbackSource": "remote-fallback",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "ef70bfb283e645e1d756bf9f292d3469f4eb214642c31310e0ae7b36fe2f4c3c",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "manual": {
+        "configuredMode": "smart",
+        "activeMode": "manual",
+        "modeSource": "session-command",
+        "generation": 3,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerHealth": "ready",
+        "reviewerSource": "session-default",
+        "remoteFallback": "zhipu_tf/glm-5.3-flash",
+        "remoteFallbackHealth": "ready",
+        "remoteFallbackSource": "remote-fallback",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "ef70bfb283e645e1d756bf9f292d3469f4eb214642c31310e0ae7b36fe2f4c3c",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "new": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerHealth": "ready",
+        "reviewerSource": "session-default",
+        "remoteFallback": "zhipu_tf/glm-5.3-flash",
+        "remoteFallbackHealth": "ready",
+        "remoteFallbackSource": "remote-fallback",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "ef70bfb283e645e1d756bf9f292d3469f4eb214642c31310e0ae7b36fe2f4c3c",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "resume": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 1,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerHealth": "ready",
+        "reviewerSource": "session-default",
+        "remoteFallback": "zhipu_tf/glm-5.3-flash",
+        "remoteFallbackHealth": "ready",
+        "remoteFallbackSource": "remote-fallback",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "ef70bfb283e645e1d756bf9f292d3469f4eb214642c31310e0ae7b36fe2f4c3c",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "exit": 0,
+      "realModelCalls": 0
+    },
+    "scriptedResult": {
+      "initial": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 2,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerHealth": "ready",
+        "reviewerSource": "session-default",
+        "remoteFallback": "zhipu_tf/glm-5.3-flash",
+        "remoteFallbackHealth": "ready",
+        "remoteFallbackSource": "remote-fallback",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": false,
+          "reasons": [
+            "unknown-target"
+          ]
+        },
+        "executionLimits": [
+          "unknown-target"
+        ],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "ef70bfb283e645e1d756bf9f292d3469f4eb214642c31310e0ae7b36fe2f4c3c",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "final": {
+        "configuredMode": "smart",
+        "activeMode": "smart",
+        "modeSource": "profile-default",
+        "generation": 5,
+        "reviewer": "kimi_tf/kimi-for-coding",
+        "reviewerHealth": "ready",
+        "reviewerSource": "session-default",
+        "remoteFallback": "zhipu_tf/glm-5.3-flash",
+        "remoteFallbackHealth": "ready",
+        "remoteFallbackSource": "remote-fallback",
+        "fallback": "local/lfm2.5-230m",
+        "fallbackLimit": "ask-or-deny-only;installed-only;never-allow",
+        "fallbackHealth": "unavailable",
+        "coverage": {
+          "tool": "bash",
+          "session": "main",
+          "shell": "bash",
+          "platform": "linux",
+          "backend": "native",
+          "execution": "foreground",
+          "eligible": true,
+          "reasons": []
+        },
+        "executionLimits": [],
+        "nativeProtection": {
+          "bashPrompt": true,
+          "denyPreserved": true,
+          "commandPromptPreserved": true,
+          "criticalSafetyPreserved": true,
+          "taskPrompt": true,
+          "evalPrompt": true,
+          "noYolo": true
+        },
+        "childAndHeadless": "native-prompt-or-block;no-smart-permit-inheritance;no-yolo",
+        "bridge": {
+          "abi": "permission-control/v1",
+          "health": "healthy",
+          "identityVerified": true
+        },
+        "policyVersion": "ef70bfb283e645e1d756bf9f292d3469f4eb214642c31310e0ae7b36fe2f4c3c",
+        "pending": "none",
+        "unverified": [
+          "real-model-quality",
+          "real-host-smoke",
+          "non-linux-platforms"
+        ]
+      },
+      "counts": {
+        "allowedCommand": "pwd",
+        "mainFixtureRequests": 2,
+        "primaryReviewFixtureRequests": 1,
+        "remoteReviewFixtureRequests": 1,
+        "result": "main-scripted",
+        "reviewFixtureRequests": 1,
+        "totalRequests": 4
+      },
+      "exit": 0,
+      "externalModelRequests": 0
+    },
+    "verifiedSession": {
+      "status": "passed",
+      "sessionId": "01a0f1b6-492d-7490-9ab4-99f10dc4dfdb",
+      "sessionFile": "/tmp/rotom-permission-remote-host-20260930-attempt2/instances/omp/omp-kernel/user-home/.omp/profiles/rotom-9f4ab30f8f021fc711a1b22b/agent/sessions/--var-tmp-rotom-permission-remote-work-20260930--/2026-09-30T09-47-30-477Z_01a0f1b6-492d-7490-9ab4-99f10dc4dfdb.jsonl",
+      "runtimeIdentity": "06e42249ac791b39fd66d7a5d30c5988742eea876fa38ba19178d6adf018ebe2",
+      "audits": [
+        {
+          "schema_version": 1,
+          "request_id": "scripted-pwd-1",
+          "decision_id": "a4868d46-a848-4d66-9966-8b8640a217a8",
+          "operation_digest": "dfadc34399aefa5260ef2ff9ba54b831c3b8aa718053e28aff695abe2eff1a85",
+          "outcome": "allow",
+          "source": "remote-fallback",
+          "reason_code": "LOW_RISK_AUTHORIZED",
+          "active_mode": "smart",
+          "policy_version": "ef70bfb283e645e1d756bf9f292d3469f4eb214642c31310e0ae7b36fe2f4c3c",
+          "actual_reviewer": "zhipu_tf/glm-5.3-flash",
+          "reviewer_source": "remote-fallback",
+          "primary_model": "kimi_tf/kimi-for-coding",
+          "remote_model": "zhipu_tf/glm-5.3-flash",
+          "remote_configured": true,
+          "remote_called": true,
+          "fallback_configured": true,
+          "fallback_called": false,
+          "coverage": "eligible",
+          "coverage_reasons": [],
+          "health": {
+            "bridge": "healthy",
+            "model": "degraded",
+            "tiny": "not-called",
+            "remote": "healthy"
+          },
+          "primary_calls": 1,
+          "remote_calls": 1,
+          "tiny_calls": 0,
+          "permit": "pending",
+          "user_message_ids": [
+            "b5d21695-771c-4911-93d6-40c4443f62da"
+          ],
+          "elapsed_bucket": "under-1s"
+        },
+        {
+          "schema_version": 1,
+          "request_id": "scripted-pwd-1",
+          "decision_id": "a4868d46-a848-4d66-9966-8b8640a217a8",
+          "operation_digest": "dfadc34399aefa5260ef2ff9ba54b831c3b8aa718053e28aff695abe2eff1a85",
+          "outcome": "allow",
+          "source": "remote-fallback",
+          "reason_code": "LOW_RISK_AUTHORIZED",
+          "active_mode": "smart",
+          "policy_version": "ef70bfb283e645e1d756bf9f292d3469f4eb214642c31310e0ae7b36fe2f4c3c",
+          "actual_reviewer": "zhipu_tf/glm-5.3-flash",
+          "reviewer_source": "remote-fallback",
+          "primary_model": "kimi_tf/kimi-for-coding",
+          "remote_model": "zhipu_tf/glm-5.3-flash",
+          "remote_configured": true,
+          "remote_called": true,
+          "fallback_configured": true,
+          "fallback_called": false,
+          "coverage": "eligible",
+          "coverage_reasons": [],
+          "health": {
+            "bridge": "healthy",
+            "model": "degraded",
+            "tiny": "not-called",
+            "remote": "healthy"
+          },
+          "primary_calls": 1,
+          "remote_calls": 1,
+          "tiny_calls": 0,
+          "permit": "consumed",
+          "user_message_ids": [
+            "b5d21695-771c-4911-93d6-40c4443f62da"
+          ],
+          "elapsed_bucket": "under-1s"
+        }
+      ],
+      "successfulToolResults": 1,
+      "humanApprovals": 0,
+      "externalModelRequests": 0
+    },
+    "steps": [
+      {
+        "script": "prepare.py",
+        "exit": 0,
+        "elapsedSeconds": 9.635,
+        "log": "/tmp/rotom-permission-remote-host-20260930-attempt2/prepare.py.log"
+      },
+      {
+        "script": "prepare-scripted.py",
+        "exit": 0,
+        "elapsedSeconds": 4.677,
+        "log": "/tmp/rotom-permission-remote-host-20260930-attempt2/prepare-scripted.py.log"
+      },
+      {
+        "script": "scripted-smoke.py",
+        "exit": 0,
+        "elapsedSeconds": 14.756,
+        "log": "/tmp/rotom-permission-remote-host-20260930-attempt2/scripted-smoke.py.log"
+      },
+      {
+        "script": "verify-session.py",
+        "exit": 0,
+        "elapsedSeconds": 0.032,
+        "log": "/tmp/rotom-permission-remote-host-20260930-attempt2/verify-session.py.log"
+      },
+      {
+        "script": "lifecycle-smoke.py",
+        "exit": 0,
+        "elapsedSeconds": 19.761,
+        "log": "/tmp/rotom-permission-remote-host-20260930-attempt2/lifecycle-smoke.py.log"
+      },
+      {
+        "script": "missing-plugin-smoke.py",
+        "exit": 0,
+        "elapsedSeconds": 4.226,
+        "log": "/tmp/rotom-permission-remote-host-20260930-attempt2/missing-plugin-smoke.py.log"
+      },
+      {
+        "script": "rollback-model.py",
+        "exit": 0,
+        "elapsedSeconds": 3.426,
+        "log": "/tmp/rotom-permission-remote-host-20260930-attempt2/rollback-model.py.log"
+      }
+    ],
+    "providerStopped": true,
+    "externalModelRequests": 0,
+    "pythonVerification": {
+      "passed": 266,
+      "skipped": 0,
+      "elapsedSeconds": 96.59,
+      "log": "/tmp/rotom-permission-remote-host-20260930-attempt2/final-pytest.log"
+    },
+    "workerVerification": {
+      "status": "complete",
+      "executionModels": [
+        "gpt-5.6-sol / medium",
+        "gpt-5.6-sol / medium"
+      ],
+      "sourcePath": "/data/1/weixiaoxian.wxx/dev_tool/rotom/cache/permission-remote-tests/finalcheck",
+      "cleanPatchApply": true,
+      "hostTests": {
+        "passed": 51,
+        "failed": 0,
+        "assertions": 432,
+        "files": 2,
+        "log": "/tmp/rotom-permission-remote-host-tests.log"
+      },
+      "strictTypecheck": {
+        "exit": 0,
+        "command": "tsgo -p tsconfig.json --noEmit",
+        "log": "/tmp/rotom-permission-remote-tsgo.log"
+      },
+      "targetedOxlint": {
+        "exit": 0
+      },
+      "managerTests": {
+        "passed": 155,
+        "skipped": 8,
+        "seconds": 49.02,
+        "log": "/tmp/rotom-permission-remote-manager-pytest.log",
+        "scope": "materialized fixture was omitted here; final delivery regression supplies caches"
+      },
+      "coreTests": {
+        "passed": 291,
+        "failed": 0,
+        "assertions": 1085,
+        "strictTypecheckExit": 0
+      },
+      "finalPatchSha256": [
+        "45a0fcbdd4092161cbc3c14ac8b40a323928cd4dc915538e2cbee7f6ead8e51f",
+        "c34d02d19941e09ca507e67164f5b8d37a67e991b6ed96ab51dca2b67ece33da"
+      ]
+    },
+    "initialEnvironmentFailure": {
+      "python": {
+        "passed": 221,
+        "failed": 45,
+        "reason": "group-writable ancestor under repository test base",
+        "log": "/tmp/rotom-permission-remote-host-20260930/final-pytest.log"
+      },
+      "host": {
+        "exit": 4,
+        "reason": "undeclared /tmp/.omp project source before spawn",
+        "externalModelRequests": 0,
+        "log": "/tmp/rotom-permission-remote-host-20260930/scripted-smoke.py.log"
+      },
+      "productProtectionChanged": false
+    },
+    "protectedInputsUnchanged": [
+      "docs/acceptance/omp-permission-control-model-results.json",
+      "docs/acceptance/omp-permission-control-model-semantic-audit.json",
+      "docs/acceptance/omp-permission-control-coreference-results.json",
+      "tests/fixtures/omp/permission-control/cases.jsonl",
+      "tests/fixtures/omp/permission-control/labels.json",
+      "tests/fixtures/omp/permission-control/fixture-schema.json",
+      "agents/omp/patches/permission-control/build-inputs.lock.json",
+      "/home/weixiaoxian.wxx/.config/agentcfg/machines/workstation.toml",
+      "/tmp/rotom-permission-evaluation-20260930/run-20260930/diagnostics/adapter-ledger.json"
+    ],
+    "unverified": [
+      "live Cursor OAuth model discovery",
+      "GLM remote fallback approval quality",
+      "installed tiny inference",
+      "non-linux-x64 platforms",
+      "real interceptor extension chain and long background tasks"
+    ],
+    "dailyCachePrepared": {
+      "status": "prepared",
+      "runtimeIdentity": "06e42249ac791b39fd66d7a5d30c5988742eea876fa38ba19178d6adf018ebe2",
+      "assetSha256": "0fe58d4af126d162979efe3188b0a11d3f35b4a52f01049d7c4ac8871b63fa86",
+      "cacheOnly": true,
+      "configChanged": false,
+      "accountAccessed": false,
+      "hostStarted": false,
+      "externalModelRequests": 0
+    },
+    "dailyDeployment": {
+      "date": "2026-09-30",
+      "authorization": "用户明确确认已退出并要求完成 plan 和 apply",
+      "local": "/home/weixiaoxian.wxx/.config/agentcfg/machines/workstation.toml",
+      "profile": "omp-kernel",
+      "runtimeIdentity": "06e42249ac791b39fd66d7a5d30c5988742eea876fa38ba19178d6adf018ebe2",
+      "commands": {
+        "plan": {
+          "exitCode": 0,
+          "changes": 3,
+          "conflicts": 0,
+          "drift": 0
+        },
+        "apply": {
+          "exitCode": 0,
+          "changes": 3,
+          "conflicts": 0,
+          "drift": 0
+        },
+        "doctor": {
+          "exitCode": 0,
+          "format": "json",
+          "readiness": "offline-ready",
+          "changes_pending": 0,
+          "deployed": true,
+          "dependencies": "installed",
+          "deployed_dependencies": "installed",
+          "deployed_runtime_matches_current": true,
+          "conflicts": false,
+          "drift": false,
+          "live": false,
+          "recovery_pending": false,
+          "authentication": "not-inspected; use native auth status"
+        }
+      },
+      "dailyHostStarted": false,
+      "newModelRequests": 0,
+      "accountDatabaseAccessed": false,
+      "protectedInputsUnchanged": [
+        "docs/acceptance/omp-permission-control-model-results.json",
+        "docs/acceptance/omp-permission-control-model-semantic-audit.json",
+        "docs/acceptance/omp-permission-control-coreference-results.json",
+        "tests/fixtures/omp/permission-control/cases.jsonl",
+        "tests/fixtures/omp/permission-control/labels.json",
+        "tests/fixtures/omp/permission-control/fixture-schema.json",
+        "agents/omp/patches/permission-control/build-inputs.lock.json",
+        "/home/weixiaoxian.wxx/.config/agentcfg/machines/workstation.toml",
+        "/tmp/rotom-permission-evaluation-20260930/run-20260930/diagnostics/adapter-ledger.json"
+      ],
+      "nativeConfigurationVerified": {
+        "reviewer": "session",
+        "remoteFallback": {
+          "model": "glm-5.3-flash",
+          "provider": "zhipu_tf"
+        },
+        "fallback": {
+          "installedOnly": true,
+          "model": "lfm2.5-230m",
+          "provider": "local"
+        },
+        "cursorModelsDisabled": false,
+        "cursorResourcesDisabled": true
+      }
+    }
+  }
+}
