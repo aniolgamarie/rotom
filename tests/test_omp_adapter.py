@@ -53,7 +53,7 @@ def full_data():
       "app.model.cycleForward": "Ctrl+P", "app.history.search": []}})
   data["plugins"] = {"rotom-health": {"id": "rotom-health", "source": "agents/omp/packages/rotom-health",
     "entrypoints": ["index.ts"], "tree_digest": "a382040f693dc402fdca39134a02e4c6ca158b8f23f6a8d495de486b840067ca", "license": "MIT",
-    "compatibility": {"omp": "v18.3.0"}}}
+    "compatibility": {"omp": "v18.4.5"}}}
   data["mcp"] = {"echo-stdio": {"transport": "stdio", "command": "omp-package:echo-mcp", "args": []},
     "echo-http": {"transport": "streamable-http", "url": "https://omp-validation.invalid/mcp"}}
   data["adapter_documents"] = {"agent": {"resources": {
@@ -62,7 +62,7 @@ def full_data():
     "plugins": {"plugins": {"rotom-health": data["plugins"]["rotom-health"], "echo-mcp": {
       "id": "echo-mcp", "source": "agents/omp/packages/echo-mcp", "entrypoints": ["server.py"],
       "tree_digest": "c10617b101717ec6ce399da846e165d7a6f1cfb5c2aad02d2f6c405cd187faf4",
-      "license": "MIT", "compatibility": {"omp": "v18.3.0"}}}}}
+      "license": "MIT", "compatibility": {"omp": "v18.4.5"}}}}}
   return data
 
 
@@ -100,6 +100,39 @@ def test_provider_model_and_role_invalid_inputs_fail_closed(mutate):
   data = omp_data()
   mutate(data)
   with pytest.raises(ConfigError):
+    OmpAdapter(REPO).validate(data)
+
+
+def cursor_native_role_data():
+  data = omp_data()
+  data["profile"]["providers"].append("cursor")
+  data["providers"]["cursor"] = {"protocol": "oauth-dynamic", "auth_kind": "oauth"}
+  data["profile"]["agent_options"]["native_model_roles"] = {"main": "cursor/kimi-k3-high:high"}
+  return data
+
+
+@pytest.mark.parametrize("mutate", [
+  lambda data: data["profile"]["agent_options"]["native_model_roles"].update(main="cursor/kimi k3:high"),
+  lambda data: data["profile"]["agent_options"]["native_model_roles"].update(main="cursor/family/model:high"),
+  lambda data: data["profile"]["agent_options"]["native_model_roles"].update(main="cursor/model:high:low"),
+  lambda data: data["profile"]["agent_options"]["native_model_roles"].update(main="cursor/model:turbo"),
+  lambda data: data["profile"]["agent_options"]["native_model_roles"].update(main="gateway/model:high"),
+  lambda data: data["profile"]["agent_options"]["native_model_roles"].update(vision="cursor/model"),
+  lambda data: data["providers"].pop("cursor"),
+  lambda data: data["providers"]["cursor"].update(auth_kind="api-key"),
+])
+def test_cursor_native_model_roles_reject_invalid_or_unselected_references(mutate):
+  data = cursor_native_role_data()
+  mutate(data)
+  with pytest.raises(ConfigError):
+    OmpAdapter(REPO).validate(data)
+
+
+def test_cursor_native_model_roles_reject_disabled_cursor(monkeypatch):
+  import agentcfg.omp as omp
+  data = cursor_native_role_data()
+  monkeypatch.setattr(omp, "DISABLED_PROVIDERS", (*omp.DISABLED_PROVIDERS, "cursor"))
+  with pytest.raises(ConfigError, match="disabled-provider"):
     OmpAdapter(REPO).validate(data)
 
 

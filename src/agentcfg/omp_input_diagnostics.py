@@ -52,11 +52,12 @@ def _tail(tree, name):
           before.st_dev, before.st_ino, before.st_mode, before.st_uid, before.st_nlink):
         raise Conflict("OMP日志在打开时变化")
       offset = max(0, opened.st_size - _MAX_BYTES)
+      starts_at_line = offset == 0 or os.pread(fd, 1, offset - 1) in (b"\n", b"\r")
       content = os.pread(fd, opened.st_size - offset, offset)
     finally:
       os.close(fd)
   lines = content.splitlines()
-  return lines[1:] if offset and lines else lines
+  return lines[1:] if not starts_at_line and lines else lines
 
 
 def inspect(workspace):

@@ -52,7 +52,9 @@ def test_native_fixture_renders_new_instance_with_synthetic_models_and_no_parent
     assert selected_route(manifest, "pi", {"provider_id": "agentcfg-native-fixture", "model_id": "agentcfg-native-reader"})[0] == "native-direct"
   assert manifest["model_bindings"]["main"]["model"] == "agentcfg-native-main"
   assert "synthetic-native-key" not in json.dumps(manifest)
-  assert all(value["model"].startswith("agentcfg-native-") for value in manifest["allowed_models"])
+  allowed = {value["model"] for value in manifest["allowed_models"]}
+  assert {"agentcfg-native-main", "agentcfg-native-reader", "agentcfg-native-reviewer"} <= allowed
+  assert {"deepseek-flash", "kimi-k3", "glm-5.3"} <= allowed
   assert not (result["workspace"].instance / "pi-home/auth.json").exists()
   assert (result["project"] / "code.txt").read_text() == "original\n"
   assert json.dumps("changed\n" if fixing else "original\n") in (result["project"] / "test_native_fixture.py").read_text()

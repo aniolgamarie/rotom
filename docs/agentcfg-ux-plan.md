@@ -9,7 +9,7 @@
 ## 本轮实施
 
 1. `profiles` 只读列出仓库登记的 profile ID 和所属 agent，不读取本地配置或凭据。
-2. `init-local [--machine NAME] [--profile ID]` 可指定机器和默认 profile；省略时使用 `default` 机器与 `dsh-default` 配方。显式非默认 ID 在创建目录前与仓库登记项核对；默认配方检查固定登记文件存在，保留原有不读取目录内容的初始化契约；不覆盖已有文件。
+2. `init-local [--machine NAME] [--profile ID]` 创建或校验私人机器配置与共享密钥文件，按实际选中 provider 引用补齐缺失 URL/key 空占位。省略 profile 时已有机器使用其默认配方，新机器回落 `dsh-default`。已有值、注释、密钥分组和默认 profile 保留；无缺项不重写文件。
 3. `setup` 依次做离线校验、脱敏预览、依赖同步和部署。预览有冲突、漂移或待恢复事务时，在同步之前返回 4。输出简短中文摘要，明确同步可能联网、部署会写入实例。同步失败立即停止。同步后重新读取配置与锁，沿用 `apply` 的生命周期锁、恢复和冲突检查；在写锁内再次比对完整预览，变化时停止，不复用旧候选。
 4. `run` 可以省略 agent，由选中 profile 推断；显式 agent 仍须匹配。原生参数仍放在 `--` 后并保持原样。
 5. 更新入门与 OMP 文档，使用短路径，并保留分步命令供审阅与排障。
@@ -20,6 +20,8 @@
 ```sh
 ./agentcfg profiles
 ./agentcfg init-local --machine workstation --profile omp-kernel
+./agentcfg --machine workstation --profile omp-kernel model status
+# 按状态提示填写 URL/key 后部署
 ./agentcfg --machine workstation setup
 ./agentcfg --machine workstation run --cwd /absolute/project
 ```
@@ -28,7 +30,7 @@
 
 - 原命令和 JSON 输出保持不变；`setup` 是显式执行安装与部署的新命令，不自动启动宿主或读取原生账号。
 - `setup` 的人类摘要只含 profile、agent、变化/漂移/冲突数量和依赖状态，不显示配置值、动态路径或凭据引用。
-- `init-local` 仍创建权限为 0600 的私人文件，文件已存在时返回 4；未知 profile 返回 2 且不写入。
+- `init-local` 创建权限为 0600 的私人文件；已有文件使用安全读取和 CAS 局部补齐。无效配置返回 2，不安全文件或并发修改返回 4；不联网或调用宿主。原先“目标存在即拒绝”的规则已由幂等补齐取代。
 - `usage` 的原生透传及其受管/非受管选择语义不变。
 
 ## 私有模型配置

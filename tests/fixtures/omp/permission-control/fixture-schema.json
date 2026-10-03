@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rotom.invalid/schemas/omp-permission-control-fixture.schema.json",
+  "title": "OMP permission-control frozen case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "category",
+    "title",
+    "action",
+    "userContext",
+    "evidenceExpectation",
+    "expected",
+    "rationale",
+    "tags"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "id": {"type": "string", "pattern": "^(safe|risk|fault)-[0-9]{3}$"},
+    "category": {"enum": ["policy-safe", "ask-deny", "fault-state"]},
+    "title": {"type": "string", "minLength": 8, "maxLength": 180},
+    "action": {
+      "oneOf": [
+        {"$ref": "#/$defs/bashAction"},
+        {"$ref": "#/$defs/stateSequenceAction"}
+      ]
+    },
+    "userContext": {"$ref": "#/$defs/userContext"},
+    "evidenceExpectation": {"$ref": "#/$defs/evidenceExpectation"},
+    "expected": {"$ref": "#/$defs/expected"},
+    "rationale": {"type": "string", "minLength": 12, "maxLength": 500},
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "ask-deny",
+          "authorization-change",
+          "cancel",
+          "compound",
+          "deadline",
+          "delete",
+          "device-access",
+          "duplicate-binding",
+          "event-sequence",
+          "fault-state",
+          "fixed-risk-floor",
+          "forged-message",
+          "git",
+          "head",
+          "incomplete-context",
+          "later-restriction-omitted",
+          "ls",
+          "missing-effect",
+          "mode-change",
+          "model-change",
+          "multi-effect",
+          "network-send",
+          "no-execution",
+          "non-utf8-boundary",
+          "old-generation",
+          "out-of-bounds",
+          "plugin-health",
+          "policy-change",
+          "read-only",
+          "rg",
+          "safe",
+          "secret-access",
+          "semantic-coreference",
+          "semantic-exception",
+          "semantic-negation",
+          "semantic-path-scope",
+          "semantic-revocation",
+          "session-restore",
+          "simple",
+          "target-change",
+          "tiny-state",
+          "unknown-executable",
+          "unreferenced-message",
+          "valid-binding",
+          "wc",
+          "write",
+          "wrong-scope-digest"
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "platform": {"enum": ["linux-glibc-x64", "linux-arm64", "wsl", "macos", "windows"]},
+    "shell": {"enum": ["bash", "zsh", "powershell", "unknown"]},
+    "cwdCategory": {"enum": ["repo-root", "repo-subdir", "temporary", "home", "outside-repo", "unknown"]},
+    "nativeRule": {"enum": ["explicit-deny", "command-prompt", "critical-safety", "native-allow", "tool-default", "tier-default", "compound-structural", "not-applicable"]},
+    "effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effectId", "kind", "target", "parameters", "cwdCategory", "risk", "scopeDigest"],
+      "properties": {
+        "effectId": {"type": "string", "pattern": "^effect-[1-9][0-9]*$"},
+        "kind": {"enum": ["read", "write", "delete", "network-send", "secret-access", "device-access", "execute", "dynamic", "unknown", "state-change"]},
+        "target": {"type": "string", "minLength": 1, "maxLength": 240},
+        "parameters": {"type": "array", "items": {"type": "string", "maxLength": 160}},
+        "cwdCategory": {"$ref": "#/$defs/cwdCategory"},
+        "risk": {"enum": ["low", "medium", "high", "unknown"]},
+        "scopeDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "bashAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "purpose", "command", "compound", "platform", "shell", "cwdCategory", "nativeRule", "effects"],
+      "properties": {
+        "kind": {"const": "bash"},
+        "purpose": {"type": "string", "minLength": 8, "maxLength": 240},
+        "command": {"type": "string", "minLength": 1, "maxLength": 1200},
+        "compound": {"type": "boolean"},
+        "platform": {"$ref": "#/$defs/platform"},
+        "shell": {"$ref": "#/$defs/shell"},
+        "cwdCategory": {"$ref": "#/$defs/cwdCategory"},
+        "nativeRule": {"$ref": "#/$defs/nativeRule"},
+        "effects": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/effect"}}
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventId", "atMs", "type", "subject", "value"],
+      "properties": {
+        "eventId": {"type": "string", "pattern": "^event-[1-9][0-9]*$"},
+        "atMs": {"type": "integer", "minimum": 0, "maximum": 120000},
+        "type": {"enum": ["request-start", "review-start", "review-response", "deadline", "cancel", "mode-change", "model-change", "policy-change", "authorization-change", "target-change", "plugin-health-change", "session-restore", "ui-unavailable", "tiny-state", "runtime-identity-change"]},
+        "subject": {"type": "string", "minLength": 1, "maxLength": 120},
+        "value": {"type": "string", "minLength": 1, "maxLength": 240}
+      }
+    },
+    "stateSequenceAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "purpose", "compound", "platform", "shell", "cwdCategory", "nativeRule", "events", "effects"],
+      "properties": {
+        "kind": {"const": "state-sequence"},
+        "purpose": {"type": "string", "minLength": 8, "maxLength": 240},
+        "compound": {"const": false},
+        "platform": {"$ref": "#/$defs/platform"},
+        "shell": {"$ref": "#/$defs/shell"},
+        "cwdCategory": {"$ref": "#/$defs/cwdCategory"},
+        "nativeRule": {"$ref": "#/$defs/nativeRule"},
+        "events": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/event"}},
+        "effects": {"type": "array", "items": {"$ref": "#/$defs/effect"}}
+      }
+    },
+    "sourceProof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel", "authenticated", "synthetic"],
+      "properties": {
+        "channel": {"enum": ["interactive-user", "synthetic-user", "assistant", "tool", "file"]},
+        "authenticated": {"type": "boolean"},
+        "synthetic": {"type": "boolean"}
+      }
+    },
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["messageId", "role", "sourceProof", "text"],
+      "properties": {
+        "messageId": {"type": "string", "pattern": "^msg-[a-z0-9-]+$"},
+        "role": {"enum": ["user", "assistant", "tool"]},
+        "sourceProof": {"$ref": "#/$defs/sourceProof"},
+        "text": {"type": "string", "minLength": 1, "maxLength": 1000}
+      }
+    },
+    "userContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generation", "contextComplete", "restrictionState", "structuredRestrictions", "requestSourceProof", "messages"],
+      "properties": {
+        "generation": {"type": "integer", "minimum": 1},
+        "contextComplete": {"type": "boolean"},
+        "restrictionState": {"enum": ["clear", "conflicting", "unknown"]},
+        "structuredRestrictions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["read-only", "path-scope", "no-network", "no-delete", "no-secrets", "no-device", "allow-write"]}
+        },
+        "requestSourceProof": {"$ref": "#/$defs/sourceProof"},
+        "messages": {"type": "array", "minItems": 0, "maxItems": 16, "items": {"$ref": "#/$defs/message"}}
+      }
+    },
+    "evidenceExpectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "issue", "userMessageIds", "bindings"],
+      "properties": {
+        "mode": {"enum": ["not-required", "valid", "invalid"]},
+        "issue": {"enum": ["none", "missing-effect", "duplicate-binding", "unreferenced-message", "forged-message", "out-of-bounds", "non-utf8-boundary", "wrong-scope-digest", "later-restriction-omitted", "old-generation", "incomplete-context", "semantic-negation", "semantic-revocation", "semantic-path-scope", "semantic-exception", "semantic-coreference"]},
+        "userMessageIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^msg-[a-z0-9-]+$"}},
+        "bindings": {"type": "array", "items": {"$ref": "#/$defs/evidenceBinding"}}
+      }
+    },
+    "evidenceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effectId", "userMessageId", "startByte", "endByte", "scopeDigest"],
+      "properties": {
+        "effectId": {"type": "string", "pattern": "^effect-[1-9][0-9]*$"},
+        "userMessageId": {"type": "string", "pattern": "^msg-[a-z0-9-]+$"},
+        "startByte": {"type": "integer", "minimum": 0},
+        "endByte": {"type": "integer", "minimum": 0},
+        "scopeDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome", "decisionSource", "modelCalls", "executeCalls", "reasonCode"],
+      "properties": {
+        "outcome": {"enum": ["allow", "ask", "deny", "blocked", "cancelled"]},
+        "decisionSource": {"enum": ["low-risk-rule", "reviewer", "fallback", "native-protection", "hard-rule", "manual-boundary", "system-failure"]},
+        "modelCalls": {"type": "integer", "minimum": 0, "maximum": 1},
+        "executeCalls": {"type": "integer", "minimum": 0, "maximum": 1},
+        "reasonCode": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"}
+      }
+    }
+  }
+}

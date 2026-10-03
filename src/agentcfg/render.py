@@ -171,6 +171,8 @@ _SELECTIONS = (*_REGISTRY, "plugins")
 def _selected_data(resolved: ResolvedConfig, schemas: AdapterSchemas, declaration: AdapterDeclaration) -> dict:
   if type(resolved) is not ResolvedConfig:
     raise ValueError()
+  if resolved.missing_local_values:
+    raise ValueError("本地 URL 尚未配置")
   data = _data(resolved.data)
   if type(data) is not dict or set(data) != {*_SELECTIONS, "profile", "machine", "adapter_documents"}:
     raise ValueError()

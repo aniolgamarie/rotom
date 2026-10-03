@@ -8,10 +8,10 @@ import pytest
 import yaml
 
 from agentcfg import deployment
+from agentcfg.adapter import RenderContext
 from agentcfg.omp import OmpAdapter
 from agentcfg.omp_identity import native_identity
 from agentcfg.schema import ConfigError, validate_document
-from agentcfg.workspace import load_workspace
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -19,19 +19,16 @@ REFERENCE = json.loads((REPO / "tests/fixtures/omp/kernel-reference.json").read_
 
 
 def kernel_workspace(tmp_path):
-  private = tmp_path / "private"
-  private.mkdir(mode=0o700)
-  local = private / "machine.toml"
-  local.write_text('schema_version = 1\n[machine]\nid = "kernel-test"\n'
-    '[machine.paths]\n' + "\n".join(key + " = " + json.dumps(str(tmp_path / folder)) for key, folder in (
-      ("instances_root", "instances"), ("state_root", "state"), ("cache_root", "cache"))) + "\n")
-  local.chmod(0o600)
-  return load_workspace(local, "omp-kernel", repository=REPO)
+  from omp_permission_fixture import permission_workspace
+  workspace, _, _ = permission_workspace(tmp_path, profile_name="omp-kernel", local_values={
+    "tf_openai_url": "https://tf-gateway.example.invalid/v1",
+    "tf_anthropic_url": "https://tf-gateway.example.invalid/anthropic"})
+  return workspace
 
 
 def test_kernel_deployment_preserves_reviewed_native_configuration(tmp_path):
   workspace = kernel_workspace(tmp_path)
-  candidate = workspace.candidate("fixture-lock")
+  candidate = workspace.candidate(workspace.backend.read_lock(workspace.repository).identity)
   with workspace.adapter.apply_lifecycle_guard(workspace):
     deployment.apply(workspace.instance, workspace.state_root, candidate, workspace.binding, {})
   identity = native_identity(workspace.profile, workspace.instance)
@@ -40,6 +37,18 @@ def test_kernel_deployment_preserves_reviewed_native_configuration(tmp_path):
   for key, expected in REFERENCE["config"].items():
     if key != "skills":
       assert config[key] == expected, key
+  assert "permissionControl" not in config and "disabledModelProviders" not in config
+  permission = json.loads((identity.agent_dir / "permission-control.json").read_text())
+  assert permission == workspace.adapter._native_permission(workspace.resolved.data)
+  assert permission["schemaVersion"] == 2
+  assert permission["defaultMode"] == "smart"
+  assert permission["reviewer"] == "session"
+  assert permission["remoteFallback"] == {"provider": "zhipu_tf", "model": "glm-5.3-flash"}
+  assert permission["fallback"] == {"provider": "local", "model": "lfm2.5-230m", "installedOnly": True}
+  assert permission["nativePatterns"] == workspace.resolved.data["profile"]["agent_options"]["runtime"]["bash"]["patterns"]
+  assert permission["pluginDigest"] == workspace.resolved.data["plugins"]["omp-permission-control"]["tree_digest"]
+  assert len(permission["policyVersion"]) == 64 and all(char in "0123456789abcdef" for char in permission["policyVersion"])
+  assert workspace.adapter._extension_suffixes(workspace.resolved.data)[-1].endswith("standalone.ts")
   assert config["skills"]["enablePiUser"] is True
   assert config["skills"]["enablePiProject"] is False
   models = yaml.safe_load((identity.agent_dir / "models.yml").read_text())
@@ -89,6 +98,25 @@ def test_kernel_fallback_and_agent_models_must_be_declared(tmp_path):
     validate_agent(b"---\nname: scout\ndescription: test\nprewalk: /external.sh\n---\nbody", "scout", data)
 
 
+def test_kernel_explicit_cursor_native_role_overrides_only_selected_role(tmp_path):
+  workspace = kernel_workspace(tmp_path)
+  data = deepcopy(workspace.resolved.data)
+  data["profile"]["providers"].append("cursor")
+  data["providers"]["cursor"] = {"protocol": "oauth-dynamic", "auth_kind": "oauth"}
+  data["profile"]["agent_options"]["native_model_roles"] = {"main": "cursor/kimi-k3-high:high"}
+  before_permission = workspace.adapter._native_permission(data)
+  context = RenderContext("f" * 64, tmp_path / "cache/runtimes/mock-linux-x64")
+  rendered = {(item.target.path, item.target.selector): item
+    for item in workspace.adapter.render_with_context(data, context)}
+  roles = {selector: json.loads(item.content) for (path, selector), item in rendered.items()
+    if path.endswith("/config.yml") and selector.startswith("/modelRoles/")}
+
+  assert roles["/modelRoles/default"] == "cursor/kimi-k3-high:high"
+  assert roles["/modelRoles/smol"] == REFERENCE["config"]["modelRoles"]["smol"]
+  assert data["profile"]["roles"]["main"] == "omp-kimi_tf-kimi-for-coding"
+  assert workspace.adapter._native_permission(data) == before_permission
+
+
 def test_capture_retains_kernel_role_thinking(tmp_path):
   workspace = kernel_workspace(tmp_path)
   captured = workspace.adapter.capture_configuration({"modelRoles": REFERENCE["config"]["modelRoles"]}, workspace.resolved.data)
@@ -125,12 +153,12 @@ def test_complete_kernel_runs_from_repo_with_only_declared_secret_environment(
   from types import SimpleNamespace
   from agentcfg import runtime
   from agentcfg.secrets import SecretStore
-  from test_omp_runtime_foundation import RuntimeBackend, clear_omp_identity_environment
+  from test_omp_runtime_foundation import clear_omp_identity_environment, isolate_runtime_discovery, RuntimeBackend
   clear_omp_identity_environment(monkeypatch)
   original = kernel_workspace(tmp_path)
+  lock = original.backend.read_lock(original.repository)
   backend = RuntimeBackend()
-  lock = SimpleNamespace(identity="a" * 64)
-  backend.read_lock = lambda repository: lock
+  isolate_runtime_discovery(monkeypatch)
   workspace = SimpleNamespace(**{name: getattr(original, name) for name in (
     "profile", "instance", "state_root", "cache", "binding", "resolved", "adapter", "repository", "local_path")},
     backend=backend, secret_store=SecretStore({"omp_kimi_tf_key": "synthetic-kimi", "omp_zhipu_tf_key": "synthetic-zhipu"}))
@@ -138,9 +166,9 @@ def test_complete_kernel_runs_from_repo_with_only_declared_secret_environment(
   with workspace.adapter.apply_lifecycle_guard(workspace):
     deployment.apply(workspace.instance, workspace.state_root, candidate, workspace.binding, runtime.record(workspace, lock))
   fake_subprocess.queue(returncode=0)
-  assert runtime.run(workspace, cwd=REPO) == 0
+  assert runtime.run(workspace, cwd=workspace.repository) == 0
   call = fake_subprocess.calls[0]
-  assert call["cwd"] == REPO
+  assert call["cwd"] == workspace.repository
   assert "--no-title" in call["argv"]
   assert call["env"]["HOME"] == str(native_identity(workspace.profile, workspace.instance).home)
   assert sorted(value for key, value in call["env"].items() if key.startswith("AGENTCFG_OMP_PROVIDER_")) == [
@@ -148,16 +176,18 @@ def test_complete_kernel_runs_from_repo_with_only_declared_secret_environment(
   assert "PI_CONFIG_FILES" not in call["env"]
   workspace.secret_store = SecretStore({"omp_kimi_tf_key": "synthetic-kimi"})
   fake_subprocess.queue(returncode=0)
-  assert runtime.run(workspace, cwd=REPO) == 0
+  assert runtime.run(workspace, cwd=workspace.repository) == 0
   second = fake_subprocess.calls[-1]["env"]
   assert sorted(value for key, value in second.items() if key.startswith("AGENTCFG_OMP_PROVIDER_")) == ["synthetic-kimi"]
-  assert "1 个可选模型凭据未配置" in capsys.readouterr().err
+  error = capsys.readouterr().err
+  assert "3 个模型 key 未填写" in error
+  assert "4 个模型 key 未填写" in error
   # 实际agent权限文件一旦漂移，必须在第二次spawn前拒绝。
   from agentcfg.storage import Conflict
   agent = native_identity(workspace.profile, workspace.instance).agent_dir / "agents/task.md"
   agent.write_text(agent.read_text() + "\nchanged permission instructions\n")
   with pytest.raises(Conflict):
-    runtime.run(workspace, cwd=REPO)
+    runtime.run(workspace, cwd=workspace.repository)
   assert len(fake_subprocess.calls) == 2
 
 

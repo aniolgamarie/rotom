@@ -27,7 +27,20 @@ def fake_terminal_commands(isolated_environment):
 
 
 _REAL_POPEN = subprocess.Popen
+_REAL_KILL = os.kill
 _ENTRY = Path(__file__).resolve().parents[1] / "agentcfg"
+
+
+def pytest_addoption(parser):
+  # 兼容历史调用参数；fixture 始终退休跳过，绝不消费这些材料。
+  group = parser.getgroup("omp-permission-control")
+  for name in ("omp-build-source", "omp-tool-cache", "omp-dependency-cache"):
+    group.addoption("--" + name, default=None, help="Retired host-patch test input (ignored)")
+
+
+@pytest.fixture(scope="session")
+def omp_permission_materials():
+  pytest.skip("historical OMP host-patch integration retired; standalone plugin tests are current evidence")
 
 
 @dataclass

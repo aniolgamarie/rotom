@@ -3,8 +3,8 @@
 # tests/test_config_examples.py 用测试专用 example-fixture-json adapter 和公共基线
 # 执行 load_local → load_sources → resolve_config → adapter.validate/render。
 # dsh-default 只是示例的已声明 profile ID；上述测试不证明原生 DSH 可用。
-# 当前可运行 ./agentcfg init-local --machine workstation：只创建仓库外私人框架文件，
-# 不覆盖既有文件，不填密钥；目录 0700、文件 0600，仓库提供实际 dsh-default 配方。
+# 当前可运行 ./agentcfg init-local --machine workstation：创建或检查仓库外私人框架与密钥文件，
+# 只补缺失 URL/key 空占位，不覆盖已有值；目录 0700、文件 0600，仓库提供实际 dsh-default 配方。
 # 目标为 $XDG_CONFIG_HOME/agentcfg/machines/workstation.toml，未设置时用 ~/.config。
 # validate/render/plan CLI 已实现；从首次安装到启动见 docs/getting-started.md。
 # 本例含虚构网关；仅使用订阅时保留 init-local 的最小文件即可。
@@ -95,5 +95,6 @@ terminal_images = false
 # 引用形式 secret:<name>；离线不要求有同名条目，也不联网验证有效性。
 # 实际值只能填写在仓库外私人本地文件，切勿提交；示例只能为空字符串。
 # 私有 endpoint/model ID 可进入必要的私人产物，不应出现在公开诊断中。
+# 以下为空的旧格式兼容占位；新模型 key 推荐用 model key <provider-id> 写入共享文件。
 [secrets]
 private_gateway_key = ""

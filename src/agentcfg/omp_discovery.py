@@ -12,10 +12,12 @@ import yaml
 IGNORED_PROVIDER_SOURCES = (".agent", ".agents", ".claude", ".codex", ".gemini",
   "AGENTS.md", "CLAUDE.md", "GEMINI.md")
 DISCOVERY_NAMES = (".omp", "TITLE_SYSTEM.md", ".env", ".env.local", ".env.development", ".env.production", ".env.test")
-DISABLED_PROVIDERS = ("agent-plugins", "agents-md", "claude-md", "claude", "claude-plugins", "cline", "agents", "codex", "cursor",
+DISABLED_PROVIDERS = ("agent-plugins", "agents-md", "claude-md", "claude", "claude-plugins", "cline", "agents", "codex",
   "gemini", "opencode", "github", "mcp-json", "omp-plugins", "skillshare", "ssh-json", "vscode", "windsurf")
+DISABLED_MODEL_PROVIDERS = DISABLED_PROVIDERS
+FOREIGN_PROJECT_SOURCES = (".cursor", ".cursorrules")
 DOTENV_NAMES = (".env", ".env.local", ".env.development", ".env.production", ".env.test")
-NATIVE_PROFILE_SOURCES = ("settings.json", "config.yml", "models.yml", "RULES.md", "AGENTS.md", "TITLE_SYSTEM.md",
+NATIVE_PROFILE_SOURCES = ("settings.json", "config.yml", "models.yml", "permission-control.json", "RULES.md", "AGENTS.md", "TITLE_SYSTEM.md",
   "SYSTEM.md", "SYSTEM_TEMPLATE.md", "APPEND_SYSTEM.md", "PERSONALITY.md", "rules", "skills", "prompts", "extensions", "hooks", "tools",
   "mcp.json", ".mcp.json", "agents", "themes")
 NATIVE_ROOT_PATTERNS = (tuple("$HOME/" + name for name in DOTENV_NAMES) + ("$HOME/.omp/.env",)
@@ -85,6 +87,15 @@ _EXPANSION = re.compile(r"\$|%[A-Za-z_][A-Za-z0-9_]*%")
 
 def source_present(path):
   return path.exists() or path.is_symlink()
+
+
+def _unique_object(pairs):
+  value = {}
+  for key, item in pairs:
+    if key in value:
+      raise ValueError()
+    value[key] = item
+  return value
 
 
 def _digest_files(root, files):
@@ -174,6 +185,10 @@ def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=
     raise Conflict("OMP项目来源根必须是当前目录或其祖先")
   reports = []
   for directory in ancestors:
+    for name in FOREIGN_PROJECT_SOURCES:
+      candidate = directory / name
+      if source_present(candidate):
+        raise Conflict(f"OMP检测到未声明的Cursor项目配置来源: {candidate}")
     for name in DISCOVERY_NAMES:
       if name == ".omp":
         continue
@@ -208,7 +223,7 @@ def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=
 
 
 def assert_native_sources(identity, allowed=(), mcp_shape=None, project_resources=False, *,
-    model_providers=None, extension_suffixes=()):
+    model_providers=None, extension_suffixes=(), permission_control=None):
   allowed = {Path(path) for path in allowed}
   def accepted(path):
     if path.is_symlink():
@@ -248,6 +263,9 @@ def assert_native_sources(identity, allowed=(), mcp_shape=None, project_resource
       if config.is_symlink():
         raise ValueError()
       value = yaml.safe_load(config.read_bytes()) or {}
+      if ("permissionControl" in value or any(key.startswith("permissionControl.") for key in value)
+          or "disabledModelProviders" in value):
+        raise ValueError()
       auth = value.get("auth", {}) if isinstance(value, dict) else None
       protected = (("skills", "enablePiUser", True), ("skills", "enablePiProject", project_resources),
         ("mcp", "enableProjectConfig", project_resources), ("startup", "checkUpdate", False),
@@ -283,18 +301,47 @@ def assert_native_sources(identity, allowed=(), mcp_shape=None, project_resource
         raise ValueError()
     except Exception:
       raise Conflict("OMP原生配置含无效或受禁认证来源") from None
-  models = identity.agent_dir / "models.yml"
-  if models.exists() or models.is_symlink():
+  sidecar = identity.agent_dir / "permission-control.json"
+  if permission_control is None:
+    if sidecar.exists() or sidecar.is_symlink():
+      raise Conflict("OMP检测到未声明的权限插件sidecar")
+  else:
     try:
-      if models.is_symlink():
-        raise ValueError()
-      value = yaml.safe_load(models.read_bytes()) or {}
-      if value != {"providers": model_providers or {}}:
+      if (sidecar.is_symlink() or not sidecar.is_file()
+          or json.loads(sidecar.read_bytes(), object_pairs_hook=_unique_object) != permission_control):
         raise ValueError()
     except Exception:
-      raise Conflict("OMP原生模型provider集合或字段不符合受管声明") from None
+      raise Conflict("OMP权限插件sidecar不符合受管契约") from None
+  models = identity.agent_dir / "models.yml"
+  model_problem = None
+  expected_models = model_providers or {}
+  if models.exists() or models.is_symlink():
+    if models.is_symlink():
+      model_problem = "models-link：models.yml 是符号链接"
+    else:
+      try:
+        value = yaml.safe_load(models.read_bytes()) or {}
+      except Exception:
+        model_problem = "models-read-or-parse：models.yml 无法读取或 YAML 无效"
+      else:
+        if (not isinstance(value, dict) or set(value) != {"providers"}
+            or not isinstance(value["providers"], dict)):
+          model_problem = "models-shape：models.yml 顶层或 providers 结构不符合声明"
+        elif value["providers"] != expected_models:
+          actual_ids, expected_ids = set(value["providers"]), set(expected_models)
+          if actual_ids != expected_ids:
+            model_problem = (f"models-provider-set：相对当前配方缺少 {len(expected_ids - actual_ids)} 个 provider，"
+              f"额外 {len(actual_ids - expected_ids)} 个 provider")
+          else:
+            changed = sum(value["providers"][key] != expected_models[key] for key in expected_ids)
+            model_problem = f"models-provider-fields：{changed} 个 provider 的字段或模型定义与当前配方不同"
   elif model_providers:
-    raise Conflict("OMP原生模型provider集合或字段不符合受管声明")
+    model_problem = "models-missing：当前配方声明了模型，但受管 models.yml 不存在"
+  if model_problem is not None:
+    # 当前来源与旧部署不同也会触发；不输出 provider ID、字段原值或 YAML 异常正文。
+    raise Conflict("OMP原生模型provider集合或字段不符合受管声明；" + model_problem
+      + "。请使用相同 --machine/--local 和 --profile 运行 plan；确认来源变更后 apply，"
+        "需同步依赖时用 setup；若有漂移或冲突先处理。") from None
   mcp = identity.agent_dir / "mcp.json"
   if (mcp.exists() or mcp.is_symlink()) and mcp_shape is not None:
     try:

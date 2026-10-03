@@ -304,6 +304,14 @@
                             "prompt"
                           ]
                         },
+                        "eval": {
+                          "type": "string",
+                          "enum": [
+                            "allow",
+                            "deny",
+                            "prompt"
+                          ]
+                        },
                         "web_search": {
                           "type": "string",
                           "enum": [
@@ -321,6 +329,14 @@
                           ]
                         },
                         "ast_grep": {
+                          "type": "string",
+                          "enum": [
+                            "allow",
+                            "deny",
+                            "prompt"
+                          ]
+                        },
+                        "permission_bash": {
                           "type": "string",
                           "enum": [
                             "allow",
@@ -828,6 +844,77 @@
                 ],
                 "additionalProperties": false
               }
+            },
+            "runtime_variant": {
+              "type": "string",
+              "enum": [
+                "official"
+              ]
+            },
+            "permission_control": {
+              "type": "object",
+              "properties": {
+                "default_mode": {
+                  "type": "string",
+                  "enum": [
+                    "smart",
+                    "manual"
+                  ]
+                },
+                "reviewer_model": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[^\\x00-\\x1f\\x7f]+$(?![\\s\\S])"
+                },
+                "remote_fallback_model": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[^\\x00-\\x1f\\x7f]+$(?![\\s\\S])"
+                },
+                "fallback_model": {
+                  "type": "string",
+                  "const": "local/lfm2.5-230m"
+                }
+              },
+              "required": [
+                "default_mode"
+              ],
+              "additionalProperties": false
+            },
+            "native_model_roles": {
+              "type": "object",
+              "properties": {
+                "main": {
+                  "type": "string",
+                  "pattern": "^cursor/[^/\\s:\\x00-\\x1f\\x7f]+(?::(?:off|minimal|low|medium|high|xhigh|max|auto))?$(?![\\s\\S])"
+                },
+                "smol": {
+                  "type": "string",
+                  "pattern": "^cursor/[^/\\s:\\x00-\\x1f\\x7f]+(?::(?:off|minimal|low|medium|high|xhigh|max|auto))?$(?![\\s\\S])"
+                },
+                "slow": {
+                  "type": "string",
+                  "pattern": "^cursor/[^/\\s:\\x00-\\x1f\\x7f]+(?::(?:off|minimal|low|medium|high|xhigh|max|auto))?$(?![\\s\\S])"
+                },
+                "vision": {
+                  "type": "string",
+                  "pattern": "^cursor/[^/\\s:\\x00-\\x1f\\x7f]+(?::(?:off|minimal|low|medium|high|xhigh|max|auto))?$(?![\\s\\S])"
+                },
+                "plan": {
+                  "type": "string",
+                  "pattern": "^cursor/[^/\\s:\\x00-\\x1f\\x7f]+(?::(?:off|minimal|low|medium|high|xhigh|max|auto))?$(?![\\s\\S])"
+                },
+                "advisor": {
+                  "type": "string",
+                  "pattern": "^cursor/[^/\\s:\\x00-\\x1f\\x7f]+(?::(?:off|minimal|low|medium|high|xhigh|max|auto))?$(?![\\s\\S])"
+                },
+                "task": {
+                  "type": "string",
+                  "pattern": "^cursor/[^/\\s:\\x00-\\x1f\\x7f]+(?::(?:off|minimal|low|medium|high|xhigh|max|auto))?$(?![\\s\\S])"
+                }
+              },
+              "required": [],
+              "additionalProperties": false
             }
           },
           "required": [],
@@ -875,5 +962,142 @@
     "defaults",
     "resources"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "permissionControl": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "const": 2
+        },
+        "defaultMode": {
+          "type": "string",
+          "enum": [
+            "smart",
+            "manual"
+          ]
+        },
+        "reviewer": {
+          "oneOf": [
+            {
+              "type": "string",
+              "const": "session"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[^\\x00-\\x1f\\x7f]+$(?![\\s\\S])"
+                },
+                "model": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[^\\x00-\\x1f\\x7f]+$(?![\\s\\S])"
+                }
+              },
+              "required": [
+                "provider",
+                "model"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "remoteFallback": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^\\x00-\\x1f\\x7f]+$(?![\\s\\S])"
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^\\x00-\\x1f\\x7f]+$(?![\\s\\S])"
+            }
+          },
+          "required": [
+            "provider",
+            "model"
+          ],
+          "additionalProperties": false
+        },
+        "fallback": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "const": "local"
+            },
+            "model": {
+              "type": "string",
+              "const": "lfm2.5-230m"
+            },
+            "installedOnly": {
+              "type": "boolean",
+              "const": true
+            }
+          },
+          "required": [
+            "provider",
+            "model",
+            "installedOnly"
+          ],
+          "additionalProperties": false
+        },
+        "pluginId": {
+          "type": "string",
+          "const": "omp-permission-control"
+        },
+        "pluginDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"
+        },
+        "policyVersion": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"
+        },
+        "nativePatterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "match": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[^\\x00-\\x1f\\x7f]+$(?![\\s\\S])"
+              },
+              "approval": {
+                "type": "string",
+                "enum": [
+                  "allow",
+                  "deny",
+                  "prompt"
+                ]
+              }
+            },
+            "required": [
+              "match",
+              "approval"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "defaultMode",
+        "reviewer",
+        "pluginId",
+        "pluginDigest",
+        "policyVersion",
+        "nativePatterns"
+      ],
+      "additionalProperties": false
+    }
+  }
 }

@@ -196,7 +196,7 @@ def build_parser() -> argparse.ArgumentParser:
     # init-local: 初始化本地配置
     init_local = subparsers.add_parser(
         "init-local",
-        help="初始化本地配置文件（不覆盖已有）",
+        help="创建或补齐本地配置与共享空占位",
     )
     init_local.add_argument(
         "--machine",
@@ -211,18 +211,24 @@ def build_parser() -> argparse.ArgumentParser:
         dest="init_profile",
         type=selection_id,
         metavar="ID",
-        default="dsh-default",
-        help="新机器的默认 profile（默认 dsh-default）",
+        default=None,
+        help="补齐目标 profile（已有机器默认使用 default_profile，新机器默认 dsh-default）",
     )
 
     subparsers.add_parser("profiles", help="列出仓库登记的 profile，无需本地配置")
-    subparsers.add_parser("setup", help="预览、同步依赖并部署选中的 profile")
-    model = subparsers.add_parser("model", help="查看公共预设，启用官方模型，或添加私有模型")
+    subparsers.add_parser("setup", help="首次部署或更新已有配置：预览、同步锁定依赖并部署")
+    model = subparsers.add_parser("model", help="查看模型、填写私人 URL/共享 key 或追加私有模型")
     model_sub = model.add_subparsers(dest="model_command", required=True)
     model_sub.add_parser("add", help="新增 provider、model 与角色绑定并校验私人配置")
-    model_sub.add_parser("presets", help="列出 DeepSeek、Kimi、GLM 公共模型和官方计价")
-    model_sub.add_parser("status", help="检查当前 profile 已选模型的密钥就绪状态，不显示密钥")
-    enable = model_sub.add_parser("enable", help="为当前 profile 启用官方模型；缺密钥时隐藏输入")
+    presets = model_sub.add_parser("presets", help="查看官方模型概要；--verbose 展开地址、价格和来源")
+    presets.add_argument("--verbose", action="store_true", help="展开公开地址、完整计价与来源")
+    status = model_sub.add_parser("status", help="查看模型就绪情况、缺项和填写位置")
+    status.add_argument("--verbose", action="store_true", help="展开完整模型目录和逐项填写命令")
+    key = model_sub.add_parser("key", help="隐藏输入并保存共享 API key；所有引用该 key 的工具/profile 共用")
+    key.add_argument("provider", type=selection_id, help="deepseek、kimi、glm 或当前 profile 的 provider ID")
+    url = model_sub.add_parser("url", help="隐藏输入模型服务地址，保存到私人机器配置")
+    url.add_argument("provider", type=selection_id, help="当前 profile 的 provider ID，例如 kimi_tf")
+    enable = model_sub.add_parser("enable", help="追加官方模型协议路线；缺密钥时隐藏输入，保留已有角色")
     enable.add_argument("preset", choices=("deepseek", "kimi", "glm"))
     enable.add_argument("--protocol", choices=("openai", "anthropic"), help="覆盖工具默认协议")
 
@@ -349,6 +355,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="项目路径",
     )
 
+    # 原有结构化命令在管道中保持 JSON，终端可读摘要可显式选择。
+    for name in ("validate", "render", "plan", "lock", "sync", "apply", "inventory",
+                 "doctor", "capture", "rollback", "recover"):
+        subparsers.choices[name].add_argument("--format", choices=("auto", "human", "json"),
+            default="auto", help="结果格式：auto 在终端显示摘要、重定向时输出 JSON")
+    project_init.add_argument("--format", choices=("auto", "human", "json"), default="auto",
+        help="结果格式：auto 在终端显示摘要、重定向时输出 JSON")
+
     return parser
 
 
@@ -396,15 +410,16 @@ def main(argv: list[str] | None = None) -> int:
         resolve_selection(args)
         return dispatch(args)
     except InitializationError as error:
+        from .progress import failure_context
         if args.command == "profiles":
-            print("profiles: 仓库配方登记无效；请检查 profiles/ 下的 TOML", file=sys.stderr)
+            reason = "仓库配方登记无效；请检查 profiles/ 下的 TOML"
         else:
-            print(f"{args.command}: {error}", file=sys.stderr)
+            reason = str(error)
+        failure_context(args, error.exit_code, reason=reason)
         return error.exit_code
     except SelectionError as error:
         from .progress import failure_context
-        failure_context(args, EXIT_USAGE)
-        print(f"配置错误: {error}", file=sys.stderr)
+        failure_context(args, EXIT_USAGE, reason=f"配置错误: {error}")
         return EXIT_USAGE
     except KeyboardInterrupt:
         from .progress import failure_context
@@ -412,8 +427,7 @@ def main(argv: list[str] | None = None) -> int:
         return 130
     except OSError:
         from .progress import failure_context
-        failure_context(args, EXIT_INTERNAL)
-        print("文件系统操作失败；请检查所选文件及目录的访问权限", file=sys.stderr)
+        failure_context(args, EXIT_INTERNAL, reason="文件系统操作失败；请检查所选文件及目录的访问权限")
         return EXIT_INTERNAL
     except Exception as error:
         from .schema import ConfigError
@@ -422,12 +436,14 @@ def main(argv: list[str] | None = None) -> int:
         from .render import RenderError
         if isinstance(error, (ConfigError, CredentialError, StateError, RenderError)):
             from .progress import failure_context
-            failure_context(args, error.exit_code)
-            print(str(error), file=sys.stderr)
+            if isinstance(error, ConfigError) and error.code == "local-value":
+                failure_context(args, error.exit_code,
+                    reason="缺少私人服务地址；填写机器文件中的对应 URL 字段后重试。", hint="model status")
+            else:
+                failure_context(args, error.exit_code, reason=str(error))
             return error.exit_code
         from .progress import failure_context
-        failure_context(args, EXIT_INTERNAL)
-        print("内部操作失败；请检查配置并报告脱敏复现步骤", file=sys.stderr)
+        failure_context(args, EXIT_INTERNAL, reason="内部操作失败；请检查配置并报告脱敏复现步骤")
         return EXIT_INTERNAL
 
 

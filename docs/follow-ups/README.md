@@ -17,8 +17,9 @@
 | DSH-F01 | DSH Cursor 认证缺陷（oauth-subs `parseTurns` 折叠连续 user 消息）；rotom 侧已搁置 Cursor 路线 | [../dsh-cursor-auth-deficiency.md](../dsh-cursor-auth-deficiency.md) | 待上游修复 | 上游发 issue 并修复后 bump vendor；或用户授权 rotom 侧行为补丁（优先级 B） |
 | PI-F06 | pi-cursor 精确钉死旧版 bug：已止血（1.4.36），根治项待办——8 个扩展版本落后、缺巡检机制 | [../pi-cursor-stale-pin-legacy.md](../pi-cursor-stale-pin-legacy.md) | 止血完成，根治未做 | 定期维护窗口；信任边界类扩展（pi-cursor、pi-mcp-adapter）优先审 |
 | PI-F07 | pi-permission-system `ob-make *` 过度匹配：已修复（deny→ask），观察期 | [../pi-permission-ob-make-overmatch.md](../pi-permission-ob-make-overmatch.md) | 观察期 | 观察 ask 频率；治理缺口（权限 config.json 纳入版本管理）待排期 |
-| SEC-F01 | secrets 与配置同文件（AI 场景泄露风险）：短期用临时移除 workaround | [../defect-secrets-in-same-file.md](../defect-secrets-in-same-file.md) | 待修复 | 中期实现 secrets_file 分离（方案 1，需改代码）；排在功能需求之后 |
+| SEC-F01 | secrets 与配置同文件（AI 场景误读风险） | [../defect-secrets-in-same-file.md](../defect-secrets-in-same-file.md) | 分文件与隐藏输入已实现 | 旧内联 key 保留兼容，不自动迁移；同用户进程隔离仍需独立方案 |
 | REVIEW-F01 | harden-agent-config 变更的遗留验收：B–E 行为验收 + 平台与账号验收 4 项 | [../improvement-plan.md](../improvement-plan.md) | 待执行 | 用户授权 live、macOS 环境、推送远端 CI；不自动执行 |
+| REVIEW-F02 | Task Keeper 类型检查缺少与当前接口匹配的开发依赖锁；隔离 mock 已接入 CI | [taskkeeper-typecheck.md](taskkeeper-typecheck.md) | 待实现 | 独立开发依赖锁与真实 SDK 类型；不能沿用旧 package-lock 或用空类型替身冒充通过 |
 | OPS-F01 | 磁盘清理（/home ~170G + /data ~142G）：方案已编制 | [../acceptance/pi-disk-cleanup-plan.md](../acceptance/pi-disk-cleanup-plan.md) | 待用户确认，未执行任何删除 | 用户逐项确认；删除前核验归档 SHA 与清单 |
 
 ## 归并不迁移的说明

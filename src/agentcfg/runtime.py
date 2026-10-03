@@ -6,9 +6,11 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from types import SimpleNamespace
 
 from .adapter import EnvironmentBinding, LaunchSpec, SecretRef
 from .deployment import read_state, recover
+from .presentation import command_line
 from .process import DependencyError, checked, environment, launch_environment
 from .toolchain import ensure_compatible_toolchain
 from .storage import Conflict, Tree, ensure_private, instance_lock
@@ -118,8 +120,9 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
       missing = sum(workspace.secret_store.resolve(SecretRef(reference), required=False) is None
         for reference in optional)
       if missing:
-        print(f"run: {missing} 个可选模型凭据未配置；工具继续启动，相应模型调用前需填写 key。"
-          "可运行 ./agentcfg model status 查看路线。", file=sys.stderr)
+        selector = SimpleNamespace(local=workspace.local_path, profile=workspace.profile)
+        print(f"run: {missing} 个模型 key 未填写；工具仍可启动，对应模型暂不可调用。\n"
+          "填写位置：\n  " + command_line(selector, "model", "status"), file=sys.stderr)
       env = launch_environment(spec, contract["machine"], workspace.secret_store)
       import os
       env["PATH"] = os.pathsep.join([*(str(path) for path in workspace.backend.executable_paths(root)), env.get("PATH", "")])

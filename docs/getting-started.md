@@ -49,7 +49,7 @@ uv sync --locked
 ./agentcfg init-local --machine workstation
 ```
 
-初始化成功时会提示已创建本地配置。文件已存在则不会覆盖。默认 `dsh-default` 已适合 Codex/Cursor 订阅入口，可以直接进入下一步。若要用其他配方，先运行 `./agentcfg profiles` 查看 ID，再在初始化时加 `--profile ID`；已有文件可用编辑器调整 `machine.default_profile`。
+初始化成功时会报告机器配置和共享密钥文件的位置，并生成所选 profile 需要的 URL/key 空占位。文件已存在时会检查并只补缺失字段，保留已填写值和注释；再次运行且无缺项时不重写文件。默认 `dsh-default` 已适合 Codex/Cursor 订阅入口，可以直接进入下一步。若要用其他配方，先运行 `./agentcfg profiles` 查看 ID，再在初始化时加 `--profile ID`；对已有机器，这只补齐该 profile 的字段，默认 profile 仍由 `machine.default_profile` 决定。填值位置和命令可用 `./agentcfg --machine workstation model status` 查看。
 
 **只使用 Codex/Cursor 订阅时，文件可以保持如下内容。** `editor` 是可选项；新增时要放在 `[machine]` 内、`[secrets]` 前。
 
@@ -72,7 +72,7 @@ glm_key = ""
 
 如果使用百炼或私有 API，可以运行 `./agentcfg --machine workstation model add`，在终端内一次填写 provider、model、角色及必需的密钥；向导校验后展示脱敏摘要，确认才写入。地址、模型 ID 和容量必须来自你的服务。也可按 [本地配置参考](local-config.md#私有网关示例) 手动编辑。示例中的 `example.invalid` 和 `fictional-*` 是虚构数据，不能直接调用。
 
-DeepSeek、Kimi、GLM 官方直连预设可先用 `./agentcfg model presets` 查看，再以 `./agentcfg --machine workstation model enable kimi` 等命令填入私人 key 后启用。没有 key 时无需启用，现有订阅入口仍能启动。预设记录 OpenAI/Anthropic 地址、能力、容量和带来源的价格快照；价格不等同于实际账单，详见[本地配置参考](local-config.md)。
+DeepSeek、Kimi、GLM 官方直连默认加入所有 profile，可用 `./agentcfg model presets` 查看概要，加 `--verbose` 查看 OpenAI/Anthropic 地址、计价与来源。执行 `./agentcfg --machine workstation model key kimi` 等命令填写共享 key，或按 `model status` 给出的位置直接编辑。缺 key 不阻止订阅入口启动，但对应直连模型调用前需填写；价格是目录快照，详见[本地配置参考](local-config.md)。
 
 机器文件保存在仓库外，初始化权限是 0600；不要提交到 Git。它可以包含 API key，也可以包含这台机器独有的路径和模型。所有字段说明见 [本地配置参考](local-config.md)。
 
@@ -88,14 +88,27 @@ DeepSeek、Kimi、GLM 官方直连预设可先用 `./agentcfg model presets` 查
 
 | 操作 | 做什么 | 怎样理解结果 |
 |---|---|---|
-| `validate` | 离线检查配置和依赖锁 | `"valid": true` 表示校验通过；不会验证账号是否已登录 |
+| `validate` | 离线检查配置和依赖锁 | 终端显示“配置有效”（JSON 为 `"valid": true`）；不会验证账号是否已登录 |
 | `plan` | 预览将改哪些配置，不写入实例 | 首次 `changes` 大于 0 正常；`conflicts` 应为 0；`sync-required` 表示尚需安装依赖 |
 | `sync` | 按已有锁安装 DSH、插件和 OpenSpec，可能联网 | 完成后依赖可用；不会登录或启动 DSH |
 | `apply` | 将配置部署到独立实例，并保留上一版受管内容 | 会重新检查冲突；你执行该命令就表示应用本次配置 |
 | `doctor` | 离线检查部署、依赖和备份状态，适用于 DSH、Pi、OMP | `readiness` 给出阻塞项和下一条命令；不代表已登录或模型可调用 |
 | `doctor --input` | 补充诊断命令所在终端的标志与离线交互就绪信息 | OMP 另报告受管事件循环阻塞日志；DSH/Pi 明确标记无受管事件源，不读取按键 |
 
-`setup` 在标准输出给出简短摘要；`setup` 和 `sync` 的阶段进度写到标准错误，安装耗时较长时会定时提示已等待时间。校验、预览、部署、启动及模型向导也显示当前阶段；失败时显示所在步骤、退出码和建议执行的诊断命令。分步命令保留标准输出的 JSON 供脚本使用；进度不会打印安装器原始日志、参数或密钥。`doctor` 的 `authentication: "not-inspected; use native auth status"` 表示管理器没有查看账号数据，不是登录失败。
+`setup` 在标准输出给出简短摘要；`setup` 和 `sync` 的阶段进度写到标准错误，安装耗时较长时会定时提示已等待时间。校验、预览、部署、启动及模型向导也显示当前阶段；失败时显示所在步骤、退出码和建议执行的诊断命令。分步命令在终端显示可读摘要，在管道或重定向中保留原有单行 JSON；进度不会打印安装器原始日志、参数或密钥。`doctor` 的 `authentication: "not-inspected; use native auth status"` 表示管理器没有查看账号数据，不是登录失败。
+
+结构化结果支持 `--format auto|human|json`，放在具体子命令后；默认 `auto` 根据标准输出是否为终端选择。适用于 `validate`、`render`、`plan`、`lock`、`sync`、`apply`、`inventory`、`doctor`、`capture`、`rollback`、`recover` 和 `project init`。例如：
+
+```sh
+# 在终端查看完整 JSON；脚本也可显式指定，避免依赖终端检测
+./agentcfg --machine workstation plan --format json
+# 保存易读的诊断摘要
+./agentcfg --machine workstation doctor --format human > doctor.txt
+# 展开当前模型目录与逐项填写命令
+./agentcfg --machine workstation model status --verbose
+```
+
+`setup`、`init-local` 和 `model` 继续输出文本，不接受 `--format`；`profiles` 在终端为表格，在管道中保持原有 TSV。`run`、`usage` 的原生输出保持透传。模型状态页只反映配置是否填写，不验证部署同步、账号或服务连通性。
 
 首次使用不需要执行 `lock`，仓库已经带有依赖锁；`lock` 用于开发维护或明确升级版本。也不必单独执行 `render`，`plan/apply` 会计算需要的产物。
 

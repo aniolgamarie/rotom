@@ -1,6 +1,6 @@
 # OMP 支持与验证状态
 
-固定版本：v18.3.0 / `62bc57be1b03ef0802a33cf7f5f530e534527531`。实施状态和未完成项见[实施记录](../specs/002-manage-omp-config/implementation-progress.md)，不能仅凭存在配置或下载URL判断原生能力已经通过。
+当前固定版本：v18.4.5 / `79808c3bf8f8cd9826decc63e3e18b13035f64f8`。本轮来源、管理器回归、独立权限插件 smoke 与本机部署见[升级记录](acceptance/omp-upgrade-18.4.5.md)；下表中的早期完整验收保留 v18.3.0 身份，不自动成为新版通过证据。实施状态和未完成项见[实施记录](../specs/002-manage-omp-config/implementation-progress.md)，不能仅凭存在配置或下载URL判断原生能力已经通过。
 
 | 层次 | 当前证据 | 能说明什么 |
 |---|---|---|
@@ -11,7 +11,7 @@
 
 | 平台 | 发布资产已固定 | 平台选择隔离测试 | 真实宿主 |
 |---|---|---|---|
-| Linux glibc x64 | 是 | 通过 | 通过（v18.3.0，无账号 smoke） |
+| Linux glibc x64 | 是 | 通过 | 通过（v18.4.5 独立权限插件 smoke；v18.3.0 九行/MCP 验收保留历史身份） |
 | Linux glibc arm64 | 是 | 通过 | 未验证；已转 OMP-F01 |
 | macOS x64 | 是 | 通过 | 未验证；已转 OMP-F02 |
 | macOS arm64 | 是 | 通过 | 未验证；已转 OMP-F02 |

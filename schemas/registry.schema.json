@@ -21,11 +21,13 @@
       "properties": {
         "protocol": {"$ref": "#/$defs/text"},
         "base_url": {"$ref": "#/$defs/text"},
+        "base_url_ref": {"$ref": "#/$defs/local_ref"},
         "auth_kind": {"$ref": "#/$defs/text"},
         "credential_ref": {"$ref": "#/$defs/secret"},
         "omp_auth_header": {"type": "boolean"}
       }
     },
+    "local_ref": {"type": "string", "pattern": "^local:(?!\\.{1,2}$)[^/\\\\\\u0000-\\u001f\\u007f]+(?![\\s\\S])"},
     "model": {
       "type": "object", "additionalProperties": false,
       "required": ["provider", "remote_id", "input"],

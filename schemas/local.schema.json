@@ -5,6 +5,7 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {"type": "integer", "const": 1},
+    "secrets_file": {"$ref": "#/$defs/text"},
     "machine": {
       "type": "object", "additionalProperties": false, "required": ["id"],
       "properties": {
@@ -28,6 +29,10 @@
         }
       }
     },
+    "local_values": {
+      "type": "object", "propertyNames": {"$ref": "#/$defs/id"},
+      "additionalProperties": {"type": "string"}
+    },
     "overrides": {
       "type": "object", "additionalProperties": false,
       "properties": {
@@ -50,11 +55,13 @@
       "properties": {
         "protocol": {"$ref": "#/$defs/text"},
         "base_url": {"$ref": "#/$defs/text"},
+        "base_url_ref": {"$ref": "#/$defs/local_ref"},
         "auth_kind": {"$ref": "#/$defs/text"},
         "credential_ref": {"$ref": "#/$defs/secret"},
         "omp_auth_header": {"type": "boolean"}
       }
     },
+    "local_ref": {"type": "string", "pattern": "^local:(?!\\.{1,2}$)[^/\\\\\\u0000-\\u001f\\u007f]+(?![\\s\\S])"},
     "model": {
       "type": "object", "additionalProperties": false,
       "properties": {

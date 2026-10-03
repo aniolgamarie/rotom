@@ -1,6 +1,6 @@
 # 使用 agentcfg 管理 OMP
 
-OMP 管理器集成已实现，固定基线为 OMP v18.3.0、提交 `62bc57be1b03ef0802a33cf7f5f530e534527531`。本文描述受管使用方式；隔离验收、Linux x64 smoke 与其他未验证平台/账号项见[实施记录](../specs/002-manage-omp-config/implementation-progress.md)，原生支持声明以[验证证据](omp-support.md)为准。
+OMP 管理器集成已实现，当前固定版本为 OMP v18.4.5、提交 `79808c3bf8f8cd9826decc63e3e18b13035f64f8`，本次升级证据见[升级记录](acceptance/omp-upgrade-18.4.5.md)。本文描述受管使用方式；隔离验收、Linux x64 smoke 与其他未验证平台/账号项见[实施记录](../specs/002-manage-omp-config/implementation-progress.md)，原生支持声明以[验证证据](omp-support.md)为准。
 
 ## 配方和原生 profile
 
@@ -27,7 +27,7 @@ rotom 配方定义选用的公共模型、角色、规则、技能和 OMP 资源
 
 ## 操作顺序
 
-日常使用从正式 [`omp-kernel`](omp-kernel.md) 配方开始；`omp-default` 只作为无静态模型的 bootstrap 配方。全局选择参数位于子命令之前。先准备仓库 `.venv` 与权限为 0600 的私人机器文件，再使用统一入口：
+日常使用从正式 [`omp-kernel`](omp-kernel.md) 配方开始；`omp-default` 作为继承三个官方默认模型的基础配方。全局选择参数位于子命令之前。先准备仓库 `.venv` 与权限为 0600 的私人机器文件，再使用统一入口：
 
 ```sh
 ./agentcfg --local /private/local.toml --profile omp-kernel setup
@@ -36,7 +36,7 @@ rotom 配方定义选用的公共模型、角色、规则、技能和 OMP 资源
 
 `setup` 先离线预览，有冲突或漂移时停止；随后 `sync` 消费已审阅锁，取得并验证运行包（可能联网），再重新检查并部署。需要逐项审阅时可分别执行 `validate`、`plan`、`sync`、`apply`、`doctor`；`render` 是可选的缓存生成步骤。维护依赖时才显式执行 `./agentcfg lock --agent omp`。`run` 不隐式安装或部署，也不回退到 PATH 的全局 OMP。
 
-`omp-kernel` 的自定义 API provider 使用私人 key，不需要原生账号登录。`omp-default` 是无静态模型的 bootstrap 配方；需要 OpenAI Codex 原生登录时使用同一受管身份：
+`omp-kernel` 的自定义 API provider 使用私人 key，不需要原生账号登录。`omp-default` 也继承三个官方默认模型；需要 OpenAI Codex 原生登录时使用同一受管身份：
 
 ```sh
 ./agentcfg --local /private/local.toml --profile omp-default run omp -- login openai-codex
