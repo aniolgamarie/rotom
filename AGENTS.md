@@ -1,23 +1,33 @@
 # rotom 工程约定
 
 个人 Agent 配置管理仓库。通过 `./agentcfg` 管理公共配置来源、机器覆盖、原生转换、完整依赖、部署与启动。
-首版真实支持 DSH + `ccch1mneyyy/dsh-TUI`，保留公共适配接口供未来 Pi/Codex 接入。
+已实现 DSH + `ccch1mneyyy/dsh-TUI`、Pi 和 OMP 适配；Pi 通过 model-delegate 调用官方 Codex CLI，Codex 不是独立配置适配器。`./termcfg` 独立管理 zsh/tmux/mihomo。实现、历史验收与当前平台支持须分别判断，见 `docs/architecture.md` 和各工具支持矩阵。
+
+## 基本原则：不修改 agent 上游源码
+
+- 所有 agent 均使用未改动的上游实现。集成只通过官方配置、公开插件/扩展 API、官方 CLI 和仓库自有适配代码完成。
+- 禁止给 agent 上游源码或其 vendor/缓存副本打补丁，禁止发布补丁重编译的宿主、修改官方二进制，或通过 monkey patch/私有接口改写宿主内部实现。
+- 公开接口不足时，明确说明能力限制，调整功能设计或等待上游支持；不得以实现某项功能、已有 spec 或历史验收为由绕过此原则。
+- 已存在的宿主补丁属于历史方案，必须记录偏离与迁移状态，不新增、扩展或继续构建发布。迁移到官方运行包须保留账号、会话、配置所有权与恢复边界，不能自动终止活动实例。
+- 该原则适用于当前和以后接入的全部 agent，不仅限于 OMP；完整治理规则见 `.specify/memory/constitution.md`。
 
 ## 技术栈
 
 - Python 3.11+，使用 `uv` 管理依赖
 - 依赖：PyYAML、jsonschema、Jinja2、pytest
 - 入口：`./agentcfg`（直接使用仓库 `.venv`，不走 `uv run`）
-- 配置格式：TOML（registry/profiles/local），YAML（原生 DSH 产物）
+- 配置格式：TOML（registry/profiles/local），JSON/YAML（各适配器原生产物）
 
 ## 目录结构
 
 ```
 src/agentcfg/       # Python 模块
+src/termcfg/        # 终端配置、运行包和代理服务管理
 shared/             # 公共 rules/skills
 profiles/           # profile 定义 (TOML)
-agents/dsh/         # DSH 适配器（agent.toml, bindings.toml, plugins.toml, templates/）
-locks/dsh/          # DSH 依赖锁
+agents/            # DSH/Pi/OMP 默认值、资源、schema 和适配配方
+locks/             # 各工具完整依赖锁与 vendor
+terminals/         # zsh/tmux/mihomo 公开文件和逐文件来源清单
 schemas/            # JSON Schema 定义
 examples/           # 本地配置示例
 tests/              # pytest 测试
