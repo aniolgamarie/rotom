@@ -81,3 +81,9 @@ Thumbs.db
 # 本机工具设置和误以字面量 ~ 创建的用户状态目录。
 /.qoder/settings.local.json
 /~/
+
+# 本地调查、隔离 worktree 与宿主测试状态
+/.venv
+/.cache/
+/.pi/
+/pytest-of-*/
