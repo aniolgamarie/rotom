@@ -37,6 +37,23 @@ input = ["text"]
 [skills.fixture-skill]
 path = "shared/skills/fixture-skill"
 ''')
+  defaults = root / "shared/defaults/models.toml"
+  defaults.parent.mkdir()
+  defaults.write_text('''schema_version = 1
+[adapters.dsh]
+providers=[]
+models=[]
+[adapters.dsh.roles]
+[adapters.pi]
+providers=["fixture"]
+models=["main"]
+[adapters.pi.roles]
+main="main"
+[adapters.omp]
+providers=[]
+models=[]
+[adapters.omp.roles]
+''')
   skill = root / "shared/skills/fixture-skill"
   skill.mkdir(parents=True)
   (skill / "SKILL.md").write_text("---\nname: fixture-skill\ndescription: Synthetic fixture only\n---\nRead local fixture files.\n")
@@ -135,7 +152,9 @@ def test_pi_missing_model_key_still_launches_and_damaged_runtime_fails(tmp_path,
   fake_subprocess.queue(returncode=0, stdout="v24.14.0")
   fake_subprocess.queue(returncode=0)
   assert cli.main([*args, "run", "pi"]) == 0
-  assert "可选模型凭据未配置" in capsys.readouterr().err
+  stderr = capsys.readouterr().err
+  assert "run: 1 个模型 key 未填写；工具仍可启动，对应模型暂不可调用。" in stderr
+  assert "synthetic-fixture-secret" not in stderr
   assert "synthetic-fixture-secret" not in fake_subprocess.calls[-1]["env"].values()
   assert len(fake_subprocess.calls) == 2
   lock = w.backend.read_lock(w.repository)

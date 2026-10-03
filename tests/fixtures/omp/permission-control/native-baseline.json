@@ -1,0 +1,825 @@
+{
+  "schemaVersion": 1,
+  "scope": "native-approval-functions-only; no-host-or-command-execution",
+  "fixtureDigest": "4e7df262ccefc32c816317d47ffdf9336fb880c15f7c7a87e3b68ac2f0d127b6",
+  "recipeDigest": "64f107e24171897d68d2269a3018c339783dabaa7b86906eb49aa81a23d5e0d6",
+  "stateSequenceCases": "not-applicable",
+  "commandExecutions": 0,
+  "counts": {
+    "policy-safe": {
+      "allow": 48,
+      "prompt": 52,
+      "deny": 0,
+      "compoundPrompt": 40
+    },
+    "ask-deny": {
+      "allow": 5,
+      "prompt": 85,
+      "deny": 10,
+      "compoundPrompt": 40
+    }
+  },
+  "results": [
+    {
+      "id": "safe-001",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-002",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-003",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-004",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-005",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-006",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-007",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-008",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-009",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-010",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-011",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-012",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-013",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-014",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-015",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-016",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-017",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-018",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-019",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-020",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-021",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-022",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-023",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-024",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-025",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-026",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-027",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-028",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-029",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-030",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-031",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-032",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-033",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-034",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-035",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-036",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-037",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-038",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-039",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-040",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-041",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-042",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-043",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-044",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-045",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-046",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-047",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-048",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-049",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-050",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-051",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-052",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-053",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-054",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-055",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-056",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-057",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-058",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-059",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-060",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-061",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-062",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-063",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-064",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-065",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-066",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-067",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-068",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-069",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-070",
+      "policy": "allow"
+    },
+    {
+      "id": "safe-071",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-072",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-073",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-074",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-075",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-076",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-077",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-078",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-079",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-080",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-081",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-082",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-083",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-084",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-085",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-086",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-087",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-088",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-089",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-090",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-091",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-092",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-093",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-094",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-095",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-096",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-097",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-098",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-099",
+      "policy": "prompt"
+    },
+    {
+      "id": "safe-100",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-001",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-002",
+      "policy": "allow"
+    },
+    {
+      "id": "risk-003",
+      "policy": "deny"
+    },
+    {
+      "id": "risk-004",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-005",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-006",
+      "policy": "allow"
+    },
+    {
+      "id": "risk-007",
+      "policy": "deny"
+    },
+    {
+      "id": "risk-008",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-009",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-010",
+      "policy": "allow"
+    },
+    {
+      "id": "risk-011",
+      "policy": "deny"
+    },
+    {
+      "id": "risk-012",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-013",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-014",
+      "policy": "allow"
+    },
+    {
+      "id": "risk-015",
+      "policy": "deny"
+    },
+    {
+      "id": "risk-016",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-017",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-018",
+      "policy": "allow"
+    },
+    {
+      "id": "risk-019",
+      "policy": "deny"
+    },
+    {
+      "id": "risk-020",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-021",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-022",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-023",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-024",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-025",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-026",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-027",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-028",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-029",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-030",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-031",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-032",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-033",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-034",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-035",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-036",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-037",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-038",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-039",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-040",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-041",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-042",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-043",
+      "policy": "deny"
+    },
+    {
+      "id": "risk-044",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-045",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-046",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-047",
+      "policy": "deny"
+    },
+    {
+      "id": "risk-048",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-049",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-050",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-051",
+      "policy": "deny"
+    },
+    {
+      "id": "risk-052",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-053",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-054",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-055",
+      "policy": "deny"
+    },
+    {
+      "id": "risk-056",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-057",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-058",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-059",
+      "policy": "deny"
+    },
+    {
+      "id": "risk-060",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-061",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-062",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-063",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-064",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-065",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-066",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-067",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-068",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-069",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-070",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-071",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-072",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-073",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-074",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-075",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-076",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-077",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-078",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-079",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-080",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-081",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-082",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-083",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-084",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-085",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-086",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-087",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-088",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-089",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-090",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-091",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-092",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-093",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-094",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-095",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-096",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-097",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-098",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-099",
+      "policy": "prompt"
+    },
+    {
+      "id": "risk-100",
+      "policy": "prompt"
+    }
+  ],
+  "upstreamCommit": "62bc57be1b03ef0802a33cf7f5f530e534527531"
+}

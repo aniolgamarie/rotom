@@ -319,8 +319,14 @@ def validate_document(kind: str, data: dict, *, adapter_schemas: AdapterSchemas 
   if kind == "registry":
     # OAuth 目录由插件发现，不为通过校验而伪造静态 endpoint。
     for provider in checked.get("providers", {}).values():
-      if provider["auth_kind"] == "api-key" and "base_url" not in provider:
+      endpoints = {name for name in ("base_url", "base_url_ref") if name in provider}
+      if provider["auth_kind"] == "api-key" and len(endpoints) != 1:
         raise ConfigError("schema", ("registry", "providers", "<key>", "base_url"))
+  elif kind == "local":
+    providers = checked.get("overrides", {}).get("providers", {})
+    if any("base_url" in provider and "base_url_ref" in provider
+           for provider in providers.values()):
+      raise ConfigError("schema", ("local", "overrides", "providers", "<key>", "base_url"))
   for value, bundle, path, partial in options:
     option_schema = _partial(bundle.agent_options) if partial else bundle.agent_options
     _validate(option_schema, value, path, private_schema=True)

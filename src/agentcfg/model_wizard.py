@@ -12,9 +12,11 @@ import warnings
 from .adapter import SecretRef
 from .config import read_local_document
 from .paths import PathError, safe_id
+from .presentation import command_line, table
 from .progress import Progress
 from .schema import ConfigError, validate_document
 from .storage import Conflict, Tree
+from .secret_files import save_shared_key
 from .workspace import load_workspace
 
 
@@ -237,6 +239,17 @@ def _check_native_candidate(workspace):
 def list_presets(args):
   repository = Path(__file__).resolve().parents[2]
   providers, models = _preset_catalog(repository)
+  print("官方模型预设（仓库声明）\n")
+  if not getattr(args, "verbose", False):
+    rows = []
+    for vendor, stem in _PRESETS.items():
+      model = models[stem + "_openai"]
+      rows.append((vendor, model["remote_id"], f"{model['context_window']:,}",
+        f"{model['max_output_tokens']:,}", ", ".join(model["input"])))
+    table(("服务商", "模型", "上下文 token", "最大输出 token", "输入"), rows)
+    print("\n默认加入所有工具和 profile；填写共享 key 后即可使用对应模型。")
+    print("完整地址、计价与来源：./agentcfg model presets --verbose")
+    return 0
   for vendor, stem in _PRESETS.items():
     model = models[stem + "_openai"]
     openai = providers[model["provider"]]["base_url"]
@@ -257,29 +270,13 @@ def list_presets(args):
       print(f"  off-peak: input={low['input']} output={low['output']}" +
         (f" cache-read={low['cache_read']}" if "cache_read" in low else "") + f"; {pricing['schedule']}")
     print(f"  source: {model['source']} | price: {pricing['source']} (checked {pricing['checked_on']})")
-  print("公共预设默认不启用；执行 ./agentcfg [--machine NAME] [--profile ID] model enable deepseek|kimi|glm")
+  print("\nDeepSeek、Kimi、GLM 默认加入所有工具和 profile；通过 model status 查看 key 填写位置。")
   return 0
 
 
 def model_status(args):
-  """显式检查所选模型路线；只输出公开 ID 和密钥是否存在。"""
-  workspace = load_workspace(args.local, args.profile)
-  data = workspace.resolved.data
-  print(f"{workspace.agent}/{workspace.profile} 当前配置的已选模型路线（修改后需 apply 更新部署）：")
-  for provider_id, provider in sorted(data["providers"].items()):
-    models = [model_id for model_id, model in data["models"].items() if model["provider"] == provider_id]
-    if provider["auth_kind"] == "api-key":
-      state = "key 已配置" if workspace.secret_store.resolve(
-        SecretRef(provider["credential_ref"]), required=False) is not None else "key 缺失"
-    else:
-      state = "原生登录状态未检查"
-    print(f"  {provider_id}: {state}; 模型 {', '.join(models) if models else '无静态模型'}")
-  if not data["providers"]:
-    print("  无已选 provider；可使用原生登录或 model enable 添加模型")
-  if data["profile"]["roles"]:
-    print("角色: " + ", ".join(f"{role}={model}" for role, model in sorted(data["profile"]["roles"].items())))
-  print("缺失的模型 key 不阻止工具启动；调用相应模型前请在私人机器文件中填写 key。")
-  return 0
+  from .model_status import show_model_status
+  return show_model_status(args)
 
 
 def enable_preset(args):
@@ -312,7 +309,8 @@ def enable_preset(args):
   provider_id = model["provider"]
   provider = providers[provider_id]
   secret_name = provider["credential_ref"].removeprefix("secret:")
-  secret = old.get("secrets", {}).get(secret_name, "")
+  secret = workspace.secret_store.resolve(SecretRef(provider["credential_ref"]), required=False)
+  needs_key = not secret
   if not secret:
     progress.stage("读取所需 API key（隐藏输入）", hint="validate")
     try:
@@ -345,8 +343,7 @@ def enable_preset(args):
           role_updates[role] = model_id
   if role_updates:
     profile.setdefault("roles", {}).update(role_updates)
-  proposed.setdefault("secrets", {})[secret_name] = secret
-  if proposed == old:
+  if proposed == old and not needs_key:
     print(f"{workspace.agent}/{workspace.profile}: {model_id} 已启用，密钥已配置")
     return 0
   progress.stage("校验候选配置和原生产物", hint="validate")
@@ -357,8 +354,6 @@ def enable_preset(args):
     {"providers": providers_selected, "models": models_selected})]
   if role_updates:
     updates.append((("overrides", "profiles", workspace.profile, "roles"), role_updates))
-  if old.get("secrets", {}).get(secret_name) != secret:
-    updates.append((("secrets",), {secret_name: secret}))
   with Tree(args.local.parent) as tree:
     before = tree.read(args.local.name)
     if before is None or before[1] != 0o600 or before[2] != snapshot[2]:
@@ -368,14 +363,19 @@ def enable_preset(args):
       raise Conflict("本地配置在向导期间发生变化；请重试")
     rendered = render_edit(original, updates, proposed)
     progress.stage("等待确认并写入私人文件", hint="validate")
-    print(f"提案：为 {workspace.agent}/{workspace.profile} 启用 {model['name']}（{protocol}），密钥已提供；" +
+    print(f"提案：为 {workspace.agent}/{workspace.profile} 启用 {model['name']}（{protocol}），新密钥保存到共享文件；" +
       ("绑定角色 " + ", ".join(role_updates) + "。" if role_updates else "保留现有角色绑定。"))
     if _ask("写入私人机器文件？输入 yes 确认") != "yes":
       print("已取消；机器文件未修改")
       return 0
-    tree.replace(args.local.name, rendered, 0o600, expected=before[2])
-  print("模型已启用；" + ("下一步运行 validate、plan，确认后运行 setup" if native_checked else
-    "Pi 依赖锁材料待补齐，完成后运行 validate、plan、setup"))
+    def write_config():
+      tree.replace(args.local.name, rendered, 0o600, expected=before[2])
+    if needs_key:
+      save_shared_key(old, args.local, secret_name, secret, provider_id=provider_id, after_write=write_config)
+    else:
+      write_config()
+  print("模型已启用。" if native_checked else "模型配置已保存；Pi 依赖锁材料待补齐。")
+  print("下一步：\n  " + command_line(args, "setup" if native_checked else "doctor"))
   return 0
 
 
@@ -413,7 +413,8 @@ def add_model(args):
   overrides = proposed.setdefault("overrides", {})
   providers = overrides.setdefault("providers", {})
   models = overrides.setdefault("models", {})
-  if provider_id in providers or model_id in models or secret_name in proposed.get("secrets", {}):
+  if (provider_id in providers or model_id in models or secret_name in proposed.get("secrets", {})
+      or workspace.secret_store.resolve(SecretRef("secret:" + secret_name), required=False)):
     raise ConfigError("model-wizard-id-exists")
   providers[provider_id] = provider
   models[model_id] = model
@@ -429,7 +430,6 @@ def add_model(args):
       if required_role not in selected["roles"]:
         role_updates[required_role] = model_id
   profile.setdefault("roles", {}).update(role_updates)
-  proposed.setdefault("secrets", {})[secret_name] = secret
   progress.stage("校验候选配置和原生产物", hint="validate")
   validate_document("local", proposed, adapter_schemas=workspace.schemas)
   # 使用现有合并/适配器验证链检查整份候选，不读取原生账号、不联网。
@@ -440,7 +440,6 @@ def add_model(args):
     (("overrides", "models", model_id), model),
     (("overrides", "profiles", workspace.profile), {"providers": profile["providers"], "models": profile["models"]}),
     (("overrides", "profiles", workspace.profile, "roles"), role_updates),
-    (("secrets",), {secret_name: secret}),
   ]
   with Tree(args.local.parent) as tree:
     before = tree.read(args.local.name)
@@ -451,10 +450,11 @@ def add_model(args):
       raise Conflict("本地配置在向导期间发生变化；请重试")
     rendered = render_edit(original, updates, proposed)
     progress.stage("等待确认并写入私人文件", hint="validate")
-    print(f"提案：为 {workspace.agent}/{workspace.profile} 新增 provider {provider_id}、model {model_id}，绑定角色 {role}；密钥{'已输入' if secret else '待填写'}。")
+    print(f"提案：为 {workspace.agent}/{workspace.profile} 新增 provider {provider_id}、model {model_id}，绑定角色 {role}；密钥保存到共享文件。")
     if _ask("写入私人机器文件？输入 yes 确认") != "yes":
       print("已取消；机器文件未修改")
       return 0
-    tree.replace(args.local.name, rendered, 0o600, expected=before[2])
-  print("配置已写入；下一步运行 validate、plan，确认后运行 setup")
+    save_shared_key(old, args.local, secret_name, secret, provider_id=provider_id, after_write=lambda:
+      tree.replace(args.local.name, rendered, 0o600, expected=before[2]))
+  print("配置已写入。下一步：\n  " + command_line(args, "setup"))
   return 0

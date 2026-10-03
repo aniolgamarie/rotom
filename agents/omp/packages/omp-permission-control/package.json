@@ -1,0 +1,19 @@
+{
+  "name": "omp-permission-control",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./standalone.ts",
+  "exports": {
+    ".": "./standalone.ts",
+    "./legacy": "./index.ts"
+  },
+  "engines": {
+    "bun": ">=1.4.0"
+  },
+  "license": "MIT",
+  "ompCompatibility": {
+    "version": "18.4.5",
+    "commit": "79808c3bf8f8cd9826decc63e3e18b13035f64f8"
+  }
+}

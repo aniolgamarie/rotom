@@ -2,12 +2,14 @@
 
 from copy import deepcopy
 import os
+from types import SimpleNamespace
 
 import pytest
 
 from agentcfg import omp_dependencies as dep
 from agentcfg.deployment import json_bytes
 from agentcfg.schema import ConfigError
+from agentcfg.process import DependencyError
 from test_omp_dependencies_foundation import locked, hashed
 
 
@@ -121,3 +123,45 @@ def test_stage_validation_failure_preserves_previous_package(locked, monkeypatch
   assert (root / "bin/omp").read_bytes() == b"old-damaged-package"
   assert not list(root.parent.glob(".stage-*"))
   assert not list(root.parent.glob(".pending-*"))
+
+
+def test_sync_progress_identifies_asset_and_download_substage(locked):
+  workspace, _, _, _ = locked
+  backend = dep.OmpBackend()
+  lock = backend.read_lock(workspace.repository)
+  stages = []
+  backend.sync(workspace, lock, progress=stages.append)
+  download = [stage for stage in stages if "等待下载缓存锁" in stage]
+  assert len(download) == 1
+  assert dep.TAG in download[0] and "linux-x64" in download[0]
+  assert lock.metadata["assets"]["linux-x64"]["url"].rsplit("/", 1)[-1] in download[0]
+  assert "GitHub Releases" in download[0]
+  assert any("完整缓存命中" in stage for stage in stages)
+  assert not any("https://" in stage or str(workspace.cache) in stage for stage in stages)
+
+
+def test_official_runtime_does_not_read_patched_permission_assets(locked, monkeypatch):
+  from agentcfg import omp_permission_runtime
+  workspace, _, _, official_content = locked
+  workspace.resolved = SimpleNamespace(data={"profile": {"agent_options": {"runtime_variant": "official"}}})
+  backend = dep.OmpBackend()
+  lock = backend.read_lock(workspace.repository)
+  monkeypatch.setattr(omp_permission_runtime, "read_permission_runtime",
+    lambda *args, **kwargs: pytest.fail("official runtime must not read the retired patched manifest"))
+  result = backend.sync(workspace, lock)
+  identity = result["identity"]
+  assert identity.startswith(lock.identity + "-")
+  assert (backend.root(workspace, identity) / "bin/omp").read_bytes() == official_content
+  receipt = backend._receipt(workspace, lock, identity)
+  assert "runtime_variant" not in receipt and "patched_lock_identity" not in receipt
+
+
+def test_retired_permission_variant_is_rejected_before_asset_access(locked, monkeypatch):
+  workspace, _, _, _ = locked
+  workspace.resolved = SimpleNamespace(data={"profile": {"agent_options": {"runtime_variant": "permission-control-v1"}}})
+  backend = dep.OmpBackend()
+  lock = backend.read_lock(workspace.repository)
+  monkeypatch.setattr("agentcfg.omp_download.ensure_cached_asset",
+    lambda *args, **kwargs: pytest.fail("retired variant must fail before any asset access"))
+  with pytest.raises(ConfigError, match="omp-permission-variant"): backend.sync(workspace, lock)
+  assert not (workspace.cache / "runtimes").exists()

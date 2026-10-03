@@ -13,9 +13,12 @@ import re
 from .adapter import Adapter, AdapterDeclaration, Artifact, DependencyPlan, EnvironmentBinding, LaunchSpec, ManagedTarget, Ownership, SecretRef
 from .schema import AdapterPolicy, AdapterSchemaBundle, AdapterSchemas, AuthenticationClaim, ConfigError
 from .omp_identity import lifecycle_guard, native_identity
-from .omp_discovery import DISABLED_PROVIDERS, SourcePolicy, assert_native_sources, inspect_project_sources
+from .omp_discovery import (DISABLED_PROVIDERS, SourcePolicy,
+  assert_native_sources, inspect_project_sources)
 from .omp_env import generated_name
-from .omp_settings import RUNTIME, PROVIDER_OPTIONS, MODEL_OPTIONS, ROLE_THINKING, runtime_values, validate_options
+from .omp_settings import (RUNTIME, PROVIDER_OPTIONS, MODEL_OPTIONS, ROLE_THINKING, NATIVE_MODEL_ROLES,
+  PERMISSION_CONTROL, RUNTIME_VARIANT, NATIVE_PERMISSION_CONTROL, resolve_permission_control,
+  native_model_roles, runtime_values, validate_options)
 from .render import render_rules
 from .paths import relative_path
 
@@ -31,7 +34,8 @@ KEY_BINDING = {"oneOf": [STRING, STRINGS]}
 OPTIONS = closed({"discovery": closed({"project_resources": {"type": "boolean"}, "project_roots": STRINGS}),
                   "resources": closed({"prompts": STRINGS, "themes": STRINGS, "agents": STRINGS}),
                   "runtime": RUNTIME, "provider_options": PROVIDER_OPTIONS, "model_options": MODEL_OPTIONS,
-                  "role_thinking": ROLE_THINKING,
+                  "role_thinking": ROLE_THINKING, "native_model_roles": NATIVE_MODEL_ROLES,
+                  "runtime_variant": RUNTIME_VARIANT, "permission_control": PERMISSION_CONTROL,
                   "tiny_model": {"type": "string", "const": "local/lfm2.5-230m"},
                   "ui": closed({"theme_dark": STRING, "theme_light": STRING,
                                 "keybindings": {"type": "object", "additionalProperties": KEY_BINDING}}),
@@ -186,9 +190,9 @@ def _has_url_credential(value):
 
 def _native_provider_id(provider_id, provider):
   if provider.get("protocol") == "oauth-dynamic":
-    if provider_id != "codex" or provider.get("auth_kind") != "oauth":
+    if provider.get("auth_kind") != "oauth" or provider_id not in ("codex", "cursor"):
       raise ConfigError("omp-oauth-provider-not-supported")
-    return "openai-codex"
+    return {"codex": "openai-codex", "cursor": "cursor"}[provider_id]
   return provider_id
 
 
@@ -454,6 +458,8 @@ class OmpAdapter(Adapter):
     resources = options.get("resources", {})
     for key in runtime_values(options):
       targets.append(ManagedTarget(base + "/config.yml", Ownership.FIELDS, "yaml", "/" + key))
+    if resolve_permission_control(data) is not None:
+      targets.append(ManagedTarget(base + "/permission-control.json", Ownership.FILE, "json"))
     for resource_id in resources.get("agents", []):
       targets.append(ManagedTarget(f"{base}/agents/{resource_id}.md", Ownership.FILE, "bytes"))
     for resource_id in resources.get("prompts", []):
@@ -517,12 +523,15 @@ class OmpAdapter(Adapter):
       provider_values = {prefix + "/" + key: value for key, value in provider_value.items()}
       for selector, value in provider_values.items():
         artifacts.append(Artifact(by_key[(path, selector)], json.dumps(value, ensure_ascii=False, sort_keys=True).encode()))
+    native_roles = native_model_roles(data)
     for role, model_id in sorted(data["profile"].get("roles", {}).items()):
-      model = data["models"][model_id]
-      native = _native_provider_id(model["provider"], data["providers"][model["provider"]]) + "/" + model["remote_id"]
-      level = data["profile"].get("agent_options", {}).get("role_thinking", {}).get(role)
-      if level:
-        native += ":" + level
+      native = native_roles.get(role)
+      if native is None:
+        model = data["models"][model_id]
+        native = _native_provider_id(model["provider"], data["providers"][model["provider"]]) + "/" + model["remote_id"]
+        level = data["profile"].get("agent_options", {}).get("role_thinking", {}).get(role)
+        if level:
+          native += ":" + level
       selector = "/modelRoles/" + ROLE_MAP[role]
       artifacts.append(Artifact(by_key[(base + "/config.yml", selector)], json.dumps(native).encode()))
     if data["profile"].get("rules"):
@@ -533,6 +542,10 @@ class OmpAdapter(Adapter):
     for key, value in runtime_values(options).items():
       artifacts.append(Artifact(by_key[(base + "/config.yml", "/" + key)],
         json.dumps(value, ensure_ascii=False, sort_keys=True).encode()))
+    permission = self._native_permission(data)
+    if permission is not None:
+      artifacts.append(Artifact(by_key[(base + "/permission-control.json", None)],
+        json.dumps(permission, ensure_ascii=False, sort_keys=True).encode()))
     for resource_id in options.get("resources", {}).get("agents", []):
       artifacts.append(Artifact(by_key[(f"{base}/agents/{resource_id}.md", None)],
         _resource_bytes(self.repository, catalog[resource_id], "agent")))
@@ -592,10 +605,41 @@ class OmpAdapter(Adapter):
                 "selector": artifact.target.selector, "value": value}
       if not validator.is_valid(intent):
         raise ConfigError("omp-generated-native-intent")
+    for artifact in artifacts:
+      if artifact.target.selector and artifact.target.selector.startswith("/modelRoles/"):
+        intent = {"path": Path(artifact.target.path).name, "codec": artifact.target.serialization,
+          "selector": artifact.target.selector, "value": json.loads(artifact.content)}
+        if not validator.is_valid(intent):
+          raise ConfigError("omp-generated-native-intent")
     return tuple(artifacts)
 
+  def _native_permission(self, data):
+    """生成独立插件整文件 sidecar；不依赖或选择修改版宿主运行包。"""
+    config = resolve_permission_control(data)
+    if config is None:
+      return None
+    from .deployment import json_bytes
+    digest = data["plugins"]["omp-permission-control"]["tree_digest"]
+    patterns = deepcopy(data["profile"]["agent_options"].get("runtime", {}).get("bash", {}).get("patterns", []))
+    value = {"schemaVersion": 2, **config, "pluginId": "omp-permission-control",
+      "pluginDigest": digest, "nativePatterns": patterns}
+    tools = data["profile"]["agent_options"].get("runtime", {}).get("tools", {})
+    value["policyVersion"] = hashlib.sha256(json_bytes({"permission": value,
+      "nativeProtection": {"approvalMode": tools.get("approvalMode"),
+        "approval": tools.get("approval", {}), "bash": {"patterns": patterns}}})).hexdigest()
+    from jsonschema import Draft202012Validator
+    if not Draft202012Validator(NATIVE_PERMISSION_CONTROL).is_valid(value):
+      raise ConfigError("omp-permission-native-contract")
+    return value
+
+  def _workspace_permission(self, workspace):
+    if resolve_permission_control(workspace.resolved.data) is None:
+      return None
+    return self._native_permission(workspace.resolved.data)
+
   def dependency_plan(self, data):
-    return DependencyPlan(("oh-my-pi@18.3.0",))
+    from .omp_dependencies import TAG
+    return DependencyPlan(("oh-my-pi@" + TAG.removeprefix("v"),))
 
   def lifecycle_guard(self, workspace):
     return lifecycle_guard(workspace, create=False)
@@ -648,7 +692,8 @@ class OmpAdapter(Adapter):
     assert_native_sources(identity, self._allowed_native_sources(workspace.resolved.data, identity),
       self._mcp_shape(workspace.resolved.data), policy.project_resources,
       model_providers=_native_model_providers(workspace.resolved.data),
-      extension_suffixes=self._extension_suffixes(workspace.resolved.data))
+      extension_suffixes=self._extension_suffixes(workspace.resolved.data),
+      permission_control=self._workspace_permission(workspace))
 
   def _validate_caller_environment(self):
     import os
@@ -676,7 +721,8 @@ class OmpAdapter(Adapter):
     assert_native_sources(identity, self._allowed_native_sources(workspace.resolved.data, identity),
       self._mcp_shape(workspace.resolved.data), policy.project_resources,
       model_providers=_native_model_providers(workspace.resolved.data),
-      extension_suffixes=self._extension_suffixes(workspace.resolved.data))
+      extension_suffixes=self._extension_suffixes(workspace.resolved.data),
+      permission_control=self._workspace_permission(workspace))
 
   def _extension_suffixes(self, data):
     return tuple("packages/" + plugin_id + "/" + entrypoint

@@ -219,15 +219,17 @@ def test_cli_help_needs_no_local(argv, monkeypatch, capsys):
   assert "usage:" in capsys.readouterr().out
 
 
-def test_cli_init_local_never_reads_credentials(monkeypatch, capsys, tmp_path):
-  path = write_local(machine_file("work"))
+def test_cli_init_local_checks_existing_file_without_exposing_credentials(capsys, tmp_path):
+  path = write_local(machine_file("work"), metadata='id = "work"\ndefault_profile = "dsh-default"\n')
+  original = path.read_bytes()
+  assert cli.main(["init-local", "--machine", "work"]) == 0
+  assert path.read_bytes() == original
   before = snapshot(tmp_path)
-  with monkeypatch.context() as patch:
-    patch.setattr(Path, "open", lambda *a, **k: pytest.fail("must not read"))
-    assert cli.main(["init-local", "--machine", "work"]) == 4
+  assert cli.main(["init-local", "--machine", "work"]) == 0
   assert snapshot(tmp_path) == before
   assert path.exists()
-  assert "初始化冲突" in capsys.readouterr().err
+  output = capsys.readouterr()
+  assert CANARY not in output.out + output.err
 
 
 @pytest.mark.parametrize("cwd", [None, "相对 工作", "/虚构 绝对目录"])
@@ -289,3 +291,22 @@ def test_cli_invalid_configuration_fails_before_side_effects(command, tmp_path, 
   assert cli.main(command) == 2
   assert snapshot(tmp_path) == before
   assert "校验" in capsys.readouterr().err
+def test_retired_omp_permission_runtime_lock_arguments_are_rejected(tmp_path, capsys):
+  before = snapshot(tmp_path)
+  with pytest.raises(SystemExit) as error:
+    cli.main(["lock", "--agent", "omp", "--runtime-variant", "permission-control-v1",
+      "--artifact-cache", str(tmp_path / "prepared")])
+  assert error.value.code == 2
+  assert snapshot(tmp_path) == before
+
+
+@pytest.mark.parametrize("arguments", [
+  ["lock", "--agent", "omp", "--runtime-variant", "permission-control-v1"],
+  ["lock", "--agent", "pi", "--runtime-variant", "permission-control-v1", "--artifact-cache", "prepared"],
+  ["lock", "--agent", "omp", "--artifact-cache", "prepared"],
+  ["run", "omp", "--runtime-variant", "permission-control-v1"],
+])
+def test_permission_lock_arguments_cannot_change_other_commands(arguments, capsys):
+  with pytest.raises(SystemExit) as error:
+    cli.main(arguments)
+  assert error.value.code == 2

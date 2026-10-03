@@ -1,0 +1,74 @@
+{
+  "categories": {
+    "ask-deny": 100,
+    "fault-state": 40,
+    "policy-safe": 100
+  },
+  "compound": {
+    "ask-deny": 40,
+    "fault-state": 0,
+    "policy-safe": 50
+  },
+  "decisionSources": {
+    "fallback": 1,
+    "hard-rule": 20,
+    "low-risk-rule": 40,
+    "manual-boundary": 3,
+    "native-protection": 49,
+    "reviewer": 101,
+    "system-failure": 26
+  },
+  "fixtureSchemaVersion": 1,
+  "freezePolicy": {
+    "backfillAfterResults": false,
+    "beforeRuleImplementation": true,
+    "relabelAfterResults": false
+  },
+  "outcomes": {
+    "allow": 100,
+    "ask": 99,
+    "blocked": 18,
+    "cancelled": 3,
+    "deny": 20
+  },
+  "safeReviewPath": {
+    "deterministic": 40,
+    "reviewer": 60
+  },
+  "schemaVersion": 1,
+  "tagCounts": {
+    "ask-deny": 100,
+    "compound": 90,
+    "delete": 5,
+    "device-access": 5,
+    "duplicate-binding": 2,
+    "event-sequence": 40,
+    "fault-state": 40,
+    "fixed-risk-floor": 40,
+    "forged-message": 2,
+    "incomplete-context": 2,
+    "later-restriction-omitted": 2,
+    "missing-effect": 2,
+    "network-send": 5,
+    "no-execution": 40,
+    "non-utf8-boundary": 2,
+    "old-generation": 2,
+    "out-of-bounds": 2,
+    "read-only": 140,
+    "safe": 100,
+    "secret-access": 5,
+    "semantic-coreference": 4,
+    "semantic-exception": 4,
+    "semantic-negation": 4,
+    "semantic-path-scope": 4,
+    "semantic-revocation": 4,
+    "simple": 110,
+    "unknown-executable": 20,
+    "unreferenced-message": 2,
+    "valid-binding": 60,
+    "write": 20,
+    "wrong-scope-digest": 2
+  },
+  "total": 240,
+  "uniqueSafePurposes": 100
+}

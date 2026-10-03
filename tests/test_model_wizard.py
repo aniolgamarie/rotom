@@ -19,6 +19,13 @@ def local_file():
   return Path(os.environ["XDG_CONFIG_HOME"]) / "agentcfg/machines/default.toml"
 
 
+def shared_keys():
+  path = Path(os.environ["XDG_CONFIG_HOME"]) / "agentcfg/secrets.toml"
+  document = tomllib.loads(path.read_text(encoding="utf-8"))
+  return {**document.get("secrets", {}), **document.get("shared", {}),
+    **{name: value for group in document.get("providers", {}).values() for name, value in group.items()}}
+
+
 def interactive(monkeypatch, answers, *, secret="private-key-canary"):
   values = iter(answers)
   monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
@@ -40,7 +47,7 @@ def test_add_private_model_preserves_comments_and_hides_key(monkeypatch, capsys)
   assert document["overrides"]["providers"]["private_gateway"]["base_url"] == "https://example.invalid/v1"
   assert document["overrides"]["models"]["private_main"]["remote_id"] == "model-live"
   assert document["overrides"]["profiles"]["dsh-default"]["roles"]["main"] == "private_main"
-  assert document["secrets"]["private_gateway_key"] == "private-key-canary"
+  assert shared_keys()["private_gateway_key"] == "private-key-canary"
   output = capsys.readouterr()
   assert "private-key-canary" not in output.out + output.err
   assert cli.main(["validate"]) == 0
@@ -97,9 +104,9 @@ def test_add_second_model_keeps_first_and_other_local_fields(monkeypatch):
   assert cli.main(["model", "add"]) == 0
   document = tomllib.loads(local_file().read_text(encoding="utf-8"))
   assert list(document["overrides"]["providers"]) == ["provider_one", "provider_two"]
-  assert document["overrides"]["profiles"]["dsh-default"]["models"] == ["model_one", "model_two"]
-  assert document["secrets"]["provider_one_key"] == "first-private-key"
-  assert document["secrets"]["provider_two_key"] == "second-private-key"
+  assert document["overrides"]["profiles"]["dsh-default"]["models"][-2:] == ["model_one", "model_two"]
+  assert shared_keys()["provider_one_key"] == "first-private-key"
+  assert shared_keys()["provider_two_key"] == "second-private-key"
 
 
 def test_add_model_requires_terminal_before_reading_local(monkeypatch):
@@ -176,7 +183,7 @@ def test_add_model_detects_change_during_workspace_resolution(monkeypatch):
 
 
 def test_public_presets_list_without_local_file(capsys):
-  assert cli.main(["model", "presets"]) == 0
+  assert cli.main(["model", "presets", "--verbose"]) == 0
   output = capsys.readouterr().out
   for name in ("deepseek-flash", "kimi-k3", "glm-5.3"):
     assert name in output
@@ -207,7 +214,7 @@ def test_enable_public_preset_preserves_subscription_and_comments(monkeypatch, c
   assert "codex" in profile["providers"] and "cursor" in profile["providers"]
   assert "deepseek_openai" in profile["providers"]
   assert "deepseek_flash_openai" in profile["models"]
-  assert data["secrets"]["deepseek_key"] == "preset-key-canary"
+  assert shared_keys()["deepseek_key"] == "preset-key-canary"
   assert "preset-key-canary" not in capsys.readouterr().out
   assert cli.main(["validate"]) == 0
   interactive(monkeypatch, [], secret="unused")
@@ -220,9 +227,10 @@ def test_enable_omp_uses_anthropic_and_keeps_existing_roles(monkeypatch):
   assert cli.main(["model", "enable", "kimi"]) == 0
   data = tomllib.loads(local_file().read_text(encoding="utf-8"))
   profile = data["overrides"]["profiles"]["omp-default"]
-  assert profile["providers"] == ["kimi_anthropic"]
-  assert profile["models"] == ["kimi_k3_anthropic"]
-  assert profile["roles"]["main"] == "kimi_k3_anthropic"
+  assert set(profile["providers"]) == {"deepseek_anthropic", "kimi_anthropic", "glm_anthropic"}
+  assert set(profile["models"]) == {"deepseek_flash_anthropic", "kimi_k3_anthropic", "glm_53_anthropic"}
+  assert "roles" not in profile
+  assert model_wizard.load_workspace(local_file()).resolved.data["profile"]["roles"]["main"] == "deepseek_flash_anthropic"
   assert cli.main(["validate"]) == 0
 
 
@@ -283,18 +291,19 @@ def test_one_key_enables_same_vendor_in_two_profiles(monkeypatch):
   interactive(monkeypatch, ["yes"], secret="unused")
   assert cli.main(["--profile", "omp-default", "model", "enable", "kimi"]) == 0
   data = tomllib.loads(local_file().read_text(encoding="utf-8"))
-  assert data["secrets"] == {"deepseek_key": "", "kimi_key": "shared-secret-canary", "glm_key": ""}
-  assert data["overrides"]["profiles"]["dsh-default"]["models"] == ["kimi_k3_openai"]
-  assert data["overrides"]["profiles"]["omp-default"]["models"] == ["kimi_k3_anthropic"]
+  assert "secrets" not in data
+  assert shared_keys() == {"deepseek_key": "", "kimi_key": "shared-secret-canary", "glm_key": ""}
+  assert "kimi_k3_openai" in data["overrides"]["profiles"]["dsh-default"]["models"]
+  assert "kimi_k3_anthropic" in data["overrides"]["profiles"]["omp-default"]["models"]
 
 
 def test_model_status_reports_partial_omp_keys_without_values(capsys):
   assert cli.main(["init-local", "--profile", "omp-kernel"]) == 0
   path = local_file()
   original = path.read_text(encoding="utf-8")
-  path.write_text(original + '\nomp_kimi_tf_key = "status-key-canary"\n', encoding="utf-8")
-  assert cli.main(["model", "status"]) == 0
+  path.write_text(original + '\n[secrets]\nomp_kimi_tf_key = "status-key-canary"\n', encoding="utf-8")
+  assert cli.main(["model", "status", "--verbose"]) == 0
   output = capsys.readouterr().out
-  assert "kimi_tf: key 已配置" in output
-  assert "zhipu_tf: key 缺失" in output
+  assert "kimi_tf" in output and "已填写" in output and "旧机器密钥" in output
+  assert "model key zhipu_tf" in output and "缺 key" in output
   assert "status-key-canary" not in output

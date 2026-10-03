@@ -19,5 +19,6 @@ models = ["example-main"]
 main = "example-main"
 scout = "example-main"
 reviewer = "example-main"
+# 以下为空的旧格式兼容占位；新模型 key 推荐用 model key <provider-id> 写入共享文件。
 [secrets]
 example_key = ""

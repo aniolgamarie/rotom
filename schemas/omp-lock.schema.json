@@ -28,10 +28,10 @@
       "const": "omp-1"
     },
     "tag": {
-      "const": "v18.3.0"
+      "const": "v18.4.5"
     },
     "commit": {
-      "const": "62bc57be1b03ef0802a33cf7f5f530e534527531"
+      "const": "79808c3bf8f8cd9826decc63e3e18b13035f64f8"
     },
     "source": {
       "type": "object",
@@ -208,7 +208,7 @@
             "minLength": 1
           },
           "compatibility": {
-            "const": "v18.3.0"
+            "const": "v18.4.5"
           }
         }
       }

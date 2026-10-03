@@ -7,12 +7,30 @@ from .config import AdapterSources, SourceInputs, LocalConfig, load_local, load_
 from .dsh import DshAdapter
 from .pi import PiAdapter
 from .omp import OmpAdapter
+from .model_defaults import model_default_selection
 from .paths import safe_id
 from .render import render_candidate
 from .schema import AdapterSchemas
 
 
 ADAPTER_TYPES = {"dsh": DshAdapter, "pi": PiAdapter, "omp": OmpAdapter}
+
+
+def load_public_catalog(*, repository=None):
+  """只加载仓库公开声明；初始化可据此推导引用而不触碰私人秘密。"""
+  repository = repository or Path(__file__).resolve().parents[2]
+  adapters = {name: kind(repository) for name, kind in ADAPTER_TYPES.items()}
+  schemas = AdapterSchemas({name: adapter.schemas().bundles[name] for name, adapter in adapters.items()})
+  registries = tuple(sorted((repository / "shared").glob("*.toml")))
+  for name in adapters:
+    specific = repository / "agents" / name / "content.toml"
+    if specific.exists():
+      registries += (specific,)
+  defaults_path = repository / "shared" / "defaults" / "models.toml"
+  sources = SourceInputs(registries, tuple(sorted((repository / "profiles").glob("*.toml"))),
+    {name: AdapterSources(*(repository / "agents" / name / (kind + ".toml")
+      for kind in ("agent", "bindings", "plugins"))) for name in adapters}, defaults_path)
+  return load_sources(sources, adapter_schemas=schemas), adapters
 
 
 @dataclass
@@ -23,6 +41,15 @@ class Workspace:
   adapter: object = field(repr=False)
   schemas: object = field(repr=False)
   secret_store: object = field(repr=False)
+  global_model_defaults: dict = field(default_factory=dict, repr=False)
+
+  @property
+  def default_providers(self):
+    return tuple(self.global_model_defaults.get("providers", ()))
+
+  @property
+  def default_models(self):
+    return tuple(self.global_model_defaults.get("models", ()))
 
   @property
   def backend(self):
@@ -53,6 +80,8 @@ class Workspace:
     return {"machine": self.resolved.data["machine"]["id"], "local": str(self.local_path), "profile": self.profile}
 
   def candidate(self, lock_identity):
+    if self.resolved.missing_local_values:
+      raise ValueError("本地 URL 尚未配置")
     scopes = [target.path for target in self.adapter.managed_targets(self.resolved.data)
               if target.serialization == "skill-directory"]
     skills = {"skill_root": self.repository, "skill_target_root": scopes[0]} if len(scopes) == 1 else {}
@@ -70,24 +99,20 @@ class Workspace:
       lock_identity=lock_identity, context=context, **skills)
 
 
-def load_workspace(local, profile=None, *, repository=None, proposal=None):
+def load_workspace(local, profile=None, *, repository=None, proposal=None,
+                   allow_missing_local_values=False):
   repository = repository or Path(__file__).resolve().parents[2]
-  adapters = {name: kind(repository) for name, kind in ADAPTER_TYPES.items()}
-  schemas = AdapterSchemas({name: adapter.schemas().bundles[name] for name, adapter in adapters.items()})
-  registries = tuple(sorted((repository / "shared").glob("*.toml")))
-  for name in adapters:
-    specific = repository / "agents" / name / "content.toml"
-    if specific.exists():
-      registries += (specific,)
-  sources = SourceInputs(registries, tuple(sorted((repository / "profiles").glob("*.toml"))),
-    {name: AdapterSources(*(repository / "agents" / name / (kind + ".toml") for kind in ("agent", "bindings", "plugins"))) for name in adapters})
-  catalog = load_sources(sources, adapter_schemas=schemas)
+  catalog, adapters = load_public_catalog(repository=repository)
   config, store = load_local(local, adapter_schemas=catalog.adapter_schemas)
   if proposal is not None:
     from .merge import merge_layers
     from .schema import validate_document
     config = LocalConfig(merge_layers((("local", config.data), ("request", proposal))).data)
     validate_document("local", config.data, adapter_schemas=catalog.adapter_schemas)
-  resolved = resolve_config(catalog, config, profile_id=profile, adapter_schemas=catalog.adapter_schemas)
+  resolved = resolve_config(catalog, config, profile_id=profile,
+    adapter_schemas=catalog.adapter_schemas,
+    allow_missing_local_values=allow_missing_local_values)
   safe_id(resolved.data["profile"]["id"])
-  return Workspace(repository, local.absolute(), resolved, adapters[resolved.data["profile"]["agent"]], catalog.adapter_schemas, store)
+  defaults = model_default_selection(catalog.model_defaults, resolved.data["profile"]["agent"])
+  return Workspace(repository, local.absolute(), resolved, adapters[resolved.data["profile"]["agent"]],
+    catalog.adapter_schemas, store, defaults)

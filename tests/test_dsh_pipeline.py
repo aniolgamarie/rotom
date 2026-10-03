@@ -35,12 +35,13 @@ def test_real_recipe_preserves_full_tui_config_and_has_no_static_oauth_catalog(t
   candidate = w.candidate(read_lock(w.repository).identity)
   patch = native.load(next(a.content for a in candidate.artifacts if a.target.path.endswith("patch.yml")))
   tui = next(row for row in patch if row.get("id") == "dsh-tui")
-  assert tui["config"]["provider"] == "openai-codex"
-  assert "model" not in tui["config"]
+  assert tui["config"]["provider"] == "agentcfg-deepseek_openai"
+  assert tui["config"]["model"] == "deepseek-flash"
   assert tui["config"]["terminalImages"] is False
   assert "workspace" in tui["config"] and "sessionId" in tui["config"]
   assert sum(row.get("id") == "dsh-tui-auth" for row in patch) == 1
-  assert not w.resolved.data["models"]
+  assert set(w.resolved.data["models"]) == {
+    "deepseek_flash_openai", "kimi_k3_openai", "glm_53_openai"}
 
 
 @pytest.mark.parametrize("source", [

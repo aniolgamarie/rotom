@@ -21,11 +21,15 @@ TEXTS = {"type": "array", "items": TEXT}
 THINKING = enum("off", "minimal", "low", "medium", "high", "xhigh", "max", "auto")
 APPROVAL = enum("allow", "deny", "prompt")
 NATIVE_ROLES = ("default", "smol", "slow", "vision", "plan", "advisor", "task", "tiny")
+PUBLIC_ROLES = ("main", "smol", "slow", "vision", "plan", "advisor", "task")
+NATIVE_MODEL_ID = {"type": "string", "pattern":
+  "^cursor/[^/\\s:\\x00-\\x1f\\x7f]+(?::(?:off|minimal|low|medium|high|xhigh|max|auto))?$(?![\\s\\S])"}
+NATIVE_MODEL_ROLES = closed({key: NATIVE_MODEL_ID for key in PUBLIC_ROLES})
 RUNTIME = closed({
   "cycleOrder": {"type": "array", "items": enum(*NATIVE_ROLES), "uniqueItems": True},
   "retry": closed({"modelFallback": BOOL, "fallbackChains": closed({key: TEXTS for key in NATIVE_ROLES})}),
   "tools": closed({"approvalMode": enum("always-ask", "write", "yolo"),
-    "approval": closed({key: APPROVAL for key in ("read", "find", "grep", "glob", "bash", "write", "edit", "python", "lsp", "task", "web_search", "fetch", "ast_grep")})}),
+    "approval": closed({key: APPROVAL for key in ("read", "find", "grep", "glob", "bash", "permission_bash", "write", "edit", "python", "lsp", "task", "eval", "web_search", "fetch", "ast_grep")})}),
   "bash": closed({"allowCompoundCommands": BOOL, "patterns": {"type": "array", "items": closed({
     "match": TEXT, "approval": APPROVAL}, ("match", "approval"))}}),
   "bashInterceptor": closed({"enabled": BOOL, "patterns": {"type": "array", "items": closed({
@@ -47,7 +51,87 @@ COMPAT = closed({key: BOOL for key in ("supportsDeveloperRole", "supportsReasoni
 PROVIDER_OPTIONS = {"type": "object", "additionalProperties": closed({"name": TEXT, "compat": COMPAT})}
 MODEL_OPTIONS = {"type": "object", "additionalProperties": closed({"name": TEXT, "reasoning": BOOL,
   "cost": closed({key: {"type": "number", "minimum": 0} for key in ("input", "output", "cacheRead", "cacheWrite")})})}
-ROLE_THINKING = closed({key: THINKING for key in ("main", "smol", "slow", "vision", "plan", "advisor", "task")})
+ROLE_THINKING = closed({key: THINKING for key in PUBLIC_ROLES})
+IDENTITY_TEXT = {"type": "string", "minLength": 1, "pattern": "^[^\\x00-\\x1f\\x7f]+$(?![\\s\\S])"}
+SHA256 = {"type": "string", "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"}
+PERMISSION_CONTROL = closed({"default_mode": enum("smart", "manual"), "reviewer_model": IDENTITY_TEXT,
+  "remote_fallback_model": IDENTITY_TEXT,
+  "fallback_model": {"type": "string", "const": "local/lfm2.5-230m"}}, ("default_mode",))
+RUNTIME_VARIANT = enum("official")
+NATIVE_PERMISSION_CONTROL = closed({
+  "schemaVersion": {"type": "integer", "const": 2}, "defaultMode": enum("smart", "manual"),
+  "reviewer": {"oneOf": [{"type": "string", "const": "session"},
+    closed({"provider": IDENTITY_TEXT, "model": IDENTITY_TEXT}, ("provider", "model"))]},
+  "remoteFallback": closed({"provider": IDENTITY_TEXT, "model": IDENTITY_TEXT}, ("provider", "model")),
+  "fallback": closed({"provider": {"type": "string", "const": "local"},
+    "model": {"type": "string", "const": "lfm2.5-230m"},
+    "installedOnly": {"type": "boolean", "const": True}}, ("provider", "model", "installedOnly")),
+  "pluginId": {"type": "string", "const": "omp-permission-control"},
+  "pluginDigest": SHA256, "policyVersion": SHA256,
+  "nativePatterns": {"type": "array", "items": closed({"match": IDENTITY_TEXT,
+    "approval": APPROVAL}, ("match", "approval"))},
+}, ("schemaVersion", "defaultMode", "reviewer", "pluginId", "pluginDigest", "policyVersion", "nativePatterns"))
+
+
+def resolve_permission_control(data):
+  """解析意图但不生成交付身份；不会静默修改原生执行配置或选择模型。"""
+  from jsonschema import Draft202012Validator
+  profile = data["profile"]
+  options = profile.get("agent_options", {})
+  runtime = options.get("runtime", {})
+  forbidden = {"permissionControl", "disabledModelProviders", "bridgeAbi", "pluginDigest", "runtimeIdentity", "policyVersion"}
+  if forbidden.intersection(options) or forbidden.intersection(runtime):
+    raise ConfigError("omp-permission-native-input")
+  variant = options.get("runtime_variant", "official")
+  if not Draft202012Validator(RUNTIME_VARIANT).is_valid(variant):
+    raise ConfigError("omp-permission-variant")
+  selected = "omp-permission-control" in profile.get("plugins", [])
+  configured = "permission_control" in options
+  if not (selected or configured or variant != "official"):
+    return None
+  if not selected or not configured or variant != "official":
+    raise ConfigError("omp-permission-selection-mismatch")
+  config = options["permission_control"]
+  if not Draft202012Validator(PERMISSION_CONTROL).is_valid(config):
+    raise ConfigError("omp-permission-config")
+  tools = runtime.get("tools", {})
+  approval = tools.get("approval", {})
+  if (approval.get("bash") != "prompt" or approval.get("permission_bash") != "allow" or
+      tools.get("approvalMode") == "yolo"):
+    raise ConfigError("omp-permission-native-protection")
+  result = {"defaultMode": config["default_mode"], "reviewer": "session"}
+  requested = tuple(config[key] for key in ("reviewer_model", "remote_fallback_model") if key in config)
+  identities = {}
+  if requested:
+    from .omp import _native_provider_id
+    chosen = profile.get("models", [])
+    for model_id in chosen:
+      model = data.get("models", {}).get(model_id, {})
+      provider_id = model.get("provider")
+      provider = data.get("providers", {}).get(provider_id)
+      remote_id = model.get("remote_id")
+      if provider is None or not Draft202012Validator(IDENTITY_TEXT).is_valid(remote_id):
+        raise ConfigError("omp-permission-reviewer-reference")
+      native_provider = _native_provider_id(provider_id, provider)
+      if not Draft202012Validator(IDENTITY_TEXT).is_valid(native_provider):
+        raise ConfigError("omp-permission-reviewer-reference")
+      identities[model_id] = (native_provider, remote_id)
+    if any(chosen.count(model_id) != 1 or model_id not in identities for model_id in requested):
+      raise ConfigError("omp-permission-reviewer-reference")
+  if "reviewer_model" in config:
+    reviewer = config["reviewer_model"]
+    target = identities[reviewer]
+    if list(identities.values()).count(target) != 1:
+      raise ConfigError("omp-permission-reviewer-ambiguous")
+    result["reviewer"] = {"provider": target[0], "model": target[1]}
+  if "remote_fallback_model" in config:
+    remote = identities[config["remote_fallback_model"]]
+    if list(identities.values()).count(remote) != 1:
+      raise ConfigError("omp-permission-remote-fallback-ambiguous")
+    result["remoteFallback"] = {"provider": remote[0], "model": remote[1]}
+  if "fallback_model" in config:
+    result["fallback"] = {"provider": "local", "model": "lfm2.5-230m", "installedOnly": True}
+  return result
 
 
 def runtime_values(options):
@@ -58,9 +142,29 @@ def runtime_values(options):
   return values
 
 
+def native_model_roles(data):
+  """解析官方宿主动态 OAuth 模型引用；不将它们伪装为静态 catalog 模型。"""
+  from jsonschema import Draft202012Validator
+  profile = data["profile"]
+  values = profile.get("agent_options", {}).get("native_model_roles", {})
+  if not Draft202012Validator(NATIVE_MODEL_ROLES).is_valid(values):
+    raise ConfigError("omp-native-model-role")
+  if not values:
+    return {}
+  if set(values) - set(profile.get("roles", {})):
+    raise ConfigError("omp-native-model-role-reference")
+  provider = data.get("providers", {}).get("cursor")
+  if ("cursor" not in profile.get("providers", ()) or not isinstance(provider, dict)
+      or provider.get("protocol") != "oauth-dynamic" or provider.get("auth_kind") != "oauth"):
+    raise ConfigError("omp-native-model-role-provider")
+  return deepcopy(values)
+
+
 def validate_options(data):
   from jsonschema import Draft202012Validator
   options = data["profile"].get("agent_options", {})
+  resolve_permission_control(data)
+  native_model_roles(data)
   for key, schema in (("runtime", RUNTIME), ("provider_options", PROVIDER_OPTIONS),
       ("model_options", MODEL_OPTIONS), ("role_thinking", ROLE_THINKING)):
     if not Draft202012Validator(schema).is_valid(options.get(key, {})):

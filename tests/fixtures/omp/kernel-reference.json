@@ -1,5 +1,5 @@
 {
-  "source": "kernel configuration reviewed 2026-09-26; credentials excluded",
+  "source": "kernel configuration reviewed 2026-09-26; permission-control repository contract added 2026-09-29; credentials and generated delivery digests excluded",
   "config": {
     "theme": {
       "dark": "kanagawa"
@@ -44,11 +44,14 @@
         "read": "allow",
         "grep": "allow",
         "glob": "allow",
-        "bash": "prompt"
+        "bash": "prompt",
+        "permission_bash": "allow",
+        "task": "prompt",
+        "eval": "prompt"
       }
     },
     "bash": {
-      "allowCompoundCommands": false,
+      "allowCompoundCommands": true,
       "patterns": [
         {
           "match": "rm -rf /",
@@ -449,7 +452,7 @@
       }
     },
     "display": {
-      "hideToolActivity": true,
+      "hideToolActivity": false,
       "showTokenUsage": true,
       "showTurnTime": true,
       "cacheMissMarker": true
@@ -467,7 +470,7 @@
     "providers": {
       "kimi_tf": {
         "name": "Kimi(TokensFlow)",
-        "baseUrl": "https://work.oceanbase-dev.com/tokensflow/api/v1",
+        "baseUrl": "https://tf-gateway.example.invalid/v1",
         "api": "openai-completions",
         "compat": {
           "supportsDeveloperRole": false,
@@ -530,7 +533,7 @@
       },
       "zhipu_tf": {
         "name": "智谱(TokensFlow Anthropic)",
-        "baseUrl": "https://work.oceanbase-dev.com/tokensflow/api/anthropic",
+        "baseUrl": "https://tf-gateway.example.invalid/anthropic",
         "api": "anthropic-messages",
         "compat": {
           "supportsDeveloperRole": false
@@ -621,5 +624,31 @@
     "cpp-database-kernel",
     "neovim-plugin-development",
     "safe-linux-scripting"
-  ]
+  ],
+  "permissionControl": {
+    "schemaVersion": 2,
+    "defaultMode": "smart",
+    "reviewer": "session",
+    "fallback": {
+      "provider": "local",
+      "model": "lfm2.5-230m",
+      "installedOnly": true
+    },
+    "pluginId": "omp-permission-control",
+    "remoteFallback": {
+      "provider": "zhipu_tf",
+      "model": "glm-5.3-flash"
+    }
+  },
+  "permissionDelivery": {
+    "runtimeVariant": "official",
+    "generatedFields": [
+      "pluginDigest",
+      "policyVersion",
+      "nativePatterns"
+    ],
+    "pluginEntrypoints": [
+      "packages/omp-permission-control/standalone.ts"
+    ]
+  }
 }

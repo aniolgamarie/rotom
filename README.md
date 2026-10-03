@@ -1,5 +1,7 @@
 # rotom / agentcfg
 
+**Project principle: do not modify any agent's upstream source.** Integrations use official configuration, public extension APIs and official CLIs. Historical deviations and migration status are recorded in the [architecture](docs/architecture.md#基本原则上游宿主保持原样) and [migration inventory](docs/follow-ups/upstream-agent-source-migration.md).
+
 **English** | [中文](README.zh-CN.md)
 
 Personal Agent configuration management repository: shared rules, complete skill packs, tool templates, and dependency locks live in Git; per-machine overrides and API keys stay outside. A single entry point generates, validates, deploys, and launches isolated instances; each instance keeps only the previous round of managed-configuration backup.
@@ -8,11 +10,13 @@ The first release implements **DSH + ccch1mneyyy/dsh-TUI**. The Pi migration spe
 
 The getting-started steps below cover DSH. Their Codex/Cursor subscription references describe authentication/provider access within DSH. Pi uses separate profiles and instance logins.
 
-OMP integration is tracked separately in the [OMP guide](docs/omp.md) and [support status](docs/omp-support.md). It uses fixed OMP v18.3.0 standalone packages, a separate HOME and native profile for each recipe, and fresh logins. `omp-default` is a bootstrap recipe; the nine-row fictional validation recipe is installed only in a temporary validation checkout. The Linux x64 no-account native smoke has passed. Other platform and real-account checks are tracked as [separate follow-ups](docs/follow-ups/omp-platform-and-live-validation.md), outside the completed OMP spec.
+The Pi closure report applies to the historical lock candidate `9d6a9270…`. Changes to the lock or source require matching native/cold evidence; historical completion does not establish native validation of the current checkout. See the [current support boundary](docs/acceptance/pi-support-matrix.md#当前-checkout-与历史证据).
+
+OMP integration is tracked separately in the [OMP guide](docs/omp.md) and [support status](docs/omp-support.md). It uses fixed OMP v18.4.5 standalone packages, a separate HOME and native profile for each recipe, and fresh logins. `omp-default` is a bootstrap recipe; the nine-row fictional validation recipe is installed only in a temporary validation checkout. The Linux x64 no-account native smoke has passed. Other platform and real-account checks are tracked as [separate follow-ups](docs/follow-ups/omp-platform-and-live-validation.md), outside the completed OMP spec.
 
 Terminal and proxy configuration is managed separately by [`./termcfg`](docs/termcfg.md). It previews and backs up selected zsh, tmux, and mihomo public files before copying them; core and plugin downloads and mihomo service actions are explicit commands. See the guide for private configuration, recovery, and isolated verification status.
 
-Use [`omp-kernel`](docs/omp-kernel.md) to reproduce the reviewed kernel configuration, including models, approval policies, theme, native agents, and complete skills. The guide includes WSL setup; `omp-default` remains an empty bootstrap template.
+Use [`omp-kernel`](docs/omp-kernel.md) to reproduce the reviewed kernel configuration, including models, approval policies, theme, native agents, and complete skills. The guide includes WSL setup; `omp-default` inherits the shared DeepSeek, Kimi and GLM defaults. All profiles inherit these official providers, with profile-specific models and roles layered on top. Use `model status` for credential guidance and `model key deepseek|kimi|glm` to enter a shared key without echoing it; see [local configuration](docs/local-config.md).
 
 **First-time users: start with the [Getting Started Guide](docs/getting-started.md).** It walks through environment setup, local file creation, installation, deployment, login, daily startup, and backup/restore in actual operation order, and explains command output. When using only Codex/Cursor subscriptions, you can leave `[secrets]` empty — no need to copy the private-gateway example below.
 
@@ -39,9 +43,11 @@ uv sync --locked
 ./agentcfg run --cwd /path/to/worktree
 ```
 
-The default recipe selects the Codex/Cursor subscription entry. It contains no fabricated OAuth endpoints or model IDs, and does not require a DeepSeek key. `setup` previews, syncs locked dependencies (possibly using the network), and deploys. Stage progress and failure locations appear on stderr. Log in through the native TUI before making model calls. `model presets` lists official direct DeepSeek, Kimi, and GLM endpoints and sourced pricing; `model enable` adds a selected preset after securely collecting its API key. `model status` also checks models already selected by a profile. A missing model API key warns at launch but does not block the host; that model and fallbacks using it remain unavailable until the key is supplied. Use `model add` for a new private API-key model; other custom configurations can be edited in the private TOML file.
+The default recipe selects the Codex/Cursor subscription entry. It contains no fabricated OAuth endpoints or model IDs, and does not require a DeepSeek key. `setup` previews, syncs locked dependencies (possibly using the network), and deploys. Stage progress and failure locations appear on stderr. Log in through the native TUI before making model calls. `model presets` summarizes the official DeepSeek, Kimi, and GLM models inherited by every profile; add `--verbose` for endpoints and sourced pricing. `model status` shows missing URL/key fields, role bindings, and the files to edit; add `--verbose` for the full model catalog and individual filling commands. `model key` fills shared credentials; `model enable` remains available to add another protocol route. A missing model API key warns at launch but does not block the host; that model and fallbacks using it remain unavailable until the key is supplied. Use `model add` for a new private API-key model; other custom configurations can be edited in the private TOML file.
 
-Public selectors precede subcommands: `--machine NAME` or `--local PATH` (mutually exclusive), `--profile ID` optional. Default machine is `default`; default profile comes from the local file, falling back to `dsh-default`. `init-local` creates the `default` machine, or accepts `--machine NAME --profile ID` for a named machine and recipe. Repeating it does not overwrite files.
+Public selectors precede subcommands: `--machine NAME` or `--local PATH` (mutually exclusive), `--profile ID` optional. Default machine is `default`; default profile comes from the local file, falling back to `dsh-default`. `init-local --machine NAME --profile ID` creates or checks the private machine and shared credential files, adding only missing URL/key placeholders while preserving values and comments. An explicit profile does not change an existing machine's default profile. Repeating the command without missing fields does not rewrite either file.
+
+Structured commands such as `validate`, `plan`, and `doctor` now show readable summaries in a terminal and retain the original single-line JSON when piped or redirected. Select a format after the subcommand: `./agentcfg plan --format json` or `./agentcfg doctor --format human`. Progress and errors remain on stderr. `setup`, `init-local`, and `model` keep their text output; `profiles` keeps TSV when piped. `run` and `usage` pass through native output.
 
 ## Local File
 
@@ -84,8 +90,8 @@ Files are 0600, private directories 0700. Objects merge recursively; arrays are 
 | Command | Behavior |
 |---|---|
 | `profiles` | Lists registered profile IDs and their agents without loading local configuration |
-| `init-local [--machine NAME] [--profile ID]` | Creates an empty-secrets local file; does not overwrite |
-| `setup` | Redacted preview, locked dependency sync, and deployment; stops on conflicts, drift, or pending recovery |
+| `init-local [--machine NAME] [--profile ID]` | Creates or checks private configuration and adds missing URL/key placeholders for the selected profile without replacing existing values |
+| `setup` | Initial deployment or update of existing configuration: redacted preview, locked dependency sync, and deployment; stops on conflicts, drift, or pending recovery |
 | `validate` | Offline schema, reference, adapter, and full-lock validation |
 | `render` | Offline generation; writes only to private cache — field intent is not a full native settings file |
 | `plan` | Offline redacted diff with location IDs; private cache stores concrete field positions, not targets |
@@ -96,8 +102,9 @@ Files are 0600, private directories 0700. Objects merge recursively; arrays are 
 | `usage <native-args>` | Passes through to PATH's `omp usage` without loading local configuration; a preceding explicit OMP `--profile` selects the managed instance ([details](docs/omp-usage.md)) |
 | `doctor` / `doctor --live` | Default: offline diagnostics; `--live` adds declared-service reachability checks — never auto-logs-in or calls models |
 | `model add` | Interactively adds a private API-key provider, model, and role binding; atomically writes the private machine file after confirmation |
-| `model presets` | Lists shared official DeepSeek, Kimi, and GLM endpoints, capabilities, capacity, and sourced pricing without a machine file |
-| `model status` | Shows the current profile's selected providers, models, roles, and whether each API key is set; never prints key values |
+| `model presets` | Summarizes official models; `--verbose` shows endpoints, pricing, and sources |
+| `model status` | Shows missing URL/key fields, roles, and edit locations; `--verbose` adds the full catalog and filling commands |
+| `model url PROVIDER` | Reads a service URL without echo and saves it to the private machine file; public providers can use `base_url_ref = "local:NAME"` |
 | `model enable deepseek\|kimi\|glm` | Enables a shared model for the selected profile after securely entering its API key; unselected presets never block startup |
 | `doctor --input` | All agents: caller terminal and offline interaction readiness; OMP also reports structured event-loop stalls, without recording keystrokes |
 | `capture` | Captures previews, supported themes, and declared model selections; generates a legal local proposal; does not export auth data |

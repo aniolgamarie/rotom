@@ -36,6 +36,7 @@ main = "private_main"
 terminal_images = false
 
 # 仅空值占位，离线不需要登录；其他 profile 的公共凭据引用也可完全缺席。
+# 以下为空的旧格式兼容占位；新模型 key 推荐用 model key <provider-id> 写入共享文件。
 [secrets]
 private_gateway_key = ""
 private_docs_key = ""
