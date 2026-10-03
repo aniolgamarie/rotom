@@ -17,6 +17,91 @@ def digest(value):
   return hashlib.sha256(value).hexdigest()
 
 
+def test_progress_reports_request_before_wait_and_throttled_body(tmp_path, monkeypatch):
+  events = []
+  clock = [0.0]
+  monkeypatch.setattr("agentcfg.omp_download.time.monotonic", lambda: clock[0])
+  content = b"abcd"
+
+  class StreamingResponse(Response):
+    def read1(self, size):
+      clock[0] += 0.5
+      return super().read(size)
+
+    def read(self, size=-1):
+      pytest.fail("streaming HTTP should use read1 for prompt progress")
+
+  def open_fake(request, timeout):
+    assert "等待连接/响应头" in events[-1]
+    assert "1/3" in events[-1] and "60 秒" in events[-1]
+    return StreamingResponse([bytes([value]) for value in content], headers={"Content-Length": "4"})
+
+  monkeypatch.setattr("agentcfg.omp_download.urllib.request.urlopen", open_fake)
+  path = ensure_cached_asset(tmp_path / "downloads", "https://example.invalid/private-canary",
+    digest(content), progress=events.append)
+  assert path.read_bytes() == content
+  body = [event for event in events if "下载正文" in event]
+  assert len(body) == 3
+  assert "0.0%" in body[0] and "75.0%" in body[1] and "100.0%" in body[2]
+  assert "MiB/s" in body[1] and "本次传输已用" in body[1]
+  assert any("等待下载缓存锁" in event for event in events)
+  assert "SHA-256 校验通过，发布下载缓存" in events[-1]
+  assert "private-canary" not in repr(events) and str(tmp_path) not in repr(events)
+
+
+def test_progress_reports_unknown_total_retry_and_resume_without_raw_errors(tmp_path, monkeypatch):
+  content = b"abcdefgh"
+  events, calls = [], []
+
+  def open_fake(request, timeout):
+    calls.append(request)
+    if len(calls) == 1:
+      return Response([content[:3]], failure=ConnectionResetError("private-error-canary"))
+    assert request.get_header("Range") == "bytes=3-"
+    assert "2/3" in events[-1] and "续传" in events[-1]
+    return Response([content[3:]], status=206, headers={"Content-Range": "bytes 3-7/8"})
+
+  monkeypatch.setattr("agentcfg.omp_download.urllib.request.urlopen", open_fake)
+  ensure_cached_asset(tmp_path / "downloads", "https://example.invalid/omp", digest(content), progress=events.append)
+  assert any("总量未知" in event for event in events)
+  assert any("category=connection" in event and "第 2/3" in event for event in events)
+  assert any("37.5%" in event for event in events)
+  assert "private-error-canary" not in repr(events)
+
+
+def test_progress_reports_range_reset_and_cache_hit(tmp_path, monkeypatch):
+  content = b"complete-release"
+  root = tmp_path / "downloads"
+  root.mkdir(mode=0o700)
+  part = root / (digest(content) + ".part")
+  part.write_bytes(b"old-prefix")
+  part.chmod(0o600)
+  events = []
+  monkeypatch.setattr("agentcfg.omp_download.urllib.request.urlopen", lambda *a, **kw:
+    Response([content], headers={"Content-Length": str(len(content))}))
+  ensure_cached_asset(root, "https://example.invalid/omp", digest(content), progress=events.append)
+  assert any("HTTP 200" in event and "从零" in event for event in events)
+  events.clear()
+  monkeypatch.setattr("agentcfg.omp_download.urllib.request.urlopen",
+    lambda *a, **kw: pytest.fail("cache hit must not download"))
+  ensure_cached_asset(root, "https://example.invalid/omp", digest(content), progress=events.append)
+  assert "完整缓存命中" in events[-1]
+  assert not any("次请求" in event for event in events)
+
+
+def test_progress_reports_final_failure_with_safe_category(tmp_path, monkeypatch):
+  events = []
+  def fail(request, timeout):
+    raise urllib.error.HTTPError(request.full_url, 503, "private-error-canary", {}, None)
+  monkeypatch.setattr("agentcfg.omp_download.urllib.request.urlopen", fail)
+  with pytest.raises(DependencyError, match="category=http-503 attempt=3"):
+    ensure_cached_asset(tmp_path / "downloads", "https://example.invalid/private-url-canary",
+      digest(b"x"), progress=events.append)
+  assert "第 3/3 次下载失败" in events[-1]
+  assert "已保留" in events[-1]
+  assert "canary" not in repr(events)
+
+
 class Response:
   def __init__(self, chunks, *, status=200, headers=None, failure=None):
     self.chunks = list(chunks)

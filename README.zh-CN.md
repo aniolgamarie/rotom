@@ -4,15 +4,19 @@
 
 个人 Agent 配置管理仓库：公共规则、完整技能包、工具模板和依赖锁进入 Git，机器覆盖与 API key 留在仓库外。通过一个入口生成、检查、部署和启动独立实例；每个实例只保留上一版受管配置备份。
 
+**基本原则：不修改任何 agent 的上游源码。** 使用官方配置、公开插件接口与官方 CLI 完成集成，不维护宿主补丁或功能 fork。历史偏离与迁移状态见[架构说明](docs/architecture.md#基本原则上游宿主保持原样)及[待迁移盘点](docs/follow-ups/upstream-agent-source-migration.md)。
+
 首版实现 **DSH + ccch1mneyyy/dsh-TUI**。Pi 迁移 spec 已按约定范围完成：软件集成、Linux x86_64 四配方 mock/native 验证，以及每配方两个全新 HOME/checkout 路径的冷重建。验收候选为 `9d6a9270`；其他平台与真实账号／服务仍未验证，已转入[独立后续清单](docs/follow-ups/pi-platform-and-live-validation.md)。Pi 中的 Codex 通过 model-delegate 调用官方 CLI，旧 codex-delegate 不作为迁移目标依赖。配置入口见 [Pi 指南](docs/pi.md)，具体范围与结果见 [Pi 支持矩阵](docs/acceptance/pi-support-matrix.md)和 [spec 完成报告](docs/acceptance/pi-spec-closure-20260924/README.md)。
 
 下方新手流程面向 DSH；其中 Codex/Cursor 订阅指 DSH 内的认证/provider 接入。Pi 使用独立配方和实例登录。
 
-OMP管理器集成见[OMP指南](docs/omp.md)和[支持状态](docs/omp-support.md)：固定v18.3.0 standalone，每个配方使用新HOME和独立原生profile，登录重新建立。`omp-default`是日常bootstrap配方；九行虚构验收配方仅在临时验收仓库登记。Linux x64 无账号真实 smoke 已通过；其他平台及真实账号验证已转入[独立遗留](docs/follow-ups/omp-platform-and-live-validation.md)，不属于当前已完成的 OMP spec。
+Pi 的关闭报告绑定历史候选锁 `9d6a9270…`。当前锁或源码变化后，需要新身份对应的 native/cold 证据；历史完成不代表当前 checkout 已通过原生验证，见[当前支持边界](docs/acceptance/pi-support-matrix.md#当前-checkout-与历史证据)。
+
+OMP管理器集成见[OMP指南](docs/omp.md)和[支持状态](docs/omp-support.md)：固定v18.4.5 standalone，每个配方使用新HOME和独立原生profile，登录重新建立。`omp-default`是日常bootstrap配方；九行虚构验收配方仅在临时验收仓库登记。Linux x64 无账号真实 smoke 已通过；其他平台及真实账号验证已转入[独立遗留](docs/follow-ups/omp-platform-and-live-validation.md)，不属于当前已完成的 OMP spec。
 
 终端与代理的公开配置由独立入口 [`./termcfg`](docs/termcfg.md) 管理：按组件预览、备份并复制 zsh/tmux/mihomo 文件；core/插件下载和代理服务动作均需显式命令。私人配置、恢复及隔离验证状态见指南。
 
-日常复刻本机 kernel 配置请使用 [`omp-kernel`](docs/omp-kernel.md)：包含模型、审批策略、主题、原生子代理和完整技能；另附 WSL 配置步骤。`omp-default` 仅作空白 bootstrap 模板。
+日常复刻本机 kernel 配置请使用 [`omp-kernel`](docs/omp-kernel.md)：包含模型、审批策略、主题、原生子代理和完整技能；另附 WSL 配置步骤。所有工具和 profile 默认继承 DeepSeek、Kimi、GLM 官方模型，profile 在其上追加模型和角色。用 `model status` 查看凭据指引，`model key deepseek|kimi|glm` 隐藏输入共享 key，见[本地配置](docs/local-config.md)。
 
 **第一次使用请从 [新手使用教程](docs/getting-started.md) 开始。** 教程按实际操作顺序说明准备环境、创建本机文件、安装、部署、登录、日常启动和备份恢复，并解释命令输出。仅使用 Codex/Cursor 订阅时，可以先保留空的 `[secrets]`，不需要照抄下面的私有网关示例。
 
@@ -41,9 +45,11 @@ uv sync --locked
 
 默认配方选择 Codex/Cursor 订阅入口，没有虚构的 OAuth endpoint 或 model ID，也不要求 DeepSeek key。`setup` 先预览，再同步锁定依赖（缺失时可能联网）并部署；阶段进度和失败位置显示在标准错误。在原生 TUI 登录后才能实际调用模型。新增私有 API-key 模型可用 `model add`；其他自定义配置可编辑私人 TOML。
 
-三家官方直连预设可用 `./agentcfg model presets` 查看容量、能力、计价和双协议地址；填入 key 后用 `./agentcfg model enable deepseek|kimi|glm` 为当前 profile 启用。`model status` 列出当前 profile 已选模型和 key 状态，包括 profile 自带的模型。缺少模型 key 不阻止工具启动，但对应模型及依赖它的 fallback 在填写 key 前无法调用；未启用的预设也不影响启动。详见[本地配置](docs/local-config.md)。
+DeepSeek、Kimi、GLM 官方直连默认加入所有工具和 profile。`./agentcfg model presets` 显示模型概要，加 `--verbose` 查看地址、计价和来源。`model status` 显示 URL/key 缺项、角色绑定和填写文件，加 `--verbose` 展开完整目录与逐项填写命令；`model key` 填写共享凭据，`model enable` 保留为追加协议路线的入口。缺少模型 key 不阻止工具启动，但对应模型及依赖它的 fallback 在填写 key 前无法调用。详见[本地配置](docs/local-config.md)。
 
-公共选择器位于子命令前：`--machine NAME` 或 `--local PATH` 二选一，`--profile ID` 可选。缺省机器为 `default`，缺省 profile 来自本地文件，随后回落到 `dsh-default`。`init-local` 默认创建 `default` 机器；也可用 `init-local --machine NAME --profile ID` 指定名称和配方。重复执行不会覆盖文件。
+公共选择器位于子命令前：`--machine NAME` 或 `--local PATH` 二选一，`--profile ID` 可选。缺省机器为 `default`，缺省 profile 来自本地文件，随后回落到 `dsh-default`。`init-local --machine NAME --profile ID` 创建或检查私人机器配置及共享密钥文件，只补缺失的 URL/key 空占位，保留已有值和注释。对已有机器显式选择 profile 不改变其默认 profile；重复执行且无缺项时不写文件。
+
+`validate`、`plan`、`doctor` 等结构化命令在终端默认显示可读摘要，管道或重定向保留原有单行 JSON。格式选项放在子命令后：`./agentcfg plan --format json`、`./agentcfg doctor --format human`。进度和错误仍在标准错误。`setup`、`init-local`、`model` 保持文本输出，`profiles` 在管道中保持 TSV；`run`、`usage` 透传原生输出。
 
 ## 本地文件
 
@@ -86,8 +92,8 @@ private_gateway_key = ""
 | 命令 | 行为 |
 |---|---|
 | `profiles` | 列出可选 profile 和所属工具，无需本地配置 |
-| `init-local [--machine NAME] [--profile ID]` | 创建空密钥本地文件，不覆盖 |
-| `setup` | 脱敏预览后同步锁定依赖并部署；有冲突、漂移或待恢复事务时停止 |
+| `init-local [--machine NAME] [--profile ID]` | 创建或校验私人配置，按所选 profile 补齐缺失 URL/key 空占位，保留已有值 |
+| `setup` | 首次部署或更新已有配置：脱敏预览、同步锁定依赖并部署；有冲突、漂移或待恢复事务时停止 |
 | `validate` | 离线校验 schema、引用、适配与完整锁 |
 | `render` | 离线生成，只写私人缓存；字段意图不是整份原生 settings |
 | `plan` | 离线显示脱敏差异和定位编号；私人缓存保存具体字段定位，不写目标 |
@@ -98,8 +104,9 @@ private_gateway_key = ""
 | `usage <原生参数>` | 无前置选择器时透传PATH上的OMP usage，不读local；显式OMP `--profile`使用已部署受管身份，见[两模式说明](docs/omp-usage.md) |
 | `doctor` / `doctor --live` | 默认离线诊断；live 才做声明的服务可达性检查，不自动登录或调用模型 |
 | `model add` | 交互新增私有 API-key provider、model 和角色绑定，确认后原子写入私人机器文件 |
-| `model presets` | 无需机器文件即可查看三家官方直连预设、容量、能力、价格及来源 |
-| `model status` | 查看当前 profile 已选 provider、模型、角色和 key 是否已填写，不显示 key 值 |
+| `model presets` | 官方模型概要；`--verbose` 展开地址、计价与来源 |
+| `model status` | 查看 URL/key 缺项、角色和填写位置；`--verbose` 展开完整目录与逐项填写命令 |
+| `model url PROVIDER` | 隐藏输入服务地址并写入私人机器文件；公共 provider 可用 `base_url_ref = "local:名称"` 引用 |
 | `model enable deepseek\|kimi\|glm` | 填写隐藏 API key 后为当前 profile 启用公共预设；未启用的预设不影响启动 |
 | `doctor --input` | 所有工具均报告诊断终端与离线交互就绪状态；OMP 另汇总结构化阻塞事件，不记录按键 |
 | `capture` | 捕获预览、支持的主题和已声明模型选择，生成合法本地提案，不导出认证数据 |

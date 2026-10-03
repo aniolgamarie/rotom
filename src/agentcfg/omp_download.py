@@ -21,8 +21,53 @@ MAX_ASSET_BYTES = 512 * 1024 * 1024
 MAX_LOCK_BYTES = 128 * 1024 * 1024
 ATTEMPTS = 3
 CHUNK = 1024 * 1024
+REQUEST_TIMEOUT = 60
 _DIGEST = re.compile(r"[a-f0-9]{64}")
 _CONTENT_RANGE = re.compile(r"bytes ([0-9]+)-([0-9]+)/([0-9]+|\*)")
+
+
+class _DownloadProgress:
+  """只发布固定说明与数值；按时间节流，阶段变化不等待节流窗口。"""
+
+  def __init__(self, callback):
+    self.callback = callback
+    self.attempt = 0
+    self.started = time.monotonic()
+    self.last_report = self.started
+    self.offset = 0
+
+  def stage(self, message):
+    if self.callback is not None:
+      self.callback(message)
+
+  def request(self, attempt, offset):
+    self.attempt = attempt
+    self.stage(f"第 {attempt}/{ATTEMPTS} 次请求：等待连接/响应头；"
+      f"已有 {offset / CHUNK:.2f} MiB，将{'续传' if offset else '从零下载'}；"
+      f"连接/单次读取超时 {REQUEST_TIMEOUT} 秒")
+
+  def begin_body(self, offset, total, requested_offset):
+    self.started = time.monotonic()
+    self.offset = offset
+    if requested_offset and offset == 0:
+      self.stage("服务器未接受续传（HTTP 200），从零重新下载")
+    self.body(offset, total, force=True)
+
+  def body(self, received, total, *, force=False):
+    if self.callback is None:
+      return
+    now = time.monotonic()
+    if not force and now - self.last_report < 1.5:
+      return
+    self.last_report = now
+    elapsed = max(0, now - self.started)
+    amount = f"{received / CHUNK:.2f} MiB / 总量未知"
+    if total is not None:
+      percent = received / total * 100 if total else 100
+      amount = f"{received / CHUNK:.2f} / {total / CHUNK:.2f} MiB（{percent:.1f}%）"
+    speed = max(0, received - self.offset) / CHUNK / elapsed if elapsed else 0
+    self.stage(f"第 {self.attempt}/{ATTEMPTS} 次下载正文：{amount}；"
+      f"本次均速 {speed:.2f} MiB/s；本次传输已用 {elapsed:.0f} 秒")
 
 
 class _TransferFailure(Exception):
@@ -66,7 +111,10 @@ def _status(response):
   value = getattr(response, "status", None)
   if value is None and hasattr(response, "getcode"):
     value = response.getcode()
-  return value or 200
+  value = value or 200
+  if type(value) is not int or not 100 <= value <= 599:
+    raise _TransferFailure("response-shape", retryable=False)
+  return value
 
 
 def _length(headers):
@@ -108,15 +156,19 @@ def _response_shape(response, offset, maximum):
   return offset, length, total
 
 
-def _read_response(response, output, *, offset, maximum):
+def _read_response(response, output, *, offset, maximum, progress=None):
   write_offset, length, total = _response_shape(response, offset, maximum)
+  if progress is not None:
+    progress.begin_body(write_offset, total, offset)
   if write_offset == 0:
     os.ftruncate(output, 0)
   os.lseek(output, write_offset, os.SEEK_SET)
   received = 0
+  # HTTPResponse.read1 及时返回已到达的数据，慢链路不必凑齐 1 MiB 才更新进度。
+  read = getattr(response, "read1", None) or response.read
   try:
     while True:
-      chunk = response.read(CHUNK)
+      chunk = read(CHUNK)
       if not chunk:
         break
       if not isinstance(chunk, bytes) or write_offset + received + len(chunk) > maximum:
@@ -131,6 +183,8 @@ def _read_response(response, output, *, offset, maximum):
           raise _TransferFailure("cache-write", retryable=False)
         view = view[written:]
       received += len(chunk)
+      if progress is not None:
+        progress.body(write_offset + received, total)
   finally:
     try:
       os.fsync(output)
@@ -139,6 +193,8 @@ def _read_response(response, output, *, offset, maximum):
   size = write_offset + received
   if length is not None and received != length or total is not None and size != total:
     raise _TransferFailure("short-read", retryable=True)
+  if progress is not None:
+    progress.body(size, total, force=True)
   return size, total
 
 
@@ -195,65 +251,80 @@ def _valid_final(tree, name, digest, maximum):
     return None
 
 
-def ensure_cached_asset(cache_root, url, expected_sha256, *, maximum=None):
+def ensure_cached_asset(cache_root, url, expected_sha256, *, maximum=None, progress=None):
   """确保完整发行物位于内容寻址缓存；网络失败保留可验证partial。"""
   _validate_url(url)
   if not isinstance(expected_sha256, str) or _DIGEST.fullmatch(expected_sha256) is None:
     raise DependencyError("OMP下载摘要无效")
   maximum = MAX_ASSET_BYTES if maximum is None else maximum
+  report = _DownloadProgress(progress)
   ensure_private(Path(cache_root))
+  report.stage("等待下载缓存锁（其他同步可能正在使用同一资产）")
   with Tree(Path(cache_root)) as tree, _download_lock(tree, expected_sha256):
     final = Path(cache_root) / expected_sha256
+    report.stage("检查完整下载缓存并校验 SHA-256")
     valid = _valid_final(tree, expected_sha256, expected_sha256, maximum)
     if valid is not None:
       if valid:
+        report.stage("完整缓存命中，SHA-256 校验通过，无需下载")
         return final
+      report.stage("完整缓存校验失败，重新获取锁定资产")
       with tree.parent(expected_sha256) as (parent, name):
         os.unlink(name, dir_fd=parent)
         os.fsync(parent)
     part_name = expected_sha256 + ".part"
     fd = _open_part(tree, part_name)
     try:
-      partial_digest, progress = _hash_fd(fd, maximum)
+      report.stage("检查已有断点文件及 SHA-256")
+      partial_digest, received = _hash_fd(fd, maximum)
       if partial_digest == expected_sha256:
+        report.stage("断点文件已完整且 SHA-256 通过，发布缓存，无需下载")
         with tree.parent(part_name) as (parent, source):
           os.replace(source, expected_sha256, src_dir_fd=parent, dst_dir_fd=parent)
           os.fsync(parent)
         return final
       for attempt in range(1, ATTEMPTS + 1):
         try:
-          request = _request(url, offset=progress)
-          with urllib.request.urlopen(request, timeout=60) as response:
-            progress, total = _read_response(response, fd, offset=progress, maximum=maximum)
-          actual, progress = _hash_fd(fd, maximum)
+          report.request(attempt, received)
+          request = _request(url, offset=received)
+          with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as response:
+            received, total = _read_response(response, fd, offset=received, maximum=maximum, progress=report)
+          report.stage(f"校验下载文件 SHA-256（{received / CHUNK:.2f} MiB）")
+          actual, received = _hash_fd(fd, maximum)
           if actual == expected_sha256:
+            report.stage("SHA-256 校验通过，发布下载缓存")
             with tree.parent(part_name) as (parent, source):
               os.replace(source, expected_sha256, src_dir_fd=parent, dst_dir_fd=parent)
               os.fsync(parent)
             return final
-          if total is not None and progress == total:
+          if total is not None and received == total:
             # 已有partial可能损坏；只通过重新从零下载修复，不发布错误摘要。
             os.ftruncate(fd, 0)
             os.fsync(fd)
-            progress = 0
+            received = 0
             failure = _TransferFailure("integrity", retryable=attempt < ATTEMPTS)
           else:
             failure = _TransferFailure("short-read", retryable=True)
         except _TransferFailure as error:
           failure = error
-          progress = os.fstat(fd).st_size
+          received = os.fstat(fd).st_size
         except Exception as error:
-          if isinstance(error, urllib.error.HTTPError) and error.code == 416 and progress:
+          if isinstance(error, urllib.error.HTTPError) and error.code == 416 and received:
             os.ftruncate(fd, 0)
             os.fsync(fd)
-            progress = 0
+            received = 0
             failure = _TransferFailure("range-reset", retryable=True)
           else:
             failure = _category(error)
-          progress = os.fstat(fd).st_size
+          received = os.fstat(fd).st_size
         if not failure.retryable or attempt == ATTEMPTS:
-          _fail(failure.category, attempt, progress)
-        time.sleep(0.25 * 2 ** (attempt - 1))
+          report.stage(f"第 {attempt}/{ATTEMPTS} 次下载失败，category={failure.category}；"
+            f"已保留 {received / CHUNK:.2f} MiB 断点数据")
+          _fail(failure.category, attempt, received)
+        delay = 0.25 * 2 ** (attempt - 1)
+        report.stage(f"第 {attempt}/{ATTEMPTS} 次下载失败，category={failure.category}；"
+          f"已保留 {received / CHUNK:.2f} MiB；{delay:g} 秒后进行第 {attempt + 1}/{ATTEMPTS} 次请求")
+        time.sleep(delay)
     finally:
       os.close(fd)
 

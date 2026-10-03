@@ -64,7 +64,11 @@ def test_missing_selected_model_key_does_not_block_host_launch(tmp_path, fake_su
   fake_subprocess.queue(returncode=0)
   assert runtime.run(w, cwd=tmp_path) == 0
   assert env_name("KEY", "one") not in fake_subprocess.calls[-1]["env"]
-  assert "1 个可选模型凭据未配置" in capsys.readouterr().err
+  output = capsys.readouterr().err
+  assert "4 个模型 key 未填写" in output
+  from agentcfg.presentation import command_line
+  from types import SimpleNamespace
+  assert command_line(SimpleNamespace(local=path, profile=w.profile), "model", "status") in output
 
 
 @pytest.mark.parametrize("actual", ["v24.1.0", "v25.0.0", "v24.2.0\nsynthetic-private-token"])

@@ -1,4 +1,4 @@
-"""CLI-02：仅初始化框架 TOML，不解析 profile、部署或读取原生凭据。"""
+"""初始化补齐保留路径、权限、竞态和错误脱敏边界；不部署或读取原生凭据。"""
 
 import errno
 import os
@@ -27,7 +27,13 @@ def initialize(machine="work", *, config_home=None):
   return initialize_local(machine, config_home=config_home or os.environ["XDG_CONFIG_HOME"])
 
 
-def test_init_local_creates_schema_valid_private_file_without_catalog(isolated_environment, capsys):
+def initialize_raw():
+  from agentcfg.paths import create_initial_local
+  data = b'schema_version = 1\n[machine]\nid = "work"\n'
+  return create_initial_local(Path(os.environ["XDG_CONFIG_HOME"]), "work", data)
+
+
+def test_init_local_creates_schema_valid_private_files(isolated_environment, capsys):
   cwd = Path.cwd()
   assert cli.main(["init-local", "--machine", "work"]) == 0
   path = destination()
@@ -35,7 +41,6 @@ def test_init_local_creates_schema_valid_private_file_without_catalog(isolated_e
   assert document == {
     "schema_version": 1,
     "machine": {"id": "work", "default_profile": "dsh-default"},
-    "secrets": {"deepseek_key": "", "kimi_key": "", "glm_key": ""},
   }
   validate_document("local", document)
   local, secrets = load_local(path)
@@ -72,25 +77,17 @@ def test_init_local_missing_hierarchy_and_umask(xdg, mask, isolated_environment,
 
 @pytest.mark.parametrize("machine", ['quote"name', "中文 空格", "literal'$()`name", "emoji-😀"])
 def test_init_local_ids_roundtrip_as_literal_toml(machine):
-  assert initialize(machine) is None
+  assert initialize(machine).machine_action == "created"
   assert tomllib.loads(destination(machine).read_text(encoding="utf-8"))["machine"]["id"] == machine
 
 
-def test_init_local_repeat_preserves_modified_bytes_mode_without_read(monkeypatch, sentinel_factory):
+def test_init_local_repeat_rejects_unsafe_existing_file_without_modification(sentinel_factory):
   initialize()
   path = destination()
   path.write_bytes(CANARY.encode() + b"\xff")
   path.chmod(0o640)
   before = sentinel_factory(path)
-  real_open = os.open
-  def no_read(path, flags, *args, **kwargs):
-    assert flags & os.O_DIRECTORY or flags & os.O_WRONLY
-    return real_open(path, flags, *args, **kwargs)
-  with monkeypatch.context() as patch:
-    patch.setattr(Path, "open", lambda *a, **k: pytest.fail("must not read"))
-    patch.setattr(os, "open", no_read)
-    patch.setattr(os, "read", lambda *a, **k: pytest.fail("must not read"))
-    assert cli.main(["init-local", "--machine", "work"]) == 4
+  assert cli.main(["init-local", "--machine", "work"]) == 4
   before.assert_unchanged()
 
 
@@ -102,7 +99,7 @@ def test_init_local_second_machine_reuses_containers_not_deployment_ownership(mo
   initialize("second")
   before.assert_unchanged()
   assert sorted(path.name for path in destination().parent.iterdir()) == ["first.toml", "second.toml"]
-  assert sorted(path.name for path in destination().parent.parent.iterdir()) == ["machines"]
+  assert sorted(path.name for path in destination().parent.parent.iterdir()) == ["instance.lock", "machines", "secrets.toml"]
 
 
 @pytest.mark.parametrize("kind", ["file", "directory", "symlink", "broken", "fifo", "hardlink"])
@@ -125,7 +122,7 @@ def test_init_local_existing_target_always_conflicts(kind, isolated_environment,
     os.link(outside, path)
   before = sentinel_factory(path)
   outside_before = sentinel_factory(outside)
-  assert cli.main(["init-local", "--machine", "work"]) == 4
+  assert cli.main(["init-local", "--machine", "work"]) == (2 if kind == "file" else 4)
   before.assert_unchanged()
   outside_before.assert_unchanged()
 
@@ -229,7 +226,7 @@ def test_init_local_invalid_api_config_path(value, monkeypatch):
 
 
 @pytest.mark.parametrize("operation", ["mkdir", "open", "write", "fchmod", "fstat"])
-def test_init_local_io_failures_close_all_fds_and_are_sanitized(operation, monkeypatch, capsys):
+def test_initial_file_primitive_io_failures_close_all_fds_and_are_sanitized(operation, monkeypatch, capsys):
   from agentcfg.local import InitializationError
   opened = set()
   real_open, real_close = os.open, os.close
@@ -253,7 +250,7 @@ def test_init_local_io_failures_close_all_fds_and_are_sanitized(operation, monke
     if operation != "open":
       patch.setattr(os, operation, denied)
     with pytest.raises(InitializationError) as caught:
-      initialize()
+      initialize_raw()
     assert caught.value.exit_code == 6
     assert CANARY not in "".join(traceback.format_exception(caught.value))
     assert not opened
@@ -311,7 +308,7 @@ def test_init_local_parent_close_failure_releases_child(loop, isolated_environme
 
 
 @pytest.mark.parametrize("written", ["short", "zero", "failure"])
-def test_init_local_cli_write_results(written, monkeypatch, capsys):
+def test_initial_file_primitive_write_results(written, monkeypatch, capsys):
   real_write = os.write
   def write(fd, data):
     if written == "zero":
@@ -320,7 +317,14 @@ def test_init_local_cli_write_results(written, monkeypatch, capsys):
       raise OSError(CANARY)
     return real_write(fd, data[:2])
   monkeypatch.setattr(os, "write", write)
-  assert cli.main(["init-local", "--machine", "work"]) == (0 if written == "short" else 6)
+  from agentcfg.paths import InitializationError
+  if written == "short":
+    initialize_raw()
+  else:
+    with pytest.raises(InitializationError) as caught:
+      initialize_raw()
+    assert caught.value.exit_code == 6
+    assert CANARY not in str(caught.value)
   assert CANARY not in capsys.readouterr().err
   if written == "short":
     assert tomllib.loads(destination().read_text())["machine"]["id"] == "work"
@@ -333,14 +337,15 @@ def test_init_local_repository_double_slash_refused(monkeypatch):
   assert cli.main(["init-local", "--machine", "work"]) == 4
 
 
-def test_init_local_first_creation_never_reads_credentials(monkeypatch):
-  real_open = os.open
-  def no_read(path, flags, *args, **kwargs):
-    assert flags & os.O_DIRECTORY or flags & os.O_WRONLY
-    return real_open(path, flags, *args, **kwargs)
-  monkeypatch.setattr(Path, "open", lambda *a, **k: pytest.fail("must not read"))
-  monkeypatch.setattr(os, "open", no_read)
-  monkeypatch.setattr(os, "read", lambda *a, **k: pytest.fail("must not read"))
+def test_init_local_never_reads_native_credentials(monkeypatch):
+  from agentcfg import local, secret_files
+  from agentcfg.paths import read_private_file
+  allowed = {destination(), destination().parent.parent / "secrets.toml"}
+  def selected_private(path):
+    assert path in allowed
+    return read_private_file(path)
+  monkeypatch.setattr(local, "read_private_file", selected_private)
+  monkeypatch.setattr(secret_files, "read_private_file", selected_private)
   assert cli.main(["init-local", "--machine", "work"]) == 0
 
 
@@ -365,13 +370,11 @@ def test_init_local_races_never_follow_links(race, isolated_environment, monkeyp
   outside = isolated_environment.home / "race-outside"
   outside.mkdir(mode=0o700)
   before = sentinel_factory(outside)
-  real_open, real_mkdir = os.open, os.mkdir
+  real_open, real_mkdir, real_link = os.open, os.mkdir, os.link
   if race == "directory-create":
     monkeypatch.setenv("XDG_CONFIG_HOME", str(root.parent / "new-config"))
   def racing_open(path, flags, mode=0o777, *, dir_fd=None):
-    if race == "file" and path == "work.toml":
-      os.symlink(outside / "new", path, dir_fd=dir_fd)
-    elif race in ("directory-open", "identity") and path == "machines":
+    if race in ("directory-open", "identity") and path == "machines":
       os.rename(path, "old-machines", src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
       if race == "identity":
         real_mkdir(path, 0o700, dir_fd=dir_fd)
@@ -383,6 +386,11 @@ def test_init_local_races_never_follow_links(race, isolated_environment, monkeyp
     if path == "agentcfg":
       os.rename(path, "old-agentcfg", src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
       os.symlink(outside, path, dir_fd=dir_fd)
+  def racing_link(source, target, **kwargs):
+    if race == "file" and target == "work.toml":
+      os.symlink(outside / "new", target, dir_fd=kwargs["dst_dir_fd"])
+    return real_link(source, target, **kwargs)
+  monkeypatch.setattr(os, "link", racing_link)
   monkeypatch.setattr(os, "open", racing_open)
   if race == "directory-create":
     monkeypatch.setattr(os, "mkdir", racing_mkdir)
@@ -413,3 +421,60 @@ def test_init_local_invalid_home_never_uses_real_home(home, monkeypatch):
     monkeypatch.setenv("HOME", home)
   monkeypatch.setattr(os, "mkdir", lambda *a, **k: pytest.fail("invalid HOME wrote"))
   assert cli.main(["init-local", "--machine", "work"]) == 2
+
+
+def test_existing_custom_secret_file_is_completed_without_touching_default(tmp_path, capsys):
+  initialize()
+  default_shared = destination().parent.parent / "secrets.toml"
+  default_before = default_shared.read_bytes()
+  private = tmp_path / "private-vault"
+  private.mkdir(mode=0o700)
+  custom = private / "keys.toml"
+  custom.write_text(f'schema_version = 1\n# keep secret note\n[secrets]\nkimi_key = "{CANARY}"\n')
+  custom.chmod(0o600)
+  destination().write_text(
+    f'schema_version = 1\nsecrets_file = "{custom}"\n[machine]\nid = "work"\n')
+  before = destination().read_bytes()
+  assert cli.main(["init-local", "--machine", "work"]) == 0
+  assert destination().read_bytes() == before
+  assert default_shared.read_bytes() == default_before
+  document = tomllib.loads(custom.read_text())
+  assert document["secrets"]["kimi_key"] == CANARY
+  assert document["shared"] == {"deepseek_key": "", "glm_key": ""}
+  assert "# keep secret note" in custom.read_text()
+  output = capsys.readouterr()
+  assert str(custom) in output.out
+  assert CANARY not in output.out + output.err
+
+
+@pytest.mark.parametrize("target_name", ["secrets.toml", "instance.lock"])
+def test_new_shared_file_never_overwrites_concurrent_creation(monkeypatch, target_name):
+  shared_path = destination().parent.parent / target_name
+  real_link, real_replace = os.link, os.replace
+  concurrent = b'schema_version = 1\n[shared]\nkimi_key = "concurrent-canary"\n'
+  injected = False
+
+  def inject(target, parent):
+    nonlocal injected
+    if target == target_name and not injected:
+      injected = True
+      fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=parent)
+      try:
+        os.write(fd, concurrent)
+      finally:
+        os.close(fd)
+
+  def raced_link(source, target, **kwargs):
+    inject(target, kwargs.get("dst_dir_fd"))
+    return real_link(source, target, **kwargs)
+
+  def raced_replace(source, target, **kwargs):
+    inject(target, kwargs.get("dst_dir_fd"))
+    return real_replace(source, target, **kwargs)
+
+  monkeypatch.setattr(os, "link", raced_link)
+  monkeypatch.setattr(os, "replace", raced_replace)
+  assert cli.main(["init-local", "--machine", "work"]) == 4
+  assert injected
+  assert shared_path.read_bytes() == concurrent
+  assert not destination().exists()

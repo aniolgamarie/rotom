@@ -5,7 +5,8 @@ import pytest
 
 from agentcfg import deployment, runtime
 from agentcfg.omp import OmpAdapter
-from agentcfg.omp_discovery import DISABLED_PROVIDERS, IGNORED_PROVIDER_SOURCES, SourcePolicy, assert_native_sources, inspect_project_sources
+from agentcfg.omp_discovery import (DISABLED_MODEL_PROVIDERS, DISABLED_PROVIDERS, IGNORED_PROVIDER_SOURCES,
+  SourcePolicy, assert_native_sources, inspect_project_sources)
 from agentcfg.omp_identity import native_identity
 from agentcfg.schema import ConfigError
 from agentcfg.storage import Conflict
@@ -146,7 +147,8 @@ def test_project_policy_renders_native_switches_and_conflicts_stay_disabled(tmp_
   assert values["/skills/enablePiProject"] is True
   assert values["/mcp/enableProjectConfig"] is True
   assert values["/disabledProviders"] == list(DISABLED_PROVIDERS)
-  assert len(DISABLED_PROVIDERS) == 18
+  assert len(DISABLED_PROVIDERS) == 17 and "cursor" not in DISABLED_PROVIDERS
+  assert "/disabledModelProviders" not in values
   data["providers"][DISABLED_PROVIDERS[0]] = data["providers"].pop("gateway")
   with pytest.raises(ConfigError, match="disabled-provider"):
     OmpAdapter(REPO).validate(data)
@@ -160,6 +162,61 @@ def test_native_alternate_mcp_file_is_never_implicitly_loaded(tmp_path, selected
   path.write_text('{"mcpServers": {}}')
   with pytest.raises(Conflict, match="profile配置来源"):
     assert_native_sources(identity)
+
+
+@pytest.mark.parametrize("damage", ["missing", "changed", "extra", "duplicate", "link"])
+def test_native_permission_sidecar_must_match_verified_managed_identity(tmp_path, damage):
+  identity = native_identity("managed", tmp_path / "instance")
+  identity.agent_dir.mkdir(parents=True)
+  permission = {"schemaVersion": 2, "defaultMode": "smart", "reviewer": "session",
+    "pluginId": "omp-permission-control", "pluginDigest": "a" * 64,
+    "policyVersion": "b" * 64, "nativePatterns": []}
+  sidecar = identity.agent_dir / "permission-control.json"
+  sidecar.write_text(json.dumps(permission))
+  assert_native_sources(identity, (sidecar,), permission_control=permission)
+  with pytest.raises(Conflict): assert_native_sources(identity)
+  if damage == "missing": sidecar.unlink()
+  elif damage == "changed": sidecar.write_text(json.dumps({**permission, "defaultMode": "manual"}))
+  elif damage == "extra": sidecar.write_text(json.dumps({**permission, "unknown": "SECRET_SENTINEL"}))
+  elif damage == "duplicate":
+    sidecar.write_text(json.dumps(permission)[:-1] + ',"defaultMode":"smart"}')
+  else:
+    sidecar.unlink()
+    target = tmp_path / "sidecar.json"
+    target.write_text(json.dumps(permission))
+    sidecar.symlink_to(target)
+  with pytest.raises(Conflict) as error:
+    assert_native_sources(identity, (sidecar,), permission_control=permission)
+  assert "SECRET_SENTINEL" not in str(error.value)
+
+
+@pytest.mark.parametrize("legacy", ["permissionControl", "permissionControl.defaultMode", "disabledModelProviders"])
+def test_native_config_rejects_retired_bridge_fields(tmp_path, legacy):
+  import yaml
+  identity = native_identity("managed", tmp_path / "instance")
+  identity.agent_dir.mkdir(parents=True)
+  config = identity.agent_dir / "config.yml"
+  value = {"skills": {"enablePiUser": True, "enablePiProject": False},
+    "mcp": {"enableProjectConfig": False}, "startup": {"checkUpdate": False},
+    "marketplace": {"autoUpdate": "off"}, "autolearn": {"enabled": False},
+    "auth": {}, "enabledProviders": [], "disabledProviders": list(DISABLED_PROVIDERS)}
+  value[legacy] = {} if legacy == "permissionControl" else []
+  config.write_text(yaml.safe_dump(value))
+  with pytest.raises(Conflict, match="原生配置"): assert_native_sources(identity)
+
+
+@pytest.mark.parametrize("relative", [".cursor/rules/private.mdc", ".cursorrules"])
+def test_cursor_project_sources_are_rejected_without_reading(tmp_path, monkeypatch, relative):
+  project = tmp_path / "project"
+  path = project / relative
+  path.parent.mkdir(parents=True, exist_ok=True)
+  path.write_text("api_key=MUST_NOT_BE_READ")
+  original = Path.read_bytes
+  monkeypatch.setattr(Path, "read_bytes", lambda candidate: (
+    (_ for _ in ()).throw(AssertionError("Cursor source must not be read"))
+    if candidate == path else original(candidate)))
+  with pytest.raises(Conflict, match="Cursor"):
+    inspect_project_sources(project, policy(project), managed_mcp_ids=())
 
 
 def test_runtime_revalidates_allowed_project_content_immediately_before_spawn(tmp_path, monkeypatch, fake_subprocess):
@@ -182,3 +239,54 @@ def test_runtime_revalidates_allowed_project_content_immediately_before_spawn(tm
   with pytest.raises(Conflict, match="秘密"):
     runtime.run(workspace, cwd=cwd)
   assert not fake_subprocess.calls
+
+
+@pytest.mark.parametrize("case,reason", [
+  ("missing", "models-missing"), ("link", "models-link"),
+  ("parse", "models-read-or-parse"), ("shape", "models-shape"),
+  ("set", "models-provider-set"), ("fields", "models-provider-fields"),
+])
+def test_models_diagnostics_locate_mismatch_without_exposing_private_values(tmp_path, case, reason):
+  import yaml
+  identity = native_identity("managed", tmp_path / "instance")
+  identity.agent_dir.mkdir(parents=True)
+  path = identity.agent_dir / "models.yml"
+  expected = {"private-provider-canary": {"baseUrl": "https://private-url-canary.invalid", "apiKey": "PRIVATE_KEY_CANARY"}}
+  if case == "link":
+    path.symlink_to(tmp_path / "missing-private-canary")
+  elif case == "parse":
+    path.write_text("private-parse-canary: [")
+  elif case == "shape":
+    path.write_text("private-shape-canary: true\n")
+  elif case == "set":
+    path.write_text(yaml.safe_dump({"providers": {"extra-private-canary": {}}}))
+  elif case == "fields":
+    path.write_text(yaml.safe_dump({"providers": {"private-provider-canary": {"apiKey": "old-private-canary"}}}))
+  before = path.readlink() if path.is_symlink() else path.read_bytes() if path.exists() else None
+  with pytest.raises(Conflict) as caught:
+    assert_native_sources(identity, model_providers=expected)
+  message = str(caught.value)
+  assert reason in message and "plan" in message and "apply" in message and "setup" in message
+  assert "canary" not in message.lower() and str(tmp_path) not in message
+  assert caught.value.__context__ is None
+  if case == "set":
+    assert "缺少 1" in message and "额外 1" in message
+  if case == "fields":
+    assert "1 个 provider" in message
+  after = path.readlink() if path.is_symlink() else path.read_bytes() if path.exists() else None
+  assert after == before
+
+
+def test_current_model_definition_change_requires_deployment_without_relaxing_guard(tmp_path):
+  import yaml
+  identity = native_identity("managed", tmp_path / "instance")
+  identity.agent_dir.mkdir(parents=True)
+  models = identity.agent_dir / "models.yml"
+  old = {"fixture": {"models": [{"id": "old"}]}}
+  current = {"fixture": {"models": [{"id": "new"}]}}
+  models.write_text(yaml.safe_dump({"providers": old}))
+  assert_native_sources(identity, model_providers=old)
+  with pytest.raises(Conflict, match="models-provider-fields"):
+    assert_native_sources(identity, model_providers=current)
+  models.write_text(yaml.safe_dump({"providers": current}))
+  assert_native_sources(identity, model_providers=current)

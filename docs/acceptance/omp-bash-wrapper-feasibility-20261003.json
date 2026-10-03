@@ -1,0 +1,124 @@
+{
+  "date": "2026-10-03",
+  "status": "mechanism-feasibility-only",
+  "officialTag": "v18.4.5",
+  "officialCommit": "79808c3bf8f8cd9826decc63e3e18b13035f64f8",
+  "officialBinarySha256": "42c710239b3fc30b9759424f973c6c143709935d5752be7eec8d7b011f40d864",
+  "platform": "linux-x64",
+  "paidModelRequests": 0,
+  "externalModelRequests": 0,
+  "provider": "deterministic-loopback-fixture",
+  "dailyDeploymentChanged": false,
+  "upstreamChanged": false,
+  "typecheck": {
+    "sdk": "fixed-official-source",
+    "exitCode": 0
+  },
+  "purePrototypeTests": {
+    "passed": 7,
+    "failed": 0,
+    "assertions": 27
+  },
+  "isolatedHostCases": [
+    {
+      "case": "allow",
+      "hostExitCode": 0,
+      "fixtureProviderRequests": 2,
+      "wrapperReviewCalls": 1,
+      "nativeDelegateCalls": 1,
+      "listingObserved": true,
+      "toolError": false,
+      "passed": true
+    },
+    {
+      "case": "deny",
+      "hostExitCode": 0,
+      "fixtureProviderRequests": 2,
+      "wrapperReviewCalls": 1,
+      "nativeDelegateCalls": 0,
+      "listingObserved": false,
+      "toolError": false,
+      "passed": true
+    },
+    {
+      "case": "unavailable",
+      "hostExitCode": 0,
+      "fixtureProviderRequests": 2,
+      "wrapperReviewCalls": 1,
+      "nativeDelegateCalls": 0,
+      "listingObserved": false,
+      "toolError": false,
+      "passed": true
+    },
+    {
+      "case": "plugin-missing",
+      "hostExitCode": 0,
+      "fixtureProviderRequests": 2,
+      "wrapperReviewCalls": 0,
+      "nativeDelegateCalls": 0,
+      "listingObserved": false,
+      "toolError": true,
+      "passed": true
+    },
+    {
+      "case": "runtime-override",
+      "hostExitCode": 0,
+      "fixtureProviderRequests": 2,
+      "wrapperReviewCalls": 0,
+      "nativeDelegateCalls": 0,
+      "listingObserved": false,
+      "toolError": true,
+      "passed": true
+    },
+    {
+      "case": "native-deny",
+      "hostExitCode": 0,
+      "fixtureProviderRequests": 2,
+      "wrapperReviewCalls": 0,
+      "nativeDelegateCalls": 0,
+      "listingObserved": false,
+      "toolError": true,
+      "passed": true
+    }
+  ],
+  "nativeApprovalAssessor": {
+    "publicApiVerified": true,
+    "cases": [
+      "ordinary-exec",
+      "pattern-deny",
+      "pattern-prompt",
+      "critical-prompt",
+      "compound-deny"
+    ],
+    "dangerousSamplesExecuted": false
+  },
+  "sessionSettings": {
+    "scopedAccessVerified": true,
+    "sameClassVerified": true,
+    "runtimeOverrideVisible": true,
+    "concurrentScopeIsolationVerified": true
+  },
+  "cursorDispatch": {
+    "sourceRegistryRouteConfirmed": true,
+    "runtimePassed": false,
+    "probeFailure": "ResolveMessage",
+    "bundledProbeLoadPassed": false,
+    "realOAuthEndToEndVerified": false
+  },
+  "unsafeSplitExtensionAttempt": {
+    "checkExtensionLoaded": false,
+    "wrapperStillExecutedHarmlessFixture": true,
+    "acceptedAsSafetyPass": false,
+    "productionRequirement": "one-extension-with-required-valid-ticket"
+  },
+  "limitations": [
+    "fixture-decisions-only",
+    "native-floor-hook-not-production-implementation",
+    "deny-unavailable-fixture-results-not-marked-error",
+    "real-reviewer-and-human-ui-unverified",
+    "kernel-execution-context-unverified",
+    "async-service-pty-unverified",
+    "other-platforms-unverified"
+  ],
+  "proposal": "docs/follow-ups/omp-cursor-native-approval-plan-2026-10-03.md"
+}

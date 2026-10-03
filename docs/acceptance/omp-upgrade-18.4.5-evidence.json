@@ -1,0 +1,102 @@
+{
+  "date": "2026-10-01",
+  "scope": "official Linux x64 OMP upgrade and repository standalone plugin",
+  "dailyDeployment": {
+    "tag": "v18.4.5",
+    "commit": "79808c3bf8f8cd9826decc63e3e18b13035f64f8",
+    "lockIdentity": "14480cb8a99390aa3cc47df5fbdd4087c898d9e8e77e0eccf176bf383beb4f22",
+    "runtimeIdentity": "14480cb8a99390aa3cc47df5fbdd4087c898d9e8e77e0eccf176bf383beb4f22-linux-x64",
+    "binarySha256": "42c710239b3fc30b9759424f973c6c143709935d5752be7eec8d7b011f40d864",
+    "pluginDigest": "aee7cd403cb043a726a74222860654a101a0647938206d6e99033f884367f970",
+    "hideToolActivity": false,
+    "mainModel": "cursor/kimi-k3-high:high",
+    "reviewer": "session",
+    "remoteFallback": {
+      "model": "glm-5.3-flash",
+      "provider": "zhipu_tf"
+    },
+    "preservedNativeFiles": 80,
+    "accountAndSessionFilesPreserved": true,
+    "startupAdmissionPassed": true,
+    "startupAdmissionHostSpawned": false,
+    "paidModelRequests": 0,
+    "doctor": {
+      "readiness": "offline-ready",
+      "pendingChanges": 0,
+      "drift": false,
+      "conflicts": false,
+      "recoveryPending": false
+    },
+    "nativeVersionOutput": "omp/18.4.5"
+  },
+  "offlineValidation": {
+    "currentTag": "v18.4.5",
+    "managerTests": {
+      "validatedPassedAcrossRuns": 228,
+      "skippedHistoricalHostPatch": 7,
+      "firstStableFullRun": {
+        "passed": 220,
+        "failed": 8,
+        "skipped": 7
+      },
+      "fixedRuntimeFixtures": {
+        "passed": 50,
+        "failed": 0
+      },
+      "kernelDisplayPriorRun": 14,
+      "finalFullRun": {
+        "passed": 228,
+        "failed": 0,
+        "skipped": 7,
+        "seconds": 52.5
+      }
+    },
+    "pluginTests": {
+      "passed": 315,
+      "failed": 0,
+      "assertions": 1152
+    },
+    "sdkStrictTypecheck": "passed",
+    "pluginBundle": "passed",
+    "upstreamSourceUnmodified": true,
+    "fixedAndTagArchiveAll8463FilesMatch": true,
+    "paidModelRequests": 0
+  },
+  "isolatedHostSmoke": {
+    "status": "passed",
+    "counts": {
+      "main": 2,
+      "primary": 1,
+      "remote": 1,
+      "skillDescriptions": 0
+    },
+    "exitCode": 0,
+    "modelProviderKind": "deterministic loopback fixture",
+    "externalModelRequests": 0,
+    "command": "ls -la",
+    "newSessionReset": true,
+    "actualUpstreamBinaryModified": false,
+    "runtimeIdentity": "14480cb8a99390aa3cc47df5fbdd4087c898d9e8e77e0eccf176bf383beb4f22-linux-x64",
+    "pluginDigest": "aee7cd403cb043a726a74222860654a101a0647938206d6e99033f884367f970",
+    "toolResultCount": 1,
+    "tool": "permission_bash",
+    "toolExitCode": 0
+  },
+  "backup": {
+    "fileCount": 85,
+    "consistentUnderExclusiveInstanceLease": true,
+    "permissions": "0600",
+    "nativeFilesCompared": 80
+  },
+  "unverified": [
+    "real Cursor inference and account catalog",
+    "actual runtime on other three platforms",
+    "database compatibility after cross-version rollback"
+  ],
+  "upstreamSourceModified": false,
+  "paidModelRequests": 0,
+  "delegation": {
+    "scout": "completed material and public API evidence gathering; role configured gpt-5.6-luna/medium",
+    "executor": "unavailable: session thread limit; implementation and verification performed by primary"
+  }
+}

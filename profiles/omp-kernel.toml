@@ -5,7 +5,7 @@
 "models" = ["omp-kimi_tf-kimi-for-coding", "omp-kimi_tf-k3", "omp-kimi_tf-k3-256k", "omp-kimi_tf-kimi-for-coding-highspeed", "omp-zhipu_tf-glm-5.3", "omp-zhipu_tf-glm-5.3-flash", "omp-zhipu_tf-glm-5.2", "omp-zhipu_tf-glm-5.1", "omp-zhipu_tf-glm-5-turbo"]
 "rules" = ["omp-kernel-confirmation"]
 "skills" = ["omp-kernel-codex-delegate", "omp-kernel-cpp-database-kernel", "omp-kernel-neovim-plugin-development", "omp-kernel-safe-linux-scripting"]
-"plugins" = []
+"plugins" = ["omp-permission-control"]
 "mcp" = []
 
 ["roles"]
@@ -17,6 +17,11 @@
 
 ["agent_options"]
 "tiny_model" = "local/lfm2.5-230m"
+
+["agent_options"."permission_control"]
+"default_mode" = "smart"
+"remote_fallback_model" = "omp-zhipu_tf-glm-5.3-flash"
+"fallback_model" = "local/lfm2.5-230m"
 
 ["agent_options"."discovery"]
 "project_resources" = false
@@ -52,9 +57,12 @@
 "grep" = "allow"
 "glob" = "allow"
 "bash" = "prompt"
+"permission_bash" = "allow"
+"task" = "prompt"
+"eval" = "prompt"
 
 ["agent_options"."runtime"."bash"]
-"allowCompoundCommands" = false
+"allowCompoundCommands" = true
 "patterns" = [{ "match" = "rm -rf /", "approval" = "deny" }, { "match" = "rm -rf /*", "approval" = "deny" }, { "match" = "rm -rf ~", "approval" = "deny" }, { "match" = "rm -rf ~/*", "approval" = "deny" }, { "match" = "sudo rm -rf *", "approval" = "deny" }, { "match" = "mkfs*", "approval" = "deny" }, { "match" = "dd if=*", "approval" = "deny" }, { "match" = "find * -delete", "approval" = "deny" }, { "match" = "find * -exec rm*", "approval" = "deny" }, { "match" = "curl * | sh", "approval" = "deny" }, { "match" = "curl * | bash", "approval" = "deny" }, { "match" = "wget * | sh", "approval" = "deny" }, { "match" = "wget * | bash", "approval" = "deny" }, { "match" = "git push --force*", "approval" = "deny" }, { "match" = "git push * --force", "approval" = "deny" }, { "match" = "git push -f *", "approval" = "deny" }, { "match" = "git push * -f", "approval" = "deny" }, { "match" = "git reset --hard*", "approval" = "deny" }, { "match" = "ob-make -j*", "approval" = "deny" }, { "match" = "ob-make --jobs*", "approval" = "deny" }, { "match" = "make", "approval" = "deny" }, { "match" = "make *", "approval" = "deny" }, { "match" = "ninja", "approval" = "deny" }, { "match" = "ninja *", "approval" = "deny" }, { "match" = "cmake --build *", "approval" = "deny" }, { "match" = "rm *build_release/*", "approval" = "deny" }, { "match" = "rm -rf *build_release/*", "approval" = "deny" }, { "match" = "unlink *build_release/*", "approval" = "deny" }, { "match" = "find *build_release* -delete", "approval" = "deny" }, { "match" = "find *build_release* -exec rm*", "approval" = "deny" }, { "match" = "ls *", "approval" = "allow" }, { "match" = "ls", "approval" = "allow" }, { "match" = "pwd", "approval" = "allow" }, { "match" = "cd *", "approval" = "allow" }, { "match" = "cat *", "approval" = "allow" }, { "match" = "head *", "approval" = "allow" }, { "match" = "tail *", "approval" = "allow" }, { "match" = "wc *", "approval" = "allow" }, { "match" = "file *", "approval" = "allow" }, { "match" = "stat *", "approval" = "allow" }, { "match" = "du *", "approval" = "allow" }, { "match" = "df *", "approval" = "allow" }, { "match" = "git status*", "approval" = "allow" }, { "match" = "git log*", "approval" = "allow" }, { "match" = "git diff*", "approval" = "allow" }, { "match" = "git show*", "approval" = "allow" }, { "match" = "git branch", "approval" = "allow" }, { "match" = "git branch -v", "approval" = "allow" }, { "match" = "git rev-parse *", "approval" = "allow" }, { "match" = "git ls-files*", "approval" = "allow" }, { "match" = "ob-make", "approval" = "allow" }, { "match" = "git push*", "approval" = "prompt" }, { "match" = "git checkout *", "approval" = "prompt" }, { "match" = "git clean*", "approval" = "prompt" }, { "match" = "git branch -D *", "approval" = "prompt" }, { "match" = "git restore *", "approval" = "prompt" }, { "match" = "ob-make *", "approval" = "prompt" }, { "match" = "sudo *", "approval" = "prompt" }, { "match" = "kill *", "approval" = "prompt" }, { "match" = "killall *", "approval" = "prompt" }, { "match" = "pkill *", "approval" = "prompt" }, { "match" = "docker rm*", "approval" = "prompt" }, { "match" = "docker rmi*", "approval" = "prompt" }, { "match" = "docker system prune*", "approval" = "prompt" }, { "match" = "npm publish*", "approval" = "prompt" }, { "match" = "pip install *", "approval" = "prompt" }, { "match" = "pip3 install *", "approval" = "prompt" }, { "match" = "find close_modules/hotspot_group_commit -type f", "approval" = "allow" }, { "match" = "which *", "approval" = "allow" }, { "match" = "test -e *", "approval" = "allow" }, { "match" = "test -f *", "approval" = "allow" }, { "match" = "test -d *", "approval" = "allow" }, { "match" = "git grep -O*", "approval" = "prompt" }, { "match" = "git grep --open-files-in-pager*", "approval" = "prompt" }, { "match" = "git grep --open*", "approval" = "prompt" }, { "match" = "git grep *", "approval" = "allow" }]
 
 ["agent_options"."runtime"."bashInterceptor"]
@@ -103,7 +111,7 @@
 "maxLength" = 18
 
 ["agent_options"."runtime"."display"]
-"hideToolActivity" = true
+"hideToolActivity" = false
 "showTokenUsage" = true
 "showTurnTime" = true
 "cacheMissMarker" = true

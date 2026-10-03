@@ -2,6 +2,7 @@ import hashlib
 from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 
 from agentcfg.adapter import Artifact, ContractError, ManagedTarget, Ownership
 from agentcfg.deployment import desired_items
@@ -106,17 +107,21 @@ def omp_local(path, extra=""):
   path.write_text('schema_version=1\n[machine]\nid="omp-test"\ndefault_profile="omp-default"\n' + extra)
 
 
-def test_empty_bootstrap_loads_and_renders_only_protected_settings(tmp_path):
+def test_default_profile_loads_and_renders_protected_settings_and_models(tmp_path):
   local = tmp_path / "local.toml"
   omp_local(local)
   workspace = load_workspace(local)
   candidate = workspace.candidate("a" * 64)
   assert workspace.agent == "omp"
-  assert len(candidate.artifacts) == 8
+  assert len(candidate.artifacts) == 21
   assert all(artifact.target.path.startswith("user-home/.omp/profiles/rotom-") for artifact in candidate.artifacts)
-  assert {artifact.target.selector for artifact in candidate.artifacts} == {
+  selectors = {artifact.target.selector for artifact in candidate.artifacts}
+  assert {
     "/skills/enablePiUser", "/skills/enablePiProject", "/mcp/enableProjectConfig", "/enabledProviders",
-    "/disabledProviders", "/startup/checkUpdate", "/marketplace/autoUpdate", "/autolearn/enabled"}
+    "/disabledProviders", "/startup/checkUpdate", "/marketplace/autoUpdate", "/autolearn/enabled",
+  } <= selectors
+  assert "/modelRoles/default" in selectors
+  assert workspace.resolved.data["profile"]["roles"]["main"] == "deepseek_flash_anthropic"
 
 
 def test_omp_profile_options_reject_unknown_fields(tmp_path):
@@ -141,6 +146,14 @@ def test_checked_in_omp_schemas_use_supported_strict_subset():
   assert agent["additionalProperties"] is False
   resources = agent["properties"]["defaults"]["properties"]["agent_options"]["properties"]["resources"]["properties"]
   assert set(resources) == {"prompts", "themes", "agents"}
+  native_roles = agent["properties"]["defaults"]["properties"]["agent_options"]["properties"]["native_model_roles"]
+  assert set(native_roles["properties"]) == {"main", "smol", "slow", "vision", "plan", "advisor", "task"}
   native = _read_schema("omp-native")
-  assert len(native["oneOf"]) == 8
+  assert len(native["oneOf"]) == 9
   assert native["$defs"]["keybindings"]["properties"]["path"]["const"] == "keybindings.yml"
+  assert native["$defs"]["model-role"]["properties"]["selector"]["enum"][0] == "/modelRoles/default"
+  validator = Draft202012Validator(native)
+  intent = {"path": "config.yml", "codec": "yaml", "selector": "/modelRoles/default",
+    "value": "cursor/kimi-k3-high:high"}
+  assert validator.is_valid(intent)
+  assert not validator.is_valid({**intent, "value": "cursor/kimi k3-high:high"})

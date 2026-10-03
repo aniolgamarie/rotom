@@ -225,6 +225,58 @@ def test_toml_failures_do_not_attach_raw_exception(tmp_path, text):
   assert CANARY not in "".join(traceback.format_exception(caught.value))
 
 
+def test_public_toml_parse_error_has_safe_source_and_line_column(tmp_path):
+  schema, config = api()
+  first = tmp_path / (CANARY + "-first.toml")
+  second = tmp_path / (CANARY + "-second.toml")
+  first.write_text("schema_version = 1\nbroken =\n")
+  second.write_text("schema_version = 1\nvalid = true\nbroken =\n")
+  locations = []
+  for ordinal, path in enumerate((first, second), 1):
+    with pytest.raises(schema.ConfigError) as caught:
+      config._read_toml(path, source=("registry", str(ordinal)))
+    assert caught.value.code == "parse"
+    assert caught.value.path[:2] == ("registry", str(ordinal))
+    assert caught.value.path[-1] == "TOML"
+    assert "line" in caught.value.path and "column" in caught.value.path
+    assert CANARY not in "".join(traceback.format_exception(caught.value))
+    locations.append(caught.value.path)
+  assert locations[0] != locations[1]
+
+  malformed = tmp_path / (CANARY + "-load-sources.toml")
+  malformed.write_text("schema_version = 1\nvalid = true\nbroken =\n")
+  sources = config.SourceInputs(registries=(FIXTURES / "registry.toml", malformed))
+  with pytest.raises(schema.ConfigError) as caught:
+    config.load_sources(sources, adapter_schemas=adapter_context())
+  assert caught.value.path[:2] == ("registry", "2")
+  assert caught.value.path[2:] == ("line", "3", "column", "9", "TOML")
+  assert CANARY not in "".join(traceback.format_exception(caught.value))
+
+
+def test_toml_eof_and_private_secret_parse_errors_are_located_without_leak(tmp_path):
+  schema, config = api()
+  public = tmp_path / (CANARY + "-eof.toml")
+  public.write_text("[unfinished")
+  with pytest.raises(schema.ConfigError) as caught:
+    config._read_toml(public, source=("profile", "7"))
+  assert caught.value.path == ("profile", "7", "line", "1", "column", "12", "TOML")
+  assert caught.value.__context__ is None
+
+  secret = "PRIVATE-CANARY-dynamic-secret"
+  tmp_path.chmod(0o700)
+  private = tmp_path / (CANARY + "-local.toml")
+  private.write_text('schema_version = 1\n[secrets]\n' + secret + ' = "unterminated')
+  private.chmod(0o600)
+  with pytest.raises(schema.ConfigError) as caught:
+    config.read_local_document(private)
+  rendered = "".join(traceback.format_exception(caught.value)) + repr(caught.value)
+  assert caught.value.path[:1] == ("local",)
+  assert caught.value.path[-1] == "TOML"
+  assert caught.value.__context__ is None
+  for value in (secret, CANARY, str(private)):
+    assert value not in rendered
+
+
 def test_missing_source_error_hides_private_path(tmp_path):
   schema, config = api()
   with pytest.raises(schema.ConfigError) as caught:

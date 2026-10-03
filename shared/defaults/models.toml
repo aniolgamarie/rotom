@@ -1,0 +1,22 @@
+schema_version = 1
+
+[adapters.dsh]
+providers = ["deepseek_openai", "kimi_openai", "glm_openai"]
+models = ["deepseek_flash_openai", "kimi_k3_openai", "glm_53_openai"]
+
+[adapters.dsh.roles]
+main = "deepseek_flash_openai"
+
+[adapters.pi]
+providers = ["deepseek_openai", "kimi_openai", "glm_openai"]
+models = ["deepseek_flash_openai", "kimi_k3_openai", "glm_53_openai"]
+
+[adapters.pi.roles]
+main = "deepseek_flash_openai"
+
+[adapters.omp]
+providers = ["deepseek_anthropic", "kimi_anthropic", "glm_anthropic"]
+models = ["deepseek_flash_anthropic", "kimi_k3_anthropic", "glm_53_anthropic"]
+
+[adapters.omp.roles]
+main = "deepseek_flash_anthropic"

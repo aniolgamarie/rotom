@@ -26,16 +26,16 @@ from .schema import ConfigError
 from .storage import Conflict, Tree, ensure_private
 
 ROOT = Path(__file__).resolve().parents[2]
-TAG = "v18.3.0"
-COMMIT = "62bc57be1b03ef0802a33cf7f5f530e534527531"
+TAG = "v18.4.5"
+COMMIT = "79808c3bf8f8cd9826decc63e3e18b13035f64f8"
 SOURCE_URL = "https://codeload.github.com/can1357/oh-my-pi/tar.gz/" + COMMIT
-SOURCE_SHA256 = "edcc0f93a0ab0c0223d0651bba3624c55a32d25494a43b0257ea626be1dff97d"
+SOURCE_SHA256 = "eddf7bb092dacffcfbbc1d44b1cc367e0fb9e2bf8fabd4ff97aa0ac21c401652"
 RELEASE_URL = "https://github.com/can1357/oh-my-pi/releases/download/" + TAG + "/"
 ASSETS = {name: {"url": RELEASE_URL + asset, "sha256": digest} for name, asset, digest in (
-  ("linux-x64", "omp-linux-x64", "d2fdaa29affe96e596eb9c78d42f548f1f291df28608631bcc00750a84b94bc3"),
-  ("linux-arm64", "omp-linux-arm64", "bdfb9c494e17a2fee1956dae16a010a1953574ce4172c4db8efe06fbe477c637"),
-  ("macos-x64", "omp-darwin-x64", "be74498e0edcde7e018247b925f0e0ebf00a7748a1006b3a02eb62ca9e021baf"),
-  ("macos-arm64", "omp-darwin-arm64", "d61fb411f24146bed48dd901b13b5912a297d899ee691dda69c4b5b7ab8c35dc"),
+  ("linux-x64", "omp-linux-x64", "42c710239b3fc30b9759424f973c6c143709935d5752be7eec8d7b011f40d864"),
+  ("linux-arm64", "omp-linux-arm64", "3dcf6a7f847b8c2f7bc5294c52a09151e858578ae3610655b82bf97ffa120a72"),
+  ("macos-x64", "omp-darwin-x64", "823cdd2202cbe336908c0d7a4add4cb063048e000fa9b2083b8576755d1c2523"),
+  ("macos-arm64", "omp-darwin-arm64", "64f5d0a99a2c5b5d9b453a7666257306244ac4c6fd8fdbe0e760bf3449fc8ea6"),
 )}
 UPSTREAM = {"upstream/" + name for name in ("bun.lock", "LICENSE", "THIRD-PARTY-NOTICES.txt", "provenance.json", "NOTICE.md")}
 PYTHON_REQUIREMENT = {"kind": "manager-python", "implementation": "cpython", "minimum": [3, 11]}
@@ -282,7 +282,15 @@ class OmpBackend:
     return resources, packages, recipe
 
   def runtime_identity(self, workspace, lock):
+    self._permission_runtime(workspace, lock)
     return lock.identity + "-" + platform_id()
+
+  def _permission_runtime(self, workspace, lock):
+    resolved = getattr(workspace, "resolved", None)
+    variant = resolved.data["profile"].get("agent_options", {}).get("runtime_variant", "official") if resolved else "official"
+    if variant != "official":
+      raise ConfigError("omp-permission-variant")
+    return None
 
   def root(self, workspace, identity):
     safe_id(identity)
@@ -312,8 +320,10 @@ class OmpBackend:
         os.close(fd)
 
   def _receipt(self, workspace, lock, identity):
+    self._permission_runtime(workspace, lock)
+    asset = lock.metadata["assets"][platform_id()]
     return {"version": 1, "adapter_version": self.adapter_version, "identity": identity,
-      "lock_identity": lock.identity, "platform": platform_id(), "binary_sha256": lock.metadata["assets"][platform_id()]["sha256"],
+      "lock_identity": lock.identity, "platform": platform_id(), "binary_sha256": asset["sha256"],
       "source_sha256": lock.metadata["source"]["sha256"], "path": str(self.root(workspace, identity)),
       "resources_digest": sha(json_bytes(lock.metadata["resources"])),
       "interpreters": interpreter_identity(lock.metadata["interpreters"])}
@@ -411,6 +421,7 @@ class OmpBackend:
     if current != lock:
       raise ConfigError("omp-lock-changed")
     identity = self.runtime_identity(workspace, lock)
+    self._permission_runtime(workspace, lock)
     root = self.root(workspace, identity)
     with self.runtime_guard(workspace, identity, exclusive=True):
       self._recover_activation(workspace, lock, identity)
@@ -418,9 +429,13 @@ class OmpBackend:
         return {"status": "installed", "identity": identity}
       asset = lock.metadata["assets"][platform_id()]
       from .omp_download import ensure_cached_asset
-      downloads = workspace.cache / "downloads"
-      announce("获取锁定资产")
-      ensure_cached_asset(downloads, asset["url"], asset["sha256"])
+      downloads, cache_key = workspace.cache / "downloads", asset["sha256"]
+      # read_lock 已将资产 URL 与固定发行清单逐项核对；不输出重定向或代理地址。
+      asset_name = ASSETS[platform_id()]["url"].rsplit("/", 1)[-1]
+      label = f"OMP {TAG} / {platform_id()} / {asset_name}（来源：GitHub Releases）"
+      announce(f"获取锁定资产：{label}")
+      ensure_cached_asset(downloads, asset["url"], asset["sha256"],
+        progress=lambda detail: announce(f"{label} / {detail}"))
       announce("校验并暂存运行包")
       ensure_private(root.parent)
       stage = Path(tempfile.mkdtemp(prefix=".stage-", dir=root.parent))
@@ -430,7 +445,7 @@ class OmpBackend:
         receipt = self._receipt(workspace, lock, identity)
         with Tree(stage) as target, Tree(workspace.repository, private=False) as source:
           # 大型二进制从已校验cache流式写入私有stage，避免WSL安装阶段整包驻内存。
-          with Tree(downloads) as cache, cache.open_read(asset["sha256"]) as (binary, info):
+          with Tree(downloads) as cache, cache.open_read(cache_key) as (binary, info):
             if stat.S_IMODE(info.st_mode) != 0o600:
               raise DependencyError("OMP下载缓存权限无效")
             with target.parent("bin/omp", create=True) as (parent, name):

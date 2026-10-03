@@ -1,0 +1,189 @@
+{
+  "status": "passed",
+  "local": "/tmp/rotom-permission-standalone-20260930/machine.toml",
+  "runtime": "/tmp/rotom-permission-standalone-20260930/managed-cache/omp/omp-kernel/runtimes/a24d84ccd1ebb138a147d39de2f33771dab602064f216a03ce612bd1b39f136a-linux-x64",
+  "runtimeIdentity": "a24d84ccd1ebb138a147d39de2f33771dab602064f216a03ce612bd1b39f136a-linux-x64",
+  "officialBinarySha256": "d2fdaa29affe96e596eb9c78d42f548f1f291df28608631bcc00750a84b94bc3",
+  "pluginDigest": "5e145c13475d03554fcc8e191e08bbc34223c8452c9a5be886f5fb9ba6e1b29c",
+  "counts": {
+    "main": 2,
+    "primary": 1,
+    "remote": 1,
+    "skillDescriptions": 0
+  },
+  "exitCode": 0,
+  "modelProviderKind": "deterministic loopback fixture",
+  "externalModelRequests": 0,
+  "command": "ls -la",
+  "toolResults": [
+    {
+      "session": "2026-09-30T14-29-06-154Z_01a0f2b8-17ea-71dd-b1cb-2cc1582e47d5.jsonl",
+      "tool": "permission_bash",
+      "error": false,
+      "details": {
+        "code": 0,
+        "killed": false
+      }
+    }
+  ],
+  "newSessionReset": true,
+  "actualUpstreamBinaryModified": false,
+  "schemaVersion": 1,
+  "date": "2026-09-30",
+  "officialLockIdentity": "a24d84ccd1ebb138a147d39de2f33771dab602064f216a03ce612bd1b39f136a",
+  "binaryAfterSmokeSha256": "d2fdaa29affe96e596eb9c78d42f548f1f291df28608631bcc00750a84b94bc3",
+  "pluginEntrypoint": "standalone.ts",
+  "protectedInputHashesUnchanged": {
+    "docs/acceptance/omp-permission-control-model-results.json": "543d63d8d7811d5a07fd86a761eaa7edd007c5d9667b1ec095cf03c1a75bf574",
+    "docs/acceptance/omp-permission-control-model-semantic-audit.json": "a8203f1a02694ad01e36ce5467188fee46c16d60475586238d38b09a9ce1331c",
+    "docs/acceptance/omp-permission-control-coreference-results.json": "fd8771d296bf561d14a5d65d9c68d1d3cfe627c2fe8d0b1d03b3c76b88e402ac",
+    "tests/fixtures/omp/permission-control/cases.jsonl": "e5f151ce6ab361ca10e3d633cd3538de14a2050fe6b6aac25491138d2e3397b6",
+    "tests/fixtures/omp/permission-control/labels.json": "734514f5cfa65af0ab66ac09840628596d178f40282b6d09929475fdc050f85a",
+    "tests/fixtures/omp/permission-control/fixture-schema.json": "fbeffd569bda912aa72d927229a1ded101f4e6c90551e2462ded6d19e52dd356",
+    "agents/omp/patches/permission-control/build-inputs.lock.json": "d474ff9925eeebaa7f896b4a1e62178814ad96f911006635cf063153fa5cbb2c",
+    "/home/weixiaoxian.wxx/.config/agentcfg/machines/workstation.toml": "8646148628d0cc9bc2e519fdedef9841e1a434b70383e947ce9789818260d3ef",
+    "/tmp/rotom-permission-evaluation-20260930/run-20260930/diagnostics/adapter-ledger.json": "aa02c643762da2598236bc0ca05a34464d2351e597c92f58ea795fa2039e3537",
+    "agents/omp/patches/permission-control/0001-host-bridge.patch": "45a0fcbdd4092161cbc3c14ac8b40a323928cd4dc915538e2cbee7f6ead8e51f",
+    "agents/omp/patches/permission-control/0002-installed-only-tiny.patch": "c34d02d19941e09ca507e67164f5b8d37a67e991b6ed96ab51dca2b67ece33da",
+    "locks/omp/permission-control/manifest.json": "d0c401b1d9cd148c45f48642233be49fe5995c7a0775edd487a537ec5357db31",
+    "/tmp/rotom-omp-plan/commit.tar.gz": "edcc0f93a0ab0c0223d0651bba3624c55a32d25494a43b0257ea626be1dff97d"
+  },
+  "newPaidModelRequests": 0,
+  "dailyDeployment": {
+    "performed": true,
+    "date": "2026-09-30",
+    "authorization": "user requested local environment update and confirmed OMP exited",
+    "profile": "omp-kernel",
+    "local": "/home/weixiaoxian.wxx/.config/agentcfg/machines/workstation.toml",
+    "sync": {
+      "exitCode": 0,
+      "officialBinaryCacheHit": true
+    },
+    "migration": {
+      "planExitCode": 0,
+      "applyExitCode": 0,
+      "changes": 6,
+      "conflicts": 0,
+      "preservedInitialDrift": "/modelRoles/default"
+    },
+    "cursorBinding": {
+      "configured": "cursor/kimi-k3-high:high",
+      "oauthProviderDeclared": true,
+      "staticMetadataInvented": false,
+      "unrelatedLocalSemanticsUnchanged": true,
+      "privateFileMode": "0600",
+      "planExitCode": 0,
+      "applyExitCode": 0,
+      "changes": 0,
+      "drift": 0,
+      "conflicts": 0
+    },
+    "doctor": {
+      "exitCode": 0,
+      "readiness": "offline-ready",
+      "changesPending": 0,
+      "drift": false,
+      "conflicts": false,
+      "dependencies": "installed",
+      "deployedDependencies": "installed",
+      "deployedRuntimeMatchesCurrent": true,
+      "recoveryPending": false,
+      "live": false
+    },
+    "startupAdmission": {
+      "runtimeIdentity": "a24d84ccd1ebb138a147d39de2f33771dab602064f216a03ce612bd1b39f136a-linux-x64",
+      "officialBinarySha256": "d2fdaa29affe96e596eb9c78d42f548f1f291df28608631bcc00750a84b94bc3",
+      "pluginDigest": "5e145c13475d03554fcc8e191e08bbc34223c8452c9a5be886f5fb9ba6e1b29c",
+      "defaultModel": "cursor/kimi-k3-high:high",
+      "mode": "smart",
+      "reviewer": "session",
+      "remoteFallback": {
+        "model": "glm-5.3-flash",
+        "provider": "zhipu_tf"
+      },
+      "localFallback": "unavailable",
+      "nativeBashApproval": "prompt",
+      "permissionBashApproval": "allow",
+      "oldBridgeFieldsPresent": false,
+      "startupAdmissionPassed": true,
+      "actualHostSpawned": false,
+      "accountDatabaseAccessed": false,
+      "newModelRequests": 0,
+      "privateHomeIdentityUnchanged": true
+    },
+    "modelRequestBudgetUnchanged": true,
+    "otherProtectedInputsUnchanged": 12,
+    "defaultModelRoleRegression": {
+      "command": ".venv/bin/pytest -q tests/test_omp_adapter.py tests/test_omp_kernel.py tests/test_omp_foundation.py",
+      "passed": 59,
+      "seconds": 27.15,
+      "hostOrModelStarted": false,
+      "agent": "gpt-5.6-sol / medium"
+    }
+  },
+  "validation": {
+    "bun": {
+      "passed": 24,
+      "failed": 0,
+      "assertions": 67,
+      "log": "/tmp/rotom-permission-standalone-test-load-phase.log"
+    },
+    "sdkStrictTypecheck": {
+      "exitCode": 0,
+      "log": "/tmp/rotom-permission-standalone-typecheck-load-phase.log"
+    },
+    "kernelAndThreeWayMigration": {
+      "passed": 14,
+      "fakeBackend": true,
+      "seconds": 25.93,
+      "verifiedOfficialLockIdentity": "a24d84ccd1ebb138a147d39de2f33771dab602064f216a03ce612bd1b39f136a",
+      "command": ".venv/bin/python -m pytest tests/test_omp_kernel.py tests/test_omp_permission_runtime.py::test_permission_sidecar_transactions_preserve_unmanaged_config_and_consume_rollback -q"
+    },
+    "discoveryAndDependencies": {
+      "passed": 53
+    },
+    "adapterAndPipeline": {
+      "passed": 25
+    },
+    "permissionSchemaAndHistoricalBuildInputUnits": {
+      "passed": 107,
+      "skipped": 7,
+      "skipReason": "host-patch integration retired unconditionally",
+      "command": ".venv/bin/python -m pytest tests/test_omp_permission_control.py tests/test_omp_permission_build_inputs.py -q"
+    },
+    "retiredBuilder": {
+      "passed": 1,
+      "exitCode": 2,
+      "reasonCode": "omp-host-patching-retired",
+      "materialRead": false
+    }
+  },
+  "implementationAgents": [
+    "gpt-5.6-sol / medium",
+    "gpt-5.6-sol / medium"
+  ],
+  "unverified": [
+    "real Cursor OAuth/model discovery",
+    "real reviewer model quality",
+    "installed-only tiny unavailable through public SDK",
+    "other platforms"
+  ],
+  "fixtures": {
+    "provider": "/tmp/rotom-permission-standalone-20260930/provider.py",
+    "driver": "/tmp/rotom-permission-standalone-20260930/run-smoke.py",
+    "pty": "/tmp/rotom-permission-standalone-20260930/host-smoke.py",
+    "stopped": true,
+    "skillDescriptionRequests": "separately classified by upstream prompt signature; cache-dependent"
+  },
+  "initialSmokeFailures": [
+    {
+      "reason": "runtime action called during extension loading",
+      "fixed": true
+    },
+    {
+      "reason": "skill description background requests initially mixed with reviewer count; non-stream fixture invalid for those requests",
+      "fixed": true
+    }
+  ],
+  "protectedInputHashesAuditContext": "Phase 12 prior to explicitly authorized local Cursor binding in Phase 13; workstation.toml subsequently changed only through validated narrow non-secret edit"
+}

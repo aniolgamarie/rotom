@@ -32,4 +32,26 @@ jobs:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
         run: .venv/bin/python -m pytest -q -p no:cacheprovider
       - name: Confirm lock remains unchanged
-        run: git diff --exit-code -- uv.lock locks/dsh
+        run: git diff --exit-code -- uv.lock locks
+
+  taskkeeper-mock:
+    # 此 job 使用已有隔离入口，只运行显式列出的 mock，不启动 Pi 宿主。
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.14.0'
+      - name: Prepare mock sandbox
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes bubblewrap
+      - name: Prepare locked mock dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund --prefix tests/fixtures/pi/tooling
+      - name: Run isolated Task Keeper mock tests
+        run: node agents/pi/packages/task-keeper/scripts/test-mock.mjs
+      - name: Confirm locks remain unchanged
+        run: git diff --exit-code -- locks tests/fixtures/pi/tooling/package-lock.json

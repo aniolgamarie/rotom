@@ -53,4 +53,6 @@ evidence_paths = ["load.json", "authentication.json", "execution.json"]
 
 此入口使用新临时 HOME，运行默认 pytest 和受限 Node mock 套件。原始输出保存到相邻的私人 `.artifacts` 目录，报告保留执行命令与退出状态。任何一个套件失败或无法运行，整体不会返回通过。
 
-native/live 参数的授权边界已经实现，但完整原生场景运行器仍在实施，当前未执行的场景返回 `not-run`，不能用版本探测代替能力通过。四个平台、最终源码／锁与真实账号的发布验收尚未完成。
+native/live 运行器已实现。2026-09-24 的候选锁摘要 `9d6a9270…` 在约定的 Linux x86_64 软件范围内取得 81/81 通过及四配方双路径冷重建证据，见 [历史关闭报告](acceptance/pi-spec-closure-20260924/README.md)。其他平台与真实账号/服务仍在[后续清单](follow-ups/pi-platform-and-live-validation.md)，未运行的场景保持 `not-run`。
+
+历史关闭不等于当前 checkout 的原生验证通过。锁、源码、运行包或策略变化后，需要匹配新身份的证据；版本探测和 Python/mock 测试不能替代 native/cold 验证。当前版本与历史候选的边界统一记录在 [Pi 支持矩阵](acceptance/pi-support-matrix.md)。

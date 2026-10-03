@@ -1,6 +1,5 @@
 """统一命令入口：显式副作用边界，输出默认脱敏。"""
 
-import json
 import inspect
 from contextlib import nullcontext
 from pathlib import Path
@@ -13,6 +12,7 @@ from .progress import Progress, failure_context
 from .schema import ConfigError
 from .storage import Conflict, Tree
 from .workspace import load_workspace
+from .presentation import command_line, emit_result, table
 
 
 def workspace(args):
@@ -23,24 +23,38 @@ def workspace(args):
   return result
 
 
-def output(w, command, result):
-  print(json.dumps({"command": command, "agent": w.agent, "profile": w.profile,
-    "instance": str(w.instance), **result}, ensure_ascii=False, sort_keys=True))
+def output(w, command, result, *, args=None):
+  emit_result({"command": command, "agent": w.agent, "profile": w.profile,
+    "instance": str(w.instance), **result}, args=args)
   return 0
 
 
 def cmd_init_local(args):
-  initialize_local(args.machine, config_home=args.local.parent.parent.parent, profile_id=args.init_profile)
-  from shlex import quote
-  selector = "" if args.machine == "default" else f"--machine {quote(args.machine)} "
-  print(f"init-local: 已创建空密钥本地配置；默认 profile 为 {args.init_profile}；下一步: ./agentcfg {selector}setup")
+  result = initialize_local(args.machine, config_home=args.local.parent.parent.parent,
+    profile_id=args.init_profile)
+  actions = {"created": "已创建", "supplemented": "已补齐", "unchanged": "无需变化"}
+  print(f"配置占位检查  {args.machine} / {result.profile}\n")
+  print(f"机器配置  {actions[result.machine_action]}\n  {result.machine_path}")
+  if result.local_fields:
+    print("  新增 URL 字段：" + ", ".join(result.local_fields))
+  print(f"密钥文件  {actions[result.secrets_action]}\n  {result.secrets_path}")
+  if result.secret_fields:
+    print("  新增 key 字段：" + ", ".join(result.secret_fields))
+  print("\n可直接编辑上述文件；查看待填写项：")
+  print("  " + command_line(args, "model", "status", profile=result.profile))
   return 0
 
 
 def cmd_profiles(args):
   from .local import available_profiles
-  for profile_id, agent in available_profiles():
-    print(f"{profile_id}\t{agent}")
+  profiles = available_profiles()
+  if sys.stdout.isatty():
+    print("可用配置\n")
+    table(("Profile", "工具"), profiles)
+    print("\n初始化或补齐：./agentcfg init-local --machine NAME --profile ID")
+  else:
+    for profile_id, agent in profiles:
+      print(f"{profile_id}\t{agent}")
   return 0
 
 
@@ -50,6 +64,12 @@ def cmd_model(args):
     return list_presets(args)
   if args.model_command == "status":
     return model_status(args)
+  if args.model_command == "key":
+    from .model_keys import set_model_key
+    return set_model_key(args)
+  if args.model_command == "url":
+    from .model_urls import set_model_url
+    return set_model_url(args)
   if args.model_command == "enable":
     return enable_preset(args)
   return add_model(args)
@@ -65,7 +85,7 @@ def cmd_validate(args):
   Progress("validate", args).stage("校验配置、引用与锁", hint="doctor")
   w, lock, candidate = prepared(args)
   return output(w, "validate", {"valid": True, "artifacts": len(candidate.artifacts),
-    "profiles_checked": w.resolved.validated_profiles, "credentials": "not-checked-offline"})
+    "profiles_checked": w.resolved.validated_profiles, "credentials": "not-checked-offline"}, args=args)
 
 
 def cmd_render(args):
@@ -80,7 +100,7 @@ def cmd_render(args):
       old = cache.read(name)
       if old is None or (old[0], old[1]) != (artifact.content, artifact.mode):
         cache.replace(name, artifact.content, artifact.mode, expected=old[2] if old else None)
-  return output(w, "render", {"artifacts": len(candidate.artifacts), "cache": str(w.cache / "rendered" / candidate.generation)})
+  return output(w, "render", {"artifacts": len(candidate.artifacts), "cache": str(w.cache / "rendered" / candidate.generation)}, args=args)
 
 
 def current_plan(w, lock, candidate):
@@ -110,7 +130,7 @@ def cmd_plan(args):
     with Tree(w.state_root) as state:
       result["upgrade"] = upgrade({"current": deployment.read_state(state)["current"], "candidate": candidate, "runtime_identity": runtime.runtime_identity(w, lock)})
   result["diagnostics"] = write_diagnostics(w, lock, plan)
-  output(w, "plan", result)
+  output(w, "plan", result, args=args)
   return 4 if plan.conflicts else 0
 
 
@@ -128,16 +148,16 @@ def migration_plan(args):
   cache = Path(w.resolved.data["machine"]["paths"]["cache_root"]) / "migration" / target_profile
   with Tree(cache, create=True) as output_tree:
     output_tree.write_state("inventory.json", deployment.json_bytes(report))
-  print(json.dumps({"command": "plan", "agent": "pi", "profile": target_profile,
+  emit_result({"command": "plan", "agent": "pi", "profile": target_profile,
     "mode": "migration-preview", "items": len(report["items"]), "blockers": len(report["blockers"]),
-    "ready_to_deploy": False, "proposal": str(cache / "inventory.json")}, ensure_ascii=False, sort_keys=True))
+    "ready_to_deploy": False, "proposal": str(cache / "inventory.json")}, args=args)
   return 0
 
 
 def cmd_apply(args):
   Progress("apply", args).stage("复核并部署配置", hint="plan")
   w, lock, candidate = prepared(args)
-  return output(w, "apply", apply_candidate(w, lock, candidate))
+  return output(w, "apply", apply_candidate(w, lock, candidate), args=args)
 
 
 def apply_candidate(w, lock, candidate, *, expected_plan=None):
@@ -167,10 +187,10 @@ def cmd_setup(args):
   progress.stage("预览部署差异", hint="plan")
   preview = current_plan(w, lock, candidate)
   summary = preview.public()
-  print(f"预览 {w.agent}/{w.profile}: {summary['changes']} 项变更，{summary['drift']} 项漂移，{summary['conflicts']} 项冲突", flush=True)
+  print(f"部署预览  {w.agent} / {w.profile}", flush=True)
+  print(f"  变更 {summary['changes']}  ·  漂移 {summary['drift']}  ·  冲突 {summary['conflicts']}", flush=True)
   if preview.conflicts or preview.drift:
-    failure_context(args, 4)
-    print("setup 已停止：存在冲突或漂移", file=sys.stderr)
+    failure_context(args, 4, reason="存在冲突或漂移，部署已停止。", hint="plan")
     return 4
   pre_sync_preflight = getattr(w.adapter, "pre_sync_preflight", None)
   if pre_sync_preflight is not None:
@@ -184,12 +204,13 @@ def cmd_setup(args):
   updated = current_plan(current, current_lock, current_candidate)
   if (current_candidate.generation != candidate.generation or current_lock.identity != lock.identity
       or updated.public() != summary):
-    failure_context(args, 4)
-    print("setup 已停止：同步期间配置或目标发生变化；请重新运行 setup", file=sys.stderr)
+    failure_context(args, 4, reason="同步期间配置或目标发生变化；请重新运行 setup。", hint="setup")
     return 4
   progress.stage("写入部署", hint="plan")
   result = apply_candidate(current, current_lock, current_candidate, expected_plan=updated)
-  print(f"部署完成 {current.agent}/{current.profile}: {result['changes']} 项变更；现在可以运行 run", flush=True)
+  state = f"已应用 {result['changes']} 项变更" if result["changes"] else "配置已同步，无需修改"
+  print(f"\n部署完成  {current.agent} / {current.profile}\n  {state}", flush=True)
+  print("下一步:\n  " + command_line(args, "run"), flush=True)
   return 0
 
 
@@ -197,7 +218,7 @@ def cmd_rollback(args):
   w = workspace(args)
   guard = getattr(w.adapter, "lifecycle_guard", None)
   with guard(w) if guard else nullcontext():
-    return output(w, "rollback", deployment.rollback(w.instance, w.state_root, w.binding))
+    return output(w, "rollback", deployment.rollback(w.instance, w.state_root, w.binding), args=args)
 
 
 def cmd_lock(args):
@@ -205,11 +226,11 @@ def cmd_lock(args):
     from .omp_dependencies import OmpBackend
     repository = Path(__file__).resolve().parents[2]
     OmpBackend().resolve_lock(repository)
-    print(json.dumps({"command": "lock", "agent": "omp", "locked": True}, ensure_ascii=False, sort_keys=True))
+    emit_result({"command": "lock", "agent": "omp", "locked": True}, args=args)
     return 0
   w = workspace(args)
   w.backend.resolve_lock(w.repository)
-  return output(w, "lock", {"locked": True})
+  return output(w, "lock", {"locked": True}, args=args)
 
 
 def cmd_sync(args):
@@ -220,7 +241,7 @@ def cmd_sync(args):
   progress.stage("同步依赖", hint="doctor")
   with progress.heartbeat():
     result = sync_backend(w, lock, progress.sync_stage)
-  return output(w, "sync", result)
+  return output(w, "sync", result, args=args)
 
 
 def cmd_run(args):
@@ -228,7 +249,8 @@ def cmd_run(args):
   w = workspace(args)
   code = runtime.run(w, cwd=args.cwd.absolute(), arguments=args.passthrough)
   if code:
-    print(f"run: 原生进程已退出（退出码 {code}）；可运行 ./agentcfg doctor 检查离线状态", file=sys.stderr)
+    print(f"run: 原生进程已退出（退出码 {code}）", file=sys.stderr)
+    print("检查离线状态：\n  " + command_line(args, "doctor"), file=sys.stderr)
   return code
 
 
@@ -240,13 +262,13 @@ def cmd_usage(args):
 def cmd_inventory(args):
   from .omp_inventory import write_inventory
   w = workspace(args)
-  return output(w, "inventory", write_inventory(w, args.source))
+  return output(w, "inventory", write_inventory(w, args.source), args=args)
 
 
 def cmd_recover(args):
   from .pi_recovery import recover
   w, result = recover(args)
-  return output(w, "recover", result)
+  return output(w, "recover", result, args=args)
 
 
 def cmd_doctor(args):
@@ -268,8 +290,9 @@ def cmd_doctor(args):
       result["input_diagnostics"] = {"diagnostic_terminal": terminal_state(),
         "readiness": result["readiness"], "host_events": {"status": "not-checked", "reason": "先修复依赖锁"},
         "note": "终端标志只描述诊断进程；不记录按键"}
-    output(w, "doctor", result)
-    print(f"doctor: 依赖锁缺失或校验失败（退出码 2）；检查后运行 ./agentcfg lock --agent {w.agent}", file=sys.stderr)
+    output(w, "doctor", result, args=args)
+    print("doctor: 依赖锁缺失或校验失败（退出码 2）；请核对仓库锁文件。", file=sys.stderr)
+    print("仅在需要重新解析依赖版本时执行：\n  " + command_line(args, "lock", "--agent", w.agent), file=sys.stderr)
     return 2
   with Tree(w.state_root) as state:
     saved = deployment.read_state(state)
@@ -315,7 +338,7 @@ def cmd_doctor(args):
   else:
     from .interaction_diagnostics import readiness
     result["readiness"] = readiness(result)
-  output(w, "doctor", result)
+  output(w, "doctor", result, args=args)
   return getattr(w.adapter, "diagnostic_exit_code", lambda _: 0)(capabilities)
 
 
@@ -347,13 +370,13 @@ def cmd_capture(args):
   checked.candidate(w.backend.read_lock(w.repository).identity)
   with Tree(w.cache / "proposals", create=True) as cache:
     cache.write_state("capture.json", deployment.json_bytes(proposal))
-  return output(w, "capture", {"captured_fields": len(projection), "proposal": str(w.cache / "proposals/capture.json")})
+  return output(w, "capture", {"captured_fields": len(projection), "proposal": str(w.cache / "proposals/capture.json")}, args=args)
 
 
 def cmd_project(args):
   from .project import initialize_openspec
   w = workspace(args)
-  return output(w, "project", initialize_openspec(w, w.backend.read_lock(w.repository), args.path.absolute()))
+  return output(w, "project", initialize_openspec(w, w.backend.read_lock(w.repository), args.path.absolute()), args=args)
 
 
 def dependency_status(w, lock):

@@ -88,8 +88,9 @@ def test_setup_real_dsh_roundtrip_and_repeat_preserves_backup(monkeypatch, capsy
   assert second["previous"] == first["previous"]
   assert len(calls) == 2
   output = capsys.readouterr().out
-  assert "预览 dsh/dsh-default" in output
-  assert "部署完成 dsh/dsh-default" in output
+  assert "部署预览  dsh / dsh-default" in output
+  assert "部署完成  dsh / dsh-default" in output
+  assert "配置已同步，无需修改" in output
 
 
 @pytest.mark.parametrize("condition", ["conflict", "drift", "pending"])
@@ -128,7 +129,7 @@ def test_setup_sync_failure_never_applies(error, exit_code, monkeypatch, capsys)
   output = capsys.readouterr()
   assert f"同步依赖 / 安装锁定依赖" in output.err
   assert f"退出码 {exit_code}" in output.err
-  assert "./agentcfg doctor" in output.err
+  assert "./agentcfg --machine work --profile dsh-default doctor" in output.err
   assert "private path canary" not in output.out + output.err
 
 
@@ -136,7 +137,7 @@ def test_setup_rechecks_target_after_sync_and_redacts_secrets(monkeypatch, capsy
   assert cli.main(["init-local", "--machine", "work"]) == 0
   canary = "private-setup-canary"
   with local_file().open("a", encoding="utf-8") as output:
-    output.write(f'canary = "{canary}"\n')
+    output.write(f'\n[secrets]\ncanary = "{canary}"\n')
 
   def mutate(self, workspace, lock, **kwargs):
     target = workspace.instance / "dsh-home/AGENTS.md"
@@ -188,6 +189,20 @@ def test_progress_heartbeat_reports_wait_without_private_data(capsys):
   output = capsys.readouterr().err
   assert "仍在进行" in output
   assert "已等待" in output
+
+
+def test_progress_heartbeat_retains_last_download_snapshot(capsys):
+  args = SimpleNamespace(command="setup")
+  progress = Progress("setup", args, interval=0.01)
+  snapshot = "OMP v18.3.0 / linux-x64 / 第 2/3 次下载正文：8.00 / 16.00 MiB（50.0%）"
+  progress.sync_stage(snapshot)
+  capsys.readouterr()
+  with progress.heartbeat():
+    time.sleep(0.04)
+  output = capsys.readouterr()
+  assert not output.out
+  assert snapshot in output.err
+  assert "距上次进度更新已等待" in output.err
 
 
 def test_sync_keeps_json_stdout_and_reports_progress_stderr(monkeypatch, capsys):

@@ -92,8 +92,8 @@ def _absolute_directory(path: Path):
     _check_ancestor(fd)
     for name in path.parts[1:]:
       child = _open_directory(fd, name)
-      os.close(fd)
-      fd = child
+      parent, fd = fd, child
+      os.close(parent)
       _check_ancestor(fd)
     yield fd
   finally:
@@ -182,6 +182,39 @@ def _check_initialization_parent(fd: int) -> None:
   info = os.fstat(fd)
   if info.st_uid != os.geteuid() or info.st_mode & 0o022:
     raise PathError("初始化父目录必须由当前用户安全控制")
+
+
+def prepare_initial_local(config_home: Path) -> None:
+  """创建并校验 init-local 容器；config_home 安全私有，受管子目录严格 0700。"""
+  try:
+    fd = os.open("/", _DIRECTORY_FLAGS)
+    try:
+      _check_ancestor(fd)
+      for name in config_home.parts[1:]:
+        try:
+          child = _open_directory(fd, name)
+        except FileNotFoundError:
+          _check_initialization_parent(fd)
+          child = _create_directory(fd, name)
+        parent, fd = fd, child
+        os.close(parent)
+        _check_ancestor(fd)
+      _check_initialization_parent(fd)
+      for name in ("agentcfg", "machines"):
+        try:
+          child = _open_directory(fd, name)
+        except FileNotFoundError:
+          child = _create_directory(fd, name)
+        parent, fd = fd, child
+        os.close(parent)
+        _check_private(fd)
+    finally:
+      os.close(fd)
+  except PathError:
+    raise InitializationError(4) from None
+  except OSError as error:
+    code = 4 if error.errno in (errno.EEXIST, errno.ELOOP, errno.ENOTDIR) else 6
+    raise InitializationError(code) from None
 
 
 def create_initial_local(config_home: Path, machine_id: str, data: bytes) -> None:

@@ -16,13 +16,13 @@
 ["providers"."kimi_tf"]
 "protocol" = "openai-compatible"
 "auth_kind" = "api-key"
-"base_url" = "https://work.oceanbase-dev.com/tokensflow/api/v1"
+"base_url_ref" = "local:tf_openai_url"
 "credential_ref" = "secret:omp_kimi_tf_key"
 
 ["providers"."zhipu_tf"]
 "protocol" = "anthropic-messages"
 "auth_kind" = "api-key"
-"base_url" = "https://work.oceanbase-dev.com/tokensflow/api/anthropic"
+"base_url_ref" = "local:tf_anthropic_url"
 "credential_ref" = "secret:omp_zhipu_tf_key"
 
 ["models"]

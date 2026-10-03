@@ -8,7 +8,7 @@ source = "agents/omp/packages/rotom-health"
 entrypoints = ["index.ts"]
 tree_digest = "a382040f693dc402fdca39134a02e4c6ca158b8f23f6a8d495de486b840067ca"
 license = "MIT"
-compatibility = { omp = "v18.3.0" }
+compatibility = { omp = "v18.4.5" }
 
 [plugins.echo-mcp]
 id = "echo-mcp"
@@ -16,4 +16,12 @@ source = "agents/omp/packages/echo-mcp"
 entrypoints = ["server.py"]
 tree_digest = "c10617b101717ec6ce399da846e165d7a6f1cfb5c2aad02d2f6c405cd187faf4"
 license = "MIT"
-compatibility = { omp = "v18.3.0" }
+compatibility = { omp = "v18.4.5" }
+
+[plugins.omp-permission-control]
+id = "omp-permission-control"
+source = "agents/omp/packages/omp-permission-control"
+entrypoints = ["standalone.ts"]
+tree_digest = "aee7cd403cb043a726a74222860654a101a0647938206d6e99033f884367f970"
+license = "MIT"
+compatibility = { omp = "v18.4.5" }

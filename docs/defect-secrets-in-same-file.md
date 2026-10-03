@@ -1,166 +1,55 @@
-# 缺陷：Secrets 与配置在同一文件中
+# Secrets 与配置同文件：已实现分离存储
 
-## 问题描述
+发现于 2026-09-17；2026-09-28 实现共享密钥文件与隐藏输入命令。当前使用说明见[本地配置](local-config.md)。
 
-当前 rotom 的 secrets（API keys）存储在 `~/.config/agentcfg/machines/<machine>.toml` 文件中，与配置信息在同一个文件。虽然文件权限设置为 0600（仅所有者可读写），但 AI 以当前用户身份运行时可以读取该文件，存在 secrets 泄露风险。
+## 原问题
 
-## 安全分析
+旧机器文件 `~/.config/agentcfg/machines/<machine>.toml` 同时包含普通配置和 `[secrets]`。即使文件为 0600、父目录为 0700，以同一用户身份工作的 Agent 在读取配置时仍可能顺带读取密钥；整份配置的分享、备份也容易夹带秘密。
 
-### 当前防护
+## 当前行为
 
-1. **文件权限**：0600（仅所有者可读写）
-2. **目录权限**：0700（仅所有者可访问）
-3. **SecretStore 类**：
-   - `__repr__` 返回 `"SecretStore()"`，不显示内容
-   - 不允许序列化
-   - 只在运行时通过 `resolve()` 返回值
+- 新建机器文件不含密钥，所有工具/profile 默认共享 `$XDG_CONFIG_HOME/agentcfg/secrets.toml`，XDG 未设置时为 `~/.config/agentcfg/secrets.toml`。
+- `model key deepseek|kimi|glm` 通过终端隐藏输入填写官方 key；额外 provider 使用 `model key <provider-id>`。命令行不接收明文 key。
+- `model add`、`model enable` 新输入的 key 同样进入共享文件，普通配置只保存 `secret:<name>` 引用。配置提交失败时只尝试回滚本次共享凭据版本，不覆盖并发修改。
+- 共享文件要求当前用户所有、0600、普通单链接文件，父目录要求 0700；拒绝链接、不安全权限和读取竞态。
+- 新 key 按 `[shared]`（官方默认）和 `[providers.<id>]`（额外 provider）分类，状态页显示密钥名与分组；组名不改变 `secret:<name>` 的全局唯一引用，跨组重复声明一律拒绝。
+- 旧共享文件的平铺 `[secrets]` 可继续读取、更新并标记旧格式；已有 key 不自动搬迁。
+- 旧机器文件 `[secrets]` 继续兼容，空占位符不会遮蔽共享值。同一个引用若在两个来源均有非空值则报错，防止悄悄使用错误账号。
+- 旧内联 key 的更新仍写回原位置并给出提示；没有自动迁移、删除或批量读取用户真实密钥。
 
-### 防护失效场景
-
-- **AI 助手访问**：AI 以当前用户身份运行，可以读取 secrets 文件
-- **代码审查**：当 AI 帮助修改配置时，可能意外读取或泄露 secrets
-- **上下文泄露**：AI 可能在对话中意外暴露 secrets
-
-### 风险等级
-
-**中等**：
-- 防止了其他系统用户访问
-- 无法防止 AI 访问
-- 在 AI 辅助开发场景下存在泄露风险
-
-## 影响范围
-
-所有使用 rotom 管理配置的用户，特别是：
-- 使用 AI 助手辅助开发的用户
-- 在共享环境中使用 AI 的用户
-- 需要代码审查的场景
-
-## 建议修复方案
-
-### 方案 1：分离 secrets 文件（推荐）
-
-将 secrets 存储在独立的文件中，通过引用方式访问：
+可在机器文件**顶层**指定另一份共享文件：
 
 ```toml
-# ~/.config/agentcfg/machines/workstation.toml
-[secrets]
-# 引用外部 secrets 文件
-secrets_file = "~/.config/agentcfg/secrets.toml"
+schema_version = 1
+secrets_file = "~/private/agentcfg/secrets.toml"
+
+[machine]
+id = "workstation"
 ```
+
+共享文件结构如下，实际值由隐藏输入命令写入：
 
 ```toml
-# ~/.config/agentcfg/secrets.toml（独立文件，0600 权限）
-bailian_coding_api_key = "sk-xxx"
-bailian_api_key = "sk-yyy"
+schema_version = 1
+[shared]
+deepseek_key = ""
+kimi_key = ""
+glm_key = ""
 ```
 
-**优点**：
-- AI 可以安全地修改主配置文件
-- secrets 文件可以独立备份和恢复
-- 可以设置更严格的访问控制
+缺失文件表示尚未配置；只更新 key 后重新 `run`，无需重新部署。模型选择或角色变化仍需 `plan`、`apply`。`model status` 只显示是否填写，不证明 key 有效。
 
-**缺点**：
-- 需要修改 rotom 代码支持 secrets_file 引用
-- 增加配置复杂度
+## 安全边界与未实现内容
 
-### 方案 2：环境变量注入
+分文件降低普通配置编辑中的误读、误分享风险，**不隔离同用户进程**。当前宿主仍通过子进程环境变量接收所需凭据，宿主启动的工具进程可能继承它们。若目标是阻止 Agent 主动读取或继承凭据，还需要独立权限/沙箱或凭据代理设计。
 
-通过环境变量传递 secrets，不存储在文件中：
+未实现自动迁移旧内联 key、`credential_ref = "env:..."`、系统钥匙串或 Vault 等外部后端。不要把这些草案语法写入当前配置。
 
-```bash
-# 在 shell 配置中
-export BAILIAN_CODING_API_KEY="sk-xxx"
-export BAILIAN_API_KEY="sk-yyy"
-```
+处理旧配置时，使用独立、无秘密的配置提案，只合并明确的非秘密字段；不要截断原文件、复制整份含密钥文件到仓库、将备份改成 0644，或让 Agent 整体读取旧机器文件。
 
-```toml
-# 配置文件中引用环境变量
-[overrides.providers.bailian_coding]
-credential_ref = "env:BAILIAN_CODING_API_KEY"
-```
+## 实现位置
 
-**优点**：
-- secrets 不存储在磁盘上
-- 可以通过 shell 配置管理
-- 支持密钥管理工具（如 1password、vault）
-
-**缺点**：
-- 需要修改 rotom 代码支持 env: 引用
-- 环境变量可能在进程列表中暴露
-- 不适合长期运行的服务
-
-### 方案 3：临时移除 secrets（当前可用）
-
-在 AI 帮助修改配置时，临时移除 secrets 段：
-
-```bash
-# 1. 备份 secrets
-grep -A 100 '^\[secrets\]' workstation.toml > secrets-backup.toml
-
-# 2. 删除 secrets 段
-sed -i '/^\[secrets\]/,$d' workstation.toml
-
-# 3. 让 AI 修改配置
-# ...
-
-# 4. 恢复 secrets
-cat secrets-backup.toml >> workstation.toml
-rm secrets-backup.toml
-```
-
-**优点**：
-- 无需修改 rotom 代码
-- 立即可用
-
-**缺点**：
-- 手动操作繁琐
-- 容易遗忘恢复
-- 不适合自动化流程
-
-### 方案 4：加密 secrets
-
-使用加密存储 secrets，运行时解密：
-
-```bash
-# 使用 gpg 加密
-gpg -c secrets.toml
-# 生成 secrets.toml.gpg
-```
-
-**优点**：
-- secrets 加密存储
-- 需要密码才能解密
-
-**缺点**：
-- 需要修改 rotom 代码支持解密
-- 需要交互式输入密码
-- 不适合自动化
-
-## 推荐实施路径
-
-1. **短期**（立即可用）：
-   - 使用方案 3（临时移除 secrets）
-   - 在文档中添加安全警告
-
-2. **中期**（1-2 周）：
-   - 实现方案 1（分离 secrets 文件）
-   - 添加 `secrets_file` 引用支持
-
-3. **长期**（可选）：
-   - 实现方案 2（环境变量注入）
-   - 支持多种 secrets 后端（文件、环境变量、vault）
-
-## 相关文件
-
-- `src/agentcfg/secrets.py`：SecretStore 实现
-- `src/agentcfg/config.py`：配置加载
-- `src/agentcfg/schema.py`：separate_local 函数
-- `~/.config/agentcfg/machines/*.toml`：用户配置文件
-
-## 发现时间
-
-2026-09-17
-
-## 状态
-
-**待修复**：当前使用方案 3 作为临时 workaround
+- `src/agentcfg/secret_files.py`：共享来源、权限检查与写入/回滚。
+- `src/agentcfg/model_keys.py`：隐藏输入入口。
+- `src/agentcfg/model_status.py`：状态与填写指引。
+- `tests/test_shared_model_keys.py`：临时 HOME 下的共享、权限、脱敏和回滚验证。

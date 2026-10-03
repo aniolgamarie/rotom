@@ -8,10 +8,14 @@ import re
 import tomllib
 from urllib.parse import parse_qsl, urlsplit
 
+from .local_values import validate_local_url
 from .merge import Provenance, merge_layers
+from .model_defaults import (complete_pi_roles, merge_model_selections,
+                             model_default_selection, validate_model_defaults)
 from .paths import PathError, configured_path, relative_path, safe_id
 from .schema import (AdapterPolicy, AdapterSchemas, AuthenticationClaim, ConfigError,
                      _bundle, separate_local, validate_document)
+from .secret_files import load_secrets
 from .secrets import SecretStore
 
 
@@ -32,6 +36,7 @@ class SourceInputs:
   registries: tuple[Path, ...] = field(default=(), repr=False)
   profiles: tuple[Path, ...] = field(default=(), repr=False)
   adapters: dict[str, AdapterSources] = field(default_factory=dict, repr=False)
+  model_defaults: Path | None = field(default=None, repr=False)
 
 
 @dataclass(frozen=True)
@@ -40,21 +45,60 @@ class Catalog:
   profiles: dict[str, dict] = field(repr=False)
   adapter_documents: dict[str, dict[str, dict]] = field(repr=False)
   adapter_schemas: AdapterSchemas = field(repr=False)
+  model_defaults: dict = field(default_factory=dict, repr=False)
 
 
-def _read_toml(path: Path) -> dict:
-  code = None
-  data = None
+def _line_column(text: str, position: int) -> tuple[int, int]:
+  position = max(0, min(position, len(text)))
+  prefix = text[:position]
+  return prefix.count("\n") + 1, position - prefix.rfind("\n")
+
+
+def _toml_error_location(error: Exception, text: str) -> tuple[int, int]:
+  line = getattr(error, "lineno", None)
+  column = getattr(error, "colno", None)
+  if type(line) is int and type(column) is int and line > 0 and column > 0:
+    return line, column
+  position = getattr(error, "pos", None)
+  if type(position) is int:
+    return _line_column(text, position)
+  # Python 3.11-3.13 仅把位置放在固定格式的异常文本末尾。
+  match = re.search(r"\(at line (\d+), column (\d+)\)$", str(error))
+  if match:
+    return int(match.group(1)), int(match.group(2))
+  if str(error).endswith("(at end of document)"):
+    return _line_column(text, len(text))
+  return 1, 1
+
+
+def _parse_toml(content: bytes, source: tuple[str, ...]) -> dict:
+  error = None
   try:
-    with path.open("rb") as source:
-      data = tomllib.load(source)
-  except (tomllib.TOMLDecodeError, UnicodeError):
-    code = "parse"
+    text = content.decode("utf-8")
+  except UnicodeDecodeError as exc:
+    prefix = content[:exc.start].decode("utf-8", errors="ignore")
+    line, column = _line_column(prefix, len(prefix))
+    error = ConfigError("parse", source + ("line", str(line), "column", str(column), "TOML"))
+  if error is None:
+    try:
+      return tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+      line, column = _toml_error_location(exc, text)
+      error = ConfigError("parse", source + ("line", str(line), "column", str(column), "TOML"))
+  raise error from None
+
+
+def _read_toml(path: Path, *, source: tuple[str, ...] = ("public", "1")) -> dict:
+  code = None
+  content = None
+  try:
+    with path.open("rb") as stream:
+      content = stream.read()
   except (OSError, ValueError):
     code = "read"
   if code:
-    raise ConfigError(code)
-  return data
+    raise ConfigError(code, source)
+  return _parse_toml(content, source)
 
 
 def load_local(path: Path, *, adapter_schemas: AdapterSchemas | None = None) -> tuple[LocalConfig, SecretStore]:
@@ -65,8 +109,9 @@ def load_local(path: Path, *, adapter_schemas: AdapterSchemas | None = None) -> 
     missing = True
   if missing:
     raise ConfigError("read")
-  ordinary, store = separate_local(document)
+  ordinary, _ = separate_local(document)
   validate_document("local", ordinary, adapter_schemas=adapter_schemas)
+  store = load_secrets(document, path)
   return LocalConfig(ordinary), store
 
 
@@ -84,11 +129,7 @@ def read_local_document(path):
     raise FileNotFoundError()
   if error:
     raise Conflict("本地配置读取不安全；检查访问权限、路径无链接、属主为当前用户、文件 0600、私人父目录 0700")
-  try:
-    return tomllib.loads(content.decode("utf-8"))
-  except (tomllib.TOMLDecodeError, UnicodeError):
-    pass
-  raise ConfigError("parse", ("local", "TOML"))
+  return _parse_toml(content, ("local",))
 
 
 def load_sources(explicit_sources: SourceInputs, *, adapter_schemas: AdapterSchemas) -> Catalog:
@@ -96,8 +137,12 @@ def load_sources(explicit_sources: SourceInputs, *, adapter_schemas: AdapterSche
   registry = {kind: {} for kind in ("providers", "models", "mcp", "rules", "skills")}
   profiles = {}
   adapter_documents = {}
-  for path in explicit_sources.registries:
-    data = _read_toml(path)
+  model_defaults = {}
+  if explicit_sources.model_defaults is not None:
+    model_defaults = _read_toml(explicit_sources.model_defaults, source=("model-defaults",))
+    validate_model_defaults(model_defaults)
+  for index, path in enumerate(explicit_sources.registries, 1):
+    data = _read_toml(path, source=("registry", str(index)))
     validate_document("registry", data)
     for kind, entities in registry.items():
       additions = data.get(kind, {})
@@ -122,23 +167,24 @@ def load_sources(explicit_sources: SourceInputs, *, adapter_schemas: AdapterSche
       elif entities.keys() & additions.keys():
         raise ConfigError("duplicate", ("registry", kind, "<key>"))
       entities.update(additions)
-  for path in explicit_sources.profiles:
-    data = _read_toml(path)
+  for index, path in enumerate(explicit_sources.profiles, 1):
+    data = _read_toml(path, source=("profile", str(index)))
     validate_document("profile", data, adapter_schemas=adapter_schemas, partial_options=True)
     if data["id"] in profiles:
       raise ConfigError("duplicate", ("profile", "<key>"))
     profiles[data["id"]] = data
-  for adapter_id, sources in explicit_sources.adapters.items():
+  for adapter_index, (adapter_id, sources) in enumerate(explicit_sources.adapters.items(), 1):
     documents = {}
     for kind in ("agent", "bindings", "plugins"):
-      data = _read_toml(getattr(sources, kind))
+      data = _read_toml(getattr(sources, kind),
+                        source=("adapter", str(adapter_index), kind))
       validate_document(kind, data, adapter_schemas=adapter_schemas, adapter_id=adapter_id)
       documents[kind] = data
     adapter_documents[adapter_id] = documents
   # profile 身份只来自已校验公共来源，不接受 local 指定 adapter。
   context = AdapterSchemas(bundles=dict(adapter_schemas.bundles),
                            profile_agents={key: value["agent"] for key, value in profiles.items()})
-  return Catalog(registry, profiles, adapter_documents, context)
+  return Catalog(registry, profiles, adapter_documents, context, model_defaults)
 
 
 @dataclass(frozen=True)
@@ -146,6 +192,8 @@ class ResolvedConfig:
   data: dict = field(repr=False)
   provenance: Provenance = field(repr=False)
   validated_profiles: int
+  local_value_refs: tuple[tuple[str, str], ...] = field(default=(), repr=False)
+  missing_local_values: tuple[tuple[str, str], ...] = field(default=(), repr=False)
 
 
 _SELECTIONS = ("providers", "models", "rules", "skills", "plugins", "mcp")
@@ -178,6 +226,38 @@ def _credential_url(value: str) -> bool:
   except ValueError:
     invalid = True
   return invalid
+
+
+def _provider_registry_layers(registry: dict, overrides: dict) -> list[tuple[str, dict]]:
+  """端点两种表示在跨层覆盖时互相替换，不允许继承后形成双字段。"""
+  base = deepcopy(registry)
+  local = deepcopy(overrides)
+  for provider_id, provider in local.get("providers", {}).items():
+    inherited = base.get("providers", {}).get(provider_id, {})
+    if "base_url" in provider:
+      inherited.pop("base_url_ref", None)
+    elif "base_url_ref" in provider:
+      inherited.pop("base_url", None)
+  return [("registry", base), ("local", local)]
+
+
+def _materialize_local_values(data: dict, local_values: dict) -> tuple[tuple[tuple[str, str], ...],
+                                                                        tuple[tuple[str, str], ...]]:
+  references = []
+  missing = []
+  for provider_id, provider in data["providers"].items():
+    reference = provider.pop("base_url_ref", None)
+    if reference is None:
+      continue
+    local_name = reference.removeprefix("local:")
+    item = (provider_id, local_name)
+    references.append(item)
+    value = local_values.get(local_name)
+    if value:
+      provider["base_url"] = validate_local_url(value)
+    else:
+      missing.append(item)
+  return tuple(references), tuple(missing)
 
 
 def _path(value: str, location: tuple[str, ...]) -> str:
@@ -313,9 +393,11 @@ def _selected_provenance(data: dict, sources: Provenance) -> Provenance:
 
 
 def resolve_config(catalog: Catalog, local: LocalConfig, *, profile_id: str | None = None,
-                   request_overrides: dict | None = None, adapter_schemas: AdapterSchemas) -> ResolvedConfig:
+                   request_overrides: dict | None = None, adapter_schemas: AdapterSchemas,
+                   allow_missing_local_values: bool = False) -> ResolvedConfig:
   """校验全部 profile，返回单一选择；不写文件，不接收 SecretStore 或运行请求参数。"""
-  if request_overrides is not None and (not isinstance(request_overrides, dict) or request_overrides):
+  if (request_overrides is not None and (not isinstance(request_overrides, dict) or request_overrides)
+      or type(allow_missing_local_values) is not bool):
     raise ConfigError("request")
   if not isinstance(catalog, Catalog) or not isinstance(local, LocalConfig) or "secrets" in local.data:
     raise ConfigError("schema", ("local",))
@@ -323,6 +405,7 @@ def resolve_config(catalog: Catalog, local: LocalConfig, *, profile_id: str | No
     key: value.get("agent") for key, value in catalog.profiles.items()})
   validate_document("local", local.data, adapter_schemas=context)
   overrides = local.data.get("overrides", {})
+  local_values = local.data.get("local_values", {})
   if set(overrides.get("profiles", {})) - set(catalog.profiles):
     raise ConfigError("reference", ("local", "overrides", "profiles", "<key>"))
   if ("default_profile" in local.data["machine"]
@@ -332,8 +415,9 @@ def resolve_config(catalog: Catalog, local: LocalConfig, *, profile_id: str | No
   if not isinstance(selected_id, str) or selected_id not in catalog.profiles:
     raise ConfigError("reference", ("profile",))
 
-  registry_layers = [("registry", catalog.registry), ("local", {
-    key: overrides[key] for key in ("providers", "models", "mcp") if key in overrides})]
+  registry_override = {
+    key: overrides[key] for key in ("providers", "models", "mcp") if key in overrides}
+  registry_layers = _provider_registry_layers(catalog.registry, registry_override)
   registry = merge_layers(registry_layers).data
   validate_document("registry", {"schema_version": 1, **registry})
   for model in registry["models"].values():
@@ -341,8 +425,11 @@ def resolve_config(catalog: Catalog, local: LocalConfig, *, profile_id: str | No
       raise ConfigError("reference", ("models", "<key>", "provider"))
   for kind, name in (("providers", "base_url"), ("mcp", "url")):
     for entity in registry[kind].values():
-      if name in entity and _credential_url(entity[name]):
-        raise ConfigError("credential-channel", (kind, "<key>", name))
+      if name in entity:
+        if kind == "providers":
+          validate_local_url(entity[name])
+        elif _credential_url(entity[name]):
+          raise ConfigError("credential-channel", (kind, "<key>", name))
 
   policies = {}
   credentials = set()
@@ -366,9 +453,25 @@ def resolve_config(catalog: Catalog, local: LocalConfig, *, profile_id: str | No
     policy = policies[key]
     defaults = {kind: [] for kind in _SELECTIONS}
     defaults.update(roles={}, agent_options={})
-    profile_layers = [("defaults", defaults), ("defaults", policy.defaults), ("profile", profile),
+    global_defaults = model_default_selection(catalog.model_defaults, profile["agent"])
+    profile_layers = [("defaults", global_defaults), ("defaults", defaults),
+                      ("defaults", policy.defaults), ("profile", profile),
                       ("local", overrides.get("profiles", {}).get(key, {}))]
     merged_profile = merge_layers(profile_layers).data
+    if catalog.model_defaults:
+      providers, models = merge_model_selections(value for _, value in profile_layers)
+      merged_profile["providers"] = providers
+      merged_profile["models"] = models
+      selection_sources = {kind: next((layer for layer, value in reversed(profile_layers)
+        if value.get(kind)), "defaults") for kind in ("providers", "models")}
+    else:
+      providers, models = merged_profile["providers"], merged_profile["models"]
+      selection_sources = {kind: next((layer for layer, value in reversed(profile_layers)
+        if kind in value), "defaults") for kind in ("providers", "models")}
+    role_defaults = complete_pi_roles(merged_profile,
+      catalog.adapter_documents[profile["agent"]]["agent"]) if catalog.model_defaults else {}
+    if role_defaults:
+      merged_profile["roles"] = {**role_defaults, **merged_profile["roles"]}
     # 必须调用原始完整 schema；partial 投影丢掉的逻辑/完整性谓词在此执行。
     validate_document("profile", merged_profile, adapter_schemas=context)
     if merged_profile["id"] != key:
@@ -378,16 +481,29 @@ def resolve_config(catalog: Catalog, local: LocalConfig, *, profile_id: str | No
       ("registry", {"plugins": policy.plugins, "adapter_documents": catalog.adapter_documents[profile["agent"]]}),
       ("defaults", {"machine": machine_defaults}),
       *((layer, {"profile": value}) for layer, value in profile_layers),
+      (selection_sources["providers"], {"profile": {"providers": providers}}),
+      (selection_sources["models"], {"profile": {"models": models}}),
+      ("defaults", {"profile": {"roles": role_defaults}}),
       registry_layers[1], ("local", {"machine": machine}),
     ])
     data = _selected(combined.data, merged_profile)
-    _callback(bundle.validate, "resolved", data)
+    local_value_refs, missing_local_values = _materialize_local_values(data, local_values)
+    if not missing_local_values:
+      _callback(bundle.validate, "resolved", data)
     _authentication(bundle, data)
     if key == selected_id:
+      if missing_local_values and not allow_missing_local_values:
+        raise ConfigError("local-value", ("local_values", "<key>"))
       # 未选择配方仍校验结构/引用；机器绑定就绪只由选中适配器检查。
-      if bundle.validate_selected is not None:
+      if not missing_local_values and bundle.validate_selected is not None:
         _callback(bundle.validate_selected, data)
-      selected = ResolvedConfig(data, _selected_provenance(data, combined.provenance), len(catalog.profiles))
+      provenance = dict(_selected_provenance(data, combined.provenance))
+      # 物化后的端点来自私人值；来源诊断只记录层名，不记录本地名称或值。
+      for provider_id, _ in local_value_refs:
+        if "base_url" in data["providers"][provider_id]:
+          provenance[("providers", provider_id, "base_url")] = "local"
+      selected = ResolvedConfig(data, Provenance(provenance),
+        len(catalog.profiles), local_value_refs, missing_local_values)
   return selected
 
 

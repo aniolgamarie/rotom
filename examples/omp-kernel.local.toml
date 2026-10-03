@@ -19,15 +19,22 @@ inherit = []
 # [machine.environment.values]
 # CODEX_DELEGATE_PROXY_URL = "http://127.0.0.1:10808"
 
-# 公共 catalog 默认使用当前企业 TokensFlow 网关。只有机器确实需要兼容镜像时，
-# 才在私人 local 取消以下注释并填写；不要暗自换成模型ID或协议不兼容的官方端点。
-# [overrides.providers.kimi_tf]
-# base_url = "https://compatible-private-gateway.example/v1"
-#
-# [overrides.providers.zhipu_tf]
-# base_url = "https://compatible-private-gateway.example/anthropic"
+# 企业地址只保存在仓库外的这份私人机器文件里；空值表示尚未填写。
+# 推荐运行 model url kimi_tf / model url zhipu_tf 隐藏输入完整服务地址。
+# 需要匹配公开 provider 的协议和模型 ID，不能任意换成厂商官方端点。
+[local_values]
+tf_openai_url = ""
+tf_anthropic_url = ""
 
-# 这两个值只存在于仓库外私人文件。空值允许离线检查，但 run 会以退出码 3 拒绝。
-[secrets]
-omp_kimi_tf_key = ""
-omp_zhipu_tf_key = ""
+# API key 保存在共享 agentcfg/secrets.toml；隐藏输入：
+# ./agentcfg --local /绝对路径/本文件 --profile omp-kernel model key kimi_tf
+# ./agentcfg --local /绝对路径/本文件 --profile omp-kernel model key zhipu_tf
+
+# omp-kernel 使用仓库内 omp-permission-control 扩展与独立权限运行包。
+# 主审省略时使用会话当前主模型；需要便宜模型时，可在对应 profile 的
+# agent_options.permission_control 中设置 reviewer_model 为已选择的模型 ID。
+# remote_fallback_model 是独立远程降级模型，只有主审超时、服务失败、无效输出、
+# unsupported 或 unavailable 时才尝试；有效 allow/ask/deny、取消或机械证据失败不复审。
+# local/lfm2.5-230m 仅在完整安装时兜底 ask/deny，审批流程不会下载它。
+# 会话命令：/permission-control smart、manual、status、explain。
+# 本示例不会安装或切换本机 OMP；交付前需完成 patched runtime 构建与锁核验。
