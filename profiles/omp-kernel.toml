@@ -20,6 +20,7 @@
 
 ["agent_options"."permission_control"]
 "default_mode" = "smart"
+"native_bash" = true
 "remote_fallback_model" = "omp-zhipu_tf-glm-5.3-flash"
 "fallback_model" = "local/lfm2.5-230m"
 

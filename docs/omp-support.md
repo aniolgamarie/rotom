@@ -28,3 +28,8 @@
 本轮自检扩展更新后受影响回归 57 项通过。宿主运行置于断网命名空间；观察到启动 DNS 尝试被阻断，不宣称原生宿主完全没有网络行为。
 
 2026-09-24 用户确认本机无其他平台/账号验收环境，已将上述未验证项转入[OMP-F01–F05](follow-ups/omp-platform-and-live-validation.md)。当前 spec 按[修订范围](../specs/002-manage-omp-config/scope-change-20260924.md)已完成（62/62）；后续验证不阻塞当前完成状态，仍不计为通过。
+
+
+Phase 14 原生 Bash 插件已在独立 worktree 完成实现和隔离验收（2026-10-04）；真实 Cursor 和日常部署仍未执行。已验证的原型同名注册、公开委托和 scoped Settings 机制见[可行性证据](acceptance/omp-bash-wrapper-feasibility-20261003.json)；该证据不代表生产插件、真实 Cursor wire 或日常部署通过。生产验证、高级能力和平台结果另行登记。
+
+生产插件纯测试、固定 SDK、23 组官方宿主与真实人工 UI 见[Phase 14 验收](acceptance/omp-native-bash-approval-20261004.md)。

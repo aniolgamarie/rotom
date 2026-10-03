@@ -42,6 +42,7 @@ def test_kernel_deployment_preserves_reviewed_native_configuration(tmp_path):
   assert permission == workspace.adapter._native_permission(workspace.resolved.data)
   assert permission["schemaVersion"] == 2
   assert permission["defaultMode"] == "smart"
+  assert permission["nativeBash"] is True
   assert permission["reviewer"] == "session"
   assert permission["remoteFallback"] == {"provider": "zhipu_tf", "model": "glm-5.3-flash"}
   assert permission["fallback"] == {"provider": "local", "model": "lfm2.5-230m", "installedOnly": True}
