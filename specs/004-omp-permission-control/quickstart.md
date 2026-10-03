@@ -78,7 +78,7 @@ main = "cursor/kimi-k3-high:high"
 
 ## 7. 原生 Bash 包装实施状态
 
-2026-10-03 的 Phase 14 在独立 worktree 实施；本文的新增入口描述是当前交付目标，最终已通过项见验收记录。本机原有部署不会因 worktree 改动自动更新，不能从配置 ready 推断 Cursor 路径已经覆盖。
+Phase 14 在独立 worktree 完成插件实现与隔离验收；真实 Cursor 服务和日常部署仍未执行，已通过项见验收记录。本机原有部署不会因 worktree 改动自动更新，不能从配置 ready 推断 Cursor 路径已经覆盖。
 
 `/permission-control status` 应区分配置与覆盖状态，并展示实际入口、原生委托和 scoped Settings 可用性。`explain` 区分原生 deny/prompt、主审传输不支持、远程备用、票据过期与不支持的执行上下文；正常的 bash=prompt 不意味着包装后的所有调用仍须原生人工。
 

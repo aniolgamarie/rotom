@@ -1,21 +1,22 @@
 # omp-permission-control
 
 这是 OMP 的独立权限控制插件源码目录。默认入口为 `standalone.ts`，只使用
-官方扩展 API 注册 `permission_bash` 工具和 `/permission-control` 命令，不修改、替换或
-monkey patch 宿主源码。旧 `index.ts` 及 core 文件只通过 `./legacy` 导出保留历史记录，
+官方扩展 API 注册 `permission_bash`、可选原生 `bash` 包装和 `/permission-control` 命令，不修改或
+monkey patch 宿主源码。同名包装与 `ctx.invokeTool` 委托属于官方文档支持的扩展接口。旧 `index.ts` 及 core 文件只通过 `./legacy` 导出保留历史记录，
 不是当前交付入口。
 
 `permission_bash` 覆盖模型发起的 raw non-interactive Bash：它在自身 `execute` 内完成
 原生 pattern 下限、模型审查或人工确认，然后调用公开的 `omp.exec("bash",
 ["--noprofile", "--norc", "-c", command], ...)`。它不改变 command，不读取 shell
-startup 或 direnv。服务、后台 job、PTY 和用户直接调用原生 Bash 仍遵循宿主自己的行为；
-插件不宣称继承或统一这些路径。插件缺失、配置无效、审查故障、无 UI、取消或会话/模型
+startup 或 direnv。raw 入口不继承服务、后台 job、PTY 或原生执行上下文。
+启用 `nativeBash` 时，普通原生 Bash 先审查，再通过公开 `ctx.invokeTool` 委托；首批只接受
+command/cwd/timeout，未知 async/service/PTY 字段显式阻止，不剥离参数换成另一后端。插件缺失、配置无效、审查故障、无 UI、取消或会话/模型
 变化都会阻止 `permission_bash` 执行，原生 Bash 的 prompt 策略保持可恢复。
 
-插件在 session start/switch/branch 边界从公开 `getAgentDir()/permission-control.json` 读取
+插件在注册及 session start/switch/branch 边界从公开 `getAgentDir()/permission-control.json` 读取
 schemaVersion 2 的封闭配置；它不监视会话中途的文件变化，也不声称等价于宿主动态 policy、
 credential 或版本管理。
-插件拒绝未知字段和符号链接。配置包含默认 session-only 模式、主审/远程 fallback、
+插件拒绝未知字段和符号链接。配置包含默认 session-only 模式、可选 nativeBash 布尔开关、主审/远程 fallback、
 installed-only tiny 声明、插件与 policy 摘要及原生 patterns。当前公开 API 没有可靠的
 installed-only 本地模型查询，因此 tiny 状态固定为 unavailable，不下载也不调用内部 worker。
 
@@ -39,6 +40,8 @@ authorization 和 `LOW_RISK_AUTHORIZED`。完整 command、cwd 与真实 user �
 - `package.json`：包名、独立入口与 OMP 兼容范围；不含安装脚本或运行时下载。
 - `standalone.ts`：公开扩展 API 接线、session-only 状态、命令、工具和公开 `omp.exec` 执行。
 - `standalone-reviewer.ts`：有界模型输入、严格结果协议和一次远程 fallback。
+- `native-bash.ts`：公开原生审批与 Setting 句柄、scoped/global 设置同源检查及上下文核验。
+- `native-bash.test.ts`：虚构原生适配器下的下限、设置变更与执行上下文验证。
 - `standalone-shell-analysis.ts`：用于 native patterns 的保守通用简单命令解析。
 - `standalone.test.ts`：临时假上下文、假 transport 和假 backend 的独立插件测试。
 - `tests/`：扩展纯逻辑测试，由独立 build-inputs 锁校验后的 Bun 运行。
@@ -86,3 +89,34 @@ session、generation 和当前模型。新建、恢复、切换和分支会话�
 [OMP 依赖说明](../../../../docs/omp-dependencies.md) 与
 [本特性验收记录](../../../../docs/acceptance/omp-permission-control.md)。仓库隔离测试、
 离线编译、真实宿主 smoke 和真实模型评测是不同证据，不能互相替代。
+
+
+## 原生 Bash 包装（Phase 14）
+
+公开 `agent_options.permission_control.native_bash` 渲染为 sidecar `nativeBash`，缺省 false；
+kernel 配方明确开启。注册时决定是否包装，不在活动会话中通过手工改 sidecar 切换入口。
+启用后保留原生 active bash，使 Cursor 按固定工具名发起的 shell 调用可进入插件。
+
+包装与 tool_call 安全钩子位于同一闭包；execute 必须具有钩子捕获的一次性调用票据，不能把
+缺钩子视为通过。票据绑定完整参数、cwd、会话、generation、当前执行模型和真实设置指纹。
+审批后改参、取消、切模式/模型/会话或改变相关设置均使票据失效，最多原生委托一次。
+
+原生 per-tool deny、pattern deny/prompt 和 critical prompt 不被外层 permission_bash=allow
+或模型结果覆盖。普通 exec/native allow 仍进入模型审查；默认 bash=prompt 保留插件缺失保护。
+执行端与会话设置不同源时人工或阻止；不靠 cwd 相同猜测设置实例。startup/.envrc/worktree
+重写等未知上下文不能自动批准，也不在审批前运行 shell snapshot 或 direnv preflight。
+默认 interceptor/auto-background 的开关本身不是强制人工的理由，实际结果通过原生委托保留。
+
+Phase 14 生产插件已通过纯测试、固定 SDK 类型检查及隔离官方宿主（含真实人工 UI）；
+真实 Cursor 服务调用与日常部署尚未执行。status 区分配置与覆盖；
+公开元数据不足以证明最终注册来源时不报告完整 coverage ready。真实 Cursor、模型质量、
+高级执行和其它平台分别登记，原型或历史 patch 通过不能转移为本次通过。
+
+
+官方宿主会删除封闭工具 schema 的未知键再重试，因此工具参数 schema 保留未知字段，
+由插件在 hook/execute 两边精确拒绝；配置与 sidecar 仍封闭。传输层可另行转换 strict
+schema，本地拒绝保证不能由 wire schema 或 TypeScript strict 类型检查替代。
+
+Shell snapshot 私有缓存无法查询加载前历史；首批支持从新 CLI 进程启动时加载插件。
+观察到 startup、不同 HOME 或继承 shell 函数后，未知缓存状态在插件生命周期内保持人工，
+即使删除 rc 也不会恢复自动批准；热加载到已有执行进程尚未支持。

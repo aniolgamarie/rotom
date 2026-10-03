@@ -38,3 +38,9 @@ tf_anthropic_url = ""
 # local/lfm2.5-230m 仅在完整安装时兜底 ask/deny，审批流程不会下载它。
 # 会话命令：/permission-control smart、manual、status、explain。
 # 本示例不会安装或切换本机 OMP；交付前需完成 patched runtime 构建与锁核验。
+
+# 公共 kernel 在通过验收的新版本中启用原生 Bash 包装；旧配置缺省关闭。
+# 若需要保留仅 permission_bash 的旧入口，可显式覆盖：
+# [overrides.profiles.omp-kernel.agent_options.permission_control]
+# native_bash = false
+# 开关不改变 reviewer_model、remote_fallback_model 或原生 bash=prompt 的故障保护。

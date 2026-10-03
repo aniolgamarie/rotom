@@ -55,11 +55,13 @@ ROLE_THINKING = closed({key: THINKING for key in PUBLIC_ROLES})
 IDENTITY_TEXT = {"type": "string", "minLength": 1, "pattern": "^[^\\x00-\\x1f\\x7f]+$(?![\\s\\S])"}
 SHA256 = {"type": "string", "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"}
 PERMISSION_CONTROL = closed({"default_mode": enum("smart", "manual"), "reviewer_model": IDENTITY_TEXT,
+  "native_bash": BOOL,
   "remote_fallback_model": IDENTITY_TEXT,
   "fallback_model": {"type": "string", "const": "local/lfm2.5-230m"}}, ("default_mode",))
 RUNTIME_VARIANT = enum("official")
 NATIVE_PERMISSION_CONTROL = closed({
   "schemaVersion": {"type": "integer", "const": 2}, "defaultMode": enum("smart", "manual"),
+  "nativeBash": BOOL,
   "reviewer": {"oneOf": [{"type": "string", "const": "session"},
     closed({"provider": IDENTITY_TEXT, "model": IDENTITY_TEXT}, ("provider", "model"))]},
   "remoteFallback": closed({"provider": IDENTITY_TEXT, "model": IDENTITY_TEXT}, ("provider", "model")),
@@ -100,6 +102,8 @@ def resolve_permission_control(data):
       tools.get("approvalMode") == "yolo"):
     raise ConfigError("omp-permission-native-protection")
   result = {"defaultMode": config["default_mode"], "reviewer": "session"}
+  if "native_bash" in config:
+    result["nativeBash"] = config["native_bash"]
   requested = tuple(config[key] for key in ("reviewer_model", "remote_fallback_model") if key in config)
   identities = {}
   if requested:

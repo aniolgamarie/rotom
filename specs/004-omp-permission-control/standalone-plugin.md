@@ -74,3 +74,8 @@
 - FR-056：默认验收使用临时 HOME、假模型/执行器和网络阻断；固定官方 SDK 类型检查不得伪造声明。官方宿主 fixture 与真实 Cursor OAuth 分别登记；既有 102/102 模型预算已用尽，新收费请求必须有新授权。真实 Cursor、高级能力和其它平台未运行时不得计作通过。
 
 实施分包与固定版本可行性证据见[原生 Bash 改造计划](../../docs/follow-ups/omp-cursor-native-approval-plan-2026-10-03.md)。T088—T094 为旧独立入口及日常迁移历史，不改写为本次包装已验收。
+
+
+2026-10-04 参数保留补充：官方校验会对封闭工具 schema 的未知键错误进行 coercion，删除后才发出 tool_call。工具参数 schema 因此保留未知字段，由插件在 hook 和 execute 两边精确拒绝；配置/sidecar schema 仍封闭。OpenAI 的 model-facing schema 可由宿主转换为 strict 形式，但本地输入边界不可依赖 wire schema 或 TypeScript strict 检查替代。首轮 async 被删除问题已作为真实宿主回归记录，不删除失败证据。
+
+Shell snapshot 的缓存只以 shell 为键，公开接口无法查询加载前的历史内容；首批支持新 CLI 进程从启动就加载插件。插件观察到 startup/不同 HOME/继承函数的不确定性后保持生命周期内粘性人工状态，删除 rc 文件不恢复自动批准。热加载至已执行命令的旧进程不在已验证范围。

@@ -258,9 +258,13 @@ async function attempt(target: "session" | ReviewTarget, prompt: string, runtime
 }
 
 export async function reviewCommand(input: { command: string; cwd: string; userMessages: string[];
+  parameters?: { cwd?: string; timeout?: number };
+  executionContext?: Record<string, string | number | boolean | null>;
   reviewer: "session" | ReviewTarget; remoteFallback?: ReviewTarget }, runtime: ReviewRuntime,
   signal?: AbortSignal): Promise<ReviewSequenceResult> {
-  const prompt = JSON.stringify({ command: input.command, cwd: input.cwd, genuineUserMessages: input.userMessages });
+  const prompt = JSON.stringify({ command: input.command, cwd: input.cwd, parameters: input.parameters,
+    executionContext: input.executionContext,
+    genuineUserMessages: input.userMessages });
   if (new TextEncoder().encode(prompt).length > MAX_INPUT_BYTES)
     return { status: "input-too-large", primary: { status: "failure", called: false, health: "invalid" } };
   const totalMs = runtime.deadlines?.totalMs ?? REVIEW_TIMEOUT_MS;

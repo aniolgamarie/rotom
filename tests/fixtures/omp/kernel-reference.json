@@ -638,7 +638,8 @@
     "remoteFallback": {
       "provider": "zhipu_tf",
       "model": "glm-5.3-flash"
-    }
+    },
+    "nativeBash": true
   },
   "permissionDelivery": {
     "runtimeVariant": "official",

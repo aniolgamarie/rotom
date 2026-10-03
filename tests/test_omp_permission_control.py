@@ -47,6 +47,33 @@ def test_remote_fallback_resolves_independently_from_session_reviewer():
     "remoteFallback": {"provider": "fictional", "model": "small"}}
 
 
+@pytest.mark.parametrize("enabled", [False, True])
+def test_native_bash_opt_in_is_bound_to_delivered_policy(enabled):
+  from agentcfg.omp import OmpAdapter
+  data = configured()
+  adapter = OmpAdapter(Path(__file__).resolve().parents[1])
+  baseline = adapter._native_permission(data)
+  assert "nativeBash" not in baseline
+  data["profile"]["agent_options"]["permission_control"]["native_bash"] = enabled
+  result = resolve_permission_control(data)
+  assert result["nativeBash"] is enabled
+  delivered = adapter._native_permission(data)
+  assert delivered["nativeBash"] is enabled
+  assert delivered["policyVersion"] != baseline["policyVersion"]
+  Draft202012Validator(NATIVE_PERMISSION_CONTROL).validate(delivered)
+
+
+@pytest.mark.parametrize("value", [None, "true", 0, 1, [], {}])
+def test_native_bash_rejects_non_boolean_configuration(value):
+  data = configured()
+  data["profile"]["agent_options"]["permission_control"]["native_bash"] = value
+  with pytest.raises(ConfigError, match="omp-permission-config"):
+    resolve_permission_control(data)
+  native_value = native()
+  native_value["nativeBash"] = value
+  assert not Draft202012Validator(NATIVE_PERMISSION_CONTROL).is_valid(native_value)
+
+
 def test_official_unselected_profile_has_no_permission_object():
   data = configured()
   data["profile"]["plugins"] = []

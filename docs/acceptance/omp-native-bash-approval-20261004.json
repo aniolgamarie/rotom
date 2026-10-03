@@ -1,0 +1,357 @@
+{
+  "phase": 14,
+  "date": "2026-10-04",
+  "feature": "004-omp-permission-control",
+  "branch": "feat/omp-native-bash-approval",
+  "baseCommit": "75584755a08b17dd1e0048d4c0f844c55bd672a5",
+  "designCommit": "1dac0d2",
+  "identity": {
+    "ompTag": "v18.4.5",
+    "ompCommit": "79808c3bf8f8cd9826decc63e3e18b13035f64f8",
+    "linuxX64BinarySha256": "42c710239b3fc30b9759424f973c6c143709935d5752be7eec8d7b011f40d864",
+    "officialLock": "7d3c261942b428a2a461a202273014eec6fe694ef5cb417fb27b42e00e49af33",
+    "pluginDigest": "572d340ee622f87a764a5848c413b939fb24bd187ff681b993e14786c5e67355",
+    "sourceFiles": {
+      "standalone.ts": "a5be87c237de4cc7c4e5a040eeb50eafad289be5927595bad4ab50b9b153f771",
+      "standalone-reviewer.ts": "6a541987a3d22c9068f516a7bd6a5ea5ff4f27bccd826efa26ab87fda9383c1c",
+      "standalone.test.ts": "54ba6ebaf99a45b47e9eaa6198b86222776aa84c68614765bf3c83aa3e2567d4",
+      "native-bash.ts": "9f177a0d2b445b2ffeefd23c04c5003a5deef923aabff8c41b6eb8acd5bc6053",
+      "native-bash.test.ts": "bd49d77b28da83ce155d9e62d171ed953c7a1cda84ef7f10e78d13ad93201b9d"
+    }
+  },
+  "implementationModels": {
+    "executor": "gpt-5.6-sol/medium",
+    "scout": "gpt-5.6-luna/medium",
+    "primary": "architecture, configuration, review, host acceptance",
+    "finalRegressionExecutor": "gpt-6.1-sol/medium (executor role)",
+    "finalEvidenceScout": "gpt-6-luna/high (scout role)"
+  },
+  "checks": {
+    "targetedBun": {
+      "passed": 44,
+      "failed": 0,
+      "assertions": 155
+    },
+    "packageBun": {
+      "passed": 335,
+      "failed": 0,
+      "assertions": 1240
+    },
+    "pristineSdkTsgo": {
+      "exitCode": 0,
+      "diagnostics": 0
+    },
+    "pythonRegression": {
+      "passed": 131,
+      "skipped": 7,
+      "seconds": 25.13,
+      "skipReason": "retired patched-host materials"
+    },
+    "officialHost": {
+      "paidRequests": 0,
+      "cases": [
+        {
+          "case": "native-allow",
+          "passed": true,
+          "executionObserved": true,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "compound-allow",
+          "passed": true,
+          "executionObserved": true,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "native-nonzero",
+          "passed": true,
+          "executionObserved": true,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "native-interceptor",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "native-deny",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "pattern-deny",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "pattern-prompt",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "review-ask-terminal",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "review-deny-terminal",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "remote-fallback",
+          "passed": true,
+          "executionObserved": true,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1,
+            "fixture-remote": 1
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "primary-unsupported",
+          "passed": true,
+          "executionObserved": true,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-remote": 1
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "manual-no-ui",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "unknown-async",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "unknown-service",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "unknown-pty",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "after-approval-override",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "observerApplied": true
+        },
+        {
+          "case": "after-approval-params",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "observerApplied": true
+        },
+        {
+          "case": "user-startup",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "login-startup",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "envrc",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "native-disabled",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "plugin-missing",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "invalid-config",
+          "passed": true,
+          "executionObserved": false,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "observerApplied": false
+        },
+        {
+          "case": "raw-allow",
+          "passed": true,
+          "executionObserved": true,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "observerApplied": false
+        }
+      ]
+    },
+    "realTerminalHumanApproval": {
+      "case": "manual-real-ui-approve",
+      "promptShown": true,
+      "approveSent": true,
+      "nativeExecutionObserved": true,
+      "fixtureRequests": {
+        "fixture-title": 1,
+        "fixture-exec": 2
+      },
+      "paidRequests": 0,
+      "officialBinaryUnchanged": true,
+      "fixtureProcessTerminatedAfterCheck": true,
+      "passed": true
+    },
+    "sourceAndOfficialAssetIdentityUnchanged": true,
+    "finalLockRegression": {
+      "passed": 31,
+      "failed": 0,
+      "seconds": 26.62
+    }
+  },
+  "firstAttempts": [
+    {
+      "scope": "officialHost",
+      "passed": 16,
+      "failed": 1,
+      "case": "unknown-async",
+      "effect": "harmless pwd executed after SDK removed async",
+      "fix": "preserve unknown tool parameters, reject exact keys in hook and execute"
+    },
+    {
+      "scope": "realTerminal",
+      "passed": false,
+      "effect": "fixture entered onboarding before any tool or model request",
+      "fix": "public setupVersion=2 in isolated fixture"
+    },
+    {
+      "scope": "queue-regression",
+      "passed": 40,
+      "failed": 2,
+      "effect": "stale native and raw calls blocked execution but stranded subsequent approval queue",
+      "fix": "release acquired queue gates on early stale returns; deterministic microtask regressions"
+    },
+    {
+      "scope": "bash-login-regression",
+      "passed": 9,
+      "failed": 1,
+      "effect": "startup inventory omitted a sole .bash_login; supported login context assessed allow",
+      "fix": "include .bash_login in startup inventory and verify sticky uncertainty and native deny priority",
+      "boundary": "conservative startup inventory; official ordinary Bash uses embedded Brush and snapshot sources .bashrc, not evidence that .bash_login was executed"
+    }
+  ],
+  "protected": {
+    "upstreamSourcePatch": false,
+    "officialBinaryPatch": false,
+    "historicalPatchAssetsChanged": false,
+    "dailyDeploymentChanged": false,
+    "accountDatabaseAccess": false,
+    "externalModelRequests": 0,
+    "priorPaidBudget": "102/102 unchanged"
+  },
+  "remaining": {
+    "realCursorWire": "not-run; new request budget required",
+    "dailyDeployment": "not-run; verify instance lease before plan/apply",
+    "advancedAsyncServicePty": "explicitly rejected",
+    "otherPlatforms": "not-run",
+    "localTiny": "unavailable via public API"
+  },
+  "limits": [
+    "new CLI process loads plugin from startup; preexisting private snapshot cache cannot be queried",
+    "uncertain startup/HOME/inherited functions remain sticky for plugin lifetime",
+    "application approval, not an OS sandbox; other tools and external filesystem races excluded",
+    "SDK may adapt wire schema; exact-key rejection at local boundaries is required"
+  ]
+}
