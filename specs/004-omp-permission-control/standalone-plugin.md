@@ -4,8 +4,8 @@
 
 ## 当前需求
 
-- FR-040：使用未修改的官方 OMP 运行包。插件只使用公开扩展 API，禁止宿主源码补丁、同名原生工具替换、私有模块或运行时 monkey patch。
-- FR-041：注册独立工具 `permission_bash`。工具的执行函数在模型/人工决定完成后调用公开 `omp.exec`，每次请求最多发起一次实际 Bash 执行；插件缺失或执行函数异常不能把原生 Bash 改成默认允许。原生 `bash` 保持人工保护。
+- FR-040：使用未修改的官方 OMP 运行包。插件只使用公开扩展 API，禁止宿主源码补丁、私有模块或运行时 monkey patch。允许按官方接口文档使用 `registerTool()` 注册同名 `bash` 包装，并通过公开 `ctx.invokeTool()` 委托保留的原生实现；不得改写宿主对象或调用私有执行函数。
+- FR-041：注册独立工具 `permission_bash`。工具的执行函数在模型/人工决定完成后调用公开 `omp.exec`，每次请求最多发起一次实际 Bash 执行；插件缺失或执行函数异常不能把原生 Bash 改成默认允许。可显式启用原生 `bash` 包装，两入口共用审批与会话状态。配方保留原生 `bash=prompt` 与 `permission_bash=allow`；插件缺失时回到原生保护，包装缺少配置、可信调用票据或委托能力时必须阻止。
 - FR-042：模型审查完整命令、cwd 和真实用户消息，承担语义风险与授权判断。普通 `ls -la` 不得因为旧读取证明不支持隐藏项或长格式而直接人工。可完整解析的简单与复合命令都审查完整操作；无法可靠核对明确禁止/必须人工规则时保守询问，不按只读命令名允许表冒充智能。
 - FR-043：明确配置的 deny/prompt 规则仍是模型不可覆盖的边界，从同一 profile 的 `runtime.bash.patterns` 派生，不维护第二套用户规则来源。无 UI、取消、超时、输出无效或缺少真实用户来源时不能获得默许。
 - FR-044：主审优先显式 `reviewer_model`，省略时绑定当前执行模型。主审运行故障/不支持/无效输出才尝试一次显式远程备用；相同实际模型去重，有效 allow/ask/deny 终止链。引用错误在配置期失败。输出必须严格校验；allow 仅限低风险且授权充分。
@@ -13,7 +13,7 @@
 - FR-046：保留四条 `/permission-control smart|manual|status|explain` 命令。模式只影响当前会话，新建/恢复重置。status/explain 无推理、认证刷新和下载副作用；显示独立工具覆盖范围及真实来源。模式切换/取消后在途批准不得继续执行。
 - FR-047：配置放在受管 `permission-control.json`，不向官方 `config.yml` 注入专用宿主字段。整文件所有权、封闭 schema、普通文件/符号链接边界、plugin tree digest 和 policy digest 均验证；部署通过正常三方比较移除旧受管字段，不改账号、会话或凭据。
 - FR-048：Cursor 模型发现只使用官方配置与公开接口。启用模型不得放宽私人 HOME 或外来项目资源来源限制；管理器前置检查必须拒绝不受管 Cursor 项目资源。真实 OAuth 发现和模型质量无新证据时保留未验证。
-- FR-049：新插件当前执行非交互 `bash --noprofile --norc -c`，不声称继承原生 service/job/PTY、direnv、interceptor、worktree 重写及后台管理语义。不提供 OS 沙箱、不消除外部竞态，也不宣称接管 eval/MCP/所有子代理。
+- FR-049：`permission_bash` 执行非交互 `bash --noprofile --norc -c`，不继承原生 startup/direnv/interceptor/job/PTY/worktree 语义。启用后的原生 `bash` 通过公开委托保留宿主执行路径，首批只支持完整 `command/cwd/timeout` 参数。async、service、PTY 或未知参数显式阻止，不剥离后执行。默认 interceptor 与自动后台配置不因开关本身强制人工；可变 startup、实际 `.envrc` 和 worktree 重写等不可核实上下文须人工或阻止。不提供 OS 沙箱、不消除外部竞态，也不接管 eval/MCP/所有子代理。
 
 ## 接口与交付
 
@@ -23,6 +23,7 @@
 {
   "schemaVersion": 2,
   "defaultMode": "smart",
+  "nativeBash": true,
   "reviewer": "session",
   "remoteFallback": {"provider": "zhipu_tf", "model": "glm-5.3-flash"},
   "fallback": {"provider": "local", "model": "lfm2.5-230m", "installedOnly": true},
@@ -33,7 +34,7 @@
 }
 ```
 
-摘要占位仅说明字段，不能作为生产配置。`nativePatterns` 的每项只含 `match` 与 `approval`。插件入口为 `standalone.ts`，不调用历史 `registerPermissionController`。工具外层仅 `permission_bash` 配置允许，审批责任在其真实执行函数内；原生 Bash 保持 prompt，插件未注册时原生保护仍在。
+摘要占位仅说明字段，不能作为生产配置。`nativePatterns` 的每项只含 `match` 与 `approval`。插件入口为 `standalone.ts`，不调用历史 `registerPermissionController`。可选 `nativeBash` 缺省为 false，公开配置为 `agent_options.permission_control.native_bash`，kernel 明确开启。原生包装以 `permission_bash` 为外层 policyKey；执行函数必须独立检查真实原生 deny/prompt 下限，不能被外层 allow 覆盖。原生 Bash 配置保持 prompt，插件未注册时保护仍在。
 
 ## 计划与验证
 
@@ -48,7 +49,7 @@
 | 状态 | 项目 |
 |---|---|
 | 完成 | T088—T092：基本原则、公开 API、独立工具、sidecar/官方运行包、锁与限定验收 |
-| 进行中 | 无当前实现任务；本机日常迁移已按后续授权完成 |
+| 进行中 | Phase 14：原生 Bash 包装、配置、锁与分层验证；开发分支 `feat/omp-native-bash-approval`，基线 `7558475` |
 | 失败待决策 | 无 |
 | 环境不足未验证 | 本轮尚未出现环境阻塞；真实 Cursor、模型质量及其它平台未执行 |
 
@@ -61,3 +62,15 @@
 - FR-050：用户在官方 UI 选择的 Cursor 动态模型可通过显式 `agent_options.native_model_roles` 持久化为本机非秘密意图；当前仅支持官方启用的 `cursor/model[:thinking]`。按公开角色键渲染原有 `modelRoles` 字段，优先于该角色的静态公共模型映射。未知角色、无效标识、思考级别或未启用的 Cursor 必须失败。不得伪造 Cursor API-key/static model、绕过原生登录、删除启动资源守卫或直接修改部署基线。主审显式配置及远程备用策略独立。
 
 本机迁移原生默认选择时采用窄字段编辑与正常三方比较；仅改变明确的私人角色意图，账号、秘密、其它覆盖保持不变。真实模型调用不属于本次启用检查。
+
+
+## 2026-10-03：Cursor 原生 Bash 接入
+
+- FR-051：原生包装按显式布尔开关注册，缺省 false，kernel 配方 true；开关参与受管 policy 身份。配置读取与执行安全检查位于同一插件闭包，不拆成可独立加载的安全扩展与执行扩展。
+- FR-052：在公开 `tool_call` 事件内捕获真实 scoped Settings 及调用 ID；执行必须匹配一次性票据中的完整参数、cwd、会话、generation、模型和相关设置指纹。缺失、重放、参数改写、模式/会话/模型/策略变更或取消均不能沿用许可，最多委托一次。
+- FR-053：使用公开 `BashTool.approval()` 与 Setting 句柄核对实际原生策略。per-tool deny 与原生 deny 直接阻止；显式 pattern prompt、critical prompt 必须人工。普通 exec/allow 仍进入审查，默认 bash=prompt 是插件缺失保护，不能导致所有包装调用跳过审查直接人工。执行前再核验下限与上下文。
+- FR-054：审查输入包含完整命令、真实用户授权、参数、cwd 和影响执行的已知上下文。实际执行端读取全局 Settings，首批要求其已初始化且与捕获的会话 Settings 同一实例，并在执行前重核；不满足时人工或阻止，不能以 cwd 相同代替实例身份。未知可变资源保守处理，不在审批前运行 startup、direnv 或 shell snapshot 生成；不把环境秘密发送到远程模型。公开接口无法证明的高级执行与调度能力明确标注，不能换成权限更弱的后端。
+- FR-055：status 将配置就绪与覆盖就绪分开，显示实际入口、原生委托和 scoped Settings 可用性、各审查层调用数与健康。explain 使用固定原因码区分原生下限、主审传输不支持、备用决定、故障、票据失效和执行范围不支持，不显示原始命令、环境或模型自由文本。
+- FR-056：默认验收使用临时 HOME、假模型/执行器和网络阻断；固定官方 SDK 类型检查不得伪造声明。官方宿主 fixture 与真实 Cursor OAuth 分别登记；既有 102/102 模型预算已用尽，新收费请求必须有新授权。真实 Cursor、高级能力和其它平台未运行时不得计作通过。
+
+实施分包与固定版本可行性证据见[原生 Bash 改造计划](../../docs/follow-ups/omp-cursor-native-approval-plan-2026-10-03.md)。T088—T094 为旧独立入口及日常迁移历史，不改写为本次包装已验收。

@@ -1,14 +1,14 @@
 # Implementation Plan: OMP 权限管控
 
-**Branch**: `main`（实际 Git 分支；未新建功能分支） | **Date**: 2026-09-29 | **Spec**: [spec.md](spec.md)
+**Branch**: `feat/omp-native-bash-approval`（Phase 14，基线 `7558475`） | **Date**: 2026-10-03 | **Spec**: [spec.md](spec.md)
 
 **Feature**: `004-omp-permission-control`。setup-plan 的 `BRANCH` 是 feature pointer 推导的标识，不代表已切换 Git 分支。
 
-**Status**: 仓库实现、限定验收与本机迁移完成；参见 [独立插件迁移计划](standalone-plugin.md#计划与验证)。T001—T087/Phase 11 是历史补丁交付，不能继续构建发布；本文件下文保留历史设计与验收身份。
+**Status**: T088—T094 旧独立入口与本机迁移完成；Phase 14 原生 Bash 包装正在实施；参见 [独立插件迁移计划](standalone-plugin.md#计划与验证)。T001—T087/Phase 11 是历史补丁交付，不能继续构建发布；本文件下文保留历史设计与验收身份。
 
 ## Summary
 
-**当前架构**：官方未改动 OMP + 独立 `permission_bash` 工具 + 受管 `permission-control.json`。模型和人工审批位于工具执行函数内，仅通过公开 API 发起命令。原生 Bash 保持 prompt；不再使用宿主 bridge、私有执行计划或 patched standalone。宪章第 VI 项适用，旧计划的补丁许可失效。当前接口、能力取舍和验证步骤以[独立插件修订](standalone-plugin.md)为准。
+**当前架构**：官方未改动 OMP + 独立 `permission_bash` 工具 + 可选原生 `bash` 包装 + 受管 `permission-control.json`。模型和人工审批位于工具执行函数内，仅通过公开 API 发起命令。原生 Bash 配置保持 prompt，启用包装时先审批再公开委托；不再使用宿主 bridge、私有执行计划或 patched standalone。宪章第 VI 项适用，旧计划的补丁许可失效。当前接口、能力取舍和验证步骤以[独立插件修订](standalone-plugin.md)为准。
 
 **以下为历史方案**：
 
@@ -187,3 +187,16 @@ T080 runtime `b1566c3e211f0dbd71d1849509a7f3b10bb27651602f1ca6fc5b51bd1f7ccbe4` 
 | combined runtime | `06e42249ac791b39fd66d7a5d30c5988742eea876fa38ba19178d6adf018ebe2` |
 
 Phase 11 新资产已完成正式离线构建、锁/receipt核验和266项材料化及相关OMP回归（96.59s，无跳过）；core 291 pass / 1085 assertions，宿主检查见本轮记录。Linux glibc x64临时HOME真实standalone通过主审503一次→远程Anthropic完整审批一次→pwd成功结果一次，primary1/remote1/tiny0/human0，permit pending→consumed；new/resume、missing-plugin pre-spawn exit5及rollback通过。固定服务main2/primary-failure1/remote-review1，外部模型0，服务已停止。 详细命令与结果见[验收记录](../../docs/acceptance/omp-permission-control.md)和host JSON的remoteFallbackDelivery20260930。
+
+
+## Phase 14：原生 Bash 审批（当前实施）
+
+本轮基于主分支公开修改全部提交后的 `7558475`，仅在独立 worktree 开发；不部署未验收产物，不改日常账号或上游源码。规格为 FR-040—FR-056，详细设计与固定 v18.4.5 可行性证据见 [原生 Bash 改造计划](../../docs/follow-ups/omp-cursor-native-approval-plan-2026-10-03.md)。
+
+1. 修正旧同名包装禁令，补齐可开关配置、一次性票据、scoped Settings、原生下限与覆盖状态的合同及任务追踪。
+2. 同一扩展闭包内捕获 tool_call，审批后通过 invokeTool 委托原生；raw 入口共用安全状态，保留不同执行能力边界。只支持 command/cwd/timeout，未知参数失败。
+3. kernel 默认 interceptor/auto-background 和无 .envrc 的 direnv auto 必须验证；未知 startup/.envrc/worktree 重写不能伪装成已审裸命令。
+4. 默认纯测试与管理器回归、pristine SDK 类型检查通过后，执行已授权的临时 HOME 官方宿主 fixture。真实 Cursor 请求需新预算，未运行则单独标记。
+5. 插件字节稳定后刷新普通官方资产锁并验证受管交付；不刷新历史补丁 receipt，不削弱损坏/漂移/活动实例守卫。验收后本地提交，合入与日常部署依赖相应验证和活动锁条件。
+
+默认测试不启动真实宿主；官方 fixture、真实 Cursor wire、模型质量和其它平台是不同证据。gpt-5.6-sol/medium 负责插件实现与对应测试，主代理负责合同、管理器配置、关键安全审查和最终验收。每项任务区分完成、进行中、失败待决策、环境不足未验证。

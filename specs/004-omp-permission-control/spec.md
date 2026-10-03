@@ -1,18 +1,18 @@
 # Feature Specification: OMP 权限管控
 
-**Feature Branch**: 未创建；本次在 `main` 编写，规格目录独立
+**Feature Branch**: `feat/omp-native-bash-approval`（Phase 14）；既有规格与 T001—T094 在 `main` 完成
 
 **Feature Directory**: `specs/004-omp-permission-control`
 
 **Created**: 2026-09-29
 
-**Status**: 独立插件仓库实现、限定验收及本机迁移完成；T001—T087 为历史补丁交付，当前需求由 [独立插件修订](standalone-plugin.md) 覆盖。
+**Status**: 旧独立插件与本机迁移完成；Phase 14 原生 Bash 接入正在 worktree 实施。T001—T087 为历史补丁交付，当前 FR-040—FR-056 由 [独立插件修订](standalone-plugin.md) 覆盖。
 
 **Input**: 根据本会话已确认需求整理：为自用 OMP 增加 `omp-permission-control`，在会话内切换权限模式；以独立、可配置的低成本模型审查操作，未配置时使用会话主模型；远程 fallback 只在主审运行失败时接替完整审查；本地 tiny 最后作受限故障兜底，不参与有效决定复审。插件源码保存在 rotom，由 `omp-kernel` 选择并受管加载；实现、交付与验证范围见任务和验收记录；本轮不改日常账号或活动会话。
 
 ## User Scenarios & Testing *(mandatory)*
 
-以下是原则修订前的历史规格。当前 FR-040—FR-049 和验证边界见[独立插件修订](standalone-plugin.md)，不再要求或允许宿主补丁。历史用户目标中的模型选择、会话模式与审批能力继续保留；宿主 bridge、最终内部执行计划和 tiny 私有服务要求已撤销。
+以下是原则修订前的历史规格。当前 FR-040—FR-056 和验证边界见[独立插件修订](standalone-plugin.md)，不再要求或允许宿主补丁。历史用户目标中的模型选择、会话模式与审批能力继续保留；宿主 bridge、最终内部执行计划和 tiny 私有服务要求已撤销。
 
 ### User Story 1 - 智能审查完整命令副作用 (Priority: P1)
 

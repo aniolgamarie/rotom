@@ -4,7 +4,7 @@
 
 ## 1. 工具与配置
 
-`omp-kernel` 选择官方未改动 OMP 与本地 `omp-permission-control` 插件。插件注册独立 `permission_bash`，在自己的执行函数中先完成审查或人工确认，再调用公开执行 API。原生 Bash 保持 prompt。模型通过工具说明选择受管工具；插件缺失或失败时不能让原生 Bash 自动放行。
+`omp-kernel` 选择官方未改动 OMP 与本地 `omp-permission-control` 插件。插件保留独立 `permission_bash`，并通过可选 `native_bash` 开关注册原生 `bash` 包装；kernel 明确开启，旧配置缺省关闭。两个入口先完成审查或人工确认，原生入口通过公开 `invokeTool` 委托官方实现。原生 Bash 配置仍为 prompt；插件未注册时恢复该保护，缺票据/配置/委托能力时阻止执行。
 
 审批配置位于受管原生 profile 的 `permission-control.json`；官方 `config.yml` 不含 `permissionControl`、`disabledModelProviders` 等专用补丁字段。手工修改 sidecar 会由正常漂移/冲突与启动前完整性检查处理，不把原生账号文件纳入管理。
 
@@ -38,7 +38,7 @@ fallback_model = "local/lfm2.5-230m"
 
 模型审查完整命令与真实用户上下文。普通 `ls -la` 进入主审，不再因旧读取证明只支持部分选项而直接人工。明确配置的 deny/prompt 是模型不能放宽的边界；无法可靠识别这些边界、缺上下文、取消或决定无效时保持询问/阻止。
 
-独立工具执行非交互 Bash，不加载 profile/rc。不继承原生 service/job/PTY、direnv、interceptor 或 worktree 改写，也不接管所有 eval/MCP/子代理操作。这是应用层审批，不是 OS 沙箱，无法消除文件系统外部竞态。
+`permission_bash` 仍执行不加载 profile/rc 的非交互 Bash。原生包装首批只接受 command/cwd/timeout，保留原生 interceptor 与普通命令的后台管理设置；实际 startup/.envrc/worktree 重写等未知上下文须人工。async/service/PTY/未知参数明确阻止，不宣称完整高级调度等价，也不接管所有 eval/MCP/子代理操作。这是应用层审批，不是 OS 沙箱，无法消除文件系统外部竞态。
 
 ## 5. 验证与日常迁移
 
@@ -74,3 +74,12 @@ main = "cursor/kimi-k3-high:high"
 ```
 
 绑定只影响相应执行角色，不改变reviewer_model和remote_fallback_model的优先级；不自动登录或发现账号模型。本机已按2026-09-30后续授权完成上述窄配置与部署，默认Cursor选择保留，最终doctor为offline-ready、无漂移/冲突，完整启动准入通过；见验收Phase13。前文sync/plan/apply仍适用于其它机器或下一次更新，不是要求本机重复迁移。
+
+
+## 7. 原生 Bash 包装实施状态
+
+2026-10-03 的 Phase 14 在独立 worktree 实施；本文的新增入口描述是当前交付目标，最终已通过项见验收记录。本机原有部署不会因 worktree 改动自动更新，不能从配置 ready 推断 Cursor 路径已经覆盖。
+
+`/permission-control status` 应区分配置与覆盖状态，并展示实际入口、原生委托和 scoped Settings 可用性。`explain` 区分原生 deny/prompt、主审传输不支持、远程备用、票据过期与不支持的执行上下文；正常的 bash=prompt 不意味着包装后的所有调用仍须原生人工。
+
+显式主动主审保持优先；当主审跟随 Cursor 且 OAuth transport 不支持时，尝试既有远程 GLM 备用，不切换执行模型。本地 tiny 仍 unavailable。真实 Cursor smoke 需要新的请求授权，之前的 102/102 账本不变。

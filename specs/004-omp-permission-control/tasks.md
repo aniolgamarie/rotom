@@ -625,3 +625,28 @@ Phase 12 实际证据：Bun 24 pass / 67 assertions，pristine SDK strict 类型
 完成＝官方依赖准备和首轮6项迁移；进行中＝T093—T094；失败待决策＝无；环境不足未验证＝实际Cursor OAuth/模型调用仍未尝试。本阶段不访问账号库、不新增模型请求。
 
 Phase 13 完成：T093—T094。Cursor OAuth 明确声明与native角色覆盖正反回归59 pass；本机首轮迁移6项、无冲突，原生Cursor默认选择保留。通过render_edit+Tree原子0600窄编辑三个非秘密字段范围，其它TOML语义未改；后二次plan/apply变更0、漂移0、冲突0，doctor offline-ready、依赖installed、运行包匹配、无恢复/live。完整运行路径准入通过（过滤SecretRef并使用launch callback，不启动宿主）；official SHA与plugin identity不变。12项其余保护输入不变、模型预算不变。完成＝T093—T094；进行中＝无；失败待决策＝无；环境不足未验证＝无本轮阻塞；真实Cursor认证/模型调用及其它平台仍未尝试。详细记录见验收Phase13及standalone evidence.dailyDeployment。
+
+
+## Phase 14：Cursor 原生 Bash 智能审批
+
+2026-10-03 用户授权按可行性方案实施，并要求先将已有公共修改提交 main，再从对齐基线的 worktree 开始。基线 `7558475`，开发分支 `feat/omp-native-bash-approval`。此阶段不改写 T001—T094 历史证据；FR-040—FR-056 为当前合同。
+
+- [X] T095 修订 spec/standalone-plugin/plan 与任务，消除同名包装禁令及 raw-only 覆盖冲突；追踪配置、票据、原生下限、模型链、默认上下文与分层证据。
+- [ ] T096 在同一公开扩展闭包实现可选 native bash 包装、真实 scoped Settings 捕获、一次性 tool_call 票据、完整参数绑定、取消/生命周期失效与最多一次 invokeTool；缺票据或能力即阻止。
+- [ ] T097 验证真实原生 deny/pattern prompt/critical prompt 下限及执行前重核，覆盖 kernel interceptor/auto-background/无 envrc 默认上下文；未知 startup/direnv/worktree/高级参数显式人工或阻止。
+- [ ] T098 保持主动主审→远程备用→本地不可用→人工选择，两个入口共用审查状态；status 区分配置与覆盖，explain 提供脱敏原因码；有效 ask/deny 不复审。
+- [X] T099 扩展 closed schema/render：可选 native_bash/nativeBash 布尔开关，缺省 false，kernel true，开关参与 policy identity；验证无效值、旧配置及原生故障保护。
+- [ ] T100 完成纯模块、管理器回归与固定 pristine SDK strict 检查；按受影响范围复核 diff，不修改上游/凭据/历史补丁资产。
+- [ ] T101 用临时 HOME 和本地虚构 provider 单独验证生产插件在官方宿主的加载、真实委托、下限/无 UI/票据/设置变更阻止、原生结果与默认上下文；记录首次失败与修复。
+- [ ] T102 获得新增请求预算后验证真实 Cursor 原生 shell 路径、远程备用审查、无害复合读取和禁止/故障保护；未执行不得标记通过。
+- [ ] T103 稳定插件后刷新普通锁、更新 README/quickstart/支持矩阵和验收；本地原子提交准确说明范围，不推送；验收与实例锁条件满足后合入、plan/apply/doctor 保留账号及恢复边界。
+
+| 状态 | 当前内容 |
+|---|---|
+| 完成 | main 六个公共基线提交、开发分支对齐 `7558475`；T095 合同/计划与任务；T099 配置/schema 与定向验证 53 pass、3 历史 skip、4 deselected；既有原型证据保持原身份 |
+| 进行中 | T096—T098：生产插件；T100—T103：后续验收/交付 |
+| 失败待决策 | 无当前阻塞 |
+| 环境不足未验证 | 真实 Cursor wire 及本轮日常部署尚未执行；旧付费预算 102/102 已耗尽，需新预算；其它平台与高级参数未验证 |
+
+
+Phase 14 中间验收（2026-10-04）：配置定向 53 pass/3 历史 skip；受影响 OMP permission/kernel/dependencies/pipeline/discovery 五组 131 pass/7 历史 skip，25.13s。测试采用真实 UID 的隔离临时 HOME，不启动宿主、不联网、不调用真实模型。T100 尚未完成，生产插件纯测试与 pristine SDK 检查仍进行中。源码独立核查确认原生执行读取全局 Settings，已补入 FR054 的同源门槛；插件正在落实该门槛，不把配置 ready 计作 coverage ready。日常部署和 102/102 请求账本不变。

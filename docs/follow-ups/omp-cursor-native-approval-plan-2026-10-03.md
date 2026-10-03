@@ -1,6 +1,6 @@
 # Cursor 原生 Bash 智能审批：独立插件方案与可行性
 
-状态：可行性关键机制已验证；生产插件改造尚未实施，日常部署不变。日期：2026-10-03。
+状态：可行性关键机制已验证；生产改造正在 `feat/omp-native-bash-approval` worktree 实施，基线 `7558475`。日常部署不变。日期：2026-10-03。
 
 ## 问题与结论
 
@@ -41,7 +41,7 @@ allow 仅允许进入插件自己的审批函数，不等于批准执行。插�
 ## 审批顺序与设置来源
 
 1. **捕获可信设置与调用。** 在公开 `tool_call` 事件中取得 `findScopedSettings(ctx.cwd)`。上游 runner 在此事件上调用 `withActiveSettings(this.settings, ...)`，这是捕获时机依据。保存实际 Settings 引用、toolCallId、会话 ID、generation、当前模型身份、规范化完整参数与 cwd。事件外不能凭 cwd 调用查找函数后假设得到了同一会话设置。
-2. **检查有效执行上下文。** 从公开 Setting 句柄读取影响执行的配置；使用实际会话 Settings 构造只用于审批的 `BashTool(ToolSession)`。不调用它的 execute，不用默认 Settings 或管理器 sidecar 摘要冒充会话设置，不复制其私有 matcher。只使用公共导出和配置句柄，不使用 rawValue/writeValue 等内部 plumbing。
+2. **检查有效执行上下文。** 从公开 Setting 句柄读取影响执行的配置；使用实际会话 Settings 构造只用于审批的 `BashTool(ToolSession)`。不调用它的 execute，不用默认 Settings 或管理器 sidecar 摘要冒充会话设置，不复制其私有 matcher。只使用公共导出和配置句柄，不使用 rawValue/writeValue 等内部 plumbing。执行端 `executeBash` 读取全局 `Settings.init()`，故首批必须确认全局已初始化、与 scoped 会话设置为同一实例，并在执行前重核；仅 cwd 匹配不足以证明同源，不一致时明确人工或阻止。
 3. **保留原生下限。** 原生 bash per-tool deny 或 `BashTool.approval()` 的 deny 立即阻止；显式 pattern prompt、critical override 必须人工确认。普通 exec tier、native allow 只是允许进入智能审查，不绕过审查模型。YOLO 不可关闭插件自身的安全下限。语法或执行上下文不在支持范围时转人工，无法明确呈现实际行为则阻止。
 4. **运行模式与模型链。** manual 直接人工；smart 按下述主审/fallback 策略审查。有效 allow 只在低风险且用户授权充分时生效；ask 转人工；deny 阻止。
 5. **执行前再次核验。** 完整参数、cwd、generation、会话、模型、相关 Settings 指纹均与审批时一致，重新运行原生下限判定。变化则废弃票据，重新审批或阻止，不沿用旧 allow。票据一次性消费后，最多调用一次 `ctx.invokeTool(params,{signal,onUpdate})`。
@@ -106,6 +106,6 @@ allow 仅允许进入插件自己的审批函数，不等于批准执行。插�
 
 已授权的隔离宿主：`.venv/bin/python .cache/omp-wrapper-feasibility-20261002/host/run-proof.py`；需要真实宿主独立授权，不属于默认测试。fixture provider 只在 loopback，不使用账号或外部推理。
 
-本轮已完成原型、可行性验证和方案文档；未修改生产插件、受管配方、依赖锁、本机配置或日常运行包。执行工作由 gpt-5.6-sol/medium 子代理完成，源码证据由 gpt-5.6-luna/medium 子代理搜集，主代理完成设置探针、隔离宿主验证和关键边界验收。
+可行性阶段完成原型、验证和方案文档；该阶段未修改生产插件、受管配方、依赖锁、本机配置或日常运行包。后续实施已获授权，在公共旧修改提交 main 并对齐 worktree 后开始；生产改造进度由 spec Phase 14/T095—T103 追踪，不能把前面的原型结果当作生产通过。执行工作由 gpt-5.6-sol/medium 子代理完成，源码证据由 gpt-5.6-luna/medium 子代理搜集，主代理完成设置探针、隔离宿主验证和关键边界验收。
 
 直接导入 Cursor 分派类的失败只限制此种探针方法，不是生产入口依赖；生产入口只需要已运行验证的 SDK、BashTool 和设置句柄。Cursor 是否实际经过包装最终仍须真实端到端验证，不能因源码推导而省略。
