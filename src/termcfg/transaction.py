@@ -17,7 +17,8 @@ from .home_targets import atomic_target_bytes, atomic_target_link, inspect_targe
 from .lease import operation_lease, repository_lease
 from .preview import Preview, PlannedTarget, build_preview
 from .secret_boundary import admit_existing
-from .state import journal_file, private_dir, read_journal, read_state, state_file, write_json
+from .state import (journal_file, private_dir, read_journal, read_state,
+                    require_no_pending_recovery, state_file, write_json)
 
 
 @contextmanager
@@ -374,8 +375,7 @@ def recover(machine: MachineSelection) -> dict:
 
 
 def rollback_preview(machine: MachineSelection, component: str) -> dict:
-  if journal_file(machine).exists():
-    raise TermcfgError(4, "recovery_pending", "./termcfg recover")
+  require_no_pending_recovery(machine)
   state = read_state(machine)
   previous = state["previous"].get(component)
   if not previous:

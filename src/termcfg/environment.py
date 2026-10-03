@@ -10,7 +10,7 @@ from .config import MachineSelection
 from .errors import TermcfgError
 from .home_targets import inspect_target
 from .packages import current_platform, installed_core, installed_plugins
-from .state import journal_file, read_journal, read_state
+from .state import journal_exists, read_journal, read_state
 
 
 def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) -> dict:
@@ -56,7 +56,7 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
         unverified.append("service_effect_unverified")
     else:
       service = {"service": "not_applicable"}
-    if journal_file(machine).exists():
+    if journal_exists(machine):
       blockers.append("recovery_pending")
     for item in catalog:
       if item.component != component:
@@ -83,7 +83,7 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
 def status_report(machine: MachineSelection, components: tuple[str, ...]) -> dict:
   environment = inspect_environment(machine, components)
   state = read_state(machine)
-  pending = journal_file(machine).exists()
+  pending = journal_exists(machine)
   journal = read_journal(machine) if pending else None
   catalog = load_catalog()
   for component in components:

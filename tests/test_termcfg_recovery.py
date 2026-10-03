@@ -9,7 +9,7 @@ import pytest
 from termcfg.cli import main
 from termcfg.config import read_machine
 from termcfg.preview import build_preview
-from termcfg.state import read_state, state_file, write_json
+from termcfg.state import private_dir, read_state, state_file, write_json
 from termcfg.transaction import rollback_preview
 from termcfg import transaction
 
@@ -65,6 +65,60 @@ def test_non_tty_rollback_requires_fresh_preview_id(isolated_environment, capsys
   assert plan["plan_id"]
   assert main(["rollback", "--component", "zsh", "--plan-id", "0" * 64]) == 2
   assert main(["rollback", "--component", "zsh", "--plan-id", plan["plan_id"]]) == 0
+
+
+def test_dangling_journal_link_blocks_all_gates_without_being_replaced(isolated_environment):
+  from termcfg.environment import inspect_environment, status_report
+  from termcfg.errors import TermcfgError
+  assert main(["init-local", "--component", "zsh"]) == 0
+  machine = read_machine("default")
+  plan_id = build_preview(machine, ("zsh",)).plan_id
+  private_dir(machine.private_state_root)
+  journal = machine.private_state_root / "journal.json"
+  journal.symlink_to(machine.private_state_root / "missing-journal-target")
+
+  with pytest.raises(TermcfgError) as caught:
+    build_preview(machine, ("zsh",))
+  assert (caught.value.code, caught.value.reason) == (4, "recovery_pending")
+  environment = inspect_environment(machine, ("zsh",))
+  assert "recovery_pending" in environment["zsh"]["required_blockers"]
+  with pytest.raises(TermcfgError) as caught:
+    status_report(machine, ("zsh",))
+  assert caught.value.code == 4
+  with pytest.raises(TermcfgError) as caught:
+    rollback_preview(machine, "zsh")
+  assert (caught.value.code, caught.value.reason) == (4, "recovery_pending")
+  assert main(["apply", "--component", "zsh", "--plan-id", plan_id]) == 4
+  assert journal.is_symlink()
+  assert journal.readlink() == machine.private_state_root / "missing-journal-target"
+  assert not (isolated_environment.home / ".zshenv").exists()
+  assert not (isolated_environment.home / ".zshrc").exists()
+
+
+def test_corrupt_journal_blocks_all_gates_without_being_overwritten(isolated_environment):
+  from termcfg.environment import status_report
+  from termcfg.errors import TermcfgError
+  assert main(["init-local", "--component", "zsh"]) == 0
+  machine = read_machine("default")
+  plan_id = build_preview(machine, ("zsh",)).plan_id
+  private_dir(machine.private_state_root)
+  journal = machine.private_state_root / "journal.json"
+  original = b'{"private": "synthetic malformed journal"'
+  journal.write_bytes(original)
+  journal.chmod(0o600)
+
+  for operation in (lambda: build_preview(machine, ("zsh",)),
+                    lambda: rollback_preview(machine, "zsh")):
+    with pytest.raises(TermcfgError) as caught:
+      operation()
+    assert (caught.value.code, caught.value.reason) == (4, "recovery_pending")
+  with pytest.raises(TermcfgError) as caught:
+    status_report(machine, ("zsh",))
+  assert caught.value.code == 2
+  assert main(["apply", "--component", "zsh", "--plan-id", plan_id]) == 4
+  assert journal.read_bytes() == original
+  assert not (isolated_environment.home / ".zshenv").exists()
+  assert not (isolated_environment.home / ".zshrc").exists()
 
 
 def test_committed_rollback_cleanup_failure_keeps_committed_state(isolated_environment, monkeypatch):
