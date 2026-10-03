@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "platform": "linux-x64",
+  "upstreamSource": {
+    "commit": "62bc57be1b03ef0802a33cf7f5f530e534527531",
+    "archiveSha256": "edcc0f93a0ab0c0223d0651bba3624c55a32d25494a43b0257ea626be1dff97d"
+  },
+  "dependencyLock": {
+    "path": "locks/omp/upstream/bun.lock",
+    "sha256": "eaf18ef55ef20a21991d66417054d44528ad7767df294e710a5c24c4ce2b5c87"
+  },
+  "tools": [
+    {
+      "name": "bun",
+      "version": "1.4.0",
+      "cacheKey": "sha256/33d56b070be6a9e3da0ab013038b43d1645d0534ca811ecdba4472599117eb4b",
+      "sha256": "33d56b070be6a9e3da0ab013038b43d1645d0534ca811ecdba4472599117eb4b"
+    }
+  ],
+  "dependencyArtifacts": [
+    {
+      "cacheKey": "sha256/46ab144e81134c00633752ad3a474a52605984e47bcf1ee565d462934ad6a8c5",
+      "sha256": "46ab144e81134c00633752ad3a474a52605984e47bcf1ee565d462934ad6a8c5",
+      "size": 646784300
+    }
+  ]
+}

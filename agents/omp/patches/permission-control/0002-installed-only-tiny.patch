@@ -1,0 +1,408 @@
+diff --git a/packages/coding-agent/src/cli.ts b/packages/coding-agent/src/cli.ts
+index 389bea6..741edcc 100755
+--- a/packages/coding-agent/src/cli.ts
++++ b/packages/coding-agent/src/cli.ts
+@@ -183,6 +183,11 @@ const TTS_WORKER_ARG = "__omp_worker_tts";
+ const MNEMOPI_EMBED_WORKER_ARG = "__omp_worker_mnemopi_embed";
+ 
+ async function runWorkerEntrypoint(arg: string | undefined): Promise<boolean> {
++	if (arg === "__omp_worker_permission_tiny") {
++		const { startPermissionTinyWorker } = await import("./permission-control/tiny-installed-worker");
++		await startPermissionTinyWorker();
++		return true;
++	}
+ 	if (arg === TINY_WORKER_ARG) {
+ 		await runTinyWorker();
+ 		return true;
+diff --git a/packages/coding-agent/src/permission-control/review-services.ts b/packages/coding-agent/src/permission-control/review-services.ts
+new file mode 100644
+index 0000000..496243b
+--- /dev/null
++++ b/packages/coding-agent/src/permission-control/review-services.ts
+@@ -0,0 +1,183 @@
++import type { ModelRegistry } from "../config/model-registry";
++import type { ReviewServices, SingleReviewCall } from "./core/reviewer";
++
++type PassiveRegistry = ModelRegistry & {
++  permissionReviewAuthIsPassive?: (model: Parameters<ModelRegistry["getApiKey"]>[0]) => boolean;
++  resolvePermissionReviewHeaders?: (model: Parameters<ModelRegistry["getApiKey"]>[0]) => Record<string, string> | undefined;
++};
++type Reply = Awaited<ReturnType<ReviewServices["reviewOnce"]>>;
++const encoder = new TextEncoder();
++
++async function readBounded(response: Response, signal: AbortSignal): Promise<unknown> {
++  const reader = response.body?.getReader();
++  if (!reader) throw new Error("PERMISSION_REVIEW_RESPONSE_INVALID");
++  const chunks: Uint8Array[] = [];
++  let total = 0;
++  try {
++    for (;;) {
++      if (signal.aborted) throw new Error("PERMISSION_REVIEW_CANCELLED");
++      const { done, value } = await reader.read();
++      if (done) break;
++      total += value.byteLength;
++      if (total > 64 * 1024) throw new Error("PERMISSION_REVIEW_RESPONSE_INVALID");
++      chunks.push(value);
++    }
++    const bytes = new Uint8Array(total);
++    let offset = 0;
++    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
++    return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
++  } finally {
++    try { await reader.cancel(); } catch { /* 固定失败状态，不传播服务端正文。 */ }
++  }
++}
++
++function decodeWire(body: any, api: string, maximumBytes: number, maximumTokens: number): Reply {
++  let text: unknown;
++  let tokens: unknown;
++  if (api === "anthropic-messages") {
++    if (!body || body.stop_reason !== "end_turn" || !Array.isArray(body.content) ||
++        !body.content.length || body.content.some((part: any) => part?.type !== "text" || typeof part.text !== "string"))
++      return { status: "service-failure" };
++    text = body.content.map((part: any) => part.text).join("");
++    tokens = body.usage?.output_tokens;
++  } else {
++    const choice = body?.choices?.[0];
++    if (!Array.isArray(body?.choices) || body.choices.length !== 1 || choice?.finish_reason !== "stop" ||
++        choice.message?.tool_calls?.length || choice.message?.function_call || choice.message?.refusal)
++      return { status: "service-failure" };
++    text = choice.message?.content;
++    tokens = body.usage?.completion_tokens;
++  }
++  if (typeof text !== "string" || encoder.encode(text).length > maximumBytes ||
++      !Number.isSafeInteger(tokens) || (tokens as number) < 0 || (tokens as number) > maximumTokens)
++    return { status: "service-failure" };
++  return { status: "ok", text, outputTokens: tokens as number, toolCalls: [] };
++}
++
++type PreparationBinding = Readonly<Pick<SingleReviewCall, "requestId" | "model" | "deadline" | "signal">>;
++type Failure = { status: "unavailable" | "unsupported" | "timeout" | "cancelled" | "service-failure" };
++export type PreparedReview = Failure | Readonly<{
++  status: "ready";
++  /** 仅供宿主脱敏，禁止传给扩展、审查请求、状态或审计。 */
++  knownSecrets: readonly string[];
++  bind(input: string): ReviewServices["reviewOnce"];
++}>;
++
++async function bounded<T>(deadline: number, signals: readonly AbortSignal[],
++    work: (signal: AbortSignal) => Promise<T>): Promise<T | Failure> {
++  const abort = new AbortController();
++  let expired = false;
++  const cancel = () => abort.abort();
++  const failure = (): Failure => ({ status: signals.some(signal => signal.aborted) ? "cancelled" :
++    expired || performance.now() >= deadline ? "timeout" : "service-failure" });
++  if (signals.some(signal => signal.aborted)) return { status: "cancelled" };
++  if (!Number.isFinite(deadline) || performance.now() >= deadline) return { status: "timeout" };
++  for (const signal of signals) signal.addEventListener("abort", cancel, { once: true });
++  const timer = setTimeout(() => { expired = true; cancel(); }, Math.max(0, deadline - performance.now()));
++  try {
++    const stopped = new Promise<Failure>(resolve => abort.signal.addEventListener("abort", () => resolve(failure()), { once: true }));
++    const result = await Promise.race([work(abort.signal), stopped]);
++    return abort.signal.aborted || performance.now() >= deadline ? failure() : result;
++  } catch { return failure(); }
++  finally {
++    clearTimeout(timer);
++    for (const signal of signals) signal.removeEventListener("abort", cancel);
++  }
++}
++
++/** 在构造脱敏 envelope 前仅解析一次认证，随后绑定唯一请求；不启动推理。 */
++export async function prepareReviewOnce(registry: PassiveRegistry, sessionId: string,
++    expected: PreparationBinding): Promise<PreparedReview> {
++  const maximumDeadline = expected.deadline;
++  const binding = Object.freeze({ ...expected, model: Object.freeze({ ...expected.model }),
++    deadline: Math.min(expected.deadline, performance.now() + 25_000) });
++  return bounded<PreparedReview>(binding.deadline, [binding.signal], async signal => {
++    const model = registry.find(binding.model.provider, binding.model.model);
++    if (!model || model.provider !== binding.model.provider || model.id !== binding.model.model)
++      return { status: "unavailable" };
++    if (typeof registry.permissionReviewAuthIsPassive !== "function" ||
++        typeof registry.resolvePermissionReviewHeaders !== "function" || !registry.permissionReviewAuthIsPassive(model))
++      return { status: "unsupported" };
++    if (!["anthropic-messages", "openai-completions"].includes(model.api) || registry.isUsingOAuth(model) ||
++        ["github-copilot", "azure-openai-responses", "amazon-bedrock", "google-vertex"].includes(model.provider))
++      return { status: "unsupported" };
++    const selected = Object.freeze({ provider: model.provider, id: model.id, api: model.api, baseUrl: model.baseUrl });
++    const currentMatches = () => {
++      const current = registry.find(binding.model.provider, binding.model.model);
++      return !!current && current.provider === selected.provider && current.id === selected.id &&
++        current.api === selected.api && current.baseUrl === selected.baseUrl && !registry.isUsingOAuth(current) &&
++        registry.permissionReviewAuthIsPassive?.(current) === true;
++    };
++    const url = new URL(selected.baseUrl);
++    if (!["https:", "http:"].includes(url.protocol) || url.username || url.password || url.search || url.hash)
++      return { status: "unsupported" };
++    const api = selected.api;
++    url.pathname = url.pathname.replace(/\/+$/u, "") + (api === "anthropic-messages" ? "/v1/messages" : "/chat/completions");
++    if (api === "anthropic-messages") url.pathname = url.pathname.replace(/\/v1\/v1\/messages$/u, "/v1/messages");
++    const tokenField = api === "openai-completions" && model.compat && "maxTokensField" in model.compat &&
++      model.compat.maxTokensField === "max_completion_tokens" ? "max_completion_tokens" : "max_tokens";
++    const key = await registry.getApiKey(model, sessionId, { signal });
++    if (signal.aborted) return { status: "cancelled" };
++    if (!key || ["\r", "\n", "\0"].some(character => key.includes(character))) return { status: "unavailable" };
++    if (!currentMatches() || !registry.permissionReviewAuthIsPassive(model)) return { status: "cancelled" };
++    // 专用同步解析器只读环境/字面量；通用resolver可能运行!command，禁止在此调用。
++    const configuredHeaders = registry.resolvePermissionReviewHeaders(model);
++    if (signal.aborted || !currentMatches()) return { status: "cancelled" };
++    const headers = new Headers(configuredHeaders);
++    const knownSecrets = Object.freeze([...new Set([key, ...Array.from(headers.values())].filter(Boolean))]);
++    if (knownSecrets.length > 256 || knownSecrets.reduce((total, value) => total + encoder.encode(value).length, 0) > 64 * 1024)
++      return { status: "unavailable" };
++    if (api === "anthropic-messages") {
++      if (!headers.has("x-api-key") && !headers.has("authorization")) headers.set("x-api-key", key);
++      if (!headers.has("anthropic-version")) headers.set("anthropic-version", "2023-06-01");
++    } else if (!headers.has("authorization")) headers.set("authorization", `Bearer ${key}`);
++    headers.set("content-type", "application/json"); headers.set("accept", "application/json");
++    let bound = false;
++    return Object.freeze({ status: "ready" as const, knownSecrets,
++      bind(input: string): ReviewServices["reviewOnce"] {
++        if (bound) return async () => ({ status: "cancelled" });
++        bound = true;
++        let attempted = false;
++        return async call => {
++          if (attempted || call.requestId !== binding.requestId || call.model.provider !== binding.model.provider ||
++              call.model.model !== binding.model.model || call.input !== input || !Number.isFinite(call.deadline) ||
++              call.deadline > maximumDeadline || call.signal.aborted || binding.signal.aborted)
++            return { status: "cancelled" };
++          attempted = true;
++          if (encoder.encode(input).length > 24 * 1024 || call.maxOutputTokens !== 512 || call.maxOutputBytes !== 4096)
++            return { status: "unavailable" };
++          return bounded<Reply>(Math.min(binding.deadline, call.deadline), [binding.signal, call.signal], async requestSignal => {
++            if (!currentMatches() || requestSignal.aborted) return { status: "cancelled" };
++            const body = JSON.stringify({ model: selected.id, messages: [{ role: "user", content: input }],
++              [tokenField]: 512, stream: false,
++              ...(api === "openai-completions" && selected.id === "kimi-for-coding" ?
++                { thinking: { type: "disabled" } } : {}) });
++            call.onInferenceStarted();
++            if (requestSignal.aborted) return { status: "cancelled" };
++            // 唯一发送点；认证和端点已固定，没有SDK、retry、重定向或工具。
++            const response = await fetch(url, { method: "POST", headers, body, signal: requestSignal, redirect: "error" });
++            if (!response.ok) { try { await response.body?.cancel(); } catch {} return { status: "service-failure" }; }
++            return decodeWire(await readBounded(response, requestSignal), api, call.maxOutputBytes, call.maxOutputTokens);
++          });
++        };
++      },
++    });
++  });
++}
++
++/** 兼容纯模块调用；生产宿主使用 prepareReviewOnce 在 envelope 前取得脱敏材料。 */
++export function createReviewOnce(registry: ModelRegistry, sessionId: string,
++    expected: Readonly<Pick<SingleReviewCall, "requestId" | "model" | "input" | "deadline" | "signal">>): ReviewServices["reviewOnce"] {
++  const binding = Object.freeze({ ...expected, model: Object.freeze({ ...expected.model }) });
++  let attempted = false;
++  return async call => {
++    if (attempted || call.requestId !== binding.requestId || call.model.provider !== binding.model.provider ||
++        call.model.model !== binding.model.model || call.input !== binding.input || !Number.isFinite(call.deadline) ||
++        call.deadline > binding.deadline || call.signal.aborted || binding.signal.aborted)
++      return { status: "cancelled" };
++    attempted = true;
++    const prepared = await prepareReviewOnce(registry, sessionId, { ...binding, deadline: Math.min(binding.deadline, call.deadline),
++      signal: AbortSignal.any([binding.signal, call.signal]) });
++    return prepared.status === "ready" ? prepared.bind(binding.input)(call) : prepared;
++  };
++}
+diff --git a/packages/coding-agent/src/permission-control/tiny-installed-worker.ts b/packages/coding-agent/src/permission-control/tiny-installed-worker.ts
+new file mode 100644
+index 0000000..3a8bd9f
+--- /dev/null
++++ b/packages/coding-agent/src/permission-control/tiny-installed-worker.ts
+@@ -0,0 +1,73 @@
++import { createRequire } from "node:module";
++import * as path from "node:path";
++import { createInterface } from "node:readline";
++import type { PreTrainedTokenizer } from "@huggingface/transformers";
++import { installRuntimeModuleResolver } from "@oh-my-pi/pi-utils";
++import { renderTextChatTemplate } from "../tiny/completion-prompt";
++import { inspectInstalledTiny, type TinyResources } from "./tiny-installed";
++
++interface Pipeline {
++  (text: string, options: { max_new_tokens: number; do_sample: false; return_full_text: false }):
++    Promise<Array<{ generated_text?: string }>>;
++  tokenizer: PreTrainedTokenizer;
++}
++interface LocalRuntime {
++  env: { allowLocalModels: boolean; allowRemoteModels: boolean; useFSCache: boolean; useBrowserCache: boolean;
++    localModelPath: string; logLevel?: unknown };
++  LogLevel: { ERROR: unknown };
++  pipeline(task: "text-generation", model: string,
++    options: { device: "cpu"; dtype: "q4"; local_files_only: true }): Promise<Pipeline>;
++}
++
++/** 没有共享title loader/worker/安装器引用；loader参数仅供宿主模块隔离测试。 */
++export async function loadInstalledTinyPipeline(resources: Readonly<TinyResources>,
++    load: (entry: string) => LocalRuntime = entry => {
++      // 只复用已有stub与纯resolver；绝不调用会写stub/安装资源的prepareCompiledRuntime。
++      installRuntimeModuleResolver({ runtimeNodeModules: path.join(resources.runtimeRoot, "node_modules"),
++        stubs: { sharp: path.join(resources.runtimeRoot, "omp-sharp-stub.cjs") } });
++      return createRequire(entry)(entry);
++    }): Promise<Pipeline> {
++  const verified = inspectInstalledTiny(path.dirname(path.dirname(resources.modelRoot)), resources.version);
++  if (!verified || verified.modelRoot !== resources.modelRoot || verified.runtimeRoot !== resources.runtimeRoot)
++    throw new Error("PERMISSION_TINY_UNAVAILABLE");
++  const runtime = load(path.join(verified.runtimeRoot, "node_modules/@huggingface/transformers/dist/transformers.node.cjs"));
++  runtime.env.allowLocalModels = true;
++  runtime.env.allowRemoteModels = false;
++  runtime.env.useFSCache = false;
++  runtime.env.useBrowserCache = false;
++  runtime.env.localModelPath = "";
++  runtime.env.logLevel = runtime.LogLevel.ERROR;
++  return await runtime.pipeline("text-generation", verified.modelRoot, { device: "cpu", dtype: "q4", local_files_only: true });
++}
++
++/** CLI内部独立进程入口；父进程在完成/取消/5秒到期时SIGKILL，避免卸载ONNX影响主会话。 */
++export async function startPermissionTinyWorker(): Promise<void> {
++  globalThis.fetch = (() => { throw new Error("PERMISSION_TINY_NETWORK_DISABLED"); }) as unknown as typeof fetch;
++  console.log = console.info = console.warn = console.error = () => {};
++  const lines = createInterface({ input: process.stdin, crlfDelay: Infinity })[Symbol.asyncIterator]();
++  const read = async (): Promise<any> => {
++    const next = await lines.next();
++    if (next.done || Buffer.byteLength(next.value, "utf8") > 16 * 1024) throw new Error("PERMISSION_TINY_INPUT_INVALID");
++    return JSON.parse(next.value);
++  };
++  const reply = async (value: object): Promise<void> => { await Bun.write(Bun.stdout, `${JSON.stringify(value)}\n`); };
++  try {
++    const initial = await read();
++    if (initial?.type !== "load" || !initial.resources) throw new Error("PERMISSION_TINY_INPUT_INVALID");
++    const generator = await loadInstalledTinyPipeline(initial.resources);
++    await reply({ state: "ready" });
++    const request = await read();
++    if (request?.type !== "generate" || typeof request.input !== "string" || Buffer.byteLength(request.input) > 8192)
++      throw new Error("PERMISSION_TINY_INPUT_INVALID");
++    const prompt = renderTextChatTemplate(generator.tokenizer, [{ role: "user", content: request.input }],
++      { addGenerationPrompt: true, enableThinking: false });
++    const output = await generator(prompt, { max_new_tokens: 128, do_sample: false, return_full_text: false });
++    const text = output[0]?.generated_text;
++    if (typeof text !== "string" || Buffer.byteLength(text) > 1024) throw new Error("PERMISSION_TINY_OUTPUT_INVALID");
++    const outputTokens = generator.tokenizer.encode(text, { add_special_tokens: false }).length;
++    if (outputTokens > 128) throw new Error("PERMISSION_TINY_OUTPUT_INVALID");
++    await reply({ state: "result", text, outputTokens });
++  } catch { await reply({ state: "unavailable" }); }
++  // 父进程负责终止；不退出到主CLI，也不持久化正文或打开标题worker的socket。
++  await new Promise<never>(() => {});
++}
+diff --git a/packages/coding-agent/src/permission-control/tiny-installed.ts b/packages/coding-agent/src/permission-control/tiny-installed.ts
+new file mode 100644
+index 0000000..3464e49
+--- /dev/null
++++ b/packages/coding-agent/src/permission-control/tiny-installed.ts
+@@ -0,0 +1,118 @@
++import * as fs from "node:fs";
++import * as path from "node:path";
++import { getTinyModelsCacheDir, isCompiledBinary } from "@oh-my-pi/pi-utils";
++import { workerHostEntry } from "@oh-my-pi/pi-utils/worker-host";
++import type { ModelReply, ReviewServices, SingleReviewCall } from "./core/reviewer";
++
++export const PERMISSION_TINY_WORKER = "__omp_worker_permission_tiny";
++export interface TinyResources { modelRoot: string; runtimeRoot: string; version: string }
++function ordinary(file: string, directory = false): fs.Stats {
++  const absolute = path.resolve(file);
++  if (fs.realpathSync(absolute) !== absolute) throw new Error("PERMISSION_TINY_UNAVAILABLE");
++  const stat = fs.lstatSync(absolute);
++  if (stat.isSymbolicLink() || !(directory ? stat.isDirectory() : stat.isFile()) ||
++      typeof process.geteuid === "function" && ![0, process.geteuid()].includes(stat.uid))
++    throw new Error("PERMISSION_TINY_UNAVAILABLE");
++  return stat;
++}
++function json(file: string): any {
++  if (ordinary(file).size > 4 * 1024 * 1024) throw new Error("PERMISSION_TINY_UNAVAILABLE");
++  return JSON.parse(fs.readFileSync(file, "utf8"));
++}
++
++/** 只检查已安装目录；完整性还须独立worker成功完成local-only pipeline加载。 */
++export function inspectInstalledTiny(cacheRoot: string, version: string): Readonly<TinyResources> | undefined {
++  try {
++    if (!/^\d+\.\d+\.\d+(?:[-.][A-Za-z0-9.-]+)?$/u.test(version)) return undefined;
++    const modelRoot = path.join(cacheRoot, "LiquidAI/LFM2.5-230M-ONNX");
++    const runtimeRoot = path.join(path.dirname(cacheRoot), "tiny-title-runtime", `transformers-${version}`);
++    ordinary(modelRoot, true); ordinary(runtimeRoot, true);
++    const config = json(path.join(modelRoot, "config.json"));
++    if (config.model_type !== "lfm2") return undefined;
++    json(path.join(modelRoot, "tokenizer_config.json"));
++    if (ordinary(path.join(modelRoot, "tokenizer.json")).size === 0 ||
++        ordinary(path.join(modelRoot, "onnx/model_q4.onnx")).size === 0) return undefined;
++    const manifest = json(path.join(runtimeRoot, "node_modules/@huggingface/transformers/package.json"));
++    if (manifest.version !== version || manifest.main !== "./dist/transformers.node.cjs") return undefined;
++    ordinary(path.join(runtimeRoot, "node_modules/@huggingface/transformers/dist/transformers.node.cjs"));
++    const stub = path.join(runtimeRoot, "omp-sharp-stub.cjs");
++    if (ordinary(stub).size !== 21 || fs.readFileSync(stub, "utf8") !== "module.exports = {};\n") return undefined;
++    return Object.freeze({ modelRoot, runtimeRoot, version });
++  } catch { return undefined; }
++}
++
++interface OutputReader {
++  read(): Promise<{ done: boolean; value?: Uint8Array }>;
++  cancel(): Promise<void>;
++}
++async function nextLine(reader: OutputReader, state: { bytes: Uint8Array }): Promise<any> {
++  for (;;) {
++    const index = state.bytes.indexOf(10);
++    if (index >= 0) {
++      const line = state.bytes.slice(0, index); state.bytes = state.bytes.slice(index + 1);
++      return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(line));
++    }
++    const { done, value } = await reader.read();
++    if (done || !value || state.bytes.length + value.length > 16 * 1024) throw new Error("PERMISSION_TINY_UNAVAILABLE");
++    const next = new Uint8Array(state.bytes.length + value.length);
++    next.set(state.bytes); next.set(value, state.bytes.length); state.bytes = next;
++  }
++}
++
++/** 一个请求拥有一个短命独立进程，不连接标题socket、不调用安装器。 */
++export function createTinyInstalledOnly(expected: Readonly<Pick<SingleReviewCall, "requestId" | "deadline" | "signal">>):
++    ReviewServices["tinyInstalledOnly"] {
++  let attempted = false;
++  const binding = { ...expected };
++  return async call => {
++    if (attempted || !Number.isFinite(call.deadline) || !Number.isFinite(binding.deadline) ||
++        call.requestId !== binding.requestId || call.deadline > binding.deadline ||
++        binding.signal.aborted || call.signal.aborted || performance.now() >= call.deadline)
++      return { status: "cancelled" };
++    attempted = true;
++    if (call.installedOnly !== true || call.model.provider !== "local" || call.model.model !== "lfm2.5-230m" ||
++        call.maxOutputTokens !== 128 || call.maxOutputBytes !== 1024 || new TextEncoder().encode(call.input).length > 8192 ||
++        process.platform !== "linux" || process.arch !== "x64") return { status: "unavailable" };
++    const version = process.env.PI_TINY_TRANSFORMERS_VERSION;
++    const resources = version && inspectInstalledTiny(getTinyModelsCacheDir(), version);
++    const entry = workerHostEntry();
++    if (!resources || !isCompiledBinary() && !entry) return { status: "unavailable" };
++    let child: ReturnType<typeof Bun.spawn> | undefined;
++    let reader: OutputReader | undefined;
++    let timeout = false;
++    let stopped = false;
++    const stop = () => { if (stopped) return; stopped = true; try { child?.kill("SIGKILL"); } catch {} };
++    const timer = setTimeout(() => { timeout = true; stop(); }, Math.max(0, Math.min(5000, call.deadline - performance.now())));
++    binding.signal.addEventListener("abort", stop, { once: true });
++    call.signal.addEventListener("abort", stop, { once: true });
++    const cancelled = () => binding.signal.aborted || call.signal.aborted;
++    try {
++      if (cancelled() || performance.now() >= call.deadline) return { status: "cancelled" };
++      child = Bun.spawn({ cmd: [process.execPath, ...(isCompiledBinary() ? [] : [entry!]), PERMISSION_TINY_WORKER],
++        env: { PATH: "/usr/bin:/bin", HOME: process.env.HOME ?? "/nonexistent", LANG: "C.UTF-8",
++          HF_HUB_OFFLINE: "1", TRANSFORMERS_OFFLINE: "1" }, stdin: "pipe", stdout: "pipe", stderr: "ignore" });
++      const input = child.stdin;
++      if (!input || typeof input === "number" || !child.stdout || typeof child.stdout === "number")
++        throw new Error("PERMISSION_TINY_UNAVAILABLE");
++      const output = child.stdout.getReader();
++      reader = output;
++      input.write(`${JSON.stringify({ type: "load", resources })}\n`); await input.flush();
++      const state = { bytes: new Uint8Array() };
++      const ready = await nextLine(output, state);
++      if (ready?.state !== "ready" || Object.keys(ready).length !== 1) return { status: "unavailable" };
++      if (cancelled() || timeout || performance.now() >= call.deadline) return { status: cancelled() ? "cancelled" : "timeout" };
++      call.onInferenceStarted();
++      input.write(`${JSON.stringify({ type: "generate", input: call.input })}\n`); await input.flush();
++      const reply = await nextLine(output, state);
++      if (cancelled() || timeout || performance.now() >= call.deadline) return { status: cancelled() ? "cancelled" : "timeout" };
++      if (reply?.state !== "result" || typeof reply.text !== "string" || new TextEncoder().encode(reply.text).length > 1024 ||
++          !Number.isSafeInteger(reply.outputTokens) || reply.outputTokens < 0 || reply.outputTokens > 128)
++        return { status: "service-failure" };
++      return { status: "ok", text: reply.text, outputTokens: reply.outputTokens, toolCalls: [] } satisfies ModelReply;
++    } catch { return { status: cancelled() ? "cancelled" : timeout ? "timeout" : "unavailable" }; }
++    finally {
++      clearTimeout(timer); binding.signal.removeEventListener("abort", stop); call.signal.removeEventListener("abort", stop);
++      stop(); try { await reader?.cancel(); } catch {}
++    }
++  };
++}
