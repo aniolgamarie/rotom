@@ -10,7 +10,7 @@ from .config import MachineSelection
 from .errors import TermcfgError
 from .home_targets import TargetIdentity, inspect_target, read_regular
 from .secret_boundary import admit_existing
-from .state import journal_file, read_state
+from .state import read_state, require_no_pending_recovery
 
 
 @dataclass(frozen=True)
@@ -63,8 +63,7 @@ def _old_starter_link(target_id: str, link: str) -> bool:
 
 
 def build_preview(machine: MachineSelection, components: tuple[str, ...]) -> Preview:
-  if journal_file(machine).exists():
-    raise TermcfgError(4, "recovery_pending", "./termcfg status")
+  require_no_pending_recovery(machine)
   catalog = load_catalog()
   state = read_state(machine)
   known = {artifact.bytes() for artifact in catalog}
