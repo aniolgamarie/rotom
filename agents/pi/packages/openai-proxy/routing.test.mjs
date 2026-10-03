@@ -7,7 +7,7 @@ test("matches official domains without matching lookalikes or internal gateways"
   for (const origin of ["https://api.openai.com", "https://auth.openai.com", "https://chatgpt.com", "https://openai.com"]) {
     assert.equal(isOpenAIOrigin(origin), true, origin);
   }
-  for (const origin of ["https://openai.com.evil.example", "https://fakeopenai.com", "https://work.oceanbase-dev.com", "http://127.0.0.1:8080", "ftp://api.openai.com"]) {
+  for (const origin of ["https://openai.com.evil.example", "https://fakeopenai.com", "https://internal-gateway.example.invalid", "http://127.0.0.1:8080", "ftp://api.openai.com"]) {
     assert.equal(isOpenAIOrigin(origin), false, origin);
   }
 });
@@ -18,7 +18,7 @@ test("routes simultaneous requests independently and preserves request options a
   const proxy = { dispatch: (options, handler) => { calls.push(["proxy", options, handler]); return true; } };
   const router = new OpenAIProxyDispatcher(fallback, proxy);
   const openai = { origin: "https://api.openai.com", path: "/v1/responses", method: "POST", body: "payload" };
-  const internal = { origin: "https://work.oceanbase-dev.com", path: "/tokensflow", method: "POST" };
+  const internal = { origin: "https://internal-gateway.example.invalid", path: "/internal-api", method: "POST" };
   const handler = {};
   const results = await Promise.all([openai, internal].map(async (options) => router.dispatch(options, handler)));
   assert.deepEqual(results, [true, false]);
@@ -152,7 +152,7 @@ test("OAuth refresh, model catalog and SSE use an explicit proxy after global di
       assert.equal(call.init.headers, init.headers);
       assert.equal(call.init.signal, signal);
     }
-    assert.equal(await fetch("https://work.oceanbase-dev.com/tokensflow", init), "original");
+    assert.equal(await fetch("https://internal-gateway.example.invalid/internal-api", init), "original");
     assert.equal(calls.at(-1).init, init);
     assert.equal(calls.at(-1).route, "fallback");
   } finally {
