@@ -21,7 +21,7 @@ installed-only tiny 声明、插件与 policy 摘要及原生 patterns。当前�
 installed-only 本地模型查询，因此 tiny 状态固定为 unavailable，不下载也不调用内部 worker。
 
 主审只支持 `anthropic-messages` 和 `openai-completions`，共用 30 秒期限，不重试、不跟随
-重定向。只有 transport、unsupported 或严格 JSON 无效才尝试一次不同实际模型的 remote
+重定向。Anthropic 响应可包含标准 thinking/redacted_thinking 元数据，审批只读取唯一 text 块；未知块、tool_use、多个或缺失 text 仍失败，严格决策 JSON 不变。只有 transport、unsupported 或严格 JSON 无效才尝试一次不同实际模型的 remote
 fallback；有效 allow/ask/deny 立即终止模型链。自动 allow 必须同时是 low risk、sufficient
 authorization 和 `LOW_RISK_AUTHORIZED`。完整 command、cwd 与真实 user 消息合计超过 24 KiB、
 疑似包含凭据、缺少真实 user 来源或无法保守解析 shell 语法时转人工；无 UI 则阻止。

@@ -638,15 +638,15 @@ Phase 13 完成：T093—T094。Cursor OAuth 明确声明与native角色覆盖�
 - [X] T099 扩展 closed schema/render：可选 native_bash/nativeBash 布尔开关，缺省 false，kernel true，开关参与 policy identity；验证无效值、旧配置及原生故障保护。
 - [X] T100 完成纯模块、管理器回归与固定 pristine SDK strict 检查；按受影响范围复核 diff，不修改上游/凭据/历史补丁资产。
 - [X] T101 用临时 HOME 和本地虚构 provider 单独验证生产插件在官方宿主的加载、真实委托、下限/无 UI/票据/设置变更阻止、原生结果与默认上下文；记录首次失败与修复。
-- [ ] T102 获得新增请求预算后验证真实 Cursor 原生 shell 路径、远程备用审查、无害复合读取和禁止/故障保护；未执行不得标记通过。
+- [X] T102 获得新增请求预算后验证真实 Cursor 原生 shell 路径、远程备用审查、无害复合读取和禁止/故障保护；未执行不得标记通过。
 - [X] T103 稳定插件后刷新普通锁、更新 README/quickstart/支持矩阵和验收；本地原子提交准确说明范围，不推送。
 
 | 状态 | 当前内容 |
 |---|---|
 | 完成 | main 六个公共基线提交、开发分支对齐 `7558475`；T095—T101 合同、实现、配置和隔离验收；T103 普通锁、文档与本地功能提交；既有原型证据保持原身份 |
-| 进行中 | 无代码写入；T102 等待新预算；T104 等待真实验收及实例锁条件 |
+| 进行中 | T104：用户已确认恢复 Cursor default 与 GLM smol，准备合入和正常部署 |
 | 失败待决策 | 无当前阻塞 |
-| 环境不足未验证 | 真实 Cursor wire 及本轮日常部署尚未执行；旧付费预算 102/102 已耗尽，需新预算；其它平台与高级参数未验证 |
+| 环境不足未验证 | 其它平台、未观察的 Cursor frame 和高级参数；本地 tiny 无公开推理 API；本轮日常部署等待 T104 |
 
 
 Phase 14 中间验收（2026-10-04）：配置定向 53 pass/3 历史 skip；受影响 OMP permission/kernel/dependencies/pipeline/discovery 五组 131 pass/7 历史 skip，25.13s。测试采用真实 UID 的隔离临时 HOME，不启动宿主、不联网、不调用真实模型。T100 尚未完成，生产插件纯测试与 pristine SDK 检查仍进行中。源码独立核查确认原生执行读取全局 Settings，已补入 FR054 的同源门槛；插件正在落实该门槛，不把配置 ready 计作 coverage ready。日常部署和 102/102 请求账本不变。
@@ -664,3 +664,6 @@ T103 交付记录（2026-10-04）：普通锁离线刷新并 read_lock 复核；
 
 
 Phase 14 最终稳定代码验收（2026-10-04）：最后复核新增两个确定性排队取消回归，先 40 pass/2 fail，两个获得 gate 后的提前返回补 release 后通过；启动文件清单回归先 9 pass/1 fail，补 `.bash_login` 与粘性/deny 优先验证后通过。这是保守上下文范围，未声称官方实际执行该文件。最终定向 44 pass/155 assertions，包级 335 pass/1240 assertions，pristine SDK strict 无诊断；最终插件官方宿主 24/24 pass、真实 TUI Approve 通过；刷新普通锁后的 kernel/dependencies 31 pass/26.62s。外部模型 0，本机部署未变，历史 102/102 账本不变。最终身份、首次失败、已知限制与实际委派模型见 [本轮验收](../../docs/acceptance/omp-native-bash-approval-20261004.md)。
+
+
+T102 真实验收（2026-10-04）：新增授权6次已用6次（Cursor3/GLM3），原102/102账本未动。先有thinking+text envelope兼容失败→人工Deny、零委托；生产诊断确认唯一text为有效allow。最小协议修复保留严格JSON/禁止/终止链。复验读取复合命令真实自动批准，nativeDelegate=1、human=0、coverage=ready；原生pwd deny复验 remote/human/delegate=0。原账号/日常配置未改，固定官方身份不变；新代码48定向/339包级、SDK0、25隔离宿主、31最终锁回归通过。证据与边界见 [真实Cursor验收](../../docs/acceptance/omp-cursor-native-approval-20261004.md)。

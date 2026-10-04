@@ -221,10 +221,12 @@ async function request(model: ReviewerModel, prompt: string, runtime: ReviewRunt
   if (anthropic) {
     const content = data.content;
     if (!Array.isArray(content) || content.some(item => !item || typeof item !== "object" ||
-        (item as { type?: string }).type === "tool_use")) throw new RequestFailure("invalid");
-    if (content.length !== 1 || (content[0] as { type?: string }).type !== "text")
-      throw new RequestFailure("invalid");
-    text = (content[0] as { text?: unknown }).text;
+        Array.isArray(item) || !["text", "thinking", "redacted_thinking"].includes(
+          (item as { type?: string }).type ?? ""))) throw new RequestFailure("invalid");
+    // 思考块仅为传输元数据；审查决策只能来自唯一的 text 块。
+    const textBlocks = content.filter(item => (item as { type?: string }).type === "text");
+    if (textBlocks.length !== 1) throw new RequestFailure("invalid");
+    text = (textBlocks[0] as { text?: unknown }).text;
   } else {
     const choices = data.choices;
     if (!Array.isArray(choices) || choices.length !== 1) throw new RequestFailure("invalid");

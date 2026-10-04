@@ -1,0 +1,330 @@
+{
+  "phase": 14,
+  "date": "2026-10-04",
+  "feature": "004-omp-permission-control",
+  "baseImplementationCommit": "96d4fe2",
+  "identity": {
+    "ompTag": "v18.4.5",
+    "ompCommit": "79808c3bf8f8cd9826decc63e3e18b13035f64f8",
+    "officialLock": "6bf918013ab47a76ff50c846021f677de43f82ab6d0d0f30897f44e501f8f310",
+    "pluginDigest": "8b296bf8da5c5ba0e56bc0e3f3826df62ec68a24c7f8936da76d84398daa734a",
+    "binarySha256": "42c710239b3fc30b9759424f973c6c143709935d5752be7eec8d7b011f40d864",
+    "reviewerSourceSha256": "b1754c7d140ec33b218cc38f903bf6592d8c136943569004bc7200ee60fdda93"
+  },
+  "budget": {
+    "newlyAuthorized": 6,
+    "used": 6,
+    "cursorProvider": 3,
+    "remoteReviewer": 3,
+    "priorLedger": "102/102 unchanged",
+    "enforcement": "test-only public provider payload hook and reviewer fetch share durable counter; before seventh request synchronous isolated-process exit; five fake tests passed"
+  },
+  "firstAttempt": {
+    "automaticExecution": false,
+    "primary": "Cursor unsupported; zero reviewer request",
+    "remote": "one Anthropic response invalid because thinking and text blocks rejected",
+    "humanRequests": 1,
+    "humanResult": "Deny",
+    "nativeDelegateCalls": 0,
+    "paidRequests": 2
+  },
+  "diagnosis": {
+    "paidRequests": 1,
+    "contentTypes": [
+      "thinking",
+      "text"
+    ],
+    "stopReason": "end_turn",
+    "finalDecision": {
+      "decision": "allow",
+      "risk": "low",
+      "authorization": "sufficient",
+      "reasonCode": "LOW_RISK_AUTHORIZED"
+    }
+  },
+  "repair": {
+    "scope": "Anthropic response envelope",
+    "allowedBlocks": [
+      "thinking",
+      "redacted_thinking",
+      "text"
+    ],
+    "decisionSource": "exactly one text block; existing strict decision JSON",
+    "rejected": [
+      "unknown block",
+      "tool_use",
+      "multiple text",
+      "missing text"
+    ],
+    "automaticRetryAdded": false
+  },
+  "realCursor": {
+    "allow": {
+      "case": "allow",
+      "gatePassed": true,
+      "paidTaskSent": true,
+      "passed": true,
+      "executionModel": {
+        "provider": "cursor",
+        "id": "kimi-k3",
+        "thinkingLevel": "high"
+      },
+      "promptCompleted": true,
+      "statuses": [
+        {
+          "mode": "smart",
+          "generation": 1,
+          "configuration": "ready",
+          "entrypoints": {
+            "raw": "permission_bash",
+            "native": "bash"
+          },
+          "coverage": "limited",
+          "nativeDelegateAvailable": null,
+          "scopedSettingsReady": false,
+          "unsupported": [
+            "async",
+            "service",
+            "pty",
+            "preexisting-shell-snapshot-cache"
+          ],
+          "nativeCalls": 0,
+          "nativeDelegateCalls": 0,
+          "primary": {
+            "configured": "session",
+            "calls": 0,
+            "health": "idle"
+          },
+          "remote": {
+            "configured": "zhipu_tf/glm-5.3-flash",
+            "calls": 0,
+            "health": "idle"
+          },
+          "human": {
+            "calls": 0,
+            "health": "idle"
+          },
+          "fallback": "disabled",
+          "pending": 0,
+          "nativeProtection": "configured-patterns-plus-public-native-bash-approval"
+        },
+        {
+          "mode": "smart",
+          "generation": 1,
+          "configuration": "ready",
+          "entrypoints": {
+            "raw": "permission_bash",
+            "native": "bash"
+          },
+          "coverage": "ready",
+          "nativeDelegateAvailable": true,
+          "scopedSettingsReady": true,
+          "unsupported": [
+            "async",
+            "service",
+            "pty",
+            "preexisting-shell-snapshot-cache"
+          ],
+          "nativeCalls": 1,
+          "nativeDelegateCalls": 1,
+          "primary": {
+            "configured": "session",
+            "actualModel": "cursor/kimi-k3",
+            "calls": 0,
+            "health": "unsupported"
+          },
+          "remote": {
+            "configured": "zhipu_tf/glm-5.3-flash",
+            "actualModel": "zhipu_tf/glm-5.3-flash",
+            "calls": 1,
+            "health": "ready"
+          },
+          "human": {
+            "calls": 0,
+            "health": "idle"
+          },
+          "fallback": "disabled",
+          "pending": 0,
+          "nativeProtection": "configured-patterns-plus-public-native-bash-approval"
+        }
+      ],
+      "toolResults": [
+        {
+          "tool": "bash",
+          "error": false,
+          "executionObserved": true,
+          "reasonCode": null
+        }
+      ],
+      "humanRequests": 0,
+      "errors": [],
+      "hostExitCode": 0,
+      "budget": {
+        "schemaVersion": 1,
+        "limit": 6,
+        "used": 5,
+        "provider": 2,
+        "reviewer": 3
+      },
+      "dailyProtectedInputsUnchanged": true,
+      "officialBinaryUnchanged": true
+    },
+    "nativeDeny": {
+      "case": "deny",
+      "gatePassed": true,
+      "paidTaskSent": true,
+      "passed": true,
+      "executionModel": {
+        "provider": "cursor",
+        "id": "kimi-k3",
+        "thinkingLevel": "high"
+      },
+      "promptCompleted": true,
+      "statuses": [
+        {
+          "mode": "smart",
+          "generation": 1,
+          "configuration": "ready",
+          "entrypoints": {
+            "raw": "permission_bash",
+            "native": "bash"
+          },
+          "coverage": "limited",
+          "nativeDelegateAvailable": null,
+          "scopedSettingsReady": false,
+          "unsupported": [
+            "async",
+            "service",
+            "pty",
+            "preexisting-shell-snapshot-cache"
+          ],
+          "nativeCalls": 0,
+          "nativeDelegateCalls": 0,
+          "primary": {
+            "configured": "session",
+            "calls": 0,
+            "health": "idle"
+          },
+          "remote": {
+            "configured": "zhipu_tf/glm-5.3-flash",
+            "calls": 0,
+            "health": "idle"
+          },
+          "human": {
+            "calls": 0,
+            "health": "idle"
+          },
+          "fallback": "disabled",
+          "pending": 0,
+          "nativeProtection": "configured-patterns-plus-public-native-bash-approval"
+        },
+        {
+          "mode": "smart",
+          "generation": 1,
+          "configuration": "ready",
+          "entrypoints": {
+            "raw": "permission_bash",
+            "native": "bash"
+          },
+          "coverage": "limited",
+          "nativeDelegateAvailable": null,
+          "scopedSettingsReady": true,
+          "unsupported": [
+            "async",
+            "service",
+            "pty",
+            "preexisting-shell-snapshot-cache"
+          ],
+          "nativeCalls": 1,
+          "nativeDelegateCalls": 0,
+          "primary": {
+            "configured": "session",
+            "calls": 0,
+            "health": "idle"
+          },
+          "remote": {
+            "configured": "zhipu_tf/glm-5.3-flash",
+            "calls": 0,
+            "health": "idle"
+          },
+          "human": {
+            "calls": 0,
+            "health": "idle"
+          },
+          "fallback": "disabled",
+          "pending": 0,
+          "nativeProtection": "configured-patterns-plus-public-native-bash-approval"
+        }
+      ],
+      "toolResults": [
+        {
+          "tool": "bash",
+          "error": true,
+          "executionObserved": false,
+          "reasonCode": null
+        }
+      ],
+      "humanRequests": 0,
+      "errors": [],
+      "hostExitCode": 0,
+      "budget": {
+        "schemaVersion": 1,
+        "limit": 6,
+        "used": 6,
+        "provider": 3,
+        "reviewer": 3
+      },
+      "dailyProtectedInputsUnchanged": true,
+      "officialBinaryUnchanged": true
+    }
+  },
+  "checks": {
+    "targetedBun": {
+      "passed": 48,
+      "assertions": 203
+    },
+    "packageBun": {
+      "passed": 339,
+      "assertions": 1288
+    },
+    "pristineSdkTsgo": {
+      "exitCode": 0
+    },
+    "finalLockPython": {
+      "passed": 31,
+      "seconds": 25.74
+    },
+    "officialHost": {
+      "cases": 25,
+      "allPassed": true,
+      "externalRequests": 0
+    },
+    "budgetHarness": {
+      "passed": 5,
+      "externalRequests": 0
+    }
+  },
+  "models": {
+    "executor": "gpt-6.1-sol/medium (executor role)",
+    "scout": "gpt-6-luna/high (scout role)",
+    "primary": "decisions, authenticated smoke, lock and deployment"
+  },
+  "protected": {
+    "upstreamPatch": false,
+    "officialBinaryPatch": false,
+    "dailyAccountAndConfigurationUnchangedDuringSmoke": true,
+    "authenticationUsed": "read-only source snapshot, isolated SQLite runtime copy",
+    "credentialsInTrackedArtifacts": false
+  },
+  "dailyDeployment": {
+    "state": "pending",
+    "authorization": "restore declared Cursor default and GLM smol; merge and deploy after acceptance"
+  },
+  "limits": [
+    "only observed native Bash wire path validated; not every Cursor frame variant independently exercised",
+    "installed-only local tiny inference unavailable through public API",
+    "application approval is not an OS sandbox",
+    "new process startup required; advanced async/service/PTY rejected",
+    "frozen model-quality dataset and other platforms not rerun"
+  ]
+}
