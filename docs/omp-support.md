@@ -35,3 +35,10 @@ Phase 14 原生 Bash 插件已完成实现、隔离验收及真实 Cursor 验收
 生产插件基础 335 项包级纯测试、固定 SDK、24 组官方宿主与真实人工 UI 见[Phase 14 验收](acceptance/omp-native-bash-approval-20261004.md)；后续最终 339 项/1288 assertions、25/25 隔离宿主结果见真实 Cursor 验收，保留各阶段身份。
 
 后续[真实 Cursor 验收](acceptance/omp-cursor-native-approval-20261004.md)使用新增预算 6/6（Cursor 3、GLM 3）：无害复合命令 human=0、delegate=1；原生 deny reviewer=0、delegate=0。日常部署已完成：用户授权 SIGTERM 退出活动实例后备份、sync/plan/apply/doctor 成功，offline-ready、运行包匹配、pending=0，无漂移、冲突或恢复待处理；13 项账号数据库/WAL、会话、local 与 owner 的字节和权限不变。完整启动准入通过 launch callback，未启动新的日常宿主，部署阶段外部请求为 0。
+
+Phase 15 在新 worktree 扩展常见 Shell 环境，并保持未修改的官方宿主。355 项 Bun、208 项
+Python（另 7 项已退役材料跳过）、固定 SDK 及 36/36 官方宿主 fixture 通过。真实 zsh 配置
+下 find 管道观察到 reviewer=1、human=0、nativeDelegate=1；默认 find interceptor 的 glob 提示
+另有保留验证。bash/zsh/sh 有本轮宿主证据，其它 family 只有纯模块矩阵，不计作其它 OS 或
+原生 Shell 语言通过。执行环境和覆盖限制见 [Shell 验收](acceptance/omp-shell-approval-20261004.md)。
+本轮合入不会自动更新日常实例，新增付费请求为 0。

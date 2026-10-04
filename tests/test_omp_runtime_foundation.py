@@ -67,13 +67,14 @@ def test_default_discovery_rejects_ancestor_sources(tmp_path):
 
 
 def test_discovery_manifest_has_exact_disabled_count():
-  assert len(DISABLED_PROVIDERS) == 18
-  assert len(set(DISABLED_PROVIDERS)) == 18
+  assert len(DISABLED_PROVIDERS) == 17
+  assert len(set(DISABLED_PROVIDERS)) == 17
+  assert "cursor" not in DISABLED_PROVIDERS
   assert DISABLED_PROVIDERS[0] == "agent-plugins"
   assert DISABLED_PROVIDERS[-1] == "windsurf"
   repository = Path(__file__).resolve().parents[1]
   manifest = json.loads((repository / "agents/omp/discovery-manifest.json").read_bytes())
-  assert len(NATIVE_ROOT_PATTERNS) == 53
+  assert len(NATIVE_ROOT_PATTERNS) == 55
   assert manifest == discovery_manifest()
   for required in ("$ACTIVE_AGENT/SYSTEM.md", "$DEFAULT_AGENT/SYSTEM_TEMPLATE.md",
       "$ACTIVE_AGENT/PERSONALITY.md", "$DEFAULT_AGENT/PERSONALITY.md",
@@ -82,7 +83,7 @@ def test_discovery_manifest_has_exact_disabled_count():
   assert set(manifest["nativeControls"]["configExact"]) >= {"/extensions", "/skills/enablePiProject"}
   assert set(manifest["nativeControls"]["configForbidden"]) >= {"/skills/customDirectories", "/auth/broker"}
   assert manifest["ignoredProviderSources"]["reason"] == "all-loading-providers-disabled-before-discovery"
-  assert manifest_digest() == "02346cb407b1c92e534fa28d73ce262aa5b65dd7722b610110b6ed7580659324"
+  assert manifest_digest() == "d677471c9f75da3b4a8f56818a192f38397dd4e3e19068342caf9445f7fcc6a7"
 
 
 def test_source_policy_rejects_roots_when_project_resources_are_off(tmp_path):
@@ -403,5 +404,5 @@ def test_omp_lock_dispatches_before_local_workspace_or_secret_loading(monkeypatc
   monkeypatch.setattr(commands, "workspace", lambda args: (_ for _ in ()).throw(AssertionError("workspace must not load")))
   monkeypatch.setattr(cli, "resolve_selection", lambda args: (_ for _ in ()).throw(AssertionError("local selection must not run")))
   assert cli.main(["lock", "--agent", "omp"]) == 0
-  assert len(calls) == 1 and calls[0].name == "rotom"
+  assert calls == [Path(commands.__file__).resolve().parents[2]]
   assert json.loads(capsys.readouterr().out) == {"agent": "omp", "command": "lock", "locked": True}

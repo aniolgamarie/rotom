@@ -57,6 +57,8 @@ WORKER_SELECTORS = {"__omp_worker_blob_broker", "__omp_worker_computer", "__omp_
   "__omp_worker_lsp_mux", "__omp_worker_stats_activity", "__omp_worker_terminal_output"}
 CALLER_IDENTITY_ENV = {"OMP_PROFILE", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "PI_PROFILE",
   "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_CONFIG_FILES", "PI_SESSION_DIR", "PI_CODING_AGENT_SESSION_DIR"}
+NATIVE_EXECUTION_ROUTE_ENV = "ROTOM_PERMISSION_CONTROL_EXECUTION_ROUTE"
+NATIVE_EXECUTION_ROUTE = "local-native-bash-v1"
 ALLOWED_VALUELESS = {"--help", "-h", "--version", "-v", "--no-title", "--print", "-p"}
 ALLOWED_VALUE_OPTIONS = {"--provider", "--model", "--smol", "--slow", "--plan", "--thinking", "--service-tier", "--max-time"}
 ROLE_MAP = {"main": "default", "smol": "smol", "slow": "slow", "vision": "vision", "plan": "plan", "advisor": "advisor", "task": "task"}
@@ -416,7 +418,7 @@ class OmpAdapter(Adapter):
             "entrypoints": actual["entrypoints"], "tree_digest": actual["tree_digest"], "license": actual["license"],
             "compatibility": {"omp": TAG}}):
           raise ConfigError("omp-package-catalog-integrity")
-    protected = {"HOME", "OMP_PROFILE", "OMP_AUTH_BROKER", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "PI_PROFILE", "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_CONFIG_FILES", "PI_SESSION_DIR",
+    protected = {NATIVE_EXECUTION_ROUTE_ENV, "HOME", "OMP_PROFILE", "OMP_AUTH_BROKER", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "PI_PROFILE", "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_CONFIG_FILES", "PI_SESSION_DIR",
                  "PI_CODING_AGENT_SESSION_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"}
     machine_env = data["machine"].get("environment", {})
     if protected & (set(machine_env.get("inherit", [])) | set(machine_env.get("values", {}))):
@@ -697,7 +699,7 @@ class OmpAdapter(Adapter):
 
   def _validate_caller_environment(self):
     import os
-    if CALLER_IDENTITY_ENV & os.environ.keys():
+    if (CALLER_IDENTITY_ENV | {NATIVE_EXECUTION_ROUTE_ENV}) & os.environ.keys():
       raise ConfigError("omp-caller-identity-environment")
 
   def validate_operation_environment(self, workspace, spec=None, env=None):
@@ -708,6 +710,10 @@ class OmpAdapter(Adapter):
         "XDG_DATA_HOME": str(identity.xdg_data), "XDG_CACHE_HOME": str(identity.xdg_cache),
         "XDG_STATE_HOME": str(identity.xdg_state)}
       if any(env.get(name) != value for name, value in expected.items()) or CALLER_IDENTITY_ENV & env.keys():
+        raise ConfigError("omp-operation-environment-mismatch")
+      permission = resolve_permission_control(workspace.resolved.data)
+      route = NATIVE_EXECUTION_ROUTE if permission and permission.get("nativeBash") else None
+      if env.get(NATIVE_EXECUTION_ROUTE_ENV) != route or (route is None and NATIVE_EXECUTION_ROUTE_ENV in env):
         raise ConfigError("omp-operation-environment-mismatch")
 
   def validate_before_spawn(self, workspace, cwd, arguments, env):
@@ -784,10 +790,13 @@ class OmpAdapter(Adapter):
       if "credential_ref" in server:
         secrets.append(EnvironmentBinding(generated_name("mcp", server_id, "header:Authorization", claimed=claimed),
           SecretRef(server["credential_ref"])))
+    permission = resolve_permission_control(data)
+    route = ((EnvironmentBinding(NATIVE_EXECUTION_ROUTE_ENV, NATIVE_EXECUTION_ROUTE),)
+      if permission and permission.get("nativeBash") else ())
     return LaunchSpec((str(runtime_root / "bin/omp"), "--profile", identity.native_name), cwd, lock_identity,
       (EnvironmentBinding("HOME", str(identity.home)), EnvironmentBinding("XDG_CONFIG_HOME", str(identity.xdg_config)),
        EnvironmentBinding("XDG_DATA_HOME", str(identity.xdg_data)), EnvironmentBinding("XDG_CACHE_HOME", str(identity.xdg_cache)),
-       EnvironmentBinding("XDG_STATE_HOME", str(identity.xdg_state)), *secrets))
+       EnvironmentBinding("XDG_STATE_HOME", str(identity.xdg_state)), *route, *secrets))
 
   def runtime_binding(self, data, instance_root):
     identity = native_identity(data["profile"]["id"], instance_root)

@@ -3,7 +3,7 @@ import { isAbsolute, join, resolve } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { matchesNativePattern, parseGenericCommands } from "./standalone-shell-analysis";
 import { loadNativeBashRuntime, type NativeBashRuntime, type NativeSettingsSnapshot,
-  type PlainBashParams } from "./native-bash";
+  type PlainBashParams, type NativeDiagnostics, SHELL_FAMILIES, CONTEXT_REASONS } from "./native-bash";
 import { parseStandaloneJson, reviewCommand, type ReviewAttempt, type ReviewRuntime, type ReviewTarget,
   type ReviewerModel, type ReviewSequenceResult } from "./standalone-reviewer";
 
@@ -40,7 +40,7 @@ interface State {
   human: { calls: number; health: "idle" | "approved" | "denied" | "unavailable" };
   native: { calls: number; delegateCalls: number; delegateAvailable: boolean | null;
     scopedSettingsReady: boolean; coverage: "disabled" | "initializing" | "limited" | "ready" | "unavailable";
-    unsupported: string[] };
+    unsupported: string[]; diagnostics?: NativeDiagnostics };
   last: { outcome: string; source: DecisionSource; reasonCode: string;
     chain: Array<"primary" | "remote" | "human" | "native"> };
 }
@@ -168,15 +168,24 @@ function redactSensitive(value: string): string {
 }
 
 async function humanApprove(ctx: ExtensionContext, toolName: string, command: string, cwd: string,
-  signal?: AbortSignal): Promise<boolean> {
+  reasonCode: string, signal?: AbortSignal, contextReason?: NativeDiagnostics["contextReason"]): Promise<boolean> {
   if (!ctx.hasUI || signal?.aborted) return false;
   try {
-    const title = `Allow ${toolName}?\ncwd: ${JSON.stringify(redactSensitive(cwd))}\n` +
+    const title = `Allow ${toolName}?\nreason: ${reasonCode}\n` +
+      (contextReason ? `context: ${contextReason}\n` : "") + `cwd: ${JSON.stringify(redactSensitive(cwd))}\n` +
       `command: ${JSON.stringify(redactSensitive(command))}`;
     return await ctx.ui.select(title, ["Approve", "Deny"], { signal }) === "Approve";
   } catch {
     return false;
   }
+}
+
+function nativeDiagnostics(snapshot: NativeSettingsSnapshot | undefined): NativeDiagnostics | undefined {
+  const value = snapshot?.diagnostics;
+  if (!value || !SHELL_FAMILIES.includes(value.shellFamily) ||
+      !["local-embedded", "unverified"].includes(value.executionRoute) ||
+      !CONTEXT_REASONS.includes(value.contextReason)) return undefined;
+  return { shellFamily: value.shellFamily, executionRoute: value.executionRoute, contextReason: value.contextReason };
 }
 
 function configuredTarget(value: "session" | ReviewTarget | undefined): string {
@@ -298,6 +307,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
     const approve = async (params: PlainBashParams, ctx: ExtensionContext, signal: AbortSignal,
       toolName: "bash" | "permission_bash", native?: NativeSettingsSnapshot): Promise<ApprovalOutcome> => {
       if (!config) return { approved: false, source: "none", reasonCode: "CONFIG_UNAVAILABLE", chain: [] };
+      state.native.diagnostics = nativeDiagnostics(native);
       const cwd = effectiveCwd(ctx.cwd, params.cwd) ?? params.cwd ?? ctx.cwd;
       const configuredGate = configuredNativeApproval(config, params.command);
       if (configuredGate === "deny" || native?.decision === "deny")
@@ -308,15 +318,20 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         configuredGate === "unsupported" || nativePrompt || messages.length === 0 ||
         containsSensitiveText(params.command, cwd, messages);
       if (needsHuman) {
-        state.human.calls++;
-        const approved = await humanApprove(ctx, toolName, params.command, cwd, signal);
-        state.human.health = ctx.hasUI ? (approved ? "approved" : "denied") : "unavailable";
         const reasonCode = native?.reasonCode === "UNSUPPORTED_EXECUTION_CONTEXT" ? native.reasonCode :
           configuredGate === "unsupported" ? "UNSUPPORTED_SYNTAX" :
             nativePrompt ? "NATIVE_PROMPT" : "USER_CONFIRMATION_REQUIRED";
+        const chain: ApprovalOutcome["chain"] = nativePrompt || configuredGate === "prompt" ?
+          ["native", "human"] : ["human"];
+        state.human.calls++;
+        state.last = { outcome: "pending-human", source: "human", reasonCode, chain };
+        const approved = await humanApprove(ctx, toolName, params.command, cwd, reasonCode, signal,
+          state.native.diagnostics?.contextReason);
+        state.human.health = ctx.hasUI ? (approved ? "approved" : "denied") : "unavailable";
         return { approved, source: "human", reasonCode,
-          chain: nativePrompt || configuredGate === "prompt" ? ["native", "human"] : ["human"] };
+          chain };
       }
+      state.last = { outcome: "reviewing", source: "none", reasonCode: "REVIEW_PENDING", chain: [] };
       const result = await reviewCommand({ command: params.command, cwd, userMessages: messages,
         parameters: { cwd: params.cwd, timeout: params.timeout }, reviewer: config.reviewer,
         executionContext: { entrypoint: toolName, baseCwd: ctx.cwd, ...(native?.reviewContext ?? {}) },
@@ -328,10 +343,13 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         if (result.review!.decision === "allow") return { approved: true, source, reasonCode, chain };
         if (result.review!.decision === "deny") return { approved: false, source, reasonCode, chain };
       }
+      const reasonCode = result.review?.reasonCode ?? "REVIEW_UNAVAILABLE";
       state.human.calls++;
-      const approved = await humanApprove(ctx, toolName, params.command, cwd, signal);
+      state.last = { outcome: "pending-human", source: "human", reasonCode, chain: [...chain, "human"] };
+      const approved = await humanApprove(ctx, toolName, params.command, cwd, reasonCode, signal,
+        state.native.diagnostics?.contextReason);
       state.human.health = ctx.hasUI ? (approved ? "approved" : "denied") : "unavailable";
-      return { approved, source: "human", reasonCode: result.review?.reasonCode ?? "REVIEW_UNAVAILABLE",
+      return { approved, source: "human", reasonCode,
         chain: [...chain, "human"] };
     };
 
@@ -351,6 +369,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         state.human = { calls: 0, health: "idle" };
         state.native.coverage = nativeRegistered ? "limited" : "disabled";
         state.native.scopedSettingsReady = false;
+        state.native.diagnostics = undefined;
         state.last = { outcome: "ready", source: "none", reasonCode: "NOT_REVIEWED", chain: [] };
         const active = omp.getActiveTools();
         const nextActive = nativeRegistered ? [...new Set([...active, "permission_bash"])] :
@@ -358,6 +377,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         await omp.setActiveTools(nextActive);
       } catch {
         config = undefined; state.mode = "manual";
+        state.native.diagnostics = undefined;
         state.primary = { configured: "unavailable", calls: 0, health: "unavailable" };
         state.remote = { configured: "disabled", calls: 0, health: "unavailable" };
         state.native.coverage = nativeRegistered ? "unavailable" : "disabled";
@@ -381,11 +401,13 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
             entrypoints: { raw: "permission_bash", native: nativeRegistered ? "bash" : "disabled" },
             coverage: state.native.coverage, nativeDelegateAvailable: state.native.delegateAvailable,
             scopedSettingsReady: state.native.scopedSettingsReady, unsupported: state.native.unsupported,
+            nativeContext: state.native.diagnostics,
             nativeCalls: state.native.calls, nativeDelegateCalls: state.native.delegateCalls,
             primary: state.primary, remote: state.remote, human: state.human,
             fallback: config?.fallback ? "unavailable" : "disabled", pending: state.pending.size,
             nativeProtection: "configured-patterns-plus-public-native-bash-approval" }), "info");
-        } else if (command === "explain") ctx.ui.notify(JSON.stringify(state.last), "info");
+        } else if (command === "explain") ctx.ui.notify(JSON.stringify({ ...state.last,
+          nativeContext: state.native.diagnostics }), "info");
         else ctx.ui.notify("/permission-control smart\n/permission-control manual\n/permission-control status\n/permission-control explain", "info");
       },
     });
@@ -399,12 +421,14 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         if (event.toolName !== "bash" && event.toolName !== "permission_bash") return undefined;
         state.native.calls++;
         if (seenToolCallIds.has(event.toolCallId)) {
+          state.native.diagnostics = undefined;
           state.last = { outcome: "blocked", source: "none", reasonCode: "DUPLICATE_TOOL_CALL", chain: [] };
           return { block: true, reason: "bash approval ticket already used" };
         }
         seenToolCallIds.add(event.toolCallId);
         const params = plainBashParams(event.input);
         if (!config || !params) {
+          state.native.diagnostics = undefined;
           state.last = { outcome: "blocked", source: "none", reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", chain: [] };
           return { block: true, reason: "unsupported bash execution parameters" };
         }
@@ -427,15 +451,19 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         const release = await acquire(pending.signal);
         if (!release || state.generation !== queuedGeneration) {
           release?.();
+          state.native.diagnostics = undefined;
           state.pending.delete(pending); return { block: true, reason: "stale bash review" };
         }
+        let hasCurrentSnapshot = false;
         try {
           const startSession = ctx.sessionManager.getSessionId();
           const startModel = modelIdentity(ctx.models.current()); const startMode = state.mode;
           const snapshot = await nativeRuntime.capture(ctx.cwd, params);
+          hasCurrentSnapshot = true;
           state.native.scopedSettingsReady = true;
           const outcome = await approve(params, ctx, pending.signal, "bash", snapshot);
           const checked = await nativeRuntime.recheck(snapshot.settings, ctx.cwd, params);
+          state.native.diagnostics = nativeDiagnostics(checked);
           if (!outcome.approved || pending.signal.aborted || state.generation !== queuedGeneration ||
               state.mode !== startMode || ctx.sessionManager.getSessionId() !== startSession ||
               modelIdentity(ctx.models.current()) !== startModel || checked.fingerprint !== snapshot.fingerprint ||
@@ -451,6 +479,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
             chain: outcome.chain };
           return undefined;
         } catch {
+          if (!hasCurrentSnapshot) state.native.diagnostics = undefined;
           state.native.scopedSettingsReady = false;
           state.last = { outcome: "blocked", source: "none", reasonCode: "SCOPED_SETTINGS_UNAVAILABLE", chain: [] };
           return { block: true, reason: "scoped bash settings unavailable" };
@@ -466,16 +495,19 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
           if (!ticket || !params || ticket.signature !== signature(params) || ticket.generation !== state.generation ||
               ticket.mode !== state.mode || ticket.sessionId !== ctx.sessionManager.getSessionId() ||
               ticket.model !== modelIdentity(ctx.models.current()) || ticket.baseCwd !== ctx.cwd) {
+            state.native.diagnostics = undefined;
             state.last = { outcome: "blocked", source: "none", reasonCode: "INVALID_TICKET", chain: [] };
             return textResult("bash blocked", { reasonCode: "INVALID_TICKET" }, true);
           }
           let checked: NativeSettingsSnapshot;
           try { checked = await nativeRuntime.recheck(ticket.settings, ctx.cwd, params); }
           catch {
+            state.native.diagnostics = undefined;
             state.native.scopedSettingsReady = false;
             state.last = { outcome: "blocked", source: "none", reasonCode: "SCOPED_SETTINGS_UNAVAILABLE", chain: [] };
             return textResult("bash blocked", { reasonCode: "SCOPED_SETTINGS_UNAVAILABLE" }, true);
           }
+          state.native.diagnostics = nativeDiagnostics(checked);
           if (checked.fingerprint !== ticket.fingerprint || checked.decision !== ticket.nativeDecision) {
             state.last = { outcome: "blocked", source: "native", reasonCode: "STALE_REVIEW", chain: ["native"] };
             return textResult("bash blocked", { reasonCode: "STALE_REVIEW" }, true);
@@ -512,32 +544,40 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
       approval: { tier: "exec", policy: "allow" }, loadMode: "essential", parameters,
       async execute(toolCallId, rawParams, signal, _onUpdate, ctx) {
         const params = plainBashParams(rawParams);
-        if (!config || !params || (params.timeout !== undefined && params.timeout > 120))
+        if (!config || !params || (params.timeout !== undefined && params.timeout > 120)) {
+          state.native.diagnostics = undefined;
           return textResult("permission_bash blocked", { reasonCode: "INVALID_OR_UNAVAILABLE" }, true);
+        }
         const queuedGeneration = state.generation;
         const pending = new AbortController(); state.pending.add(pending);
         const combined = signal ? AbortSignal.any([signal, pending.signal]) : pending.signal;
         const release = await acquire(combined);
         if (!release || combined.aborted || state.generation !== queuedGeneration) {
           release?.();
+          state.native.diagnostics = undefined;
           state.pending.delete(pending);
           return textResult("permission_bash blocked", { reasonCode: "STALE_REVIEW" }, true);
         }
         const startSession = ctx.sessionManager.getSessionId();
         const startModel = modelIdentity(ctx.models.current()); const startMode = state.mode;
+        let hasCurrentSnapshot = false;
         try {
           const rawTicket = rawCaptures.get(toolCallId); rawCaptures.delete(toolCallId);
           if (config.nativeBash === true && (!rawTicket || rawTicket.signature !== signature(params) ||
               rawTicket.generation !== queuedGeneration || rawTicket.mode !== startMode ||
               rawTicket.sessionId !== startSession || rawTicket.model !== startModel || rawTicket.baseCwd !== ctx.cwd)) {
+            state.native.diagnostics = undefined;
             return textResult("permission_bash blocked", { reasonCode: "INVALID_TICKET" }, true);
           }
           const nativeSnapshot = rawTicket ? await nativeRuntime!.recheck(rawTicket.settings, ctx.cwd, params) : undefined;
+          hasCurrentSnapshot = nativeSnapshot !== undefined;
+          state.native.diagnostics = nativeDiagnostics(nativeSnapshot);
           if (rawTicket && (nativeSnapshot!.fingerprint !== rawTicket.fingerprint ||
               nativeSnapshot!.decision !== rawTicket.nativeDecision))
             return textResult("permission_bash blocked", { reasonCode: "STALE_REVIEW" }, true);
           const outcome = await approve(params, ctx, combined, "permission_bash", nativeSnapshot);
           const nativeChecked = rawTicket ? await nativeRuntime!.recheck(rawTicket.settings, ctx.cwd, params) : undefined;
+          state.native.diagnostics = nativeDiagnostics(nativeChecked);
           if (!outcome.approved || combined.aborted || state.generation !== queuedGeneration || state.mode !== startMode ||
               ctx.sessionManager.getSessionId() !== startSession || modelIdentity(ctx.models.current()) !== startModel ||
               (rawTicket !== undefined && ctx.cwd !== rawTicket.baseCwd)) {
@@ -561,6 +601,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
           const output = [result.stdout, result.stderr].filter(Boolean).map(boundedOutput).join("\n");
           return textResult(output || `(exit ${result.code})`, { code: result.code, killed: result.killed }, result.code !== 0);
         } catch {
+          if (!hasCurrentSnapshot) state.native.diagnostics = undefined;
           state.last = { outcome: "blocked", source: "none", reasonCode: "RUNTIME_FAILURE", chain: [] };
           return textResult("permission_bash blocked", { reasonCode: "RUNTIME_FAILURE" }, true);
         } finally { state.pending.delete(pending); release(); }

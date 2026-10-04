@@ -134,6 +134,13 @@ Linux x64 的既有宿主证据见[真实 smoke](../specs/002-manage-omp-config/
 
 2026-10-03 Phase 14 将公共配方增加 `agent_options.permission_control.native_bash=true`，以公开同名工具包装接入原生 Bash；旧配置缺省关闭。仓库实现与本机已部署版本分别登记，合入 main 不会自动更新日常实例。原生 `bash=prompt` 保留插件缺失保护，明确 deny/pattern prompt/critical prompt 仍生效；主动主审和备用模型选择不变。
 
+2026-10-04 Phase 15 保留用户的 `SHELL`，扩展 zsh 等常见 Shell 环境的原生智能审批。
+受管启动提供本地执行路线契约，插件结合公开 CLI 与真实 Settings 核验；无契约的新 Shell
+或 ACP/未知模式仍人工。普通本地工具使用 Brush，不承诺各 Shell 的原生语言。
+`/permission-control explain` 的 `nativeContext` 可以区分 Shell family、执行路线和固定上下文原因。
+默认 find interceptor 仍可能提示改用 glob，这和审批弹窗是不同步骤。实现、验证及平台范围
+见 [Shell 验收](acceptance/omp-shell-approval-20261004.md)；使用时需退出旧进程并正常 sync/plan/apply。
+
 Phase 14 基础隔离验收为 335 项包级纯测试、官方 SDK、24 组宿主及真实人工 UI 通过，见[生产插件验收](acceptance/omp-native-bash-approval-20261004.md)。2026-10-04 后续真实 Cursor 验收通过，main 已快进至 `14f34a9`，宿主仍为未修改的官方 v18.4.5。新增预算已使用 6/6（Cursor 3、GLM 3）：无害复合命令自动批准，human=0、delegate=1；原生 deny 阻止执行，reviewer=0、delegate=0。最终包级 339 项/1288 assertions、隔离宿主 25/25 及部署证据见[真实 Cursor 验收](acceptance/omp-cursor-native-approval-20261004.md)。
 
 日常部署已完成。活动实例经用户明确授权以 SIGTERM 正常退出、释放锁，未使用 SIGKILL；先完成 0600 备份，再从已安装缓存校验运行包，无新增下载。仅恢复 default=`cursor/kimi-k3:high`、smol=`zhipu_tf/glm-5.3-flash:low` 两个模型角色；plan 漂移/冲突均为 0，apply 两项更新成功。doctor 显示 offline-ready、installed、运行包匹配、pending=0，无漂移、冲突或恢复待处理。完整 run 启动准入已通过 launch callback，但未启动新的日常宿主，也未新增外部模型请求；13 项账号数据库/WAL、会话、local 与 owner 的字节和权限保持不变。下一次日常启动加载已部署插件。
