@@ -2,7 +2,7 @@
 
 当前任务已扩展到独立插件迁移（T088 起）及原生 Bash 智能审批（T095 起）；T001—T087 的闭合仅代表历史补丁方案。当前需求与边界见[独立插件修订](standalone-plugin.md)。
 
-当前进度（2026-10-04）：T088—T104 已闭合，Phase 14 是当前交付。独立插件基于未修改的官方 OMP v18.4.5；真实 Cursor 自动审批/原生禁止验收、main 合入、备份与本机部署已完成。新增模型请求6/6，部署请求0；doctor offline-ready，完整启动准入通过，日常新宿主未启动。其它平台、未观察的 Cursor frame、高级参数与本地 tiny 保留限制，不计为通过。证据见[真实 Cursor 与部署验收](../../docs/acceptance/omp-cursor-native-approval-20261004.md)。
+当前进度（2026-10-04）：T088—T109 已闭合。Phase 15 在新 worktree 扩展常见 Shell 环境，355 项 Bun、208 项 Python（7 项历史材料 skip）、固定 SDK 与 36/36 官方宿主通过，稳定 diff 审查无阻断。本轮付费调用0，不更新活动日常实例；合入 main 后需正常 sync/plan/apply 并启动新进程。真实 Cursor 新版 zsh、其它平台、高级参数与本地 tiny 保留限制，不计为新增通过。证据见 [Shell 验收](../../docs/acceptance/omp-shell-approval-20261004.md)。此前 Phase 14 的真实 Cursor 与本机交付保留 [历史身份](../../docs/acceptance/omp-cursor-native-approval-20261004.md)，其预算6/6未改写。
 
 
 历史进度（2026-09-30）：T001—T087共87项已闭合；Phase 11是当时交付。Phase 11 新资产已完成正式离线构建、锁/receipt核验和266项材料化及相关OMP回归（96.59s，无跳过）；core 291 pass / 1085 assertions，宿主检查见本轮记录。Linux glibc x64临时HOME真实standalone通过主审503一次→远程Anthropic完整审批一次→pwd成功结果一次，primary1/remote1/tiny0/human0，permit pending→consumed；new/resume、missing-plugin pre-spawn exit5及rollback通过。固定服务main2/primary-failure1/remote-review1，外部模型0，服务已停止。 真实Cursor目录、GLM备用质量、tiny推理及其它平台未验证；历史付费账本不变。
@@ -671,3 +671,22 @@ Phase 14 最终稳定代码验收（2026-10-04）：最后复核新增两个确�
 T102 真实验收（2026-10-04）：新增授权6次已用6次（Cursor3/GLM3），原102/102账本未动。先有thinking+text envelope兼容失败→人工Deny、零委托；生产诊断确认唯一text为有效allow。最小协议修复保留严格JSON/禁止/终止链。复验读取复合命令真实自动批准，nativeDelegate=1、human=0、coverage=ready；原生pwd deny复验 remote/human/delegate=0。原账号/日常配置未改，固定官方身份不变；新代码48定向/339包级、SDK0、25隔离宿主、31最终锁回归通过。证据与边界见 [真实Cursor验收](../../docs/acceptance/omp-cursor-native-approval-20261004.md)。
 
 T104 日常交付完成（2026-10-04）：main 快进至 `14f34a9`。首次备份被活动锁阻止，未修改；用户明确要求终止后核验对应官方宿主并 SIGTERM 正常退出。双独占锁内完整 0600 备份169成员，按已确认意图仅恢复 Cursor default 与 GLM smol（退出后 smol 为 Cursor low），其它原生语义保持。正常 sync/plan/apply 更新2项、漂移0、冲突0；doctor offline-ready/installed、运行包匹配、待变更0、无恢复。完整 run 准入从用户压测项目目录通过 callback 验证，未启动日常宿主，新增请求0。13项账号DB/WAL/SHM、会话、本机TOML、owner字节/权限不变，官方binary SHA未变；测试HOME、账号副本、原响应已清理，6/6安全账本保留。完成=T095—T104；进行中=无；失败待决策=无；环境不足未验证=表列能力与平台，无本轮阻塞。细节见真实验收JSON.dailyDeployment，私人缓存与本机文件不提交。
+
+## Phase 15：常见 Shell 环境兼容
+
+2026-10-04 用户授权在新 worktree 扩展 zsh 与常见 Shell，开发测试完成后再合入。基线 `93a3341`，分支 `feat/omp-shell-approval`。本机实测 explain 为 UNSUPPORTED_EXECUTION_CONTEXT/native→human；持锁 OMP 的 SHELL=/bin/zsh，cwd/.envrc/受管 HOME 正常。旧测试固定 Bash，漏掉 zsh 父终端启动。
+
+- [X] T105 修订 FR-057—FR-061 与计划，固定普通本地 Brush/ACP 外部终端的区别、执行路径证明、Shell family 与语言边界；保留历史验收身份。
+- [X] T106 在受管启动契约绑定本地执行路径标记，拒绝机器覆盖及 ACP/未知模式，隔离验证父环境 SHELL 保留、不影响非原生插件配置；不新增强制 Shell 设置。
+- [X] T107 扩展插件支持常见 Shell 标准调用形状，按可证执行路径核对 startup/custom path；标记与 Shell 变更失效票据，保留原生 deny/prompt、未知上下文与审查链，完善固定诊断；实现前保留失败回归。
+- [X] T108 完成纯包、受影响 Python 与固定 SDK；用无账号官方宿主/loopback fixture 验证真实 zsh 环境 find 管道自动审批及执行计数，覆盖原生禁止/未知路径等反例，记录首轮失败与未安装 Shell/平台。
+- [X] T109 稳定代码后刷新普通锁、支持矩阵与验收；最终独立审查、准确本地提交并快进合入 main。不自动更新活动日常实例，不新增收费推理。
+
+| 状态 | 当前内容 |
+|---|---|
+| 完成 | T105—T109，常见 Shell 实现、普通锁、64 定向/355包级、208 Python、SDK0、36/36官方宿主、独立审查、本地提交与快进合入 |
+| 进行中 | 无 |
+| 失败待决策 | 无 |
+| 环境不足未验证 | 未安装 Shell 和其它 OS 尚未真实运行，真实 Cursor 新版调用未授权；不计作通过 |
+
+最终分层结果与首轮失败见 [Shell 验收](../../docs/acceptance/omp-shell-approval-20261004.md)。7 项 Python skip 来自已退役的 patched-host 材料，不执行或刷新其历史资产。诊断失败残留和 raw 并发预捕获覆盖均有新增回归。无当前审查快照的拒绝事件发布自身 last 并清 context，单个 explain 不表示全部并发 pending。

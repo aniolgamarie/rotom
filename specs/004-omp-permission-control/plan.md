@@ -200,3 +200,13 @@ Phase 11 新资产已完成正式离线构建、锁/receipt核验和266项材料
 5. 插件字节稳定后刷新普通官方资产锁并验证受管交付；不刷新历史补丁 receipt，不削弱损坏/漂移/活动实例守卫。验收后本地提交，合入与日常部署依赖相应验证和活动锁条件。
 
 默认测试不启动真实宿主；官方 fixture、真实 Cursor wire、模型质量和其它平台是不同证据。gpt-5.6-sol/medium 负责插件实现与对应测试，主代理负责合同、管理器配置、关键安全审查和最终验收。每项任务区分完成、进行中、失败待决策、环境不足未验证。
+
+## Phase 15：常见 Shell 环境兼容
+
+开发分支 `feat/omp-shell-approval`，基线 `93a3341`。用户拒绝强制换成 Bash，要求扩展 zsh 与常见 Shell，并在 worktree 开发测试后合入。本机失败是 zsh family 被过窄的 native context 检查送人工，不是审查模型决定。
+
+1. 固定官方普通本地 BashTool 使用 Brush；Bash 配置生成 snapshot，非 Bash 不读取对应启动脚本。ACP client terminal 是外部执行例外，公开扩展上下文不能辨别。因此由严格受管 CLI 启动契约提供只表示本地路径的专用环境绑定，禁止机器覆盖；插件同时校验公开 CLI 模式并将绑定纳入重核指纹。不能在未证明路径时全局删除 Shell 门槛。
+2. 识别已声明 family 和官方参数形状，不改变用户 Shell，不新增 shellPath 配方。已证明本地 Brush 的非 Bash 环境进入既有审查链；Bash snapshot 继续保留启动文件、继承函数、HOME、粘性缓存及自定义 snapshot 路径门槛。其它原生下限和执行参数不变。
+3. 增加固定 family/route/context 原因到审查材料与脱敏诊断，人工弹窗给出固定原因码。主审、远程备用、tiny unavailable 和人类决定链不改。
+4. executor（角色配置 gpt-6.1-sol/medium）拥有插件及相应 TS 测试；主代理拥有管理器绑定、Python 回归、规格/交付锁/验收与官方宿主矩阵；scout（角色配置 gpt-6-luna/high）只读核对固定源码与最终稳定 diff。不修改任何上游或 vendor，默认测试临时 HOME/假模型，官方 smoke 独立记录。
+5. 检查纯模块、受影响 Python、pristine SDK；在无账号临时 HOME 使用已授权的官方宿主和 loopback 固定 provider，验证实际 zsh 环境/find 管道与其它可安装环境。仅记已运行的 Shell/平台，付费模型预算不增加。稳定插件后离线刷新普通锁、独立审查、准确本地提交、快进合入 main；本轮不自动部署或终止日常实例。

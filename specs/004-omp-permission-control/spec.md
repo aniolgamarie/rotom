@@ -1,12 +1,12 @@
 # Feature Specification: OMP 权限管控
 
-**Feature Branch**: `feat/omp-native-bash-approval`（Phase 14）；既有规格与 T001—T094 在 `main` 完成
+**Feature Branch**: `feat/omp-shell-approval`（Phase 15）；Phase 14 已合入 `main`
 
 **Feature Directory**: `specs/004-omp-permission-control`
 
 **Created**: 2026-09-29
 
-**Status**: 旧独立插件与本机迁移完成；Phase 14 原生 Bash 接入正在 worktree 实施。T001—T087 为历史补丁交付，当前 FR-040—FR-056 由 [独立插件修订](standalone-plugin.md) 覆盖。
+**Status**: Phase 15 常见 Shell 环境兼容已在新 worktree 开发、验收并快进合入 main；本轮未部署日常实例。Phase 14 原生 Bash 保留此前真实 Cursor 与部署身份。T001—T087 为历史补丁交付，当前 FR-040—FR-061 由 [独立插件修订](standalone-plugin.md) 覆盖。
 
 **Input**: 根据本会话已确认需求整理：为自用 OMP 增加 `omp-permission-control`，在会话内切换权限模式；以独立、可配置的低成本模型审查操作，未配置时使用会话主模型；远程 fallback 只在主审运行失败时接替完整审查；本地 tiny 最后作受限故障兜底，不参与有效决定复审。插件源码保存在 rotom，由 `omp-kernel` 选择并受管加载；实现、交付与验证范围见任务和验收记录；本轮不改日常账号或活动会话。
 

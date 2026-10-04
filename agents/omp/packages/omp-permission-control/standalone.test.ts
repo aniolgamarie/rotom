@@ -112,19 +112,30 @@ function fakeNativeRuntime(initial: Partial<NativeSettingsSnapshot> = {}) {
   let fingerprint = initial.fingerprint ?? "settings-1";
   let decision = initial.decision ?? "allow";
   let reasonCode = initial.reasonCode ?? "NATIVE_ALLOW";
+  let diagnostics = initial.diagnostics;
   let recheckWait: Promise<void> | undefined;
+  let captureFailure = false;
+  let recheckFailure = false;
   const snapshot = (): NativeSettingsSnapshot => ({ settings, fingerprint, decision, reasonCode,
-    reviewContext: { sameSettingsInstance: true, nativeDecision: decision, shellContext: "standard" } });
+    diagnostics,
+    reviewContext: initial.reviewContext ?? { sameSettingsInstance: true, nativeDecision: decision, shellContext: "standard" } });
   const runtime: NativeBashRuntime = {
-    capture: async () => snapshot(),
-    recheck: async () => { await recheckWait; return snapshot(); },
+    capture: async () => { if (captureFailure) throw new Error("fixture capture unavailable"); return snapshot(); },
+    recheck: async () => {
+      await recheckWait;
+      if (recheckFailure) throw new Error("fixture recheck unavailable");
+      return snapshot();
+    },
   };
   return { runtime,
     setFingerprint: (value: string) => { fingerprint = value; },
+    setDiagnostics: (value: NativeSettingsSnapshot["diagnostics"]) => { diagnostics = value; },
     setDecision: (value: NativeSettingsSnapshot["decision"], reason: NativeSettingsSnapshot["reasonCode"]) => {
       decision = value; reasonCode = reason;
     },
     setRecheckWait: (value: Promise<void> | undefined) => { recheckWait = value; },
+    setCaptureFailure: () => { captureFailure = true; },
+    setRecheckFailure: () => { recheckFailure = true; },
   };
 }
 
@@ -468,6 +479,147 @@ describe("native bash delegation", () => {
   const params = { command: "ls -la", cwd: "work", timeout: 2 };
   const event = (id: string, input: unknown = params, toolName = "bash") =>
     ({ type: "tool_call", toolName, toolCallId: id, input });
+
+  test("local zsh find pipeline reviews once and delegates once without human approval", async () => {
+    const diagnostics = { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } as const;
+    const native = fakeNativeRuntime({ diagnostics, reviewContext: { ...diagnostics, sameSettingsInstance: true,
+      nativeDecision: "allow" } });
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime,
+      messages: [{ type: "message", message: { role: "user", content: "find the files and show the first twenty", timestamp: 1 } }] });
+    const { tool, hook } = await nativeReady(h);
+    const input = { command: "find . -maxdepth 1 -type f | head -20", timeout: 2 };
+    expect(await hook(event("zsh-pipeline", input), h.ctx)).toBeUndefined();
+    expect((await tool.execute("zsh-pipeline", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
+    expect(h.fetchCalls).toHaveLength(1);
+    expect(h.selectCalls).toHaveLength(0);
+    expect(h.invokeCalls).toHaveLength(1);
+    expect(h.invokeCalls[0][0]).toBe(input);
+    expect(h.execCalls).toHaveLength(0);
+    const request = JSON.parse(h.fetchCalls[0][1].body);
+    expect(request.messages.at(-1).content).toContain('"shellFamily":"zsh"');
+    expect(request.messages.at(-1).content).toContain('"executionRoute":"local-embedded"');
+    await h.commands.get("permission-control").handler("status", h.ctx);
+    expect(JSON.parse(h.notices.at(-1)!).nativeContext).toEqual(diagnostics);
+  });
+
+  test("failures without a current snapshot clear the preceding call's native context", async () => {
+    for (const failure of ["malformed-hook", "duplicate-hook", "native-capture",
+      "native-ticket", "native-recheck", "raw-ticket", "raw-recheck", "raw-params"]) {
+      const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded",
+        contextReason: "STANDARD_CONTEXT" } });
+      const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
+      const { tool, hook } = await nativeReady(h);
+      expect(await hook(event("previous"), h.ctx)).toBeUndefined();
+      await h.commands.get("permission-control").handler("explain", h.ctx);
+      expect(JSON.parse(h.notices.at(-1)!).nativeContext.shellFamily).toBe("zsh");
+      if (failure === "malformed-hook") expect((await hook(event("bad", { ...params, async: true }), h.ctx)).block).toBe(true);
+      else if (failure === "duplicate-hook") expect((await hook(event("previous"), h.ctx)).block).toBe(true);
+      else if (failure === "native-capture") {
+        native.setCaptureFailure();
+        expect((await hook(event("bad"), h.ctx)).block).toBe(true);
+      } else if (failure === "native-ticket" || failure === "native-recheck") {
+        if (failure === "native-recheck") native.setRecheckFailure();
+        expect((await tool.execute(failure === "native-ticket" ? "missing" : "previous", params,
+          undefined, undefined, h.ctx)).isError).toBe(true);
+      } else {
+        if (failure === "raw-recheck") {
+          expect(await hook(event("raw", params, "permission_bash"), h.ctx)).toBeUndefined();
+          native.setRecheckFailure();
+        }
+        expect((await h.tools.get("permission_bash").execute("raw",
+          failure === "raw-params" ? { ...params, async: true } : params, undefined, undefined, h.ctx)).isError).toBe(true);
+      }
+      for (const command of ["explain", "status"]) {
+        await h.commands.get("permission-control").handler(command, h.ctx);
+        expect(JSON.parse(h.notices.at(-1)!).nativeContext).toBeUndefined();
+      }
+      expect(h.invokeCalls).toHaveLength(0);
+      expect(h.execCalls).toHaveLength(0);
+    }
+  });
+
+  test("a stale ticket retains the current recheck context rather than the preceding context", async () => {
+    const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded",
+      contextReason: "STANDARD_CONTEXT" } });
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
+    const { tool, hook } = await nativeReady(h);
+    expect(await hook(event("route-change"), h.ctx)).toBeUndefined();
+    const current = { shellFamily: "zsh", executionRoute: "unverified", contextReason: "EXECUTION_ROUTE_UNVERIFIED" } as const;
+    native.setDiagnostics(current);
+    native.setFingerprint("current-route-changed");
+    expect((await tool.execute("route-change", params, undefined, undefined, h.ctx)).details.reasonCode).toBe("STALE_REVIEW");
+    for (const command of ["explain", "status"]) {
+      await h.commands.get("permission-control").handler(command, h.ctx);
+      expect(JSON.parse(h.notices.at(-1)!).nativeContext).toEqual(current);
+    }
+    expect(h.invokeCalls).toHaveLength(0);
+  });
+
+  test("raw precapture success and failure preserve the current pending Bash approval context", async () => {
+    const current = { shellFamily: "bash", executionRoute: "local-embedded", contextReason: "BASH_STARTUP" } as const;
+    const native = fakeNativeRuntime({ decision: "prompt", reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", diagnostics: current });
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
+    const { hook } = await nativeReady(h);
+    let respond: (value: string) => void = () => {};
+    let entered: () => void = () => {};
+    const shown = new Promise<void>(resolve => { entered = resolve; });
+    h.ctx.ui.select = async () => {
+      entered();
+      return new Promise<string>(resolve => { respond = resolve; });
+    };
+    const pending = hook(event("pending-bash"), h.ctx);
+    await shown;
+    native.setDiagnostics({ shellFamily: "fish", executionRoute: "unverified", contextReason: "EXECUTION_ROUTE_UNVERIFIED" });
+    expect(await hook(event("raw-different-context", params, "permission_bash"), h.ctx)).toBeUndefined();
+    const assertPendingContext = async () => {
+      await h.commands.get("permission-control").handler("explain", h.ctx);
+      expect(JSON.parse(h.notices.at(-1)!)).toMatchObject({ outcome: "pending-human",
+        reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", nativeContext: current });
+      await h.commands.get("permission-control").handler("status", h.ctx);
+      expect(JSON.parse(h.notices.at(-1)!).nativeContext).toEqual(current);
+    };
+    await assertPendingContext();
+    native.setCaptureFailure();
+    expect((await hook(event("raw-failed-capture", params, "permission_bash"), h.ctx)).block).toBe(true);
+    await assertPendingContext();
+    respond("Deny");
+    expect((await pending).block).toBe(true);
+    expect(h.fetchCalls).toHaveLength(0);
+    expect(h.invokeCalls).toHaveLength(0);
+    expect(h.execCalls).toHaveLength(0);
+  });
+
+  test("pending human approval explains the current fixed reason and safe context", async () => {
+    const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded",
+      contextReason: "STANDARD_CONTEXT" } });
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
+    const { hook } = await nativeReady(h);
+    expect(await hook(event("previous-allow"), h.ctx)).toBeUndefined();
+    native.setDecision("prompt", "UNSUPPORTED_EXECUTION_CONTEXT");
+    native.setDiagnostics({ shellFamily: "zsh", executionRoute: "unverified", contextReason: "EXECUTION_ROUTE_UNVERIFIED",
+      env: "SECRET_ENV_SENTINEL", path: "/SECRET_PATH_SENTINEL" } as any);
+    let respond: (value: string) => void = () => {};
+    let entered: () => void = () => {};
+    const shown = new Promise<void>(resolve => { entered = resolve; });
+    h.ctx.ui.select = async (title: string) => {
+      h.selectCalls.push([title]); entered();
+      return new Promise<string>(resolve => { respond = resolve; });
+    };
+    const waiting = hook(event("pending-route"), h.ctx);
+    await shown;
+    await h.commands.get("permission-control").handler("explain", h.ctx);
+    expect(JSON.parse(h.notices.at(-1)!)).toMatchObject({ outcome: "pending-human", source: "human",
+      reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", chain: ["native", "human"], nativeContext: {
+        shellFamily: "zsh", executionRoute: "unverified", contextReason: "EXECUTION_ROUTE_UNVERIFIED" } });
+    await h.commands.get("permission-control").handler("status", h.ctx);
+    expect(JSON.parse(h.notices.at(-1)!)).toMatchObject({ pending: 1, human: { calls: 1 }, primary: { calls: 1 } });
+    expect(h.selectCalls[0][0]).toContain("reason: UNSUPPORTED_EXECUTION_CONTEXT");
+    expect(h.selectCalls[0][0]).toContain("context: EXECUTION_ROUTE_UNVERIFIED");
+    expect([...h.notices, h.selectCalls[0][0]].join("\n")).not.toContain("SECRET_");
+    respond("Deny");
+    expect((await waiting).block).toBe(true);
+    expect(h.invokeCalls).toHaveLength(0);
+  });
 
   test("mode change after native queue acquisition releases the next request", async () => {
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: fakeNativeRuntime().runtime });

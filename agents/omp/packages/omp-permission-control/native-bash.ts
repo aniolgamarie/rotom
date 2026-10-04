@@ -1,7 +1,7 @@
 import { lstat, realpath } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
-import { basename, dirname, isAbsolute, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import type { ToolSession } from "@oh-my-pi/pi-coding-agent/tools";
 
 export interface PlainBashParams {
@@ -10,12 +10,66 @@ export interface PlainBashParams {
   timeout?: number;
 }
 
+export const SHELL_FAMILIES = ["bash", "sh", "zsh", "dash", "ash", "ksh", "mksh", "fish",
+  "pwsh", "powershell", "cmd", "unknown"] as const;
+export type ShellFamily = (typeof SHELL_FAMILIES)[number];
+export type ExecutionRoute = "local-embedded" | "unverified";
+export const CONTEXT_REASONS = ["STANDARD_CONTEXT", "SETTINGS_MISMATCH", "CWD_UNCERTAIN", "DIRENV_CONTEXT",
+  "SHELL_UNKNOWN", "SHELL_ARGUMENTS", "EXECUTION_ROUTE_UNVERIFIED", "SHELL_PATH_UNVERIFIED", "SHELL_PREFIX",
+  "BASH_STARTUP", "BASH_FUNCTIONS", "SHELL_HOME_MISMATCH", "BASH_SNAPSHOT_UNCERTAIN", "WORKTREE_CONTEXT"] as const;
+export interface NativeDiagnostics {
+  shellFamily: ShellFamily;
+  executionRoute: ExecutionRoute;
+  contextReason: (typeof CONTEXT_REASONS)[number];
+}
+
+export function shellFamily(shell: string): ShellFamily {
+  const name = shell.replace(/\\/gu, "/").split("/").at(-1)?.toLowerCase().replace(/\.exe$/u, "");
+  return SHELL_FAMILIES.includes(name as ShellFamily) ? name as ShellFamily : "unknown";
+}
+
+function standardShellArguments(family: ShellFamily, args: string[]): boolean {
+  const shapes = family === "cmd" ? [["/c"]] : family === "pwsh" || family === "powershell"
+    ? [["-NoLogo", "-Command"], ["-NoLogo", "-NoProfile", "-Command"]] : [["-l", "-c"], ["-c"]];
+  return family !== "unknown" && shapes.some(shape => shape.length === args.length &&
+    shape.every((arg, index) => arg === args[index]));
+}
+
+// 只核验受管本地启动的公开 argv；不信任缓存到 Settings 的环境副本。
+export function executionRoute(marker: string | undefined, argv: readonly string[]): ExecutionRoute {
+  if (marker !== "local-native-bash-v1" || argv.length < 2) return "unverified";
+  const booleanFlags = new Set(["--help", "-h", "--version", "-v", "--no-title", "--print", "-p",
+    "--no-session", "--no-skills"]);
+  const valueFlags = new Set(["--provider", "--model", "--smol", "--slow", "--plan", "--thinking",
+    "--service-tier", "--max-time", "--profile", "--mode"]);
+  // 官方入口 runCli(process.argv.slice(2))：前两个元素为 executable 与入口。
+  const args = argv.slice(2);
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index];
+    if (arg === "--") break;
+    if (arg === "acp" || arg === "rpc-ui") return "unverified";
+    if (!arg.startsWith("-")) continue;
+    const equals = arg.startsWith("--") ? arg.indexOf("=") : -1;
+    const flag = equals === -1 ? arg : arg.slice(0, equals);
+    if (booleanFlags.has(flag)) {
+      if (equals !== -1) return "unverified";
+      continue;
+    }
+    if (!valueFlags.has(flag)) return "unverified";
+    const value = equals === -1 ? args[++index] : arg.slice(equals + 1);
+    if (value === undefined || value.length === 0 || value === "--") return "unverified";
+    if (flag === "--mode" && !["text", "json", "rpc"].includes(value)) return "unverified";
+  }
+  return "local-embedded";
+}
+
 export interface NativeSettingsSnapshot {
   settings: object;
   fingerprint: string;
   decision: "allow" | "deny" | "prompt";
   reasonCode: "NATIVE_ALLOW" | "NATIVE_DENY" | "NATIVE_PROMPT" | "UNSUPPORTED_EXECUTION_CONTEXT";
   reviewContext: Record<string, string | number | boolean | null>;
+  diagnostics?: NativeDiagnostics;
 }
 
 export interface NativeBashRuntime {
@@ -34,6 +88,9 @@ interface SettingLike<T> {
 
 interface NativeModules {
   homeDir(): string;
+  executionRoute?(): ExecutionRoute;
+  executionRouteFingerprint?(): string;
+  legacyShellAllowed?(): boolean;
   findScopedSettings(cwd?: string): SettingsLike | undefined;
   isSettingsInitialized(): boolean;
   getGlobalSettings(): Promise<SettingsLike>;
@@ -102,12 +159,9 @@ async function nearestEnvrc(start: string): Promise<{ present: boolean; uncertai
   }
 }
 
-async function userStartupState(shell: string, home: string): Promise<{ present: boolean; uncertain: boolean;
+async function userStartupState(home: string): Promise<{ present: boolean; uncertain: boolean;
   marker: string }> {
-  const name = basename(shell).toLowerCase();
-  const candidates = name.includes("zsh") ? [".zshrc", ".zprofile"] :
-    name.includes("fish") ? [join(".config", "fish", "config.fish")] :
-      [".bashrc", ".bash_profile", ".bash_login", ".profile"];
+  const candidates = [".bashrc", ".bash_profile", ".bash_login", ".profile"];
   const markers: string[] = [];
   let present = false;
   let uncertain = false;
@@ -157,6 +211,13 @@ async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: 
   params: PlainBashParams, globalSettings: SettingsLike,
   mutable: { shellSnapshotUncertain: boolean }): Promise<NativeSettingsSnapshot> {
   const policies = modules.cfgToolsApproval.get(settings);
+  const shell = settings.getShellConfig();
+  const family = shellFamily(shell.shell);
+  const route = modules.executionRoute?.() ?? "unverified";
+  const routeFingerprint = modules.executionRouteFingerprint?.() ?? route;
+  const legacyShellAllowed = modules.legacyShellAllowed?.() ?? modules.executionRoute === undefined;
+  const diagnostics: NativeDiagnostics = { shellFamily: family, executionRoute: route,
+    contextReason: "STANDARD_CONTEXT" };
   const session = {
     cwd: baseCwd,
     hasUI: false,
@@ -166,6 +227,7 @@ async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: 
   } as unknown as ToolSession;
   const approvalDecision = nativeDecision(new modules.BashTool(session).approval({ command: params.command }));
   const reviewContext = {
+    ...diagnostics,
     sameSettingsInstance: settings === globalSettings,
     nativeDecision: approvalDecision,
     compoundCommands: modules.cfgBashAllowCompoundCommands.get(settings),
@@ -179,44 +241,59 @@ async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: 
   if (policies.bash === "deny") {
     return { settings: { scoped: settings, global: globalSettings },
       fingerprint: digest({ scoped: settingsFingerprint(modules, settings),
-        global: settingsFingerprint(modules, globalSettings) }),
-      decision: "deny", reasonCode: "NATIVE_DENY", reviewContext };
+        global: settingsFingerprint(modules, globalSettings), route, routeFingerprint, legacyShellAllowed }),
+      decision: "deny", reasonCode: "NATIVE_DENY", reviewContext, diagnostics };
   }
   const cwd = targetCwd(baseCwd, params.cwd);
-  const shell = settings.getShellConfig();
   const direnv = cwd.path ? await nearestEnvrc(cwd.path) :
     { present: false, uncertain: true, marker: "cwd-unavailable" };
   const systemHome = modules.homeDir();
   const shellHome = shell.env?.HOME ?? systemHome;
-  const startup = await userStartupState(shell.shell, shellHome);
+  // 只有 Bash 本地路径生成 snapshot；未证明路由的旧 sh 保留原有保护。
+  const snapshotContext = family === "bash" || (family === "sh" && route === "unverified");
+  const startup = snapshotContext ? await userStartupState(shellHome) :
+    { present: false, uncertain: false, marker: "not-executed" };
   const inheritedFunctions = Object.keys(shell.env ?? {}).some(key => /^BASH_FUNC_.*%%$/u.test(key));
   const differentHome = shellHome !== systemHome;
-  if (startup.present || startup.uncertain || inheritedFunctions || differentHome)
+  if (snapshotContext && (startup.present || startup.uncertain || inheritedFunctions || differentHome))
     mutable.shellSnapshotUncertain = true;
-  const standardShell = /^(?:bash|sh)$/iu.test(basename(shell.shell)) &&
-    (canonical(shell.args) === canonical(["-l", "-c"]) || canonical(shell.args) === canonical(["-c"]));
-  const mutableContext = settings !== globalSettings || cwd.uncertain || !cwd.path || direnv.uncertain ||
-    (modules.cfgBashDirenv.get(settings) !== "off" && direnv.present) || startup.uncertain || startup.present ||
-    !standardShell || modules.cfgShellPath.get(settings) !== undefined || shell.prefix !== undefined ||
-    inheritedFunctions || differentHome || mutable.shellSnapshotUncertain ||
-    (modules.cfgWorktreeClone.get(settings) && /(?:^|[;&|]\s*)git\s+worktree\s+add(?:\s|$)/u.test(params.command));
+  const configuredShellPath = modules.cfgShellPath.get(settings);
+  const contextReason: NativeDiagnostics["contextReason"] = settings !== globalSettings ? "SETTINGS_MISMATCH" :
+    cwd.uncertain || !cwd.path || direnv.uncertain ? "CWD_UNCERTAIN" :
+    modules.cfgBashDirenv.get(settings) !== "off" && direnv.present ? "DIRENV_CONTEXT" :
+    family === "unknown" ? "SHELL_UNKNOWN" :
+    !standardShellArguments(family, shell.args) ? "SHELL_ARGUMENTS" :
+    route !== "local-embedded" && !(legacyShellAllowed && (family === "bash" || family === "sh"))
+      ? "EXECUTION_ROUTE_UNVERIFIED" :
+    configuredShellPath !== undefined && (route !== "local-embedded" || family === "bash" ||
+      shellFamily(configuredShellPath) !== family) ? "SHELL_PATH_UNVERIFIED" :
+    shell.prefix !== undefined ? "SHELL_PREFIX" :
+    startup.uncertain || startup.present ? "BASH_STARTUP" :
+    snapshotContext && inheritedFunctions ? "BASH_FUNCTIONS" :
+    snapshotContext && differentHome ? "SHELL_HOME_MISMATCH" :
+    snapshotContext && mutable.shellSnapshotUncertain ? "BASH_SNAPSHOT_UNCERTAIN" :
+    modules.cfgWorktreeClone.get(settings) && /(?:^|[;&|]\s*)git\s+worktree\s+add(?:\s|$)/u.test(params.command)
+      ? "WORKTREE_CONTEXT" : "STANDARD_CONTEXT";
+  diagnostics.contextReason = contextReason;
+  reviewContext.contextReason = contextReason;
   const currentFingerprint = digest({ scoped: settingsFingerprint(modules, settings),
     global: settingsFingerprint(modules, globalSettings), direnv: direnv.marker, startup: startup.marker,
+    route, routeFingerprint, legacyShellAllowed,
     physicalCwd: cwd.path ? await realpath(cwd.path).catch(() => "unresolved") : "unavailable" });
   if (approvalDecision === "deny") {
     return { settings: { scoped: settings, global: globalSettings }, fingerprint: currentFingerprint,
-      decision: "deny", reasonCode: "NATIVE_DENY", reviewContext };
+      decision: "deny", reasonCode: "NATIVE_DENY", reviewContext, diagnostics };
   }
   if (approvalDecision === "prompt") {
     return { settings: { scoped: settings, global: globalSettings }, fingerprint: currentFingerprint,
-      decision: "prompt", reasonCode: "NATIVE_PROMPT", reviewContext };
+      decision: "prompt", reasonCode: "NATIVE_PROMPT", reviewContext, diagnostics };
   }
-  if (mutableContext) {
+  if (contextReason !== "STANDARD_CONTEXT") {
     return { settings: { scoped: settings, global: globalSettings }, fingerprint: currentFingerprint, decision: "prompt",
-      reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", reviewContext };
+      reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", reviewContext, diagnostics };
   }
   return { settings: { scoped: settings, global: globalSettings }, fingerprint: currentFingerprint, decision: "allow",
-    reasonCode: "NATIVE_ALLOW", reviewContext };
+    reasonCode: "NATIVE_ALLOW", reviewContext, diagnostics };
 }
 
 export function createNativeBashRuntime(modules: NativeModules): NativeBashRuntime {
@@ -250,6 +327,11 @@ export async function loadNativeBashRuntime(): Promise<NativeBashRuntime> {
   ]);
   return createNativeBashRuntime({
     homeDir: homedir,
+    executionRoute: () => executionRoute(process.env.ROTOM_PERMISSION_CONTROL_EXECUTION_ROUTE, process.argv),
+    executionRouteFingerprint: () => digest({ marker: process.env.ROTOM_PERMISSION_CONTROL_EXECUTION_ROUTE ?? null,
+      argv: process.argv }),
+    legacyShellAllowed: () => process.env.ROTOM_PERMISSION_CONTROL_EXECUTION_ROUTE === undefined &&
+      executionRoute("local-native-bash-v1", process.argv) === "local-embedded",
     findScopedSettings: config.findScopedSettings,
     isSettingsInitialized: config.isSettingsInitialized,
     getGlobalSettings: config.Settings.init,

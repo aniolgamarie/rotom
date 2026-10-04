@@ -79,3 +79,11 @@
 2026-10-04 参数保留补充：官方校验会对封闭工具 schema 的未知键错误进行 coercion，删除后才发出 tool_call。工具参数 schema 因此保留未知字段，由插件在 hook 和 execute 两边精确拒绝；配置/sidecar schema 仍封闭。OpenAI 的 model-facing schema 可由宿主转换为 strict 形式，但本地输入边界不可依赖 wire schema 或 TypeScript strict 检查替代。首轮 async 被删除问题已作为真实宿主回归记录，不删除失败证据。
 
 Shell snapshot 的缓存只以 shell 为键，公开接口无法查询加载前的历史内容；首批支持新 CLI 进程从启动就加载插件。插件观察到 startup/不同 HOME/继承函数的不确定性后保持生命周期内粘性人工状态，删除 rc 文件不恢复自动批准。热加载至已执行命令的旧进程不在已验证范围。
+
+## 2026-10-04：常见 Shell 环境兼容
+
+- FR-057：保留用户选择的 Shell，不通过覆盖 SHELL 或 shellPath 规避兼容问题。识别 bash、sh、zsh、dash、ash、ksh、mksh、fish、pwsh、powershell、cmd 的标准官方调用形状（含 .exe 名称及 Windows 路径）。支持范围是这些配置环境下普通原生 Bash 的智能审批，不承诺把 Brush 命令语言变成 fish/PowerShell/cmd 原生语言；未知壳或额外启动参数仍人工。
+- FR-058：固定官方 v18.4.5 的本地普通 BashTool 委托不传 useUserShell，使用内嵌 Brush；只有 Bash 配置会生成 Shell snapshot。ACP 客户端终端可能实际执行外部 Shell，但公开 ExtensionContext 不能辨别客户端 bridge，不能仅凭 Shell 名称假定执行路径。受管本地启动契约应提供 `ROTOM_PERMISSION_CONTROL_EXECUTION_ROUTE=local-native-bash-v1`；管理器严格拒绝 ACP、rpc-ui、外部终端和未知模式参数，禁止私人 machine 配置伪造或覆盖该标记。插件还须拒绝带 ACP/未知模式的标记复用。缺少可核实的本地路径时，新扩展 Shell 不自动批准，保留旧 Bash/sh 保守边界；标记变化参与执行指纹并使旧票据失效。
+- FR-059：已确认的本地普通 Brush 路径不因非 Bash 的用户启动文件或非 Bash 已知 shellPath 单独转人工，因为这些文件/壳不被此路径执行。Bash snapshot 的既有 startup、继承函数、HOME 和历史缓存保护保留；自定义 Bash snapshot 路径仍人工。前缀、实际 direnv、cwd 不确定、scoped/global 设置不同源、显式原生 prompt/deny 和未知高级参数的门槛不变，审查模型链不变。不得读取/执行秘密环境或启动脚本来制造兼容。
+- FR-060：审查材料与 explain/status 输出受控 Shell family、执行路径分类及固定上下文原因码；不输出原始环境、配置目录、任意文件路径或模型自由文本。人工弹窗至少显示转人工的固定原因；有效模型 ask/deny 仍不走复审链。
+- FR-061：覆盖 zsh 父终端下标准登录参数与无害 find 管道，验证审查调用、人工计数、原生委托和实际结果；覆盖所有 family/参数的隔离模拟矩阵、标记缺失/伪造模式/改变、Bash startup、未知壳与前缀等反例。固定 SDK strict 与无账号官方宿主 smoke 单列，真实模型预算不增加。未安装的 Shell 或其它 OS 不计作真实环境验证；写入稳定后审查、提交、再快进合入 main，不自动部署活动实例。

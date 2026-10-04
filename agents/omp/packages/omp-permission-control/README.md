@@ -120,3 +120,25 @@ schema，本地拒绝保证不能由 wire schema 或 TypeScript strict 类型检
 Shell snapshot 私有缓存无法查询加载前历史；首批支持从新 CLI 进程启动时加载插件。
 观察到 startup、不同 HOME 或继承 shell 函数后，未知缓存状态在插件生命周期内保持人工，
 即使删除 rc 也不会恢复自动批准；热加载到已有执行进程尚未支持。
+
+## 常见 Shell 环境（Phase 15）
+
+受管启动保留调用者或机器配置选定的 `SHELL`。开启 `native_bash` 时，管理器在启动契约
+绑定非秘密的本地执行路线标记；机器覆盖和调用者预置该标记均被拒绝。插件每次捕获和
+执行前检查标记、公开 CLI 形状以及真实 scoped Settings，环境或参数变更会撤销票据。
+这项契约只适用于 `agentcfg run` 启动的官方 CLI；标记是配置边界，不是来源认证或防止
+同 UID 进程伪造的凭据。第三方自行嵌入 SDK 或热加载到已有宿主不属于这项覆盖范围。
+
+支持识别 bash、sh、zsh、dash、ash、ksh、mksh、fish、pwsh、powershell 和 cmd 的标准
+调用形状，包括 Windows 路径及 `.exe` 名称。普通本地原生 Bash 使用 OMP 的内置 Brush；
+这项兼容表示上述 Shell 环境可以进入智能审批，命令仍使用 Brush 支持的语法，不表示
+fish、PowerShell 或 cmd 的原生语言已经适配。已确认本地执行路线时，非 Bash 的启动脚本
+和已知同族 custom shellPath 不参与普通 Bash 执行；Bash 的 snapshot/startup、继承函数、
+HOME 不一致、direnv、prefix、未知 Shell/args/path 和 worktree 重写继续保守处理。
+
+无受管标记的普通旧 Bash/sh 启动维持原有保守行为。标记错误、ACP、rpc-ui、未知 CLI
+选项或模式不自动批准；PTY、async、service 等参数仍在现有边界之外。可以使用
+`/permission-control explain` 查看固定的 `shellFamily`、`executionRoute` 和 `contextReason`；
+人工询问会显示固定原因码，不输出环境变量内容或启动文件路径。
+
+验收与实际平台范围见 [Shell 兼容记录](../../../../docs/acceptance/omp-shell-approval-20261004.md)。

@@ -1,0 +1,1200 @@
+{
+  "phase": 15,
+  "date": "2026-10-04",
+  "feature": "004-omp-permission-control",
+  "branch": "feat/omp-shell-approval",
+  "baseCommit": "93a3341",
+  "identity": {
+    "ompTag": "v18.4.5",
+    "ompCommit": "79808c3bf8f8cd9826decc63e3e18b13035f64f8",
+    "binarySha256": "42c710239b3fc30b9759424f973c6c143709935d5752be7eec8d7b011f40d864",
+    "officialLock": "8ef7433146b739df711dd8b5c0cf4970a01d95da8276e34633f7d52e7990c50a",
+    "pluginDigest": "c80de47eaea75120330052b767f8d45f32e65866af6ca55007f1b56caa5e0fcd",
+    "sourceFiles": {
+      "src/agentcfg/omp.py": "5e13f8d7e15eed86b7f19eaa692d4986a24a9f20ed159aad8471f06d2f3bc783",
+      "agents/omp/packages/omp-permission-control/native-bash.ts": "9a9da0f1d1df243c066eb64d9ca5ca2f73427bb1893957109789b54dbcde30db",
+      "agents/omp/packages/omp-permission-control/native-bash.test.ts": "44b7edec296c352fb8dc81645d14c440a021fa7c5efe91e73506042081aa47d0",
+      "agents/omp/packages/omp-permission-control/standalone.ts": "2ac6cf0b6aa2fb634464dbfb70d89ddff6b32ad61f1667881240aaa347acbe1b",
+      "agents/omp/packages/omp-permission-control/standalone.test.ts": "2e96ef997d35bfd201dad1a37c94b6d657acbe2c279e5e1470a6a19f743e8204"
+    }
+  },
+  "implementationModels": {
+    "executor": "gpt-6.1-sol/medium",
+    "scout": "gpt-6-luna/high",
+    "primary": "specification, launch contract, safety decisions, official host acceptance, final merge"
+  },
+  "checks": {
+    "targetedBun": {
+      "passed": 64,
+      "failed": 0,
+      "assertions": 543
+    },
+    "packageBun": {
+      "passed": 355,
+      "failed": 0,
+      "assertions": 1628,
+      "files": 15
+    },
+    "pristineSdk": {
+      "exitCode": 0,
+      "diagnostics": 0
+    },
+    "python": {
+      "passed": 208,
+      "skipped": 7,
+      "seconds": 29.28,
+      "skipReason": "historical patched-host materials retired"
+    },
+    "officialHost": {
+      "officialTag": "v18.4.5",
+      "binarySha256": "42c710239b3fc30b9759424f973c6c143709935d5752be7eec8d7b011f40d864",
+      "paidRequests": 0,
+      "fixture": "deterministic loopback",
+      "cases": [
+        {
+          "case": "zsh-find-pipeline",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": false,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "timeoutSeconds": 5,
+                "wallTimeMs": 4.671363000000042
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "executed",
+            "source": "primary",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary"
+            ],
+            "nativeContext": {
+              "shellFamily": "zsh",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "zsh-find-default-interceptor",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": true,
+              "details": {}
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "failed",
+            "source": "native",
+            "reasonCode": "NATIVE_EXECUTION_FAILED",
+            "chain": [
+              "native"
+            ],
+            "nativeContext": {
+              "shellFamily": "zsh",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "zsh-unused-startup",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": false,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "timeoutSeconds": 5,
+                "wallTimeMs": 23.795102000000043
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "executed",
+            "source": "primary",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary"
+            ],
+            "nativeContext": {
+              "shellFamily": "zsh",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "zsh-custom-path",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": false,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "timeoutSeconds": 5,
+                "wallTimeMs": 38.053987000000006
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "executed",
+            "source": "primary",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary"
+            ],
+            "nativeContext": {
+              "shellFamily": "zsh",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "sh-custom-path",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": false,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "timeoutSeconds": 5,
+                "wallTimeMs": 38.30533600000001
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "executed",
+            "source": "primary",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary"
+            ],
+            "nativeContext": {
+              "shellFamily": "sh",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "bash-custom-path",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "zsh-missing-route",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "zsh-wrong-route",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "zsh-native-deny",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "zsh-pattern-deny",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "zsh-envrc",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "native-allow",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": false,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "timeoutSeconds": 5,
+                "wallTimeMs": 61.07890999999995
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "executed",
+            "source": "primary",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary"
+            ],
+            "nativeContext": {
+              "shellFamily": "bash",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "anthropic-thinking",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": false,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "timeoutSeconds": 5,
+                "wallTimeMs": 54.827504999999974
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "executed",
+            "source": "primary",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary"
+            ],
+            "nativeContext": {
+              "shellFamily": "bash",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "compound-allow",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": false,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "timeoutSeconds": 5,
+                "wallTimeMs": 26.230412
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "executed",
+            "source": "primary",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary"
+            ],
+            "nativeContext": {
+              "shellFamily": "bash",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "native-nonzero",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "timeoutSeconds": 5,
+                "wallTimeMs": 31.53433999999993,
+                "exitCode": 2
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "failed",
+            "source": "primary",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary"
+            ],
+            "nativeContext": {
+              "shellFamily": "bash",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "native-interceptor",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": true,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "failed",
+            "source": "native",
+            "reasonCode": "NATIVE_EXECUTION_FAILED",
+            "chain": [
+              "native"
+            ],
+            "nativeContext": {
+              "shellFamily": "bash",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "native-deny",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "pattern-deny",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "pattern-prompt",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "review-ask-terminal",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "review-deny-terminal",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "remote-fallback",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1,
+            "fixture-remote": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": false,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "timeoutSeconds": 5,
+                "wallTimeMs": 64.43420300000002
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "executed",
+            "source": "remote",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary",
+              "remote"
+            ],
+            "nativeContext": {
+              "shellFamily": "bash",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "primary-unsupported",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-remote": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": false,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "timeoutSeconds": 5,
+                "wallTimeMs": 49.80823500000008
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 1,
+          "diagnostic": {
+            "outcome": "executed",
+            "source": "remote",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary",
+              "remote"
+            ],
+            "nativeContext": {
+              "shellFamily": "bash",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "manual-no-ui",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "unknown-async",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "unknown-service",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "unknown-pty",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "after-approval-override",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "reasonCode": "STALE_REVIEW"
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 0,
+          "diagnostic": {
+            "outcome": "blocked",
+            "source": "native",
+            "reasonCode": "STALE_REVIEW",
+            "chain": [
+              "native"
+            ],
+            "nativeContext": {
+              "shellFamily": "bash",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": true,
+          "passed": true
+        },
+        {
+          "case": "after-approval-params",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "reasonCode": "INVALID_TICKET"
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 0,
+          "diagnostic": {
+            "outcome": "blocked",
+            "source": "none",
+            "reasonCode": "INVALID_TICKET",
+            "chain": []
+          },
+          "observerApplied": true,
+          "passed": true
+        },
+        {
+          "case": "user-startup",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "login-startup",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "envrc",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "native-disabled",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "isError": true,
+                "error": "Tool bash not found"
+              }
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "plugin-missing",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "invalid-config",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2
+          },
+          "toolResults": [
+            {
+              "tool": "bash",
+              "error": true,
+              "executionObserved": false,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {}
+            }
+          ],
+          "humanCalls": null,
+          "nativeDelegateCalls": null,
+          "diagnostic": {},
+          "observerApplied": false,
+          "passed": true
+        },
+        {
+          "case": "raw-allow",
+          "hostExitCode": 0,
+          "fixtureRequests": {
+            "fixture-exec": 2,
+            "fixture-review": 1
+          },
+          "toolResults": [
+            {
+              "tool": "permission_bash",
+              "error": false,
+              "executionObserved": true,
+              "interceptorObserved": false,
+              "findInterceptorObserved": false,
+              "details": {
+                "code": 0,
+                "killed": false
+              }
+            }
+          ],
+          "humanCalls": 0,
+          "nativeDelegateCalls": 0,
+          "diagnostic": {
+            "outcome": "executed",
+            "source": "primary",
+            "reasonCode": "LOW_RISK_AUTHORIZED",
+            "chain": [
+              "primary"
+            ],
+            "nativeContext": {
+              "shellFamily": "bash",
+              "executionRoute": "local-embedded",
+              "contextReason": "STANDARD_CONTEXT"
+            }
+          },
+          "observerApplied": false,
+          "passed": true
+        }
+      ],
+      "lockIdentity": "8ef7433146b739df711dd8b5c0cf4970a01d95da8276e34633f7d52e7990c50a",
+      "pluginDigest": "c80de47eaea75120330052b767f8d45f32e65866af6ca55007f1b56caa5e0fcd",
+      "sourceStable": true
+    }
+  },
+  "firstFailures": [
+    {
+      "kind": "product regression before implementation",
+      "scenario": "zsh standard args with startup and find pipeline",
+      "expected": "allow",
+      "observed": "prompt"
+    },
+    {
+      "kind": "diagnostic regression before repair",
+      "scenario": "current failure after successful snapshot",
+      "observed": "previous nativeContext retained"
+    },
+    {
+      "kind": "host fixture expectation",
+      "scenario": "zsh find pipeline with default interceptor",
+      "reviewerCalls": 1,
+      "observed": "native interceptor requested glob; actual find not run"
+    },
+    {
+      "kind": "test facade integration",
+      "scenario": "spread ExtensionAPI prototype methods",
+      "observed": "extension failed to load; no review or delegate",
+      "resolution": "forward public methods without modifying host object"
+    }
+  ],
+  "runtimeScope": {
+    "managedEntry": "agentcfg run",
+    "marker": "ROTOM_PERMISSION_CONTROL_EXECUTION_ROUTE=local-native-bash-v1",
+    "markerIsCredential": false,
+    "preservesCallerAndMachineShell": true,
+    "verifiedLocalModes": [
+      "default",
+      "text",
+      "json",
+      "rpc"
+    ],
+    "notCovered": [
+      "ACP terminal",
+      "rpc-ui",
+      "unknown CLI",
+      "third-party SDK embedding",
+      "hot loading",
+      "PTY",
+      "async",
+      "service"
+    ],
+    "commandLanguage": "OMP embedded Brush"
+  },
+  "shellMatrix": {
+    "unitFamilies": [
+      "bash",
+      "sh",
+      "zsh",
+      "dash",
+      "ash",
+      "ksh",
+      "mksh",
+      "fish",
+      "pwsh",
+      "powershell",
+      "cmd"
+    ],
+    "officialHostEnvironments": [
+      "bash",
+      "zsh",
+      "sh"
+    ],
+    "notActuallyRun": [
+      "dash",
+      "ash",
+      "ksh",
+      "mksh",
+      "fish",
+      "pwsh",
+      "powershell",
+      "cmd"
+    ],
+    "otherOS": "not verified; package platform support unchanged"
+  },
+  "paidRequests": 0,
+  "realCursorNewShellCalls": "not run; prior Phase 14 evidence retains its identity",
+  "dailyDeployment": {
+    "performed": false,
+    "activeInstanceTerminated": false,
+    "machineConfigChanged": false,
+    "upstreamModified": false
+  },
+  "review": {
+    "blockingFindings": 0,
+    "scope": "stable diff; source routing, managed marker contract, ticket invalidation, current diagnostics",
+    "singleExplain": "latest published result or current serialized approval; does not list all pending calls"
+  },
+  "baselineRepairs": [
+    "regenerated discovery manifest from existing source rules",
+    "updated historical discovery fixed assertions",
+    "made repository identity assertion worktree-compatible"
+  ],
+  "gitScope": {
+    "included": [
+      "repository-owned source",
+      "tests",
+      "specification",
+      "ordinary lock/catalog",
+      "sanitized acceptance"
+    ],
+    "excluded": [
+      "cache",
+      "machine settings",
+      "credentials",
+      "sessions",
+      "raw host logs",
+      "historical patched-host artifacts"
+    ]
+  }
+}
