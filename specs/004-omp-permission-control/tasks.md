@@ -2,7 +2,7 @@
 
 当前任务已扩展到独立插件迁移（T088 起）及原生 Bash 智能审批（T095 起）；T001—T087 的闭合仅代表历史补丁方案。当前需求与边界见[独立插件修订](standalone-plugin.md)。
 
-当前进度（2026-10-04）：T088—T109 已闭合。Phase 15 在新 worktree 扩展常见 Shell 环境，355 项 Bun、208 项 Python（7 项历史材料 skip）、固定 SDK 与 36/36 官方宿主通过，稳定 diff 审查无阻断。本轮付费调用0，不更新活动日常实例；合入 main 后需正常 sync/plan/apply 并启动新进程。真实 Cursor 新版 zsh、其它平台、高级参数与本地 tiny 保留限制，不计为新增通过。证据见 [Shell 验收](../../docs/acceptance/omp-shell-approval-20261004.md)。此前 Phase 14 的真实 Cursor 与本机交付保留 [历史身份](../../docs/acceptance/omp-cursor-native-approval-20261004.md)，其预算6/6未改写。
+当前进度（2026-10-04）：T088—T109 已闭合。Phase 15 在新 worktree 扩展常见 Shell 环境，355 项 Bun、208 项 Python（7 项历史材料 skip）、固定 SDK 与 36/36 官方宿主通过，稳定 diff 审查无阻断。本轮付费调用0；用户后续确认退出并明确授权后，已完成备份和正常 sync/plan/apply，doctor offline-ready、待变更0，zsh 完整启动准入通过；未启动日常宿主。真实 Cursor 新版 zsh、其它平台、高级参数与本地 tiny 保留限制，不计为新增通过。证据见 [Shell 验收](../../docs/acceptance/omp-shell-approval-20261004.md)。此前 Phase 14 的真实 Cursor 与本机交付保留 [历史身份](../../docs/acceptance/omp-cursor-native-approval-20261004.md)，其预算6/6未改写。
 
 
 历史进度（2026-09-30）：T001—T087共87项已闭合；Phase 11是当时交付。Phase 11 新资产已完成正式离线构建、锁/receipt核验和266项材料化及相关OMP回归（96.59s，无跳过）；core 291 pass / 1085 assertions，宿主检查见本轮记录。Linux glibc x64临时HOME真实standalone通过主审503一次→远程Anthropic完整审批一次→pwd成功结果一次，primary1/remote1/tiny0/human0，permit pending→consumed；new/resume、missing-plugin pre-spawn exit5及rollback通过。固定服务main2/primary-failure1/remote-review1，外部模型0，服务已停止。 真实Cursor目录、GLM备用质量、tiny推理及其它平台未验证；历史付费账本不变。
@@ -690,3 +690,5 @@ T104 日常交付完成（2026-10-04）：main 快进至 `14f34a9`。首次备�
 | 环境不足未验证 | 未安装 Shell 和其它 OS 尚未真实运行，真实 Cursor 新版调用未授权；不计作通过 |
 
 最终分层结果与首轮失败见 [Shell 验收](../../docs/acceptance/omp-shell-approval-20261004.md)。7 项 Python skip 来自已退役的 patched-host 材料，不执行或刷新其历史资产。诊断失败残留和 raw 并发预捕获覆盖均有新增回归。无当前审查快照的拒绝事件发布自身 last 并清 context，单个 explain 不表示全部并发 pending。
+
+后续本机交付（2026-10-04）：用户已退出并允许更新，排他锁通过，无进程终止。完整0600备份173成员；按已有模型恢复授权仅修复default规范化漂移。sync复用官方缓存，plan/apply两项更新、drift/conflicts=0；doctor installed/offline-ready、runtime匹配、pending=0、无恢复。zsh父环境完整run callback通过，过滤秘密绑定，host/model请求0。14项账号/会话/local/owner字节与权限不变；公开安全摘要写入Shell验收，私人备份和原始输出不提交。

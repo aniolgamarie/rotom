@@ -1165,10 +1165,82 @@
   "paidRequests": 0,
   "realCursorNewShellCalls": "not run; prior Phase 14 evidence retains its identity",
   "dailyDeployment": {
-    "performed": false,
+    "performed": true,
+    "state": "completed",
+    "authorization": "user confirmed exit and authorized update after main merge",
+    "implementationCommit": "33ec9573579adc15e8ffcb5e772fd995b779bb2d",
     "activeInstanceTerminated": false,
     "machineConfigChanged": false,
-    "upstreamModified": false
+    "upstreamModified": false,
+    "backup": {
+      "fileName": "before-shell-approval-20261004T102842Z.tar",
+      "location": "private omp-kernel cache upgrade-backups",
+      "mode": "0600",
+      "members": 173,
+      "verified": true
+    },
+    "modelRestoration": {
+      "previousDefault": "cursor/kimi-k3",
+      "default": "cursor/kimi-k3:high",
+      "smol": "zhipu_tf/glm-5.3-flash:low",
+      "changedSelectors": [
+        "/modelRoles/default"
+      ],
+      "authority": "previous explicit approval to restore declared Cursor default and GLM smol",
+      "otherNativeConfigSemanticsUnchanged": true
+    },
+    "operations": {
+      "sync": "installed; cached official release SHA verified, no download",
+      "plan": {
+        "changes": 2,
+        "drift": 0,
+        "conflicts": 0
+      },
+      "apply": {
+        "changes": 2,
+        "drift": 0,
+        "conflicts": 0
+      },
+      "doctor": {
+        "readiness": "offline-ready",
+        "dependencies": "installed",
+        "deployed_dependencies": "installed",
+        "deployed_runtime_matches_current": true,
+        "changes_pending": 0,
+        "drift": false,
+        "conflicts": false,
+        "recovery_pending": false
+      }
+    },
+    "runtimeIdentity": "8ef7433146b739df711dd8b5c0cf4970a01d95da8276e34633f7d52e7990c50a-linux-x64",
+    "permissionControl": {
+      "defaultMode": "smart",
+      "nativeBash": true,
+      "reviewer": "session",
+      "remoteFallback": {
+        "model": "glm-5.3-flash",
+        "provider": "zhipu_tf"
+      },
+      "localFallbackInference": "unavailable through public API"
+    },
+    "startupAdmission": {
+      "cwd": "user stress-test project",
+      "passed": true,
+      "completeRunPathWithLaunchCallback": true,
+      "callerShell": "/bin/zsh",
+      "shellPreserved": true,
+      "localExecutionRouteBound": true,
+      "secretBindingsExcluded": true,
+      "hostLaunched": false,
+      "externalRequests": 0
+    },
+    "protectedInputs": {
+      "files": 14,
+      "scope": "account DB/WAL/SHM, sessions, machine TOML and ownership",
+      "bytesAndModesUnchanged": true,
+      "officialBinarySha256Matches": true
+    },
+    "paidRequests": 0
   },
   "review": {
     "blockingFindings": 0,
@@ -1196,5 +1268,11 @@
       "raw host logs",
       "historical patched-host artifacts"
     ]
+  },
+  "developmentDeploymentBoundary": {
+    "performed": false,
+    "activeInstanceTerminated": false,
+    "machineConfigChanged": false,
+    "upstreamModified": false
   }
 }
