@@ -7,7 +7,7 @@
 | 固定源码 | [来源记录](../specs/002-manage-omp-config/evidence/source-provenance.md)、完整bun.lock/许可证/发布摘要 | 固定来源、发现路径与能力映射依据 |
 | 管理器隔离测试 | [基础](../specs/002-manage-omp-config/evidence/foundation.md)、[资源与US1](../specs/002-manage-omp-config/evidence/us1.md)、[依赖维护](../specs/002-manage-omp-config/evidence/us5.md)、[全量回归](../specs/002-manage-omp-config/evidence/regression.md)、[提交前审查](../specs/002-manage-omp-config/evidence/precommit-review.md)（最新全量 2160 项及 7 子测试通过） | 合成配置、假进程/资产下的行为和边界 |
 | 原生宿主 | [Linux x64 smoke 通过](../specs/002-manage-omp-config/evidence/linux-smoke.md) | 九行配置被真实宿主发现，本地 MCP 完成调用；未触发安装器，未请求模型 |
-| 原生账号 | 登录、真实usage、模型调用均未执行，已转 OMP-F03–F05 | 不宣称服务、账号、额度窗口或模型路线通过 |
+| 原生账号 | 早期升级验收未执行登录、真实usage或模型调用，转 OMP-F03–F05；后续 [真实 Cursor 验收](acceptance/omp-cursor-native-approval-20261004.md) 已执行限定模型调用 | 证明观察到的 Cursor 原生 Bash 与 GLM 审查路径，不扩大为登录流程、usage或其它模型路线通过 |
 
 | 平台 | 发布资产已固定 | 平台选择隔离测试 | 真实宿主 |
 |---|---|---|---|
@@ -30,6 +30,8 @@
 2026-09-24 用户确认本机无其他平台/账号验收环境，已将上述未验证项转入[OMP-F01–F05](follow-ups/omp-platform-and-live-validation.md)。当前 spec 按[修订范围](../specs/002-manage-omp-config/scope-change-20260924.md)已完成（62/62）；后续验证不阻塞当前完成状态，仍不计为通过。
 
 
-Phase 14 原生 Bash 插件已在独立 worktree 完成实现和隔离验收（2026-10-04）；真实 Cursor 和日常部署仍未执行。已验证的原型同名注册、公开委托和 scoped Settings 机制见[可行性证据](acceptance/omp-bash-wrapper-feasibility-20261003.json)；该证据不代表生产插件、真实 Cursor wire 或日常部署通过。生产验证、高级能力和平台结果另行登记。
+Phase 14 原生 Bash 插件已完成实现、隔离验收及真实 Cursor 验收（2026-10-04），main 已快进至 `14f34a9`，仍使用未修改的官方 v18.4.5。已验证的原型同名注册、公开委托和 scoped Settings 机制见[可行性证据](acceptance/omp-bash-wrapper-feasibility-20261003.json)；保留其原型身份，高级能力和其它平台结果另行登记。
 
-生产插件纯测试、固定 SDK、23 组官方宿主与真实人工 UI 见[Phase 14 验收](acceptance/omp-native-bash-approval-20261004.md)。
+生产插件基础 335 项包级纯测试、固定 SDK、24 组官方宿主与真实人工 UI 见[Phase 14 验收](acceptance/omp-native-bash-approval-20261004.md)；后续最终 339 项/1288 assertions、25/25 隔离宿主结果见真实 Cursor 验收，保留各阶段身份。
+
+后续[真实 Cursor 验收](acceptance/omp-cursor-native-approval-20261004.md)使用新增预算 6/6（Cursor 3、GLM 3）：无害复合命令 human=0、delegate=1；原生 deny reviewer=0、delegate=0。日常部署已完成：用户授权 SIGTERM 退出活动实例后备份、sync/plan/apply/doctor 成功，offline-ready、运行包匹配、pending=0，无漂移、冲突或恢复待处理；13 项账号数据库/WAL、会话、local 与 owner 的字节和权限不变。完整启动准入通过 launch callback，未启动新的日常宿主，部署阶段外部请求为 0。
