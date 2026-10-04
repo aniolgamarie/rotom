@@ -1,10 +1,10 @@
 # Cursor 原生 Bash 智能审批：独立插件方案与可行性
 
-状态：生产改造与隔离官方宿主验收已完成，位于 `feat/omp-native-bash-approval` worktree，基线 `7558475`。真实 Cursor、合入 main 和日常部署尚未执行。方案日期：2026-10-03；验收更新：2026-10-04。生产证据见 [Phase 14 验收](../acceptance/omp-native-bash-approval-20261004.md)。
+状态：生产改造、隔离官方宿主、真实 Cursor 验收及日常部署已完成，main 已快进至 `14f34a9`。活动实例经用户明确授权以 SIGTERM 正常退出、释放锁，备份与受管部署成功；完整启动准入通过，尚未启动新的日常宿主。方案日期：2026-10-03；验收更新：2026-10-04。基础 335 项/24 组证据见 [Phase 14 验收](../acceptance/omp-native-bash-approval-20261004.md)，最终 339 项/1288 assertions、25/25 隔离宿主及部署证据见[真实 Cursor 验收](../acceptance/omp-cursor-native-approval-20261004.md)。
 
 ## 问题与结论
 
-当前独立插件只审查 `permission_bash`。官方 OMP v18.4.5 的 Cursor shell、shellStream、piBash 通道按固定名称查找 registry 中的 `bash`，不受模型 active tools 中移除 bash 的约束。因此 smart/ready 与 reviewer 调用数 0 可以同时出现，原生 `Allow tool: bash` 仍会弹出。
+方案提出时独立插件只审查 `permission_bash`。官方 OMP v18.4.5 的 Cursor shell、shellStream、piBash 通道按固定名称查找 registry 中的 `bash`，不受模型 active tools 中移除 bash 的约束。因此当时 smart/ready 与 reviewer 调用数 0 可以同时出现，原生 `Allow tool: bash` 仍会弹出。
 
 建议通过公开 `registerTool()` 注册同名 bash，在执行函数完成审批后使用公开 `ctx.invokeTool()` 委托原生实现。接口文档明确支持这种包装，不修改上游源码、vendor/cache、二进制或内部对象。它能保留原生执行与 bookkeeping，无需重新实现终端后端。但委托不会再次经过原生审批 gate，安全检查必须在包装器中完成。
 
@@ -23,7 +23,8 @@
 | 环境不足未验证 | 直接 Cursor handler 分派探针 | 严格类型检查通过，但相对模块中的包 import 在 standalone 扩展加载时 ResolveMessage；没有把它记为运行通过 |
 | 已完成（替代方法失败，已作取舍） | 将 Cursor 探针 bundle 成单入口的替代尝试 | 官方二进制仍无法加载该子路径，整个探针扩展未加载；回到已通过的设置探针。保留失败证据，生产插件不依赖 CursorExecHandlers 导入 |
 | 已完成（隔离验收） | 完整生产审批链 | 官方宿主固定 provider 验证审查链、票据、设置变更；真实 TUI 验证人工批准，不等同真实 Cursor wire |
-| 环境不足未验证 | 真实 Cursor OAuth 端到端 | 本轮无外部推理，无 OAuth wire 取证；本机已授权付费预算 102/102 耗尽，不借 fixture 声称真实服务通过 |
+| 已完成（限定真实路径） | [真实 Cursor OAuth 端到端](../acceptance/omp-cursor-native-approval-20261004.md) | 原型阶段预算 102/102 耗尽且未执行；2026-10-04 新增预算使用 6/6（Cursor 3、GLM 3），复合命令 human=0/delegate=1，原生 deny reviewer=0/delegate=0；未穷举所有 Cursor frame |
+| 已完成 | 日常部署 | 用户授权 SIGTERM 退出后备份、sync/plan/apply/doctor 成功；offline-ready、运行包匹配、pending=0，无漂移/冲突/恢复待处理；13 项账号/会话/local/owner 字节与权限不变，启动准入通过但未启动新日常宿主，部署外部请求 0 |
 | 已完成（限定范围） | kernel 默认环境与参数边界 | 默认 interceptor/auto-background/无 envrc、取消和模型切换有证据；未知 startup/direnv 转人工，async/service/PTY 显式拒绝 |
 
 机器证据见 [omp-bash-wrapper-feasibility-20261003.json](../acceptance/omp-bash-wrapper-feasibility-20261003.json)。原型与本机日志在 `.cache/omp-wrapper-feasibility-20261002/`，日期目录保留启动时身份。原型的拒绝结果未统一设置 isError，只用于“不发生委托”的计数证明；生产版本必须返回明确错误语义。
@@ -108,4 +109,4 @@ allow 仅允许进入插件自己的审批函数，不等于批准执行。插�
 
 可行性阶段完成原型、验证和方案文档；该阶段未修改生产插件、受管配方、依赖锁、本机配置或日常运行包。后续实施已获授权，在公共旧修改提交 main 并对齐 worktree 后开始；生产改造进度由 spec Phase 14/T095—T104 追踪，不能把前面的原型结果当作生产通过。执行工作由 gpt-5.6-sol/medium 子代理完成，源码证据由 gpt-5.6-luna/medium 子代理搜集，主代理完成设置探针、隔离宿主验证和关键边界验收。
 
-直接导入 Cursor 分派类的失败只限制此种探针方法，不是生产入口依赖；生产入口只需要已运行验证的 SDK、BashTool 和设置句柄。Cursor 是否实际经过包装最终仍须真实端到端验证，不能因源码推导而省略。
+直接导入 Cursor 分派类的失败只限制此种探针方法，不是生产入口依赖；生产入口只需要已运行验证的 SDK、BashTool 和设置句柄。后续[真实端到端验收](../acceptance/omp-cursor-native-approval-20261004.md)已确认观察到的 Cursor 原生 Bash 路径经过包装；其它 frame、高级能力和平台仍须各自验证。

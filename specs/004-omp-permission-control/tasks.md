@@ -1,9 +1,11 @@
 # Tasks: OMP 权限管控
 
-当前任务已扩展到独立插件迁移（T088 起）；T001—T087 的闭合仅代表历史补丁方案。当前需求与边界见[独立插件修订](standalone-plugin.md)。
+当前任务已扩展到独立插件迁移（T088 起）及原生 Bash 智能审批（T095 起）；T001—T087 的闭合仅代表历史补丁方案。当前需求与边界见[独立插件修订](standalone-plugin.md)。
+
+当前进度（2026-10-04）：T088—T104 已闭合，Phase 14 是当前交付。独立插件基于未修改的官方 OMP v18.4.5；真实 Cursor 自动审批/原生禁止验收、main 合入、备份与本机部署已完成。新增模型请求6/6，部署请求0；doctor offline-ready，完整启动准入通过，日常新宿主未启动。其它平台、未观察的 Cursor frame、高级参数与本地 tiny 保留限制，不计为通过。证据见[真实 Cursor 与部署验收](../../docs/acceptance/omp-cursor-native-approval-20261004.md)。
 
 
-当前进度（2026-09-30）：T001—T087共87项已闭合；Phase 11是当前交付。Phase 11 新资产已完成正式离线构建、锁/receipt核验和266项材料化及相关OMP回归（96.59s，无跳过）；core 291 pass / 1085 assertions，宿主检查见本轮记录。Linux glibc x64临时HOME真实standalone通过主审503一次→远程Anthropic完整审批一次→pwd成功结果一次，primary1/remote1/tiny0/human0，permit pending→consumed；new/resume、missing-plugin pre-spawn exit5及rollback通过。固定服务main2/primary-failure1/remote-review1，外部模型0，服务已停止。 真实Cursor目录、GLM备用质量、tiny推理及其它平台未验证；历史付费账本不变。
+历史进度（2026-09-30）：T001—T087共87项已闭合；Phase 11是当时交付。Phase 11 新资产已完成正式离线构建、锁/receipt核验和266项材料化及相关OMP回归（96.59s，无跳过）；core 291 pass / 1085 assertions，宿主检查见本轮记录。Linux glibc x64临时HOME真实standalone通过主审503一次→远程Anthropic完整审批一次→pwd成功结果一次，primary1/remote1/tiny0/human0，permit pending→consumed；new/resume、missing-plugin pre-spawn exit5及rollback通过。固定服务main2/primary-failure1/remote-review1，外部模型0，服务已停止。 真实Cursor目录、GLM备用质量、tiny推理及其它平台未验证；历史付费账本不变。
 **Input**: `specs/004-omp-permission-control/` 中的 spec、plan、research、data-model、quickstart 与四份 contracts
 
 **Prerequisites**: `plan.md`、`spec.md`、`research.md`、`data-model.md`、`contracts/`
@@ -643,10 +645,10 @@ Phase 13 完成：T093—T094。Cursor OAuth 明确声明与native角色覆盖�
 
 | 状态 | 当前内容 |
 |---|---|
-| 完成 | main 六个公共基线提交、开发分支对齐 `7558475`；T095—T101 合同、实现、配置和隔离验收；T103 普通锁、文档与本地功能提交；既有原型证据保持原身份 |
-| 进行中 | T104：用户已确认恢复 Cursor default 与 GLM smol，准备合入和正常部署 |
+| 完成 | main 六个公共基线提交、开发分支对齐 `7558475`；T095—T104 合同、实现、真实与隔离验收、普通锁、本地提交合入及日常部署；既有原型证据保持原身份 |
+| 进行中 | 无 |
 | 失败待决策 | 无当前阻塞 |
-| 环境不足未验证 | 其它平台、未观察的 Cursor frame 和高级参数；本地 tiny 无公开推理 API；本轮日常部署等待 T104 |
+| 环境不足未验证 | 其它平台、未观察的 Cursor frame 和高级参数；本地 tiny 无公开推理 API；这些限制不记为通过，无本轮交付阻塞 |
 
 
 Phase 14 中间验收（2026-10-04）：配置定向 53 pass/3 历史 skip；受影响 OMP permission/kernel/dependencies/pipeline/discovery 五组 131 pass/7 历史 skip，25.13s。测试采用真实 UID 的隔离临时 HOME，不启动宿主、不联网、不调用真实模型。T100 尚未完成，生产插件纯测试与 pristine SDK 检查仍进行中。源码独立核查确认原生执行读取全局 Settings，已补入 FR054 的同源门槛；插件正在落实该门槛，不把配置 ready 计作 coverage ready。日常部署和 102/102 请求账本不变。
@@ -658,7 +660,7 @@ Phase 14 首轮官方宿主（2026-10-04）：17 组中 16 pass、unknown-async 
 Phase 14 隔离验收闭合（2026-10-04）：T096—T101（含 T099）完成。参数管线修复后官方宿主 23/23 pass；真实 TUI manual Approve 通过，实际 pwd 一次，reviewer 0 次（本地固定执行响应 2 次、固定 title 1 次）。TUI 首次因临时 profile 缺 setupVersion 而进入设置向导、未执行工具，补齐公开 setupVersion=2 后通过，保留失败结果。临时测试进程已停止，官方 binary SHA256 未改，外部/付费模型请求 0。公开 snapshot cache 先验限制和 SDK wire schema 转换范围已记录，不支持已有执行进程热加载。T102 真实 Cursor 和 T104 日常部署仍未执行，不能把隔离通过计作真实服务通过。
 
 
-- [ ] T104 在 T102 真实 Cursor 验收满足后，将准确的功能提交合回 main；退出/实例锁条件满足时用正常 sync/plan/apply/doctor 启用，保留账号、会话与恢复边界，不自动终止日常实例。
+- [X] T104 在 T102 真实 Cursor 验收满足后，将准确的功能提交合回 main；退出/实例锁条件满足时用正常 sync/plan/apply/doctor 启用，保留账号、会话与恢复边界，不自动终止日常实例。
 
 T103 交付记录（2026-10-04）：普通锁离线刷新并 read_lock 复核；官方身份未变，当前 plugin tree 与普通锁见生产验收 JSON。README/quickstart/支持与验收记录已更新，缓存/凭据/原始终端日志不提交。T103 范围为仓库交付与本地功能提交，后续合入及日常部署拆为 T104；T102/T104 均未执行，仍不计通过。所有历史补丁锁、receipt 与请求账本保持原身份。
 
@@ -667,3 +669,5 @@ Phase 14 最终稳定代码验收（2026-10-04）：最后复核新增两个确�
 
 
 T102 真实验收（2026-10-04）：新增授权6次已用6次（Cursor3/GLM3），原102/102账本未动。先有thinking+text envelope兼容失败→人工Deny、零委托；生产诊断确认唯一text为有效allow。最小协议修复保留严格JSON/禁止/终止链。复验读取复合命令真实自动批准，nativeDelegate=1、human=0、coverage=ready；原生pwd deny复验 remote/human/delegate=0。原账号/日常配置未改，固定官方身份不变；新代码48定向/339包级、SDK0、25隔离宿主、31最终锁回归通过。证据与边界见 [真实Cursor验收](../../docs/acceptance/omp-cursor-native-approval-20261004.md)。
+
+T104 日常交付完成（2026-10-04）：main 快进至 `14f34a9`。首次备份被活动锁阻止，未修改；用户明确要求终止后核验对应官方宿主并 SIGTERM 正常退出。双独占锁内完整 0600 备份169成员，按已确认意图仅恢复 Cursor default 与 GLM smol（退出后 smol 为 Cursor low），其它原生语义保持。正常 sync/plan/apply 更新2项、漂移0、冲突0；doctor offline-ready/installed、运行包匹配、待变更0、无恢复。完整 run 准入从用户压测项目目录通过 callback 验证，未启动日常宿主，新增请求0。13项账号DB/WAL/SHM、会话、本机TOML、owner字节/权限不变，官方binary SHA未变；测试HOME、账号副本、原响应已清理，6/6安全账本保留。完成=T095—T104；进行中=无；失败待决策=无；环境不足未验证=表列能力与平台，无本轮阻塞。细节见真实验收JSON.dailyDeployment，私人缓存与本机文件不提交。

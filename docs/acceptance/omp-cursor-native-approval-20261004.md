@@ -27,6 +27,14 @@
 
 ## 部署状态与限制
 
-已获得恢复本机两个清空模型角色的明确选择：恢复已声明的 Cursor default 与 GLM smol。合入和日常部署正在按正常生命周期锁、备份、sync、plan、apply、doctor 执行，完成后补本节与 JSON；当前不能用本记录宣称已部署。
+日常部署已完成，功能与兼容修复 `14f34a9` 已快进合入本地 main。备份时实例锁拦住首次尝试，未发生修改；用户随后明确要求终止，核验持锁的官方 omp-kernel 进程后用 SIGTERM 正常退出，锁释放，无需 SIGKILL，也没有终止其它实例。
+
+独占实例和状态锁内创建完整 0600 备份（169 成员，路径见 JSON），包含实例、部署状态与本机配置，不跟随符号链接。退出后 default 仍缺失、smol 保存为 `cursor/kimi-k3:low`；按用户已确认的声明恢复 default=`cursor/kimi-k3:high`、smol=`zhipu_tf/glm-5.3-flash:low`。原子替换只改变这两个字段的语义，保留其它原生字段；备份辅助脚本的证据目录改为机器私有缓存，并用完整备份重新核对恢复结果，没有改动原生会话目录权限。
+
+正常 sync 校验缓存的官方发布资产，无下载；plan/apply 更新两项、漂移零、冲突零。doctor 为 offline-ready，依赖 installed、运行包匹配、待变更零、无恢复。完整 `run` 路径在用户的 `group_commit_leader_switch` 目录通过，以 launch callback 验证准入，没有启动日常宿主或增加模型请求。部署前后的 13 个账号 DB/WAL/SHM、会话、本机 TOML 和所有权文件字节与权限保持不变；新运行包的官方二进制 SHA256 与固定上游一致。
+
+当前模式 smart、nativeBash=true；主审未显式配置时跟随会话，Cursor 不支持标准审查传输时转 GLM flash 远程备用。用户设置显式 reviewer 后它仍优先，smol 角色不等于 reviewer。本地 tiny 配置为 installed-only，但无公开推理 API，仍记录 unavailable 并转人工。新启动时 coverage 可能为 limited，取得实际 scoped Settings 和委托能力后才能变为 ready；本次真实 Cursor 自动执行已观察到 ready，部署准入本身不冒充运行覆盖验证。
+
+临时测试 HOME、账号副本和原始模型响应已清理，安全预算计数保留为 6/6；备份与本机证据放在私人缓存，未提交账号、原始日志或本机 TOML。恢复角色、同步、部署与启动准入均未新增外部推理请求。
 
 本次只证明观察到的真实 native Bash 路径，没有独立穷举所有 Cursor frame。其它平台、高级 async/service/PTY、本地 tiny 和冻结质量样本不因本次通过而视为新增通过。审批仍为应用层能力，未知 startup/direnv 和敏感上下文继续人工；必须从新进程启动加载插件。

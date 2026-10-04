@@ -317,8 +317,85 @@
     "credentialsInTrackedArtifacts": false
   },
   "dailyDeployment": {
-    "state": "pending",
-    "authorization": "restore declared Cursor default and GLM smol; merge and deploy after acceptance"
+    "state": "completed",
+    "authorization": "restore declared Cursor default and GLM smol; merge and deploy after acceptance; explicitly terminate the active instance",
+    "implementationCommit": "14f34a93fa3106e566a20fc77754fb9b84109b0d",
+    "mainFastForward": true,
+    "termination": {
+      "userRequested": true,
+      "target": "verified official omp-kernel process holding the instance lease",
+      "signals": ["SIGTERM"],
+      "instanceLockReleased": true,
+      "otherInstancesTargeted": false
+    },
+    "backup": {
+      "path": "/home/weixiaoxian.wxx/.cache/agentcfg/omp/omp-kernel/upgrade-backups/before-native-bash-20261004T032812Z.tar",
+      "mode": "0600",
+      "members": 169,
+      "verified": true,
+      "scope": "instance, deployment state and local configuration; symlinks not followed"
+    },
+    "restoration": {
+      "previousDefault": null,
+      "previousSmolAfterExit": "cursor/kimi-k3:low",
+      "default": "cursor/kimi-k3:high",
+      "smol": "zhipu_tf/glm-5.3-flash:low",
+      "changedSelectors": ["/modelRoles/default", "/modelRoles/smol"],
+      "otherNativeConfigSemanticsUnchanged": true,
+      "configurationMode": "0600",
+      "exclusiveInstanceAndStateLeases": true
+    },
+    "operations": {
+      "sync": "installed; verified cached official release, no download",
+      "plan": {"changes": 2, "drift": 0, "conflicts": 0},
+      "apply": {"changes": 2, "drift": 0, "conflicts": 0},
+      "doctor": {
+        "readiness": "offline-ready",
+        "dependencies": "installed",
+        "deployedDependencies": "installed",
+        "deployedRuntimeMatchesCurrent": true,
+        "changesPending": 0,
+        "drift": false,
+        "conflicts": false,
+        "recoveryPending": false
+      }
+    },
+    "runtimeIdentity": "6bf918013ab47a76ff50c846021f677de43f82ab6d0d0f30897f44e501f8f310-linux-x64",
+    "permissionControl": {
+      "defaultMode": "smart",
+      "nativeBash": true,
+      "reviewer": "session",
+      "remoteFallback": {"provider": "zhipu_tf", "model": "glm-5.3-flash"},
+      "fallback": {"provider": "local", "model": "lfm2.5-230m", "installedOnly": true},
+      "localFallbackInference": "unavailable through public API; proceeds to human"
+    },
+    "startupAdmission": {
+      "cwd": "/data/1/weixiaoxian.wxx/test_tool/group_commit_leader_switch",
+      "passed": true,
+      "completeRunPathWithLaunchCallback": true,
+      "hostLaunched": false,
+      "externalRequests": 0
+    },
+    "protectedInputs": {
+      "files": 13,
+      "scope": "daily account DB/WAL/SHM, sessions, workstation.toml and ownership marker",
+      "bytesAndModesUnchanged": true,
+      "officialBinarySha256Matches": true
+    },
+    "helperNotes": [
+      "Initial backup attempt refused the active instance before any native mutation; explicit user termination authorization then obtained.",
+      "After normal exit smol was Cursor low; restored the same two authorized role selectors to declared values.",
+      "Backup helper read native session directories from the private instance root without changing their permissions.",
+      "Private evidence write relocated from repository cache to private machine cache; restored config independently compared with complete backup plus exactly two role changes."
+    ],
+    "cleanup": {
+      "isolatedAccountCopyRemoved": true,
+      "isolatedRawModelResponseRemoved": true,
+      "temporaryHomeRemoved": true,
+      "finalBudgetPreserved": "6/6: Cursor 3, GLM 3",
+      "dailyAccountTouchedByCleanup": false
+    },
+    "privateEvidenceDirectory": "/home/weixiaoxian.wxx/.cache/agentcfg/omp/omp-kernel/native-bash-deploy-20261004"
   },
   "limits": [
     "only observed native Bash wire path validated; not every Cursor frame variant independently exercised",
