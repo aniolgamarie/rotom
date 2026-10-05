@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-05",
+  "baselineCommit": "139b277",
+  "platform": "linux-x86_64",
+  "toolchain": {
+    "python": "3.11.11",
+    "bun": "1.4.0",
+    "babelParser": "7.29.9"
+  },
+  "scope": "read-only authorized historical extraction; pure parser baseline; no runtime modification",
+  "extractionStatistics": {
+    "pi": {
+      "files": 594,
+      "events": 168862,
+      "extracted": 20769,
+      "unsupportedCommandCarrier": 4,
+      "malformed": 8,
+      "redactionSkipped": 24181,
+      "dynamicCommandSkipped": 4850,
+      "nonCommand": 132402,
+      "jsScripts": 0,
+      "jsLiteralCommands": 0,
+      "jsUnresolvedCalls": 0,
+      "jsMalformedScripts": 0
+    },
+    "codex": {
+      "files": 1052,
+      "events": 498831,
+      "extracted": 10958,
+      "unsupportedCommandCarrier": 1138,
+      "malformed": 46,
+      "redactionSkipped": 37771,
+      "dynamicCommandSkipped": 8718,
+      "nonCommand": 457704,
+      "jsScripts": 39006,
+      "jsLiteralCommands": 41387,
+      "jsUnresolvedCalls": 1271,
+      "jsMalformedScripts": 45
+    },
+    "omp": {
+      "files": 11,
+      "events": 280,
+      "extracted": 15,
+      "unsupportedCommandCarrier": 0,
+      "malformed": 0,
+      "redactionSkipped": 0,
+      "dynamicCommandSkipped": 0,
+      "nonCommand": 274,
+      "jsScripts": 0,
+      "jsLiteralCommands": 0,
+      "jsUnresolvedCalls": 0,
+      "jsMalformedScripts": 0
+    }
+  },
+  "parserReport": {
+    "schemaVersion": 1,
+    "parser": "standalone-shell-analysis",
+    "modelRequests": 0,
+    "shellCommandsExecuted": 0,
+    "golden": {
+      "cases": 79,
+      "counts": {
+        "supported": 39,
+        "coverage-gap": 14,
+        "conservative-boundary": 23,
+        "known-semantic-gap": 3
+      },
+      "semanticMatches": 76,
+      "knownSemanticFailures": [
+        "H077",
+        "H078",
+        "H079"
+      ],
+      "unexpectedFailures": [],
+      "resolvedSemanticGaps": [],
+      "baselinePassed": true,
+      "semanticConformancePassed": false
+    },
+    "corpus": {
+      "uniqueCommands": 16103,
+      "occurrences": 31742,
+      "complete": 8640,
+      "unsupported": 7463,
+      "thrown": 0,
+      "acceptanceRate": 0.5365459852201453,
+      "bySource": {
+        "pi": {
+          "unique": 8337,
+          "complete": 2911,
+          "unsupported": 5426
+        },
+        "codex": {
+          "unique": 7792,
+          "complete": 5755,
+          "unsupported": 2037
+        },
+        "omp": {
+          "unique": 8,
+          "complete": 7,
+          "unsupported": 1
+        }
+      },
+      "featureAppearances": {
+        "glob-like": {
+          "complete": 2200,
+          "unsupported": 3076
+        },
+        "connector-like": {
+          "complete": 6510,
+          "unsupported": 6557
+        },
+        "multiline": {
+          "complete": 0,
+          "unsupported": 3420
+        },
+        "expansion-like": {
+          "complete": 172,
+          "unsupported": 947
+        },
+        "redirection-like": {
+          "complete": 147,
+          "unsupported": 5037
+        }
+      },
+      "commentOracleEligible": 0,
+      "commentOracleMismatches": 0,
+      "semantics": "acceptance-is-not-accuracy-or-approval; private-redaction-bias; partial-comment-oracle"
+    }
+  },
+  "validation": {
+    "pythonSyntheticTests": {
+      "passed": 53,
+      "failed": 0
+    },
+    "bunWithExplicitExistingBabel": {
+      "passed": 90,
+      "failed": 0,
+      "assertions": 401
+    },
+    "bunDefaultNoBabel": {
+      "passed": 89,
+      "skipped": 1,
+      "failed": 0,
+      "assertions": 388
+    },
+    "existingStandaloneAndNativeTests": {
+      "passed": 64,
+      "failed": 0,
+      "assertions": 543
+    },
+    "workflowYamlValidated": true,
+    "remoteCiExecuted": false,
+    "historicalJavaScriptExecuted": 0,
+    "historicalShellCommandsExecuted": 0,
+    "agentHostsLaunched": 0,
+    "modelRequests": 0
+  },
+  "delegation": {
+    "executor": "gpt-6.1-sol / medium",
+    "scout": "gpt-6-luna / high"
+  },
+  "limitations": [
+    "Automatic redaction is not a publication guarantee; candidate commands remain private and ignored.",
+    "The public 79 cases are synthetic reconstructions and independent controls, not copied log text.",
+    "Acceptance is not semantic accuracy or approval accuracy; unsupported inputs are not covered syntax.",
+    "Selection and normalization bias: malformed quoting, embedded code, dynamic or high-entropy values may be excluded.",
+    "Live logs can append during extraction; figures describe this saved candidate snapshot.",
+    "JS literal AST candidates do not prove runtime calls; unknown aliases and interpolation are not evaluated.",
+    "The partial comment oracle has zero eligible historical inputs; three defects are established by synthetic cases.",
+    "Three known comment defects and fourteen syntax gaps remain in the unchanged production parser.",
+    "Real Babel integration is explicitly opt-in and is skipped by default CI.",
+    "Remote CI and actual macOS were not run; Windows extraction is not supported or verified."
+  ]
+}

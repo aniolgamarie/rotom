@@ -1,0 +1,1261 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "H001",
+      "command": "ls -la",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "-la"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H002",
+      "command": "pwd",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "pwd"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H003",
+      "command": "find sample_project -type f | head -50",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "find",
+              "sample_project",
+              "-type",
+              "f"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-50"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H004",
+      "command": "git status --short",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "status",
+              "--short"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H005",
+      "command": "git diff -- src/example.py",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "diff",
+              "--",
+              "src/example.py"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H006",
+      "command": "git log --oneline -5",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "log",
+              "--oneline",
+              "-5"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H007",
+      "command": "git rev-parse --show-toplevel",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "rev-parse",
+              "--show-toplevel"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H008",
+      "command": "git ls-files | wc -l",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "ls-files"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "wc",
+              "-l"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H009",
+      "command": "sed -n '1,80p' src/example.py",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "sed",
+              "-n",
+              "1,80p",
+              "src/example.py"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H010",
+      "command": "rg -n 'alpha|beta' src tests",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "rg",
+              "-n",
+              "alpha|beta",
+              "src",
+              "tests"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H011",
+      "command": "rg --files | head -40",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "rg",
+              "--files"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-40"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H012",
+      "command": "printf '%s\\n' 'a b'",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "printf",
+              "%s\\n",
+              "a b"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H013",
+      "command": "printf '%s\\n' 'a;b|c&&d'",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "printf",
+              "%s\\n",
+              "a;b|c&&d"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H014",
+      "command": "echo \"a;b|c&&d\"",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "a;b|c&&d"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H015",
+      "command": "echo \"\" ''",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "",
+              ""
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H016",
+      "command": "cat 'file with spaces.txt'",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "cat",
+              "file with spaces.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H017",
+      "command": "cat file\\ with\\ spaces.txt",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "cat",
+              "file with spaces.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H018",
+      "command": "echo \"a\\qb\"",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "a\\qb"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H019",
+      "command": "echo \"\\$HOME\"",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "$HOME"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H020",
+      "command": "echo '$(id)'",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "$(id)"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H021",
+      "command": "echo '$HOME'",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "$HOME"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H022",
+      "command": "echo a\\;b a\\|b",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "a;b",
+              "a|b"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H023",
+      "command": "printf \"%s\\n\" line",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "printf",
+              "%s\\n",
+              "line"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H024",
+      "command": "ls \"*.jar\"",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "*.jar"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H025",
+      "command": "cat README.md && git status --short",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "cat",
+              "README.md"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "status",
+              "--short"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H026",
+      "command": "cd sample_project && javac -cp client.jar Example.java && echo COMPILE_OK",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "cd",
+              "sample_project"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "javac",
+              "-cp",
+              "client.jar",
+              "Example.java"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "COMPILE_OK"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H027",
+      "command": "test -f src/example.py && cat src/example.py || echo missing",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "test",
+              "-f",
+              "src/example.py"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "cat",
+              "src/example.py"
+            ]
+          },
+          {
+            "connector": "||",
+            "argv": [
+              "echo",
+              "missing"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H028",
+      "command": "git status --short; git diff --stat",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "status",
+              "--short"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "diff",
+              "--stat"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H029",
+      "command": "ls src || pwd",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "src"
+            ]
+          },
+          {
+            "connector": "||",
+            "argv": [
+              "pwd"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H030",
+      "command": "printf '%s' ';' | wc -c",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "printf",
+              "%s",
+              ";"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "wc",
+              "-c"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H031",
+      "command": "which javac java",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "which",
+              "javac",
+              "java"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H032",
+      "command": "python -m pytest tests/test_example.py -q",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "python",
+              "-m",
+              "pytest",
+              "tests/test_example.py",
+              "-q"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H033",
+      "command": "./agentcfg --profile sample doctor",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "./agentcfg",
+              "--profile",
+              "sample",
+              "doctor"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H034",
+      "command": "git -C sample_project status --short",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "-C",
+              "sample_project",
+              "status",
+              "--short"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H035",
+      "command": "rg -n \"#literal\" src",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "rg",
+              "-n",
+              "#literal",
+              "src"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H036",
+      "command": "echo foo#bar",
+      "basis": "reconstructed-history-shape",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "foo#bar"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H037",
+      "command": "ls -la; rm -rf /",
+      "basis": "synthetic-policy-control",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "-la"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "rm",
+              "-rf",
+              "/"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H038",
+      "command": "pwd && git push --force origin main",
+      "basis": "synthetic-policy-control",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "pwd"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "push",
+              "--force",
+              "origin",
+              "main"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H039",
+      "command": "printf '%s' 'rm -rf /'",
+      "basis": "synthetic-policy-control",
+      "category": "supported",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "printf",
+              "%s",
+              "rm -rf /"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H040",
+      "command": "echo $(id)",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H041",
+      "command": "echo \"$(id)\"",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H042",
+      "command": "echo $HOME",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H043",
+      "command": "echo ${HOME}",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H044",
+      "command": "echo $((1+2))",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H045",
+      "command": "cat <(printf x)",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H046",
+      "command": "echo `id`",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H047",
+      "command": "if test -f a; then cat a; fi",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H048",
+      "command": "for x in a b; do echo x; done",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H049",
+      "command": "while true; do pwd; done",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H050",
+      "command": "function f() { pwd; }",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H051",
+      "command": "env rm -rf /",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H052",
+      "command": "command rm -rf /",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H053",
+      "command": "VAR=x ls",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H054",
+      "command": "pwd &",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H055",
+      "command": "echo \"unterminated",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H056",
+      "command": "echo trailing\\",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H057",
+      "command": "echo one &&",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H058",
+      "command": "echo one ||",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H059",
+      "command": "echo one |",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H060",
+      "command": "; pwd",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H061",
+      "command": "echo one;; pwd",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H062",
+      "command": "echo one\u0000two",
+      "basis": "synthetic-boundary-control",
+      "category": "conservative-boundary",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H063",
+      "command": "ls *.jar",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H064",
+      "command": "ls src/*.py",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H065",
+      "command": "ls [ab].txt",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H066",
+      "command": "ls file?.txt",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H067",
+      "command": "ls sample_project/*.jar sample_project/lib/*.jar 2>/dev/null; which javac java",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H068",
+      "command": "cat < input.txt",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H069",
+      "command": "printf x > output.txt",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H070",
+      "command": "printf x >> output.txt",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H071",
+      "command": "ls 2>/dev/null",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H072",
+      "command": "cat <<'EOF'\nexample\nEOF",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H073",
+      "command": "pwd\nls",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H074",
+      "command": "pwd;",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H075",
+      "command": "echo {a,b}",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H076",
+      "command": "printf 'line\nline'",
+      "basis": "reconstructed-history-shape",
+      "category": "coverage-gap",
+      "expected": {
+        "status": "unsupported",
+        "reason": "unsupported-syntax"
+      }
+    },
+    {
+      "id": "H077",
+      "command": "echo ok # note",
+      "basis": "synthetic-comment-oracle",
+      "category": "known-semantic-gap",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "ok"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H078",
+      "command": "echo ok # $(id)",
+      "basis": "synthetic-comment-oracle",
+      "category": "known-semantic-gap",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "ok"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "H079",
+      "command": "printf '%s' value # ; rm -rf /",
+      "basis": "synthetic-comment-oracle",
+      "category": "known-semantic-gap",
+      "expected": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "printf",
+              "%s",
+              "value"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
