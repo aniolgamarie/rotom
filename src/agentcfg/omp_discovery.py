@@ -40,7 +40,9 @@ def discovery_manifest():
       "reason": "all-loading-providers-disabled-before-discovery"},
     "disabledProviders": list(DISABLED_PROVIDERS),
     "nativeControls": {key: list(value) for key, value in NATIVE_SETTING_CONTROLS.items()},
-    "authBroker": "disabled", "gateway": "disabled"}
+    "authBroker": "disabled", "gateway": "disabled",
+    "projectModelRoles": {"file": ".omp/config.yml", "scope": "cwd-only", "inspection": "cwd-and-ancestors",
+      "activation": "declared-model-presets-and-project-role-storage", "fields": ["modelRoles"]}}
 
 
 def manifest_digest():
@@ -170,7 +172,8 @@ def _validate_project_mcp(path, managed_mcp_ids, expected_python, expected_echo)
     raise Conflict("OMP项目MCP来源不符合只读非秘密契约") from None
 
 
-def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=None, expected_echo=None):
+def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=None, expected_echo=None,
+    project_model_roles=None):
   """重新读取固定发现路径并返回仅含路径和摘要的非秘密报告。"""
   current = Path(cwd).resolve()
   ancestors = []
@@ -200,16 +203,25 @@ def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=
       continue
     if not source_present(omp):
       continue
-    if omp.is_symlink() or not omp.is_dir() or not policy.project_resources:
+    if omp.is_symlink() or not omp.is_dir():
       raise Conflict(f"OMP检测到未声明的项目配置来源: {omp}")
     allowed = set()
-    if directory in roots:
+    if policy.project_resources and directory in roots:
       allowed.add("skills")
-    if directory == current and directory in roots:
+    if policy.project_resources and directory == current and directory in roots:
       allowed.update(("mcp.json", ".mcp.json"))
+    if project_model_roles is not None:
+      allowed.add("config.yml")
+    if not policy.project_resources and not allowed:
+      raise Conflict(f"OMP检测到未声明的项目配置来源: {omp}")
     children = list(omp.iterdir())
     if any(child.name not in allowed for child in children):
-      raise Conflict(f"OMP检测到未声明的项目配置来源: {omp}（仅允许声明的skills/MCP）")
+      raise Conflict(f"OMP检测到未声明的项目配置来源: {omp}（仅允许声明的skills/MCP/模型角色）")
+    config = omp / "config.yml"
+    if source_present(config):
+      from .omp_project_roles import validate_project_role_file
+      content = validate_project_role_file(config, project_model_roles)
+      reports.append({"category": "model-roles", "path": str(config), "sha256": hashlib.sha256(content).hexdigest()})
     skills = omp / "skills"
     if source_present(skills):
       reports.extend(_skill_reports(skills))

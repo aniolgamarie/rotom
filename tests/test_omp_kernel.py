@@ -43,8 +43,8 @@ def test_kernel_deployment_preserves_reviewed_native_configuration(tmp_path):
   assert permission["schemaVersion"] == 2
   assert permission["defaultMode"] == "smart"
   assert permission["nativeBash"] is True
-  assert permission["reviewer"] == "session"
-  assert permission["remoteFallback"] == {"provider": "zhipu_tf", "model": "glm-5.3-flash"}
+  assert permission["reviewer"] == {"provider": "zhipu_tf", "model": "glm-5.3-flash"}
+  assert permission["remoteFallback"] == {"provider": "kimi_tf", "model": "kimi-for-coding"}
   assert permission["fallback"] == {"provider": "local", "model": "lfm2.5-230m", "installedOnly": True}
   assert permission["nativePatterns"] == workspace.resolved.data["profile"]["agent_options"]["runtime"]["bash"]["patterns"]
   assert permission["pluginDigest"] == workspace.resolved.data["plugins"]["omp-permission-control"]["tree_digest"]

@@ -16,6 +16,8 @@ from .omp_identity import lifecycle_guard, native_identity
 from .omp_discovery import (DISABLED_PROVIDERS, SourcePolicy,
   assert_native_sources, inspect_project_sources)
 from .omp_env import generated_name
+from .omp_project_roles import project_role_policy
+from .omp_model_presets import MODEL_PRESETS, materialize_presets
 from .omp_settings import (RUNTIME, PROVIDER_OPTIONS, MODEL_OPTIONS, ROLE_THINKING, NATIVE_MODEL_ROLES,
   PERMISSION_CONTROL, RUNTIME_VARIANT, NATIVE_PERMISSION_CONTROL, resolve_permission_control,
   native_model_roles, runtime_values, validate_options)
@@ -33,7 +35,7 @@ VERSION = {"type": "integer", "const": 1}
 KEY_BINDING = {"oneOf": [STRING, STRINGS]}
 OPTIONS = closed({"discovery": closed({"project_resources": {"type": "boolean"}, "project_roots": STRINGS}),
                   "resources": closed({"prompts": STRINGS, "themes": STRINGS, "agents": STRINGS}),
-                  "runtime": RUNTIME, "provider_options": PROVIDER_OPTIONS, "model_options": MODEL_OPTIONS,
+                  "runtime": RUNTIME, "model_presets": MODEL_PRESETS, "provider_options": PROVIDER_OPTIONS, "model_options": MODEL_OPTIONS,
                   "role_thinking": ROLE_THINKING, "native_model_roles": NATIVE_MODEL_ROLES,
                   "runtime_variant": RUNTIME_VARIANT, "permission_control": PERMISSION_CONTROL,
                   "tiny_model": {"type": "string", "const": "local/lfm2.5-230m"},
@@ -458,6 +460,8 @@ class OmpAdapter(Adapter):
       targets.append(ManagedTarget(base + "/skills", Ownership.FILE, "skill-directory"))
     options = data["profile"].get("agent_options", {})
     resources = options.get("resources", {})
+    for name in materialize_presets(data):
+      targets.append(ManagedTarget(base + "/config.yml", Ownership.FIELDS, "yaml", "/modelPresets/" + _pointer(name)))
     for key in runtime_values(options):
       targets.append(ManagedTarget(base + "/config.yml", Ownership.FIELDS, "yaml", "/" + key))
     if resolve_permission_control(data) is not None:
@@ -541,6 +545,9 @@ class OmpAdapter(Adapter):
       artifacts.append(Artifact(by_key[(base + "/RULES.md", None)], render_rules(self.repository, rules, {})))
     options = data["profile"].get("agent_options", {})
     catalog = data.get("adapter_documents", {}).get("agent", {}).get("resources", {})
+    for name, preset in materialize_presets(data).items():
+      selector = "/modelPresets/" + _pointer(name)
+      artifacts.append(Artifact(by_key[(base + "/config.yml", selector)], json.dumps(preset).encode()))
     for key, value in runtime_values(options).items():
       artifacts.append(Artifact(by_key[(base + "/config.yml", "/" + key)],
         json.dumps(value, ensure_ascii=False, sort_keys=True).encode()))
@@ -749,7 +756,8 @@ class OmpAdapter(Adapter):
         expected_python = Path(interpreter_identity({"python": PYTHON_REQUIREMENT})["python"]["path"])
         expected_echo = root / "packages/echo-mcp/server.py"
     return inspect_project_sources(cwd, policy, managed_mcp_ids=workspace.resolved.data.get("mcp", {}),
-      expected_python=expected_python, expected_echo=expected_echo)
+      expected_python=expected_python, expected_echo=expected_echo,
+      project_model_roles=project_role_policy(workspace.resolved.data))
 
   def _allowed_native_sources(self, data, identity):
     prefix = _native_base(data) + "/"
@@ -812,7 +820,8 @@ class OmpAdapter(Adapter):
       "xdg": [str(identity.xdg_config), str(identity.xdg_data), str(identity.xdg_cache), str(identity.xdg_state)],
       "layout_version": identity.layout_version},
       "source_policy": {"manifest_sha256": policy.manifest_sha256, "project_resources": policy.project_resources,
-                        "project_roots": [str(path) for path in policy.project_roots]},
+                        "project_roots": [str(path) for path in policy.project_roots],
+                        "project_model_roles": project_role_policy(data) is not None},
       "storage": {"state_root": str(state_root), "cache_root": str(cache_root)}}
 
   def validate_runtime_binding(self, workspace, saved):
@@ -900,7 +909,8 @@ class OmpAdapter(Adapter):
         "cache": str(identity.xdg_cache), "state": str(identity.xdg_state)},
       "default_keybindings": default, "account_scope": "native-profile-home", "layout_conflict": layout_conflict,
       "source_policy": {"project_resources": policy.project_resources,
-        "project_roots": [str(path) for path in policy.project_roots], "manifest_sha256": policy.manifest_sha256},
+        "project_roots": [str(path) for path in policy.project_roots], "manifest_sha256": policy.manifest_sha256,
+        "project_model_roles": project_role_policy(workspace.resolved.data) is not None},
       "project_sources": list(sources),
       "project_sources_status": "inspected" if cwd is not None else "not-inspected-without-launch-cwd",
       "migration": "new-profile-relogin-required"}

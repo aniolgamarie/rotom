@@ -83,7 +83,10 @@ def test_discovery_manifest_has_exact_disabled_count():
   assert set(manifest["nativeControls"]["configExact"]) >= {"/extensions", "/skills/enablePiProject"}
   assert set(manifest["nativeControls"]["configForbidden"]) >= {"/skills/customDirectories", "/auth/broker"}
   assert manifest["ignoredProviderSources"]["reason"] == "all-loading-providers-disabled-before-discovery"
-  assert manifest_digest() == "d677471c9f75da3b4a8f56818a192f38397dd4e3e19068342caf9445f7fcc6a7"
+  assert manifest["projectModelRoles"] == {"file": ".omp/config.yml", "scope": "cwd-only",
+    "inspection": "cwd-and-ancestors", "activation": "declared-model-presets-and-project-role-storage",
+    "fields": ["modelRoles"]}
+  assert manifest_digest() == "4b181b2b4f3dd6e440f1052446e25dabc0ea47fead656c56e243872fee5c221b"
 
 
 def test_source_policy_rejects_roots_when_project_resources_are_off(tmp_path):

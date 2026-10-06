@@ -4,6 +4,7 @@ from copy import deepcopy
 import re
 
 from .schema import ConfigError
+from .omp_model_presets import materialize_presets, validate_fallback_chains
 
 
 def closed(properties, required=()):
@@ -27,7 +28,11 @@ NATIVE_MODEL_ID = {"type": "string", "pattern":
 NATIVE_MODEL_ROLES = closed({key: NATIVE_MODEL_ID for key in PUBLIC_ROLES})
 RUNTIME = closed({
   "cycleOrder": {"type": "array", "items": enum(*NATIVE_ROLES), "uniqueItems": True},
-  "retry": closed({"modelFallback": BOOL, "fallbackChains": closed({key: TEXTS for key in NATIVE_ROLES})}),
+  "modelRoleStorage": enum("global", "project"),
+  "retry": closed({"modelFallback": BOOL, "fallbackChains": {"type": "object",
+    "propertyNames": {"oneOf": [enum(*NATIVE_ROLES), {"type": "string", "pattern":
+      r"^[^/\s:\x00-\x1f\x7f]+/(?:\*|[^*?\[\]\s\x00-\x1f\x7f]+)$(?![\s\S])"}]},
+    "additionalProperties": TEXTS}}),
   "tools": closed({"approvalMode": enum("always-ask", "write", "yolo"),
     "approval": closed({key: APPROVAL for key in ("read", "find", "grep", "glob", "bash", "permission_bash", "write", "edit", "python", "lsp", "task", "eval", "web_search", "fetch", "ast_grep")})}),
   "bash": closed({"allowCompoundCommands": BOOL, "patterns": {"type": "array", "items": closed({
@@ -104,7 +109,8 @@ def resolve_permission_control(data):
   result = {"defaultMode": config["default_mode"], "reviewer": "session"}
   if "native_bash" in config:
     result["nativeBash"] = config["native_bash"]
-  requested = tuple(config[key] for key in ("reviewer_model", "remote_fallback_model") if key in config)
+  requested = tuple(config[key] for key in ("reviewer_model", "remote_fallback_model")
+    if key in config and not (key == "reviewer_model" and config[key] == "session"))
   identities = {}
   if requested:
     from .omp import _native_provider_id
@@ -122,7 +128,7 @@ def resolve_permission_control(data):
       identities[model_id] = (native_provider, remote_id)
     if any(chosen.count(model_id) != 1 or model_id not in identities for model_id in requested):
       raise ConfigError("omp-permission-reviewer-reference")
-  if "reviewer_model" in config:
+  if "reviewer_model" in config and config["reviewer_model"] != "session":
     reviewer = config["reviewer_model"]
     target = identities[reviewer]
     if list(identities.values()).count(target) != 1:
@@ -169,6 +175,7 @@ def validate_options(data):
   options = data["profile"].get("agent_options", {})
   resolve_permission_control(data)
   native_model_roles(data)
+  materialize_presets(data)
   for key, schema in (("runtime", RUNTIME), ("provider_options", PROVIDER_OPTIONS),
       ("model_options", MODEL_OPTIONS), ("role_thinking", ROLE_THINKING)):
     if not Draft202012Validator(schema).is_valid(options.get(key, {})):
@@ -181,18 +188,8 @@ def validate_options(data):
     raise ConfigError("omp-role-thinking-reference")
   if "tiny_model" in options and options["tiny_model"] != "local/lfm2.5-230m":
     raise ConfigError("omp-tiny-model-not-supported")
-  allowed = {provider + "/" + model["remote_id"] for model in data.get("models", {}).values()
-             for provider in (model["provider"],)}
   runtime = options.get("runtime", {})
-  for values in runtime.get("retry", {}).get("fallbackChains", {}).values():
-    for value in values:
-      if value in allowed:
-        continue
-      model, colon, level = value.rpartition(":")
-      if not colon:
-        model = value
-      if model not in allowed or colon and level not in THINKING["enum"]:
-        raise ConfigError("omp-fallback-model-reference")
+  validate_fallback_chains(data, runtime.get("retry", {}).get("fallbackChains", {}))
   for item in runtime.get("bashInterceptor", {}).get("patterns", []):
     try:
       re.compile(item["pattern"])

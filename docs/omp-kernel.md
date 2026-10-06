@@ -22,7 +22,7 @@
 
 当前固定官方 OMP v18.4.5，升级验证见[验收记录](acceptance/omp-upgrade-18.4.5.md)。公共 kernel 配方设置 `display.hideToolActivity=false`，显示工具活动；在界面切换工具可见性会持久化该字段，长期调整应写回公共配方或私人机器覆盖后部署。
 
-执行模型在 OMP 会话中选择。权限主审优先使用显式 `reviewer_model`，省略时绑定当前会话执行模型。默认远程 `remote_fallback_model="omp-zhipu_tf-glm-5.3-flash"` 仅在主审运行故障、transport不支持或不可用时接替；有效 allow/ask/deny 终止，不复审。模型引用错误在配置期失败。这与执行模型的 `retry.modelFallback` 分开管理。
+执行模型在 OMP 会话中选择。权限主审优先使用显式 `reviewer_model`；kernel 公开默认固定为 `omp-zhipu_tf-glm-5.3-flash`，私人覆盖优先。未配置主审时仍绑定当前会话执行模型；私人覆盖可显式设 `reviewer_model="session"` 恢复跟随会话。默认远程 `remote_fallback_model="omp-kimi_tf-kimi-for-coding"` 仅在主审运行故障、transport不支持或不可用时接替；有效 allow/ask/deny 终止，不复审。模型引用错误在配置期失败。这与执行模型的 `retry.modelFallback` 分开管理。
 
 例如主动选择 GLM 主审、Kimi 作为远程备用，在私人 local 设置：
 
@@ -55,7 +55,7 @@ OMP_LOCAL="${XDG_CONFIG_HOME:-$HOME/.config}/agentcfg/machines/omp-kernel.toml"
 
 先用 `model url kimi_tf` 和 `model url zhipu_tf` 隐藏输入企业服务地址，真实地址只保存到私人机器文件。
 
-所有 profile 继承包含 Kimi Code、GLM Coding Plan 与 DeepSeek 按量 API 的公共可选池，公共初始主模型仍是 Kimi Code。`omp-kernel` 在其基础上追加 TF provider、模型和角色，现有 main/plan 等角色仍使用 TF，不会因模型进入池子而自动切换服务。TF 定义属于 OMP 专用目录，包含 Kimi 四个、GLM 五个和 DeepSeek 两个型号，加上公共池共十九条静态模型绑定。核心规格复用公共模板，协议兼容和计费保留在各绑定中；网关可用性仍需实际账号确认。原生模型套装尚未新增。详见[模型目录](model-catalog.md)。先查看状态，再按实际使用情况填写共享 key：
+所有 profile 继承包含 Kimi Code、GLM Coding Plan 与 DeepSeek 按量 API 的公共可选池，公共初始主模型仍是 Kimi Code。`omp-kernel` 在其基础上追加 TF provider、模型和角色，现有 main/plan 等角色仍使用 TF，不会因模型进入池子而自动切换服务。TF 定义属于 OMP 专用目录，包含 Kimi 四个、GLM 五个和 DeepSeek 两个型号，加上公共池共十九条静态模型绑定。核心规格复用公共模板，协议兼容和计费保留在各绑定中；网关可用性仍需实际账号确认。该配方提供五套原生模型预设，见[模型套件](omp-model-presets.md)。详见[模型目录](model-catalog.md)。先查看状态，再按实际使用情况填写共享 key：
 
 ```sh
 ./agentcfg --local "$OMP_LOCAL" --profile omp-kernel model status
