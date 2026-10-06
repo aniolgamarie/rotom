@@ -11,6 +11,7 @@
 "mcp" = []
 
 ["defaults"."agent_options"]
+"tiny_model" = "local/lfm2.5-230m"
 
 ["defaults"."agent_options"."discovery"]
 "project_resources" = false
@@ -61,3 +62,36 @@
 "kind" = "theme"
 "path" = "agents/omp/resources/themes/kanagawa.json"
 "scope" = "global"
+
+["defaults"."agent_options"."model_presets"."basic"."roles"]
+"main" = "kimi_code_anthropic:high"
+"smol" = "glm_coding_53_flash_anthropic:low"
+"slow" = "kimi_code_anthropic:max"
+"plan" = "glm_coding_53_anthropic:high"
+"task" = "kimi_code_anthropic:high"
+"advisor" = "glm_coding_53_anthropic:high"
+"vision" = "glm_coding_53_flash_anthropic:high"
+"tiny" = "local/lfm2.5-230m"
+
+["defaults"."agent_options"."model_presets"."deepseek-payg"."roles"]
+"main" = "deepseek_flash_anthropic:high"
+"smol" = "deepseek_flash_anthropic:low"
+"slow" = "deepseek_flash_anthropic:max"
+"plan" = "deepseek_flash_anthropic:high"
+"task" = "deepseek_flash_anthropic:high"
+"advisor" = "deepseek_flash_anthropic:max"
+"vision" = "deepseek_flash_anthropic:high"
+"tiny" = "local/lfm2.5-230m"
+
+["defaults"."agent_options"."runtime"]
+"modelRoleStorage" = "project"
+
+["defaults"."agent_options"."runtime"."retry"]
+"modelFallback" = true
+
+["defaults"."agent_options"."runtime"."retry"."fallbackChains"]
+"kimi_code_anthropic/kimi-for-coding:high" = ["glm_coding_anthropic/glm-5.3:high"]
+"kimi_code_anthropic/kimi-for-coding:max" = ["glm_coding_anthropic/glm-5.3:high"]
+"glm_coding_anthropic/glm-5.3-flash:low" = ["kimi_code_anthropic/kimi-for-coding:low"]
+"glm_coding_anthropic/glm-5.3-flash:high" = ["kimi_code_anthropic/kimi-for-coding:high"]
+"glm_coding_anthropic/glm-5.3:high" = ["kimi_code_anthropic/kimi-for-coding:high"]

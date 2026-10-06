@@ -196,7 +196,7 @@ def test_checked_in_validation_fixture_resolves_and_renders_all_rows(tmp_path):
     + (REPO / "agents/omp/content.toml", REPO / "tests/fixtures/omp/registry.toml"),
     (REPO / "profiles/omp-default.toml", REPO / "tests/fixtures/omp/profiles/omp-validation.toml"),
     {"omp": AdapterSources(REPO / "agents/omp/agent.toml", REPO / "agents/omp/bindings.toml",
-      REPO / "agents/omp/plugins.toml")})
+      REPO / "agents/omp/plugins.toml")}, model_defaults=REPO / "shared/defaults/models.toml")
   catalog = load_sources(sources, adapter_schemas=schemas)
   private = tmp_path / "private"
   private.mkdir(mode=0o700)

@@ -98,8 +98,9 @@ def test_defaults_apply_to_future_profile_and_profile_local_roles_win():
 
 def test_synthetic_catalog_without_global_defaults_keeps_empty_local_selection_provenance():
   loaded = catalog()
-  loaded = type(loaded)(loaded.registry, loaded.profiles, loaded.adapter_documents,
-                        loaded.adapter_schemas)
+  # 本例只声明 DSH；生产 OMP bootstrap 依赖公共默认模型池。
+  loaded = type(loaded)(loaded.registry, {"dsh-default": loaded.profiles["dsh-default"]},
+                        loaded.adapter_documents, loaded.adapter_schemas)
   local = LocalConfig({"schema_version": 1, "machine": {"id": "fixture"}, "overrides": {
     "profiles": {"dsh-default": {"providers": [], "models": []}}}})
   resolved = resolve_config(loaded, local, profile_id="dsh-default",
@@ -300,6 +301,6 @@ def test_deepseek_tf_reuses_url_but_requires_its_independent_key(tmp_path):
   assert data["providers"]["deepseek_tf"]["base_url"] == data["providers"]["kimi_tf"]["base_url"]
   assert workspace.secret_store.resolve(SecretRef("secret:omp_deepseek_tf_key"), required=False) is None
   assert data["profile"]["roles"]["main"] == "omp-kimi_tf-kimi-for-coding"
-  assert data["profile"]["agent_options"]["permission_control"]["remote_fallback_model"] == "omp-zhipu_tf-glm-5.3-flash"
+  assert data["profile"]["agent_options"]["permission_control"]["remote_fallback_model"] == "omp-kimi_tf-kimi-for-coding"
   lock = workspace.backend.read_lock(workspace.repository)
   assert all(b"OFFICIAL-KEY-CANARY" not in artifact.content for artifact in workspace.candidate(lock.identity).artifacts)

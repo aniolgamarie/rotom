@@ -24,7 +24,7 @@ OMP official 路径使用固定官方 standalone，管理器不安装系统 Bun/
 
 以下身份与命令仅保存历史取证，不再执行或用于当前锁。
 
-`omp-kernel`选择本地TypeScript扩展`omp-permission-control`和`permission-control-v1`运行包，默认smart。主审优先显式`reviewer_model`，省略才跟随会话；远程`remote_fallback_model`缺省GLM5.3Flash，只在主审运行故障/不支持时接替完整审批；最后installed-only tiny只ask/deny。有效allow/ask/deny不复审。这与执行模型重试及生成session title的tiny角色分别管理。
+`omp-kernel`选择本地TypeScript扩展`omp-permission-control`和`permission-control-v1`运行包，默认smart。主审优先显式`reviewer_model`，省略才跟随会话；kernel公开主审固定GLM TF Flash、远程`remote_fallback_model`缺省Kimi TF，只在主审运行故障/不支持时接替完整审批；最后installed-only tiny只ask/deny。有效allow/ask/deny不复审。这与执行模型重试及生成session title的tiny角色分别管理。
 
 | 身份 | 本轮实际值 |
 |---|---|

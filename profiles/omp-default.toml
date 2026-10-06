@@ -9,6 +9,14 @@ plugins = []
 mcp = []
 
 [roles]
+main = "kimi_code_anthropic"
+smol = "glm_coding_53_flash_anthropic"
+slow = "kimi_code_anthropic"
+plan = "glm_coding_53_anthropic"
+task = "kimi_code_anthropic"
+advisor = "glm_coding_53_anthropic"
+vision = "glm_coding_53_flash_anthropic"
+
 
 [agent_options.discovery]
 project_resources = false
@@ -17,3 +25,12 @@ project_roots = []
 [agent_options.resources]
 prompts = []
 themes = []
+
+["agent_options"."role_thinking"]
+"main" = "high"
+"smol" = "low"
+"slow" = "max"
+"plan" = "high"
+"task" = "high"
+"advisor" = "high"
+"vision" = "high"

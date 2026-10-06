@@ -1,7 +1,7 @@
 "schema_version" = 1
 "id" = "omp-kernel"
 "agent" = "omp"
-"providers" = ["kimi_tf", "zhipu_tf", "deepseek_tf"]
+"providers" = ["kimi_tf", "zhipu_tf", "deepseek_tf", "cursor"]
 "models" = ["omp-kimi_tf-kimi-for-coding", "omp-kimi_tf-k3", "omp-kimi_tf-k3-256k", "omp-kimi_tf-kimi-for-coding-highspeed", "omp-zhipu_tf-glm-5.3", "omp-zhipu_tf-glm-5.3-flash", "omp-zhipu_tf-glm-5.2", "omp-zhipu_tf-glm-5.1", "omp-zhipu_tf-glm-5-turbo", "omp-deepseek_tf-deepseek-flash", "omp-deepseek_tf-deepseek-v4-pro"]
 "rules" = ["omp-kernel-confirmation"]
 "skills" = ["omp-kernel-codex-delegate", "omp-kernel-cpp-database-kernel", "omp-kernel-neovim-plugin-development", "omp-kernel-safe-linux-scripting"]
@@ -21,7 +21,8 @@
 ["agent_options"."permission_control"]
 "default_mode" = "smart"
 "native_bash" = true
-"remote_fallback_model" = "omp-zhipu_tf-glm-5.3-flash"
+"reviewer_model" = "omp-zhipu_tf-glm-5.3-flash"
+"remote_fallback_model" = "omp-kimi_tf-kimi-for-coding"
 "fallback_model" = "local/lfm2.5-230m"
 
 ["agent_options"."discovery"]
@@ -45,10 +46,21 @@
 "modelFallback" = true
 
 ["agent_options"."runtime"."retry"."fallbackChains"]
-"default" = ["kimi_tf/k3:high", "zhipu_tf/glm-5.2:medium"]
-"smol" = ["zhipu_tf/glm-5.1:low", "kimi_tf/kimi-for-coding-highspeed:low"]
-"slow" = ["zhipu_tf/glm-5.3:high", "zhipu_tf/glm-5.2:high"]
-"plan" = ["zhipu_tf/glm-5.2:high", "kimi_tf/k3:high"]
+"kimi_tf/kimi-for-coding:high" = ["zhipu_tf/glm-5.3:high"]
+"kimi_tf/kimi-for-coding:max" = ["zhipu_tf/glm-5.3:high"]
+"kimi_tf/k3:high" = ["zhipu_tf/glm-5.3:high"]
+"kimi_tf/k3:max" = ["zhipu_tf/glm-5.3:high"]
+"zhipu_tf/glm-5.3-flash:low" = ["kimi_tf/kimi-for-coding:low"]
+"zhipu_tf/glm-5.3-flash:high" = ["kimi_tf/kimi-for-coding:high"]
+"zhipu_tf/glm-5.3:high" = ["kimi_tf/kimi-for-coding:high"]
+"cursor/kimi-k3:high" = ["cursor/glm-5.2:high"]
+"cursor/glm-5.2:high" = ["cursor/kimi-k3:high"]
+"cursor/kimi-k3:max" = ["cursor/glm-5.2:max"]
+"cursor/glm-5.2:max" = ["cursor/kimi-k3:max"]
+"cursor/composer-2.5:low" = ["cursor/kimi-k2.7-code:low"]
+"cursor/composer-2.5:medium" = ["cursor/kimi-k2.7-code:medium"]
+"cursor/grok-4.7:high" = ["cursor/kimi-k3:high"]
+
 
 ["agent_options"."runtime"."tools"]
 "approvalMode" = "write"
@@ -239,3 +251,33 @@
 
 ["agent_options"."provider_options"."deepseek_tf"]
 "name" = "DeepSeek(TokensFlow)"
+
+["agent_options"."model_presets"."tf"."roles"]
+"main" = "omp-kimi_tf-kimi-for-coding:high"
+"smol" = "omp-zhipu_tf-glm-5.3-flash:low"
+"slow" = "omp-kimi_tf-k3:high"
+"plan" = "omp-zhipu_tf-glm-5.3:high"
+"task" = "omp-kimi_tf-kimi-for-coding:high"
+"advisor" = "omp-zhipu_tf-glm-5.3:high"
+"vision" = "omp-zhipu_tf-glm-5.3-flash:high"
+"tiny" = "local/lfm2.5-230m"
+
+["agent_options"."model_presets"."cursor"."roles"]
+"main" = "cursor/kimi-k3:high"
+"smol" = "cursor/composer-2.5:low"
+"slow" = "cursor/kimi-k3:max"
+"plan" = "cursor/glm-5.2:high"
+"task" = "cursor/composer-2.5:medium"
+"advisor" = "cursor/grok-4.7:high"
+"vision" = "cursor/kimi-k3:high"
+"tiny" = "local/lfm2.5-230m"
+
+["agent_options"."model_presets"."deepseek-tf-payg"."roles"]
+"main" = "omp-deepseek_tf-deepseek-flash:high"
+"smol" = "omp-deepseek_tf-deepseek-flash:low"
+"slow" = "omp-deepseek_tf-deepseek-flash:max"
+"plan" = "omp-deepseek_tf-deepseek-flash:high"
+"task" = "omp-deepseek_tf-deepseek-flash:high"
+"advisor" = "omp-deepseek_tf-deepseek-flash:max"
+"vision" = "omp-deepseek_tf-deepseek-flash:high"
+"tiny" = "local/lfm2.5-230m"

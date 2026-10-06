@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-06",
+  "baselineCommit": "042d02b",
+  "scope": "five native OMP model presets, model-specific retry routes, strict project role source policy and independent API permission reviewer",
+  "nativeHost": {
+    "tag": "v18.4.5",
+    "commit": "79808c3bf8f8cd9826decc63e3e18b13035f64f8",
+    "sourceOrBinaryModified": false,
+    "newSwitchingPlugin": false,
+    "commands": [
+      "/modelpreset list",
+      "/modelpreset switch <name>"
+    ]
+  },
+  "profiles": {
+    "omp-default": {
+      "presets": [
+        "basic",
+        "deepseek-payg"
+      ],
+      "roleCounts": {
+        "basic": 8,
+        "deepseek-payg": 8
+      },
+      "projectStorage": "project",
+      "bootstrapMain": "kimi_code_anthropic",
+      "staticModels": 8
+    },
+    "omp-kernel": {
+      "presets": [
+        "basic",
+        "deepseek-payg",
+        "tf",
+        "cursor",
+        "deepseek-tf-payg"
+      ],
+      "roleCounts": {
+        "basic": 8,
+        "deepseek-payg": 8,
+        "tf": 8,
+        "cursor": 8,
+        "deepseek-tf-payg": 8
+      },
+      "projectStorage": "project",
+      "bootstrapMain": "omp-kimi_tf-kimi-for-coding",
+      "staticModels": 19,
+      "reviewer": {
+        "provider": "zhipu_tf",
+        "model": "glm-5.3-flash"
+      },
+      "remoteFallback": {
+        "provider": "kimi_tf",
+        "model": "kimi-for-coding"
+      }
+    }
+  },
+  "cursor": {
+    "source": "previous authorized read-only account-scoped OMP model cache observation",
+    "cacheUpdatedUTC": "2026-10-06T05:24:13.727Z",
+    "cachedModelCount": 14,
+    "roleModels": [
+      "kimi-k3",
+      "glm-5.2",
+      "composer-2.5",
+      "grok-4.7"
+    ],
+    "retryAdditionalModel": "kimi-k2.7-code",
+    "rejectedDefaultCandidates": [
+      "GPT-5.6 Sol/Terra/Luna",
+      "Claude Opus 5.5",
+      "Gemini 3.8 Flash"
+    ],
+    "liveEntitlementOrInferenceClaimed": false,
+    "privateDynamicSelectorValidation": "selected OAuth provider, syntax and known efforts; not account entitlement proof"
+  },
+  "ownership": {
+    "presetsManagedPerName": true,
+    "userOtherPresetNamesPreserved": true,
+    "bootstrapRolesRemainManaged": true,
+    "projectStorage": true,
+    "defaultThinkingLevelEmittedByPresets": false,
+    "privateNativeRoleOverridesPreserved": true
+  },
+  "projectRoleSource": {
+    "activation": "declared presets and project role storage",
+    "acceptedFile": ".omp/config.yml",
+    "effectiveScope": "cwd only",
+    "ancestorRoleFilesValidated": true,
+    "allowedTopLevel": [
+      "modelRoles"
+    ],
+    "selectors": "per-role declared preset or explicit bootstrap/private role, not the whole model pool",
+    "poolOnlyDeepSeekProRejected": true,
+    "unknownCursorProjectSelectorRejectedUnlessExplicitlyDeclared": true,
+    "rejects": [
+      "unknown settings",
+      "duplicate YAML keys",
+      "aliases/anchors",
+      "symlinks",
+      "hardlinks",
+      "nonregular files",
+      "over 64KiB",
+      "wildcard selectors"
+    ],
+    "diagnosticsContainOnlyPathsAndDigests": true,
+    "continuousOriginOrHumanActionAttestationClaimed": false
+  },
+  "fallbacks": {
+    "modelSpecific": true,
+    "genericKernelRoleTfChainsRemoved": true,
+    "oldGlmDefaultDependenciesRemoved": true,
+    "automaticCrossSuitePaygAdded": false,
+    "deepseekProAutomaticFallbackAdded": false,
+    "privateExplicitFallbackIntentPreserved": true
+  },
+  "permissionReview": {
+    "kernelPrimary": "zhipu_tf/glm-5.3-flash",
+    "kernelRemoteFallback": "kimi_tf/kimi-for-coding",
+    "localFallback": "local/lfm2.5-230m (installed-only ask/deny)",
+    "presetSwitchChangesSidecar": false,
+    "privateStaticReviewerAndRemoteOverridesPreserved": true,
+    "privateExplicitSessionReviewerSupported": true,
+    "sessionRemoteFallbackRejected": true
+  },
+  "compatibility": {
+    "fullSelectedRemoteIdBeforeThinkingSuffix": true,
+    "colonRemoteRegressionCovered": true,
+    "slashParserBoundaryCoveredWithoutExpandingAdapterSupport": true,
+    "effectiveNativeReasoningOverrideHonored": true,
+    "wildcardsAcceptedOnlyForProviderFallbackKeys": true
+  },
+  "validation": {
+    "status": "passedAfterTargetedSnapshotUpdate",
+    "affectedScenariosVerified": 777,
+    "initialBroadRun": {
+      "files": 33,
+      "passed": 776,
+      "failed": 1
+    },
+    "failureRepair": "approved discovery manifest digest snapshot updated, with explicit model-role policy field assertions",
+    "finalSupplement": {
+      "passed": 152,
+      "failed": 0
+    },
+    "sourceAndPresetTargetedRuns": {
+      "projectPlusDiscovery": 82,
+      "presets": 41
+    },
+    "entireBroadRunRepeatedAfterTestOnlySnapshotRepair": false,
+    "publicConfigPreviewPassed": true,
+    "gitDiffCheckPassed": true,
+    "editedTomlAndEvidenceJsonParsed": true,
+    "temporaryHomeNetworkBlockingFakeProcesses": true,
+    "realAgentHostsLaunched": 0,
+    "realModelRequests": 0,
+    "currentAccountCredentialsRead": false,
+    "localDeploymentModified": false
+  },
+  "locks": {
+    "ompIdentity": "420dd10a6aa7390e6858919392bd2f6f4d0204ee6f3f93362ebac6cd5acab113",
+    "piIdentity": "636bf8854f72dfbfb7e56678b6e3e1646581ce532cae4c4b23076826c14e8f07",
+    "verifiedPiArchives": 26,
+    "verifiedPiSourceTrees": 20,
+    "dependencySourcesSlicesAndUpstreamVersionsUnchanged": true,
+    "refreshNetworkRequests": 0
+  },
+  "review": {
+    "executor": "gpt-6.1-sol / medium",
+    "independentScout": "gpt-6-luna / high",
+    "finalAcceptance": "root",
+    "reportedProjectPoolOnlyProFindingClosed": true,
+    "selectorCompatibilityFindingsClosed": true,
+    "blockingFindingsRemaining": 0
+  },
+  "taskRecord": {
+    "completed": [
+      "native/account source research",
+      "five preset configurations and strict projection",
+      "project role ownership/source gate",
+      "model-specific fallback isolation",
+      "independent reviewer and private session compatibility",
+      "documentation",
+      "offline lock verification",
+      "affected regression and targeted repair",
+      "stable independent review"
+    ],
+    "inProgress": [],
+    "failedPendingDecision": [],
+    "environmentUnverified": [
+      "real native preset switching",
+      "current Cursor entitlement/inference",
+      "TF inference and image transport",
+      "local deployment"
+    ]
+  }
+}
