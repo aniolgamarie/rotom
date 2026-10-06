@@ -206,8 +206,8 @@ def test_status_has_default_and_extra_sources_actionable_commands_and_no_key(mon
   assert cli.main(["--machine", "workstation", "model", "status", "--verbose"]) == 0
   output = capsys.readouterr().out
   assert "全局默认" in output and "profile 扩展" in output
-  assert "deepseek_anthropic" in output and "kimi_tf" in output
-  assert "--machine workstation --profile omp-kernel model key deepseek" in output
+  assert "kimi_code_anthropic" in output and "kimi_tf" in output
+  assert "--machine workstation --profile omp-kernel model key kimi-code" in output
   assert "--machine workstation --profile omp-kernel model key zhipu_tf" in output
   assert "main" in output and "kimi-for-coding" in output and "缺 key" in output
   assert CANARY not in output
@@ -223,3 +223,22 @@ def test_legacy_inline_key_update_keeps_single_source(monkeypatch):
   assert shared().read_bytes() == before
   _, store = load_local(machine())
   assert store.resolve(SecretRef("secret:kimi_key")) == CANARY
+
+
+@pytest.mark.parametrize("selector,provider_id,name,legacy", [
+  ("kimi-code", "kimi_code_openai", "kimi_code_key", "kimi_key"),
+  ("glm-code", "glm_coding_openai", "glm_coding_key", "glm_key"),
+])
+def test_subscription_key_alias_and_exact_provider_preserve_legacy(monkeypatch, capsys, selector, provider_id, name, legacy):
+  assert cli.main(["init-local"]) == 0
+  write_shared(f'schema_version = 1\n[shared]\n{legacy} = "LEGACY-PRIVATE-CANARY"\n')
+  terminal(monkeypatch)
+  assert cli.main(["model", "key", selector]) == 0
+  terminal(monkeypatch, "ROTATED-CODING-CANARY")
+  assert cli.main(["model", "key", provider_id]) == 0
+  document = tomllib.loads(shared().read_text())
+  assert document["shared"][legacy] == "LEGACY-PRIVATE-CANARY"
+  assert document["shared"][name] == "ROTATED-CODING-CANARY"
+  assert cli.main(["model", "status", "--verbose"]) == 0
+  output = capsys.readouterr().out
+  assert "LEGACY-PRIVATE-CANARY" not in output and "ROTATED-CODING-CANARY" not in output and CANARY not in output

@@ -17,11 +17,11 @@ def test_status_explains_empty_placeholder_groups_without_changing_file(capsys):
   output = capsys.readouterr().out
   assert "填写位置（可直接用编辑器修改）" in output
   assert "[shared]" in output and "[providers.kimi_tf]" in output
-  assert "omp_kimi_tf_key" in output and "kimi_key" in output
+  assert "omp_kimi_tf_key" in output and "kimi_code_key" in output
   assert "model key kimi_tf" in output
   assert path.read_bytes() == before
   document = tomllib.loads(before.decode())
-  assert document["shared"] == {"deepseek_key": "", "kimi_key": "", "glm_key": ""}
+  assert document["shared"] == {"kimi_code_key": "", "glm_coding_key": ""}
   assert document["providers"]["kimi_tf"] == {"omp_kimi_tf_key": ""}
 
 

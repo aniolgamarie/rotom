@@ -74,9 +74,21 @@
       "type": "object", "additionalProperties": false,
       "properties": {
         "pi": {"type": "object", "additionalProperties": false, "properties": {
+          "thinkingLevelMap": {"type": "object", "additionalProperties": false, "properties": {
+            "minimal": {"type": "string", "enum": ["low", "high", "max"]},
+            "low": {"type": "string", "enum": ["low", "high", "max"]},
+            "medium": {"type": "string", "enum": ["low", "high", "max"]},
+            "high": {"type": "string", "enum": ["low", "high", "max"]},
+            "xhigh": {"type": "string", "enum": ["low", "high", "max"]},
+            "max": {"type": "string", "enum": ["low", "high", "max"]}
+          }},
           "compat": {"type": "object", "additionalProperties": false, "properties": {
+            "supportsDeveloperRole": {"type": "boolean"},
+            "supportsReasoningEffort": {"type": "boolean"},
+            "maxTokensField": {"type": "string", "enum": ["max_tokens"]},
+            "supportsStrictMode": {"type": "boolean"},
             "requiresReasoningContentOnAssistantMessages": {"type": "boolean"},
-            "thinkingFormat": {"type": "string", "enum": ["deepseek"]},
+            "thinkingFormat": {"type": "string", "enum": ["deepseek", "zai"]},
             "reasoningEffortMap": {"type": "object", "additionalProperties": false, "properties": {
               "minimal": {"type": "string", "enum": ["low", "high", "max"]},
               "low": {"type": "string", "enum": ["low", "high", "max"]},

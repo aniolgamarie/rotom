@@ -67,10 +67,10 @@ def test_hidden_urls_can_be_filled_sequentially_and_updated(monkeypatch, capsys)
 def test_literal_endpoint_uses_private_override(monkeypatch, capsys):
   assert cli.main(["init-local", "--profile", "omp-default"]) == 0
   terminal(monkeypatch)
-  assert cli.main(["model", "url", "deepseek_anthropic"]) == 0
+  assert cli.main(["model", "url", "kimi_code_anthropic"]) == 0
   document = tomllib.loads(machine().read_text())
-  assert document["overrides"]["providers"]["deepseek_anthropic"]["base_url"] == URL
-  assert load_workspace(machine()).resolved.data["providers"]["deepseek_anthropic"]["base_url"] == URL
+  assert document["overrides"]["providers"]["kimi_code_anthropic"]["base_url"] == URL
+  assert load_workspace(machine()).resolved.data["providers"]["kimi_code_anthropic"]["base_url"] == URL
   assert URL not in capsys.readouterr().out
 
 
