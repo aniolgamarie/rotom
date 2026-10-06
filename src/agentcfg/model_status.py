@@ -90,7 +90,7 @@ def show_model_status(args):
         print("  " + command_line(args, "model", "url", provider_id, profile=workspace.profile))
       for name, provider_id in missing_keys.items():
         alias = {"kimi_code_key": "kimi-code", "glm_coding_key": "glm-code"}.get(name,
-          name.removesuffix("_key") if name in {"deepseek_key", "kimi_key", "glm_key"} else provider_id)
+          name.removesuffix("_key") if name == "deepseek_key" else provider_id)
         print("  " + command_line(args, "model", "key", alias, profile=workspace.profile))
     print("\n密钥名在文件中唯一；同一引用可供多个工具和 profile 共用，分组用于辨识。")
   else:

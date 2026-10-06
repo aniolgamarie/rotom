@@ -57,7 +57,7 @@ def test_model_default_summary_and_verbose_catalog_are_read_only(capsys):
   prefix = ["--machine", "workstation", "model", "status"]
   assert cli.main(prefix) == 0
   summary = capsys.readouterr().out
-  assert "2 个地址待填写" in summary and "4 个 key 未填写" in summary
+  assert "2 个地址待填写" in summary and "5 个 key 未填写" in summary
   assert "完整模型目录" not in summary and "kimi-for-coding-highspeed" not in summary
   assert "[providers.kimi_tf]" in summary and "omp_kimi_tf_key ← kimi_tf" in summary
   assert "[local_values]" in summary and str(machine) in summary and str(keys) in summary
@@ -73,7 +73,7 @@ def test_model_default_summary_and_verbose_catalog_are_read_only(capsys):
 def test_presets_default_hides_public_reference_detail(capsys):
   assert cli.main(["model", "presets"]) == 0
   output = capsys.readouterr().out
-  for model in ("deepseek-flash", "kimi-k3", "glm-5.3"):
+  for model in ("deepseek-flash", "kimi-for-coding", "glm-5.3"):
     assert model in output
   assert "默认加入" in output and "model presets --verbose" in output
   assert "https://" not in output and "source:" not in output

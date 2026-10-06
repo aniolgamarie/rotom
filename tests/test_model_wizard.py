@@ -185,16 +185,17 @@ def test_add_model_detects_change_during_workspace_resolution(monkeypatch):
 def test_public_presets_list_without_local_file(capsys):
   assert cli.main(["model", "presets", "--verbose"]) == 0
   output = capsys.readouterr().out
-  for name in ("deepseek-flash", "kimi-k3", "glm-5.3"):
+  for name in ("deepseek-flash", "kimi-for-coding", "glm-5.3"):
     assert name in output
-  assert "https://api.moonshot.cn/anthropic" in output
-  assert "USD/1000000" in output and "CNY/1000000" in output
-  assert "默认订阅" in output and "可选旧 API 路线" in output
+  assert "api.moonshot.cn" not in output
+  assert "USD/1000000" in output
+  assert "默认可选·订阅" in output and "默认可选·按量" in output
   assert "消耗订阅额度；未验证真实账单" in output
   assert "https://api.kimi.com/coding/v1" in output
   assert "glm-5.3-flash" in output
   assert "reasoning=low,high,max" in output
-  assert "GLM 计费方式需按具体 endpoint/key 确认" in output
+  assert "context=1048576 | output=393216" in output
+  assert "checked 2026-09-27" in output
 
 
 def test_enable_preset_requires_key_and_keeps_file_unchanged(monkeypatch):
@@ -230,11 +231,11 @@ def test_enable_public_preset_preserves_subscription_and_comments(monkeypatch, c
 def test_enable_omp_uses_anthropic_and_keeps_existing_roles(monkeypatch):
   assert cli.main(["init-local", "--profile", "omp-default"]) == 0
   interactive(monkeypatch, ["yes"], secret="omp-key-canary")
-  assert cli.main(["model", "enable", "kimi"]) == 0
+  assert cli.main(["model", "enable", "kimi-code"]) == 0
   data = tomllib.loads(local_file().read_text(encoding="utf-8"))
   profile = data["overrides"]["profiles"]["omp-default"]
-  assert set(profile["providers"]) == {"kimi_code_anthropic", "glm_coding_anthropic", "kimi_anthropic"}
-  assert set(profile["models"]) == {"kimi_code_anthropic", "glm_coding_53_anthropic", "glm_coding_53_flash_anthropic", "kimi_k3_anthropic"}
+  assert set(profile["providers"]) == {"kimi_code_anthropic", "glm_coding_anthropic", "deepseek_anthropic"}
+  assert set(profile["models"]) == {"kimi_code_anthropic", "glm_coding_53_anthropic", "glm_coding_53_flash_anthropic", "deepseek_flash_anthropic"}
   assert "roles" not in profile
   assert model_wizard.load_workspace(local_file()).resolved.data["profile"]["roles"]["main"] == "kimi_code_anthropic"
   assert cli.main(["validate"]) == 0
@@ -244,7 +245,7 @@ def test_enable_preset_rejects_unsupported_protocol_without_edit(monkeypatch):
   assert cli.main(["init-local"]) == 0
   before = local_file().read_bytes()
   interactive(monkeypatch, [], secret="unused")
-  assert cli.main(["model", "enable", "glm", "--protocol", "anthropic"]) == 2
+  assert cli.main(["model", "enable", "glm-code", "--protocol", "anthropic"]) == 2
   assert local_file().read_bytes() == before
 
 
@@ -257,7 +258,9 @@ def test_enable_pi_projects_deepseek_native_compat(monkeypatch, capsys):
     if target.path == "pi-home/models.json" and target.selector.endswith("/models")]
   deepseek = next(model for group in models for model in group if model["id"] == "deepseek-flash")
   assert deepseek["compat"]["requiresReasoningContentOnAssistantMessages"] is True
-  assert deepseek["compat"]["reasoningEffortMap"]["xhigh"] == "max"
+  assert deepseek["thinkingLevelMap"] == {"minimal": "low", "low": "low", "medium": "high",
+    "high": "high", "xhigh": "high", "max": "max"}
+  assert "reasoningEffortMap" not in deepseek["compat"]
   assert w.candidate("offline-candidate").artifacts
   assert "pi-key-canary" not in capsys.readouterr().err
 
@@ -293,14 +296,14 @@ def test_price_schema_rejects_incomplete_rate_and_schedule():
 def test_one_key_enables_same_vendor_in_two_profiles(monkeypatch):
   assert cli.main(["init-local"]) == 0
   interactive(monkeypatch, ["yes"], secret="shared-secret-canary")
-  assert cli.main(["model", "enable", "kimi"]) == 0
+  assert cli.main(["model", "enable", "kimi-code"]) == 0
   interactive(monkeypatch, ["yes"], secret="unused")
-  assert cli.main(["--profile", "omp-default", "model", "enable", "kimi"]) == 0
+  assert cli.main(["--profile", "omp-default", "model", "enable", "kimi-code"]) == 0
   data = tomllib.loads(local_file().read_text(encoding="utf-8"))
   assert "secrets" not in data
-  assert shared_keys() == {"kimi_code_key": "", "kimi_key": "shared-secret-canary", "glm_coding_key": ""}
-  assert "kimi_k3_openai" in data["overrides"]["profiles"]["dsh-default"]["models"]
-  assert "kimi_k3_anthropic" in data["overrides"]["profiles"]["omp-default"]["models"]
+  assert shared_keys() == {"kimi_code_key": "shared-secret-canary", "deepseek_key": "", "glm_coding_key": ""}
+  assert "kimi_code_openai" in data["overrides"]["profiles"]["dsh-default"]["models"]
+  assert "kimi_code_anthropic" in data["overrides"]["profiles"]["omp-default"]["models"]
 
 
 def test_model_status_reports_partial_omp_keys_without_values(capsys):
@@ -346,8 +349,8 @@ def test_legacy_presets_still_require_valid_pricing(tmp_path, invalid_pricing):
   shared.mkdir()
   (shared / "providers.toml").write_bytes((repository / "shared/providers.toml").read_bytes())
   source = (repository / "shared/models.toml").read_text()
-  start = source.index("[models.kimi_k3_openai]")
-  end = source.index("[models.kimi_k3_anthropic]")
+  start = source.index("[models.deepseek_flash_anthropic]")
+  end = source.index("[models.kimi_code_openai]")
   section = source[start:end]
   lines = [line for line in section.splitlines() if not line.startswith("pricing =")]
   if invalid_pricing is not None:
@@ -356,3 +359,10 @@ def test_legacy_presets_still_require_valid_pricing(tmp_path, invalid_pricing):
   (shared / "models.toml").write_text(source)
   with pytest.raises(ConfigError):
     model_wizard._preset_catalog(tmp_path)
+
+
+@pytest.mark.parametrize("selector", ["kimi", "glm"])
+def test_removed_enable_selectors_are_rejected(selector):
+  with pytest.raises(SystemExit) as error:
+    cli.build_parser().parse_args(["model", "enable", selector])
+  assert error.value.code == 2

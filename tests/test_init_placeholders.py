@@ -17,18 +17,18 @@ def paths(machine="work"):
   return root / "machines" / f"{machine}.toml", root / "secrets.toml"
 
 
-def test_new_omp_kernel_has_two_urls_and_four_keys():
+def test_new_omp_kernel_has_two_urls_and_five_keys():
   result = initialize_local("work", config_home=os.environ["XDG_CONFIG_HOME"],
     profile_id="omp-kernel")
   machine_path, shared_path = paths()
   machine = tomllib.loads(machine_path.read_text())
   shared = tomllib.loads(shared_path.read_text())
   assert machine["local_values"] == {"tf_openai_url": "", "tf_anthropic_url": ""}
-  assert set(shared["shared"]) == {"kimi_code_key", "glm_coding_key"}
+  assert set(shared["shared"]) == {"kimi_code_key", "glm_coding_key", "deepseek_key"}
   assert shared["providers"] == {
     "kimi_tf": {"omp_kimi_tf_key": ""}, "zhipu_tf": {"omp_zhipu_tf_key": ""}}
   assert set(result.secret_fields) == {
-    "kimi_code_key", "glm_coding_key", "omp_kimi_tf_key", "omp_zhipu_tf_key"}
+    "kimi_code_key", "glm_coding_key", "deepseek_key", "omp_kimi_tf_key", "omp_zhipu_tf_key"}
 
 
 def test_existing_preserves_values_comments_default_and_adapter_override():
@@ -132,6 +132,7 @@ id = "work"
 [secrets]
 kimi_code_key = ""
 glm_coding_key = ""
+deepseek_key = ""
 ''', encoding="utf-8")
   result = initialize_local("work", config_home=os.environ["XDG_CONFIG_HOME"])
   assert result.secrets_action == "created"

@@ -68,7 +68,7 @@ Codex/Cursor 订阅登录稍后在 DSH 内完成，无需在机器文件写入�
 
 如果使用百炼或私有 API，可以运行 `./agentcfg --machine workstation model add`，在终端内一次填写 provider、model、角色及必需的密钥；向导校验后展示脱敏摘要，确认才写入。地址、模型 ID 和容量必须来自你的服务。也可按 [本地配置参考](local-config.md#私有网关示例) 手动编辑。示例中的 `example.invalid` 和 `fictional-*` 是虚构数据，不能直接调用。
 
-公共默认加入 Kimi Code、GLM Coding Plan 订阅模型；没有显式主模型时选择 Kimi Code `kimi-for-coding`。执行 `./agentcfg --machine workstation model key kimi-code` 和 `model key glm-code` 隐藏输入匹配的套餐 key，或按 `model status` 给出的位置编辑共享秘密文件。新凭据不复用旧 Kimi/GLM 通用 API key。`model presets` 区分订阅默认与显式可选 API；DeepSeek 与旧按量路线需显式启用，不会因已有 key 自动加入默认。更多地址与迁移说明见[本地配置参考](local-config.md)。
+公共默认可选池加入 Kimi Code、GLM Coding Plan 订阅模型与 DeepSeek 按量模型；没有显式主模型时仍选择 Kimi Code `kimi-for-coding`。执行 `./agentcfg --machine workstation model key kimi-code` 和 `model key glm-code` 隐藏输入匹配的套餐 key，按量 DeepSeek 使用 `model key deepseek`。填写 key 不会切换已有角色。新凭据不复用旧 Kimi/GLM 通用 API key；过时的开放平台模型入口已删除，但已有秘密不会自动删除。`model presets` 显示池中模型的订阅/按量性质，模型池与使用时的角色组合分别管理。更多地址与迁移说明见[本地配置参考](local-config.md)。
 
 机器文件保存在仓库外，初始化权限是 0600；不要提交到 Git。它可以包含 API key，也可以包含这台机器独有的路径和模型。所有字段说明见 [本地配置参考](local-config.md)。
 

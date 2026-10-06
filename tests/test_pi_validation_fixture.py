@@ -54,7 +54,7 @@ def test_native_fixture_renders_new_instance_with_synthetic_models_and_no_parent
   assert "synthetic-native-key" not in json.dumps(manifest)
   allowed = {value["model"] for value in manifest["allowed_models"]}
   assert {"agentcfg-native-main", "agentcfg-native-reader", "agentcfg-native-reviewer"} <= allowed
-  assert {"deepseek-flash", "kimi-k3", "glm-5.3"} <= allowed
+  assert {"deepseek-flash", "kimi-for-coding", "glm-5.3"} <= allowed
   assert not (result["workspace"].instance / "pi-home/auth.json").exists()
   assert (result["project"] / "code.txt").read_text() == "original\n"
   assert json.dumps("changed\n" if fixing else "original\n") in (result["project"] / "test_native_fixture.py").read_text()
