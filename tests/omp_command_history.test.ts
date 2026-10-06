@@ -2,8 +2,11 @@ import { test, expect } from "bun:test";
 import { isDeepStrictEqual } from "node:util";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
+import { mkdtempSync, rmSync, truncateSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { gzipSync } from "node:zlib";
 import { parseGenericCommands, matchesNativePattern } from "../agents/omp/packages/omp-permission-control/standalone-shell-analysis";
-import { loadGolden, evaluateGolden, evaluateCorpus, stripTrailingComment } from "../scripts/check-omp-command-history";
+import { loadGolden, evaluateGolden, evaluateCorpus, readCorpusFile, stripTrailingComment } from "../scripts/check-omp-command-history";
 
 const cases = loadGolden(join(import.meta.dir, "fixtures/omp/command-history/cases.json"));
 for (const item of cases.filter(item => item.category !== "known-semantic-gap")) {
@@ -96,4 +99,42 @@ test("bounded generated literal inputs have exact independent token results; tru
     ] });
     expect(parseGenericCommands(`printf '%s' '${token}`)).toEqual({ status: "unsupported", reason: "unsupported-syntax" });
   }
+});
+
+test("scenario evaluation preserves weighted occurrences and validates all selection metadata", () => {
+  const raw = fixtureCorpus(["ls first.txt", "ls second.txt", "ls *.jar"]);
+  const stats = Object.fromEntries(Object.entries(raw.statistics).map(([source, counters]) => [source, { ...counters, secondPassSkipped: 0 }]));
+  const records = [
+    { ...raw.records[0], occurrences: 2, scenario: { id: "a".repeat(64), category: "simple", features: [], members: 2 } },
+    { ...raw.records[2], scenario: { id: "b".repeat(64), category: "glob", features: ["glob"], members: 1 } },
+  ];
+  const input = { ...raw, schemaVersion: 2, redactionVersion: 2, statistics: stats, records,
+    selection: { classificationVersion: 1, inputUniqueCommands: 3, scenarioCount: 2, removedDuplicateCommands: 1,
+      preservedOccurrences: 3, secondPassChecked: 3, secondPassFailures: 0, categories: { simple: 1, glob: 1 } } };
+  const result = evaluateCorpus(input);
+  expect(result.uniqueCommands).toBe(2);
+  expect(result.occurrences).toBe(3);
+  expect(result.sampling).toBe("lexical-scenario-representatives");
+  expect(result.complete).toBe(1);
+  expect(result.unsupported).toBe(1);
+  expect(() => evaluateCorpus({ ...input, selection: { ...input.selection, scenarioCount: 3 } })).toThrow();
+  expect(() => evaluateCorpus({ ...input, selection: { ...input.selection, secondPassFailures: 1 } })).toThrow();
+  expect(() => evaluateCorpus({ ...input, records: records.map(r => ({ ...r, scenario: { ...r.scenario, id: "a".repeat(64) } })) })).toThrow();
+  expect(() => evaluateCorpus({ ...input, schemaVersion: "2" })).toThrow();
+});
+
+test("private corpus loading supports gzip and rejects corruption or oversized input", () => {
+  const directory = mkdtempSync(join(tmpdir(), "omp-history-reader-"));
+  try {
+    const input = fixtureCorpus(["pwd"]);
+    const plain = join(directory, "corpus.json");
+    const compressed = join(directory, "corpus.json.gz");
+    writeFileSync(plain, JSON.stringify(input), { mode: 0o600 });
+    writeFileSync(compressed, gzipSync(JSON.stringify(input)), { mode: 0o600 });
+    expect(evaluateCorpus(readCorpusFile(compressed))).toEqual(evaluateCorpus(readCorpusFile(plain)));
+    writeFileSync(compressed, "invalid gzip");
+    expect(() => readCorpusFile(compressed)).toThrow();
+    truncateSync(plain, 64 * 1024 * 1024 + 1);
+    expect(() => readCorpusFile(plain)).toThrow();
+  } finally { rmSync(directory, { recursive: true, force: true }); }
 });

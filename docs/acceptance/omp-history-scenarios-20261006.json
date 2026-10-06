@@ -1,0 +1,333 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-06",
+  "baselineCommit": "f264d22",
+  "scope": "private history redaction repair, lexical scenario deduplication, pure parser regression; no runtime changes",
+  "toolchain": {
+    "python": "3.11.11",
+    "bun": "1.4.0",
+    "babelParser": "7.29.9"
+  },
+  "extractionStatistics": {
+    "pi": {
+      "files": 594,
+      "events": 168862,
+      "extracted": 20759,
+      "unsupportedCommandCarrier": 4,
+      "malformed": 8,
+      "redactionSkipped": 24191,
+      "secondPassSkipped": 0,
+      "dynamicCommandSkipped": 4851,
+      "nonCommand": 132402,
+      "jsScripts": 0,
+      "jsLiteralCommands": 0,
+      "jsUnresolvedCalls": 0,
+      "jsMalformedScripts": 0
+    },
+    "codex": {
+      "files": 1066,
+      "events": 507413,
+      "extracted": 11140,
+      "unsupportedCommandCarrier": 1145,
+      "malformed": 57,
+      "redactionSkipped": 38402,
+      "secondPassSkipped": 0,
+      "dynamicCommandSkipped": 8960,
+      "nonCommand": 465681,
+      "jsScripts": 39647,
+      "jsLiteralCommands": 42200,
+      "jsUnresolvedCalls": 1289,
+      "jsMalformedScripts": 56
+    },
+    "omp": {
+      "files": 11,
+      "events": 280,
+      "extracted": 15,
+      "unsupportedCommandCarrier": 0,
+      "malformed": 0,
+      "redactionSkipped": 0,
+      "secondPassSkipped": 0,
+      "dynamicCommandSkipped": 0,
+      "nonCommand": 274,
+      "jsScripts": 0,
+      "jsLiteralCommands": 0,
+      "jsUnresolvedCalls": 0,
+      "jsMalformedScripts": 0
+    }
+  },
+  "selection": {
+    "classificationVersion": 1,
+    "inputUniqueCommands": 16178,
+    "scenarioCount": 11504,
+    "removedDuplicateCommands": 4674,
+    "preservedOccurrences": 31914,
+    "secondPassChecked": 16178,
+    "secondPassFailures": 0,
+    "categories": {
+      "compound": 4294,
+      "control-flow": 243,
+      "dynamic": 488,
+      "glob": 374,
+      "multiline": 1212,
+      "redirection": 3599,
+      "simple": 1294
+    }
+  },
+  "storage": {
+    "fullCandidateBytes": 5230069,
+    "compactScenarioBytes": 1796841,
+    "byteReductionRatio": 0.6564402878814792,
+    "duplicateReductionRatio": 0.28891086660897514,
+    "compression": "gzip; mtime=0; no original filename",
+    "privateFileMode": "0600",
+    "privateDirectoryMode": "0700",
+    "historicalCandidateBytes": 5211804
+  },
+  "secondRedactionAudit": {
+    "fullChecked": 16178,
+    "representativesChecked": 11504,
+    "publicSyntheticChecked": 79,
+    "recognizedResiduals": 0,
+    "checks": [
+      "known-key",
+      "pem",
+      "identity-raw-and-shell-joined",
+      "expanded-personal-path",
+      "ipv4",
+      "email",
+      "url-userinfo",
+      "url-query",
+      "url-damage",
+      "named-credential",
+      "quoted-marker-tail"
+    ],
+    "initialUrlCandidates": 9,
+    "urlBoundaryFalsePositives": 9,
+    "unknownSecretsGuaranteedAbsent": false
+  },
+  "fullParserReport": {
+    "schemaVersion": 1,
+    "parser": "standalone-shell-analysis",
+    "modelRequests": 0,
+    "shellCommandsExecuted": 0,
+    "golden": {
+      "cases": 79,
+      "counts": {
+        "supported": 39,
+        "coverage-gap": 14,
+        "conservative-boundary": 23,
+        "known-semantic-gap": 3
+      },
+      "semanticMatches": 76,
+      "knownSemanticFailures": [
+        "H077",
+        "H078",
+        "H079"
+      ],
+      "unexpectedFailures": [],
+      "resolvedSemanticGaps": [],
+      "baselinePassed": true,
+      "semanticConformancePassed": false
+    },
+    "corpus": {
+      "uniqueCommands": 16178,
+      "occurrences": 31914,
+      "complete": 8706,
+      "unsupported": 7472,
+      "thrown": 0,
+      "acceptanceRate": 0.5381382123871925,
+      "bySource": {
+        "pi": {
+          "unique": 8330,
+          "complete": 2911,
+          "unsupported": 5419
+        },
+        "codex": {
+          "unique": 7874,
+          "complete": 5821,
+          "unsupported": 2053
+        },
+        "omp": {
+          "unique": 8,
+          "complete": 7,
+          "unsupported": 1
+        }
+      },
+      "featureAppearances": {
+        "glob-like": {
+          "complete": 2209,
+          "unsupported": 3079
+        },
+        "connector-like": {
+          "complete": 6540,
+          "unsupported": 6562
+        },
+        "multiline": {
+          "complete": 0,
+          "unsupported": 3421
+        },
+        "expansion-like": {
+          "complete": 172,
+          "unsupported": 946
+        },
+        "redirection-like": {
+          "complete": 147,
+          "unsupported": 5041
+        }
+      },
+      "commentOracleEligible": 0,
+      "commentOracleMismatches": 0,
+      "sampling": "unique-command-text",
+      "selection": null,
+      "semantics": "acceptance-is-not-accuracy-or-approval; private-redaction-bias; partial-comment-oracle"
+    }
+  },
+  "scenarioParserReport": {
+    "schemaVersion": 1,
+    "parser": "standalone-shell-analysis",
+    "modelRequests": 0,
+    "shellCommandsExecuted": 0,
+    "golden": {
+      "cases": 79,
+      "counts": {
+        "supported": 39,
+        "coverage-gap": 14,
+        "conservative-boundary": 23,
+        "known-semantic-gap": 3
+      },
+      "semanticMatches": 76,
+      "knownSemanticFailures": [
+        "H077",
+        "H078",
+        "H079"
+      ],
+      "unexpectedFailures": [],
+      "resolvedSemanticGaps": [],
+      "baselinePassed": true,
+      "semanticConformancePassed": false
+    },
+    "corpus": {
+      "uniqueCommands": 11504,
+      "occurrences": 31914,
+      "complete": 5345,
+      "unsupported": 6159,
+      "thrown": 0,
+      "acceptanceRate": 0.4646210013908206,
+      "bySource": {
+        "pi": {
+          "unique": 5930,
+          "complete": 1622,
+          "unsupported": 4308
+        },
+        "codex": {
+          "unique": 5634,
+          "complete": 3779,
+          "unsupported": 1855
+        },
+        "omp": {
+          "unique": 8,
+          "complete": 7,
+          "unsupported": 1
+        }
+      },
+      "featureAppearances": {
+        "redirection-like": {
+          "complete": 133,
+          "unsupported": 4079
+        },
+        "connector-like": {
+          "complete": 4646,
+          "unsupported": 5561
+        },
+        "multiline": {
+          "complete": 0,
+          "unsupported": 2852
+        },
+        "glob-like": {
+          "complete": 1859,
+          "unsupported": 2776
+        },
+        "expansion-like": {
+          "complete": 142,
+          "unsupported": 863
+        }
+      },
+      "commentOracleEligible": 0,
+      "commentOracleMismatches": 0,
+      "sampling": "lexical-scenario-representatives",
+      "selection": {
+        "classificationVersion": 1,
+        "inputUniqueCommands": 16178,
+        "scenarioCount": 11504,
+        "removedDuplicateCommands": 4674,
+        "preservedOccurrences": 31914,
+        "secondPassChecked": 16178,
+        "secondPassFailures": 0,
+        "categories": {
+          "compound": 4294,
+          "control-flow": 243,
+          "dynamic": 488,
+          "glob": 374,
+          "multiline": 1212,
+          "redirection": 3599,
+          "simple": 1294
+        }
+      },
+      "semantics": "acceptance-is-not-accuracy-or-approval; private-redaction-bias; partial-comment-oracle"
+    }
+  },
+  "validation": {
+    "pythonAffectedTests": {
+      "passed": 166,
+      "failed": 0
+    },
+    "bunExplicitExistingBabel": {
+      "passed": 92,
+      "failed": 0,
+      "assertions": 413
+    },
+    "bunDefault": {
+      "passed": 91,
+      "skipped": 1,
+      "failed": 0,
+      "assertions": 400
+    },
+    "gzipCliEvaluated": true,
+    "workflowYamlValidated": true,
+    "remoteCiExecuted": false,
+    "fullRepositoryAttempt": {
+      "passed": 1634,
+      "failed": 1172,
+      "errors": 43,
+      "skipped": 7,
+      "countedAsPassingEvidence": false,
+      "observedEnvironmentFailure": "temporary directory ancestor ownership admission; broad run not acceptance evidence"
+    },
+    "agentHostsLaunched": 0,
+    "modelRequests": 0,
+    "historicalShellCommandsExecuted": 0,
+    "historicalJavaScriptExecuted": 0
+  },
+  "delegation": {
+    "executor": "gpt-6.1-sol / medium",
+    "scout": "gpt-6-luna / high",
+    "executorCapacityFailure": true,
+    "finalValidationBy": "root"
+  },
+  "unverified": [
+    "remote CI",
+    "actual macOS and Windows",
+    "approval quality",
+    "real agent-host execution"
+  ],
+  "privacy": "only aggregate statistics and public synthetic fixture ids; private commands and original fingerprints excluded",
+  "cleanup": {
+    "status": "completed",
+    "obsoleteArtifactsRemoved": 10,
+    "obsoleteBytesRemoved": 33794532,
+    "finalCorpusBytes": 1796841,
+    "finalReportBytes": 2194,
+    "originalLogsTouched": false,
+    "canonicalVerified": true
+  }
+}

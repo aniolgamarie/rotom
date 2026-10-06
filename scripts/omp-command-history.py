@@ -21,6 +21,81 @@ from urllib.parse import urlsplit, urlunsplit
 SOURCES = ("pi", "codex", "omp")
 SECRET_KEY = r"(?:[A-Za-z0-9_]*(?:token|password|passwd|secret|api[_-]?key|credential)[A-Za-z0-9_]*|authorization|cookie)"
 VALUE = r'''(?:"[^"\n]*"|'[^'\n]*'|[^\s;&|<>]+)'''
+URL = r'''[A-Za-z][A-Za-z0-9+.-]*://[^\s'"<>|;]+'''
+URL_UNQUOTED = r'''[A-Za-z][A-Za-z0-9+.-]*://[^\s'"<>|;&]+(?:&(?!&)[^\s'"<>|;&=]+=([^\s'"<>|;&]*))*'''
+EMAIL = r"[A-Za-z0-9.!#$%&'*+=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
+PERSONAL_PATH = r"(?<![\w/])/(?:var/tmp|home|Users|root|data|mnt|media|tmp|opt|workspaces?|private)(?![\w.-])(?:/[^\s'\";&|<>*?\[\]$`(){}\\]*)?"
+
+
+def redaction_findings(command, identities=()):
+  """独立扫描输出，只返回分类；不输出匹配原文。"""
+  findings = set()
+  if re.search(r"\b(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{12,}|AKIA[A-Z0-9]{16})\b", command):
+    findings.add("known-key")
+  if re.search(r"-----BEGIN .*PRIVATE KEY", command):
+    findings.add("pem")
+  if any(identity and identity in command for identity in identities):
+    findings.add("identity")
+  if any(identities):
+    # 仅做 shell 词法拼接，不执行或展开命令。
+    try:
+      tokens = shlex.split(command)
+    except ValueError:
+      findings.add("identity")
+    else:
+      if any(identity and identity in token for identity in identities for token in tokens):
+        findings.add("identity")
+  if re.search(PERSONAL_PATH, command):
+    findings.add("personal-path")
+  if re.search(r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])", command):
+    findings.add("ip")
+  for match in re.finditer(r"(?<![\w:])[0-9A-Fa-f:]*:[0-9A-Fa-f:]+(?![\w:])", command):
+    try:
+      ipaddress.IPv6Address(match[0])
+      findings.add("ip")
+    except ValueError:
+      pass
+  segments = re.split(r"(\"[^\"\n]*\"|'[^'\n]*')", command)
+  url_matches = []
+  outside_urls = ""
+  for index, segment in enumerate(segments):
+    pattern = URL if index % 2 else URL_UNQUOTED
+    url_matches.extend(re.finditer(pattern, segment))
+    outside_urls += re.sub(pattern, "", segment)
+  if re.search(EMAIL, outside_urls):
+    findings.add("email")
+  if re.search(r"[A-Za-z][A-Za-z0-9+.-]*:REDACTED_EMAIL|://REDACTED_EMAIL", command):
+    findings.add("url-marker")
+  for match in url_matches:
+    try:
+      url = urlsplit(match[0])
+      if "@" in url.netloc and url.netloc.rsplit("@", 1)[0] != "REDACTED":
+        findings.add("url-credential")
+      if any(part and part.split("=", 1)[-1] != "REDACTED" for part in url.query.split("&")):
+        findings.add("url-query")
+      if url.fragment and url.fragment != "REDACTED":
+        findings.add("url-query")
+    except ValueError:
+      findings.add("url-boundary")
+  patterns = [
+    rf"(?i)\b{SECRET_KEY}\b[\"']?\s*[=:]\s*({VALUE})",
+    rf"(?i)--{SECRET_KEY}\b\s*(?:=\s*)?({VALUE})",
+    rf"(?i)(?:-H|--header)\s+({VALUE})",
+    rf"(?i)\bBearer\s+({VALUE})",
+  ]
+  if re.search(r"\bcurl\b", command):
+    patterns.append(rf"(?<![\w-])(?:--(?:proxy-user|user|oauth2-bearer)(?:=|\s+)|-[uU]\s*)({VALUE})")
+  if re.search(r"\b(?:mysql|mariadb)\b", command):
+    patterns.append(rf"(?<![\w-])-p({VALUE})")
+  if re.search(r"\b(?:redis-cli|sqlcmd)\b", command):
+    patterns.append(rf"(?:-a|-P)\s+({VALUE})")
+  for pattern in patterns:
+    for match in re.finditer(pattern, command):
+      if match[1].strip("\"'") != "REDACTED":
+        findings.add("credential")
+      elif match[1].startswith(("'", '"')) and match.end() < len(command) and re.match(r"[\w\"'./:+@=-]", command[match.end()]):
+        findings.add("credential-tail")
+  return findings
 
 
 
@@ -111,7 +186,7 @@ def mask_value(value):
   return "REDACTED"
 
 
-def redact(command):
+def redact(command, identities=()):
   # 不能可靠判定边界的源码和密钥整条隔离，原文仅留在内存。
   try:
     shlex.split(command)
@@ -130,6 +205,44 @@ def redact(command):
   dynamic = command.replace("$(pwd)", "")
   if re.search(r"\$\(|`|\$\{", dynamic):
     return None
+
+  # 引号片段后接字面后缀或另一片段时，旧正则只能遮半段；整条隔离。
+  sensitive = [
+    rf"(?i)\b{SECRET_KEY}\b[\"']?\s*[=:]\s*({VALUE})",
+    rf"(?i)--{SECRET_KEY}\b\s*(?:=\s*)?({VALUE})",
+    rf"(?i)(?:-H|--header)\s+({VALUE})",
+    rf"(?i)\bBearer\s+({VALUE})",
+  ]
+  if re.search(r"\b(?:mysql|mariadb)\b", command):
+    sensitive.append(rf"(?<![\w-])-p({VALUE})")
+  if re.search(r"\b(?:redis-cli|sqlcmd)\b", command):
+    sensitive.append(rf"(?:-a|-P)\s+({VALUE})")
+  for pattern in sensitive:
+    for match in re.finditer(pattern, command):
+      value = match[1]
+      if re.search(r"[$`\\]", value):
+        return None
+      # 未加引号开头的词也可能含带空格的引号片段，不能只遮到空格。
+      context = None
+      escaped = False
+      for char in command[:match.start(1)]:
+        if escaped:
+          escaped = False
+        elif char == "\\" and context != "'":
+          escaped = True
+        elif char == context:
+          context = None
+        elif context is None and char in "\"'":
+          context = char
+      # Header 内层匹配可能带上外层 shell 的关闭引号。
+      checked = value[:-1] if context and value.endswith(context) and not value.startswith(context) else value
+      try:
+        shlex.split(checked)
+      except ValueError:
+        return None
+      if value.startswith(("'", '\"')) and match.end() < len(command):
+        if re.match(r"[\w\"'./:+@=-]", command[match.end()]):
+          return None
 
   # curl 的认证值不是通用 secret 字段，完整遮盖用户名、密码和 OAuth 凭据。
   if re.search(r"\bcurl\b", command):
@@ -171,7 +284,7 @@ def redact(command):
   if re.search(r"\b(?:redis-cli|sqlcmd)\b", command):
     command = re.sub(rf"((?:-a|-P)\s+)({VALUE})", lambda m: m[1] + mask_value(m[2]), command)
 
-  command = re.sub(r"(?i)(\bBearer\s+)[^\s'\";&|<>]+", r"\1REDACTED", command)
+  command = re.sub(rf"(?i)(\bBearer\s+)({VALUE})", lambda m: m[1] + mask_value(m[2]), command)
   command = re.sub(r"\b(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{12,}|AKIA[A-Z0-9]{16})\b", "REDACTED", command)
 
   def mask_url(match):
@@ -180,14 +293,36 @@ def redact(command):
       host = url.netloc.rsplit("@", 1)[-1]
       if "@" in url.netloc:
         host = "REDACTED@" + host
-      # 查询参数可能有未声明的秘密，统一遮盖值且保留分隔符。
-      query = re.sub(r"([?&]?[^=&]+)=([^&]*)", r"\1=REDACTED", url.query)
+      # 无等号的查询片段也可能是短凭据，不保留其字面值。
+      query = "&".join(part.split("=", 1)[0] + "=REDACTED" if "=" in part else "REDACTED" for part in url.query.split("&")) if url.query else ""
       return urlunsplit((url.scheme, host, url.path, query, "REDACTED" if url.fragment else ""))
     except ValueError:
       return "REDACTED_URL"
 
-  command = re.sub(r'''[A-Za-z][A-Za-z0-9+.-]*://[^\s'"<>|;]+''', mask_url, command)
-  command = re.sub(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", "REDACTED_EMAIL", command)
+  # 裸 URL 中无等号的 & 后缀按 shell 控制边界保留；带引号时属于 URL。
+  chunks = re.split(r"(\"[^\"\n]*\"|'[^'\n]*')", command)
+  for index, chunk in enumerate(chunks):
+    for match in re.finditer(URL if index % 2 else URL_UNQUOTED, chunk):
+      if index % 2:
+        if chunks[index - 1] and not re.search(r"[\s;&|<>]$", chunks[index - 1]):
+          return None
+        if chunks[index + 1] and not re.match(r"[\s;&|<>]", chunks[index + 1]):
+          return None
+      elif match.end() == len(chunk) and index + 1 < len(chunks):
+        return None
+  command = "".join(re.sub(URL if index % 2 else URL_UNQUOTED, mask_url, chunk) for index, chunk in enumerate(chunks))
+  # URL userinfo 的 marker 不得被邮箱替换吞掉 scheme://。
+  chunks = re.split(r"(\"[^\"\n]*\"|'[^'\n]*')", command)
+  masked_chunks = []
+  for index, chunk in enumerate(chunks):
+    pattern = URL if index % 2 else URL_UNQUOTED
+    cursor = 0
+    masked = ""
+    for match in re.finditer(pattern, chunk):
+      masked += re.sub(EMAIL, "REDACTED_EMAIL", chunk[cursor:match.start()]) + match[0]
+      cursor = match.end()
+    masked_chunks.append(masked + re.sub(EMAIL, "REDACTED_EMAIL", chunk[cursor:]))
+  command = "".join(masked_chunks)
   command = re.sub(r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])", "REDACTED_IP", command)
   # IPv6 使用标准库验证，避免把 shell 的冒号语法误作地址。
   def mask_ipv6(match):
@@ -197,7 +332,18 @@ def redact(command):
     except ValueError:
       return match[0]
   command = re.sub(r"(?<![\w:])[0-9A-Fa-f:]*:[0-9A-Fa-f:]+(?![\w:])", mask_ipv6, command)
-  command = re.sub(r"(?<![\w:])/(?:home|Users|root|data|mnt|media|tmp)(?:/[^\s'\";&|<>*?\[\]$`(){}\\]*)?", "/REDACTED_PATH", command)
+  command = re.sub(PERSONAL_PATH, "/REDACTED_PATH", command)
+  for identity in identities:
+    if identity:
+      command = command.replace(identity, "REDACTED_IDENTITY")
+  if any(identities):
+    # 原文字面替换无法覆盖引号或反斜线拼接出的身份，整条隔离。
+    try:
+      tokens = shlex.split(command)
+    except ValueError:
+      return None
+    if any(identity and identity in token for identity in identities for token in tokens):
+      return None
   # 剩余的未知高熵串不能当作已覆盖秘密公开输出。
   for token in re.findall(r"[A-Za-z0-9_+/=-]{24,}", command):
     # 已遮盖的认证参数包含数字和连接符，不能误计为未知凭据。
@@ -348,6 +494,7 @@ def main(argv=None):
   for source in SOURCES:
     parser.add_argument(f"--{source}-root", action="append", default=[])
   parser.add_argument("--output", required=True)
+  parser.add_argument("--identity-term", action="append", default=[])
   parser.add_argument("--bun")
   parser.add_argument("--js-parser-module")
   args = parser.parse_args(argv)
@@ -363,7 +510,7 @@ def main(argv=None):
     records = {}
     statistics = {}
     for source in SOURCES:
-      counters = dict.fromkeys(("files", "events", "extracted", "unsupportedCommandCarrier", "malformed", "redactionSkipped", "dynamicCommandSkipped", "nonCommand", "jsScripts", "jsLiteralCommands", "jsUnresolvedCalls", "jsMalformedScripts"), 0)
+      counters = dict.fromkeys(("files", "events", "extracted", "unsupportedCommandCarrier", "malformed", "redactionSkipped", "secondPassSkipped", "dynamicCommandSkipped", "nonCommand", "jsScripts", "jsLiteralCommands", "jsUnresolvedCalls", "jsMalformedScripts"), 0)
       statistics[source] = counters
       files = set()
       for root in getattr(args, f"{source}_root"):
@@ -382,10 +529,14 @@ def main(argv=None):
             if status:
               counters[status] += 1
             for command in commands:
-              safe = redact(command)
+              safe = redact(command, args.identity_term)
               if safe is None:
                 if re.search(r"\$(?:\(|\{|[A-Za-z_])|`|<<", command):
                   counters["dynamicCommandSkipped"] += 1
+                counters["redactionSkipped"] += 1
+                continue
+              if redaction_findings(safe, args.identity_term):
+                counters["secondPassSkipped"] += 1
                 counters["redactionSkipped"] += 1
                 continue
               counters["extracted"] += 1
@@ -397,7 +548,7 @@ def main(argv=None):
               record["occurrences"] += 1
     if js_parser is not None:
       js_parser.close()
-    artifact = {"schemaVersion": 1, "publication": "private-review-required", "records": list(records.values()), "statistics": statistics, "redactionVersion": 1}
+    artifact = {"schemaVersion": 1, "publication": "private-review-required", "records": list(records.values()), "statistics": statistics, "redactionVersion": 2}
     descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
       json.dump(artifact, handle, ensure_ascii=False, indent=2)

@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { closeSync, fstatSync, openSync, readFileSync, writeFileSync } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
 import { join } from "node:path";
+import { gunzipSync } from "node:zlib";
 import { parseGenericCommands, type GenericShellParse } from "../agents/omp/packages/omp-permission-control/standalone-shell-analysis";
 
 const SOURCES = ["pi", "codex", "omp"] as const;
@@ -12,7 +13,10 @@ export interface GoldenCase {
   category: "supported" | "coverage-gap" | "conservative-boundary" | "known-semantic-gap";
   expected: GenericShellParse;
 }
-interface CorpusRecord { id: string; command: string; sources: Source[]; occurrences: number }
+interface CorpusRecord { id: string; command: string; sources: Source[]; occurrences: number;
+  scenario?: { id: string; category: string; features: string[]; members: number } }
+const SCENE_CATEGORIES = ["invalid-boundary", "control-flow", "dynamic", "heredoc", "redirection", "multiline", "glob", "comment", "compound", "simple"];
+const SCENE_FEATURES = [...SCENE_CATEGORIES.filter(c => c !== "simple"), "quote:single", "quote:double", "concatenation", "escape", "assignment", "write-command", "privilege-command", "embedded-code", "nested-write"];
 
 // 已知错误只允许当前明确观察到的结果；不能借“已知错误”豁免新的行为偏离。
 const KNOWN_COMMENT_BASELINES: Record<string, GenericShellParse> = {
@@ -111,12 +115,16 @@ function appearances(command: string): string[] {
 }
 
 export function evaluateCorpus(input: unknown) {
-  exactKeys(input, ["schemaVersion", "publication", "records", "statistics", "redactionVersion"]);
-  if (input.schemaVersion !== 1 || input.redactionVersion !== 1 || input.publication !== "private-review-required" ||
+  if (!input || typeof input !== "object") throw new Error("invalid corpus");
+  const version = (input as Record<string, unknown>).schemaVersion;
+  exactKeys(input, ["schemaVersion", "publication", "records", "statistics", "redactionVersion", ...(version === 2 ? ["selection"] : [])]);
+  if (![1, 2].includes(input.schemaVersion as number) || ![1, 2].includes(input.redactionVersion as number) ||
+      (version === 2 && input.redactionVersion !== 2) || input.publication !== "private-review-required" ||
       !Array.isArray(input.records)) throw new Error("invalid corpus");
   exactKeys(input.statistics, [...SOURCES]);
   const counterKeys = ["files", "events", "extracted", "unsupportedCommandCarrier", "malformed", "redactionSkipped",
-    "dynamicCommandSkipped", "nonCommand", "jsScripts", "jsLiteralCommands", "jsUnresolvedCalls", "jsMalformedScripts"];
+    "dynamicCommandSkipped", "nonCommand", "jsScripts", "jsLiteralCommands", "jsUnresolvedCalls", "jsMalformedScripts",
+    ...(input.redactionVersion === 2 ? ["secondPassSkipped"] : [])];
   let extracted = 0;
   for (const source of SOURCES) {
     const counters = input.statistics[source];
@@ -130,6 +138,9 @@ export function evaluateCorpus(input: unknown) {
   const featureAppearances: Record<string, { complete: number; unsupported: number }> = {};
   const ids = new Set<string>();
   const commands = new Set<string>();
+  const scenarioIds = new Set<string>();
+  const categories: Record<string, number> = {};
+  let members = 0;
   let complete = 0;
   let unsupported = 0;
   let occurrences = 0;
@@ -137,13 +148,24 @@ export function evaluateCorpus(input: unknown) {
   let commentOracleEligible = 0;
   let commentOracleMismatches = 0;
   for (const raw of input.records) {
-    exactKeys(raw, ["id", "command", "sources", "occurrences"]);
+    exactKeys(raw, ["id", "command", "sources", "occurrences", ...(version === 2 ? ["scenario"] : [])]);
     const record = raw as unknown as CorpusRecord;
     if (typeof record.id !== "string" || !/^[a-f0-9]{64}$/u.test(record.id) || ids.has(record.id) ||
         typeof record.command !== "string" || commands.has(record.command) ||
         !Array.isArray(record.sources) || !record.sources.length || new Set(record.sources).size !== record.sources.length ||
         record.sources.some(s => !SOURCES.includes(s)) || !Number.isSafeInteger(record.occurrences) || record.occurrences < 1)
       throw new Error("invalid corpus record");
+    if (version === 2) {
+      exactKeys(record.scenario, ["id", "category", "features", "members"]);
+      const scene = record.scenario!;
+      if (!/^[a-f0-9]{64}$/u.test(scene.id) || scenarioIds.has(scene.id) || !SCENE_CATEGORIES.includes(scene.category) ||
+          !Array.isArray(scene.features) || scene.features.some(f => !SCENE_FEATURES.includes(f)) ||
+          new Set(scene.features).size !== scene.features.length || !Number.isSafeInteger(scene.members) || scene.members < 1 ||
+          scene.members > record.occurrences) throw new Error("invalid scenario");
+      scenarioIds.add(scene.id);
+      categories[scene.category] = (categories[scene.category] ?? 0) + 1;
+      members += scene.members;
+    }
     ids.add(record.id);
     commands.add(record.command);
     occurrences += record.occurrences;
@@ -166,10 +188,31 @@ export function evaluateCorpus(input: unknown) {
     }
   }
   if (extracted !== occurrences) throw new Error("inconsistent occurrence counts");
+  if (version === 2) {
+    exactKeys(input.selection, ["classificationVersion", "inputUniqueCommands", "scenarioCount", "removedDuplicateCommands",
+      "preservedOccurrences", "secondPassChecked", "secondPassFailures", "categories"]);
+    const selection = input.selection;
+    if (selection.classificationVersion !== 1 || selection.inputUniqueCommands !== members || selection.scenarioCount !== input.records.length ||
+        selection.removedDuplicateCommands !== members-input.records.length || selection.preservedOccurrences !== occurrences ||
+        selection.secondPassChecked !== members || selection.secondPassFailures !== 0 || !isDeepStrictEqual(selection.categories, categories))
+      throw new Error("inconsistent selection metadata");
+  }
   return { uniqueCommands: input.records.length, occurrences, complete, unsupported, thrown,
     acceptanceRate: input.records.length ? complete / input.records.length : null,
     bySource, featureAppearances, commentOracleEligible, commentOracleMismatches,
+    sampling: version === 2 ? "lexical-scenario-representatives" : "unique-command-text",
+    selection: version === 2 ? input.selection : null,
     semantics: "acceptance-is-not-accuracy-or-approval; private-redaction-bias; partial-comment-oracle" };
+}
+
+export function readCorpusFile(path: string): unknown {
+  const descriptor = openSync(path, "r");
+  try {
+    const info = fstatSync(descriptor);
+    if (!info.isFile() || info.size > 64 * 1024 * 1024) throw new Error("invalid corpus size");
+    const bytes = readFileSync(descriptor);
+    return JSON.parse((path.endsWith(".gz") ? gunzipSync(bytes, { maxOutputLength: 64 * 1024 * 1024 }) : bytes).toString("utf8"));
+  } finally { closeSync(descriptor); }
 }
 
 function main() {
@@ -183,7 +226,7 @@ function main() {
     else throw new Error("unknown argument");
   }
   const golden = evaluateGolden(loadGolden(join(import.meta.dir, "../tests/fixtures/omp/command-history/cases.json")));
-  const corpus = corpusPath ? evaluateCorpus(JSON.parse(readFileSync(corpusPath, "utf8"))) : null;
+  const corpus = corpusPath ? evaluateCorpus(readCorpusFile(corpusPath)) : null;
   const report = { schemaVersion: 1, parser: "standalone-shell-analysis", modelRequests: 0,
     shellCommandsExecuted: 0, golden, corpus };
   if (output) writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`, { flag: "wx", mode: 0o600 });
