@@ -41,7 +41,8 @@ def test_real_recipe_preserves_full_tui_config_and_has_no_static_oauth_catalog(t
   assert "workspace" in tui["config"] and "sessionId" in tui["config"]
   assert sum(row.get("id") == "dsh-tui-auth" for row in patch) == 1
   assert set(w.resolved.data["models"]) == {
-    "kimi_code_openai", "glm_coding_53_openai", "glm_coding_53_flash_openai", "deepseek_flash_openai"}
+    "kimi_code_openai", "kimi_code_k3_openai", "kimi_code_k3_256k_openai", "kimi_code_highspeed_openai",
+    "glm_coding_53_openai", "glm_coding_53_flash_openai", "deepseek_flash_openai", "deepseek_pro_openai"}
 
 
 @pytest.mark.parametrize("source", [

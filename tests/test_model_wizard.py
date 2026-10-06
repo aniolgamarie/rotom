@@ -185,7 +185,8 @@ def test_add_model_detects_change_during_workspace_resolution(monkeypatch):
 def test_public_presets_list_without_local_file(capsys):
   assert cli.main(["model", "presets", "--verbose"]) == 0
   output = capsys.readouterr().out
-  for name in ("deepseek-flash", "kimi-for-coding", "glm-5.3"):
+  for name in ("deepseek-flash", "deepseek-v4-pro", "kimi-for-coding", "k3", "k3-256k",
+               "kimi-for-coding-highspeed", "glm-5.3", "glm-5.3-flash"):
     assert name in output
   assert "api.moonshot.cn" not in output
   assert "USD/1000000" in output
@@ -195,7 +196,7 @@ def test_public_presets_list_without_local_file(capsys):
   assert "glm-5.3-flash" in output
   assert "reasoning=low,high,max" in output
   assert "context=1048576 | output=393216" in output
-  assert "checked 2026-09-27" in output
+  assert "checked 2026-10-06" in output
 
 
 def test_enable_preset_requires_key_and_keeps_file_unchanged(monkeypatch):
@@ -235,7 +236,9 @@ def test_enable_omp_uses_anthropic_and_keeps_existing_roles(monkeypatch):
   data = tomllib.loads(local_file().read_text(encoding="utf-8"))
   profile = data["overrides"]["profiles"]["omp-default"]
   assert set(profile["providers"]) == {"kimi_code_anthropic", "glm_coding_anthropic", "deepseek_anthropic"}
-  assert set(profile["models"]) == {"kimi_code_anthropic", "glm_coding_53_anthropic", "glm_coding_53_flash_anthropic", "deepseek_flash_anthropic"}
+  assert set(profile["models"]) == {"kimi_code_anthropic", "kimi_code_k3_anthropic",
+    "kimi_code_k3_256k_anthropic", "kimi_code_highspeed_anthropic", "glm_coding_53_anthropic",
+    "glm_coding_53_flash_anthropic", "deepseek_flash_anthropic", "deepseek_pro_anthropic"}
   assert "roles" not in profile
   assert model_wizard.load_workspace(local_file()).resolved.data["profile"]["roles"]["main"] == "kimi_code_anthropic"
   assert cli.main(["validate"]) == 0
@@ -348,11 +351,12 @@ def test_legacy_presets_still_require_valid_pricing(tmp_path, invalid_pricing):
   shared = tmp_path / "shared"
   shared.mkdir()
   (shared / "providers.toml").write_bytes((repository / "shared/providers.toml").read_bytes())
+  (shared / "model-templates.toml").write_bytes((repository / "shared/model-templates.toml").read_bytes())
   source = (repository / "shared/models.toml").read_text()
-  start = source.index("[models.deepseek_flash_anthropic]")
-  end = source.index("[models.kimi_code_openai]")
+  start = source.index('["models"."deepseek_flash_anthropic"]')
+  end = source.index('["models"."deepseek_pro_anthropic"]')
   section = source[start:end]
-  lines = [line for line in section.splitlines() if not line.startswith("pricing =")]
+  lines = [line for line in section.splitlines() if not line.startswith('"pricing" =')]
   if invalid_pricing is not None:
     lines.append(invalid_pricing)
   source = source[:start] + "\n".join(lines) + "\n\n" + source[end:]

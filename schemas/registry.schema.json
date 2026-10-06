@@ -6,7 +6,8 @@
   "properties": {
     "schema_version": {"type": "integer", "const": 1},
     "providers": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/provider"}},
-    "models": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/model"}},
+    "models": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/raw_model"}},
+    "model_templates": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/model_template"}},
     "mcp": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/mcp"}},
     "rules": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/rule"}},
     "skills": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"$ref": "#/$defs/skill"}}
@@ -28,6 +29,118 @@
       }
     },
     "local_ref": {"type": "string", "pattern": "^local:(?!\\.{1,2}$)[^/\\\\\\u0000-\\u001f\\u007f]+(?![\\s\\S])"},
+    "model_template": {
+      "type": "object",
+      "required": ["remote_id", "input", "context_window", "max_output_tokens", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "remote_id": {
+          "$ref": "#/$defs/text"
+        },
+        "name": {
+          "$ref": "#/$defs/text"
+        },
+        "input": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "uniqueItems": true
+        },
+        "reasoning": {
+          "type": "boolean"
+        },
+        "reasoning_efforts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "low",
+              "high",
+              "max"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "context_window": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_output_tokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_output_supported": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source": {
+          "$ref": "#/$defs/text"
+        },
+        "notes": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "model_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "template"
+      ],
+      "properties": {
+        "template": {
+          "$ref": "#/$defs/id"
+        },
+        "provider": {
+          "$ref": "#/$defs/model/properties/provider"
+        },
+        "remote_id": {
+          "$ref": "#/$defs/model/properties/remote_id"
+        },
+        "context_window": {
+          "$ref": "#/$defs/model/properties/context_window"
+        },
+        "max_output_tokens": {
+          "$ref": "#/$defs/model/properties/max_output_tokens"
+        },
+        "max_output_supported": {
+          "$ref": "#/$defs/model/properties/max_output_supported"
+        },
+        "source": {
+          "$ref": "#/$defs/model/properties/source"
+        },
+        "name": {
+          "$ref": "#/$defs/model/properties/name"
+        },
+        "reasoning": {
+          "$ref": "#/$defs/model/properties/reasoning"
+        },
+        "reasoning_efforts": {
+          "$ref": "#/$defs/model/properties/reasoning_efforts"
+        },
+        "pricing": {
+          "$ref": "#/$defs/model/properties/pricing"
+        },
+        "native": {
+          "$ref": "#/$defs/model/properties/native"
+        },
+        "input": {
+          "$ref": "#/$defs/model/properties/input"
+        }
+      }
+    },
+    "raw_model": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/model"
+        },
+        {
+          "$ref": "#/$defs/model_binding"
+        }
+      ]
+    },
     "model": {
       "type": "object", "additionalProperties": false,
       "required": ["provider", "remote_id", "input"],
@@ -74,7 +187,9 @@
       "type": "object", "additionalProperties": false,
       "properties": {
         "pi": {"type": "object", "additionalProperties": false, "properties": {
+          "disabled_thinking_levels": {"type": "array", "items": {"type": "string", "enum": ["off"]}, "uniqueItems": true},
           "thinkingLevelMap": {"type": "object", "additionalProperties": false, "properties": {
+            "off": {"type": "null"},
             "minimal": {"type": "string", "enum": ["low", "high", "max"]},
             "low": {"type": "string", "enum": ["low", "high", "max"]},
             "medium": {"type": "string", "enum": ["low", "high", "max"]},
@@ -88,15 +203,17 @@
             "maxTokensField": {"type": "string", "enum": ["max_tokens"]},
             "supportsStrictMode": {"type": "boolean"},
             "requiresReasoningContentOnAssistantMessages": {"type": "boolean"},
-            "thinkingFormat": {"type": "string", "enum": ["deepseek", "zai"]}
+            "thinkingFormat": {"type": "string", "enum": ["deepseek", "zai", "openai"]}
           }}
         }},
         "omp": {"type": "object", "additionalProperties": false, "properties": {
           "thinking": {"type": "object", "additionalProperties": false, "properties": {
+            "requiresEffort": {"type": "boolean"},
             "minLevel": {"$ref": "#/$defs/text"}, "maxLevel": {"$ref": "#/$defs/text"},
             "mode": {"type": "string", "enum": ["effort"]}
           }},
           "compat": {"type": "object", "additionalProperties": false, "properties": {
+            "thinkingFormat": {"type": "string", "enum": ["openai", "zai"]},
             "supportsDeveloperRole": {"type": "boolean"},
             "supportsReasoningEffort": {"type": "boolean"},
             "maxTokensField": {"type": "string", "enum": ["max_tokens"]},

@@ -24,9 +24,9 @@ _HEADER = re.compile(r"^\s*\[.*\]\s*(?:#.*)?$")
 _KEY = re.compile(r"^\s*([A-Za-z0-9_-]+|\"(?:[^\"\\]|\\.)*\"|'[^']*')\s*=")
 _MARKER = "__agentcfg_table_marker__"
 _PRESETS = {
-  "kimi-code": "kimi_code",
-  "glm-code": "glm_coding_53",
-  "deepseek": "deepseek_flash",
+  "kimi-code": ("kimi_code", "kimi_code_k3", "kimi_code_k3_256k", "kimi_code_highspeed"),
+  "glm-code": ("glm_coding_53", "glm_coding_53_flash"),
+  "deepseek": ("deepseek_flash", "deepseek_pro"),
 }
 
 
@@ -200,26 +200,24 @@ def _public_ids(repository):
 
 
 def _preset_catalog(repository):
-  from .schema import validate_document
-  try:
-    providers = tomllib.loads((repository / "shared/providers.toml").read_text(encoding="utf-8"))
-    models = tomllib.loads((repository / "shared/models.toml").read_text(encoding="utf-8"))
-  except (OSError, UnicodeError, tomllib.TOMLDecodeError):
-    raise ConfigError("model-preset-catalog-invalid") from None
-  validate_document("registry", providers)
-  validate_document("registry", models)
-  for selector, stem in _PRESETS.items():
-    for protocol in ("openai", "anthropic"):
-      item = models.get("models", {}).get(stem + "_" + protocol)
-      provider = providers.get("providers", {}).get(item.get("provider")) if isinstance(item, dict) else None
-      if (not isinstance(provider, dict) or provider.get("protocol") != {
-            "openai": "openai-compatible", "anthropic": "anthropic-messages"}[protocol]
-          or provider.get("auth_kind") != "api-key" or "base_url" not in provider or "credential_ref" not in provider
-          or (selector not in {"kimi-code", "glm-code"} and not isinstance(item.get("pricing"), dict))
-          or "context_window" not in item
-          or "max_output_tokens" not in item or "source" not in item):
-        raise ConfigError("model-preset-catalog-invalid")
-  return providers["providers"], models["models"]
+  from .config import SourceInputs, load_sources
+  from .schema import AdapterSchemas
+  registry = load_sources(SourceInputs(registries=tuple(repository / "shared" / name
+    for name in ("providers.toml", "model-templates.toml", "models.toml"))),
+    adapter_schemas=AdapterSchemas()).registry
+  providers, models = registry["providers"], registry["models"]
+  for selector, stems in _PRESETS.items():
+    for stem in stems:
+      for protocol in ("openai", "anthropic"):
+        item = models.get(stem + "_" + protocol)
+        provider = providers.get(item.get("provider")) if isinstance(item, dict) else None
+        if (not isinstance(provider, dict) or provider.get("protocol") != {
+              "openai": "openai-compatible", "anthropic": "anthropic-messages"}[protocol]
+            or provider.get("auth_kind") != "api-key" or "base_url" not in provider or "credential_ref" not in provider
+            or (selector == "deepseek" and not isinstance(item.get("pricing"), dict))
+            or "context_window" not in item or "max_output_tokens" not in item or "source" not in item):
+          raise ConfigError("model-preset-catalog-invalid")
+  return providers, models
 
 
 def _check_native_candidate(workspace):
@@ -241,49 +239,43 @@ def list_presets(args):
   repository = Path(__file__).resolve().parents[2]
   providers, models = _preset_catalog(repository)
   print("官方模型预设（仓库声明）\n")
-  if not getattr(args, "verbose", False):
-    rows = []
-    for vendor, stem in _PRESETS.items():
+  rows = []
+  for vendor, stems in _PRESETS.items():
+    for stem in stems:
       model = models[stem + "_openai"]
-      rows.append((vendor, model["remote_id"], f"{model['context_window']:,}",
-        f"{model['max_output_tokens']:,}", ", ".join(model["input"]),
-        "默认可选·订阅" if vendor in {"kimi-code", "glm-code"} else "默认可选·按量"))
-    table(("服务商", "模型", "上下文 token", "最大输出 token", "输入", "用途"), rows)
-    print("\nKimi Code、GLM Coding Plan、DeepSeek 默认加入可选模型池；公共初始主模型为 Kimi Code；模型池、角色绑定与请求失败备用链分别配置。")
-    print("订阅模型消耗订阅额度；未验证真实账单。GLM 同时默认提供 glm-5.3-flash。")
-    print("完整地址、计价与来源：./agentcfg model presets --verbose")
-    return 0
-  for vendor, stem in _PRESETS.items():
-    model = models[stem + "_openai"]
-    openai = providers[model["provider"]]["base_url"]
-    anthropic = providers[models[stem + "_anthropic"]["provider"]]["base_url"]
-    pricing = model.get("pricing")
-    if pricing is None:
-      print(f"{vendor}: {model['remote_id']} | 默认可选·订阅 | context={model['context_window']} | output={model['max_output_tokens']} | input={','.join(model['input'])}")
+      thinking = ",".join(model.get("reasoning_efforts", [])) or ("ON" if model.get("reasoning") else "off")
+      origin = "默认可选·按量" if vendor == "deepseek" else "默认可选·订阅"
+      if not getattr(args, "verbose", False):
+        rows.append((vendor, model["remote_id"], f"{model['context_window']:,}",
+          f"{model['max_output_tokens']:,}", ", ".join(model["input"]), thinking, origin))
+        continue
+      openai = providers[model["provider"]]["base_url"]
+      anthropic = providers[models[stem + "_anthropic"]["provider"]]["base_url"]
+      print(f"{vendor}: {model['remote_id']} | {origin} | context={model['context_window']} | output={model['max_output_tokens']} | input={','.join(model['input'])}")
+      print("  reasoning=" + thinking)
       print(f"  OpenAI: {openai} | Anthropic: {anthropic}")
-      print("  reasoning=" + (",".join(model.get("reasoning_efforts", [])) if model.get("reasoning") else "off"))
-      print("  消耗订阅额度；未验证真实账单；不复用旧 API key。")
       print(f"  source: {model['source']}")
-      if vendor == "glm-code":
-        print("  同时默认提供 glm-5.3-flash（text,image）")
-      continue
-    rates = pricing["standard"]
-    amount = f"{pricing['currency']}/{pricing['per_tokens']} tokens"
-    print(f"{vendor}: {model['remote_id']} | 默认可选·按量 | context={model['context_window']} | output={model['max_output_tokens']} | input={','.join(model['input'])}")
-    print("  按量 API 路线；价格为目录快照，未验证实际计费。")
-    print("  reasoning=" + (",".join(model.get("reasoning_efforts", [])) if model.get("reasoning") else "off") +
-      (f" | provider max output={model['max_output_supported']}" if "max_output_supported" in model else ""))
-    print(f"  OpenAI: {openai} | Anthropic: {anthropic}")
-    print(f"  {'peak ' if 'off_peak' in pricing else ''}{amount}: input={rates['input']} output={rates['output']}" +
-      (f" cache-read={rates['cache_read']}" if "cache_read" in rates else ""))
-    if "cache_write" in rates:
-      print(f"  cache-write={rates['cache_write']} {amount}")
-    if "off_peak" in pricing:
-      low = pricing["off_peak"]
-      print(f"  off-peak: input={low['input']} output={low['output']}" +
-        (f" cache-read={low['cache_read']}" if "cache_read" in low else "") + f"; {pricing['schedule']}")
-    print(f"  source: {model['source']} | price: {pricing['source']} (checked {pricing['checked_on']})")
-  print("\nKimi Code、GLM Coding Plan、DeepSeek 为默认可选模型池；公共初始主模型为 Kimi Code；模型池、角色绑定与请求失败备用链分别配置。通过 model status 查看 key 填写位置。")
+      pricing = model.get("pricing")
+      if pricing is None:
+        print("  消耗订阅额度；未验证真实账单；不复用旧 API key。")
+        continue
+      print("  按量 API 路线；价格为目录快照，未验证实际计费。")
+      amount = f"{pricing['currency']}/{pricing['per_tokens']} tokens"
+      rates = pricing["standard"]
+      print(f"  {'peak ' if 'off_peak' in pricing else ''}{amount}: input={rates['input']} output={rates['output']}" +
+        (f" cache-read={rates['cache_read']}" if "cache_read" in rates else ""))
+      if "cache_write" in rates:
+        print(f"  cache-write={rates['cache_write']} {amount}")
+      if "off_peak" in pricing:
+        low = pricing["off_peak"]
+        print(f"  off-peak: input={low['input']} output={low['output']}" +
+          (f" cache-read={low['cache_read']}" if "cache_read" in low else "") + f"; {pricing['schedule']}")
+      print(f"  price: {pricing['source']} (checked {pricing['checked_on']})")
+  if not getattr(args, "verbose", False):
+    table(("服务商", "模型", "上下文 token", "客户端输出 cap", "输入", "思考", "用途"), rows)
+    print("\n完整地址、计价与来源：./agentcfg model presets --verbose")
+  print("\nKimi Code、GLM Coding Plan、DeepSeek 默认加入可选模型池；公共初始主模型为 Kimi Code；模型池、角色绑定与请求失败备用链分别配置。")
+  print("订阅模型消耗订阅额度；输出值为安全客户端 cap，不宣称全部服务端最大值；未验证真实账号套餐或账单。")
   return 0
 
 
@@ -317,7 +309,8 @@ def enable_preset(args):
   if protocol == "anthropic" and workspace.agent != "omp":
     raise ConfigError("model-preset-protocol-unsupported")
   providers, models = _preset_catalog(workspace.repository)
-  model_id = _PRESETS[args.preset] + "_" + protocol
+  family_models = [stem + "_" + protocol for stem in _PRESETS[args.preset]]
+  model_id = family_models[0]
   model = models[model_id]
   provider_id = model["provider"]
   provider = providers[provider_id]
@@ -341,8 +334,9 @@ def enable_preset(args):
   models_selected = list(selected["models"])
   if provider_id not in providers_selected:
     providers_selected.append(provider_id)
-  if model_id not in models_selected:
-    models_selected.append(model_id)
+  for family_model in family_models:
+    if family_model not in models_selected:
+      models_selected.append(family_model)
   profile["providers"] = providers_selected
   profile["models"] = models_selected
   role_updates = {}

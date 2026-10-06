@@ -1,8 +1,8 @@
 "schema_version" = 1
 "id" = "omp-kernel"
 "agent" = "omp"
-"providers" = ["kimi_tf", "zhipu_tf"]
-"models" = ["omp-kimi_tf-kimi-for-coding", "omp-kimi_tf-k3", "omp-kimi_tf-k3-256k", "omp-kimi_tf-kimi-for-coding-highspeed", "omp-zhipu_tf-glm-5.3", "omp-zhipu_tf-glm-5.3-flash", "omp-zhipu_tf-glm-5.2", "omp-zhipu_tf-glm-5.1", "omp-zhipu_tf-glm-5-turbo"]
+"providers" = ["kimi_tf", "zhipu_tf", "deepseek_tf"]
+"models" = ["omp-kimi_tf-kimi-for-coding", "omp-kimi_tf-k3", "omp-kimi_tf-k3-256k", "omp-kimi_tf-kimi-for-coding-highspeed", "omp-zhipu_tf-glm-5.3", "omp-zhipu_tf-glm-5.3-flash", "omp-zhipu_tf-glm-5.2", "omp-zhipu_tf-glm-5.1", "omp-zhipu_tf-glm-5-turbo", "omp-deepseek_tf-deepseek-flash", "omp-deepseek_tf-deepseek-v4-pro"]
 "rules" = ["omp-kernel-confirmation"]
 "skills" = ["omp-kernel-codex-delegate", "omp-kernel-cpp-database-kernel", "omp-kernel-neovim-plugin-development", "omp-kernel-safe-linux-scripting"]
 "plugins" = ["omp-permission-control"]
@@ -236,3 +236,6 @@
 "output" = 3.08
 "cacheRead" = 0.2
 "cacheWrite" = 0.98
+
+["agent_options"."provider_options"."deepseek_tf"]
+"name" = "DeepSeek(TokensFlow)"

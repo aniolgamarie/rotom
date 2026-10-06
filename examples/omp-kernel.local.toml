@@ -29,6 +29,8 @@ tf_anthropic_url = ""
 # API key 保存在共享 agentcfg/secrets.toml；隐藏输入：
 # ./agentcfg --local /绝对路径/本文件 --profile omp-kernel model key kimi_tf
 # ./agentcfg --local /绝对路径/本文件 --profile omp-kernel model key zhipu_tf
+# DeepSeek TF 复用 tf_openai_url，但使用独立密钥；网关型号可用性须另行确认。
+# ./agentcfg --local /绝对路径/本文件 --profile omp-kernel model key deepseek_tf
 # 公共目录中的官方订阅使用独立凭据，不复用 TF 或旧按量 key：
 # ./agentcfg --local /绝对路径/本文件 --profile omp-kernel model key kimi-code
 # ./agentcfg --local /绝对路径/本文件 --profile omp-kernel model key glm-code
@@ -42,7 +44,7 @@ tf_anthropic_url = ""
 # unsupported 或 unavailable 时才尝试；有效 allow/ask/deny、取消或机械证据失败不复审。
 # local/lfm2.5-230m 仅在完整安装时兜底 ask/deny，审批流程不会下载它。
 # 会话命令：/permission-control smart、manual、status、explain。
-# 本示例不会安装或切换本机 OMP；交付前需完成 patched runtime 构建与锁核验。
+# 本示例不会安装或切换本机 OMP；使用官方运行包及公开扩展接口，不修改 agent 上游源码。
 
 # 公共 kernel 在通过验收的新版本中启用原生 Bash 包装；旧配置缺省关闭。
 # 若需要保留仅 permission_bash 的旧入口，可显式覆盖：

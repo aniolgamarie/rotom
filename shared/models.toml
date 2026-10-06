@@ -1,158 +1,80 @@
 schema_version = 1
-# OAuth 模型目录由插件在登录后发现；不编造静态 model ID。
-# 公共预设包含默认可选 Coding Plan 订阅与 DeepSeek 按量 API；凭据独立。
+# 订阅模型消耗 Coding Plan 额度，不声明虚构的按 token 价格；TF 费率不继承官方价格。
 
-[models.deepseek_flash_openai]
-provider = "deepseek_openai"
-remote_id = "deepseek-flash"
-name = "DeepSeek-V4.1-Flash"
-input = ["text", "image"]
-reasoning = true
-reasoning_efforts = ["low", "high", "max"]
-context_window = 1048576
-max_output_tokens = 393216
-source = "https://api-docs.deepseek.com/api/list-models/"
+["models"."kimi_code_openai"]
+"template" = "kimi_code"
+"provider" = "kimi_code_openai"
+"native" = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "zai"}, "thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}, "omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "zai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
 
-[models.deepseek_flash_openai.pricing]
-currency = "USD"
-per_tokens = 1000000
-source = "https://api-docs.deepseek.com/quick_start/pricing/"
-checked_on = "2026-09-27"
-schedule = "Peak: Monday-Friday 01:00-04:00 and 06:00-10:00 UTC; other times off-peak"
-standard = {input = 0.30, output = 1.20, cache_read = 0.006}
-off_peak = {input = 0.15, output = 0.60, cache_read = 0.003}
+["models"."kimi_code_k3_openai"]
+"template" = "kimi_k3"
+"provider" = "kimi_code_openai"
+"native" = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "openai"}, "thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}, "omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "openai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
 
-[models.deepseek_flash_openai.native.pi]
-thinkingLevelMap = {minimal = "low", low = "low", medium = "high", high = "high", xhigh = "high", max = "max"}
+["models"."kimi_code_k3_256k_openai"]
+"template" = "kimi_k3_256k"
+"provider" = "kimi_code_openai"
+"native" = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "openai"}, "thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}, "omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "openai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
 
-[models.deepseek_flash_openai.native.pi.compat]
-requiresReasoningContentOnAssistantMessages = true
-thinkingFormat = "deepseek"
-supportsDeveloperRole = false
-supportsReasoningEffort = true
-maxTokensField = "max_tokens"
+["models"."kimi_code_highspeed_openai"]
+"template" = "kimi_code_highspeed"
+"provider" = "kimi_code_openai"
+"native" = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = false, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "zai"}}, "omp" = {"thinking" = {"minLevel" = "high", "maxLevel" = "high", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = false, "maxTokensField" = "max_tokens", "thinkingFormat" = "zai", "extraBody" = {"thinking" = {"type" = "enabled"}}}}}
 
-[models.deepseek_flash_openai.native.omp.thinking]
-minLevel = "low"
-maxLevel = "max"
-mode = "effort"
+["models"."glm_coding_53_openai"]
+"template" = "glm_53"
+"provider" = "glm_coding_openai"
+"native" = {"pi" = {"thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "zai", "supportsStrictMode" = false}, "disabled_thinking_levels" = ["off"]}, "omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}}}
 
-[models.deepseek_flash_openai.native.omp.compat]
-supportsDeveloperRole = false
-supportsReasoningEffort = true
-maxTokensField = "max_tokens"
-reasoningEffortMap = {minimal = "low", low = "low", medium = "high", high = "high", xhigh = "high", max = "max"}
-supportsToolChoice = false
-requiresReasoningContentForToolCalls = true
-requiresAssistantContentForToolCalls = true
-extraBody = {thinking = {type = "enabled"}}
+["models"."glm_coding_53_flash_openai"]
+"template" = "glm_53_flash"
+"provider" = "glm_coding_openai"
+"native" = {"pi" = {"thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "zai", "supportsStrictMode" = false}, "disabled_thinking_levels" = ["off"]}, "omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}}}
 
-[models.deepseek_flash_anthropic]
-provider = "deepseek_anthropic"
-remote_id = "deepseek-flash"
-name = "DeepSeek-V4.1-Flash"
-input = ["text", "image"]
-reasoning = true
-reasoning_efforts = ["low", "high", "max"]
-context_window = 1048576
-max_output_tokens = 393216
-source = "https://api-docs.deepseek.com/api/list-models/"
-pricing = {currency = "USD", per_tokens = 1000000, source = "https://api-docs.deepseek.com/quick_start/pricing/", checked_on = "2026-09-27", schedule = "Peak: Monday-Friday 01:00-04:00 and 06:00-10:00 UTC; other times off-peak", standard = {input = 0.30, output = 1.20, cache_read = 0.006}, off_peak = {input = 0.15, output = 0.60, cache_read = 0.003}}
+["models"."deepseek_flash_openai"]
+"template" = "deepseek_flash"
+"provider" = "deepseek_openai"
+"native" = {"pi" = {"thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "high", "max" = "max"}, "compat" = {"requiresReasoningContentOnAssistantMessages" = true, "thinkingFormat" = "deepseek", "supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens"}}, "omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "high", "max" = "max"}, "supportsToolChoice" = false, "requiresReasoningContentForToolCalls" = true, "requiresAssistantContentForToolCalls" = true, "extraBody" = {"thinking" = {"type" = "enabled"}}}}}
+"pricing" = {"currency" = "USD", "per_tokens" = 1000000, "source" = "https://api-docs.deepseek.com/quick_start/pricing/", "checked_on" = "2026-10-06", "schedule" = "Peak: Monday-Friday 01:00-04:00 and 06:00-10:00 UTC, excluding Chinese public holidays; other times, including holidays, off-peak", "standard" = {"input" = 0.3, "output" = 1.2, "cache_read" = 0.006}, "off_peak" = {"input" = 0.15, "output" = 0.6, "cache_read" = 0.003}}
 
-# 订阅模型消耗 Coding Plan 额度，不声明虚构的按 token 价格。
+["models"."deepseek_pro_openai"]
+"template" = "deepseek_pro"
+"provider" = "deepseek_openai"
+"native" = {"pi" = {"thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "high", "max" = "max"}, "compat" = {"requiresReasoningContentOnAssistantMessages" = true, "thinkingFormat" = "deepseek", "supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens"}}, "omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "high", "max" = "max"}, "supportsToolChoice" = false, "requiresReasoningContentForToolCalls" = true, "requiresAssistantContentForToolCalls" = true, "extraBody" = {"thinking" = {"type" = "enabled"}}}}}
+"pricing" = {"currency" = "USD", "per_tokens" = 1000000, "source" = "https://api-docs.deepseek.com/quick_start/pricing/", "checked_on" = "2026-10-06", "schedule" = "Peak: Monday-Friday 01:00-04:00 and 06:00-10:00 UTC, excluding Chinese public holidays; other times, including holidays, off-peak", "standard" = {"input" = 1.32, "output" = 3.96, "cache_read" = 0.044}, "off_peak" = {"input" = 0.66, "output" = 1.98, "cache_read" = 0.022}}
 
-[models.kimi_code_openai]
-provider = "kimi_code_openai"
-remote_id = "kimi-for-coding"
-name = "Kimi Code (K2.8 Preview)"
-input = ["text", "image"]
-reasoning = true
-reasoning_efforts = ["low", "high", "max"]
-context_window = 1048576
-max_output_tokens = 32768
-source = "https://www.kimi.com/code/docs/en/kimi-code/models.html"
+["models"."kimi_code_anthropic"]
+"template" = "kimi_code"
+"provider" = "kimi_code_anthropic"
 
-[models.kimi_code_openai.native.pi]
-thinkingLevelMap = {minimal = "low", low = "low", medium = "high", high = "high", xhigh = "max", max = "max"}
+["models"."kimi_code_k3_anthropic"]
+"template" = "kimi_k3"
+"provider" = "kimi_code_anthropic"
 
-[models.kimi_code_openai.native.pi.compat]
-supportsDeveloperRole = false
-supportsReasoningEffort = true
-maxTokensField = "max_tokens"
-thinkingFormat = "zai"
-supportsStrictMode = false
+["models"."kimi_code_k3_256k_anthropic"]
+"template" = "kimi_k3_256k"
+"provider" = "kimi_code_anthropic"
 
-[models.glm_coding_53_openai]
-provider = "glm_coding_openai"
-remote_id = "glm-5.3"
-name = "GLM-5.3 Coding Plan"
-input = ["text"]
-reasoning = true
-reasoning_efforts = ["low", "high", "max"]
-context_window = 1000000
-max_output_tokens = 131072
-source = "https://docs.bigmodel.cn/cn/coding-plan/overview"
+["models"."kimi_code_highspeed_anthropic"]
+"template" = "kimi_code_highspeed"
+"provider" = "kimi_code_anthropic"
 
-[models.glm_coding_53_openai.native.pi]
-thinkingLevelMap = {minimal = "low", low = "low", medium = "high", high = "high", xhigh = "max", max = "max"}
+["models"."glm_coding_53_anthropic"]
+"template" = "glm_53"
+"provider" = "glm_coding_anthropic"
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}}}
 
-[models.glm_coding_53_openai.native.pi.compat]
-supportsDeveloperRole = false
-supportsReasoningEffort = true
-maxTokensField = "max_tokens"
-thinkingFormat = "zai"
-supportsStrictMode = false
+["models"."glm_coding_53_flash_anthropic"]
+"template" = "glm_53_flash"
+"provider" = "glm_coding_anthropic"
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}}}
 
-[models.glm_coding_53_flash_openai]
-provider = "glm_coding_openai"
-remote_id = "glm-5.3-flash"
-name = "GLM-5.3 Flash Coding Plan"
-input = ["text", "image"]
-reasoning = true
-reasoning_efforts = ["low", "high", "max"]
-context_window = 1000000
-max_output_tokens = 131072
-source = "https://docs.bigmodel.cn/cn/coding-plan/overview"
+["models"."deepseek_flash_anthropic"]
+"template" = "deepseek_flash"
+"provider" = "deepseek_anthropic"
+"pricing" = {"currency" = "USD", "per_tokens" = 1000000, "source" = "https://api-docs.deepseek.com/quick_start/pricing/", "checked_on" = "2026-10-06", "schedule" = "Peak: Monday-Friday 01:00-04:00 and 06:00-10:00 UTC, excluding Chinese public holidays; other times, including holidays, off-peak", "standard" = {"input" = 0.3, "output" = 1.2, "cache_read" = 0.006}, "off_peak" = {"input" = 0.15, "output" = 0.6, "cache_read" = 0.003}}
 
-[models.glm_coding_53_flash_openai.native.pi]
-thinkingLevelMap = {minimal = "low", low = "low", medium = "high", high = "high", xhigh = "max", max = "max"}
-
-[models.glm_coding_53_flash_openai.native.pi.compat]
-supportsDeveloperRole = false
-supportsReasoningEffort = true
-maxTokensField = "max_tokens"
-thinkingFormat = "zai"
-supportsStrictMode = false
-
-[models.kimi_code_anthropic]
-provider = "kimi_code_anthropic"
-remote_id = "kimi-for-coding"
-name = "Kimi Code (K2.8 Preview)"
-input = ["text", "image"]
-reasoning = true
-reasoning_efforts = ["low", "high", "max"]
-context_window = 1048576
-max_output_tokens = 32768
-source = "https://www.kimi.com/code/docs/en/kimi-code/models.html"
-
-[models.glm_coding_53_anthropic]
-provider = "glm_coding_anthropic"
-remote_id = "glm-5.3"
-name = "GLM-5.3 Coding Plan"
-input = ["text"]
-reasoning = true
-reasoning_efforts = ["low", "high", "max"]
-context_window = 1000000
-max_output_tokens = 131072
-source = "https://docs.bigmodel.cn/cn/coding-plan/overview"
-
-[models.glm_coding_53_flash_anthropic]
-provider = "glm_coding_anthropic"
-remote_id = "glm-5.3-flash"
-name = "GLM-5.3 Flash Coding Plan"
-input = ["text", "image"]
-reasoning = true
-reasoning_efforts = ["low", "high", "max"]
-context_window = 1000000
-max_output_tokens = 131072
-source = "https://docs.bigmodel.cn/cn/coding-plan/overview"
+["models"."deepseek_pro_anthropic"]
+"template" = "deepseek_pro"
+"provider" = "deepseek_anthropic"
+"pricing" = {"currency" = "USD", "per_tokens" = 1000000, "source" = "https://api-docs.deepseek.com/quick_start/pricing/", "checked_on" = "2026-10-06", "schedule" = "Peak: Monday-Friday 01:00-04:00 and 06:00-10:00 UTC, excluding Chinese public holidays; other times, including holidays, off-peak", "standard" = {"input" = 1.32, "output" = 3.96, "cache_read" = 0.044}, "off_peak" = {"input" = 0.66, "output" = 1.98, "cache_read" = 0.022}}

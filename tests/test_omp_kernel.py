@@ -181,8 +181,8 @@ def test_complete_kernel_runs_from_repo_with_only_declared_secret_environment(
   second = fake_subprocess.calls[-1]["env"]
   assert sorted(value for key, value in second.items() if key.startswith("AGENTCFG_OMP_PROVIDER_")) == ["synthetic-kimi"]
   error = capsys.readouterr().err
-  assert "3 个模型 key 未填写" in error
   assert "4 个模型 key 未填写" in error
+  assert "5 个模型 key 未填写" in error
   # 实际agent权限文件一旦漂移，必须在第二次spawn前拒绝。
   from agentcfg.storage import Conflict
   agent = native_identity(workspace.profile, workspace.instance).agent_dir / "agents/task.md"
