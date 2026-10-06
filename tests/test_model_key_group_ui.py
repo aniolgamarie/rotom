@@ -21,7 +21,7 @@ def test_status_explains_empty_placeholder_groups_without_changing_file(capsys):
   assert "model key kimi_tf" in output
   assert path.read_bytes() == before
   document = tomllib.loads(before.decode())
-  assert document["shared"] == {"kimi_code_key": "", "glm_coding_key": ""}
+  assert document["shared"] == {"kimi_code_key": "", "glm_coding_key": "", "deepseek_key": ""}
   assert document["providers"]["kimi_tf"] == {"omp_kimi_tf_key": ""}
 
 
@@ -30,11 +30,11 @@ def test_cli_saves_default_and_extra_credentials_in_distinct_groups(monkeypatch,
   monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
   monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
   monkeypatch.setattr(getpass, "getpass", lambda prompt: "PRIVATE-GROUP-KEY-CANARY")
-  assert cli.main(["model", "key", "kimi"]) == 0
+  assert cli.main(["model", "key", "kimi-code"]) == 0
   assert cli.main(["model", "key", "kimi_tf"]) == 0
   path = Path(os.environ["XDG_CONFIG_HOME"]) / "agentcfg/secrets.toml"
   document = tomllib.loads(path.read_text())
-  assert document["shared"]["kimi_key"] == "PRIVATE-GROUP-KEY-CANARY"
+  assert document["shared"]["kimi_code_key"] == "PRIVATE-GROUP-KEY-CANARY"
   assert document["providers"]["kimi_tf"]["omp_kimi_tf_key"] == "PRIVATE-GROUP-KEY-CANARY"
   assert "secrets" not in document
   assert cli.main(["model", "status"]) == 0
@@ -46,15 +46,15 @@ def test_cli_saves_default_and_extra_credentials_in_distinct_groups(monkeypatch,
 def test_existing_flat_key_remains_readable_and_labelled(monkeypatch, capsys):
   assert cli.main(["init-local", "--profile", "omp-kernel"]) == 0
   path = Path(os.environ["XDG_CONFIG_HOME"]) / "agentcfg/secrets.toml"
-  path.write_text('schema_version = 1\n# old note\n[secrets]\nkimi_key = "PRIVATE-OLD-CANARY"\n')
+  path.write_text('schema_version = 1\n# old note\n[secrets]\ndeepseek_key = "PRIVATE-OLD-CANARY"\n')
   path.chmod(0o600)
   monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
   monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
   monkeypatch.setattr(getpass, "getpass", lambda prompt: "PRIVATE-NEW-CANARY")
-  assert cli.main(["model", "key", "kimi"]) == 0
+  assert cli.main(["model", "key", "deepseek"]) == 0
   assert cli.main(["model", "status"]) == 0
   output = capsys.readouterr().out
   assert "旧格式" in output
   assert "PRIVATE-OLD-CANARY" not in output and "PRIVATE-NEW-CANARY" not in output
-  assert tomllib.loads(path.read_text())["secrets"]["kimi_key"] == "PRIVATE-NEW-CANARY"
+  assert tomllib.loads(path.read_text())["secrets"]["deepseek_key"] == "PRIVATE-NEW-CANARY"
   assert "# old note" in path.read_text()

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-06",
+  "baselineCommit": "a1faeaf",
+  "scope": "restore DeepSeek to selectable model pools, remove obsolete platform API definitions, update DeepSeek metadata; model suites deferred",
+  "publicPool": {
+    "services": ["Kimi Code", "GLM Coding Plan", "DeepSeek API"],
+    "remoteModels": ["kimi-for-coding", "glm-5.3", "glm-5.3-flash", "deepseek-flash"],
+    "initialMainRemoteModel": "kimi-for-coding",
+    "deepseekInEachAdapterPool": true,
+    "explicitRolePrecedencePreserved": true,
+    "requestFailureFallbackConfigurationAdded": false,
+    "nativeModelSuiteAdded": false
+  },
+  "removedPublicEntries": {
+    "providers": ["kimi_openai", "kimi_anthropic", "glm_openai", "glm_anthropic"],
+    "models": ["kimi_k3_openai", "kimi_k3_anthropic", "glm_53_openai", "glm_53_anthropic"],
+    "fixedCliShorthandsRemoved": ["kimi", "glm"],
+    "selectedCustomProviderKeySupportPreserved": true,
+    "legacySecretsDeletedOrMigrated": false
+  },
+  "deepseek": {
+    "remoteId": "deepseek-flash",
+    "displayName": "DeepSeek-V4.1-Flash",
+    "contextWindow": 1048576,
+    "maxOutputTokens": 393216,
+    "input": ["text", "image"],
+    "reasoningEfforts": ["low", "high", "max"],
+    "modelMetadataSource": "https://api-docs.deepseek.com/api/list-models/",
+    "thinkingSource": "https://api-docs.deepseek.com/guides/thinking_mode/",
+    "effortMapping": {"minimal": "low", "low": "low", "medium": "high", "high": "high", "xhigh": "high", "max": "max"},
+    "piUsesThinkingLevelMap": true,
+    "invalidPiCompatReasoningEffortMapRejected": true,
+    "ompOpenAiToolChoiceRestrictionPreserved": true,
+    "anthropicUsesExistingHostInference": true,
+    "pricingSnapshotCheckedOn": "2026-09-27",
+    "pricingReverificationClaimed": false
+  },
+  "tf": {
+    "definitionSource": "agents/omp/content.toml",
+    "selectedBy": "omp-kernel",
+    "defaultForAllAdapters": false,
+    "providers": ["kimi_tf", "zhipu_tf"],
+    "deepseekTfDefinitionFound": false,
+    "deepseekTfIntegration": "pending endpoint/credential reference, protocol, model ID and capability confirmation; no fabricated entry"
+  },
+  "validation": {
+    "affectedPythonRegression": {"passed": 710, "failed": 0},
+    "publicPresetsExitCode": 0,
+    "gitDiffCheckPassed": true,
+    "temporaryHomeNetworkBlockingAndFakeProcesses": true,
+    "realAgentHostsLaunched": 0,
+    "realModelRequests": 0,
+    "realAccountOrCredentialInspection": false,
+    "localDeploymentModified": false
+  },
+  "locks": {
+    "ompIdentity": "9b0dec91e8f3a1ef5b7e62bf374931b3960e4f790ae798c1ddd1e0cd90ecd0ee",
+    "piIdentity": "e34b82cb154809369c31ee7cd291fae3908b249da033aaf4f474269a312c6687",
+    "verifiedPiVendorArchives": 26,
+    "verifiedPiSourceTrees": 20,
+    "piDependencySourcesSlicesAndResolutionsUnchanged": true,
+    "upstreamVersionOrSourceChanged": false,
+    "lockRefreshNetworkRequests": 0
+  },
+  "review": {
+    "blockingFindingsRemaining": 0,
+    "executor": "gpt-6.1-sol / medium",
+    "scout": "gpt-6-luna / high",
+    "finalAcceptance": "root"
+  },
+  "taskRecord": {
+    "completed": ["legacy definition removal", "DeepSeek pool restoration", "DeepSeek specification and compatibility update", "TF definition audit", "documentation", "lock verification", "affected regression", "stable diff review"],
+    "inProgress": [],
+    "failedPendingDecision": [],
+    "environmentUnverified": ["DeepSeek TF integration inputs", "real host/model behavior and billing", "local deployment"]
+  }
+}

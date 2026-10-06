@@ -45,7 +45,7 @@ def test_key_command_shares_across_machines_profiles_and_protocols(monkeypatch, 
   assert cli.main(["init-local", "--machine", "second", "--profile", "omp-kernel"]) == 0
   before = {path: path.read_bytes() for path in (machine(), machine("second"))}
   terminal(monkeypatch)
-  assert cli.main(["model", "key", "kimi"]) == 0
+  assert cli.main(["model", "key", "kimi-code"]) == 0
   assert shared().stat().st_mode & 0o777 == 0o600
   assert shared().parent.stat().st_mode & 0o777 == 0o700
   for path, original in before.items():
@@ -54,7 +54,7 @@ def test_key_command_shares_across_machines_profiles_and_protocols(monkeypatch, 
       workspace = load_workspace(path, profile, proposal={"local_values": {
         "tf_openai_url": "https://tf-gateway.example.invalid/v1",
         "tf_anthropic_url": "https://tf-gateway.example.invalid/anthropic"}})
-      assert workspace.secret_store.resolve(SecretRef("secret:kimi_key")) == CANARY
+      assert workspace.secret_store.resolve(SecretRef("secret:kimi_code_key")) == CANARY
       identity = "offline-config-only" if workspace.agent == "pi" else workspace.backend.read_lock(workspace.repository).identity
       candidate = workspace.candidate(identity)
       assert all(CANARY.encode() not in artifact.content for artifact in candidate.artifacts)
@@ -81,12 +81,12 @@ def test_key_rotation_and_empty_cancel_do_not_change_machine(monkeypatch, capsys
 def test_key_requires_hidden_terminal_input(monkeypatch):
   assert cli.main(["init-local"]) == 0
   before = shared().read_bytes()
-  assert cli.main(["model", "key", "glm"]) == 2
+  assert cli.main(["model", "key", "glm-code"]) == 2
   terminal(monkeypatch)
   def no_echo(prompt):
     warnings.warn("no hidden input", getpass.GetPassWarning)
   monkeypatch.setattr(getpass, "getpass", no_echo)
-  assert cli.main(["model", "key", "glm"]) == 2
+  assert cli.main(["model", "key", "glm-code"]) == 2
   assert shared().read_bytes() == before
 
 
@@ -181,7 +181,7 @@ def test_key_command_reports_unsafe_new_parent_without_internal_error(monkeypatc
   shared().unlink()
   shared().parent.chmod(0o755)
   terminal(monkeypatch)
-  assert cli.main(["model", "key", "kimi"]) == 4
+  assert cli.main(["model", "key", "kimi-code"]) == 4
   output = capsys.readouterr()
   assert "0700" in output.err and "内部操作失败" not in output.err
   assert CANARY not in output.out + output.err
@@ -202,7 +202,7 @@ def test_shared_key_rolls_back_if_model_config_commit_fails():
 def test_status_has_default_and_extra_sources_actionable_commands_and_no_key(monkeypatch, capsys):
   assert cli.main(["init-local", "--machine", "workstation", "--profile", "omp-kernel"]) == 0
   terminal(monkeypatch)
-  assert cli.main(["--machine", "workstation", "model", "key", "kimi"]) == 0
+  assert cli.main(["--machine", "workstation", "model", "key", "deepseek"]) == 0
   assert cli.main(["--machine", "workstation", "model", "status", "--verbose"]) == 0
   output = capsys.readouterr().out
   assert "全局默认" in output and "profile 扩展" in output
@@ -217,12 +217,12 @@ def test_legacy_inline_key_update_keeps_single_source(monkeypatch):
   assert cli.main(["init-local"]) == 0
   before = shared().read_bytes()
   with machine().open("a") as stream:
-    stream.write('\n[secrets]\nkimi_key = "old-inline"\n')
+    stream.write('\n[secrets]\ndeepseek_key = "old-inline"\n')
   terminal(monkeypatch)
-  assert cli.main(["model", "key", "kimi"]) == 0
+  assert cli.main(["model", "key", "deepseek"]) == 0
   assert shared().read_bytes() == before
   _, store = load_local(machine())
-  assert store.resolve(SecretRef("secret:kimi_key")) == CANARY
+  assert store.resolve(SecretRef("secret:deepseek_key")) == CANARY
 
 
 @pytest.mark.parametrize("selector,provider_id,name,legacy", [
@@ -242,3 +242,20 @@ def test_subscription_key_alias_and_exact_provider_preserve_legacy(monkeypatch, 
   assert cli.main(["model", "status", "--verbose"]) == 0
   output = capsys.readouterr().out
   assert "LEGACY-PRIVATE-CANARY" not in output and "ROTATED-CODING-CANARY" not in output and CANARY not in output
+
+
+@pytest.mark.parametrize("selector", ["kimi", "glm"])
+def test_removed_key_alias_preserves_old_secret_and_supports_selected_custom_provider(monkeypatch, capsys, selector):
+  assert cli.main(["init-local"]) == 0
+  legacy = selector + "_key"
+  write_shared(f'schema_version = 1\n[shared]\n{legacy} = "LEGACY-PRIVATE-CANARY"\n')
+  terminal(monkeypatch)
+  assert cli.main(["model", "key", selector]) == 2
+  assert load_secrets({}, machine()).resolve(SecretRef("secret:" + legacy)) == "LEGACY-PRIVATE-CANARY"
+  with machine().open("a") as stream:
+    stream.write(f'\n[overrides.providers.{selector}]\nprotocol = "openai-compatible"\nauth_kind = "api-key"\nbase_url = "https://custom.example.invalid/v1"\ncredential_ref = "secret:custom_key"\n\n[overrides.profiles.dsh-default]\nproviders = ["{selector}"]\n')
+  assert cli.main(["model", "key", selector]) == 0
+  store = load_secrets({}, machine())
+  assert store.resolve(SecretRef("secret:custom_key")) == CANARY
+  assert store.resolve(SecretRef("secret:" + legacy)) == "LEGACY-PRIVATE-CANARY"
+  assert "LEGACY-PRIVATE-CANARY" not in capsys.readouterr().out

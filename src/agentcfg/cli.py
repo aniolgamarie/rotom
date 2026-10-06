@@ -225,11 +225,11 @@ def build_parser() -> argparse.ArgumentParser:
     status = model_sub.add_parser("status", help="查看模型就绪情况、缺项和填写位置")
     status.add_argument("--verbose", action="store_true", help="展开完整模型目录和逐项填写命令")
     key = model_sub.add_parser("key", help="隐藏输入并保存共享 API key；所有引用该 key 的工具/profile 共用")
-    key.add_argument("provider", type=selection_id, help="kimi-code、glm-code（独立订阅 key）、deepseek、kimi、glm（旧 API key）或当前 profile 的 provider ID")
+    key.add_argument("provider", type=selection_id, help="kimi-code、glm-code（独立订阅 key）、deepseek（按量 API key）或当前 profile 的 provider ID")
     url = model_sub.add_parser("url", help="隐藏输入模型服务地址，保存到私人机器配置")
     url.add_argument("provider", type=selection_id, help="当前 profile 的 provider ID，例如 kimi_tf")
     enable = model_sub.add_parser("enable", help="追加官方模型协议路线；缺密钥时隐藏输入，保留已有角色")
-    enable.add_argument("preset", choices=("kimi-code", "glm-code", "deepseek", "kimi", "glm"))
+    enable.add_argument("preset", choices=("kimi-code", "glm-code", "deepseek"))
     enable.add_argument("--protocol", choices=("openai", "anthropic"), help="覆盖工具默认协议")
 
     # validate: 离线校验

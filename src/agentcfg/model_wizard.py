@@ -27,8 +27,6 @@ _PRESETS = {
   "kimi-code": "kimi_code",
   "glm-code": "glm_coding_53",
   "deepseek": "deepseek_flash",
-  "kimi": "kimi_k3",
-  "glm": "glm_53",
 }
 
 
@@ -249,9 +247,9 @@ def list_presets(args):
       model = models[stem + "_openai"]
       rows.append((vendor, model["remote_id"], f"{model['context_window']:,}",
         f"{model['max_output_tokens']:,}", ", ".join(model["input"]),
-        "默认订阅" if vendor in {"kimi-code", "glm-code"} else "可选旧 API 路线"))
+        "默认可选·订阅" if vendor in {"kimi-code", "glm-code"} else "默认可选·按量"))
     table(("服务商", "模型", "上下文 token", "最大输出 token", "输入", "用途"), rows)
-    print("\nKimi Code 和 GLM Coding Plan 默认加入所有工具和 profile；各自需要独立订阅 key。")
+    print("\nKimi Code、GLM Coding Plan、DeepSeek 默认加入可选模型池；公共初始主模型为 Kimi Code；模型池、角色绑定与请求失败备用链分别配置。")
     print("订阅模型消耗订阅额度；未验证真实账单。GLM 同时默认提供 glm-5.3-flash。")
     print("完整地址、计价与来源：./agentcfg model presets --verbose")
     return 0
@@ -261,7 +259,7 @@ def list_presets(args):
     anthropic = providers[models[stem + "_anthropic"]["provider"]]["base_url"]
     pricing = model.get("pricing")
     if pricing is None:
-      print(f"{vendor}: {model['remote_id']} | 默认订阅 | context={model['context_window']} | output={model['max_output_tokens']} | input={','.join(model['input'])}")
+      print(f"{vendor}: {model['remote_id']} | 默认可选·订阅 | context={model['context_window']} | output={model['max_output_tokens']} | input={','.join(model['input'])}")
       print(f"  OpenAI: {openai} | Anthropic: {anthropic}")
       print("  reasoning=" + (",".join(model.get("reasoning_efforts", [])) if model.get("reasoning") else "off"))
       print("  消耗订阅额度；未验证真实账单；不复用旧 API key。")
@@ -271,9 +269,8 @@ def list_presets(args):
       continue
     rates = pricing["standard"]
     amount = f"{pricing['currency']}/{pricing['per_tokens']} tokens"
-    print(f"{vendor}: {model['remote_id']} | 可选旧 API 路线 | context={model['context_window']} | output={model['max_output_tokens']} | input={','.join(model['input'])}")
-    print("  价格为目录快照，未验证实际计费；GLM 计费方式需按具体 endpoint/key 确认。" if vendor == "glm" else
-      "  按量 API 路线；价格为目录快照，未验证实际计费。")
+    print(f"{vendor}: {model['remote_id']} | 默认可选·按量 | context={model['context_window']} | output={model['max_output_tokens']} | input={','.join(model['input'])}")
+    print("  按量 API 路线；价格为目录快照，未验证实际计费。")
     print("  reasoning=" + (",".join(model.get("reasoning_efforts", [])) if model.get("reasoning") else "off") +
       (f" | provider max output={model['max_output_supported']}" if "max_output_supported" in model else ""))
     print(f"  OpenAI: {openai} | Anthropic: {anthropic}")
@@ -286,7 +283,7 @@ def list_presets(args):
       print(f"  off-peak: input={low['input']} output={low['output']}" +
         (f" cache-read={low['cache_read']}" if "cache_read" in low else "") + f"; {pricing['schedule']}")
     print(f"  source: {model['source']} | price: {pricing['source']} (checked {pricing['checked_on']})")
-  print("\nKimi Code、GLM Coding Plan 为默认订阅服务；DeepSeek、旧 Kimi/GLM API 可显式启用。通过 model status 查看 key 填写位置。")
+  print("\nKimi Code、GLM Coding Plan、DeepSeek 为默认可选模型池；公共初始主模型为 Kimi Code；模型池、角色绑定与请求失败备用链分别配置。通过 model status 查看 key 填写位置。")
   return 0
 
 

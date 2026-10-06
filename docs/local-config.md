@@ -2,7 +2,7 @@
 
 这是 **agentcfg 框架 TOML**，不是 DSH 原生配置。默认文件在 `$XDG_CONFIG_HOME/agentcfg/machines/<机器>.toml`，XDG 未设置时使用 `~/.config`。先运行 `./agentcfg profiles` 查看可选配方，再用 `./agentcfg init-local [--machine NAME] [--profile ID]` 初始化或补齐占位；不写机器名时选择 `default`。后续命令用前置 `--machine NAME` 或 `--local /绝对路径/local.toml`，两者互斥；缺省选择机器 `default`。
 
-`init-local` 根据所选 profile 及其继承的全局默认生成实际需要的字段：机器文件中增加缺失的 `[local_values]` URL 空值，共享密钥文件中增加缺失的 key 空值。以 `omp-kernel` 为例，会准备两个 TF URL 字段、两个 Coding Plan key 和两个 TF key。已有文件也会校验并补齐，保留已填写值、其他配置、注释和已有密钥分组；没有缺项时不重写文件。重复引用只生成一个占位，旧机器文件中已有的密钥声明不迁移或复制。
+`init-local` 根据所选 profile 及其继承的全局可选池生成实际需要的字段：机器文件中增加缺失的 `[local_values]` URL 空值，共享密钥文件中增加缺失的 key 空值。以 `omp-kernel` 为例，会准备两个 TF URL 字段、两个 Coding Plan key、一个 DeepSeek key 和两个 TF key。已有文件也会校验并补齐，保留已填写值、其他配置、注释和已有密钥分组；没有缺项时不重写文件。重复引用只生成一个占位，旧机器文件中已有的密钥声明不迁移或复制。
 
 ```sh
 # 新机器初始化和已有机器补齐使用同一命令
@@ -14,16 +14,18 @@
 
 机器文件权限 0600、私人目录 0700。新建机器文件不含密钥；API key 默认写入 `$XDG_CONFIG_HOME/agentcfg/secrets.toml`（XDG 未设置时为 `~/.config/agentcfg/secrets.toml`），所有工具、机器选择和 profile 共用。管理器不导入其他工具的认证，也不联网验证 key。
 
-Kimi Code、GLM Coding Plan 订阅默认由 [`shared/defaults/models.toml`](../shared/defaults/models.toml) 加入所有 DSH、Pi、OMP profile。DSH/Pi 使用 OpenAI 兼容协议，OMP 使用 Anthropic 兼容协议。同一订阅服务的两种协议分别共用 `kimi_code_key`、`glm_coding_key`。未指定主模型时默认 Kimi Code `kimi-for-coding`；GLM-5.3、GLM-5.3-Flash 同时列入可选默认目录。profile 和本地 overrides 的显式角色优先，TF/Cursor 已有角色不会因此改为公共主模型。Pi 所需而未绑定的资源角色继承当前主模型。profile 的 provider/model 列表与默认集合去重追加，不必复制默认项；普通 rules、skills、plugins、MCP 数组仍按原有覆盖规则处理。
+公共默认可选池由 [`shared/defaults/models.toml`](../shared/defaults/models.toml) 加入所有 DSH、Pi、OMP profile，包含 Kimi Code、GLM Coding Plan 订阅与 DeepSeek 按量 API。DSH/Pi 使用 OpenAI 兼容协议，OMP 使用 Anthropic 兼容协议。同一服务的两种协议分别共用 `kimi_code_key`、`glm_coding_key`、`deepseek_key`。未指定主模型时仍默认 Kimi Code `kimi-for-coding`；GLM-5.3、GLM-5.3-Flash 和 DeepSeek V4.1 Flash 均可选择。模型进入池子不等于被分配为执行角色或加入自动备用链；OMP 模型套装属于角色组合，当前未新增套装。profile 和本地 overrides 的显式角色优先，TF/Cursor 已有角色不会因此改为公共主模型。Pi 所需而未绑定的资源角色继承当前主模型。profile 的 provider/model 列表与默认集合去重追加，不必复制默认项；普通 rules、skills、plugins、MCP 数组仍按原有覆盖规则处理。
 
 订阅和按量服务使用独立 provider、模型 ID 与凭据引用。Kimi Code 地址为 `https://api.kimi.com/coding/v1`（OpenAI）和 `https://api.kimi.com/coding/`（Anthropic）；GLM Coding Plan 地址为 `https://open.bigmodel.cn/api/coding/paas/v4`（OpenAI）和 `https://open.bigmodel.cn/api/anthropic`（Anthropic）。依据为 [Kimi Code 官方模型说明](https://www.kimi.com/code/docs/en/kimi-code/models.html)和 [GLM Coding Plan 官方接入说明](https://docs.bigmodel.cn/cn/coding-plan/tool/others)。配置使用套餐控制台取得的匹配凭据；地址和本地非空 key 不能证明实际账号权益或服务连通性。
 
-DeepSeek 和旧 Kimi/GLM API 项保留在公共目录，但不再自动加入默认集合。旧 `kimi_key`、`glm_key` 不会自动用于新订阅 provider，不改写它们原有地址或密钥含义。旧机器需要补充订阅凭据，再审阅部署计划；本机覆盖中显式选择的旧 API 路线仍保持显式选择。
+过时的 Kimi 开放平台和旧 GLM API provider/model 定义及 `model enable kimi|glm` 入口已删除。订阅入口继续使用明确的 `kimi-code`、`glm-code`。已有秘密文件中的 `kimi_key`、`glm_key` 仍可读取，不自动删除或复用；若机器覆盖仍引用已删除的 provider/model，校验会明确拒绝，须按实际服务修改引用，不能静默替换为订阅凭据。
 
 ```sh
 ./agentcfg --machine workstation --profile omp-kernel model status
 ./agentcfg --machine workstation model key kimi-code
 ./agentcfg --machine workstation model key glm-code
+# 需要使用按量 DeepSeek 时填写；这不会切换当前主模型。
+./agentcfg --machine workstation model key deepseek
 ```
 
 `model status` 默认显示缺项摘要、provider 来源与状态、角色绑定，以及文件路径、TOML 分组、密钥名与 provider 对应关系，便于直接编辑。加 `--verbose` 展开完整模型目录和保留当前机器/profile 的逐项填写命令。状态页不显示私人 URL 或 key 实际值，也不验证部署同步或账号连通性。`model key` 仅从终端隐藏输入读取 key，留空取消；不存在的共享文件会以 0600 创建。命令行不接受 key 值。已配置只表示有非空值；缺少模型 key 仍允许启动，相应模型请求需要凭据。只更新 key 后退出并重新 `run`；URL/provider/model/角色改变后退出工具，执行 `setup` 再 `run`，已经运行的实例不会自动刷新。
@@ -33,10 +35,11 @@ DeepSeek 和旧 Kimi/GLM API 项保留在公共目录，但不再自动加入默
 ```toml
 schema_version = 1
 
-# 两份订阅默认凭据，由各工具和 profile 共同引用。
+# 可选池中的两份订阅凭据和一份 DeepSeek 按量凭据。
 [shared]
 kimi_code_key = ""
 glm_coding_key = ""
+deepseek_key = ""
 
 # omp-kernel 追加的 TF provider；其他选择相同 provider 的 profile 也可复用。
 [providers.kimi_tf]
@@ -46,13 +49,15 @@ omp_kimi_tf_key = ""
 omp_zhipu_tf_key = ""
 ```
 
-新 key 自动分类：订阅默认引用进入 `[shared]`，旧 `deepseek_key`、`kimi_key`、`glm_key` 仍保持共享分组兼容，额外 provider 的 key 进入 `[providers.<provider-id>]`；未选择的旧 API 不因目录中存在而新增 key 占位。`model key` 在输入前显示保存文件和分组。分组是组织方式，不是 profile 访问隔离，也不改变 `secret:<name>` 引用。密钥名在整个文件中必须唯一；跨组重复（包括空占位符）会报错。多个 profile 共用同一 provider 时引用同一个条目，不需要复制 key。
+新 key 自动分类：公共池的订阅与 DeepSeek 引用进入 `[shared]`，旧 `kimi_key`、`glm_key` 仍保持存储分组兼容，额外 provider 的 key 进入 `[providers.<provider-id>]`。`model key` 在输入前显示保存文件和分组。分组是组织方式，不是 profile 访问隔离，也不改变 `secret:<name>` 引用。密钥名在整个文件中必须唯一；跨组重复（包括空占位符）会报错。多个 profile 共用同一 provider 时引用同一个条目，不需要复制 key。
 
 旧共享文件的平铺 `[secrets]` 仍可读取和更新，状态页会标注“旧格式”。已有 key 保持原组和注释，不自动搬迁或重排整份文件；同一次更新只改目标条目。新分组也可与旧表并存，但不可重复声明相同密钥名。
 
 机器文件顶层可设置 `secrets_file = "~/private/agentcfg/secrets.toml"` 指定另一份共享文件，只支持绝对路径或 `~/`，不展开环境变量，不能指向机器文件或仓库内文件。缺失文件视为尚未填写；已存在的文件必须通过权限、属主、无链接校验。旧机器文件的 `[secrets]` 继续兼容，空占位符不遮蔽共享值；同一个引用在两处都有非空值时明确拒绝，避免悄悄用错账号。`model key` 更新已有旧 key 时会说明仍写回原位置，不自动迁移或删除旧秘密。把新 key 分文件降低误读和误分享风险，不构成对同用户进程的访问隔离。
 
-`./agentcfg model presets` 无需机器文件即可查看官方模型概要，并区分订阅默认与显式可选的旧 API 项；`--verbose` 展开公开地址、规格和来源。订阅项按套餐额度说明，不展示虚构的每 token 单价；旧目录价格只作为有日期的公开快照，GLM Anthropic 地址与套餐接入地址相同，不能仅凭旧项的价格元数据判断真实计费。`model enable kimi-code|glm-code` 可以显式追加订阅的另一协议路线，OMP 可用 `--protocol openai`。旧 `model enable deepseek|kimi|glm` 保持原模型/凭据含义，仅显式执行时添加，不会替换已有主模型角色。
+`./agentcfg model presets` 无需机器文件即可查看公共可选模型池，并区分订阅与按量路线；`--verbose` 展开公开地址、规格和来源。订阅项按套餐额度说明，不展示虚构的每 token 单价；DeepSeek 价格是有日期的目录快照，规格/思考档位更新不冒充价格已重新核验。`model enable kimi-code|glm-code|deepseek` 可以显式追加另一协议路线，OMP 可用 `--protocol openai`，不会替换已有主模型角色。
+
+TF 定义位于 `agents/omp/content.toml`，由 `omp-kernel` 选择 Kimi TF 和 GLM TF provider，追加到该 profile 的可选池；它们不是全部工具共同继承的公共默认。当前公共目录没有 DeepSeek TF 定义，仍需确认 endpoint/凭据引用、协议、远端 model ID 和能力后接入，不照搬官方直连 metadata。
 
 企业地址等私人配置可以保存在机器文件 `[local_values]` 中。公共 provider 使用 `base_url_ref = "local:<名称>"` 引用地址，和直接 `base_url` 二选一；当前引用仅用于 provider URL，不进行通用字符串插值、环境变量展开或命令执行。例子：
 
@@ -103,7 +108,7 @@ TOML 语法或编码错误返回 2，并给出安全来源和从 1 开始的行�
 
 XDG 未设置时分别回落 `~/.local/share`、`~/.local/state`、`~/.cache`。TOML 路径允许中文和空格；仅开头 `~/` 展开，不支持相对路径、其他用户 `~user`、变量或命令插值。字段存在但为空不等于缺省。editor 不能写成 `nvim -f` 或 shell 命令。
 
-provider 字段：`protocol`、`auth_kind` 必填；静态 API-key provider 需 `base_url` 或 `base_url_ref`，凭据用 `credential_ref`。动态 OAuth provider 可没有静态地址，不应补虚构地址；路由和认证拥有者由工具 binding 决定。模型字段为 `provider`、`remote_id`、`input`（已知能力数组）；可选 `context_window`、`max_output_tokens` 为原生表使用的已核实正整数，`max_output_supported` 可额外记录服务端上限，`name`、`reasoning`、`reasoning_efforts` 和 `source` 记录展示名、推理能力及依据，未知时省略。Kimi K3 的原生默认输出上限设为 131072，同时记录官方支持的 1048576 上限。`native.pi`、`native.omp` 仅容纳 schema 明确允许的兼容字段；DeepSeek OpenAI 预设据官方接入文档记录思考等级、历史消息与工具调用要求。`pricing` 记录币种、每百万 token 的输入/输出/缓存读写单价、查询日期和来源；分时价格另记 `off_peak` 与 `schedule`。价格是目录快照，使用前请在官方页面复核。OMP/Pi 将容量和推理能力投影到原生模型表；DSH 当前只支持容量。三种工具的原生成本字段均不能准确表达人民币币种或 DeepSeek 分时费率，因此公共价格保留在目录与 `model presets` 输出中，不写成误导性的原生成本。MCP 的 `command` 与 `args` 是 argv，远端 URL 与凭据引用能否转换由 adapter 检查。
+provider 字段：`protocol`、`auth_kind` 必填；静态 API-key provider 需 `base_url` 或 `base_url_ref`，凭据用 `credential_ref`。动态 OAuth provider 可没有静态地址，不应补虚构地址；路由和认证拥有者由工具 binding 决定。模型字段为 `provider`、`remote_id`、`input`（已知能力数组）；可选 `context_window`、`max_output_tokens` 为原生表使用的已核实正整数，`max_output_supported` 可额外记录服务端上限，`name`、`reasoning`、`reasoning_efforts` 和 `source` 记录展示名、推理能力及依据，未知时省略。DeepSeek Flash 的上下文与输出上限按官方模型目录更新为 1048576、393216；其 low/high/max 档位与工具历史要求按当前文档记录。`native.pi`、`native.omp` 仅容纳 schema 明确允许的兼容字段；DeepSeek OpenAI 预设据官方接入文档记录思考等级、历史消息与工具调用要求。`pricing` 记录币种、每百万 token 的输入/输出/缓存读写单价、查询日期和来源；分时价格另记 `off_peak` 与 `schedule`。价格是目录快照，使用前请在官方页面复核。OMP/Pi 将容量和推理能力投影到原生模型表；DSH 当前只支持容量。三种工具的原生成本字段均不能准确表达人民币币种或 DeepSeek 分时费率，因此公共价格保留在目录与 `model presets` 输出中，不写成误导性的原生成本。MCP 的 `command` 与 `args` 是 argv，远端 URL 与凭据引用能否转换由 adapter 检查。
 
 允许覆盖 profile 的 `providers/models/rules/skills/plugins/mcp` 选择数组、`roles` 模型别名和经 adapter schema 校验的 `agent_options`。合并顺序为 registry/工具默认值 → profile → 本地 overrides → 明确支持的单次参数；对象递归，标量覆盖；providers/models 按层去重追加，其他数组整体替换。`mcp = []` 清空选择，`terminal_images = false` 保留 false。省略字段继承原值；删除 registry 中仍被引用的 ID 会失败。
 
