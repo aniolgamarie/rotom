@@ -17,18 +17,18 @@ def paths(machine="work"):
   return root / "machines" / f"{machine}.toml", root / "secrets.toml"
 
 
-def test_new_omp_kernel_has_two_urls_and_five_keys():
+def test_new_omp_kernel_has_two_urls_and_four_keys():
   result = initialize_local("work", config_home=os.environ["XDG_CONFIG_HOME"],
     profile_id="omp-kernel")
   machine_path, shared_path = paths()
   machine = tomllib.loads(machine_path.read_text())
   shared = tomllib.loads(shared_path.read_text())
   assert machine["local_values"] == {"tf_openai_url": "", "tf_anthropic_url": ""}
-  assert set(shared["shared"]) == {"deepseek_key", "kimi_key", "glm_key"}
+  assert set(shared["shared"]) == {"kimi_code_key", "glm_coding_key"}
   assert shared["providers"] == {
     "kimi_tf": {"omp_kimi_tf_key": ""}, "zhipu_tf": {"omp_zhipu_tf_key": ""}}
   assert set(result.secret_fields) == {
-    "deepseek_key", "kimi_key", "glm_key", "omp_kimi_tf_key", "omp_zhipu_tf_key"}
+    "kimi_code_key", "glm_coding_key", "omp_kimi_tf_key", "omp_zhipu_tf_key"}
 
 
 def test_existing_preserves_values_comments_default_and_adapter_override():
@@ -90,11 +90,11 @@ base_url = "https://literal.invalid/v1"
 def test_multiple_machines_share_keys_without_overwriting_values():
   initialize_local("first", config_home=os.environ["XDG_CONFIG_HOME"])
   _, shared_path = paths("first")
-  content = shared_path.read_text().replace('deepseek_key = ""', 'deepseek_key = "kept"')
+  content = shared_path.read_text().replace('kimi_code_key = ""', 'kimi_code_key = "kept"')
   shared_path.write_text(content, encoding="utf-8")
   initialize_local("second", config_home=os.environ["XDG_CONFIG_HOME"], profile_id="omp-kernel")
   shared = tomllib.loads(shared_path.read_text())
-  assert shared["shared"]["deepseek_key"] == "kept"
+  assert shared["shared"]["kimi_code_key"] == "kept"
   assert set(shared["providers"]) == {"kimi_tf", "zhipu_tf"}
 
 
@@ -114,9 +114,12 @@ glm_key = "inline-kept"
 deepseek_key = "legacy-kept"
 ''', encoding="utf-8")
   result = initialize_local("work", config_home=os.environ["XDG_CONFIG_HOME"])
-  assert result.secret_fields == ()
+  assert set(result.secret_fields) == {"kimi_code_key", "glm_coding_key"}
   assert tomllib.loads(shared_path.read_text()) == {
-    "schema_version": 1, "secrets": {"deepseek_key": "legacy-kept"}}
+    "schema_version": 1, "secrets": {"deepseek_key": "legacy-kept"},
+    "shared": {"kimi_code_key": "", "glm_coding_key": ""}}
+  assert tomllib.loads(machine_path.read_text())["secrets"] == {
+    "kimi_key": "", "glm_key": "inline-kept"}
 
 
 def test_inline_declarations_still_create_empty_shared_file():
@@ -127,9 +130,8 @@ def test_inline_declarations_still_create_empty_shared_file():
 [machine]
 id = "work"
 [secrets]
-deepseek_key = ""
-kimi_key = ""
-glm_key = ""
+kimi_code_key = ""
+glm_coding_key = ""
 ''', encoding="utf-8")
   result = initialize_local("work", config_home=os.environ["XDG_CONFIG_HOME"])
   assert result.secrets_action == "created"

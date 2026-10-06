@@ -1,6 +1,6 @@
 schema_version = 1
 # OAuth 模型目录由插件在登录后发现；不编造静态 model ID。
-# 以下是官方直连 API 公共预设；不在 profile 中选择时无需密钥。
+# 公共预设包含默认 Coding Plan 订阅与可显式启用的旧 API 路线；凭据独立。
 
 [models.deepseek_flash_openai]
 provider = "deepseek_openai"
@@ -103,3 +103,101 @@ context_window = 1000000
 max_output_tokens = 131072
 source = "https://docs.bigmodel.cn/cn/guide/models/text/glm-5.3"
 pricing = {currency = "CNY", per_tokens = 1000000, source = "https://docs.bigmodel.cn/cn/guide/start/pricing", checked_on = "2026-09-27", standard = {input = 8.0, output = 28.0, cache_read = 2.0}}
+
+# 订阅模型消耗 Coding Plan 额度；不声明虚构的按 token 价格。
+
+[models.kimi_code_openai]
+provider = "kimi_code_openai"
+remote_id = "kimi-for-coding"
+name = "Kimi Code (K2.8 Preview)"
+input = ["text", "image"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1048576
+max_output_tokens = 32768
+source = "https://www.kimi.com/code/docs/en/kimi-code/models.html"
+
+[models.kimi_code_openai.native.pi]
+thinkingLevelMap = {minimal = "low", low = "low", medium = "high", high = "high", xhigh = "max", max = "max"}
+
+[models.kimi_code_openai.native.pi.compat]
+supportsDeveloperRole = false
+supportsReasoningEffort = true
+maxTokensField = "max_tokens"
+thinkingFormat = "zai"
+supportsStrictMode = false
+
+[models.glm_coding_53_openai]
+provider = "glm_coding_openai"
+remote_id = "glm-5.3"
+name = "GLM-5.3 Coding Plan"
+input = ["text"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1000000
+max_output_tokens = 131072
+source = "https://docs.bigmodel.cn/cn/coding-plan/overview"
+
+[models.glm_coding_53_openai.native.pi]
+thinkingLevelMap = {minimal = "low", low = "low", medium = "high", high = "high", xhigh = "max", max = "max"}
+
+[models.glm_coding_53_openai.native.pi.compat]
+supportsDeveloperRole = false
+supportsReasoningEffort = true
+maxTokensField = "max_tokens"
+thinkingFormat = "zai"
+supportsStrictMode = false
+
+[models.glm_coding_53_flash_openai]
+provider = "glm_coding_openai"
+remote_id = "glm-5.3-flash"
+name = "GLM-5.3 Flash Coding Plan"
+input = ["text", "image"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1000000
+max_output_tokens = 131072
+source = "https://docs.bigmodel.cn/cn/coding-plan/overview"
+
+[models.glm_coding_53_flash_openai.native.pi]
+thinkingLevelMap = {minimal = "low", low = "low", medium = "high", high = "high", xhigh = "max", max = "max"}
+
+[models.glm_coding_53_flash_openai.native.pi.compat]
+supportsDeveloperRole = false
+supportsReasoningEffort = true
+maxTokensField = "max_tokens"
+thinkingFormat = "zai"
+supportsStrictMode = false
+
+[models.kimi_code_anthropic]
+provider = "kimi_code_anthropic"
+remote_id = "kimi-for-coding"
+name = "Kimi Code (K2.8 Preview)"
+input = ["text", "image"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1048576
+max_output_tokens = 32768
+source = "https://www.kimi.com/code/docs/en/kimi-code/models.html"
+
+[models.glm_coding_53_anthropic]
+provider = "glm_coding_anthropic"
+remote_id = "glm-5.3"
+name = "GLM-5.3 Coding Plan"
+input = ["text"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1000000
+max_output_tokens = 131072
+source = "https://docs.bigmodel.cn/cn/coding-plan/overview"
+
+[models.glm_coding_53_flash_anthropic]
+provider = "glm_coding_anthropic"
+remote_id = "glm-5.3-flash"
+name = "GLM-5.3 Flash Coding Plan"
+input = ["text", "image"]
+reasoning = true
+reasoning_efforts = ["low", "high", "max"]
+context_window = 1000000
+max_output_tokens = 131072
+source = "https://docs.bigmodel.cn/cn/coding-plan/overview"

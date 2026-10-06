@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-06",
+  "baselineCommit": "ef96d49",
+  "scope": "repository shared model defaults, subscription endpoints, credential references and adapter projections; no model suites",
+  "defaults": {
+    "services": ["Kimi Code", "GLM Coding Plan"],
+    "remoteModels": ["kimi-for-coding", "glm-5.3", "glm-5.3-flash"],
+    "mainRemoteModel": "kimi-for-coding",
+    "protocols": {"dsh": "openai-compatible", "pi": "openai-compatible", "omp": "anthropic-messages"},
+    "credentialReferences": ["secret:kimi_code_key", "secret:glm_coding_key"],
+    "legacyKeysAutomaticallyReused": false,
+    "deepseekInDefaultSelection": false,
+    "legacyApiDefinitionsPreserved": true,
+    "explicitProfileAndLocalRolePrecedencePreserved": true,
+    "modelSuiteConfigurationAdded": false
+  },
+  "piWireCompatibility": {
+    "officialPackage": "@earendil-works/pi-ai@0.84.4",
+    "lockedNpmIntegrityVerified": true,
+    "apiSourceInspectedWithoutExecution": true,
+    "subscriptionOpenAiModelsWithExplicitCompat": 3,
+    "systemRoleConfigured": true,
+    "reasoningEffortEnabled": true,
+    "thinkingFormat": "zai",
+    "maxTokensField": "max_tokens",
+    "strictToolsDisabled": true,
+    "thinkingLevelMap": {"minimal": "low", "low": "low", "medium": "high", "high": "high", "xhigh": "max", "max": "max"}
+  },
+  "validation": {
+    "affectedPythonRegression": {"passed": 665, "failed": 0},
+    "supplementalDefaultAndCursorRegression": {"passed": 27, "failed": 0, "overlapsAffectedRegression": true},
+    "publicPresetsVerboseExitCode": 0,
+    "gitDiffCheckPassed": true,
+    "nativeRenderVerified": ["dsh", "pi", "omp"],
+    "temporaryHomeAndFakeProcesses": true,
+    "testNetworkBlocked": true,
+    "realAgentHostsLaunched": 0,
+    "realModelRequests": 0,
+    "actualAccountsAndBillingInspected": false,
+    "localDeploymentModified": false
+  },
+  "locks": {
+    "omp": {
+      "identity": "63a3f4538b2512dade6ddfeab8e3ac8915b23225aa3c399b9dc7d0ec90ebba93",
+      "officialVersionUnchanged": "v18.4.5",
+      "fixedOfficialSourceAndChecksumsReused": true,
+      "upstreamSourcesAndAssetsUnchanged": true
+    },
+    "pi": {
+      "identity": "6e6a20b61ee9e13ab65e47381ae9765ab5ef62283831a24189ffd84019cca06e",
+      "baselineRecipeAlreadyStale": true,
+      "verifiedVendorArchives": 26,
+      "verifiedSourceTrees": 20,
+      "onlyRecipeDigestAndIdentityChanged": true,
+      "dependencySourcesSlicesAndResolutionsUnchanged": true,
+      "verifiedIgnoredAssetsReusedInWorktree": 6
+    }
+  },
+  "review": {
+    "blockingFindingsRemaining": 0,
+    "executor": "gpt-6.1-sol / medium",
+    "scout": "gpt-6-luna / high",
+    "finalAcceptance": "root",
+    "oauthBootstrapBoundaryClarified": true,
+    "piManagedProjectChecksPreserved": true
+  },
+  "taskRecord": {
+    "completed": ["default provider correction", "independent subscription keys", "explicit legacy API compatibility", "Pi wire metadata", "documentation", "lock validation", "affected tests", "stable diff review"],
+    "inProgress": [],
+    "failedPendingDecision": [],
+    "environmentUnverified": ["real subscription entitlements and billing", "real model and host behavior", "local deployment"]
+  }
+}

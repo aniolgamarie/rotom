@@ -88,8 +88,10 @@ def test_defaults_apply_to_future_profile_and_profile_local_roles_win():
   resolved = resolve_config(loaded, local, profile_id="dsh-future",
                             adapter_schemas=context)
   profile = resolved.data["profile"]
-  assert profile["providers"] == ["deepseek_openai", "kimi_openai", "glm_openai", "codex", "cursor"]
-  assert profile["models"] == ["deepseek_flash_openai", "kimi_k3_openai", "glm_53_openai"]
+  assert profile["providers"] == ["kimi_code_openai", "glm_coding_openai", "codex", "cursor",
+    "glm_openai", "deepseek_openai", "kimi_openai"]
+  assert profile["models"] == ["kimi_code_openai", "glm_coding_53_openai",
+    "glm_coding_53_flash_openai", "glm_53_openai", "deepseek_flash_openai", "kimi_k3_openai"]
   assert profile["roles"]["main"] == "kimi_k3_openai"
   assert resolved.provenance[("profile", "providers")] == "local"
   assert resolved.provenance[("profile", "models")] == "local"
@@ -110,14 +112,19 @@ def test_synthetic_catalog_without_global_defaults_keeps_empty_local_selection_p
 
 
 @pytest.mark.parametrize("profile,protocol,model", [
-  ("dsh-default", "openai-compatible", "deepseek_flash_openai"),
-  ("pi-default", "openai-compatible", "deepseek_flash_openai"),
-  ("omp-default", "anthropic-messages", "deepseek_flash_anthropic"),
+  ("dsh-default", "openai-compatible", "kimi_code_openai"),
+  ("pi-default", "openai-compatible", "kimi_code_openai"),
+  ("omp-default", "anthropic-messages", "kimi_code_anthropic"),
 ])
 def test_each_adapter_resolves_and_renders_defaults_without_keys(tmp_path, profile, protocol, model):
   workspace = load_workspace(local_file(tmp_path), profile, repository=REPO)
   data = workspace.resolved.data
   assert data["profile"]["roles"]["main"] == model
+  suffix = "anthropic" if workspace.agent == "omp" else "openai"
+  assert set(workspace.default_providers) == {"kimi_code_" + suffix, "glm_coding_" + suffix}
+  assert {data["models"][mid]["remote_id"] for mid in workspace.default_models} == {
+    "kimi-for-coding", "glm-5.3", "glm-5.3-flash"}
+  assert all("pricing" not in data["models"][mid] for mid in workspace.default_models)
   assert data["providers"][data["models"][model]["provider"]]["protocol"] == protocol
   assert workspace.default_models == tuple(
     model_default_selection(catalog().model_defaults, workspace.agent)["models"])
@@ -125,6 +132,17 @@ def test_each_adapter_resolves_and_renders_defaults_without_keys(tmp_path, profi
     if provider["auth_kind"] == "api-key":
       assert workspace.secret_store.resolve(SecretRef(provider["credential_ref"]), required=False) is None
   artifacts = workspace.adapter.render(data)
+  expected_urls = {
+    "openai": {"kimi_code": "https://api.kimi.com/coding/v1",
+      "glm_coding": "https://open.bigmodel.cn/api/coding/paas/v4"},
+    "anthropic": {"kimi_code": "https://api.kimi.com/coding/",
+      "glm_coding": "https://open.bigmodel.cn/api/anthropic"},
+  }[suffix]
+  for stem, url in expected_urls.items():
+    provider = data["providers"][stem + "_" + suffix]
+    assert provider["base_url"] == url
+    assert provider["credential_ref"] == "secret:" + stem + "_key"
+    assert any(url.encode() in artifact.content for artifact in artifacts)
   assert artifacts
   assert any(data["models"][model]["remote_id"].encode() in artifact.content
              for artifact in artifacts)
@@ -133,15 +151,43 @@ def test_each_adapter_resolves_and_renders_defaults_without_keys(tmp_path, profi
     lock_identity="a" * 64)
   optional = [binding for binding in spec.environment
               if isinstance(binding.value, SecretRef) and not binding.required]
-  assert len(optional) == 3
+  assert {binding.value.reference for binding in optional} == {"secret:kimi_code_key", "secret:glm_coding_key"}
 
 
 def test_pi_default_fills_selected_resource_roles_from_main(tmp_path):
   workspace = load_workspace(local_file(tmp_path), "pi-default", repository=REPO)
   roles = workspace.resolved.data["profile"]["roles"]
-  assert roles == {"main": "deepseek_flash_openai", "reviewer": "deepseek_flash_openai",
-                   "scout": "deepseek_flash_openai"}
+  assert roles == {"main": "kimi_code_openai", "reviewer": "kimi_code_openai",
+                   "scout": "kimi_code_openai"}
   workspace.adapter.validate_selected(workspace.resolved.data)
+
+
+@pytest.mark.parametrize("profile", ["pi-codex", "pi-cursor"])
+def test_unbound_pi_profile_inherits_subscription_main(tmp_path, profile):
+  workspace = load_workspace(local_file(tmp_path), profile, repository=REPO)
+  assert workspace.resolved.data["profile"]["roles"]["main"] == "kimi_code_openai"
+
+
+def test_pi_managed_still_requires_explicit_project_checks(tmp_path):
+  # 订阅默认不解除 managed 配方已有的项目和检查绑定要求。
+  with pytest.raises(ConfigError):
+    load_workspace(local_file(tmp_path), "pi-managed", repository=REPO)
+
+
+def test_explicit_cursor_model_binding_wins_over_subscription_default(tmp_path):
+  workspace = load_workspace(local_file(tmp_path, '''
+[overrides.models.fixture_cursor]
+provider = "cursor"
+remote_id = "fixture-cursor"
+input = ["text"]
+[overrides.profiles.pi-cursor]
+models = ["fixture_cursor"]
+[overrides.profiles.pi-cursor.roles]
+main = "fixture_cursor"
+'''), "pi-cursor", repository=REPO)
+  assert workspace.resolved.data["profile"]["roles"]["main"] == "fixture_cursor"
+  workspace.adapter.validate_selected(workspace.resolved.data)
+  assert workspace.adapter.render(workspace.resolved.data)
 
 
 def test_omp_kernel_keeps_profile_roles_and_adds_global_catalog(tmp_path):
@@ -151,4 +197,55 @@ def test_omp_kernel_keeps_profile_roles_and_adds_global_catalog(tmp_path):
   profile = workspace.resolved.data["profile"]
   assert profile["roles"]["main"] == "omp-kimi_tf-kimi-for-coding"
   assert profile["roles"]["smol"] == "omp-zhipu_tf-glm-5.3-flash"
-  assert profile["providers"][:3] == ["deepseek_anthropic", "kimi_anthropic", "glm_anthropic"]
+  assert profile["providers"][:2] == ["kimi_code_anthropic", "glm_coding_anthropic"]
+
+
+@pytest.mark.parametrize("profile", ["dsh-default", "pi-default", "omp-default"])
+def test_subscription_defaults_do_not_reuse_legacy_keys(tmp_path, profile):
+  workspace = load_workspace(local_file(tmp_path, '\n[secrets]\nkimi_key = "OLD-KIMI-CANARY"\nglm_key = "OLD-GLM-CANARY"\n'),
+    profile, repository=REPO)
+  for name in ("kimi_code_key", "glm_coding_key"):
+    assert workspace.secret_store.resolve(SecretRef("secret:" + name), required=False) is None
+  artifacts = workspace.adapter.render(workspace.resolved.data)
+  assert all(b"OLD-KIMI-CANARY" not in item.content and b"OLD-GLM-CANARY" not in item.content for item in artifacts)
+
+
+def test_pi_subscription_models_render_explicit_wire_compatibility(tmp_path):
+  import json
+  workspace = load_workspace(local_file(tmp_path), "pi-default", repository=REPO)
+  artifacts = workspace.adapter.render(workspace.resolved.data)
+  groups = [json.loads(artifact.content) for artifact in artifacts
+    if artifact.target.path == "pi-home/models.json" and artifact.target.selector.endswith("/models")]
+  models = {model["id"]: model for group in groups for model in group}
+  assert set(models) == {"kimi-for-coding", "glm-5.3", "glm-5.3-flash"}
+  for model_id in ("kimi-for-coding", "glm-5.3", "glm-5.3-flash"):
+    assert models[model_id]["compat"] == {
+      "supportsDeveloperRole": False,
+      "supportsReasoningEffort": True,
+      "maxTokensField": "max_tokens",
+      "thinkingFormat": "zai",
+      "supportsStrictMode": False,
+    }
+    assert models[model_id]["thinkingLevelMap"] == {
+      "minimal": "low", "low": "low", "medium": "high", "high": "high",
+      "xhigh": "max", "max": "max",
+    }
+
+
+@pytest.mark.parametrize("native", [
+  {"compat": {"supportsDevelopRole": False}},
+  {"compat": {"supportsStrictModes": False}},
+  {"compat": {"maxTokensField": "max_completion_tokens"}},
+  {"compat": {"thinkingFormat": "za"}},
+  {"thinkingLevelMaps": {"low": "low"}},
+  {"thinkingLevelMap": {"hig": "high"}},
+  {"thinkingLevelMap": {"off": "low"}},
+  {"thinkingLevelMap": {"high": "hig"}},
+])
+def test_pi_subscription_native_schema_rejects_unknown_fields_and_levels(native):
+  from agentcfg.schema import validate_document
+  document = {"schema_version": 1, "models": {"model": {
+    "provider": "provider", "remote_id": "model", "input": ["text"], "native": {"pi": native}}}}
+  with pytest.raises(ConfigError) as error:
+    validate_document("registry", document)
+  assert error.value.code == "schema"

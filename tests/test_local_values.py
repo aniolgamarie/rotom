@@ -43,7 +43,7 @@ def local(values=None, overrides=None):
   return LocalConfig(result)
 
 
-def referenced_catalog(provider_id="deepseek_openai", local_name="private_url"):
+def referenced_catalog(provider_id="kimi_code_openai", local_name="private_url"):
   loaded, adapters = catalog_and_adapters()
   providers = deepcopy(loaded.registry["providers"])
   providers[provider_id].pop("base_url", None)
@@ -96,11 +96,11 @@ def test_selected_missing_ref_is_strict_but_diagnostic_mode_returns_only_metadat
 
   resolved = resolve_config(loaded, local({"private_url": ""}), profile_id="dsh-default",
     adapter_schemas=loaded.adapter_schemas, allow_missing_local_values=True)
-  assert resolved.local_value_refs == (("deepseek_openai", "private_url"),)
+  assert resolved.local_value_refs == (("kimi_code_openai", "private_url"),)
   assert resolved.missing_local_values == resolved.local_value_refs
   assert "local_values" not in resolved.data
-  assert "base_url_ref" not in resolved.data["providers"]["deepseek_openai"]
-  assert "base_url" not in resolved.data["providers"]["deepseek_openai"]
+  assert "base_url_ref" not in resolved.data["providers"]["kimi_code_openai"]
+  assert "base_url" not in resolved.data["providers"]["kimi_code_openai"]
   assert "private_url" not in repr(resolved)
   with pytest.raises(RenderError):
     render_candidate(resolved, adapter=adapters["dsh"],
@@ -120,24 +120,24 @@ def test_local_provider_endpoint_override_replaces_inherited_other_form():
   loaded, _ = referenced_catalog()
   literal = "https://literal.example.invalid/v1"
   resolved = resolve_config(loaded, local(overrides={"providers": {
-    "deepseek_openai": {"base_url": literal}}}), profile_id="dsh-default",
+    "kimi_code_openai": {"base_url": literal}}}), profile_id="dsh-default",
     adapter_schemas=loaded.adapter_schemas)
-  assert resolved.data["providers"]["deepseek_openai"]["base_url"] == literal
+  assert resolved.data["providers"]["kimi_code_openai"]["base_url"] == literal
   assert resolved.local_value_refs == ()
 
   loaded, _ = catalog_and_adapters()
   resolved = resolve_config(loaded, local({"private_url": "https://private.example.invalid/v1"},
-    {"providers": {"deepseek_openai": {"base_url_ref": "local:private_url"}}}),
+    {"providers": {"kimi_code_openai": {"base_url_ref": "local:private_url"}}}),
     profile_id="dsh-default", adapter_schemas=loaded.adapter_schemas)
-  assert resolved.local_value_refs == (("deepseek_openai", "private_url"),)
+  assert resolved.local_value_refs == (("kimi_code_openai", "private_url"),)
   assert resolved.missing_local_values == ()
-  assert resolved.data["providers"]["deepseek_openai"]["base_url"].startswith("https://private.")
+  assert resolved.data["providers"]["kimi_code_openai"]["base_url"].startswith("https://private.")
 
 
 @pytest.mark.parametrize("profile,provider", [
-  ("dsh-default", "deepseek_openai"),
-  ("pi-default", "deepseek_openai"),
-  ("omp-default", "deepseek_anthropic"),
+  ("dsh-default", "kimi_code_openai"),
+  ("pi-default", "kimi_code_openai"),
+  ("omp-default", "kimi_code_anthropic"),
 ])
 def test_all_adapters_resolve_materialized_private_url(profile, provider):
   loaded, _ = referenced_catalog(provider)

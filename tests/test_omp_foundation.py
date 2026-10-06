@@ -113,7 +113,7 @@ def test_default_profile_loads_and_renders_protected_settings_and_models(tmp_pat
   workspace = load_workspace(local)
   candidate = workspace.candidate("a" * 64)
   assert workspace.agent == "omp"
-  assert len(candidate.artifacts) == 21
+  assert len(candidate.artifacts) == 17
   assert all(artifact.target.path.startswith("user-home/.omp/profiles/rotom-") for artifact in candidate.artifacts)
   selectors = {artifact.target.selector for artifact in candidate.artifacts}
   assert {
@@ -121,7 +121,7 @@ def test_default_profile_loads_and_renders_protected_settings_and_models(tmp_pat
     "/disabledProviders", "/startup/checkUpdate", "/marketplace/autoUpdate", "/autolearn/enabled",
   } <= selectors
   assert "/modelRoles/default" in selectors
-  assert workspace.resolved.data["profile"]["roles"]["main"] == "deepseek_flash_anthropic"
+  assert workspace.resolved.data["profile"]["roles"]["main"] == "kimi_code_anthropic"
 
 
 def test_omp_profile_options_reject_unknown_fields(tmp_path):

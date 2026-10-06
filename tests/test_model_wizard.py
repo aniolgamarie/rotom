@@ -189,6 +189,12 @@ def test_public_presets_list_without_local_file(capsys):
     assert name in output
   assert "https://api.moonshot.cn/anthropic" in output
   assert "USD/1000000" in output and "CNY/1000000" in output
+  assert "默认订阅" in output and "可选旧 API 路线" in output
+  assert "消耗订阅额度；未验证真实账单" in output
+  assert "https://api.kimi.com/coding/v1" in output
+  assert "glm-5.3-flash" in output
+  assert "reasoning=low,high,max" in output
+  assert "GLM 计费方式需按具体 endpoint/key 确认" in output
 
 
 def test_enable_preset_requires_key_and_keeps_file_unchanged(monkeypatch):
@@ -227,10 +233,10 @@ def test_enable_omp_uses_anthropic_and_keeps_existing_roles(monkeypatch):
   assert cli.main(["model", "enable", "kimi"]) == 0
   data = tomllib.loads(local_file().read_text(encoding="utf-8"))
   profile = data["overrides"]["profiles"]["omp-default"]
-  assert set(profile["providers"]) == {"deepseek_anthropic", "kimi_anthropic", "glm_anthropic"}
-  assert set(profile["models"]) == {"deepseek_flash_anthropic", "kimi_k3_anthropic", "glm_53_anthropic"}
+  assert set(profile["providers"]) == {"kimi_code_anthropic", "glm_coding_anthropic", "kimi_anthropic"}
+  assert set(profile["models"]) == {"kimi_code_anthropic", "glm_coding_53_anthropic", "glm_coding_53_flash_anthropic", "kimi_k3_anthropic"}
   assert "roles" not in profile
-  assert model_wizard.load_workspace(local_file()).resolved.data["profile"]["roles"]["main"] == "deepseek_flash_anthropic"
+  assert model_wizard.load_workspace(local_file()).resolved.data["profile"]["roles"]["main"] == "kimi_code_anthropic"
   assert cli.main(["validate"]) == 0
 
 
@@ -292,7 +298,7 @@ def test_one_key_enables_same_vendor_in_two_profiles(monkeypatch):
   assert cli.main(["--profile", "omp-default", "model", "enable", "kimi"]) == 0
   data = tomllib.loads(local_file().read_text(encoding="utf-8"))
   assert "secrets" not in data
-  assert shared_keys() == {"deepseek_key": "", "kimi_key": "shared-secret-canary", "glm_key": ""}
+  assert shared_keys() == {"kimi_code_key": "", "kimi_key": "shared-secret-canary", "glm_coding_key": ""}
   assert "kimi_k3_openai" in data["overrides"]["profiles"]["dsh-default"]["models"]
   assert "kimi_k3_anthropic" in data["overrides"]["profiles"]["omp-default"]["models"]
 
@@ -307,3 +313,46 @@ def test_model_status_reports_partial_omp_keys_without_values(capsys):
   assert "kimi_tf" in output and "已填写" in output and "旧机器密钥" in output
   assert "model key zhipu_tf" in output and "缺 key" in output
   assert "status-key-canary" not in output
+
+
+@pytest.mark.parametrize("selector,secret_name,stem", [
+  ("kimi-code", "kimi_code_key", "kimi_code"),
+  ("glm-code", "glm_coding_key", "glm_coding_53"),
+])
+def test_enable_subscription_requires_independent_key(monkeypatch, capsys, selector, secret_name, stem):
+  assert cli.main(["init-local"]) == 0
+  legacy = "kimi_key" if selector == "kimi-code" else "glm_key"
+  with local_file().open("a") as stream:
+    stream.write(f'\n[secrets]\n{legacy} = "legacy-private-canary"\n')
+  before = local_file().read_bytes()
+  interactive(monkeypatch, [], secret="")
+  assert cli.main(["model", "enable", selector]) == 2
+  assert local_file().read_bytes() == before
+  interactive(monkeypatch, ["yes"], secret="coding-private-canary")
+  assert cli.main(["model", "enable", selector]) == 0
+  assert shared_keys()[secret_name] == "coding-private-canary"
+  data = model_wizard.load_workspace(local_file()).resolved.data
+  assert stem + "_openai" in data["profile"]["models"]
+  assert data["profile"]["roles"]["main"] == "kimi_code_openai"
+  output = capsys.readouterr().out
+  assert "legacy-private-canary" not in output and "coding-private-canary" not in output
+
+
+@pytest.mark.parametrize("invalid_pricing", [None, 'pricing = {currency = "CNY", unknown = 0}'])
+def test_legacy_presets_still_require_valid_pricing(tmp_path, invalid_pricing):
+  from agentcfg.schema import ConfigError
+  repository = Path(model_wizard.__file__).resolve().parents[2]
+  shared = tmp_path / "shared"
+  shared.mkdir()
+  (shared / "providers.toml").write_bytes((repository / "shared/providers.toml").read_bytes())
+  source = (repository / "shared/models.toml").read_text()
+  start = source.index("[models.kimi_k3_openai]")
+  end = source.index("[models.kimi_k3_anthropic]")
+  section = source[start:end]
+  lines = [line for line in section.splitlines() if not line.startswith("pricing =")]
+  if invalid_pricing is not None:
+    lines.append(invalid_pricing)
+  source = source[:start] + "\n".join(lines) + "\n\n" + source[end:]
+  (shared / "models.toml").write_text(source)
+  with pytest.raises(ConfigError):
+    model_wizard._preset_catalog(tmp_path)

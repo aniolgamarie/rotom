@@ -9,7 +9,7 @@ plugins = ["pi-subagents", "pi-permissions", "task-keeper"]
 mcp = []
 
 [roles]
-# 模型由本机显式绑定；普通 profile 可先进入 bootstrap 登录。
+# 角色继承公共 Coding Plan 默认或本机覆盖；managed 还需明确项目和检查绑定。
 
 [agent_options.runtime]
 engine = "node"

@@ -57,7 +57,7 @@ Linux 四个配方都安装锁定的 bwrap 辅助程序，Pi 宿主在独立 PID
 
 模型引用必须在当前 profile 选中的集合内。绑定 `main`、`scout`、`reviewer` 以及 managed 角色时填写逻辑模型 ID；模型声明中的 `remote_id` 必须精确，不使用模糊模型匹配。
 
-无 `main` 的普通配方可以进入 bootstrap 登录界面，但不能派发任务。API key 使用 `secret:名称`，运行时转换成实例环境引用。OAuth 在目标实例的原生登录流程中建立；不自动读取系统 Cursor 账号、旧 Pi auth.json 或全局 CODEX_HOME。Codex 显式控制与登录流程见 [model-delegate 使用说明](../shared/skills/model-delegate/USAGE.md)。
+完整解析后仍无 `main` 的普通配方可以进入 bootstrap 登录界面，但不能派发任务。仓库现有 Pi 配方未声明 `main` 时会继承公共 Kimi Code 默认；选择 `pi-cursor` 的插件不等于自动绑定 Cursor 主模型，需要本机明确绑定所选模型，角色覆盖优先。API key 使用 `secret:名称`，运行时转换成实例环境引用。OAuth 在目标实例的原生登录流程中建立；不自动读取系统 Cursor 账号、旧 Pi auth.json 或全局 CODEX_HOME。Codex 显式控制与登录流程见 [model-delegate 使用说明](../shared/skills/model-delegate/USAGE.md)。
 
 ## Task Keeper
 

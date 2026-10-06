@@ -18,7 +18,9 @@ def set_model_key(args):
     raise ConfigError("model-wizard-requires-terminal")
   workspace = load_workspace(args.local, args.profile, allow_missing_local_values=True)
   provider = workspace.resolved.data["providers"].get(args.provider)
-  if args.provider in ("deepseek", "kimi", "glm"):
+  if args.provider in ("kimi-code", "glm-code"):
+    name = {"kimi-code": "kimi_code_key", "glm-code": "glm_coding_key"}[args.provider]
+  elif args.provider in ("deepseek", "kimi", "glm"):
     name = args.provider + "_key"
   elif provider and provider.get("auth_kind") == "api-key":
     name = provider["credential_ref"].removeprefix("secret:")

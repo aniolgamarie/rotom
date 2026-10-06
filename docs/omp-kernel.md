@@ -55,7 +55,7 @@ OMP_LOCAL="${XDG_CONFIG_HOME:-$HOME/.config}/agentcfg/machines/omp-kernel.toml"
 
 先用 `model url kimi_tf` 和 `model url zhipu_tf` 隐藏输入企业服务地址，真实地址只保存到私人机器文件。
 
-所有 profile 现在继承 DeepSeek、Kimi、GLM 官方直连默认模型。`omp-kernel` 在其基础上追加 TF provider、模型和角色，现有 main/plan 等角色仍使用 TF，不会因继承默认模型而自动切换服务。先查看状态，再按实际使用情况填写共享 key：
+所有 profile 继承 Kimi Code、GLM Coding Plan 官方订阅默认模型。`omp-kernel` 在其基础上追加 TF provider、模型和角色，现有 main/plan 等角色仍使用 TF，不会因继承默认模型而自动切换服务。DeepSeek 和旧官方 API 路线不再自动加入目录。先查看状态，再按实际使用情况填写共享 key：
 
 ```sh
 ./agentcfg --local "$OMP_LOCAL" --profile omp-kernel model status
@@ -65,7 +65,7 @@ OMP_LOCAL="${XDG_CONFIG_HOME:-$HOME/.config}/agentcfg/machines/omp-kernel.toml"
 ./agentcfg --local "$OMP_LOCAL" --profile omp-kernel model key zhipu_tf
 ```
 
-密钥使用隐藏输入，默认保存在 `~/.config/agentcfg/secrets.toml`（遵循 XDG_CONFIG_HOME），对应引用为 `omp_kimi_tf_key`、`omp_zhipu_tf_key`。官方直连用 `model key deepseek|kimi|glm`，与 TF 凭据不同。缺少 key 时仍能进入界面，对应模型及 fallback 未就绪；只修改 key 无需 apply，但需要重新 run。共享文件与旧配置的兼容规则见[本地配置](local-config.md)。
+密钥使用隐藏输入，默认保存在 `~/.config/agentcfg/secrets.toml`（遵循 XDG_CONFIG_HOME），TF 对应引用为 `omp_kimi_tf_key`、`omp_zhipu_tf_key`。官方订阅用 `model key kimi-code|glm-code`，对应 `kimi_code_key`、`glm_coding_key`，与 TF 及旧按量 API 凭据分别管理；不自动复用或迁移旧 key。缺少 key 时仍能进入界面，对应模型及 fallback 未就绪；只修改 key 无需 apply，但需要重新 run。共享文件与旧配置的兼容规则见[本地配置](local-config.md)。
 
 公共 provider 使用 `base_url_ref = "local:tf_openai_url"` 和 `base_url_ref = "local:tf_anthropic_url"`，由机器文件 `[local_values]` 提供实际地址。`model url` 负责隐藏输入、校验并原子保存，不回显已有地址。缺少选中 provider 的地址时，`model status` 仍可列出缺项，`setup/apply/run` 会明确失败；未选择 TF 的其他 profile 不受缺值影响。私人 URL 必须与 TF 模型 ID 和协议匹配，不能直接换成同名厂商官方端点。
 

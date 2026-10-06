@@ -9,7 +9,8 @@ plugins = ["pi-subagents", "pi-permissions", "model-delegate", "pi-todo", "loop-
 mcp = []
 
 [roles]
-# 模型由本机显式绑定；普通 profile 可先进入 bootstrap 登录。
+# 未显式绑定时继承公共 Coding Plan 默认；本机角色覆盖优先。
+# Cursor 等 OAuth 执行模型需本机明确绑定，登录与模型选择分别处理。
 
 [agent_options.runtime]
 engine = "bun"

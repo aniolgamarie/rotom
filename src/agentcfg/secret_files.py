@@ -11,7 +11,7 @@ from .secrets import CredentialError, SecretStore
 from .storage import Conflict, Tree, instance_lock
 
 
-_DEFAULT_SHARED_NAMES = {"deepseek_key", "kimi_key", "glm_key"}
+_DEFAULT_SHARED_NAMES = {"deepseek_key", "kimi_key", "glm_key", "kimi_code_key", "glm_coding_key"}
 _BARE_TOML_KEY = re.compile(r"[A-Za-z0-9_-]+")
 
 

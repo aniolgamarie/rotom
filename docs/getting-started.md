@@ -62,17 +62,13 @@ id = "workstation"
 default_profile = "dsh-default"
 editor = "nvim"
 
-[secrets]
-deepseek_key = ""
-kimi_key = ""
-glm_key = ""
 ```
 
-订阅登录稍后在 DSH 内完成，空 `[secrets]` 不影响生成和部署。无需填写 DeepSeek key，也不要把 Codex 订阅登录信息当作 OpenAI API key 填在这里。
+Codex/Cursor 订阅登录稍后在 DSH 内完成，无需在机器文件写入登录信息。新建机器文件不包含密钥；`init-local` 在共享秘密文件中为 Kimi Code、GLM Coding Plan 准备空占位。缺少这些 key 不影响部署和对应 OAuth 入口启动；不要把 Codex 订阅登录信息当作 OpenAI API key。
 
 如果使用百炼或私有 API，可以运行 `./agentcfg --machine workstation model add`，在终端内一次填写 provider、model、角色及必需的密钥；向导校验后展示脱敏摘要，确认才写入。地址、模型 ID 和容量必须来自你的服务。也可按 [本地配置参考](local-config.md#私有网关示例) 手动编辑。示例中的 `example.invalid` 和 `fictional-*` 是虚构数据，不能直接调用。
 
-DeepSeek、Kimi、GLM 官方直连默认加入所有 profile，可用 `./agentcfg model presets` 查看概要，加 `--verbose` 查看 OpenAI/Anthropic 地址、计价与来源。执行 `./agentcfg --machine workstation model key kimi` 等命令填写共享 key，或按 `model status` 给出的位置直接编辑。缺 key 不阻止订阅入口启动，但对应直连模型调用前需填写；价格是目录快照，详见[本地配置参考](local-config.md)。
+公共默认加入 Kimi Code、GLM Coding Plan 订阅模型；没有显式主模型时选择 Kimi Code `kimi-for-coding`。执行 `./agentcfg --machine workstation model key kimi-code` 和 `model key glm-code` 隐藏输入匹配的套餐 key，或按 `model status` 给出的位置编辑共享秘密文件。新凭据不复用旧 Kimi/GLM 通用 API key。`model presets` 区分订阅默认与显式可选 API；DeepSeek 与旧按量路线需显式启用，不会因已有 key 自动加入默认。更多地址与迁移说明见[本地配置参考](local-config.md)。
 
 机器文件保存在仓库外，初始化权限是 0600；不要提交到 Git。它可以包含 API key，也可以包含这台机器独有的路径和模型。所有字段说明见 [本地配置参考](local-config.md)。
 
