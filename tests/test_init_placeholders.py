@@ -17,7 +17,7 @@ def paths(machine="work"):
   return root / "machines" / f"{machine}.toml", root / "secrets.toml"
 
 
-def test_new_omp_kernel_has_two_urls_and_five_keys():
+def test_new_omp_kernel_has_two_urls_and_six_keys():
   result = initialize_local("work", config_home=os.environ["XDG_CONFIG_HOME"],
     profile_id="omp-kernel")
   machine_path, shared_path = paths()
@@ -26,9 +26,9 @@ def test_new_omp_kernel_has_two_urls_and_five_keys():
   assert machine["local_values"] == {"tf_openai_url": "", "tf_anthropic_url": ""}
   assert set(shared["shared"]) == {"kimi_code_key", "glm_coding_key", "deepseek_key"}
   assert shared["providers"] == {
-    "kimi_tf": {"omp_kimi_tf_key": ""}, "zhipu_tf": {"omp_zhipu_tf_key": ""}}
+    "kimi_tf": {"omp_kimi_tf_key": ""}, "zhipu_tf": {"omp_zhipu_tf_key": ""}, "deepseek_tf": {"omp_deepseek_tf_key": ""}}
   assert set(result.secret_fields) == {
-    "kimi_code_key", "glm_coding_key", "deepseek_key", "omp_kimi_tf_key", "omp_zhipu_tf_key"}
+    "kimi_code_key", "glm_coding_key", "deepseek_key", "omp_kimi_tf_key", "omp_zhipu_tf_key", "omp_deepseek_tf_key"}
 
 
 def test_existing_preserves_values_comments_default_and_adapter_override():
@@ -71,7 +71,7 @@ def test_repeat_is_byte_and_mtime_idempotent():
   assert after == before
 
 
-def test_literal_provider_url_needs_no_local_placeholder():
+def test_literal_provider_url_keeps_other_provider_placeholder():
   machine_path, _ = paths()
   initialize_local("work", config_home=os.environ["XDG_CONFIG_HOME"])
   machine_path.write_text('''schema_version = 1
@@ -84,7 +84,7 @@ base_url = "https://literal.invalid/v1"
 ''', encoding="utf-8")
   initialize_local("work", config_home=os.environ["XDG_CONFIG_HOME"])
   values = tomllib.loads(machine_path.read_text())["local_values"]
-  assert values == {"tf_anthropic_url": ""}
+  assert values == {"tf_anthropic_url": "", "tf_openai_url": ""}
 
 
 def test_multiple_machines_share_keys_without_overwriting_values():
@@ -95,7 +95,7 @@ def test_multiple_machines_share_keys_without_overwriting_values():
   initialize_local("second", config_home=os.environ["XDG_CONFIG_HOME"], profile_id="omp-kernel")
   shared = tomllib.loads(shared_path.read_text())
   assert shared["shared"]["kimi_code_key"] == "kept"
-  assert set(shared["providers"]) == {"kimi_tf", "zhipu_tf"}
+  assert set(shared["providers"]) == {"kimi_tf", "zhipu_tf", "deepseek_tf"}
 
 
 def test_legacy_shared_and_inline_declarations_are_not_duplicated():

@@ -89,8 +89,8 @@ def test_defaults_apply_to_future_profile_and_profile_local_roles_win():
                             adapter_schemas=context)
   profile = resolved.data["profile"]
   assert profile["providers"] == ["kimi_code_openai", "glm_coding_openai", "deepseek_openai", "codex", "cursor"]
-  assert profile["models"] == ["kimi_code_openai", "glm_coding_53_openai",
-    "glm_coding_53_flash_openai", "deepseek_flash_openai"]
+  assert profile["models"] == ["kimi_code_openai", "kimi_code_k3_openai", "kimi_code_k3_256k_openai", "kimi_code_highspeed_openai",
+    "glm_coding_53_openai", "glm_coding_53_flash_openai", "deepseek_flash_openai", "deepseek_pro_openai"]
   assert profile["roles"]["main"] == "glm_coding_53_openai"
   assert resolved.provenance[("profile", "providers")] == "local"
   assert resolved.provenance[("profile", "models")] == "local"
@@ -122,7 +122,8 @@ def test_each_adapter_resolves_and_renders_defaults_without_keys(tmp_path, profi
   suffix = "anthropic" if workspace.agent == "omp" else "openai"
   assert set(workspace.default_providers) == {"kimi_code_" + suffix, "glm_coding_" + suffix, "deepseek_" + suffix}
   assert {data["models"][mid]["remote_id"] for mid in workspace.default_models} == {
-    "kimi-for-coding", "glm-5.3", "glm-5.3-flash", "deepseek-flash"}
+    "kimi-for-coding", "k3", "k3-256k", "kimi-for-coding-highspeed",
+    "glm-5.3", "glm-5.3-flash", "deepseek-flash", "deepseek-v4-pro"}
   assert all("pricing" not in data["models"][mid] for mid in workspace.default_models if not mid.startswith("deepseek"))
   assert data["providers"][data["models"][model]["provider"]]["protocol"] == protocol
   assert workspace.default_models == tuple(
@@ -216,7 +217,8 @@ def test_pi_subscription_models_render_explicit_wire_compatibility(tmp_path):
   groups = [json.loads(artifact.content) for artifact in artifacts
     if artifact.target.path == "pi-home/models.json" and artifact.target.selector.endswith("/models")]
   models = {model["id"]: model for group in groups for model in group}
-  assert set(models) == {"kimi-for-coding", "glm-5.3", "glm-5.3-flash", "deepseek-flash"}
+  assert set(models) == {"kimi-for-coding", "k3", "k3-256k", "kimi-for-coding-highspeed",
+    "glm-5.3", "glm-5.3-flash", "deepseek-flash", "deepseek-v4-pro"}
   for model_id in ("kimi-for-coding", "glm-5.3", "glm-5.3-flash"):
     assert models[model_id]["compat"] == {
       "supportsDeveloperRole": False,
@@ -225,10 +227,10 @@ def test_pi_subscription_models_render_explicit_wire_compatibility(tmp_path):
       "thinkingFormat": "zai",
       "supportsStrictMode": False,
     }
-    assert models[model_id]["thinkingLevelMap"] == {
-      "minimal": "low", "low": "low", "medium": "high", "high": "high",
-      "xhigh": "max", "max": "max",
-    }
+    expected_levels = {"minimal": "low", "low": "low", "medium": "high", "high": "high", "xhigh": "max", "max": "max"}
+    if model_id.startswith("glm"):
+      expected_levels["off"] = None
+    assert models[model_id]["thinkingLevelMap"] == expected_levels
 
 
 @pytest.mark.parametrize("native", [
@@ -263,7 +265,7 @@ def test_public_pool_removes_obsolete_routes_and_keeps_deepseek_specifications()
     assert model["input"] == ["text", "image"]
     assert model["reasoning_efforts"] == ["low", "high", "max"]
     assert model["source"] == "https://api-docs.deepseek.com/api/list-models/"
-    assert model["pricing"]["checked_on"] == "2026-09-27"
+    assert model["pricing"]["checked_on"] == "2026-10-06"
   native = loaded.registry["models"]["deepseek_flash_openai"]["native"]
   assert native["pi"]["thinkingLevelMap"] == expected_map
   assert "reasoningEffortMap" not in native["pi"]["compat"]
@@ -271,3 +273,33 @@ def test_public_pool_removes_obsolete_routes_and_keeps_deepseek_specifications()
   assert native["omp"]["thinking"] == {"minLevel": "low", "maxLevel": "max", "mode": "effort"}
   assert native["omp"]["compat"]["reasoningEffortMap"] == expected_map
   assert native["omp"]["compat"]["extraBody"] == {"thinking": {"type": "enabled"}}
+
+
+def test_glm_mandatory_reasoning_controls_render_as_public_sdk_metadata(tmp_path):
+  import json
+  workspace = load_workspace(local_file(tmp_path), "pi-default", repository=REPO)
+  artifacts = workspace.adapter.render(workspace.resolved.data)
+  groups = [json.loads(artifact.content) for artifact in artifacts
+    if artifact.target.path == "pi-home/models.json" and artifact.target.selector.endswith("/models")]
+  models = {model["id"]: model for group in groups for model in group}
+  for remote in ("glm-5.3", "glm-5.3-flash"):
+    assert models[remote]["thinkingLevelMap"]["off"] is None
+    assert "disabled_thinking_levels" not in models[remote]
+  registry = catalog().registry
+  for model in registry["models"].values():
+    if model["remote_id"] in ("glm-5.3", "glm-5.3-flash"):
+      assert model["native"]["omp"]["thinking"] == {
+        "minLevel": "low", "maxLevel": "max", "mode": "effort", "requiresEffort": True}
+
+
+def test_deepseek_tf_reuses_url_but_requires_its_independent_key(tmp_path):
+  workspace = load_workspace(local_file(tmp_path, '\n[secrets]\ndeepseek_key = "OFFICIAL-KEY-CANARY"\n'),
+    "omp-kernel", repository=REPO, proposal={"local_values": {
+      "tf_openai_url": "https://gateway.example.invalid/v1", "tf_anthropic_url": "https://gateway.example.invalid/anthropic"}})
+  data = workspace.resolved.data
+  assert data["providers"]["deepseek_tf"]["base_url"] == data["providers"]["kimi_tf"]["base_url"]
+  assert workspace.secret_store.resolve(SecretRef("secret:omp_deepseek_tf_key"), required=False) is None
+  assert data["profile"]["roles"]["main"] == "omp-kimi_tf-kimi-for-coding"
+  assert data["profile"]["agent_options"]["permission_control"]["remote_fallback_model"] == "omp-zhipu_tf-glm-5.3-flash"
+  lock = workspace.backend.read_lock(workspace.repository)
+  assert all(b"OFFICIAL-KEY-CANARY" not in artifact.content for artifact in workspace.candidate(lock.identity).artifacts)

@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-06",
+  "baselineCommit": "9f1678d",
+  "scope": "refresh coding/chat model catalog, share core specifications, add DeepSeek TF; model suites deferred",
+  "catalog": {
+    "coreTemplates": 11,
+    "staticBindings": 27,
+    "officialBindings": 16,
+    "tfBindings": 11,
+    "providers": 11,
+    "dynamicOAuthProviders": [
+      "codex",
+      "cursor"
+    ],
+    "oauthModelsIncludedInStaticCount": false
+  },
+  "publicPool": {
+    "modelsPerAdapter": 8,
+    "remoteModels": [
+      "kimi-for-coding",
+      "k3",
+      "k3-256k",
+      "kimi-for-coding-highspeed",
+      "glm-5.3",
+      "glm-5.3-flash",
+      "deepseek-flash",
+      "deepseek-v4-pro"
+    ],
+    "initialMainRemoteModel": "kimi-for-coding",
+    "existingExplicitRolesPreserved": true,
+    "modelSuitesAdded": false,
+    "automaticFailureFallbackAdded": false
+  },
+  "tf": {
+    "profile": "omp-kernel",
+    "providers": [
+      "kimi_tf",
+      "zhipu_tf",
+      "deepseek_tf"
+    ],
+    "modelsPerProvider": {
+      "kimi_tf": 4,
+      "zhipu_tf": 5,
+      "deepseek_tf": 2
+    },
+    "kernelStaticBindings": 19,
+    "deepseekAddressRef": "local:tf_openai_url",
+    "deepseekCredentialRef": "secret:omp_deepseek_tf_key",
+    "sharesAddressWithKimi": true,
+    "sharesCredentials": false,
+    "officialPricingCopied": false,
+    "actualGatewayAvailabilityVerified": false
+  },
+  "architecture": {
+    "singleLayerPublicTemplates": true,
+    "templatesExclude": [
+      "provider",
+      "address",
+      "credentials",
+      "native",
+      "pricing"
+    ],
+    "strictUnknownFieldsAndReferences": true,
+    "unreferencedMalformedTemplatesRejected": true,
+    "privateOverrideFormatUnchanged": true,
+    "controlFieldsOmittedFromNativeOutput": [
+      "template",
+      "notes",
+      "native.pi.disabled_thinking_levels"
+    ],
+    "piDisabledOffMaterializedAsNull": true,
+    "ompMandatoryGlmEffortDeclared": true,
+    "upstreamSourceModified": false
+  },
+  "sources": [
+    "https://www.kimi.com/code/docs/en/kimi-code/models.html",
+    "https://docs.z.ai/devpack/overview",
+    "https://docs.z.ai/guides/llm/glm-5.3",
+    "https://docs.z.ai/guides/vlm/glm-5.3-flash",
+    "https://docs.bigmodel.cn/cn/coding-plan/tool/others",
+    "https://api-docs.deepseek.com/api/list-models/",
+    "https://api-docs.deepseek.com/updates/",
+    "https://api-docs.deepseek.com/quick_start/pricing/",
+    "https://docs.z.ai/guides/llm/glm-5.2",
+    "https://docs.z.ai/guides/llm/glm-5.1",
+    "https://docs.z.ai/guides/llm/glm-5-turbo"
+  ],
+  "capabilityLimits": {
+    "kimiOutput": "reviewed official OMP 18.4.5 SDK client cap, not verified server maximum",
+    "kimiK3ContextRequiresHigherMembership": true,
+    "kimiHighspeed": "Thinking ON; no invented effort ladder",
+    "glmContext": "conservative 1000000 client budget",
+    "unsupportedAgentInputOmitted": [
+      "video",
+      "file"
+    ],
+    "dshProjectsCapacityOnly": true,
+    "tfLegacyGlmAliasesAssumedEquivalentToOfficial": false,
+    "deepseekProRetainedAsSeparateModel": true,
+    "pricingSnapshotCheckedOn": "2026-10-06"
+  },
+  "validation": {
+    "status": "passedAfterTargetedRepairs",
+    "realAgentHostsLaunched": 0,
+    "realModelRequests": 0,
+    "realAccountOrCredentialInspection": false,
+    "localDeploymentModified": false,
+    "affectedScenariosVerified": 546,
+    "initialBroadRun": {
+      "files": 22,
+      "passed": 544,
+      "failed": 2
+    },
+    "repairs": [
+      "new candidate test now uses actual repository lock identity",
+      "custom secret-file test expects current Coding Plan keys and preserves existing values"
+    ],
+    "finalSupplement": {
+      "passed": 25,
+      "failed": 0
+    },
+    "finalInitLocalFile": {
+      "passed": 88,
+      "failed": 0
+    },
+    "repeatedEntireBroadRunAfterTestOnlyRepairs": false,
+    "publicPresetsExitCode": 0,
+    "gitDiffCheckPassed": true,
+    "editedTomlAndEvidenceJsonParsed": true,
+    "temporaryHomeNetworkBlockingAndFakeProcesses": true
+  },
+  "locks": {
+    "piIdentity": "b64c18ff2d4acb3b7e7f3f9ae47fb1271504ef8a6236c6074077e25b7a48a6db",
+    "ompIdentity": "44227bf4c85fcf32e063fd0f19230b3842cad00f862ac1395eb6c6606f059427",
+    "verifiedPiVendorArchives": 26,
+    "verifiedPiSourceTrees": 20,
+    "dependencySourcesSlicesAndResolutionsUnchanged": true,
+    "upstreamVersionChanged": false,
+    "refreshNetworkRequests": 0
+  },
+  "review": {
+    "executor": "gpt-6.1-sol / medium",
+    "scout": "gpt-6-luna / high",
+    "finalAcceptance": "root",
+    "status": "completed",
+    "blockingFindingsRemaining": 0,
+    "documentationCountFindingCorrected": true,
+    "finalPriceScheduleReviewIncludesChinesePublicHolidayException": true
+  },
+  "taskRecord": {
+    "completed": [
+      "official model research",
+      "shared template materialization",
+      "model roster and DeepSeek TF",
+      "documentation",
+      "offline lock refresh",
+      "stable affected regression",
+      "final stable diff review",
+      "targeted repairs and final regressions"
+    ],
+    "inProgress": [],
+    "failedPendingDecision": [],
+    "environmentUnverified": [
+      "TF gateway availability",
+      "real host/model behavior and account entitlements/billing",
+      "local deployment"
+    ]
+  }
+}

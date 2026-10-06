@@ -482,12 +482,35 @@
             "name": "Kimi For Coding (K2.8 Preview)",
             "reasoning": true,
             "contextWindow": 1048576,
-            "maxTokens": 131072,
+            "maxTokens": 32768,
             "cost": {
               "input": 1.0,
               "output": 4.0,
               "cacheRead": 0.4,
               "cacheWrite": 1.0
+            },
+            "input": [
+              "text",
+              "image"
+            ],
+            "thinking": {
+              "minLevel": "low",
+              "maxLevel": "max",
+              "mode": "effort"
+            },
+            "compat": {
+              "supportsDeveloperRole": false,
+              "supportsReasoningEffort": true,
+              "maxTokensField": "max_tokens",
+              "thinkingFormat": "zai",
+              "reasoningEffortMap": {
+                "minimal": "low",
+                "low": "low",
+                "medium": "high",
+                "high": "high",
+                "xhigh": "max",
+                "max": "max"
+              }
             }
           },
           {
@@ -501,6 +524,29 @@
               "output": 15.0,
               "cacheRead": 0.3,
               "cacheWrite": 3.0
+            },
+            "input": [
+              "text",
+              "image"
+            ],
+            "thinking": {
+              "minLevel": "low",
+              "maxLevel": "max",
+              "mode": "effort"
+            },
+            "compat": {
+              "supportsDeveloperRole": false,
+              "supportsReasoningEffort": true,
+              "maxTokensField": "max_tokens",
+              "thinkingFormat": "openai",
+              "reasoningEffortMap": {
+                "minimal": "low",
+                "low": "low",
+                "medium": "high",
+                "high": "high",
+                "xhigh": "max",
+                "max": "max"
+              }
             }
           },
           {
@@ -508,12 +554,35 @@
             "name": "Kimi K3 256K",
             "reasoning": true,
             "contextWindow": 262144,
-            "maxTokens": 65536,
+            "maxTokens": 131072,
             "cost": {
               "input": 3.0,
               "output": 15.0,
               "cacheRead": 0.3,
               "cacheWrite": 3.0
+            },
+            "input": [
+              "text",
+              "image"
+            ],
+            "thinking": {
+              "minLevel": "low",
+              "maxLevel": "max",
+              "mode": "effort"
+            },
+            "compat": {
+              "supportsDeveloperRole": false,
+              "supportsReasoningEffort": true,
+              "maxTokensField": "max_tokens",
+              "thinkingFormat": "openai",
+              "reasoningEffortMap": {
+                "minimal": "low",
+                "low": "low",
+                "medium": "high",
+                "high": "high",
+                "xhigh": "max",
+                "max": "max"
+              }
             }
           },
           {
@@ -521,12 +590,32 @@
             "name": "Kimi For Coding Highspeed",
             "reasoning": true,
             "contextWindow": 262144,
-            "maxTokens": 65536,
+            "maxTokens": 32768,
             "cost": {
               "input": 1.9,
               "output": 8.0,
               "cacheRead": 0.38,
               "cacheWrite": 1.9
+            },
+            "input": [
+              "text",
+              "image"
+            ],
+            "thinking": {
+              "minLevel": "high",
+              "maxLevel": "high",
+              "mode": "effort"
+            },
+            "compat": {
+              "supportsDeveloperRole": false,
+              "supportsReasoningEffort": false,
+              "maxTokensField": "max_tokens",
+              "thinkingFormat": "zai",
+              "extraBody": {
+                "thinking": {
+                  "type": "enabled"
+                }
+              }
             }
           }
         ]
@@ -543,13 +632,19 @@
             "id": "glm-5.3",
             "name": "GLM-5.3",
             "reasoning": true,
-            "contextWindow": 1048576,
+            "contextWindow": 1000000,
             "maxTokens": 131072,
             "cost": {
               "input": 1.4,
               "output": 4.4,
               "cacheRead": 0.28,
               "cacheWrite": 1.4
+            },
+            "thinking": {
+              "minLevel": "low",
+              "maxLevel": "max",
+              "mode": "effort",
+              "requiresEffort": true
             }
           },
           {
@@ -560,20 +655,26 @@
               "text",
               "image"
             ],
-            "contextWindow": 1048576,
+            "contextWindow": 1000000,
             "maxTokens": 131072,
             "cost": {
               "input": 0.075,
               "output": 0.25,
               "cacheRead": 0.015,
               "cacheWrite": 0.075
+            },
+            "thinking": {
+              "minLevel": "low",
+              "maxLevel": "max",
+              "mode": "effort",
+              "requiresEffort": true
             }
           },
           {
             "id": "glm-5.2",
             "name": "GLM-5.2",
             "reasoning": true,
-            "contextWindow": 1048576,
+            "contextWindow": 1000000,
             "maxTokens": 131072,
             "cost": {
               "input": 0.98,
@@ -606,6 +707,86 @@
               "output": 3.08,
               "cacheRead": 0.2,
               "cacheWrite": 0.98
+            }
+          }
+        ]
+      },
+      "deepseek_tf": {
+        "name": "DeepSeek(TokensFlow)",
+        "baseUrl": "https://tf-gateway.example.invalid/v1",
+        "api": "openai-completions",
+        "models": [
+          {
+            "name": "omp-deepseek_tf-deepseek-flash",
+            "id": "deepseek-flash",
+            "contextWindow": 1048576,
+            "maxTokens": 393216,
+            "input": [
+              "text",
+              "image"
+            ],
+            "reasoning": true,
+            "thinking": {
+              "minLevel": "low",
+              "maxLevel": "max",
+              "mode": "effort"
+            },
+            "compat": {
+              "supportsDeveloperRole": false,
+              "supportsReasoningEffort": true,
+              "maxTokensField": "max_tokens",
+              "reasoningEffortMap": {
+                "minimal": "low",
+                "low": "low",
+                "medium": "high",
+                "high": "high",
+                "xhigh": "high",
+                "max": "max"
+              },
+              "supportsToolChoice": false,
+              "requiresReasoningContentForToolCalls": true,
+              "requiresAssistantContentForToolCalls": true,
+              "extraBody": {
+                "thinking": {
+                  "type": "enabled"
+                }
+              }
+            }
+          },
+          {
+            "name": "omp-deepseek_tf-deepseek-v4-pro",
+            "id": "deepseek-v4-pro",
+            "contextWindow": 1048576,
+            "maxTokens": 393216,
+            "input": [
+              "text"
+            ],
+            "reasoning": true,
+            "thinking": {
+              "minLevel": "low",
+              "maxLevel": "max",
+              "mode": "effort"
+            },
+            "compat": {
+              "supportsDeveloperRole": false,
+              "supportsReasoningEffort": true,
+              "maxTokensField": "max_tokens",
+              "reasoningEffortMap": {
+                "minimal": "low",
+                "low": "low",
+                "medium": "high",
+                "high": "high",
+                "xhigh": "high",
+                "max": "max"
+              },
+              "supportsToolChoice": false,
+              "requiresReasoningContentForToolCalls": true,
+              "requiresAssistantContentForToolCalls": true,
+              "extraBody": {
+                "thinking": {
+                  "type": "enabled"
+                }
+              }
             }
           }
         ]

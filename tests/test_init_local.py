@@ -440,7 +440,7 @@ def test_existing_custom_secret_file_is_completed_without_touching_default(tmp_p
   assert default_shared.read_bytes() == default_before
   document = tomllib.loads(custom.read_text())
   assert document["secrets"]["kimi_key"] == CANARY
-  assert document["shared"] == {"deepseek_key": "", "glm_key": ""}
+  assert document["shared"] == {"kimi_code_key": "", "glm_coding_key": "", "deepseek_key": ""}
   assert "# keep secret note" in custom.read_text()
   output = capsys.readouterr()
   assert str(custom) in output.out

@@ -2,21 +2,21 @@ schema_version = 1
 
 [adapters.dsh]
 providers = ["kimi_code_openai", "glm_coding_openai", "deepseek_openai"]
-models = ["kimi_code_openai", "glm_coding_53_openai", "glm_coding_53_flash_openai", "deepseek_flash_openai"]
+models = ["kimi_code_openai", "kimi_code_k3_openai", "kimi_code_k3_256k_openai", "kimi_code_highspeed_openai", "glm_coding_53_openai", "glm_coding_53_flash_openai", "deepseek_flash_openai", "deepseek_pro_openai"]
 
 [adapters.dsh.roles]
 main = "kimi_code_openai"
 
 [adapters.pi]
 providers = ["kimi_code_openai", "glm_coding_openai", "deepseek_openai"]
-models = ["kimi_code_openai", "glm_coding_53_openai", "glm_coding_53_flash_openai", "deepseek_flash_openai"]
+models = ["kimi_code_openai", "kimi_code_k3_openai", "kimi_code_k3_256k_openai", "kimi_code_highspeed_openai", "glm_coding_53_openai", "glm_coding_53_flash_openai", "deepseek_flash_openai", "deepseek_pro_openai"]
 
 [adapters.pi.roles]
 main = "kimi_code_openai"
 
 [adapters.omp]
 providers = ["kimi_code_anthropic", "glm_coding_anthropic", "deepseek_anthropic"]
-models = ["kimi_code_anthropic", "glm_coding_53_anthropic", "glm_coding_53_flash_anthropic", "deepseek_flash_anthropic"]
+models = ["kimi_code_anthropic", "kimi_code_k3_anthropic", "kimi_code_k3_256k_anthropic", "kimi_code_highspeed_anthropic", "glm_coding_53_anthropic", "glm_coding_53_flash_anthropic", "deepseek_flash_anthropic", "deepseek_pro_anthropic"]
 
 [adapters.omp.roles]
 main = "kimi_code_anthropic"

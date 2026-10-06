@@ -1,6 +1,4 @@
-"schema_version" = 1
-
-["rules"]
+schema_version = 1
 
 ["rules"."omp-chinese"]
 "path" = "shared/rules/chinese.md"
@@ -10,8 +8,6 @@
 
 ["rules"."omp-kernel-confirmation"]
 "path" = "agents/omp/resources/rules/confirmation-before-action.md"
-
-["providers"]
 
 ["providers"."kimi_tf"]
 "protocol" = "openai-compatible"
@@ -25,72 +21,63 @@
 "base_url_ref" = "local:tf_anthropic_url"
 "credential_ref" = "secret:omp_zhipu_tf_key"
 
-["models"]
+["providers"."deepseek_tf"]
+"protocol" = "openai-compatible"
+"auth_kind" = "api-key"
+"base_url_ref" = "local:tf_openai_url"
+"credential_ref" = "secret:omp_deepseek_tf_key"
 
 ["models"."omp-kimi_tf-kimi-for-coding"]
+"template" = "kimi_code"
 "provider" = "kimi_tf"
-"remote_id" = "kimi-for-coding"
-"input" = ["text"]
-"context_window" = 1048576
-"max_output_tokens" = 131072
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "zai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
 
 ["models"."omp-kimi_tf-k3"]
+"template" = "kimi_k3"
 "provider" = "kimi_tf"
-"remote_id" = "k3"
-"input" = ["text"]
-"context_window" = 1048576
-"max_output_tokens" = 131072
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "openai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
 
 ["models"."omp-kimi_tf-k3-256k"]
+"template" = "kimi_k3_256k"
 "provider" = "kimi_tf"
-"remote_id" = "k3-256k"
-"input" = ["text"]
-"context_window" = 262144
-"max_output_tokens" = 65536
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "openai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
 
 ["models"."omp-kimi_tf-kimi-for-coding-highspeed"]
+"template" = "kimi_code_highspeed"
 "provider" = "kimi_tf"
-"remote_id" = "kimi-for-coding-highspeed"
-"input" = ["text"]
-"context_window" = 262144
-"max_output_tokens" = 65536
+"native" = {"omp" = {"thinking" = {"minLevel" = "high", "maxLevel" = "high", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = false, "maxTokensField" = "max_tokens", "thinkingFormat" = "zai", "extraBody" = {"thinking" = {"type" = "enabled"}}}}}
 
 ["models"."omp-zhipu_tf-glm-5.3"]
+"template" = "glm_53"
 "provider" = "zhipu_tf"
-"remote_id" = "glm-5.3"
-"input" = ["text"]
-"context_window" = 1048576
-"max_output_tokens" = 131072
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}}}
 
 ["models"."omp-zhipu_tf-glm-5.3-flash"]
+"template" = "glm_53_flash"
 "provider" = "zhipu_tf"
-"remote_id" = "glm-5.3-flash"
-"input" = ["text", "image"]
-"context_window" = 1048576
-"max_output_tokens" = 131072
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}}}
 
 ["models"."omp-zhipu_tf-glm-5.2"]
+"template" = "glm_52"
 "provider" = "zhipu_tf"
-"remote_id" = "glm-5.2"
-"input" = ["text"]
-"context_window" = 1048576
-"max_output_tokens" = 131072
 
 ["models"."omp-zhipu_tf-glm-5.1"]
+"template" = "glm_51"
 "provider" = "zhipu_tf"
-"remote_id" = "glm-5.1"
-"input" = ["text"]
-"context_window" = 200000
-"max_output_tokens" = 131072
 
 ["models"."omp-zhipu_tf-glm-5-turbo"]
+"template" = "glm_5_turbo"
 "provider" = "zhipu_tf"
-"remote_id" = "glm-5-turbo"
-"input" = ["text"]
-"context_window" = 204800
-"max_output_tokens" = 131072
 
-["skills"]
+["models"."omp-deepseek_tf-deepseek-flash"]
+"template" = "deepseek_flash"
+"provider" = "deepseek_tf"
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "high", "max" = "max"}, "supportsToolChoice" = false, "requiresReasoningContentForToolCalls" = true, "requiresAssistantContentForToolCalls" = true, "extraBody" = {"thinking" = {"type" = "enabled"}}}}}
+
+["models"."omp-deepseek_tf-deepseek-v4-pro"]
+"template" = "deepseek_pro"
+"provider" = "deepseek_tf"
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "high", "max" = "max"}, "supportsToolChoice" = false, "requiresReasoningContentForToolCalls" = true, "requiresAssistantContentForToolCalls" = true, "extraBody" = {"thinking" = {"type" = "enabled"}}}}}
 
 ["skills"."omp-kernel-codex-delegate"]
 "path" = "agents/omp/resources/skills/codex-delegate"

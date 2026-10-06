@@ -134,7 +134,7 @@ def read_local_document(path):
 
 def load_sources(explicit_sources: SourceInputs, *, adapter_schemas: AdapterSchemas) -> Catalog:
   """不发现目录、不加载秘密；仅技能允许精确指向旧 path 的一次显式整包替换。"""
-  registry = {kind: {} for kind in ("providers", "models", "mcp", "rules", "skills")}
+  registry = {kind: {} for kind in ("providers", "models", "mcp", "rules", "skills", "model_templates")}
   profiles = {}
   adapter_documents = {}
   model_defaults = {}
@@ -167,6 +167,8 @@ def load_sources(explicit_sources: SourceInputs, *, adapter_schemas: AdapterSche
       elif entities.keys() & additions.keys():
         raise ConfigError("duplicate", ("registry", kind, "<key>"))
       entities.update(additions)
+  from .model_templates import materialize_models
+  registry = materialize_models(registry)
   for index, path in enumerate(explicit_sources.profiles, 1):
     data = _read_toml(path, source=("profile", str(index)))
     validate_document("profile", data, adapter_schemas=adapter_schemas, partial_options=True)
