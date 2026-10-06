@@ -101,13 +101,71 @@
     "reconstructed public text is not complete semantic equivalence of original commands",
     "native pattern protection is not a process sandbox",
     "actual other OS, real host Shell and model quality not newly verified",
-    "daily machine deployment not performed"
+    "daily machine deployment was not performed in initial implementation validation; subsequent authorized deployment is recorded separately below"
   ],
   "delegation": {
     "scout": "gpt-6-luna / high",
     "executorAvailable": false,
     "executorBlockedBy": "agent thread limit",
     "implementationAndFinalValidation": "root"
+  },
+  "dailyDeployment20261006": {
+    "reviewedCommit": "18b89d5",
+    "profile": "omp-kernel",
+    "review": {
+      "blockingFindings": 0,
+      "scout": "gpt-6-luna / high",
+      "publicScenarioMismatches": 0,
+      "publicScenarioExceptions": 0,
+      "targetedBunPassed": 71,
+      "targetedBunFailed": 0,
+      "targetedBunAssertions": 12171
+    },
+    "backup": {
+      "members": 179,
+      "files": 124,
+      "mode": "0600",
+      "contentsVerified": true,
+      "privateLedgerTracked": false
+    },
+    "syncExitCode": 0,
+    "planChanges": 2,
+    "applyExitCode": 0,
+    "appliedChanges": 2,
+    "doctor": {
+      "exitCode": 0,
+      "readiness": "offline-ready",
+      "dependencies": "installed",
+      "deployedRuntimeMatchesCurrent": true,
+      "changesPending": 0,
+      "drift": false,
+      "conflicts": false,
+      "recoveryPending": false,
+      "authenticationInspected": false
+    },
+    "preservation": {
+      "filesVerifiedUnchanged": 120,
+      "machineConfiguration": true,
+      "accountSessionAndOwnership": true,
+      "nativeConfigurationOtherThanExtensions": true,
+      "activeInstanceTerminated": false
+    },
+    "startupAdmission": {
+      "passed": true,
+      "shell": "zsh",
+      "route": "local-embedded",
+      "launchReplacedByValidationCallback": true,
+      "secretReferenceBindingsExcluded": true,
+      "actualHostSpawned": false,
+      "externalModelRequests": 0,
+      "historicalCommandsExecuted": 0
+    },
+    "officialBinarySha256": "42c710239b3fc30b9759424f973c6c143709935d5752be7eec8d7b011f40d864",
+    "officialBinaryMatchesLockedAsset": true,
+    "mode": "smart",
+    "reviewer": "session",
+    "remoteFallbackConfigured": true,
+    "localPrivatePathsAndFileFingerprintsPublished": false
   },
   "delivery": {
     "ordinaryOfficialLockRefreshed": true,
