@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-06",
+  "baselineCommit": "54e37fa",
+  "scope": "independent plugin static grammar, privacy and native approval boundaries; synthetic public corpus",
+  "privateOriginal": {
+    "cases": 11504,
+    "complete": 9461,
+    "unsupported": 2043,
+    "mismatches": 0,
+    "thrown": 0
+  },
+  "publicCorpus": {
+    "path": "tests/fixtures/omp/command-scenarios/corpus.json.gz",
+    "bytes": 1223214,
+    "summary": {
+      "inputScenarios": 11504,
+      "publicCases": 11473,
+      "mergedRebuiltCases": 31,
+      "representedScenarios": 11504,
+      "categories": {
+        "compound": 4282,
+        "control-flow": 243,
+        "dynamic": 486,
+        "glob": 374,
+        "multiline": 1211,
+        "redirection": 3597,
+        "simple": 1280
+      },
+      "expectedComplete": 9442,
+      "expectedUnsupported": 2031
+    },
+    "unknownLiteralAtoms": 0,
+    "knownIdentityResiduals": 0,
+    "originalFingerprintsCopied": false
+  },
+  "pluginMockGate": {
+    "cases": 11473,
+    "modelAndDelegate": 9430,
+    "headlessBlocked": 2043,
+    "mismatches": 0,
+    "realModelRequests": 0,
+    "realBackendExecutions": 0,
+    "context": "smart; no configured restrictions; native zsh/local-embedded allow; fake provenance/model/settings/backend"
+  },
+  "anchors": {
+    "cases": 79,
+    "supported": 54,
+    "conservativeBoundary": 25,
+    "semanticMatches": 79,
+    "semanticConformancePassed": true,
+    "commentErrorsFixed": [
+      "H077",
+      "H078",
+      "H079"
+    ],
+    "priorCoverageCasesSupported": 12,
+    "heredocAndBraceStillConservative": true
+  },
+  "validation": {
+    "pythonHistoryAndPublic": {
+      "passed": 183,
+      "failed": 0
+    },
+    "bunExplicitExistingBabel": {
+      "passed": 166,
+      "failed": 0,
+      "assertions": 12588
+    },
+    "bunDefault": {
+      "passed": 165,
+      "skipped": 1,
+      "failed": 0,
+      "assertions": 12575
+    },
+    "relatedMockProductTests": {
+      "passed": 104,
+      "skipped": 7,
+      "failed": 0,
+      "retiredPatchedMaterialNotBuilt": true
+    },
+    "sdkStrictTsgo": {
+      "exitCode": 0,
+      "pristineOmp": "18.4.5"
+    },
+    "initialSandboxProductAttempts": {
+      "attempts": 2,
+      "eachPassed": 71,
+      "eachFailed": 33,
+      "eachSkipped": 7,
+      "reason": "sandbox ancestor UID mapping to nobody; real filesystem root UID0 rerun passed without relaxing protections"
+    },
+    "remoteCiExecuted": false,
+    "modelRequests": 0,
+    "agentHostsLaunched": 0,
+    "historicalCommandsExecuted": 0
+  },
+  "limits": [
+    "bounded static grammar with Python/shlex oracle and hardcoded anchors, not full shell semantics proof",
+    "fake model outputs test routing, not actual approval quality",
+    "reconstructed public text is not complete semantic equivalence of original commands",
+    "native pattern protection is not a process sandbox",
+    "actual other OS, real host Shell and model quality not newly verified",
+    "daily machine deployment not performed"
+  ],
+  "delegation": {
+    "scout": "gpt-6-luna / high",
+    "executorAvailable": false,
+    "executorBlockedBy": "agent thread limit",
+    "implementationAndFinalValidation": "root"
+  },
+  "delivery": {
+    "ordinaryOfficialLockRefreshed": true,
+    "upstreamSourcesModified": false,
+    "retiredPatchedAssetsRefreshed": false,
+    "cleanup": {
+      "status": "completed",
+      "taskIntermediatesRemoved": 13,
+      "bytesRemoved": 16496450,
+      "originalPrivateCorpusRetained": true,
+      "originalLogsTouched": false
+    },
+    "officialLockIdentity": "8335b3b0ba9c96942aa21f5b1dad00d1e71195c29ad6482b506fae38982a65a2",
+    "pluginTreeDigest": "fd0d209c653b4b1af0afc8cd1b9f89b5761fe69f7cc7f40b33169041263c2e6e",
+    "upstreamIdentityUnchanged": true
+  }
+}

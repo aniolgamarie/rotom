@@ -3,6 +3,8 @@ import { createStandalonePlugin, type StandaloneConfig, validateStandaloneConfig
 import type { NativeBashRuntime, NativeSettingsSnapshot } from "./native-bash";
 import { parseStandaloneReview, reviewCommand } from "./standalone-reviewer";
 import { parseGenericCommands } from "./standalone-shell-analysis";
+import { readCorpusFile } from "../../../../scripts/check-omp-command-history";
+import { join } from "node:path";
 
 const digest = "a".repeat(64);
 const baseConfig: StandaloneConfig = {
@@ -153,7 +155,7 @@ describe("standalone shell analysis", () => {
   });
   test("fails closed on dynamic syntax", () => {
     expect(parseGenericCommands("echo $(id)").status).toBe("unsupported");
-    expect(parseGenericCommands("cat *.env").status).toBe("unsupported");
+    expect(parseGenericCommands("cat *.env")).toEqual({ status: "complete", commands: [{ connector: "start", argv: ["cat", "*.env"], globs: [1] }] });
   });
 });
 
@@ -297,6 +299,36 @@ describe("standalone reviewer", () => {
 });
 
 describe("standalone plugin", () => {
+  test("all rebuilt scenarios follow the native plugin review or headless human boundary", async () => {
+    const data = readCorpusFile(join(import.meta.dir, "../../../../tests/fixtures/omp/command-scenarios/corpus.json.gz")) as any;
+    const diagnostics = { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } as const;
+    const native = fakeNativeRuntime({ diagnostics, reviewContext: { ...diagnostics, sameSettingsInstance: true, nativeDecision: "allow" } });
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime, hasUI: false });
+    const { tool, hook } = await nativeReady(h);
+    let completed = 0;
+    let blocked = 0;
+    const failures: string[] = [];
+    for (const row of data.records) {
+      const input = { command: row.command, timeout: 2 };
+      const fetches = h.fetchCalls.length;
+      const invoked = h.invokeCalls.length;
+      const result = await hook({ type: "tool_call", toolName: "bash", toolCallId: row.id, input }, h.ctx);
+      if (row.expectedGate === "human") {
+        if (!result?.block || h.fetchCalls.length !== fetches || h.invokeCalls.length !== invoked) failures.push(row.id);
+        blocked++;
+      } else {
+        const output = result === undefined ? await tool.execute(row.id, input, undefined, undefined, h.ctx) : undefined;
+        if (result !== undefined || output?.isError || h.fetchCalls.length !== fetches+1 || h.invokeCalls.length !== invoked+1 || h.invokeCalls.at(-1)?.[0] !== input) failures.push(row.id);
+        completed++;
+      }
+    }
+    expect(completed+blocked).toBe(data.records.length);
+    expect(completed).toBeGreaterThan(9000);
+    expect(blocked).toBeGreaterThan(1900);
+    expect({ count: failures.length, first: failures.slice(0, 10) }).toEqual({ count: 0, first: [] });
+    expect(h.execCalls).toHaveLength(0);
+    expect(h.selectCalls).toHaveLength(0);
+  }, 60000);
   test("loads by registration only before runtime actions are initialized", async () => {
 const h = await fakeHost({ loadingActionsThrow: true });
     expect(h.tools.has("permission_bash")).toBe(true);
@@ -331,6 +363,25 @@ const h = await fakeHost({ config: { ...baseConfig, defaultMode: "manual" }, sel
     expect(title).toContain('command: "API_KEY=[REDACTED] env"');
     expect(title).not.toContain("sk-12345678901234567890");
   });
+  test("credential flags, custom secret fields, URL userinfo and quote concatenation never reach the reviewer", async () => {
+    for (const command of ["echo CUSTOM_ACCESS_TOKEN='CanaryOne'CanaryTwo", "echo API'_'KEY=CanaryKey", "echo API'_'KEY=CanaryKey \\", "echo CUSTOM'_'ACCESS_TOKEN=CanaryKey", "echo API_KEY=\\\nCanaryKey", "echo ok # API'_'KEY=CanaryKey", "curl -u CanaryUser:CanaryPass https://example.invalid", "curl -uCanaryUser:CanaryPass https://example.invalid", "curl -u \\\nCanaryUser:CanaryPass https://example.invalid", "curl https://CanaryUser:CanaryPass@example.invalid", "curl --api-key CanaryKey", "echo 'Authorization: Bearer CanaryToken'"]) {
+      const h = await fakeHost({ select: "Deny" });
+      expect((await (await ready(h)).execute("call", { command }, undefined, undefined, h.ctx)).isError).toBe(true);
+      expect(h.fetchCalls).toHaveLength(0);
+      expect(h.execCalls).toHaveLength(0);
+      expect(h.selectCalls).toHaveLength(1);
+      expect(JSON.stringify(h.selectCalls)).not.toMatch(/Canary(?:One|Two|User|Pass|Key|Token)/u);
+    }
+    const ordinary = await fakeHost({ config: { ...baseConfig, defaultMode: "manual" }, select: "Deny" });
+    await (await ready(ordinary)).execute("call", { command: "ls -u fixture.txt" }, undefined, undefined, ordinary.ctx);
+    expect(JSON.stringify(ordinary.selectCalls)).toContain("ls -u fixture.txt");
+    for (const command of ["curl --api'_'key CanaryKey", "echo Be'ar'er CanaryToken", "echo Be'ar'er\" CanaryToken\""]) {
+      const h = await fakeHost({ select: "Deny" });
+      await (await ready(h)).execute("call", { command }, undefined, undefined, h.ctx);
+      expect(h.fetchCalls).toHaveLength(0);
+      expect(JSON.stringify(h.selectCalls)).not.toMatch(/Canary(?:Key|Token)/u);
+    }
+  });
   test("human prompt renders control characters as explicit escapes", async () => {
     const h = await fakeHost({ config: { ...baseConfig, defaultMode: "manual" }, select: "Deny" });
     await (await ready(h)).execute("call", { command: "printf '\u001b[31m'\rnext", cwd: "/tmp\u001b]0;title\u0007" },
@@ -356,6 +407,36 @@ const h = await fakeHost({ config: { ...baseConfig, nativePatterns: [{ match: "r
     expect(result.isError).toBe(true);
     expect(h.fetchCalls).toHaveLength(0);
     expect(h.selectCalls).toHaveLength(1);
+  });
+  test("redirect effects, wildcard uncertainty and embedded programs preserve configured gates", async () => {
+    for (const [command, pattern, approval] of [
+      ["echo ok 1>protected.txt 2>&1", "echo * > protected.txt", "deny"],
+      ["cat *.txt", "cat protected.txt", "deny"],
+      ["cat *.txt", "cat protected.txt", "prompt"],
+      ["cat *.txt", "cat *", "deny"],
+      ["python '-cprint(1)'", "rm *", "deny"],
+      ["sudo rm target", "rm *", "deny"],
+      ["rm file >", "rm *", "deny"],
+      ["rm protected.txt; echo $(id)", "rm protected.txt", "deny"],
+      ["rm protected.txt\n echo $(id)", "rm *", "deny"],
+      ["find . -exec rm -rf / \\;", "rm *", "deny"],
+      ["awk 'BEGIN{system(\"rm -rf /\")}'", "rm *", "deny"],
+      ["sed 'e rm -rf /'", "rm *", "deny"],
+    ] as const) {
+      const hardDeny = approval === "deny" && /^(?:rm|cat|echo)\s/u.test(command);
+      const h = await fakeHost({ config: { ...baseConfig, nativePatterns: [{ match: pattern, approval }] }, hasUI: hardDeny, select: "Approve" });
+      const result = await (await ready(h)).execute("call", { command }, undefined, undefined, h.ctx);
+      expect(result.isError).toBe(true);
+      expect(h.fetchCalls).toHaveLength(0);
+      expect(h.execCalls).toHaveLength(0);
+      if (hardDeny) expect(h.selectCalls).toHaveLength(0);
+    }
+    for (const command of ["ls *.jar 2>/dev/null", "pwd\nls;", "echo ok # ; rm -rf /", "cat '*.txt'"]) {
+      const h = await fakeHost({ config: { ...baseConfig, nativePatterns: [{ match: "rm *", approval: "deny" }] }, hasUI: false });
+      expect((await (await ready(h)).execute("call", { command }, undefined, undefined, h.ctx)).isError).toBeUndefined();
+      expect(h.fetchCalls).toHaveLength(1);
+      expect(h.execCalls).toHaveLength(1);
+    }
   });
   test("model failure uses human and headless blocks", async () => {
 const ui = await fakeHost({ response: new Error("offline"), select: "Approve" });

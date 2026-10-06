@@ -1,7 +1,7 @@
 import { lstat, readFile } from "node:fs/promises";
 import { isAbsolute, join, resolve } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
-import { matchesNativePattern, parseGenericCommands } from "./standalone-shell-analysis";
+import { hasUncertainPatternMatch, matchesNativePattern, matchesNativeRaw, parseGenericCommands, privacyWords, visiblePrefixForDenial } from "./standalone-shell-analysis";
 import { loadNativeBashRuntime, type NativeBashRuntime, type NativeSettingsSnapshot,
   type PlainBashParams, type NativeDiagnostics, SHELL_FAMILIES, CONTEXT_REASONS } from "./native-bash";
 import { parseStandaloneJson, reviewCommand, type ReviewAttempt, type ReviewRuntime, type ReviewTarget,
@@ -140,19 +140,37 @@ function userMessages(ctx: ExtensionContext): string[] {
   return messages;
 }
 
+const SECRET_FIELD = "(?:(?:token|password|passwd|secret|api[_-]?key|credential|authorization|cookie)[A-Za-z0-9_-]*)";
+const SECRET_VALUE = "(?:'[^'\\n]*'|\"[^\"\\n]*\"|[^\\s;&|<>]+)+";
+
 function containsSensitiveText(command: string, cwd: string, messages: string[]): boolean {
-  const text = [command, cwd, ...messages].join("\n");
-  return /(?:api[_-]?key|access[_-]?token|secret|password|authorization)\s*[:=]\s*\S+/iu.test(text) ||
+  const raw = [command, cwd, ...messages].join("\n");
+  const text = raw + "\n" + privacyWords(raw).map(t => t.value).join(" ");
+  return new RegExp(SECRET_FIELD + "[\"']?\\s*[:=]\\s*\\S+|--[A-Za-z0-9_-]*" + SECRET_FIELD + "\\s+\\S+", "iu").test(text) ||
+    /\b(?:Bearer|Basic)\s+\S+|[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s/"'<>]+@/iu.test(text) ||
+    (/\bcurl\b/u.test(text) && /(?<![\w-])(?:--(?:user|proxy-user|oauth2-bearer)(?:=|\s+)|-[uU]\s*)\S+/u.test(text)) ||
     /\b(?:sk-[A-Za-z0-9_-]{16,}|gh[opusr]_[A-Za-z0-9]{20,}|AKIA[A-Z0-9]{16})\b/u.test(text);
 }
 
 function configuredNativeApproval(config: StandaloneConfig, command: string): Approval | "unsupported" {
+  // 硬拒绝不能因后续语法不支持而降成可手工覆盖的提示。
+  if (config.nativePatterns.some(p => p.approval === "deny" && matchesNativeRaw(command, p.match))) return "deny";
   const parsed = parseGenericCommands(command);
-  if (parsed.status !== "complete") return "unsupported";
+  if (parsed.status !== "complete") {
+    const denies = config.nativePatterns.filter(p => p.approval === "deny");
+    if (denies.length && visiblePrefixForDenial(command).some(c => denies.some(p => matchesNativePattern(c, p.match) || hasUncertainPatternMatch(c, p.match)))) return "deny";
+    return "unsupported";
+  }
   let result: Approval = "allow";
   for (const simple of parsed.commands) {
     for (const pattern of config.nativePatterns) {
-      if (!matchesNativePattern(simple, pattern.match)) continue;
+      if (!matchesNativePattern(simple, pattern.match) && !matchesNativeRaw(command, pattern.match)) {
+        if (pattern.approval !== "allow" && hasUncertainPatternMatch(simple, pattern.match)) {
+          if (pattern.approval === "deny") return "deny";
+          result = "prompt";
+        }
+        continue;
+      }
       if (pattern.approval === "deny") return "deny";
       if (pattern.approval === "prompt") result = "prompt";
     }
@@ -161,9 +179,25 @@ function configuredNativeApproval(config: StandaloneConfig, command: string): Ap
 }
 
 function redactSensitive(value: string): string {
+  const words = privacyWords(value);
+  const curl = /\bcurl\b/u.test(value);
+  for (let i = words.length-1; i >= 0; i--) {
+    const word = words[i];
+    const previous = words[i-1]?.value ?? "";
+    const credentialFlag = (curl && /^--(?:user|proxy-user|oauth2-bearer)$|^-[uU]$/u.test(previous)) ||
+      new RegExp("^--[A-Za-z0-9_-]*" + SECRET_FIELD + "$", "iu").test(previous) || /^(?:Bearer|Basic)$/iu.test(previous);
+    const foldedSensitive = word.raw !== word.value && (containsSensitiveText(word.value, "", []) ||
+      (curl && /^(?:-[uU]|--(?:user|proxy-user|oauth2-bearer)=).+/u.test(word.value)));
+    if (credentialFlag || foldedSensitive)
+      value = value.slice(0, word.start) + (word.raw.startsWith("#") ? "# [REDACTED]" : "[REDACTED]") + value.slice(word.end);
+  }
   return value
-    .replace(/((?:api[_-]?key|access[_-]?token|secret|password|authorization)\s*[:=]\s*)\S+/giu,
-      "$1[REDACTED]")
+    .replace(new RegExp("((?:-H|--header)\\s+)" + SECRET_VALUE, "gu"), "$1[REDACTED]")
+    .replace(new RegExp("(\\b(?:Bearer|Basic)\\s+)" + SECRET_VALUE, "giu"), "$1[REDACTED]")
+    .replace(/([A-Za-z][A-Za-z0-9+.-]*:\/\/)[^\s/"'<>]+@/gu, "$1[REDACTED]@")
+    .replace(new RegExp(curl ? "((?<![\\w-])(?:--(?:user|proxy-user|oauth2-bearer)(?:=|\\s+)|-[uU]\\s*))" + SECRET_VALUE : "(?!)", "gu"), "$1[REDACTED]")
+    .replace(new RegExp("(" + SECRET_FIELD + "[\"']?\\s*[:=]\\s*)" + SECRET_VALUE, "giu"), "$1[REDACTED]")
+    .replace(new RegExp("(--[A-Za-z0-9_-]*" + SECRET_FIELD + "\\s+)" + SECRET_VALUE, "giu"), "$1[REDACTED]")
     .replace(/\b(?:sk-[A-Za-z0-9_-]{16,}|gh[opusr]_[A-Za-z0-9]{20,}|AKIA[A-Z0-9]{16})\b/gu, "[REDACTED]");
 }
 

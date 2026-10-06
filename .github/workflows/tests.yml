@@ -46,7 +46,7 @@ jobs:
         with:
           bun-version: "1.4.0"
       - name: Run synthetic parser regressions
-        run: bun test ./tests/omp_command_history.test.ts ./tests/omp_command_history_js.test.ts
+        run: bun test ./tests/omp_command_history.test.ts ./tests/omp_command_history_js.test.ts ./tests/omp_shell_scenarios.test.ts ./agents/omp/packages/omp-permission-control/standalone.test.ts ./agents/omp/packages/omp-permission-control/native-bash.test.ts
       - name: Report supported syntax and known semantic gaps
         run: bun scripts/check-omp-command-history.ts
       - name: Confirm runtime locks remain unchanged

@@ -1066,97 +1066,227 @@
       "id": "H063",
       "command": "ls *.jar",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "*.jar"
+            ],
+            "globs": [
+              1
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H064",
       "command": "ls src/*.py",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "src/*.py"
+            ],
+            "globs": [
+              1
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H065",
       "command": "ls [ab].txt",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "[ab].txt"
+            ],
+            "globs": [
+              1
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H066",
       "command": "ls file?.txt",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "file?.txt"
+            ],
+            "globs": [
+              1
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H067",
       "command": "ls sample_project/*.jar sample_project/lib/*.jar 2>/dev/null; which javac java",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "sample_project/*.jar",
+              "sample_project/lib/*.jar"
+            ],
+            "globs": [
+              1,
+              2
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "which",
+              "javac",
+              "java"
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H068",
       "command": "cat < input.txt",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "cat"
+            ],
+            "redirections": [
+              {
+                "fd": 0,
+                "operator": "<",
+                "target": "input.txt"
+              }
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H069",
       "command": "printf x > output.txt",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "printf",
+              "x"
+            ],
+            "redirections": [
+              {
+                "fd": 1,
+                "operator": ">",
+                "target": "output.txt"
+              }
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H070",
       "command": "printf x >> output.txt",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "printf",
+              "x"
+            ],
+            "redirections": [
+              {
+                "fd": 1,
+                "operator": ">>",
+                "target": "output.txt"
+              }
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H071",
       "command": "ls 2>/dev/null",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H072",
       "command": "cat <<'EOF'\nexample\nEOF",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "conservative-boundary",
       "expected": {
         "status": "unsupported",
         "reason": "unsupported-syntax"
@@ -1166,27 +1296,47 @@
       "id": "H073",
       "command": "pwd\nls",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "pwd"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "ls"
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H074",
       "command": "pwd;",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "pwd"
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H075",
       "command": "echo {a,b}",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "conservative-boundary",
       "expected": {
         "status": "unsupported",
         "reason": "unsupported-syntax"
@@ -1196,17 +1346,25 @@
       "id": "H076",
       "command": "printf 'line\nline'",
       "basis": "reconstructed-history-shape",
-      "category": "coverage-gap",
+      "category": "supported",
       "expected": {
-        "status": "unsupported",
-        "reason": "unsupported-syntax"
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "printf",
+              "line\nline"
+            ]
+          }
+        ]
       }
     },
     {
       "id": "H077",
       "command": "echo ok # note",
       "basis": "synthetic-comment-oracle",
-      "category": "known-semantic-gap",
+      "category": "supported",
       "expected": {
         "status": "complete",
         "commands": [
@@ -1224,7 +1382,7 @@
       "id": "H078",
       "command": "echo ok # $(id)",
       "basis": "synthetic-comment-oracle",
-      "category": "known-semantic-gap",
+      "category": "supported",
       "expected": {
         "status": "complete",
         "commands": [
@@ -1242,7 +1400,7 @@
       "id": "H079",
       "command": "printf '%s' value # ; rm -rf /",
       "basis": "synthetic-comment-oracle",
-      "category": "known-semantic-gap",
+      "category": "supported",
       "expected": {
         "status": "complete",
         "commands": [

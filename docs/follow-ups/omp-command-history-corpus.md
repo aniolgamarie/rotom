@@ -150,3 +150,88 @@ bun test ./tests/omp_command_history.test.ts ./tests/omp_command_history_js.test
 | 环境不足未验证 | 全库回归环境准入未通过；远程 CI、真实 macOS/Windows、审批质量、真实宿主执行未验证 |
 
 executor 实际为 gpt-6.1-sol / medium，scout 为 gpt-6-luna / high；executor 容量失败后由主代理接手最终验证。全程历史 Shell/JS 执行、宿主启动和模型请求均为 0。
+
+## 2026-10-06 Phase 18：公开测试集与插件修复
+
+用户进一步要求用集合修复插件，直到每个场景正确解析或明确安全拒绝，并将测试数据加入Git。
+用户已确认：这不意味着所有动态脚本自动批准。开发分支 `fix/omp-shell-corpus`，基线 `54e37fa`。
+前面Phase16/17的数字与缺陷记录是当时快照；本节为更新后的当前验收。
+
+生产改动只在自有独立插件：修复三个注释错误，支持LF分隔/续行、参数glob、静态文件/fd重定向，
+完整保留argv、连接符、glob位置、重定向顺序/操作符/两端描述符。原命令和参数不改写。
+79个独立固定anchors现全部符合正确Shell词法预期：54支持、25明确保守边界；其中12个旧语法缺口
+已扩展，heredoc与brace展开两个场景明确保守拒绝，不靠删除测试隐藏缺口。
+`semanticConformancePassed=true`，不再容忍三个历史注释错误的错误结果。
+
+原文hard deny在解析之前检查，换行不能躲过wildcard；解析失败时已知前缀在24KiB/256token上限内
+只能加强deny，绝不批准部分分析。可见命令和每条重定向效果检查native规则；glob可能与同命令
+deny参数相交时保守deny，与prompt相交时人工。代码选项/已识别wrapper、find执行型选项、awk/sed
+执行形态及Shell状态/处理器脚本人工，无UI阻止。固定模式不是进程沙箱；没有命中固定deny的未知
+脚本仍可由人明确授权。这不宣称分析了任意外部程序的全部间接行为。
+
+凭据审核也补齐了命名字段/长选项、Basic/Bearer、URL userinfo、curl认证短选项（含粘连）、
+字段名/值引号拼接及续行：原文和不求值的词法拼接视图共同防止向审批模型发送疑似凭据；人工
+预览使用完整word span遮盖复杂值。新canary检查模型、backend及人工标题；普通`ls -u`不会被
+当成curl认证参数隐藏。
+
+### Git中的测试数据
+
+文件位于 [`tests/fixtures/omp/command-scenarios/corpus.json.gz`](../../tests/fixtures/omp/command-scenarios/corpus.json.gz)，
+**1,223,214字节，约1.17MiB**。它是固定词表和fixture数据重建的公开虚构版本，不是私有集合的
+直接复制；不复制日志来源、账号/机器路径、provider、原始指纹或原参数值。
+引用/转义、运算符、空值、glob位置、描述符及已知关键命令/选项保留；凭据信号规范化且值重建。
+重建后相同文本再次合并31例：11,473个公开用例计入全部11,504个原场景，词汇闭包与已知身份
+残留检查均0未知/残留。目录README解释schema、预期合同和复验方式。
+
+每例`expected`由独立Python/shlex oracle生成，`expectedGate`指明固定fake配置下的模型/人工路径。
+oracle不导入生产解析器；79条另行硬编码语义预期和高价值安全canary作为anchors。
+两种有限语法实现的一致性不是完整POSIX/zsh/Brush语义证明；虚构数据重建也不是原始命令完整
+语义等价保证。故原始私有集合另行逐条纯解析验证，不仅依赖公开版本：
+
+| 集合/层 | 正确静态解析 | 明确拒绝/阻止 | 差异/异常 |
+|---|---:|---:|---:|
+| 原私有11,504例：完整argv/connector/glob/redirect预期 | 9,461 | 2,043 | 0 / 0 |
+| 公开11,473例：独立词法预期 | 9,442 | 2,031 | 0 / 0 |
+| 公开11,473例：fake native hook→review→delegate/headless | 9,430 | 2,043 | 0 |
+
+12个公开例虽可静态解析，但含凭据信号，走人工边界而不发给模型。
+fake native层逐例证明审查一次、委托一次及原参数/结果保持；被阻止者无模型/委托。
+模型均返回固定虚构响应，Settings、API key与backend全是假对象；没有执行测试命令、启动宿主
+或请求真实模型。这验证机制接线和声明词法合同，不证明真实风险模型对11,504例的正确率。
+
+复验：
+
+```sh
+bun scripts/check-omp-shell-scenarios.ts
+bun scripts/check-omp-command-history.ts
+bun test ./tests/omp_shell_scenarios.test.ts ./tests/omp_command_history.test.ts \
+  ./tests/omp_command_history_js.test.ts \
+  ./agents/omp/packages/omp-permission-control/standalone.test.ts \
+  ./agents/omp/packages/omp-permission-control/native-bash.test.ts
+.venv/bin/python -m pytest tests/test_omp_command_history.py \
+  tests/test_omp_history_scenarios.py tests/test_omp_public_corpus.py -q
+```
+
+最终受影响Python测试183pass；显式已有Babel Bun 166pass，默认无Babel 165pass/1明确skip；
+固定pristine18.4.5 SDK严格tsgo退出0。官方普通锁离线读取固定已校验source/checksums刷新，资源、
+plugin tree与公开fixture recipe闭包核验通过；官方版本/source/assets、退休patched记录及其它
+agent锁不变。没有修改agent上游源码、重新编译宿主或本机部署。
+
+依赖/kernel相关隔离Python104pass/7skip，7个skip来自退休的patched-host材料，不继续构建。
+默认沙箱将根目录与/tmp的属主映射为nobody，导致两次同范围33fail/71pass/7skip；换临时路径
+不能修复根属主。核对真实文件系统root属主为UID0后，在真实FS专用临时目录重跑通过，文件保护
+原样保留。此前全库环境红灯不自动冒充全库通过，本次只验收受影响范围。
+远程CI、其它实际OS、真实宿主Shell行为与真实模型审批质量未新增验证。
+
+原私有压缩集合继续保存在原私有缓存，未加入Git；本轮临时oracle/中间导出验收后清理。
+新的[机器可读验收](../acceptance/omp-shell-scenarios-20261006.json)只包含公开集合身份与聚合结果。
+本机OMP需部署新的官方锁/插件资源后才能使用这些修复；本轮不触碰账号、会话或本机配置。
+
+| 状态 | 本轮结果 |
+|---|---|
+| 完成 | 私有逐例预期、公开虚构集合、语法/保护修复、fake native逐例验收、隐私canary、锁刷新、稳定diff审查 |
+| 进行中 | 无本轮实现任务 |
+| 失败待决策 | 无本轮交付阻塞；初始失败已定位并修复或转为明确的环境诊断 |
+| 环境不足未验证 | 远程CI、实际其它OS、真实宿主Shell语义、真实模型质量及日常机器部署；不计作通过 |
+
+scout实际为gpt-6-luna/high；执行子代理受线程额度限制无法启动，实现/修复/最终验证由主代理完成。
