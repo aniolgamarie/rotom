@@ -720,3 +720,19 @@ T104 日常交付完成（2026-10-04）：main 快进至 `14f34a9`。首次备�
 完成＝T115—T119；进行中＝无；失败待决策＝无本轮阻塞，既有3个注释错误与14个语法缺口仍留待生产行为变更；环境不足未验证＝误扩大的全库测试受临时目录所有权准入限制、远程CI、实际其它OS、审批质量和宿主执行，不计作通过。
 
 最终16,178条候选/31,914次出现，归并11,504个场景，合并4,674条；5,230,069 → 1,796,841字节（减少65.64%）。独立二次扫描已识别残留0；166 Python、92 显式Babel Bun、91 pass/1 skip 默认Bun；全量和精简解析异常均0。原79条固定oracle保留，semanticConformancePassed=false维持真实语义缺陷报告。详见[精简记录](../../docs/follow-ups/omp-command-history-corpus.md)和[新数值证据](../../docs/acceptance/omp-history-scenarios-20261006.json)。
+
+## Phase 18：全场景预期、公开语料与独立插件词法修复
+
+2026-10-06 用户要求测试插件、修复至全部场景正确解析/明确安全拒绝，并将集合纳入tests目录Git。
+用户确认动态与复杂结构的安全拒绝也应有明确预期。分支`fix/omp-shell-corpus`，基线`54e37fa`。
+
+- [X] T120 为原11,504个私有场景及公开重建场景建立不执行命令的独立词法预期，另用硬编码anchors约束正确语义，区分接受与准确率。
+- [X] T121 创建tests/fixtures/omp/command-scenarios下的确定性gzip虚构集合与README，按重建文本去重并保留全部代表计数，严格公开词表和路径/遍历边界，不复制私人数据或原始指纹。
+- [X] T122 修复三个注释错误，扩展LF、续行、参数glob及静态文件/fd重定向；保留所有命令与副作用参数，未知结构明确人工/无UI阻止。
+- [X] T123 维护raw/AST/redirect hard deny、glob潜在deny、deny-only有界前缀；修复凭据短选项、字段/值拼接和续行的model/UI边界，新增Approve不能绕过deny与秘密canary。
+- [X] T124 逐例验证公开集合native hook→模拟审查→原样一次委托或headless阻断，增加公开CLI汇总与CI接线；完成受影响Python/Bun/固定SDK严格类型检查与独立稳定代码审查。
+- [X] T125 离线刷新官方普通lock/plugin/fixture闭包，保留官方资产与退休patched材料不变，清理本轮临时导出，只提交公开数据/工具/代码/证据；本机部署另行授权执行。
+
+完成＝T120—T125；进行中＝无；失败待决策＝无；环境不足未验证＝远程CI、真实其它OS、真实宿主Shell/模型质量和本机部署不计作通过。
+原私有11,504例9,461正确解析/2,043拒绝，差异/异常0；公开11,473例代表全部11,504场景，9,442正确解析/2,031拒绝，12例凭据信号另行人工，native fake机制差异0。
+183 Python、166显式Babel Bun、165pass/1skip默认Bun、104pass/7历史skip相关mock回归及固定pristineSDK严格tsgo通过。详见[当前语料验收](../../docs/follow-ups/omp-command-history-corpus.md)与[机器可读证据](../../docs/acceptance/omp-shell-scenarios-20261006.json)。

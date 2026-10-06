@@ -15,7 +15,7 @@ for (const item of cases.filter(item => item.category !== "known-semantic-gap"))
   });
 }
 
-test("known comment defects are reported as semantic failures, separately from a stable baseline", () => {
+test("all fixed anchors including comments meet their independent semantics", () => {
   const report = evaluateGolden(cases);
   const expected = cases.filter(c => c.category === "known-semantic-gap" &&
     !isDeepStrictEqual(parseGenericCommands(c.command), c.expected)).map(c => c.id);
@@ -23,7 +23,8 @@ test("known comment defects are reported as semantic failures, separately from a
   expect(report.unexpectedFailures).toEqual([]);
   expect(report.baselinePassed).toBe(true);
   expect(report.semanticConformancePassed).toBe(expected.length === 0);
-  expect(report.counts["coverage-gap"]).toBeGreaterThan(0);
+  expect(report.counts["coverage-gap"]).toBe(0);
+  expect(report.semanticMatches).toBe(79);
 });
 
 test("all commands in read-then-dangerous compound inputs remain visible to native pattern matching", () => {
@@ -40,14 +41,14 @@ test("all commands in read-then-dangerous compound inputs remain visible to nati
   if (result.status === "complete") expect(matchesNativePattern(result.commands[0], "rm -rf *")).toBe(false);
 });
 
-test("a known comment error does not exempt a new parse regression", () => {
+test("comment anchors reject incorrect token expectations after repair", () => {
   const known = cases.find(c => c.id === "H077")!;
   const report = evaluateGolden([{ ...known, command: "echo changed # note" }]);
-  expect(report.knownSemanticFailures).toEqual(["H077"]);
+  expect(report.knownSemanticFailures).toEqual([]);
   expect(report.unexpectedFailures).toEqual(["H077"]);
   expect(report.baselinePassed).toBe(false);
   const resolved = evaluateGolden([{ ...known, command: "echo ok" }]);
-  expect(resolved.resolvedSemanticGaps).toEqual(["H077"]);
+  expect(resolved.resolvedSemanticGaps).toEqual([]);
   expect(resolved.semanticConformancePassed).toBe(true);
 });
 
@@ -73,12 +74,12 @@ test("history report separates refusal, partial semantic failures and acceptance
   const corpus = fixtureCorpus(["pwd", "ls *.jar", "echo ok # note"]);
   const report = evaluateCorpus(corpus);
   expect(report.uniqueCommands).toBe(3);
-  expect(report.complete).toBe(2);
-  expect(report.unsupported).toBe(1);
+  expect(report.complete).toBe(3);
+  expect(report.unsupported).toBe(0);
   expect(report.thrown).toBe(0);
   expect(report.commentOracleEligible).toBe(1);
-  expect(report.commentOracleMismatches).toBe(1);
-  expect(report.acceptanceRate).toBe(2 / 3);
+  expect(report.commentOracleMismatches).toBe(0);
+  expect(report.acceptanceRate).toBe(1);
   expect(JSON.stringify(report)).not.toContain("echo ok");
 });
 
@@ -115,8 +116,8 @@ test("scenario evaluation preserves weighted occurrences and validates all selec
   expect(result.uniqueCommands).toBe(2);
   expect(result.occurrences).toBe(3);
   expect(result.sampling).toBe("lexical-scenario-representatives");
-  expect(result.complete).toBe(1);
-  expect(result.unsupported).toBe(1);
+  expect(result.complete).toBe(2);
+  expect(result.unsupported).toBe(0);
   expect(() => evaluateCorpus({ ...input, selection: { ...input.selection, scenarioCount: 3 } })).toThrow();
   expect(() => evaluateCorpus({ ...input, selection: { ...input.selection, secondPassFailures: 1 } })).toThrow();
   expect(() => evaluateCorpus({ ...input, records: records.map(r => ({ ...r, scenario: { ...r.scenario, id: "a".repeat(64) } })) })).toThrow();

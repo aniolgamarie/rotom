@@ -18,16 +18,6 @@ interface CorpusRecord { id: string; command: string; sources: Source[]; occurre
 const SCENE_CATEGORIES = ["invalid-boundary", "control-flow", "dynamic", "heredoc", "redirection", "multiline", "glob", "comment", "compound", "simple"];
 const SCENE_FEATURES = [...SCENE_CATEGORIES.filter(c => c !== "simple"), "quote:single", "quote:double", "concatenation", "escape", "assignment", "write-command", "privilege-command", "embedded-code", "nested-write"];
 
-// 已知错误只允许当前明确观察到的结果；不能借“已知错误”豁免新的行为偏离。
-const KNOWN_COMMENT_BASELINES: Record<string, GenericShellParse> = {
-  H077: { status: "complete", commands: [{ connector: "start", argv: ["echo", "ok", "#", "note"] }] },
-  H078: { status: "unsupported", reason: "unsupported-syntax" },
-  H079: { status: "complete", commands: [
-    { connector: "start", argv: ["printf", "%s", "value", "#"] },
-    { connector: ";", argv: ["rm", "-rf", "/"] },
-  ] },
-};
-
 function exactKeys(value: unknown, keys: string[]): asserts value is Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value) ||
       Object.keys(value).sort().join(",") !== [...keys].sort().join(",")) throw new Error("invalid shape");
@@ -53,10 +43,15 @@ export function loadGolden(path: string): GoldenCase[] {
       exactKeys(expected, ["status", "commands"]);
       if (!Array.isArray(expected.commands) || !expected.commands.length) throw new Error("invalid commands");
       for (const command of expected.commands) {
-        exactKeys(command, ["connector", "argv"]);
+        exactKeys(command, ["connector", "argv", ...(command.globs ? ["globs"] : []), ...(command.redirections ? ["redirections"] : [])]);
         if (!["start", "&&", "||", ";", "|"].includes(String(command.connector)) ||
             !Array.isArray(command.argv) || !command.argv.length || command.argv.some(a => typeof a !== "string"))
           throw new Error("invalid command");
+        if (command.globs && (!command.globs.length || new Set(command.globs).size !== command.globs.length || command.globs.some(i => !Number.isSafeInteger(i) || i < 1 || i >= command.argv.length))) throw new Error("invalid glob positions");
+        if (command.redirections) for (const redirect of command.redirections) {
+          exactKeys(redirect, ["fd", "operator", "target"]);
+          if (!Number.isSafeInteger(redirect.fd) || redirect.fd < 0 || redirect.fd > 9 || ![">", ">>", "<", ">|", ">&", "<&"].includes(redirect.operator) || typeof redirect.target !== "string" || !redirect.target) throw new Error("invalid redirection");
+        }
       }
     } else throw new Error("invalid expected status");
   }
@@ -78,7 +73,7 @@ export function evaluateGolden(cases: GoldenCase[]) {
       if (item.category === "known-semantic-gap") resolvedSemanticGaps.push(item.id);
     } else if (item.category === "known-semantic-gap") {
       knownSemanticFailures.push(item.id);
-      if (!isDeepStrictEqual(actual, KNOWN_COMMENT_BASELINES[item.id])) unexpectedFailures.push(item.id);
+      unexpectedFailures.push(item.id);
     }
     else unexpectedFailures.push(item.id);
   }

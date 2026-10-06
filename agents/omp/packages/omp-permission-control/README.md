@@ -142,3 +142,42 @@ HOME 不一致、direnv、prefix、未知 Shell/args/path 和 worktree 重写继
 人工询问会显示固定原因码，不输出环境变量内容或启动文件路径。
 
 验收与实际平台范围见 [Shell 兼容记录](../../../../docs/acceptance/omp-shell-approval-20261004.md)。
+
+## 静态 Shell 词法与公开场景回归（Phase 18）
+
+普通命令现支持边界后的注释、LF 多行分隔/续行、空参数和引号拼接、参数中的未引用
+通配符，以及 `>`、`>>`、`<`、`>|`、`>&`、`<&` 的静态目标/0—9 描述符。
+解析结果保留 glob 参数位置、重定向顺序、源 fd、操作符和目标；不做路径扩展或执行。
+原始 command 原样交给模型和原生委托。通配符在命令名中、重定向目标中的 glob、动态
+替换、控制结构、heredoc、brace/tilde 展开、CR、truncated 输入和未解析执行脚本仍走
+人工边界（无 UI 阻止）。`unsupported-syntax` 表示超出静态合同，不等于 Shell 本身非法。
+
+当前命令/参数规则的 deny 优先于语法 fallback：原文匹配、每个可见简单命令及静态
+重定向效果都检查；通配符可能作用于同一命令的 deny 参数时保守拒绝，prompt 时人工。
+不存在先求值或展开通配符来完成审批的过程。已识别但未展开的 wrapper、代码选项、执行型 find/awk/sed
+以及 shell 状态/事件处理脚本保守人工；这些规则不是进程级沙箱，不保证禁止所有外部
+程序的间接行为。没有命中固定 deny 时，人工可以明确批准未解析的命令。
+
+`tests/fixtures/omp/command-scenarios/corpus.json.gz` 是公开虚构数据：由授权私有场景的
+词法形状重建，替换普通值、名称和代码数据，去掉原始指纹、来源与会话信息。
+独立 Python oracle 借助 shlex 解码单词，生成确定性预期；79 条硬编码语义 anchors 另行
+验证，包含原来3个注释错误和12个常见语法缺口。所有公开场景还通过 fake Settings、
+模型 transport 和 backend 验证 native hook/review/委托或 headless 人工边界。
+该结果证明声明语法合同与插件接线，不代替真实 Shell、真实 OMP 或模型风险质量评测。
+
+仓库默认验证（不执行测试命令、不启动第三方 agent、无真实模型请求）：
+
+```sh
+bun test ./tests/omp_shell_scenarios.test.ts ./tests/omp_command_history.test.ts \
+  ./agents/omp/packages/omp-permission-control/standalone.test.ts \
+  ./agents/omp/packages/omp-permission-control/native-bash.test.ts
+```
+
+生产源码和本目录测试变化后，须同时刷新官方普通锁中的插件树与 recipe 身份。
+不构建、刷新或扩展已退休的 patched-host 运行包。
+
+语法失败时，已知前缀可在 24 KiB / 256 token 上限内额外加强 deny；这条路径从不据部分
+分析批准。原文 wildcard 匹配覆盖换行，避免动态后缀遮住已知被禁止的直接命令。
+凭据字段/长选项、自定义 token 名、Basic/Bearer、URL userinfo 与 curl 认证参数会阻止
+送入审查模型；人工预览遮盖其值，含短选项粘连、字段名/值的引号拼接与续行。公开重建保留这些信号并替换真实名称/值，
+因此“静态解析成功”仍可能按凭据边界人工。
