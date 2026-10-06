@@ -40,7 +40,7 @@ bun scripts/check-omp-command-history.ts \
   --corpus .cache/command-history-private/candidates.json
 
 .venv/bin/python -m pytest tests/test_omp_command_history.py -q
-bun test tests/omp_command_history.test.ts tests/omp_command_history_js.test.ts
+bun test ./tests/omp_command_history.test.ts ./tests/omp_command_history_js.test.ts
 ```
 
 纯解析测试不依赖 Babel 或宿主 SDK。默认 JS 测试使用合成 AST，真实库集成用例明确 skip；只有显式设置 `OMP_HISTORY_JS_PARSER_MODULE` 为已准备的解析模块时才执行该用例，输入仍全部虚构。现有 Python CI 自动收集提取器测试；新增 `omp-command-parser` job 固定 Bun 1.4.0 跑合成回归和缺口报告。setup action 固定为官方 [v2.2.0 commit](https://github.com/oven-sh/setup-bun/commit/0c5077e51419868618aeaa5fe8019c62421857d6)，不安装或运行 OMP、Pi、Codex。
@@ -73,7 +73,7 @@ bun test tests/omp_command_history.test.ts tests/omp_command_history_js.test.ts
 
 实际工具链为 Linux x86_64、Python 3.11.11、Bun 1.4.0、Babel parser 7.29.9；未下载新工具链。executor 为 gpt-6.1-sol / medium，scout 为 gpt-6-luna / high。独立审查发现并修复 curl 用户/代理认证与 OAuth 值遗漏、JS 别名统计遗漏；系统临时根用合成测试验证，真实平台不计作通过。
 
-机器可读的[汇总证据](../acceptance/omp-command-history-20261005.json)只含数值和固定样本身份。最终私有语料保存在 main 的 `.cache/omp-command-history/20261005/candidates.json`，0700 父目录/0600 文件，未纳入 git；同目录保存不含命令的 `parser-report.json`。本轮中间导出已清理，原始日志未写入或删除。日志可能持续追加，本节是已保存候选集合的快照，重提取的数量可能改变。
+机器可读的[汇总证据](../acceptance/omp-command-history-20261005.json)只含数值和固定样本身份。当时的私有语料保存在 main 的 `.cache/omp-command-history/20261005/candidates.json`（该候选文件在后续二次检查和精简后已替换清理），0700 父目录/0600 文件，未纳入 git；同目录保存不含命令的 `parser-report.json`。本轮中间导出已清理，原始日志未写入或删除。日志可能持续追加，本节是已保存候选集合的快照，重提取的数量可能改变。
 
 ## 任务记录
 
@@ -83,3 +83,70 @@ bun test tests/omp_command_history.test.ts tests/omp_command_history_js.test.ts
 | 进行中 | 无本轮实现工作 |
 | 失败待决策 | 无交付阻塞；生产解析器的 3 个注释错误及 14 条语法缺口已记录，修复需作为下一轮行为变更 |
 | 环境不足未验证 | 远程 CI、真实 macOS/Windows；智能审批准确率、真实宿主行为和跨平台 Shell 执行不属于本轮通过结论 |
+
+## 2026-10-06 二次脱敏与场景精简
+
+用户要求修复隐私 review 发现的问题，再次检查并删除重复测试信息。开发在 `fix/omp-history-scenarios` worktree，基线 `f264d22`；原 Phase 16 汇总保留为历史快照。重新只读提取授权的三个来源，不复用旧脱敏文本作为可信输入。日志持续追加，数量变化不单独归因于脱敏改进。
+
+修复内容：凭据值的引号拼接、引号后缀及反斜线边界不可靠时整条隔离；URL userinfo 不再被邮箱脱敏吞掉 `scheme://`，裸 URL 与控制符分界、查询短值及 fragment 分别遮盖；个人路径补充 `/var/tmp`、`/opt`、`/workspace(s)`、`/private` 和 scp 的冒号前缀。新增重复可传的 `--identity-term`，既做字面身份替换，也检查 shell 引号/转义拼接后的残留；身份值不写入产物或汇总。
+
+提取器输出 `redactionVersion=2`，另一个检查函数扫描已脱敏结果，残留整条跳过并记录 `secondPassSkipped`。精简器进入时对全部候选再扫描，发现问题则拒绝整个输入。最终独立检查另外读取原文视图与 shell 拼接视图，覆盖凭据标记、邮箱、IP、个人路径、身份、URL 凭据及 marker 后缀；16,178 条候选、11,504 条代表及 79 条公开虚构样本中，已识别残留为 0。首次粗 URL 扫描的 9 个候选均在嵌入文本中，按引号和控制符边界复核为误报，不能把粗匹配值当作真实凭据。检查结果不保证未知短秘密全部消失，因此自动语料始终为 `private-review-required`，不转为公共 fixture。
+
+### 分类合同
+
+`scripts/omp-history-scenarios.py` 使用独立词法形状归并，选每组字节数最短、字典序最前的代表；保留成员数、来源并集和出现次数。普通文件名、数字及数据参数可以归一化，未知命令名和普通 flag 按形状归一化；环境变量名、已列出的关键命令和危险选项保留。归并是解析回归的测试抽象，不表示完整命令语义相同，也不能用于缓存风险批准结果。
+
+形状保留命令和连接符顺序、重复命令、参数个数、空参数、引号类型/拼接、转义、未引用 glob 的前后位置、重定向类型及两端 fd、根路径/系统目标。复制类参数保留相同操作数的关联，普通名字的双射重命名合并；`cp a a` 与 `cp a b` 不合并。`sh -c` 的内层命令递归分类，wrapper 和未知 launcher 后可见解释器也保守区分脚本；其它嵌入程序内容按已脱敏文本指纹区分，避免把不同程序都当成一个普通字符串。递归深度超过三层时保留 opaque 指纹，不执行或推断脚本行为。
+
+主类别互斥，按 invalid/control/dynamic/heredoc/redirect/multiline/glob/comment/compound/simple 的优先级选取；附加 features 可以重叠，因此不能将类别数当作全部通配符或多行命令数。没有按生产解析器的“unsupported”结果合并，也没有设定最大条数而静默丢掉不同形状。79 条公开 oracle 独立保存，不随历史语料去重而删除。
+
+| 最终主类别 | 代表数 |
+|---|---:|
+| compound | 4,294 |
+| redirection | 3,599 |
+| simple | 1,294 |
+| multiline | 1,212 |
+| dynamic | 488 |
+| glob | 374 |
+| control-flow | 243 |
+
+本次保存候选 16,178 条、31,914 次出现，精简为 11,504 个词法场景，合并 4,674 条（28.89%），出现次数全部保留。每条代表增加分类元数据，未压缩 JSON 不一定比旧候选文件小，因此最终用固定 mtime、无原文件名的 gzip 存储：5,230,069 → 1,796,841 字节，减少 65.64%，约 4.99 → 1.71 MiB。数量仍较多是因为复合命令的次序、参数/引用片段及程序内容不同；没有为追求更小体积把这些差异抹掉。
+
+### 重跑与结果
+
+```bash
+.venv/bin/python scripts/omp-command-history.py \
+  --pi-root /explicit/pi/sessions --codex-root /explicit/codex/sessions \
+  --omp-root /explicit/omp/sessions --identity-term example-identity \
+  --bun /explicit/bin/bun \
+  --js-parser-module /explicit/node_modules/@babel/parser/lib/index.js \
+  --output .cache/command-history-private/candidates-v2.json
+
+.venv/bin/python scripts/omp-history-scenarios.py \
+  --input .cache/command-history-private/candidates-v2.json \
+  --identity-term example-identity \
+  --output .cache/command-history-private/scenarios.json.gz
+
+bun scripts/check-omp-command-history.ts \
+  --corpus .cache/command-history-private/scenarios.json.gz
+
+.venv/bin/python -m pytest tests/test_omp_command_history.py tests/test_omp_history_scenarios.py -q
+bun test ./tests/omp_command_history.test.ts ./tests/omp_command_history_js.test.ts
+```
+
+输出仍须私有目录，独占创建并拒绝符号链接；gzip 支持在评测时直接读取。评测文件读取前和解压结果均限制为 64 MiB。Bun 命令使用显式 `./` 文件路径，避免将文件名当过滤条件扫入 `.cache` 中的旧 worktree 或复制仓库测试。
+
+本轮受影响范围：Python **166 pass**；已有 Babel 显式集成 **92 pass / 413 assertions**；默认无 Babel **91 pass / 1 明确 skip / 400 assertions**。新增测试覆盖二次扫描失败、身份拼接、关键形状差分、成员/出现数、确定性压缩、损坏 gzip 和过大输入；最终 gzip CLI 评测退出 0；解压 64 MiB 上限有实现，但未单独构造超限压缩输入测试。workflow YAML 本地校验通过，远程 CI 未运行。一次误扩大的全库测试尝试有大量临时目录祖先所有权准入错误，未作为通过证据；没有放宽产品文件系统保护或据此修改无关代码。
+
+全量候选解析完成 8,706 / 拒绝 7,472 / 异常 0；精简场景完成 5,345 / 拒绝 6,159 / 异常 0。各来源的 unique/场景数存在跨来源交叠，不能直接相加。场景代表统计的接受率 46.46% 与全量唯一文本 53.81% 使用不同抽样单位，不能直接当作退化/改进比较，也不是准确率。79 条 oracle 的当前基线通过，3 个注释语义错误仍报告 `semanticConformancePassed=false`，14 个语法缺口保留。本轮未修生产解析器、配置、锁或运行包。
+
+最终私人集合位于 main `.cache/omp-command-history/20261006/scenarios.json.gz`，同目录保留 `parser-report.json`；目录 0700、文件 0600，均不纳入 git。替换验证后清理旧 main 和旧 worktree 的候选副本，以及本轮候选/中间场景导出；共清理 10 个旧副本/中间产物（33,794,532 字节）；原始日志从未写入或删除。新的[数值验收记录](../acceptance/omp-history-scenarios-20261006.json)区分二次检查、去重、存储和两种统计单位。
+
+| 状态 | 本轮结果 |
+|---|---|
+| 完成 | 脱敏修复、重新提取、全量与代表二次检查、分类去重与压缩、受影响范围验证、最终代码审查、私有副本清理 |
+| 进行中 | 无 |
+| 失败待决策 | 无本轮交付阻塞；既有生产注释错误与语法缺口另行修复 |
+| 环境不足未验证 | 全库回归环境准入未通过；远程 CI、真实 macOS/Windows、审批质量、真实宿主执行未验证 |
+
+executor 实际为 gpt-6.1-sol / medium，scout 为 gpt-6-luna / high；executor 容量失败后由主代理接手最终验证。全程历史 Shell/JS 执行、宿主启动和模型请求均为 0。

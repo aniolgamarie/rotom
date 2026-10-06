@@ -52,7 +52,8 @@ def test_three_shapes_deduplicate_and_preserve_shell(tmp_path, capsys):
   assert len(record["id"]) == 64
   assert set(record) == {"id", "command", "sources", "occurrences"}
   assert artifact["publication"] == "private-review-required"
-  assert artifact["schemaVersion"] == artifact["redactionVersion"] == 1
+  assert artifact["schemaVersion"] == 1
+  assert artifact["redactionVersion"] == 2
   assert stat.S_IMODE(output.stat().st_mode) == 0o600
   assert stat.S_IMODE(output.parent.stat().st_mode) == 0o700
   assert command not in captured.out
@@ -438,3 +439,185 @@ def test_system_temp_root_cannot_authorize_public_repository_output(tmp_path, ca
   assert history.main(["--pi-root", str(log), "--output", str(cache_output)]) == 0
   assert cache_output.exists()
   capsys.readouterr()
+
+
+@pytest.mark.parametrize("command", [
+  "TOKEN='HeadSentinel123'\"TailSentinel123\" echo safe",
+  "TOKEN=\"HeadSentinel123\"TailSentinel123 echo safe",
+  "cli --password 'HeadSentinel123'TailSentinel123",
+  "mysql -p'HeadSentinel123'\"TailSentinel123\"",
+  "mysql -p\"HeadSentinel123\"TailSentinel123",
+  "redis-cli -a 'HeadSentinel123'TailSentinel123",
+  "curl -H 'Authorization: HeadSentinel123'\"TailSentinel123\"",
+  "echo Bearer 'HeadSentinel123'TailSentinel123",
+])
+def test_adjacent_quoted_credentials_are_quarantined(tmp_path, capsys, command):
+  artifact, output, captured = run(tmp_path, {"pi": write_log(tmp_path / "pi.jsonl", [tool(command)])}, capsys)
+  assert artifact["records"] == []
+  assert artifact["statistics"]["pi"]["redactionSkipped"] == 1
+  assert "Sentinel123" not in output.read_text() + captured.out + captured.err
+
+
+@pytest.mark.parametrize("command, expected", [
+  ("TOKEN=Head'Sentinel123' echo safe", "TOKEN=REDACTED echo safe"),
+  ("echo Bearer 'BearerSentinel123'", "echo Bearer 'REDACTED'"),
+  ("printf '%s' 'normal'\"concat\"suffix", "printf '%s' 'normal'\"concat\"suffix"),
+  ("mysql -pHead'Sentinel123'", "mysql -pREDACTED"),
+])
+def test_literal_concatenation_and_credential_boundaries(command, expected):
+  assert history.redact(command) == expected
+  assert history.redaction_findings(expected) == set()
+
+
+@pytest.mark.parametrize("command, expected", [
+  ("curl 'https://AccountSentinel123:PassSentinel123@example.test/a?x=ValueSentinel123&ShortSentinel123#FragmentSentinel123' && echo done", "curl 'https://REDACTED@example.test/a?x=REDACTED&REDACTED#REDACTED' && echo done"),
+  ("curl https://AccountSentinel123@example.test/a?ShortSentinel123&echo done", "curl https://REDACTED@example.test/a?REDACTED&echo done"),
+  ("curl https://example.test/a?x=ValueSentinel123&y=OtherSentinel123& echo done", "curl https://example.test/a?x=REDACTED&y=REDACTED& echo done"),
+  ("curl https://example.test/a&&echo done", "curl https://example.test/a&&echo done"),
+  ("echo MailSentinel123@example.test; curl https://example.test/a", "echo REDACTED_EMAIL; curl https://example.test/a"),
+])
+def test_url_credentials_queries_and_shell_controls(command, expected):
+  safe = history.redact(command)
+  assert safe == expected
+  assert "Sentinel123" not in safe
+  assert history.redaction_findings(safe) == set()
+
+
+@pytest.mark.parametrize("root", ["/var/tmp", "/opt", "/workspace", "/workspaces", "/private", "/home", "/Users", "/root"])
+def test_personal_path_roots_and_scp_colon(root):
+  command = f"scp host:{root}/PathSentinel123/*.txt {root}/OtherSentinel123; rm -rf / > /dev/null"
+  expected = "scp host:/REDACTED_PATH*.txt /REDACTED_PATH; rm -rf / > /dev/null"
+  assert history.redact(command) == expected
+  assert history.redaction_findings(expected) == set()
+
+
+def test_identity_terms_are_literal_case_sensitive_and_private(tmp_path, capsys):
+  command = "echo Name.Sentinel123 name.sentinel123 Team+Sentinel123"
+  identities = ("Name.Sentinel123", "Team+Sentinel123")
+  assert history.redact(command, identities) == "echo REDACTED_IDENTITY name.sentinel123 REDACTED_IDENTITY"
+  log = write_log(tmp_path / "pi.jsonl", [tool(command)])
+  output = tmp_path / "private" / "history.json"
+  args = ["--pi-root", str(log), "--output", str(output)]
+  for identity in identities:
+    args.extend(["--identity-term", identity])
+  assert history.main(args) == 0
+  captured = capsys.readouterr()
+  external = output.read_text() + captured.out + captured.err
+  assert all(identity not in external for identity in identities)
+  assert "identity-term" not in external
+  assert json.loads(output.read_text())["records"][0]["command"] == history.redact(command, identities)
+  assert history.main(args) == 2
+  captured = capsys.readouterr()
+  assert all(identity not in captured.out + captured.err for identity in identities)
+
+
+@pytest.mark.parametrize("command, category", [
+  ("echo sk-KnownSentinel123456789abc", "known-key"),
+  ("echo -----BEGIN RSA PRIVATE KEY-----", "pem"),
+  ("echo EmailSentinel123@example.test", "email"),
+  ("echo 192.0.2.10", "ip"),
+  ("echo 2001:db8::12", "ip"),
+  ("cat /opt/PathSentinel123", "personal-path"),
+  ("echo IdentitySentinel123", "identity"),
+  ("TOKEN=ValueSentinel123", "credential"),
+  ("mysql -pValueSentinel123", "credential"),
+  ("TOKEN='REDACTED'TailSentinel123", "credential-tail"),
+  ("curl https:REDACTED_EMAIL/a", "url-marker"),
+  ("curl https://UserSentinel123@example.test/a", "url-credential"),
+  ("curl https://example.test/a?ShortSentinel123", "url-query"),
+])
+def test_independent_scanner_reports_only_categories(command, category):
+  findings = history.redaction_findings(command, ("IdentitySentinel123",))
+  assert category in findings
+  assert isinstance(findings, set)
+  assert "Sentinel123" not in str(findings)
+
+
+def test_second_scan_blocks_injected_first_pass_failure(tmp_path, capsys, monkeypatch):
+  monkeypatch.setattr(history, "redact", lambda command, identities=(): command)
+  command = "TOKEN=ShortSentinel123 echo safe"
+  artifact, output, captured = run(tmp_path, {"pi": write_log(tmp_path / "pi.jsonl", [tool(command), tool("echo safe")])}, capsys)
+  assert [record["command"] for record in artifact["records"]] == ["echo safe"]
+  assert artifact["statistics"]["pi"]["secondPassSkipped"] == 1
+  assert artifact["statistics"]["pi"]["redactionSkipped"] == 1
+  assert artifact["statistics"]["pi"]["extracted"] == 1
+  assert "ShortSentinel123" not in output.read_text() + captured.out + captured.err
+
+
+@pytest.mark.parametrize("command", [
+  "TOKEN=Head'Hidden Sentinel123' echo safe",
+  "mysql -pHead\"Hidden Sentinel123\"",
+  "echo Bearer Head'Hidden Sentinel123'",
+  "curl -H Head'Hidden Sentinel123'",
+  "curl https://User:'Url Sentinel123'@example.test/a",
+  "curl 'https://User:UrlSentinel123@example.test/a'TailSentinel123",
+])
+def test_embedded_quote_spaces_and_url_concat_do_not_leak(tmp_path, capsys, command):
+  artifact, output, captured = run(tmp_path, {"pi": write_log(tmp_path / "pi.jsonl", [tool(command)])}, capsys)
+  assert artifact["records"] == []
+  assert "Sentinel123" not in output.read_text() + captured.out + captured.err
+
+
+def test_second_scan_exception_fails_without_artifact_or_secret(tmp_path, capsys, monkeypatch):
+  def fail_scan(command, identities=()):
+    raise ValueError("ScannerSentinel123")
+  monkeypatch.setattr(history, "redaction_findings", fail_scan)
+  log = write_log(tmp_path / "pi.jsonl", [tool("echo safe")])
+  output = tmp_path / "private" / "history.json"
+  assert history.main(["--pi-root", str(log), "--output", str(output), "--identity-term", "IdentitySentinel123"]) == 2
+  assert not output.exists()
+  captured = capsys.readouterr()
+  assert "Sentinel123" not in captured.out + captured.err
+  assert not captured.out
+
+
+@pytest.mark.parametrize("spelling", [
+  "Identity''Sentinel123",
+  'Identity""Sentinel123',
+  "'Identity'Sentinel123",
+  'Identity"Sentinel123"',
+  "'Identity'\"Sentinel123\"",
+  "Iden\\titySentinel123",
+  "IdentitySentinel12\\3",
+  "prefixIdentity''Sentinel123suffix",
+])
+def test_shell_cooked_identity_is_quarantined_and_independently_found(tmp_path, capsys, spelling):
+  identity = "IdentitySentinel123"
+  command = "echo " + spelling
+  assert identity not in command
+  assert history.redact(command, (identity,)) is None
+  assert history.redaction_findings(command, (identity,)) == {"identity"}
+  log = write_log(tmp_path / "pi.jsonl", [tool(command)])
+  output = tmp_path / "private" / "history.json"
+  assert history.main(["--pi-root", str(log), "--output", str(output), "--identity-term", identity]) == 0
+  captured = capsys.readouterr()
+  artifact = json.loads(output.read_text())
+  assert artifact["records"] == []
+  assert artifact["statistics"]["pi"]["redactionSkipped"] == 1
+  assert spelling not in output.read_text() + captured.out + captured.err
+  assert identity not in output.read_text() + captured.out + captured.err
+
+
+@pytest.mark.parametrize("command", [
+  "echo Identity''Sentinel123",
+  "echo identity''sentinel123",
+  "echo 'Identity' 'Sentinel123'",
+])
+def test_cooked_identity_checks_preserve_ordinary_concat_case_and_word_boundaries(command):
+  assert history.redact(command) == command
+  assert history.redaction_findings(command) == set()
+  if command != "echo Identity''Sentinel123":
+    assert history.redact(command, ("IdentitySentinel123",)) == command
+    assert history.redaction_findings(command, ("IdentitySentinel123",)) == set()
+
+
+def test_second_scan_catches_cooked_identity_after_injected_redactor_failure(tmp_path, capsys, monkeypatch):
+  monkeypatch.setattr(history, "redact", lambda command, identities=(): command)
+  command = "echo Identity''Sentinel123"
+  log = write_log(tmp_path / "pi.jsonl", [tool(command)])
+  output = tmp_path / "private" / "history.json"
+  assert history.main(["--pi-root", str(log), "--output", str(output), "--identity-term", "IdentitySentinel123"]) == 0
+  artifact = json.loads(output.read_text())
+  assert artifact["records"] == []
+  assert artifact["statistics"]["pi"]["secondPassSkipped"] == 1
+  assert command not in output.read_text() + capsys.readouterr().out
