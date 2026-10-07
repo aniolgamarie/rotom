@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-07",
+  "repositoryConfigurationCommit": "e8b1d09",
+  "scope": "authorized workstation omp-kernel local deployment of model catalog and five native presets",
+  "profile": "omp-kernel",
+  "runtime": {
+    "tag": "v18.4.5",
+    "lockIdentity": "420dd10a6aa7390e6858919392bd2f6f4d0204ee6f3f93362ebac6cd5acab113",
+    "runtimeIdentity": "420dd10a6aa7390e6858919392bd2f6f4d0204ee6f3f93362ebac6cd5acab113-linux-x64",
+    "upstreamSourceOrBinaryModified": false,
+    "asset": "existing verified official cache",
+    "downloadRequired": false
+  },
+  "backup": {
+    "completePrivateBackupVerified": true,
+    "mode": "0600",
+    "members": 181,
+    "protectedAccountSessionSecretAndOwnerFiles": 17,
+    "protectedFileBytesAndModesUnchanged": true,
+    "privateArchiveAndLedgerExcludedFromGit": true
+  },
+  "machineMigration": {
+    "removedRetiredProviderSelection": [
+      "kimi_anthropic",
+      "glm_anthropic"
+    ],
+    "addedProviderSelection": [
+      "deepseek_tf"
+    ],
+    "otherMachineConfigurationAndSecretsUnchanged": true,
+    "mainPreserved": "cursor/kimi-k3:high",
+    "nativeAccountAndSessionsMigratedOrCopied": false,
+    "activeProcessTerminated": false,
+    "userConfirmedExit": true
+  },
+  "deployment": {
+    "applyChanges": 33,
+    "presetNames": [
+      "basic",
+      "deepseek-payg",
+      "tf",
+      "cursor",
+      "deepseek-tf-payg"
+    ],
+    "modelRoleStorage": "project",
+    "reviewer": {
+      "model": "glm-5.3-flash",
+      "provider": "zhipu_tf"
+    },
+    "remoteFallback": {
+      "model": "kimi-for-coding",
+      "provider": "kimi_tf"
+    },
+    "retiredEmptyProviderContainersRemoved": [
+      "glm_anthropic",
+      "kimi_anthropic"
+    ],
+    "emptyContainerCleanupHadPrivateBeforeBackup": true,
+    "nonemptyUnownedProviderFieldsRemoved": false
+  },
+  "verification": {
+    "dependencies": "installed",
+    "deployedDependencies": "installed",
+    "deployedRuntimeMatchesCurrent": true,
+    "changesPending": 0,
+    "drift": false,
+    "conflicts": false,
+    "recoveryPending": false,
+    "readiness": "offline-ready",
+    "runAdmissionPassed": true,
+    "instanceAndStateLeasesHeld": true,
+    "hostLaunched": false,
+    "modelRequests": 0,
+    "liveServiceConnectivityOrEntitlementVerified": false
+  },
+  "credentialReadiness": {
+    "configuredApiProviders": [
+      "deepseek_anthropic",
+      "kimi_tf",
+      "zhipu_tf"
+    ],
+    "missingKeys": [
+      "kimi_code_key",
+      "glm_coding_key",
+      "omp_deepseek_tf_key"
+    ],
+    "cursorAuth": "existing native login data preserved, not live-inspected",
+    "basicCallsRequireIndependentCodingPlanKeys": true,
+    "deepseekTfCallsRequireIndependentKey": true,
+    "legacyOrTfKeysSilentlyReused": false
+  },
+  "taskRecord": {
+    "completed": [
+      "official runtime cache preparation",
+      "confirmed inactive instance",
+      "verified full private backup",
+      "retired reference correction",
+      "reviewed zero-conflict plan",
+      "apply",
+      "bounded empty-provider cleanup",
+      "protected data/config verification",
+      "no-spawn run admission",
+      "final doctor and credential readiness"
+    ],
+    "inProgress": [],
+    "failedPendingDecision": [],
+    "environmentUnverified": [
+      "live native preset switching/plugin health",
+      "current Cursor/TF service and account entitlements",
+      "TF image transfer",
+      "missing independent keys for basic and DeepSeek TF"
+    ]
+  }
+}

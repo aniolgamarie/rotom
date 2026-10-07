@@ -65,4 +65,4 @@ OMP 原生预设只切角色，不切 `retry.fallbackChains`。本轮将执行�
 
 权限审批与执行套件独立。kernel 公开默认 `reviewer_model` 固定为 GLM TF Flash，`remote_fallback_model` 为 Kimi TF `kimi-for-coding`；有效 allow/ask/deny 不复审，运行故障才尝试远程备用。tiny 仍为 installed-only 的保守 ask/deny 兜底。私人显式主审、备用及模式设置优先，套件切换不会修改权限 sidecar。用户可在私人覆盖中显式设置 `reviewer_model = "session"` 恢复跟随会话；省略私人字段会保留公开默认。`remote_fallback_model` 仍要求选中的具体模型，不能设置为 session。跟随会话时仍适用原有传输不支持后的备用规则。
 
-这些配置与离线测试不代表已在本机部署，也不代表真实 Cursor/TF 推理或图像传输已通过。配置来源和验收证据见[本轮验收记录](acceptance/omp-model-presets-20261006.json)。
+离线配置验收见[实现记录](acceptance/omp-model-presets-20261006.json)。2026-10-07 已完成 workstation 的 omp-kernel 本机部署，五套预设、备份、受管配置与无宿主启动准入均已核验，见[本机部署记录](acceptance/omp-model-presets-local-deploy-20261007.json)。真实会话切换、当前 Cursor/TF 推理与图像传输仍未验证；basic 的官方订阅 key 与 DeepSeek TF 独立 key 尚需填写。
