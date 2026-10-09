@@ -2,6 +2,8 @@
 
 [English](README.md) | **中文**
 
+第三方插件按需管理与仓库瘦身等后续规划，统一记录在独立的 [Roadmap](docs/roadmap.md) 中。
+
 个人 Agent 配置管理仓库：公共规则、完整技能包、工具模板和依赖锁进入 Git，机器覆盖与 API key 留在仓库外。通过一个入口生成、检查、部署和启动独立实例；每个实例只保留上一版受管配置备份。
 
 **基本原则：不修改任何 agent 的上游源码。** 使用官方配置、公开插件接口与官方 CLI 完成集成，不维护宿主补丁或功能 fork。历史偏离与迁移状态见[架构说明](docs/architecture.md#基本原则上游宿主保持原样)及[待迁移盘点](docs/follow-ups/upstream-agent-source-migration.md)。
