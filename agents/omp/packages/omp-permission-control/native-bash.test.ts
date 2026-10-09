@@ -100,6 +100,16 @@ describe("native bash public approval adapter", () => {
       contextReason: "STANDARD_CONTEXT" });
   });
 
+  test("common shell probe data keeps standard zsh context without executing commands", async () => {
+    const { native } = runtime({ home, shell: "/bin/zsh", shellArgs: ["-l", "-c"], executionRoute: () => "local-embedded" });
+    for (const command of ["ls ~/bin /usr/local/bin 2>/dev/null | grep -i ob; command -v ob; type ob 2>&1",
+      "git branch --contains b99258786076 2>/dev/null; echo ---; git log --oneline --graph --all --not --remotes | head -30"]) {
+      const captured = await native.capture(root, { command, timeout: 30 });
+      expect(captured.decision).toBe("allow");
+      expect(captured.reviewContext).toMatchObject({ shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" });
+    }
+  });
+
   test("all configured shell families accept only official shapes on the local route", async () => {
     const families = ["bash", "sh", "zsh", "dash", "ash", "ksh", "mksh", "fish", "pwsh", "powershell", "cmd"];
     for (const family of families) {
