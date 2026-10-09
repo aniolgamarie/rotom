@@ -4,6 +4,8 @@
 
 **English** | [中文](README.zh-CN.md)
 
+Future plans, including on-demand third-party plugin management and repository size reduction, are recorded in the [Roadmap](docs/roadmap.md).
+
 Personal Agent configuration management repository: shared rules, complete skill packs, tool templates, and dependency locks live in Git; per-machine overrides and API keys stay outside. A single entry point generates, validates, deploys, and launches isolated instances; each instance keeps only the previous round of managed-configuration backup.
 
 The first release implements **DSH + ccch1mneyyy/dsh-TUI**. The Pi migration spec is complete within its agreed scope: software integration and Linux x86_64 mock/native validation, including cold rebuilds of all four profiles in two fresh HOME/checkout paths each. The accepted candidate is `9d6a9270`; other platforms and real-account/service validation remain unverified and are tracked as [separate follow-up work](docs/follow-ups/pi-platform-and-live-validation.md). Pi delegates to the official Codex CLI through model-delegate; the migration retires codex-delegate. See the [Pi guide](docs/pi.md), [support matrix](docs/acceptance/pi-support-matrix.md), and [spec completion report](docs/acceptance/pi-spec-closure-20260924/README.md) for configuration and verification status.
