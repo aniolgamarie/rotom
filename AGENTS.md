@@ -47,7 +47,7 @@ docs/               # 文档
 - 双引号字符串，2 空格缩进
 - 中文注释
 - 原子提交，conventional commit 格式
-- 本仓库新提交的 author 和 committer 均使用 `Olga Marie <aniolgamarie@gmail.com>`；提交前核对 `git var GIT_AUTHOR_IDENT` 与 `git var GIT_COMMITTER_IDENT`，不依赖机器全局身份或系统自动推导。
+- 使用用户确认的仓库级 Git 身份；具体姓名、邮箱保存在各 clone 的 `.git/config`，不在共享规则中固定。提交前核对 `git config --local --get user.name`、`git config --local --get user.email` 与 `git var GIT_AUTHOR_IDENT`、`git var GIT_COMMITTER_IDENT`；未配置或身份不一致时先明确身份，不沿用机器全局值或系统自动推导。
 - 不提交 secrets 或凭据
 - 未知字段失败，不静默丢弃或修复
 - 秘密值不进入通用配置/摘要/日志/异常
