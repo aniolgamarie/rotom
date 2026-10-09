@@ -5,7 +5,7 @@
   "sourceSha256": "122a86ca25143d65e36d38c749bc0aeb5ab0ed7aff75ae672eae197c01493ad3",
   "checksumsSha256": "d39ec7d888b22822e2e487ae40114a197335acb20a8135801918ebff8a7188dc",
   "linuxBinarySha256": "877acdc48384b80fe4c083b1e610433d28922dd9fccde9ea430aaace8765b19b",
-  "lockIdentity": "a6ffd2d92068d0c1159df55500547d28a89205d4a2bf5f420d80ded2033b2c69",
+  "lockIdentity": "47e765c93a31f24befc89a6596995ccb4cb4ab8c8e3ecbea9d0525e8b8d92fd2",
   "upstreamModified": false,
   "offlineTests": {
     "pytestConfiguration": {
@@ -87,7 +87,27 @@
     "evidenceMethod": "Separate allow and deny runs; aggregate initial harness failures are preserved, not described as a single clean run"
   },
   "dailyDeployment": {
-    "status": "pending"
+    "status": "complete",
+    "profile": "omp-kernel",
+    "version": "v18.8.6",
+    "runtimeIdentity": "47e765c93a31f24befc89a6596995ccb4cb4ab8c8e3ecbea9d0525e8b8d92fd2-linux-x64",
+    "syncExit": 0,
+    "planChanges": 2,
+    "applyExit": 0,
+    "doctorExit": 0,
+    "readiness": "offline-ready",
+    "changesPending": 0,
+    "drift": false,
+    "conflicts": false,
+    "recoveryPending": false,
+    "dependencies": "installed",
+    "deployedDependencies": "installed",
+    "runtimeMatchesCurrent": true,
+    "nativeIdentityPreserved": true,
+    "previousManagedBackup": true,
+    "instanceQuietCheck": "physical lifecycle guard passed at apply; doctor.live describes online diagnostics only",
+    "realAccountsOrSessionFilesInspected": false,
+    "credentialsLoadedInternally": "explicitly authorized; bodies not displayed/copied/hashed"
   },
   "networkProposal": {
     "implemented": false,
@@ -100,16 +120,41 @@
       "Offline tests and lock",
       "Network design and source feasibility review",
       "Historical corpus plus strict independent syntax tests",
-      "Allow and deny official host smoke; own temporary fixtures cleaned"
+      "Allow and deny official host smoke; own temporary fixtures cleaned",
+      "Upgrade and K3 history protection merged into main",
+      "Effective K3 fallback defaults verified",
+      "Daily guarded sync/plan/apply/doctor complete"
     ],
-    "inProgress": [
-      "Merge and daily deployment"
-    ],
+    "inProgress": [],
     "failedAwaitingDecision": [],
     "environmentNotVerified": [
       "Real Cursor service availability",
       "Real credential database downgrade",
       "Other-platform actual binaries"
     ]
+  },
+  "initialUpgradeLockIdentity": "a6ffd2d92068d0c1159df55500547d28a89205d4a2bf5f420d80ded2033b2c69",
+  "cursorHistoryProtection": {
+    "commit": "786fe94",
+    "explicitEmptyChains": 6,
+    "effectiveMachineConfigurationVerified": true,
+    "initialAffectedPytest": {
+      "passed": 79,
+      "failed": 1,
+      "failure": "historical kernel snapshot retry expectation"
+    },
+    "fixedKernelPytest": {
+      "passed": 14
+    },
+    "fixedNativeRenderTest": {
+      "passed": 1
+    },
+    "frozenOracleChanged": false,
+    "independentReview": {
+      "P1": 0,
+      "P2": 0
+    },
+    "realModelRequests": 0,
+    "existingHistoryRewritten": false
   }
 }
