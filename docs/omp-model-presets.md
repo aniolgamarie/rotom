@@ -1,6 +1,6 @@
 # OMP 模型套件
 
-模型池提供可选型号，套件配置日常执行、轻量任务、深入分析等角色的组合。rotom 将 `agent_options.model_presets` 转换为 OMP 官方 `modelPresets`；使用固定 v18.4.5 的公开配置与命令，不修改上游源码。
+模型池提供可选型号，套件配置日常执行、轻量任务、深入分析等角色的组合。rotom 将 `agent_options.model_presets` 转换为 OMP 官方 `modelPresets`；使用固定 v18.8.6 的公开配置与命令，不修改上游源码。
 
 `omp-default` 提供 `basic` 和 `deepseek-payg`，其初始角色使用 basic。`omp-kernel` 在其基础上提供 `tf`、`cursor`、`deepseek-tf-payg`，共五套；kernel 的全局初始角色仍使用既有 TF 配置，私人 Cursor 角色覆盖仍优先。新增预设不会自动切换已有部署或登录账号。
 

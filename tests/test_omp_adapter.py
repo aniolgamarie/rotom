@@ -53,7 +53,7 @@ def full_data():
       "app.model.cycleForward": "Ctrl+P", "app.history.search": []}})
   data["plugins"] = {"rotom-health": {"id": "rotom-health", "source": "agents/omp/packages/rotom-health",
     "entrypoints": ["index.ts"], "tree_digest": "a382040f693dc402fdca39134a02e4c6ca158b8f23f6a8d495de486b840067ca", "license": "MIT",
-    "compatibility": {"omp": "v18.4.5"}}}
+    "compatibility": {"omp": "v18.8.6"}}}
   data["mcp"] = {"echo-stdio": {"transport": "stdio", "command": "omp-package:echo-mcp", "args": []},
     "echo-http": {"transport": "streamable-http", "url": "https://omp-validation.invalid/mcp"}}
   data["adapter_documents"] = {"agent": {"resources": {
@@ -62,7 +62,7 @@ def full_data():
     "plugins": {"plugins": {"rotom-health": data["plugins"]["rotom-health"], "echo-mcp": {
       "id": "echo-mcp", "source": "agents/omp/packages/echo-mcp", "entrypoints": ["server.py"],
       "tree_digest": "c10617b101717ec6ce399da846e165d7a6f1cfb5c2aad02d2f6c405cd187faf4",
-      "license": "MIT", "compatibility": {"omp": "v18.4.5"}}}}}
+      "license": "MIT", "compatibility": {"omp": "v18.8.6"}}}}}
   return data
 
 

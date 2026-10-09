@@ -26,16 +26,16 @@ from .schema import ConfigError
 from .storage import Conflict, Tree, ensure_private
 
 ROOT = Path(__file__).resolve().parents[2]
-TAG = "v18.4.5"
-COMMIT = "79808c3bf8f8cd9826decc63e3e18b13035f64f8"
+TAG = "v18.8.6"
+COMMIT = "f068751e2f1dbdbc195977776d47a26db8697495"
 SOURCE_URL = "https://codeload.github.com/can1357/oh-my-pi/tar.gz/" + COMMIT
-SOURCE_SHA256 = "eddf7bb092dacffcfbbc1d44b1cc367e0fb9e2bf8fabd4ff97aa0ac21c401652"
+SOURCE_SHA256 = "122a86ca25143d65e36d38c749bc0aeb5ab0ed7aff75ae672eae197c01493ad3"
 RELEASE_URL = "https://github.com/can1357/oh-my-pi/releases/download/" + TAG + "/"
 ASSETS = {name: {"url": RELEASE_URL + asset, "sha256": digest} for name, asset, digest in (
-  ("linux-x64", "omp-linux-x64", "42c710239b3fc30b9759424f973c6c143709935d5752be7eec8d7b011f40d864"),
-  ("linux-arm64", "omp-linux-arm64", "3dcf6a7f847b8c2f7bc5294c52a09151e858578ae3610655b82bf97ffa120a72"),
-  ("macos-x64", "omp-darwin-x64", "823cdd2202cbe336908c0d7a4add4cb063048e000fa9b2083b8576755d1c2523"),
-  ("macos-arm64", "omp-darwin-arm64", "64f5d0a99a2c5b5d9b453a7666257306244ac4c6fd8fdbe0e760bf3449fc8ea6"),
+  ("linux-x64", "omp-linux-x64", "877acdc48384b80fe4c083b1e610433d28922dd9fccde9ea430aaace8765b19b"),
+  ("linux-arm64", "omp-linux-arm64", "a6bf1405877a739965586fcf973136f72078d2e6dc288905fab08588469c13cf"),
+  ("macos-x64", "omp-darwin-x64", "94395b644479c6900c09843a03b581eda4c197946c91c73ab581ef6a48bb0367"),
+  ("macos-arm64", "omp-darwin-arm64", "31faa0ee8420a13a783f4ca56d98f974e4a9f9081d269057a099f7eb618d1133"),
 )}
 UPSTREAM = {"upstream/" + name for name in ("bun.lock", "LICENSE", "THIRD-PARTY-NOTICES.txt", "provenance.json", "NOTICE.md")}
 PYTHON_REQUIREMENT = {"kind": "manager-python", "implementation": "cpython", "minimum": [3, 11]}

@@ -20,7 +20,7 @@
 
 当前仓库使用官方未改动 OMP 与本地 `omp-permission-control` 插件，遵守[不修改 agent 上游源码的原则](architecture.md#基本原则上游宿主保持原样)。插件提供独立 `permission_bash`，在工具执行函数内部完成审批后才调用公开执行 API；原生 Bash 保持 prompt。模型审查命令语义，普通 `ls -la` 不再受到旧宿主读取证明的选项限制。明确配置的禁止/人工规则仍保留。
 
-当前固定官方 OMP v18.4.5，升级验证见[验收记录](acceptance/omp-upgrade-18.4.5.md)。公共 kernel 配方设置 `display.hideToolActivity=false`，显示工具活动；在界面切换工具可见性会持久化该字段，长期调整应写回公共配方或私人机器覆盖后部署。
+当前固定官方 OMP v18.8.6，升级验证见[当前验收](acceptance/omp-upgrade-18.8.6.md)；v18.4.5 的历史升级验证见[验收记录](acceptance/omp-upgrade-18.4.5.md)。公共 kernel 配方设置 `display.hideToolActivity=false`，显示工具活动；在界面切换工具可见性会持久化该字段，长期调整应写回公共配方或私人机器覆盖后部署。
 
 执行模型在 OMP 会话中选择。权限主审优先使用显式 `reviewer_model`；kernel 公开默认固定为 `omp-zhipu_tf-glm-5.3-flash`，私人覆盖优先。未配置主审时仍绑定当前会话执行模型；私人覆盖可显式设 `reviewer_model="session"` 恢复跟随会话。默认远程 `remote_fallback_model="omp-kimi_tf-kimi-for-coding"` 仅在主审运行故障、transport不支持或不可用时接替；有效 allow/ask/deny 终止，不复审。模型引用错误在配置期失败。这与执行模型的 `retry.modelFallback` 分开管理。
 
