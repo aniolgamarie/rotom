@@ -880,6 +880,186 @@ describe("native bash delegation", () => {
     expect(JSON.parse(h.notices.at(-1)!).coverage).toBe("ready");
   });
 
+  test("structured worktree effects enter reviewer once and delegate only the original input object", async () => {
+    const raw = "git worktree add ../rotom-cli-ux -b cli-ux-help && cd ../rotom-cli-ux && git log --oneline -1";
+    const plan = { rawCommand: raw, normalizedCommand: raw,
+      executionCommand: "/fixture/omp worktree add -b cli-ux-help -- ../rotom-cli-ux && cd ../rotom-cli-ux && git log --oneline -1",
+      cliArgv: ["/fixture/omp"], effectiveCwd: "/repo", backend: "auto",
+      operations: [{ target: "../rotom-cli-ux", branch: "cli-ux-help", forceBranch: false }],
+      effects: ["may copy ignored build artifacts", "backend auto may fall back"] };
+    const native = fakeNativeRuntime({ reviewContext: { sameSettingsInstance: true, nativeDecision: "allow", worktreePlan: plan } });
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
+    const { tool, hook } = await nativeReady(h); const input = { command: raw, timeout: 30 };
+    expect(await hook(event("worktree-plan", input), h.ctx)).toBeUndefined();
+    expect((await tool.execute("worktree-plan", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
+    expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(1);
+    expect(h.invokeCalls[0][0]).toBe(input); expect(h.execCalls).toHaveLength(0);
+    const request = JSON.parse(h.fetchCalls[0][1].body);
+    expect(request.messages[0].content).toContain("not authorization or an automatic low-risk signal");
+    expect(JSON.parse(request.messages.at(-1).content).executionContext.worktreePlan).toEqual(plan);
+  });
+
+  test("a worktree plan still obeys model ask/deny", async () => {
+    for (const decision of ["ask", "deny"] as const) {
+      const native = fakeNativeRuntime({ reviewContext: { sameSettingsInstance: true, nativeDecision: "allow",
+        worktreePlan: { effects: ["creates worktree"] } } });
+      const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny",
+        response: { choices: [{ message: { content: JSON.stringify({ decision, risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } });
+      const { hook } = await nativeReady(h);
+      expect((await hook(event("plan-" + decision), h.ctx)).block).toBe(true);
+      expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(0);
+      expect(h.selectCalls).toHaveLength(decision === "ask" ? 1 : 0);
+    }
+  });
+
+  test("raw permission_bash retains manual original-shell semantics instead of native clone effects", async () => {
+    const raw = "git worktree add ../target -b branch";
+    const plan = { rawCommand: raw, backend: "auto", operations: [{ target: "../target", branch: "branch" }],
+      effects: ["may carry ignored/local source data"] };
+    for (const select of ["Deny", "Approve"]) {
+      const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" },
+        reviewContext: { sameSettingsInstance: true, nativeDecision: "allow", worktreePlan: plan } });
+      const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select });
+      const tool = await ready(h); const input = { command: raw, timeout: 30 };
+      expect(await h.events.get("tool_call")(event("raw-worktree", input, "permission_bash"), h.ctx)).toBeUndefined();
+      const result = await tool.execute("raw-worktree", input, undefined, undefined, h.ctx);
+      expect(result.isError).toBe(select === "Deny" ? true : undefined);
+      expect(h.fetchCalls).toHaveLength(0); expect(h.invokeCalls).toHaveLength(0);
+      expect(h.execCalls).toHaveLength(select === "Deny" ? 0 : 1); expect(h.selectCalls).toHaveLength(1);
+      const title = h.selectCalls[0][0];
+      expect(title).toContain("WORKTREE_CONTEXT"); expect(title).not.toContain("worktree clone effects");
+      expect(title).not.toContain("ignored/local");
+      if (select === "Approve") expect(h.execCalls[0][1]).toEqual(["--noprofile", "--norc", "-c", raw]);
+      await h.commands.get("permission-control").handler("status", h.ctx);
+      expect(JSON.parse(h.notices.at(-1)!).rawNativeCloneCoverage).toBe("not-applicable-raw-shell");
+    }
+    const native = fakeNativeRuntime({ reviewContext: { sameSettingsInstance: true, nativeDecision: "allow", worktreePlan: plan } });
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
+    const { hook, tool } = await nativeReady(h); const input = { command: raw, timeout: 30 };
+    expect(await hook(event("native-worktree", input), h.ctx)).toBeUndefined();
+    expect((await tool.execute("native-worktree", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
+    expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(1);
+    expect(h.invokeCalls[0][0]).toBe(input); expect(h.execCalls).toHaveLength(0);
+  });
+
+  test("worktree human approval shows bounded redacted effects for ask/manual/native prompt", async () => {
+    const secret = "sk-" + "x".repeat(24);
+    const plan = { backend: "auto", cliArgv: ["/internal/cli-path"],
+      operations: [{ target: "../" + secret, branch: "branch\nname", forceBranch: true }],
+      effects: ["source checkout data may be copied"] };
+    for (const mode of ["ask", "manual", "native-prompt"] as const) {
+      const native = fakeNativeRuntime({ decision: mode === "native-prompt" ? "prompt" : "allow",
+        reasonCode: mode === "native-prompt" ? "NATIVE_PROMPT" : "NATIVE_ALLOW",
+        reviewContext: { sameSettingsInstance: true, nativeDecision: mode === "native-prompt" ? "prompt" : "allow", worktreePlan: plan } });
+      const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny",
+        response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } });
+      const { hook } = await nativeReady(h);
+      if (mode === "manual") await h.commands.get("permission-control").handler("manual", h.ctx);
+      expect((await hook(event("ui-" + mode, { command: "git worktree add ../target -B branch" }), h.ctx)).block).toBe(true);
+      expect(h.selectCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(0);
+      const title = h.selectCalls[0][0];
+      expect(title).toContain("worktree clone effects"); expect(title).toContain("-B branch reset possible: true");
+      expect(title).toContain("local/ignored data"); expect(title).toContain("not enumerated or guaranteed secret-free");
+      expect(title).toContain("configured intent"); expect(title).toContain("not complete side-effect verification");
+      expect(title).toContain("repository-cwd settings"); expect(title).toContain("actual clone/backend may differ");
+      expect(title).toContain("Post-checkout hooks may execute local code"); expect(title).toContain("not inspected");
+      expect(title).not.toContain(secret); expect(title).not.toContain("/internal/cli-path");
+      expect(title).not.toContain("branch\nname");
+    }
+  });
+
+  test("unverified native rewrite effects remain visible only in native human UI", async () => {
+    for (const evidence of ["changed", "helper-unavailable"]) {
+      for (const name of ["bash", "permission_bash"]) {
+        const native = fakeNativeRuntime({ decision: "prompt", reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT",
+          diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "WORKTREE_CONTEXT" },
+          reviewContext: { sameSettingsInstance: true, unverifiedWorktreeEffects:
+            { mayRewrite: true, verified: false, rewriteEvidence: evidence } } });
+        const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny" });
+        await ready(h); const input = { command: "echo ok && cd sub && git worktree add ../x" };
+        const hook = h.events.get("tool_call");
+        if (name === "bash") expect((await hook(event("unverified", input), h.ctx)).block).toBe(true);
+        else {
+          expect(await hook(event("unverified", input, name), h.ctx)).toBeUndefined();
+          expect((await h.tools.get(name).execute("unverified", input, undefined, undefined, h.ctx)).isError).toBe(true);
+        }
+        expect(h.fetchCalls).toHaveLength(0); expect(h.invokeCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+        expect(h.selectCalls).toHaveLength(1);
+        const title = h.selectCalls[0][0];
+        if (name === "bash") {
+          expect(title).toContain("analysis is incomplete"); expect(title).toContain("local/ignored data");
+          expect(title).toContain("configuration/backend may differ"); expect(title).toContain("hooks may execute local code");
+        } else expect(title).not.toContain("Possible native worktree rewrite");
+      }
+    }
+  });
+
+  test("unverified rewrite native deny never asks or executes", async () => {
+    const native = fakeNativeRuntime({ decision: "deny", reasonCode: "NATIVE_DENY",
+      reviewContext: { unverifiedWorktreeEffects: { mayRewrite: true, verified: false } } });
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
+    const { hook } = await nativeReady(h);
+    expect((await hook(event("unverified-deny", { command: "git worktree add ../x" }), h.ctx)).block).toBe(true);
+    expect(h.selectCalls).toHaveLength(0); expect(h.fetchCalls).toHaveLength(0);
+    expect(h.invokeCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+  });
+
+  test("proven no-rewrite commands use ordinary model or generic-syntax policy", async () => {
+    for (const command of ["git grep worktree add", "git log --grep worktree add", "git worktree add target --unknown",
+      "git worktree add 'target$literal'", "echo $NAME"]) {
+      const native = fakeNativeRuntime({ decision: "allow", reasonCode: "NATIVE_ALLOW",
+        diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" },
+        reviewContext: { sameSettingsInstance: true, nativeRewriteApplied: false } });
+      const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny" });
+      const { hook, tool } = await nativeReady(h); const input = { command };
+      const result = await hook(event("no-rewrite", input), h.ctx);
+      if (command === "echo $NAME") {
+        expect(result.block).toBe(true); expect(h.fetchCalls).toHaveLength(0); expect(h.invokeCalls).toHaveLength(0);
+        expect(h.selectCalls[0][0]).toContain("UNSUPPORTED_SYNTAX");
+        expect(h.selectCalls[0][0]).not.toContain("WORKTREE_CONTEXT");
+        expect(h.selectCalls[0][0]).not.toContain("Possible native worktree rewrite");
+      } else {
+        expect(result).toBeUndefined();
+        expect((await tool.execute("no-rewrite", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
+        expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(1); expect(h.invokeCalls[0][0]).toBe(input);
+      }
+    }
+  });
+
+  test("clone summary redacts complete long secret-like strings before truncation", async () => {
+    const target = "/" + "a".repeat(108) + "/sk-" + "t".repeat(24);
+    const branch = "b".repeat(109) + "-ghp_" + "u".repeat(24);
+    const native = fakeNativeRuntime({ decision: "prompt", reasonCode: "NATIVE_PROMPT",
+      reviewContext: { sameSettingsInstance: true, worktreePlan: { backend: "auto",
+        operations: [{ target, branch, forceBranch: true }] } } });
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny" });
+    const { hook } = await nativeReady(h);
+    expect((await hook(event("long-canary", { command: "git worktree add " + target + " -b " + branch }), h.ctx)).block).toBe(true);
+    const title = h.selectCalls[0][0];
+    expect(title).not.toContain("sk-tt"); expect(title).not.toContain("ghp_uu");
+    expect(title).not.toContain("t".repeat(16)); expect(title).not.toContain("u".repeat(16));
+    expect(h.fetchCalls).toHaveLength(0); expect(h.invokeCalls).toHaveLength(0);
+  });
+
+  test("cancelling a pending worktree review never delegates", async () => {
+    let release!: () => void;
+    const wait = new Promise<void>(resolve => { release = resolve; });
+    const native = fakeNativeRuntime({ reviewContext: { sameSettingsInstance: true, nativeDecision: "allow",
+      worktreePlan: { effects: ["may copy source checkout data"] } } });
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, fetchImpl: async () => {
+      await wait;
+      return new Response(JSON.stringify({ choices: [{ message: { content:
+        '{"decision":"allow","risk":"low","authorization":"sufficient","reasonCode":"LOW_RISK_AUTHORIZED"}' } }] }), { status: 200 });
+    } });
+    const { hook } = await nativeReady(h);
+    const execution = hook(event("cancel-worktree", { command: "git worktree add ../target" }), h.ctx);
+    await Promise.resolve();
+    await h.commands.get("permission-control").handler("manual", h.ctx);
+    release();
+    expect((await execution).block).toBe(true);
+    expect(h.invokeCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+  });
+
   test("native deny and prompt stop before the reviewer and delegate", async () => {
     const denyRuntime = fakeNativeRuntime({ decision: "deny", reasonCode: "NATIVE_DENY" });
     const deny = await fakeHost({ config: nativeConfig, nativeRuntime: denyRuntime.runtime });

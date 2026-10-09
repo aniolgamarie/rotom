@@ -103,7 +103,7 @@ kernel 配方明确开启。注册时决定是否包装，不在活动会话中�
 
 原生 per-tool deny、pattern deny/prompt 和 critical prompt 不被外层 permission_bash=allow
 或模型结果覆盖。普通 exec/native allow 仍进入模型审查；默认 bash=prompt 保留插件缺失保护。
-执行端与会话设置不同源时人工或阻止；不靠 cwd 相同猜测设置实例。startup/.envrc/worktree
+执行端与会话设置不同源时人工或阻止；不靠 cwd 相同猜测设置实例。startup/.envrc 和不能可靠分析的 worktree
 重写等未知上下文不能自动批准，也不在审批前运行 shell snapshot 或 direnv preflight。
 默认 interceptor/auto-background 的开关本身不是强制人工的理由，实际结果通过原生委托保留。
 
@@ -134,7 +134,7 @@ Shell snapshot 私有缓存无法查询加载前历史；首批支持从新 CLI 
 这项兼容表示上述 Shell 环境可以进入智能审批，命令仍使用 Brush 支持的语法，不表示
 fish、PowerShell 或 cmd 的原生语言已经适配。已确认本地执行路线时，非 Bash 的启动脚本
 和已知同族 custom shellPath 不参与普通 Bash 执行；Bash 的 snapshot/startup、继承函数、
-HOME 不一致、direnv、prefix、未知 Shell/args/path 和 worktree 重写继续保守处理。
+HOME 不一致、direnv、prefix、未知 Shell/args/path 继续保守处理。
 
 无受管标记的普通旧 Bash/sh 启动维持原有保守行为。标记错误、ACP、rpc-ui、未知 CLI
 选项或模式不自动批准；PTY、async、service 等参数仍在现有边界之外。可以使用
@@ -207,3 +207,69 @@ allow、真人授权或真实宿主。逐行观测只保存 ID/门控与计数�
 overlay SHA-256 为
 `92211b188ca473c31ebdf431bee5c7bae661d4d6306a5e7ebfdaa9b0ed18815b`。
 每个 overlay ID 还绑定原 row 的递归排序 canonical JSON SHA，原 gzip 永不重写。
+
+## 原生 worktree clone 审查
+
+保留官方 `worktree.clone` 行为。插件使用公开 `extractLeadingCdTarget`、`resolveToCwd`、
+`rewriteGitWorktreeAdd` 分析实际归一化与重写结果；入口使用公开 compiled 判别与
+`process.execPath` 的自有受管 resolver，仅支持受管 compiled 官方 CLI。静态可解析的
+clone 命令可进入模型审查，不提供自动 allow 规则。原始命令和原 params 对象继续交给
+`ctx.invokeTool`，实际归一化、clone 和执行由未修改的官方宿主完成。
+
+审查上下文的 `worktreePlan` 包含原命令、归一化与执行命令、CLI argv、有效执行 cwd、
+配置 backend，以及各改写段的目标、分支、`-B`、起点和 `-C` 仓库位置。路径只描述词法
+执行关系，不证明存在性。clone 可能携带源 checkout 的本地/ignored 数据（包括构建产物）；
+公开接口未枚举复制集合，也不保证其中没有秘密。backend 是意图，不保证成功，auto 可
+选择其他后端或回退普通 Git checkout。上述效果数据不是用户授权或自动低风险证明。
+
+原命令与执行命令都须满足声明的静态解析合同。动态形式仍由通用语法合同拦截；已证明不重写的未知 Git 标志不增加 clone 门控。helper 不可用、
+clone 前的内部条件导航和无法核验的 cwd 保留人工边界；公开 leading-cd 归一化仅在
+同源 scoped Settings、真实路径与 `.envrc` 检查均满足时进入模型。截图中的 clone 后
+`cd` 不用于猜测此前 clone 的源位置。path git、echo 中的命令文本与不重写的管道不会
+被标记成 clone。原生 deny/prompt 仍先于模型，完整执行 plan、backend、CLI argv 和
+有效 cwd 参与捕获及复核指纹，任何漂移都会阻止原生委派。
+
+人工确认在已有可核验 clone plan 时显示简短目标/分支、`-B` 和本地/ignored 数据复制风险，
+并说明 backend 只是意图；文本脱敏与转义，不展开内部 CLI 路径。legacy `permission_bash`
+执行 raw shell，不采用原生 clone 重写；它遇到原生 clone plan 仍保留人工边界，不向模型
+或窗口借用该 plan，状态以 `rawNativeCloneCoverage: not-applicable-raw-shell` 明确标注。
+人工批准该 raw 入口时执行原 raw 语义，不宣称会携带 clone 的 ignored/local 数据。
+
+此 plan 的保证对象是 dispatch：`analysisScope` 为
+`native-dispatch-and-declared-possible-effects`，`backendScope` 为 `native-session-intent`，
+`executionSettingsScope` 为 `new-cli-repository-cwd-unverified`。新 CLI 根据 repository cwd
+重新解析设置，实际 clone/backend 可能不同；post-checkout hook 可能执行本地代码，其
+内容未检查。子进程配置、hook 和复制的源文件集合不受本插件的 parent-settings 指纹锁
+保护，这些未知效果同时进入模型与人工摘要；不读取真实源文件、设置或 hook 来补证。
+父 Settings/revision/backend、公开重写结果、入口 argv 与结构化参数仍精确绑定并复核。
+`STANDARD_CONTEXT` 与内部 dispatch supported 只描述 parent native 上下文或 dispatch
+分析状态；通用语法与授权门控仍单独适用，不表示完整副作用已验证或命令属于低风险。plan 存在不代替明确用户授权，模型可 ask/deny，
+人工批准仍须依据披露的未知效果判断；fake allow 测试只证明接线，不保证真实 reviewer 会 allow。
+
+若公开 helper 已返回改写结果但静态分析不完整，或确有可能 clone 而 helper 不可用，
+`unverifiedWorktreeEffects` 只标记 `mayRewrite` 与未验证效果，不伪造 supported plan。
+原生入口保持人工边界，并提示改写范围不完整、本地/ignored 数据、新 CLI 配置/backend
+及 post-checkout hook 风险；已证明不重写的命令不显示 clone 警告。raw 入口不借用这些
+原生效果。普通 HOME 导航和最后一次 clone 后的尾部 HOME 导航不会增加无关 clone 门控；
+影响后续 clone 的 HOME/内部导航仍保守处理。摘要先对完整值脱敏，再截断、JSON 转义，
+避免截断秘密样式字符串后漏出短前缀。
+
+clone 候选只识别官方支持的 `git [可选 -C path] worktree add` 精确 argv 前缀，不搜索
+`git grep`、`git log --grep` 等命令参数。公开 helper 已证明未改写时记录
+`nativeRewriteApplied=false`，由原 native、通用语法和模型规则判断原命令；未知 Git
+标志或 literal 扩展字符不被误报成 clone，dynamic/control 语法仍不进入自动模型审查。
+
+官方 compiled SDK 未暴露 `subprocess/worker-client`，插件不依赖它，也不复刻其 SDK/source、
+unlink 或 PATH fallback。公开 `@oh-my-pi/pi-utils` 的 `isCompiledBinary()`、既有受管
+本地路线标记和绝对普通可执行 `process.execPath` 共同限定入口 resolver；不满足时 clone
+候选保持人工，普通命令仍适用原规则。可选 clone SDK 加载失败只降级 clone 能力，
+不会关闭已经可用的普通 native runtime。
+
+捕获和复核包含入口 path、dev/ino/mode/size/mtime/ctime 观察值，入口缺失、不可执行或
+身份变化会拒绝本次 clone 审批。stat 不是认证或沙箱，复核到实际 spawn 之间仍存在
+stat-to-spawn race；这项限制写入 plan 元数据，UI 不展开入口路径。
+
+入口不可用时可用同一公开 rewrite helper 的空 argv 纯探测比较“原样/变换”。该输出
+不存为 executionCommand、plan 或模型输入，也不代表实际入口：普通动态命令保持原通用
+语法原因，late literal clone 仅获得未验证的可能效果提示并转人工；探测异常且已知候选
+仍保守处理。

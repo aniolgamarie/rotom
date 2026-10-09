@@ -22,6 +22,6 @@ compatibility = { omp = "v18.8.6" }
 id = "omp-permission-control"
 source = "agents/omp/packages/omp-permission-control"
 entrypoints = ["standalone.ts"]
-tree_digest = "159c9cbfa431bdc149c5f597200bd1b2fe1600fefac3c3d7ae732abab5db31e5"
+tree_digest = "f3d9fcb5281a6dec32ddf91d20bede9d95edcb96e38d8a96e4a2c9b339ab453f"
 license = "MIT"
 compatibility = { omp = "v18.8.6" }
