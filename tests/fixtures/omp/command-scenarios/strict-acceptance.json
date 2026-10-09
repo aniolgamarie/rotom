@@ -1,0 +1,194 @@
+{
+  "oracle": "independent-handwritten-static-contract",
+  "complete": [
+    {
+      "id": "user-home-query-pipeline",
+      "gate": "model-eligible",
+      "reason": "用户提供的静态查询包含四个简单命令，HOME仅记录在参数中，fd复制保留顺序。",
+      "command": "ls ~/bin /usr/local/bin 2>/dev/null | grep -i ob; command -v ob; type ob 2>&1",
+      "commands": [
+        { "connector": "start", "argv": ["ls", "~/bin", "/usr/local/bin"], "homeExpansions": [1], "redirections": [{ "fd": 2, "operator": ">", "target": "/dev/null" }] },
+        { "connector": "|", "argv": ["grep", "-i", "ob"] },
+        { "connector": ";", "argv": ["command", "-v", "ob"] },
+        { "connector": ";", "argv": ["type", "ob"], "redirections": [{ "fd": 2, "operator": ">&", "target": "1" }] }
+      ]
+    },
+    {
+      "id": "public-git-pipeline-anchor",
+      "gate": "model-eligible",
+      "reason": "公开固定Git只读管道，不声称是用户原文；两个argv和管道连接完整保留。",
+      "command": "git diff --name-only | head -20",
+      "commands": [{ "connector": "start", "argv": ["git", "diff", "--name-only"] }, { "connector": "|", "argv": ["head", "-20"] }]
+    },
+    {
+      "id": "existing-git-compound-anchor",
+      "gate": "model-eligible",
+      "reason": "既有测试固定Git语料，仅作已有anchor；重定向和分号不得遮蔽后续管道。",
+      "command": "git branch --contains b99258786076 2>/dev/null; echo ---; git log --oneline --graph --all --not --remotes | head -30",
+      "commands": [{ "connector": "start", "argv": ["git", "branch", "--contains", "b99258786076"], "redirections": [{ "fd": 2, "operator": ">", "target": "/dev/null" }] }, { "connector": ";", "argv": ["echo", "---"] }, { "connector": ";", "argv": ["git", "log", "--oneline", "--graph", "--all", "--not", "--remotes"] }, { "connector": "|", "argv": ["head", "-30"] }]
+    },
+    {
+      "id": "bare-home-and-multiple-home",
+      "gate": "model-eligible",
+      "reason": "裸HOME与HOME路径作为普通参数保持原文；引号内波浪号只是字面数据。",
+      "command": "ls ~ ~/bin '~' && command -V -- ob ls || type ob",
+      "commands": [{ "connector": "start", "argv": ["ls", "~", "~/bin", "~"], "homeExpansions": [1, 2] }, { "connector": "&&", "argv": ["command", "-V", "--", "ob", "ls"] }, { "connector": "||", "argv": ["type", "ob"] }]
+    },
+    {
+      "id": "quoted-escaped-home-and-glob",
+      "gate": "model-eligible",
+      "reason": "单引号、双引号和反斜线保护的HOME与glob全部为字面参数，不记录展开。",
+      "command": "printf '%s' '~/bin' \"~/bin\" \\~/bin '*.txt' \\*.txt | head -2",
+      "commands": [{ "connector": "start", "argv": ["printf", "%s", "~/bin", "~/bin", "~/bin", "*.txt", "*.txt"] }, { "connector": "|", "argv": ["head", "-2"] }]
+    },
+    {
+      "id": "home-plus-glob-compound",
+      "gate": "model-eligible",
+      "reason": "未引用的HOME与glob在相同参数记录两个独立下标，后续查询和管道不受影响。",
+      "command": "ls ~/notes/*.txt '*.md' && command -v ob | head -1",
+      "commands": [{ "connector": "start", "argv": ["ls", "~/notes/*.txt", "*.md"], "homeExpansions": [1], "globs": [1] }, { "connector": "&&", "argv": ["command", "-v", "ob"] }, { "connector": "|", "argv": ["head", "-1"] }]
+    },
+    {
+      "id": "glob-indices-after-literal",
+      "gate": "model-eligible",
+      "reason": "引用glob为字面字符串，未引用问号和方括号是glob；下标以argv顺序计数。",
+      "command": "ls '*.txt' file?.md [ab].txt ~/bin && pwd",
+      "commands": [{ "connector": "start", "argv": ["ls", "*.txt", "file?.md", "[ab].txt", "~/bin"], "globs": [2, 3], "homeExpansions": [4] }, { "connector": "&&", "argv": ["pwd"] }]
+    },
+    {
+      "id": "redirect-copy-before-write",
+      "gate": "model-eligible",
+      "reason": "先复制stderr再改stdout与逆序的shell效果不同，因此保留重定向原有顺序。",
+      "command": "ls ~/bin 2>&1 > out.txt | head -2",
+      "commands": [{ "connector": "start", "argv": ["ls", "~/bin"], "homeExpansions": [1], "redirections": [{ "fd": 2, "operator": ">&", "target": "1" }, { "fd": 1, "operator": ">", "target": "out.txt" }] }, { "connector": "|", "argv": ["head", "-2"] }]
+    },
+    {
+      "id": "redirect-write-before-copy",
+      "gate": "model-eligible",
+      "reason": "先改stdout再复制stderr的fd目标顺序不得归一化或丢失。",
+      "command": "ls ~/bin > out.txt 2>&1 | head -2",
+      "commands": [{ "connector": "start", "argv": ["ls", "~/bin"], "homeExpansions": [1], "redirections": [{ "fd": 1, "operator": ">", "target": "out.txt" }, { "fd": 2, "operator": ">&", "target": "1" }] }, { "connector": "|", "argv": ["head", "-2"] }]
+    },
+    {
+      "id": "redirect-interleaved-with-argv",
+      "gate": "model-eligible",
+      "reason": "重定向可以在argv之前或之间，目标不作为argv计数，空引号参数必须保留。",
+      "command": "2>/dev/null ls ~/bin 3< input.txt '' 4>&- && command -v -- -name",
+      "commands": [{ "connector": "start", "argv": ["ls", "~/bin", ""], "homeExpansions": [1], "redirections": [{ "fd": 2, "operator": ">", "target": "/dev/null" }, { "fd": 3, "operator": "<", "target": "input.txt" }, { "fd": 4, "operator": ">&", "target": "-" }] }, { "connector": "&&", "argv": ["command", "-v", "--", "-name"] }]
+    },
+    {
+      "id": "quoted-redirection-home-literal",
+      "gate": "model-eligible",
+      "reason": "引用的波浪号重定向目标没有HOME展开，静态字面目标可保留。",
+      "command": "printf '%s' '~/bin' > '~/literal.txt'; command -V ob",
+      "commands": [{ "connector": "start", "argv": ["printf", "%s", "~/bin"], "redirections": [{ "fd": 1, "operator": ">", "target": "~/literal.txt" }] }, { "connector": ";", "argv": ["command", "-V", "ob"] }]
+    },
+    {
+      "id": "comment-after-home",
+      "gate": "model-eligible",
+      "reason": "词起始井号引入注释，注释内危险文本没有执行语义，换行继续普通查询。",
+      "command": "ls ~/bin # rm -rf /\ncommand -v ob | head -1",
+      "commands": [{ "connector": "start", "argv": ["ls", "~/bin"], "homeExpansions": [1] }, { "connector": ";", "argv": ["command", "-v", "ob"] }, { "connector": "|", "argv": ["head", "-1"] }]
+    },
+    {
+      "id": "quoted-and-midword-comment",
+      "gate": "model-eligible",
+      "reason": "引号内井号及单词中井号都是参数字符，不能作为注释截断后续argv。",
+      "command": "echo '# literal' ob#tag; command -v ob",
+      "commands": [{ "connector": "start", "argv": ["echo", "# literal", "ob#tag"] }, { "connector": ";", "argv": ["command", "-v", "ob"] }]
+    },
+    {
+      "id": "continuation-with-home-query",
+      "gate": "model-eligible",
+      "reason": "反斜线换行仅连接命令文本，不能创建多余connector或改变HOME参数下标。",
+      "command": "ls ~/bin \\\n/usr/local/bin && \\\ncommand -v ob",
+      "commands": [{ "connector": "start", "argv": ["ls", "~/bin", "/usr/local/bin"], "homeExpansions": [1] }, { "connector": "&&", "argv": ["command", "-v", "ob"] }]
+    },
+    {
+      "id": "operator-newline-comment",
+      "gate": "model-eligible",
+      "reason": "逻辑连接符后的换行与注释不覆盖待连接的&&语义，查询仍连接前一命令。",
+      "command": "ls ~/bin &&\n# lookup only\ncommand -v ob ||\n type ob",
+      "commands": [{ "connector": "start", "argv": ["ls", "~/bin"], "homeExpansions": [1] }, { "connector": "&&", "argv": ["command", "-v", "ob"] }, { "connector": "||", "argv": ["type", "ob"] }]
+    },
+    {
+      "id": "quoted-dynamic-literal",
+      "gate": "model-eligible",
+      "reason": "单引号内变量、替换和反引号为字面数据，不能误判为动态执行。",
+      "command": "printf '%s' '$HOME' '$(id)' '`id`' && command -v ob",
+      "commands": [{ "connector": "start", "argv": ["printf", "%s", "$HOME", "$(id)", "`id`"] }, { "connector": "&&", "argv": ["command", "-v", "ob"] }]
+    },
+    {
+      "id": "query-quoted-name-and-path",
+      "gate": "model-eligible",
+      "reason": "command查询的静态引用名称和路径都是数据，不启动被查询程序。",
+      "command": "command -v 'ob' /usr/bin/ob && command -V -- 'name with space'",
+      "commands": [{ "connector": "start", "argv": ["command", "-v", "ob", "/usr/bin/ob"] }, { "connector": "&&", "argv": ["command", "-V", "--", "name with space"] }]
+    },
+    {
+      "id": "dangerous-home-tail",
+      "gate": "native-protection-required",
+      "reason": "解析完整只表示语法可见，查询后的HOME删除必须继续受原生deny/prompt保护。",
+      "command": "command -v ob && ls ~/bin; rm -rf ~/private",
+      "commands": [{ "connector": "start", "argv": ["command", "-v", "ob"] }, { "connector": "&&", "argv": ["ls", "~/bin"], "homeExpansions": [1] }, { "connector": ";", "argv": ["rm", "-rf", "~/private"], "homeExpansions": [2] }]
+    },
+    {
+      "id": "dangerous-pipeline-head",
+      "gate": "native-protection-required",
+      "reason": "删除命令即使处于管道头也会执行，不能只审批后续只读查询。",
+      "command": "rm -rf target | command -v ob || ls ~/bin",
+      "commands": [{ "connector": "start", "argv": ["rm", "-rf", "target"] }, { "connector": "|", "argv": ["command", "-v", "ob"] }, { "connector": "||", "argv": ["ls", "~/bin"], "homeExpansions": [1] }]
+    },
+    {
+      "id": "dangerous-redirection-order",
+      "gate": "native-protection-required",
+      "reason": "受保护写入与删除是独立效果，fd复制和写入的顺序全部保留用于原生保护。",
+      "command": "command -v ob && echo ok 2>&1 > protected.txt; rm -rf ~/private",
+      "commands": [{ "connector": "start", "argv": ["command", "-v", "ob"] }, { "connector": "&&", "argv": ["echo", "ok"], "redirections": [{ "fd": 2, "operator": ">&", "target": "1" }, { "fd": 1, "operator": ">", "target": "protected.txt" }] }, { "connector": ";", "argv": ["rm", "-rf", "~/private"], "homeExpansions": [2] }]
+    }
+  ],
+  "manual": [
+    { "id": "home-command-head", "command": "~/bin/ob --version", "reason": "命令头HOME会改变实际可执行路径，不属于普通参数展开的静态合同。" },
+    { "id": "bare-home-command-head", "command": "~", "reason": "裸HOME作为命令头也不是普通参数，应保守保留人工审批边界。" },
+    { "id": "named-user-home", "command": "ls ~someone/bin", "reason": "命名用户的HOME解析依赖外部用户数据库，未纳入静态普通HOME合同。" },
+    { "id": "current-directory-tilde", "command": "ls ~+/bin", "reason": "当前目录波浪号扩展属于不同环境语义，不纳入本次HOME参数合同。" },
+    { "id": "previous-directory-tilde", "command": "ls ~-/bin", "reason": "上一目录波浪号扩展依赖shell状态，不纳入本次HOME参数合同。" },
+    { "id": "embedded-tilde", "command": "echo prefix~", "reason": "本合同保守拒绝未引用的非前导波浪号，不尝试扩展更广的shell语法。" },
+    { "id": "home-output-target", "command": "echo ok > ~/out.txt", "reason": "重定向目标HOME有真实文件写入效果，当前合同只开放普通参数。" },
+    { "id": "home-input-target", "command": "cat < ~/input.txt", "reason": "输入重定向HOME目标同样超出普通参数HOME合同，不能静态批准。" },
+    { "id": "glob-redirection-target", "command": "echo ok > *.txt", "reason": "重定向目标glob依赖文件系统并可能歧义，因此保守人工处理。" },
+    { "id": "command-exec-wrapper", "command": "command ob --version", "reason": "command真正执行目标程序与-v/-V查询不同，仍是未支持wrapper。" },
+    { "id": "command-path-namesake", "command": "/usr/bin/command -v ob", "reason": "路径同名程序不等价于shell内建command查询，不能借名称放行。" },
+    { "id": "command-relative-namesake", "command": "./command -V ob", "reason": "相对路径同名程序不是已决定的内建查询接口，继续保守拒绝。" },
+    { "id": "command-query-default-path-option", "command": "command -p -v ob", "reason": "只开放精确-v或-V查询，额外-p选项组合不属于固定静态合同。" },
+    { "id": "command-query-combined-flags", "command": "command -pv ob", "reason": "合并标志改变查询语法，不能把精确静态接口任意扩大。" },
+    { "id": "command-query-empty", "command": "command -v", "reason": "查询必须提供非空静态名称，没有名称不满足已决定的接口。" },
+    { "id": "command-query-empty-after-double-dash", "command": "command -V --", "reason": "选项终止符后仍必须有查询名称，空查询保守人工处理。" },
+    { "id": "command-query-empty-name", "command": "command -v ''", "reason": "引号保留的空字符串仍是空查询名称，不满足非空静态名称合同。" },
+    { "id": "command-query-home-name", "command": "command -v ~/ob", "reason": "HOME查询名称需要环境展开，只允许没有HOME或glob的静态查询。" },
+    { "id": "command-query-glob-name", "command": "command -v ob*", "reason": "查询名称glob依赖文件系统，超出精确静态名称查询合同。" },
+    { "id": "command-query-option-like-name", "command": "command -v -name", "reason": "没有选项终止符的横线开头名称含选项歧义，保守人工处理。" },
+    { "id": "dynamic-command-substitution", "command": "ls $(printf x)", "reason": "命令替换会隐藏额外执行及动态参数，不能通过静态解析审批。" },
+    { "id": "dynamic-home-variable", "command": "ls $HOME/bin", "reason": "环境变量展开与已开放的静态HOME标记不同，继续保守拒绝。" },
+    { "id": "double-quoted-dynamic-variable", "command": "ls \"$HOME/bin\"", "reason": "双引号不阻止变量展开，因此该参数仍超出静态语法合同。" },
+    { "id": "dynamic-backticks", "command": "ls `printf x`", "reason": "反引号会执行子命令，不能将其效果隐藏在普通argv数据中。" },
+    { "id": "dynamic-query-name", "command": "command -v $(printf ob)", "reason": "查询目标看似只读但名称包含命令替换，仍可能执行额外程序。" },
+    { "id": "control-if", "command": "if ls ~/bin; then command -v ob; fi", "reason": "控制流会改变执行顺序与条件，固定简单命令合同未开放该结构。" },
+    { "id": "heredoc", "command": "cat <<EOF\nob\nEOF", "reason": "heredoc包含独立输入和可能的展开规则，不属于当前静态重定向合同。" },
+    { "id": "here-string", "command": "cat <<< ob", "reason": "here-string不是当前支持的简单文件或fd重定向，继续人工处理。" },
+    { "id": "process-substitution", "command": "cat <(ls ~/bin)", "reason": "进程替换引入额外执行和动态路径，超出简单命令解析合同。" },
+    { "id": "file-env-wrapper", "command": "/usr/bin/env ob", "reason": "路径env仍是执行wrapper，不能因带路径绕过保守执行边界。" },
+    { "id": "file-sudo-wrapper", "command": "./sudo ob", "reason": "路径同名sudo仍按wrapper处理，不能隐藏执行权限或目标命令。" },
+    { "id": "file-shell-wrapper", "command": "/bin/sh -c 'rm -rf target'", "reason": "shell-c程序包含隐藏命令，必须保留人工或原生拒绝边界。" },
+    { "id": "file-interpreter-wrapper", "command": "/usr/bin/python3 -c 'print(1)'", "reason": "内嵌解释器程序可能隐藏任意执行，当前合同保守拒绝。" },
+    { "id": "find-exec-wrapper", "command": "find . -exec rm {} \\;", "reason": "find-exec是嵌套执行接口，不能只批准外层find就忽略内部命令。" },
+    { "id": "awk-system-wrapper", "command": "awk 'BEGIN {system(\"id\")}'", "reason": "awk system具有嵌套执行效果，不属于允许的普通静态参数。" },
+    { "id": "sed-exec-wrapper", "command": "sed 's/a/id/e' input.txt", "reason": "sed替换的e标志会执行程序，不能把脚本仅当字面数据批准。" },
+    { "id": "fd-out-of-contract", "command": "echo ok 10> out.txt", "reason": "当前fd接口只允许0到9，超范围描述符保持明确人工边界。" },
+    { "id": "missing-redirection-target", "command": "ls ~/bin >", "reason": "缺少重定向目标的截断命令不能被部分解析或前缀批准。" },
+    { "id": "background-command", "command": "ls ~/bin &", "reason": "后台执行改变生命周期，单个&未纳入已支持connector集合。" },
+    { "id": "shell-group", "command": "(ls ~/bin; command -v ob)", "reason": "子shell分组有独立环境和执行语义，当前简单命令合同不解析。" },
+    { "id": "assignment-prefix", "command": "MODE=test ls ~/bin", "reason": "环境赋值前缀改变命令上下文，固定简单argv合同未开放。" },
+    { "id": "unclosed-quote", "command": "ls '~/bin", "reason": "未闭合引用必须整体失败，不能通过compound上下文丢弃不完整参数。" }
+  ]
+}

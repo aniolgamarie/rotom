@@ -5,6 +5,9 @@ import { parseStandaloneReview, reviewCommand } from "./standalone-reviewer";
 import { parseGenericCommands } from "./standalone-shell-analysis";
 import { readCorpusFile } from "../../../../scripts/check-omp-command-history";
 import { join } from "node:path";
+import { readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { parseGenericCommands as frozenParser } from "../../../../tests/fixtures/omp/command-scenarios/parser-before-home-query";
 
 const digest = "a".repeat(64);
 const baseConfig: StandaloneConfig = {
@@ -159,6 +162,48 @@ describe("standalone shell analysis", () => {
   });
 });
 
+describe("common HOME arguments and command queries", () => {
+  test("retains raw HOME arguments and marks uncertainty without resolving HOME", () => {
+    expect(parseGenericCommands("ls ~ ~/bin")).toEqual({ status: "complete", commands: [
+      { connector: "start", argv: ["ls", "~", "~/bin"], homeExpansions: [1, 2] },
+    ] });
+    expect(parseGenericCommands("ls '~/bin' \\~/bin")).toEqual({ status: "complete", commands: [
+      { connector: "start", argv: ["ls", "~/bin", "~/bin"] },
+    ] });
+    expect(parseGenericCommands("ls ~/bin/*.txt")).toEqual({ status: "complete", commands: [
+      { connector: "start", argv: ["ls", "~/bin/*.txt"], globs: [1], homeExpansions: [1] },
+    ] });
+  });
+  test("allows only exact static command -v or -V queries", () => {
+    for (const command of ["command -v ob", "command -V -- ob ls", "command -v -- -name"]) {
+      expect(parseGenericCommands(command).status).toBe("complete");
+    }
+    for (const command of ["command ob", "command -p -v ob", "command -pv ob", "command -vV ob", "command -v", "command -V --", "command -- -v ob", "/usr/bin/command -v ob", "./command -v ob", "command -v ~/ob", "command -v ob*", "command -v $(id)"]) {
+      expect(parseGenericCommands(command).status).toBe("unsupported");
+    }
+  });
+  test("HOME heads, redirect targets, named/special HOME and dynamic words remain unsupported", () => {
+    for (const command of ["~/bin/ob", "~ ob", "ls ~user/bin", "ls ~+", "ls ~-", "ls ~+/bin", "ls ~-/bin", "ls x~/bin", "ls ~/bin > ~/out", "ls ~/bin < ~", "ls ~/$(id)", "ls ~/bin${name}", "ls ~/bin`id`", "ls ~''/bin"]) {
+      expect(parseGenericCommands(command).status).toBe("unsupported");
+    }
+  });
+  test("HOME and glob uncertainty cannot bypass native deny or prompt", async () => {
+    for (const command of ["cat ~/.env", "cat ~/private/*.txt", "cat *.env"]) {
+      for (const approval of ["deny", "prompt"] as const) {
+        const h = await fakeHost({ config: { ...baseConfig, nativePatterns: [{ match: "cat /resolved/private/*", approval }] }, hasUI: false });
+        const result = await (await ready(h)).execute("uncertain", { command }, undefined, undefined, h.ctx);
+        expect(result.isError).toBe(true);
+        expect(h.fetchCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+      }
+    }
+    for (const command of ["rm ~/private; echo $(id)", "ls ~/bin; rm ~/.env", "command -v ob; rm ~/private"]) {
+      const h = await fakeHost({ config: { ...baseConfig, nativePatterns: [{ match: "rm *", approval: "deny" }] } });
+      const result = await (await ready(h)).execute("compound-deny", { command }, undefined, undefined, h.ctx);
+      expect(result.isError).toBe(true); expect(h.fetchCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+    }
+  });
+});
+
 describe("standalone reviewer", () => {
   for (const [decision, risk, authorization, reasonCode] of [
     ["allow", "low", "sufficient", "LOW_RISK_AUTHORIZED"],
@@ -299,35 +344,108 @@ describe("standalone reviewer", () => {
 });
 
 describe("standalone plugin", () => {
-  test("all rebuilt scenarios follow the native plugin review or headless human boundary", async () => {
-    const data = readCorpusFile(join(import.meta.dir, "../../../../tests/fixtures/omp/command-scenarios/corpus.json.gz")) as any;
+  test("all rebuilt scenarios preserve frozen gates except the exact root-reviewed grammar overlay", async () => {
+    const fixture = join(import.meta.dir, "../../../../tests/fixtures/omp/command-scenarios");
+    const sha = (raw: string | Uint8Array) => createHash("sha256").update(raw).digest("hex");
+    const canonical = (value: any): string => Array.isArray(value) ? "[" + value.map(canonical).join(",") + "]" :
+      value && typeof value === "object" ? "{" + Object.keys(value).sort().map(key => JSON.stringify(key) + ":" + canonical(value[key])).join(",") + "}" : JSON.stringify(value);
+    const fields = (value: any, keys: string[]) => {
+      expect(value !== null && typeof value === "object" && !Array.isArray(value)).toBe(true);
+      expect(Object.keys(value).sort()).toEqual([...keys].sort());
+    };
+    const corpusRaw = readFileSync(join(fixture, "corpus.json.gz"));
+    expect(corpusRaw.byteLength).toBe(1223214);
+    expect(sha(corpusRaw)).toBe("d6e5dc5d68c685d44949a0487f7ff71bd60b28daad228c20ec8070d39a710699");
+    expect(sha(readFileSync(join(fixture, "parser-before-home-query.ts")))).toBe("9a9d9e7208b66be04f61801d8b3af35339d313d838c243d20b3c40c113586f8b");
+    const data = readCorpusFile(join(fixture, "corpus.json.gz")) as any;
+    expect(data.records).toHaveLength(11473);
+    const rows = new Map<string, any>();
+    let oldModel = 0, oldHuman = 0;
+    for (const row of data.records) {
+      expect(rows.has(row.id)).toBe(false); rows.set(row.id, row);
+      // 历史parser逐行校验原结构；12条complete仍有原隐私人工门，不能从parser猜成model。
+      const parsed = frozenParser(row.command);
+      expect(parsed).toEqual(row.expected);
+      expect(["model", "human"]).toContain(row.expectedGate);
+      if (parsed.status === "unsupported") expect(row.expectedGate).toBe("human");
+      if (row.expectedGate === "model") { expect(parsed.status).toBe("complete"); oldModel++; }
+      else oldHuman++;
+    }
+    expect({ oldModel, oldHuman }).toEqual({ oldModel: 9430, oldHuman: 2043 });
+    const overlayRaw = readFileSync(join(fixture, "grammar-upgrade-20261009.json"));
+    expect(overlayRaw.byteLength).toBe(157672);
+    expect(sha(overlayRaw)).toBe("92211b188ca473c31ebdf431bee5c7bae661d4d6306a5e7ebfdaa9b0ed18815b");
+    const overlay = JSON.parse(overlayRaw.toString());
+    fields(overlay, ["schemaVersion", "purpose", "sourceCorpusSha256", "sourceRowDigestMethod", "sourceCommit", "counts", "entries", "reviewDecision"]);
+    expect(overlay.schemaVersion).toBe(1);
+    expect(overlay.purpose).toBe("root reviewed static syntax eligibility delta only; never approval/risk labels");
+    expect(overlay.sourceCorpusSha256).toBe(sha(corpusRaw));
+    expect(overlay.sourceRowDigestMethod).toBe("sha256 canonical recursively sorted original parsed row JSON");
+    expect(overlay.sourceCommit).toBe("25a5b1c136c888dc7a3850b018c7d5546aa5d197");
+    expect(overlay.reviewDecision).toBe("New HOME/query grammar admits these cases to model review with empty nativePatterns. Native deny/prompt tests remain mandatory. Original corpus/labels remain unchanged; all other IDs retain original gate. Actual per-row gate not yet observed.");
+    fields(overlay.counts, ["HOME", "query", "HOME+query"]);
+    expect(overlay.counts).toEqual({ HOME: 501, query: 74, "HOME+query": 8 });
+    expect(Array.isArray(overlay.entries)).toBe(true); expect(overlay.entries).toHaveLength(583);
+    const overrides = new Map<string, "model">(); const categoryCounts = { HOME: 0, query: 0, "HOME+query": 0 };
+    for (const entry of overlay.entries) {
+      fields(entry, ["id", "sourceRowSha256", "category", "oldGate", "expectedGate"]);
+      expect(typeof entry.id === "string" && /^[0-9a-f]{64}$/.test(entry.id)).toBe(true);
+      expect(typeof entry.sourceRowSha256 === "string" && /^[0-9a-f]{64}$/.test(entry.sourceRowSha256)).toBe(true);
+      expect(overrides.has(entry.id)).toBe(false);
+      const row = rows.get(entry.id); expect(row !== undefined).toBe(true);
+      expect(sha(canonical(row))).toBe(entry.sourceRowSha256);
+      expect(row.expected.status).toBe("unsupported");
+      expect(row.expectedGate).toBe("human"); expect(entry.oldGate).toBe("human"); expect(entry.expectedGate).toBe("review");
+      expect(Object.hasOwn(categoryCounts, entry.category)).toBe(true);
+      categoryCounts[entry.category as keyof typeof categoryCounts]++;
+      overrides.set(entry.id, "model"); // 固定review eligibility精确映射为既有model门枚举。
+    }
+    expect(categoryCounts).toEqual(overlay.counts);
     const diagnostics = { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } as const;
     const native = fakeNativeRuntime({ diagnostics, reviewContext: { ...diagnostics, sameSettingsInstance: true, nativeDecision: "allow" } });
     const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime, hasUI: false });
     const { tool, hook } = await nativeReady(h);
-    let completed = 0;
-    let blocked = 0;
-    const failures: string[] = [];
+    let completed = 0, blocked = 0, overlayReviewed = 0, unchanged = 0;
+    const failures: string[] = [], observed: [string, string][] = [];
     for (const row of data.records) {
+      // 期望仅取固定override或原row，不从current parser推导。
+      const expectedGate = overrides.get(row.id) ?? row.expectedGate;
       const input = { command: row.command, timeout: 2 };
-      const fetches = h.fetchCalls.length;
-      const invoked = h.invokeCalls.length;
+      const fetches = h.fetchCalls.length, invoked = h.invokeCalls.length;
       const result = await hook({ type: "tool_call", toolName: "bash", toolCallId: row.id, input }, h.ctx);
-      if (row.expectedGate === "human") {
-        if (!result?.block || h.fetchCalls.length !== fetches || h.invokeCalls.length !== invoked) failures.push(row.id);
-        blocked++;
-      } else {
-        const output = result === undefined ? await tool.execute(row.id, input, undefined, undefined, h.ctx) : undefined;
-        if (result !== undefined || output?.isError || h.fetchCalls.length !== fetches+1 || h.invokeCalls.length !== invoked+1 || h.invokeCalls.at(-1)?.[0] !== input) failures.push(row.id);
-        completed++;
-      }
+      const output = result === undefined ? await tool.execute(row.id, input, undefined, undefined, h.ctx) : undefined;
+      const review = result === undefined && !output?.isError && h.fetchCalls.length === fetches+1 &&
+        h.invokeCalls.length === invoked+1 && h.invokeCalls.at(-1)?.[0] === input && h.invokeCalls.at(-1)?.[0].command === row.command;
+      const human = Boolean(result?.block) && h.fetchCalls.length === fetches && h.invokeCalls.length === invoked;
+      const actualGate = review ? "review" : human ? "human" : "unexpected";
+      observed.push([row.id, actualGate]);
+      if (expectedGate === "human") { if (!human) failures.push(row.id); blocked++; }
+      else { if (!review) failures.push(row.id); completed++; }
+      if (overrides.has(row.id)) { if (review) overlayReviewed++; }
+      else if (actualGate === (row.expectedGate === "model" ? "review" : "human")) unchanged++;
     }
-    expect(completed+blocked).toBe(data.records.length);
-    expect(completed).toBeGreaterThan(9000);
-    expect(blocked).toBeGreaterThan(1900);
+    const summary = { total: observed.length, review: observed.filter(row => row[1] === "review").length,
+      human: observed.filter(row => row[1] === "human").length, unexpected: observed.filter(row => row[1] === "unexpected").length,
+      expectedReview: completed, expectedHuman: blocked, overlayReviewed, unchanged, failures: failures.length,
+      fakeFetches: h.fetchCalls.length, fakeDelegates: h.invokeCalls.length, fakeExecs: h.execCalls.length, humanSelects: h.selectCalls.length,
+      sourceCorpusSha256: sha(corpusRaw), overlaySha256: sha(overlayRaw), observationSha256: sha(JSON.stringify(observed)),
+      riskOrRealHumanQualification: false, shellCommandsExecuted: false };
+    const outputDir = process.env.OMP_SHELL_REVIEW_EVIDENCE;
+    if (outputDir) {
+      const shards = [];
+      for (let offset = 0; offset < observed.length; offset += 4096) {
+        const records = observed.slice(offset, offset+4096); const raw = JSON.stringify(records) + "\n";
+        expect(Buffer.byteLength(raw)).toBeLessThanOrEqual(384 * 1024);
+        const name = "actual-gates-" + String(shards.length + 1) + ".json";
+        writeFileSync(join(outputDir, name), raw, { mode: 0o600, flag: "wx" });
+        shards.push({ name, records: records.length, bytes: Buffer.byteLength(raw), sha256: sha(raw) });
+      }
+      writeFileSync(join(outputDir, "actual-gates-summary.json"), JSON.stringify({ ...summary, shards }, null, 2) + "\n", { mode: 0o600, flag: "wx" });
+    }
+    expect({ total: observed.length, completed, blocked, overlayReviewed, unchanged }).toEqual({ total: 11473, completed: 10013, blocked: 1460, overlayReviewed: 583, unchanged: 10890 });
     expect({ count: failures.length, first: failures.slice(0, 10) }).toEqual({ count: 0, first: [] });
-    expect(h.execCalls).toHaveLength(0);
-    expect(h.selectCalls).toHaveLength(0);
+    expect(h.fetchCalls).toHaveLength(10013); expect(h.invokeCalls).toHaveLength(10013);
+    expect(h.execCalls).toHaveLength(0); expect(h.selectCalls).toHaveLength(0);
   }, 60000);
   test("loads by registration only before runtime actions are initialized", async () => {
 const h = await fakeHost({ loadingActionsThrow: true });
@@ -581,6 +699,26 @@ describe("native bash delegation", () => {
     expect(request.messages.at(-1).content).toContain('"executionRoute":"local-embedded"');
     await h.commands.get("permission-control").handler("status", h.ctx);
     expect(JSON.parse(h.notices.at(-1)!).nativeContext).toEqual(diagnostics);
+  });
+
+  test("user HOME query and Git pipeline data review once and delegate raw inputs once", async () => {
+    const commands = [
+      "ls ~/bin /usr/local/bin 2>/dev/null | grep -i ob; command -v ob; type ob 2>&1",
+      "git branch --contains b99258786076 2>/dev/null; echo ---; git log --oneline --graph --all --not --remotes | head -30",
+    ];
+    for (const command of commands) {
+      const diagnostics = { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } as const;
+      const native = fakeNativeRuntime({ diagnostics, reviewContext: { ...diagnostics, sameSettingsInstance: true, nativeDecision: "allow" } });
+      const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime,
+        messages: [{ type: "message", message: { role: "user", content: "Inspect the requested synthetic shell query", timestamp: 1 } }] });
+      const { tool, hook } = await nativeReady(h); const input = { command, timeout: 30 };
+      expect(await hook(event("common-static", input), h.ctx)).toBeUndefined();
+      expect((await tool.execute("common-static", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
+      expect(h.fetchCalls).toHaveLength(1); expect(h.selectCalls).toHaveLength(0);
+      expect(h.invokeCalls).toHaveLength(1); expect(h.invokeCalls[0][0]).toBe(input);
+      expect(h.invokeCalls[0][0].command).toBe(command); expect(h.execCalls).toHaveLength(0);
+      expect(JSON.parse(h.fetchCalls[0][1].body).messages.at(-1).content).toContain(command);
+    }
   });
 
   test("failures without a current snapshot clear the preceding call's native context", async () => {
@@ -858,4 +996,99 @@ describe("native bash delegation", () => {
     expect(h.invokeCalls).toHaveLength(0);
     expect(h.execCalls).toHaveLength(0);
   });
+});
+
+
+// 独立手写场景覆盖真实插件接线；模型与原生委派均为假实现。
+describe("strict independent native approval acceptance", () => {
+  const fixture = JSON.parse(readFileSync(join(import.meta.dir, "../../../../tests/fixtures/omp/command-scenarios/strict-acceptance.json"), "utf8"));
+  const diagnostics = { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } as const;
+  async function run(command: string, options: {
+    decision?: "allow" | "ask" | "deny";
+    hasUI?: boolean;
+    nativeDecision?: "allow" | "deny" | "prompt";
+    nativePatterns?: StandaloneConfig["nativePatterns"];
+  } = {}) {
+    const decision = options.decision ?? "allow";
+    const nativeDecision = options.nativeDecision ?? "allow";
+    const native = fakeNativeRuntime({ decision: nativeDecision, diagnostics,
+      reviewContext: { ...diagnostics, sameSettingsInstance: true, nativeDecision } });
+    const review = decision === "allow"
+      ? { decision, risk: "low", authorization: "sufficient", reasonCode: "LOW_RISK_AUTHORIZED" }
+      : decision === "ask"
+        ? { decision, risk: "unknown", authorization: "unknown", reasonCode: "USER_CONFIRMATION_REQUIRED" }
+        : { decision, risk: "high", authorization: "insufficient", reasonCode: "HIGH_RISK" };
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true,
+      nativePatterns: options.nativePatterns ?? [] }, nativeRuntime: native.runtime,
+      hasUI: options.hasUI ?? true, select: "Deny",
+      response: { choices: [{ message: { content: JSON.stringify(review) } }] },
+      messages: [{ type: "message", message: { role: "user",
+        content: `Review this exact synthetic command: ${command}`, timestamp: 1 } }] });
+    const { tool, hook } = await nativeReady(h);
+    const input = { command, timeout: 30 };
+    const hookResult = await hook({ type: "tool_call", toolName: "bash", toolCallId: "strict", input }, h.ctx);
+    const result = hookResult === undefined
+      ? await tool.execute("strict", input, undefined, undefined, h.ctx) : hookResult;
+    return { h, input, result, blocked: hookResult?.block === true || result?.isError === true };
+  }
+
+  for (const row of fixture.complete.filter((row: any) => row.gate === "model-eligible")) {
+    for (const decision of ["allow", "ask", "deny"] as const) {
+      test(`strict model decision ${decision}: ${row.id}`, async () => {
+        const { h, input, blocked } = await run(row.command, { decision });
+        expect(h.fetchCalls).toHaveLength(1);
+        expect(h.execCalls).toHaveLength(0);
+        expect(h.selectCalls).toHaveLength(decision === "ask" ? 1 : 0);
+        expect(h.invokeCalls).toHaveLength(decision === "allow" ? 1 : 0);
+        expect(blocked).toBe(decision !== "allow");
+        expect(JSON.parse(JSON.parse(h.fetchCalls[0][1].body).messages.at(-1).content).command).toBe(row.command);
+        if (decision === "allow") {
+          expect(h.invokeCalls[0][0]).toBe(input);
+          expect(h.invokeCalls[0][0].command).toBe(row.command);
+        }
+      });
+    }
+    test(`strict headless ask and native protection: ${row.id}`, async () => {
+      const headless = await run(row.command, { decision: "ask", hasUI: false });
+      expect(headless.blocked).toBe(true);
+      expect(headless.h.fetchCalls).toHaveLength(1);
+      expect(headless.h.selectCalls).toHaveLength(0);
+      expect(headless.h.invokeCalls).toHaveLength(0);
+      expect(headless.h.execCalls).toHaveLength(0);
+      for (const nativeDecision of ["deny", "prompt"] as const) {
+        const result = await run(row.command, { nativeDecision });
+        expect(result.blocked).toBe(true);
+        expect(result.h.fetchCalls).toHaveLength(0);
+        expect(result.h.invokeCalls).toHaveLength(0);
+        expect(result.h.execCalls).toHaveLength(0);
+        expect(result.h.selectCalls).toHaveLength(nativeDecision === "prompt" ? 1 : 0);
+      }
+    });
+  }
+
+  for (const row of fixture.manual) {
+    test(`strict unsupported structures never review or delegate: ${row.id}`, async () => {
+      for (const command of [row.command, `pwd && ${row.command}`, `${row.command}; echo done`, `command -v ob | ${row.command}`]) {
+        const result = await run(command, { hasUI: false });
+        expect(result.blocked).toBe(true);
+        expect(result.h.fetchCalls).toHaveLength(0);
+        expect(result.h.selectCalls).toHaveLength(0);
+        expect(result.h.invokeCalls).toHaveLength(0);
+        expect(result.h.execCalls).toHaveLength(0);
+      }
+    });
+  }
+
+  for (const row of fixture.complete.filter((row: any) => row.gate === "native-protection-required")) {
+    test(`strict protected compound stops before model: ${row.id}`, async () => {
+      for (const approval of ["deny", "prompt"] as const) {
+        const result = await run(row.command, { nativePatterns: [{ match: "rm *", approval }] });
+        expect(result.blocked).toBe(true);
+        expect(result.h.fetchCalls).toHaveLength(0);
+        expect(result.h.invokeCalls).toHaveLength(0);
+        expect(result.h.execCalls).toHaveLength(0);
+        expect(result.h.selectCalls).toHaveLength(approval === "prompt" ? 1 : 0);
+      }
+    });
+  }
 });

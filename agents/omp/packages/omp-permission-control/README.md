@@ -181,3 +181,29 @@ bun test ./tests/omp_shell_scenarios.test.ts ./tests/omp_command_history.test.ts
 凭据字段/长选项、自定义 token 名、Basic/Bearer、URL userinfo 与 curl 认证参数会阻止
 送入审查模型；人工预览遮盖其值，含短选项粘连、字段名/值的引号拼接与续行。公开重建保留这些信号并替换真实名称/值，
 因此“静态解析成功”仍可能按凭据边界人工。
+
+## 常见静态 shell 参数的审核边界
+
+普通参数中的未引号 `~`、`~/...` 保留原文并标记 HOME expansion，不读取真实 HOME，
+不把它当已解析路径。HOME 与 glob 的具体参数可能命中 native deny/prompt 时仍保守
+转人工；宽泛、raw 与可见前缀 deny 不变。命令头、重定向目标、`~user`、`~+`、`~-`
+及动态插值仍拒绝；quoted/escaped tilde 保持字面量。
+
+仅确切 `command -v NAME...` 与 `command -V NAME...` 的静态查询形式进入普通审核，
+可有固定 `--`，至少一个静态名字。不开放执行型 command、`-p`、组合/未知 flags
+或路径同名程序。没有新增自动允许：smart 仍须原严格模型审查及 native/settings/
+session/generation/ticket 复核；待审 command 原文和全部调用参数不改写。
+
+默认 corpus 保留原 gzip 与 gate 标签。`tests/fixtures/omp/command-scenarios/` 中的
+`parser-before-home-query.ts` 是本仓库自有 parser 的精确历史快照（SHA-256
+`9a9d9e7208b66be04f61801d8b3af35339d313d838c243d20b3c40c113586f8b`），
+`grammar-upgrade-20261009.json` 是 root 审定、SHA 绑定的 583 个静态语法 ID overlay
+（501 HOME、74 query、8 两者兼有）。测试先回读原 parser/fixture，再仅按固定 map
+升级机械假模型 eligibility，其余 10890 行门控不变；不重生成原标签，不证明风险
+allow、真人授权或真实宿主。逐行观测只保存 ID/门控与计数，命令样本不执行。
+
+冻结原 corpus SHA-256 为
+`d6e5dc5d68c685d44949a0487f7ff71bd60b28daad228c20ec8070d39a710699`；
+overlay SHA-256 为
+`92211b188ca473c31ebdf431bee5c7bae661d4d6306a5e7ebfdaa9b0ed18815b`。
+每个 overlay ID 还绑定原 row 的递归排序 canonical JSON SHA，原 gzip 永不重写。
