@@ -2,7 +2,7 @@
 
 > 当前已按维护者要求改为官方宿主与独立插件，仓库实现及隔离验收完成；本机日常实例已按后续明确授权完成独立插件迁移（见验收 Phase 13）。下文 patched runtime/bridge 的构建和验收为历史记录，不继续构建发布，也不作为新插件通过证据。当前需求见[独立插件修订](../specs/004-omp-permission-control/standalone-plugin.md)。本机部署是否切换须单独登记。
 
-OMP official 路径使用固定官方 standalone，管理器不安装系统 Bun/Node、不运行上游安装脚本。当前固定 v18.4.5 / `79808c3bf8f8cd9826decc63e3e18b13035f64f8`；来源和当前升级验收见 [v18.4.5 升级记录](acceptance/omp-upgrade-18.4.5.md)，v18.3.0 来源记录保留为历史证据。源码及校验清单核对不代表二进制或账号已验收。`omp-kernel` 同样使用 official，独立权限插件通过公开 API 加载。
+OMP official 路径使用固定官方 standalone，管理器不安装系统 Bun/Node、不运行上游安装脚本。当前升级验收见 [v18.8.6 记录](acceptance/omp-upgrade-18.8.6.md)。当前固定 v18.8.6 / `f068751e2f1dbdbc195977776d47a26db8697495`；[v18.4.5 升级记录](acceptance/omp-upgrade-18.4.5.md)及 v18.3.0 来源记录保留为历史证据。源码及校验清单核对不代表二进制或账号已验收。`omp-kernel` 同样使用 official，独立权限插件通过公开 API 加载。 v18.8.6 的原生 bash 适配继续使用公开导出的 Settings、`BashTool.approval()` 和同名 `ctx.invokeTool()`；权限插件生产源码已针对此版本 SDK 做离线类型检查。v18.8.2 起上游移除 task 的 per-call `model` 参数，现有配方使用模型角色和 agent 定义，不依赖该参数。
 
 ## 完整锁
 
@@ -120,7 +120,7 @@ receipt 记录实际平台、锁身份、来源及二进制摘要、安装路径
 
 ## 下载中断诊断
 
-`setup` / `sync` 的 stderr 会先标明锁定 OMP 版本、目标平台和资产名，例如 `OMP v18.4.5 / linux-x64 / omp-linux-x64（来源：GitHub Releases）`。随后按真实步骤报告：
+`setup` / `sync` 的 stderr 会先标明锁定 OMP 版本、目标平台和资产名，例如 `OMP v18.8.6 / linux-x64 / omp-linux-x64（来源：GitHub Releases）`。随后按真实步骤报告：
 
 | 当前提示 | 正在做什么 |
 | --- | --- |

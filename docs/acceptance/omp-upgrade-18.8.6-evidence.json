@@ -1,0 +1,115 @@
+{
+  "date": "2026-10-09",
+  "version": "v18.8.6",
+  "commit": "f068751e2f1dbdbc195977776d47a26db8697495",
+  "sourceSha256": "122a86ca25143d65e36d38c749bc0aeb5ab0ed7aff75ae672eae197c01493ad3",
+  "checksumsSha256": "d39ec7d888b22822e2e487ae40114a197335acb20a8135801918ebff8a7188dc",
+  "linuxBinarySha256": "877acdc48384b80fe4c083b1e610433d28922dd9fccde9ea430aaace8765b19b",
+  "lockIdentity": "a6ffd2d92068d0c1159df55500547d28a89205d4a2bf5f420d80ded2033b2c69",
+  "upstreamModified": false,
+  "offlineTests": {
+    "pytestConfiguration": {
+      "passed": 97,
+      "skipped": 7
+    },
+    "pytestRuntime": {
+      "passed": 133
+    },
+    "bunPermission": {
+      "passed": 477,
+      "failed": 0,
+      "assertions": 56198
+    },
+    "sdkTypecheckExit": 0,
+    "bunCorpus": {
+      "passed": 71,
+      "failed": 0,
+      "assertions": 11784,
+      "cases": 11473,
+      "reviewedParseDelta": 583
+    }
+  },
+  "sourceDatabaseAssessment": {
+    "agentSchemaVersion": 6,
+    "authSchemaVersion": 8,
+    "schemaVersionsChanged": false,
+    "newDestructiveMigrationsFound": false,
+    "realDatabaseDowngradeVerified": false
+  },
+  "independentReview": {
+    "P1": 0,
+    "P2": 0,
+    "mode": "stable upgrade diff read-only"
+  },
+  "hostSmoke": {
+    "status": "passed",
+    "network": "private user/network namespace; loopback-only fake service",
+    "realCredentialsRead": false,
+    "realModelRequests": 0,
+    "cases": [
+      {
+        "case": "allow",
+        "status": "passed",
+        "exitCode": 0,
+        "reviewerCalls": 1,
+        "nativeDelegateCalls": 1,
+        "successfulExecutions": 1,
+        "humanCalls": 0,
+        "coverage": "ready",
+        "nativeDelegateAvailable": true,
+        "scopedSettingsReady": true,
+        "context": {
+          "shellFamily": "bash",
+          "executionRoute": "local-embedded",
+          "contextReason": "STANDARD_CONTEXT"
+        }
+      },
+      {
+        "case": "deny",
+        "status": "passed",
+        "exitCode": 0,
+        "reviewerCalls": 0,
+        "nativeDelegateCalls": 0,
+        "successfulExecutions": 0,
+        "humanCalls": 0,
+        "coverage": "limited",
+        "nativeDelegateAvailable": null,
+        "scopedSettingsReady": true,
+        "context": {
+          "shellFamily": "bash",
+          "executionRoute": "local-embedded",
+          "contextReason": "STANDARD_CONTEXT"
+        }
+      }
+    ],
+    "officialBinarySha256": "877acdc48384b80fe4c083b1e610433d28922dd9fccde9ea430aaace8765b19b",
+    "runtimeIdentity": "a6ffd2d92068d0c1159df55500547d28a89205d4a2bf5f420d80ded2033b2c69-linux-x64",
+    "evidenceMethod": "Separate allow and deny runs; aggregate initial harness failures are preserved, not described as a single clean run"
+  },
+  "dailyDeployment": {
+    "status": "pending"
+  },
+  "networkProposal": {
+    "implemented": false,
+    "document": "../follow-ups/omp-network-proxy-design-2026-10-09.md"
+  },
+  "taskStates": {
+    "completed": [
+      "Official fixed source/checksums/Linux binary verification",
+      "Public SDK compatibility",
+      "Offline tests and lock",
+      "Network design and source feasibility review",
+      "Historical corpus plus strict independent syntax tests",
+      "Allow and deny official host smoke; own temporary fixtures cleaned"
+    ],
+    "inProgress": [
+      "Merge and daily deployment"
+    ],
+    "failedAwaitingDecision": [],
+    "environmentNotVerified": [
+      "Real Cursor service availability",
+      "Real credential database downgrade",
+      "Other-platform actual binaries"
+    ]
+  }
+}
