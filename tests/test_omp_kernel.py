@@ -36,6 +36,12 @@ def test_kernel_deployment_preserves_reviewed_native_configuration(tmp_path):
   # 对照迁入前非秘密快照，身份和发现来源策略另有明确替换契约。
   for key, expected in REFERENCE["config"].items():
     if key != "skills":
+      expected = deepcopy(expected)
+      if key == "retry":
+        # 冻结历史快照；仅列明本次 K3 历史保护的六个备用链差量。
+        for selector in ("cursor/kimi-k3", "cursor/kimi-k3:high", "cursor/kimi-k3:max",
+            "cursor/glm-5.2:high", "cursor/glm-5.2:max", "cursor/grok-4.7:high"):
+          expected["fallbackChains"][selector] = []
       assert config[key] == expected, key
   assert "permissionControl" not in config and "disabledModelProviders" not in config
   permission = json.loads((identity.agent_dir / "permission-control.json").read_text())
