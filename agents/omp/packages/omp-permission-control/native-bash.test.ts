@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import type { WorktreeHelpers } from "./worktree-analysis";
 import { createNativeBashRuntime, executionRoute, type PlainBashParams } from "./native-bash";
 
 function setting<T>(read: (settings: any) => T) {
@@ -9,7 +10,7 @@ function setting<T>(read: (settings: any) => T) {
 }
 
 function runtime(options: { approval?: unknown; policy?: string; revision?: number; split?: boolean;
-  home?: string; env?: Record<string, string>; direnv?: string; shellArgs?: string[]; shell?: string;
+  clone?: boolean; backend?: string; helpers?: WorktreeHelpers; home?: string; env?: Record<string, string>; direnv?: string; shellArgs?: string[]; shell?: string;
   shellPath?: string; prefix?: string; executionRoute?: () => "local-embedded" | "unverified";
   executionRouteFingerprint?: () => string; legacyShellAllowed?: () => boolean } = {}) {
   const settings: any = {
@@ -40,7 +41,9 @@ function runtime(options: { approval?: unknown; policy?: string; revision?: numb
     cfgBashDirenv: setting(() => options.direnv ?? "auto"),
     cfgBashDirenvLoadTimeoutMs: setting(() => 30_000),
     cfgShellPath: setting(() => options.shellPath),
-    cfgWorktreeClone: setting(() => false),
+    cfgWorktreeClone: setting(() => options.clone ?? false),
+    cfgIsolationBackend: setting(() => options.backend ?? "auto"),
+    worktreeHelpers: options.helpers,
   };
   return { native: createNativeBashRuntime(modules), settings };
 }
@@ -305,6 +308,93 @@ describe("native bash public approval adapter", () => {
     expect(checked.decision).toBe("prompt");
     expect(checked.reasonCode).toBe("UNSUPPORTED_EXECUTION_CONTEXT");
     expect(checked.fingerprint).not.toBe(captured.fingerprint);
+  });
+
+  test("public helper worktree plan keeps standard context and fingerprints CLI/backend/effects", async () => {
+    const raw = "git worktree add ../target -b branch && cd ../target && git log --oneline -1";
+    let cli = ["/fixture/omp"]; let extra = "";
+    const options = { home, shell: "/bin/zsh", clone: true, backend: "auto",
+      executionRoute: () => "local-embedded" as const, helpers: {
+        resolveCliEntryCmd: () => cli,
+        extractLeadingCdTarget: () => null,
+        resolveToCwd: (path: string, cwd: string) => resolve(cwd, path),
+        rewriteGitWorktreeAdd: () => cli.join(" ") + " worktree add -b branch -- ../target" + extra + " && cd ../target && git log --oneline -1",
+      } };
+    const { native } = runtime(options);
+    const captured = await native.capture(root, { command: raw });
+    expect(captured.decision).toBe("allow");
+    expect(captured.diagnostics?.contextReason).toBe("STANDARD_CONTEXT");
+    expect(captured.reviewContext.worktreePlan).toMatchObject({ rawCommand: raw, backend: "auto" });
+    options.backend = "rcopy";
+    expect((await native.recheck(captured.settings, root, { command: raw })).fingerprint).not.toBe(captured.fingerprint);
+    options.backend = "auto"; cli = ["/fixture/other-omp"];
+    expect((await native.recheck(captured.settings, root, { command: raw })).fingerprint).not.toBe(captured.fingerprint);
+    cli = ["/fixture/omp"]; extra = " HEAD~1";
+    expect((await native.recheck(captured.settings, root, { command: raw })).fingerprint).not.toBe(captured.fingerprint);
+  });
+
+  test("leading-cd effective scope, physical cwd and direnv protections remain active", async () => {
+    const destination = join(root, "destination"); await mkdir(destination);
+    const helpers: WorktreeHelpers = { resolveCliEntryCmd: () => ["/fixture/omp"],
+      extractLeadingCdTarget: () => ({ path: destination, rest: "git worktree add ../target" }),
+      resolveToCwd: (path, cwd) => resolve(cwd, path),
+      rewriteGitWorktreeAdd: () => "/fixture/omp worktree add -- ../target" };
+    const options = { home, shell: "/bin/zsh", clone: true, helpers, executionRoute: () => "local-embedded" as const };
+    expect((await runtime(options).native.capture(root, { command: "cd destination && git worktree add ../target" })).decision).toBe("allow");
+    await writeFile(join(destination, ".envrc"), "# not executed\n");
+    const context = await runtime(options).native.capture(root, { command: "cd destination && git worktree add ../target" });
+    expect(context.diagnostics?.contextReason).toBe("DIRENV_CONTEXT");
+    expect(context.decision).toBe("prompt");
+  });
+
+  test("unavailable worktree helper fails closed while native deny and prompt retain priority", async () => {
+    const command = "git worktree add ../target";
+    for (const policy of ["deny", "prompt", "allow"] as const) {
+      const captured = await runtime({ home, shell: "/bin/zsh", clone: true,
+        approval: { tier: "exec", policy }, executionRoute: () => "local-embedded" }).native.capture(root, { command });
+      expect(captured.diagnostics?.contextReason).toBe("WORKTREE_CONTEXT");
+      expect(captured.decision).toBe(policy === "deny" ? "deny" : "prompt");
+      expect(captured.reasonCode).toBe(policy === "allow" ? "UNSUPPORTED_EXECUTION_CONTEXT" : policy === "deny" ? "NATIVE_DENY" : "NATIVE_PROMPT");
+    }
+  });
+
+  test("P2 unverified rewrite retains effect markers while no-clone HOME navigation stays standard", async () => {
+    const helpers: WorktreeHelpers = { resolveCliEntryCmd: () => ["/fixture/omp"],
+      extractLeadingCdTarget: () => null, resolveToCwd: (path, cwd) => resolve(cwd, path),
+      rewriteGitWorktreeAdd: command => command.replace("git worktree add ../x", "/fixture/omp worktree add -- ../x") };
+    const options = { home, shell: "/bin/zsh", clone: true, helpers, executionRoute: () => "local-embedded" as const };
+    for (const command of ["cd ~/bin", "echo 'git worktree add fake'", "git worktree add target | cat",
+      "git grep worktree add", "git log --grep worktree add", "git worktree add target --unknown", "echo $NAME"]) {
+      const snapshot = await runtime(options).native.capture(root, { command });
+      expect(snapshot.decision).toBe("allow"); expect(snapshot.diagnostics?.contextReason).toBe("STANDARD_CONTEXT");
+      expect(snapshot.reviewContext.worktreePlan).toBeUndefined(); expect(snapshot.reviewContext.unverifiedWorktreeEffects).toBeUndefined();
+    }
+    const tail = await runtime(options).native.capture(root, { command: "git worktree add ../x && cd ~/bin" });
+    expect(tail.decision).toBe("allow"); expect(tail.reviewContext.worktreePlan).toBeDefined();
+    for (const policy of ["allow", "deny"] as const) {
+      const snapshot = await runtime({ ...options, approval: { tier: "exec", policy } }).native.capture(root,
+        { command: "echo ok && cd sub && git worktree add ../x" });
+      expect(snapshot.decision).toBe(policy === "deny" ? "deny" : "prompt");
+      expect(snapshot.reviewContext.worktreePlan).toBeUndefined();
+      expect(snapshot.reviewContext.unverifiedWorktreeEffects).toMatchObject({ mayRewrite: true, verified: false });
+    }
+  });
+
+  test("compiled CLI entry file identity changes invalidate the dispatch snapshot", async () => {
+    let inode = 1;
+    const helpers: WorktreeHelpers = { resolveCliEntry: () => ({ argv: ["/fixture/omp"],
+        identity: { path: "/fixture/omp", dev: 1, ino: inode, mode: 0o100700, size: 10, mtimeMs: 1, ctimeMs: 1 } }),
+      extractLeadingCdTarget: () => null, resolveToCwd: (path, cwd) => resolve(cwd, path),
+      rewriteGitWorktreeAdd: () => "/fixture/omp worktree add -- ../x" };
+    const { native } = runtime({ home, shell: "/bin/zsh", clone: true, helpers,
+      executionRoute: () => "local-embedded" });
+    const captured = await native.capture(root, { command: "git worktree add ../x" });
+    expect(captured.decision).toBe("allow");
+    expect(captured.reviewContext.worktreePlan).toMatchObject({ cliEntryIdentity: { ino: 1 },
+      entryCheckScope: "file-identity-observation-not-authentication-or-sandbox" });
+    inode = 2;
+    expect((await native.recheck(captured.settings, root, { command: "git worktree add ../x" })).fingerprint)
+      .not.toBe(captured.fingerprint);
   });
 
   test("native deny wins when a bash login file exists", async () => {

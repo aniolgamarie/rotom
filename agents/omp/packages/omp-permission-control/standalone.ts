@@ -201,13 +201,38 @@ function redactSensitive(value: string): string {
     .replace(/\b(?:sk-[A-Za-z0-9_-]{16,}|gh[opusr]_[A-Za-z0-9]{20,}|AKIA[A-Z0-9]{16})\b/gu, "[REDACTED]");
 }
 
+function worktreeSummary(plan: NativeSettingsSnapshot["reviewContext"][string] | undefined): string {
+  if (!plan || typeof plan !== "object" || Array.isArray(plan)) return "";
+  if (plan.mayRewrite === true && plan.verified === false) return "\nPossible native worktree rewrite: analysis is incomplete; rewrite scope is unverified." +
+    "\nMay copy source-checkout local/ignored data; copied set is not enumerated or guaranteed secret-free." +
+    "\nFresh CLI repository-cwd configuration/backend may differ; post-checkout hooks may execute local code whose contents were not inspected." +
+    "\nUnverified possible effects are not authorization or an automatic low-risk signal.";
+  const operations = Array.isArray(plan.operations) ? plan.operations.filter(value =>
+    value && typeof value === "object" && !Array.isArray(value)) : [];
+  const items = operations as Array<Record<string, unknown>>;
+  const display = (value: unknown) => typeof value === "string" ? redactSensitive(value).slice(0, 120) : "unspecified";
+  const summary = items.slice(0, 3).map(value =>
+    "target " + JSON.stringify(redactSensitive(display(value.target))) +
+    ", branch " + JSON.stringify(redactSensitive(display(value.branch)))).join("; ");
+  return "\nworktree clone effects: " + summary +
+    (items.length > 3 ? ` (+${items.length - 3} more operations; see raw command)` : "") +
+    `\n-B branch reset possible: ${items.some(value => value.forceBranch === true)}` +
+    "\nMay copy source-checkout local/ignored data; copied set is not enumerated or guaranteed secret-free." +
+    "\nbackend: " + JSON.stringify(redactSensitive(display(plan.backend))) +
+    "; configured intent, not a success or copied-set guarantee; ordinary checkout fallback is possible." +
+    "\nNew CLI re-resolves repository-cwd settings; actual clone/backend may differ and child settings are not protected by this fingerprint." +
+    "\nPost-checkout hooks may execute local code; hook contents were not inspected or protected by this fingerprint." +
+    "\nDispatch effects are not complete side-effect verification, authorization or an automatic low-risk signal.";
+}
+
 async function humanApprove(ctx: ExtensionContext, toolName: string, command: string, cwd: string,
-  reasonCode: string, signal?: AbortSignal, contextReason?: NativeDiagnostics["contextReason"]): Promise<boolean> {
+  reasonCode: string, signal?: AbortSignal, contextReason?: NativeDiagnostics["contextReason"],
+  plan?: NativeSettingsSnapshot["reviewContext"][string]): Promise<boolean> {
   if (!ctx.hasUI || signal?.aborted) return false;
   try {
     const title = `Allow ${toolName}?\nreason: ${reasonCode}\n` +
       (contextReason ? `context: ${contextReason}\n` : "") + `cwd: ${JSON.stringify(redactSensitive(cwd))}\n` +
-      `command: ${JSON.stringify(redactSensitive(command))}`;
+      `command: ${JSON.stringify(redactSensitive(command))}` + worktreeSummary(plan);
     return await ctx.ui.select(title, ["Approve", "Deny"], { signal }) === "Approve";
   } catch {
     return false;
@@ -341,6 +366,14 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
     const approve = async (params: PlainBashParams, ctx: ExtensionContext, signal: AbortSignal,
       toolName: "bash" | "permission_bash", native?: NativeSettingsSnapshot): Promise<ApprovalOutcome> => {
       if (!config) return { approved: false, source: "none", reasonCode: "CONFIG_UNAVAILABLE", chain: [] };
+      // raw shell 不执行宿主 clone 重写；保留其旧人工边界，不借用原生计划宣称效果。
+      if (toolName === "permission_bash" && (native?.reviewContext.worktreePlan || native?.reviewContext.unverifiedWorktreeEffects)) {
+        const { worktreePlan: _plan, unverifiedWorktreeEffects: _unverified, ...reviewContext } = native.reviewContext;
+        native = { ...native, reviewContext,
+          decision: native.decision === "deny" ? "deny" : "prompt",
+          reasonCode: native.decision === "allow" ? "UNSUPPORTED_EXECUTION_CONTEXT" : native.reasonCode,
+          diagnostics: native.diagnostics ? { ...native.diagnostics, contextReason: "WORKTREE_CONTEXT" } : undefined };
+      }
       state.native.diagnostics = nativeDiagnostics(native);
       const cwd = effectiveCwd(ctx.cwd, params.cwd) ?? params.cwd ?? ctx.cwd;
       const configuredGate = configuredNativeApproval(config, params.command);
@@ -360,7 +393,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         state.human.calls++;
         state.last = { outcome: "pending-human", source: "human", reasonCode, chain };
         const approved = await humanApprove(ctx, toolName, params.command, cwd, reasonCode, signal,
-          state.native.diagnostics?.contextReason);
+          state.native.diagnostics?.contextReason, native?.reviewContext.worktreePlan ?? native?.reviewContext.unverifiedWorktreeEffects);
         state.human.health = ctx.hasUI ? (approved ? "approved" : "denied") : "unavailable";
         return { approved, source: "human", reasonCode,
           chain };
@@ -381,7 +414,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
       state.human.calls++;
       state.last = { outcome: "pending-human", source: "human", reasonCode, chain: [...chain, "human"] };
       const approved = await humanApprove(ctx, toolName, params.command, cwd, reasonCode, signal,
-        state.native.diagnostics?.contextReason);
+        state.native.diagnostics?.contextReason, native?.reviewContext.worktreePlan ?? native?.reviewContext.unverifiedWorktreeEffects);
       state.human.health = ctx.hasUI ? (approved ? "approved" : "denied") : "unavailable";
       return { approved, source: "human", reasonCode,
         chain: [...chain, "human"] };
@@ -433,6 +466,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
           ctx.ui.notify(JSON.stringify({ mode: state.mode, generation: state.generation,
             configuration: config ? "ready" : "unavailable",
             entrypoints: { raw: "permission_bash", native: nativeRegistered ? "bash" : "disabled" },
+            rawNativeCloneCoverage: "not-applicable-raw-shell",
             coverage: state.native.coverage, nativeDelegateAvailable: state.native.delegateAvailable,
             scopedSettingsReady: state.native.scopedSettingsReady, unsupported: state.native.unsupported,
             nativeContext: state.native.diagnostics,

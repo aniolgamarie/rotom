@@ -2,6 +2,8 @@ import { lstat, realpath } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
+import { resolveManagedCliEntry } from "./cli-entry";
+import { analyzeWorktree, type ContextValue, type WorktreeHelpers } from "./worktree-analysis";
 import type { ToolSession } from "@oh-my-pi/pi-coding-agent/tools";
 
 export interface PlainBashParams {
@@ -68,7 +70,7 @@ export interface NativeSettingsSnapshot {
   fingerprint: string;
   decision: "allow" | "deny" | "prompt";
   reasonCode: "NATIVE_ALLOW" | "NATIVE_DENY" | "NATIVE_PROMPT" | "UNSUPPORTED_EXECUTION_CONTEXT";
-  reviewContext: Record<string, string | number | boolean | null>;
+  reviewContext: Record<string, ContextValue>;
   diagnostics?: NativeDiagnostics;
 }
 
@@ -109,6 +111,8 @@ interface NativeModules {
   cfgBashDirenvLoadTimeoutMs: SettingLike<number>;
   cfgShellPath: SettingLike<string | undefined>;
   cfgWorktreeClone: SettingLike<boolean>;
+  cfgIsolationBackend?: SettingLike<string>;
+  worktreeHelpers?: WorktreeHelpers;
 }
 
 function canonical(value: unknown): string {
@@ -204,6 +208,7 @@ function settingsFingerprint(modules: NativeModules, settings: SettingsLike): st
     async: modules.cfgAsyncEnabled.get(settings),
     launch: modules.cfgLaunchEnabled.get(settings),
     worktreeClone: modules.cfgWorktreeClone.get(settings),
+    isolationBackend: modules.cfgIsolationBackend?.get(settings) ?? null,
   });
 }
 
@@ -226,7 +231,7 @@ async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: 
     settings,
   } as unknown as ToolSession;
   const approvalDecision = nativeDecision(new modules.BashTool(session).approval({ command: params.command }));
-  const reviewContext = {
+  const reviewContext: Record<string, ContextValue> = {
     ...diagnostics,
     sameSettingsInstance: settings === globalSettings,
     nativeDecision: approvalDecision,
@@ -237,6 +242,7 @@ async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: 
     autoBackgroundThresholdMs: modules.cfgBashAutoBackgroundThresholdMs.get(settings),
     toolsMaxTimeout: modules.cfgToolsMaxTimeout.get(settings),
     worktreeClone: modules.cfgWorktreeClone.get(settings),
+    isolationBackend: modules.cfgIsolationBackend?.get(settings) ?? null,
   };
   if (policies.bash === "deny") {
     return { settings: { scoped: settings, global: globalSettings },
@@ -244,7 +250,13 @@ async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: 
         global: settingsFingerprint(modules, globalSettings), route, routeFingerprint, legacyShellAllowed }),
       decision: "deny", reasonCode: "NATIVE_DENY", reviewContext, diagnostics };
   }
-  const cwd = targetCwd(baseCwd, params.cwd);
+  const clone = modules.cfgWorktreeClone.get(settings);
+  const analysis = clone || modules.worktreeHelpers ? analyzeWorktree(params.command, params.cwd, baseCwd,
+    clone, modules.cfgIsolationBackend?.get(settings) ?? "unavailable", modules.worktreeHelpers) : undefined;
+  if (analysis?.plan) reviewContext.worktreePlan = analysis.plan;
+  if (analysis?.rewriteApplied !== undefined) reviewContext.nativeRewriteApplied = analysis.rewriteApplied;
+  if (analysis?.unverified) reviewContext.unverifiedWorktreeEffects = analysis.unverified;
+  const cwd = targetCwd(baseCwd, modules.worktreeHelpers ? analysis?.effectiveCwd ?? params.cwd : params.cwd);
   const direnv = cwd.path ? await nearestEnvrc(cwd.path) :
     { present: false, uncertain: true, marker: "cwd-unavailable" };
   const systemHome = modules.homeDir();
@@ -258,7 +270,9 @@ async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: 
   if (snapshotContext && (startup.present || startup.uncertain || inheritedFunctions || differentHome))
     mutable.shellSnapshotUncertain = true;
   const configuredShellPath = modules.cfgShellPath.get(settings);
-  const contextReason: NativeDiagnostics["contextReason"] = settings !== globalSettings ? "SETTINGS_MISMATCH" :
+  const contextReason: NativeDiagnostics["contextReason"] = settings !== globalSettings ||
+    (analysis && analysis.effectiveCwd !== baseCwd && modules.findScopedSettings(analysis.effectiveCwd) !== settings)
+      ? "SETTINGS_MISMATCH" :
     cwd.uncertain || !cwd.path || direnv.uncertain ? "CWD_UNCERTAIN" :
     modules.cfgBashDirenv.get(settings) !== "off" && direnv.present ? "DIRENV_CONTEXT" :
     family === "unknown" ? "SHELL_UNKNOWN" :
@@ -272,14 +286,15 @@ async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: 
     snapshotContext && inheritedFunctions ? "BASH_FUNCTIONS" :
     snapshotContext && differentHome ? "SHELL_HOME_MISMATCH" :
     snapshotContext && mutable.shellSnapshotUncertain ? "BASH_SNAPSHOT_UNCERTAIN" :
-    modules.cfgWorktreeClone.get(settings) && /(?:^|[;&|]\s*)git\s+worktree\s+add(?:\s|$)/u.test(params.command)
+    analysis && (!analysis.supported || (analysis.plan && !modules.cfgIsolationBackend))
       ? "WORKTREE_CONTEXT" : "STANDARD_CONTEXT";
   diagnostics.contextReason = contextReason;
   reviewContext.contextReason = contextReason;
   const currentFingerprint = digest({ scoped: settingsFingerprint(modules, settings),
     global: settingsFingerprint(modules, globalSettings), direnv: direnv.marker, startup: startup.marker,
     route, routeFingerprint, legacyShellAllowed,
-    physicalCwd: cwd.path ? await realpath(cwd.path).catch(() => "unresolved") : "unavailable" });
+    physicalCwd: cwd.path ? await realpath(cwd.path).catch(() => "unresolved") : "unavailable",
+    worktreeAnalysis: analysis ?? null });
   if (approvalDecision === "deny") {
     return { settings: { scoped: settings, global: globalSettings }, fingerprint: currentFingerprint,
       decision: "deny", reasonCode: "NATIVE_DENY", reviewContext, diagnostics };
@@ -324,7 +339,28 @@ export async function loadNativeBashRuntime(): Promise<NativeBashRuntime> {
     import("@oh-my-pi/pi-coding-agent/tools/settings"),
     import("@oh-my-pi/pi-coding-agent/exec/settings"),
     import("@oh-my-pi/pi-coding-agent/task/settings"),
+
   ]);
+  let worktreeHelpers: WorktreeHelpers | undefined;
+  try {
+    const [rewrite, tokenize, paths, utils] = await Promise.all([
+      import("@oh-my-pi/pi-coding-agent/tools/bash-worktree-rewrite"),
+      import("@oh-my-pi/pi-coding-agent/tools/shell-tokenize"),
+      import("@oh-my-pi/pi-coding-agent/tools/path-utils"),
+      import("@oh-my-pi/pi-utils"),
+    ]);
+    worktreeHelpers = { rewriteGitWorktreeAdd: rewrite.rewriteGitWorktreeAdd,
+      extractLeadingCdTarget: tokenize.extractLeadingCdTarget, resolveToCwd: paths.resolveToCwd,
+      resolveCliEntry: () => {
+        const entry = resolveManagedCliEntry({ compiled: utils.isCompiledBinary(),
+          managedLocal: process.env.ROTOM_PERMISSION_CONTROL_EXECUTION_ROUTE === "local-native-bash-v1" &&
+            executionRoute("local-native-bash-v1", process.argv) === "local-embedded", execPath: process.execPath });
+        return { argv: entry.argv, identity: { ...entry.identity } };
+      } };
+  } catch {
+    // 可选 clone SDK 面不足只降级 clone 审查，不禁用普通原生工具。
+    worktreeHelpers = undefined;
+  }
   return createNativeBashRuntime({
     homeDir: homedir,
     executionRoute: () => executionRoute(process.env.ROTOM_PERMISSION_CONTROL_EXECUTION_ROUTE, process.argv),
@@ -350,5 +386,7 @@ export async function loadNativeBashRuntime(): Promise<NativeBashRuntime> {
     cfgBashDirenvLoadTimeoutMs: execSettings.cfgBashDirenvLoadTimeoutMs,
     cfgShellPath: execSettings.cfgShellPath,
     cfgWorktreeClone: taskSettings.cfgWorktreeClone,
+    cfgIsolationBackend: taskSettings.cfgIsolationBackend,
+    worktreeHelpers,
   } as unknown as NativeModules);
 }
