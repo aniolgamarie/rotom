@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "publication": "synthetic-public",
+  "purpose": "model-first-routing-baseline",
+  "defaultRoute": "model",
+  "corpus": {
+    "path": "tests/fixtures/omp/command-scenarios/corpus.json.gz",
+    "sha256": "d6e5dc5d68c685d44949a0487f7ff71bd60b28daad228c20ec8070d39a710699",
+    "publication": "synthetic-public",
+    "recordCount": 11473,
+    "categories": {
+      "compound": 4282,
+      "control-flow": 243,
+      "dynamic": 486,
+      "glob": 374,
+      "multiline": 1211,
+      "redirection": 3597,
+      "simple": 1280
+    },
+    "representedScenarioCount": 11504
+  },
+  "routingContract": {
+    "modelReachCount": 11472,
+    "preModelExceptionCount": 0,
+    "fakeModelDecision": "ask",
+    "expectedExecutedCommandCount": 0,
+    "rationale": "The empty command is rejected by the independent required-command input check (command.length == 0), before permission routing; it is not a model-review exception. The remaining synthetic-public command strings default to model review under the new standard, absent a configured hard rule. A command that reads a credential source does not itself disclose credential contents. Shell syntax uncertainty is sent to model review.",
+    "inputValidationCount": 1
+  },
+  "exceptions": [],
+  "scope": "This contract covers every row of the frozen synthetic-public corpus when the model service is available and there is no separately configured hard rule. One empty command is rejected as invalid tool input before permission routing; 11,472 nonempty command strings must reach model review. It does not establish that arbitrary real command text is safe to send to a model or validate semantic risk labels.",
+  "inputValidationCases": [
+    {
+      "id": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "EMPTY_COMMAND",
+      "expectedRoute": "invalid-input-rejected"
+    }
+  ]
+}
