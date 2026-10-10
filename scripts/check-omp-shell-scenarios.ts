@@ -43,12 +43,35 @@ function fixedParseOverlay(data: any, overlay: any): Map<string, any> {
   return entries;
 }
 
-export function evaluatePublicScenarios(data: any, overlay?: any) {
+function fixedStatusOverlay(data: any, overlay: any): Map<string, any> {
+  keys(overlay, ["schemaVersion", "purpose", "sourceCorpusSha256", "sourceOracleSha256", "count", "entries"]);
+  if (digest(overlay) !== "c170529b91aa45ee33c1b568dfe6e64c75d8c1a2546b4182de0d009fa1847858" ||
+      overlay.sourceCorpusSha256 !== CORPUS_SHA256 || overlay.count !== 65 || overlay.entries.length !== 65 ||
+      createHash("sha256").update(readFileSync(join(import.meta.dir, "omp-shell-status-oracle.py"))).digest("hex") !== overlay.sourceOracleSha256)
+    throw new Error("invalid fixed status overlay fingerprint");
+  const rows = new Map<string, any>(data.records.map((row: any) => [row.id, row]));
+  const result = new Map<string, any>();
+  for (const entry of overlay.entries) {
+    keys(entry, ["id", "sourceRowSha256", "oldGate", "expectedGate", "fullParse"]);
+    const row = rows.get(entry.id);
+    if (!row || result.has(entry.id) || digest(row) !== entry.sourceRowSha256 || row.expectedGate !== "human" ||
+        row.expected.status !== "unsupported" || entry.oldGate !== "human" || entry.expectedGate !== "review" || entry.fullParse?.status !== "complete")
+      throw new Error("invalid fixed status overlay row");
+    result.set(entry.id, entry);
+  }
+  return result;
+}
+
+export function evaluatePublicScenarios(data: any, overlay?: any, statusOverlay?: any) {
   keys(data, ["schemaVersion", "publication", "oracleVersion", "records", "summary"]);
   keys(data.summary, ["inputScenarios", "publicCases", "mergedRebuiltCases", "representedScenarios", "categories", "expectedComplete", "expectedUnsupported"]);
   if (data.schemaVersion !== 1 || data.oracleVersion !== 1 || data.publication !== "synthetic-public" || !Array.isArray(data.records) || !data.records.length) throw new Error("invalid public corpus");
   // 小fixture默认使用自身v1预期，只有显式提供已冻结差量才应用v2结构。
   const upgraded = overlay === undefined ? new Map<string, any>() : fixedParseOverlay(data, overlay);
+  if (statusOverlay !== undefined) for (const [id, entry] of fixedStatusOverlay(data, statusOverlay)) {
+    if (upgraded.has(id)) throw new Error("overlapping fixed overlays");
+    upgraded.set(id, entry);
+  }
   let complete = 0, unsupported = 0, represented = 0, thrown = 0;
   const mismatches: string[] = [];
   const ids = new Set<string>();
@@ -84,7 +107,8 @@ if (import.meta.main) {
   try {
     const path = join(FIXTURES, "corpus.json.gz");
     if (createHash("sha256").update(readFileSync(path)).digest("hex") !== CORPUS_SHA256) throw new Error("invalid frozen corpus fingerprint");
-    const report = evaluatePublicScenarios(readCorpusFile(path), JSON.parse(readFileSync(join(FIXTURES, "grammar-parse-upgrade-20261009.json"), "utf8")));
+    const report = evaluatePublicScenarios(readCorpusFile(path), JSON.parse(readFileSync(join(FIXTURES, "grammar-parse-upgrade-20261009.json"), "utf8")),
+      JSON.parse(readFileSync(join(FIXTURES, "grammar-status-upgrade-20261010.json"), "utf8")));
     console.log(JSON.stringify(report, null, 2));
     process.exitCode = report.passed ? 0 : 1;
   } catch { console.error("public scenario check failed: invalid fixture"); process.exitCode = 2; }

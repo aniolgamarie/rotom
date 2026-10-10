@@ -621,3 +621,23 @@ def test_second_scan_catches_cooked_identity_after_injected_redactor_failure(tmp
   assert artifact["records"] == []
   assert artifact["statistics"]["pi"]["secondPassSkipped"] == 1
   assert command not in output.read_text() + capsys.readouterr().out
+
+
+@pytest.mark.parametrize("command", [
+  "obclient -h192.0.2.14 -P2881 -pPasswordSentinel123 -e 'select 1'",
+  "mysql -h192.0.2.14 -pPasswordSentinel123",
+  "curl https://192.0.2.14:8443/status",
+])
+def test_glued_ipv4_and_obclient_password_redaction(command):
+  safe = history.redact(command)
+  assert safe is not None
+  assert "192.0.2.14" not in safe
+  assert "PasswordSentinel123" not in safe
+  assert not history.redaction_findings(safe)
+  assert "ip" in history.redaction_findings(command)
+
+
+def test_obclient_short_password_scanner_does_not_assume_mysql_name():
+  assert "credential" in history.redaction_findings("obclient -pPasswordSentinel123")
+  assert history.redact("obclient -p'HeadSentinel123'\"TailSentinel123\"") is None
+  assert history.redact("obclient -h192.0.2.14 -P2881 -e 'select 1'") == "obclient -hREDACTED_IP -P2881 -e 'select 1'"

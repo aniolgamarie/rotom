@@ -1,3 +1,4 @@
+import { sessionIdDigest } from "./approval-diagnostic";
 import { describe, expect, test } from "bun:test";
 import { createStandalonePlugin, type StandaloneConfig, validateStandaloneConfig } from "./standalone";
 import type { NativeBashRuntime, NativeSettingsSnapshot } from "./native-bash";
@@ -37,7 +38,9 @@ async function fakeHost(options: {
   nativeRuntime?: any;
   nativeLoadError?: boolean;
   invokeImpl?: (...args: any[]) => Promise<any>;
+  appendFailure?: boolean;
 } = {}) {
+  const auditEntries: any[] = [];
   const tools = new Map<string, any>();
   const commands = new Map<string, any>();
   const events = new Map<string, any>();
@@ -56,6 +59,10 @@ async function fakeHost(options: {
       Optional: (value: unknown) => value,
       Object: (properties: unknown, extra: unknown) => ({ properties, ...extra as object }),
     } },
+    appendEntry: (type: string, data: unknown) => {
+      if (options.appendFailure) throw new Error("SENSITIVE_CANARY_WRITER_ERROR");
+      auditEntries.push({ type, data });
+    },
     getAllTools: () => {
       if (loading && options.loadingActionsThrow) throw new Error("runtime not initialized");
       return [...tools.values()];
@@ -103,7 +110,7 @@ async function fakeHost(options: {
       return { content: [{ type: "text", text: "native-ok" }], details: { native: true } };
     },
   };
-  return { host, ctx, tools, commands, events, execCalls, fetchCalls, selectCalls, notices, invokeCalls,
+  return { host, ctx, auditEntries, tools, commands, events, execCalls, fetchCalls, selectCalls, notices, invokeCalls,
     setCurrent: (value: any) => { current = value; } };
 }
 
@@ -344,7 +351,7 @@ describe("standalone reviewer", () => {
 });
 
 describe("standalone plugin", () => {
-  test("all rebuilt scenarios preserve frozen gates except the exact root-reviewed grammar overlay", async () => {
+  test("all rebuilt scenarios preserve frozen gates except the exact root-reviewed grammar overlays", async () => {
     const fixture = join(import.meta.dir, "../../../../tests/fixtures/omp/command-scenarios");
     const sha = (raw: string | Uint8Array) => createHash("sha256").update(raw).digest("hex");
     const canonical = (value: any): string => Array.isArray(value) ? "[" + value.map(canonical).join(",") + "]" :
@@ -401,6 +408,27 @@ describe("standalone plugin", () => {
       overrides.set(entry.id, "model"); // 固定review eligibility精确映射为既有model门枚举。
     }
     expect(categoryCounts).toEqual(overlay.counts);
+    const statusRaw = readFileSync(join(fixture, "grammar-status-upgrade-20261010.json"));
+    expect(statusRaw.byteLength).toBe(105519);
+    expect(sha(statusRaw)).toBe("64dcdb505c0e884fbbc5493fd3f750f1eb564969ef9f2d8030d05f1e679ebe5f");
+    const statusOverlay = JSON.parse(statusRaw.toString());
+    fields(statusOverlay, ["schemaVersion", "purpose", "sourceCorpusSha256", "sourceOracleSha256", "count", "entries"]);
+    expect(statusOverlay.schemaVersion).toBe(1);
+    expect(statusOverlay.purpose).toBe("fixed numeric status output eligibility; never approval");
+    expect(statusOverlay.sourceCorpusSha256).toBe(sha(corpusRaw));
+    expect(statusOverlay.sourceOracleSha256).toBe(sha(readFileSync(join(import.meta.dir, "../../../../scripts/omp-shell-status-oracle.py"))));
+    expect(statusOverlay.count).toBe(65); expect(statusOverlay.entries).toHaveLength(65);
+    for (const entry of statusOverlay.entries) {
+      fields(entry, ["id", "sourceRowSha256", "oldGate", "expectedGate", "fullParse"]);
+      expect(overrides.has(entry.id)).toBe(false);
+      const row = rows.get(entry.id); expect(row !== undefined).toBe(true);
+      expect(sha(canonical(row))).toBe(entry.sourceRowSha256);
+      expect(row.expected.status).toBe("unsupported"); expect(row.expectedGate).toBe("human");
+      expect(entry.oldGate).toBe("human"); expect(entry.expectedGate).toBe("review");
+      expect(entry.fullParse.status).toBe("complete");
+      expect(entry.fullParse.commands.some((command: any) => command.statusExpansions?.length)).toBe(true);
+      overrides.set(entry.id, "model");
+    }
     const diagnostics = { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } as const;
     const native = fakeNativeRuntime({ diagnostics, reviewContext: { ...diagnostics, sameSettingsInstance: true, nativeDecision: "allow" } });
     const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime, hasUI: false });
@@ -428,7 +456,7 @@ describe("standalone plugin", () => {
       human: observed.filter(row => row[1] === "human").length, unexpected: observed.filter(row => row[1] === "unexpected").length,
       expectedReview: completed, expectedHuman: blocked, overlayReviewed, unchanged, failures: failures.length,
       fakeFetches: h.fetchCalls.length, fakeDelegates: h.invokeCalls.length, fakeExecs: h.execCalls.length, humanSelects: h.selectCalls.length,
-      sourceCorpusSha256: sha(corpusRaw), overlaySha256: sha(overlayRaw), observationSha256: sha(JSON.stringify(observed)),
+      sourceCorpusSha256: sha(corpusRaw), overlaySha256: sha(overlayRaw), statusOverlaySha256: sha(statusRaw), observationSha256: sha(JSON.stringify(observed)),
       riskOrRealHumanQualification: false, shellCommandsExecuted: false };
     const outputDir = process.env.OMP_SHELL_REVIEW_EVIDENCE;
     if (outputDir) {
@@ -442,9 +470,9 @@ describe("standalone plugin", () => {
       }
       writeFileSync(join(outputDir, "actual-gates-summary.json"), JSON.stringify({ ...summary, shards }, null, 2) + "\n", { mode: 0o600, flag: "wx" });
     }
-    expect({ total: observed.length, completed, blocked, overlayReviewed, unchanged }).toEqual({ total: 11473, completed: 10013, blocked: 1460, overlayReviewed: 583, unchanged: 10890 });
+    expect({ total: observed.length, completed, blocked, overlayReviewed, unchanged }).toEqual({ total: 11473, completed: 10078, blocked: 1395, overlayReviewed: 648, unchanged: 10825 });
     expect({ count: failures.length, first: failures.slice(0, 10) }).toEqual({ count: 0, first: [] });
-    expect(h.fetchCalls).toHaveLength(10013); expect(h.invokeCalls).toHaveLength(10013);
+    expect(h.fetchCalls).toHaveLength(10078); expect(h.invokeCalls).toHaveLength(10078);
     expect(h.execCalls).toHaveLength(0); expect(h.selectCalls).toHaveLength(0);
   }, 60000);
   test("loads by registration only before runtime actions are initialized", async () => {
@@ -790,9 +818,13 @@ describe("native bash delegation", () => {
     await shown;
     native.setDiagnostics({ shellFamily: "fish", executionRoute: "unverified", contextReason: "EXECUTION_ROUTE_UNVERIFIED" });
     expect(await hook(event("raw-different-context", params, "permission_bash"), h.ctx)).toBeUndefined();
-    const assertPendingContext = async () => {
+    const assertPendingContext = async (completedRawFailure = false) => {
       await h.commands.get("permission-control").handler("explain", h.ctx);
-      expect(JSON.parse(h.notices.at(-1)!)).toMatchObject({ outcome: "pending-human",
+      const explained = JSON.parse(h.notices.at(-1)!);
+      if (completedRawFailure) {
+        expect(explained).toMatchObject({ outcome: "blocked", reasonCode: "SCOPED_SETTINGS_UNAVAILABLE" });
+        expect(explained.nativeContext).toBeUndefined();
+      } else expect(explained).toMatchObject({ outcome: "pending-human",
         reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", nativeContext: current });
       await h.commands.get("permission-control").handler("status", h.ctx);
       expect(JSON.parse(h.notices.at(-1)!).nativeContext).toEqual(current);
@@ -800,7 +832,7 @@ describe("native bash delegation", () => {
     await assertPendingContext();
     native.setCaptureFailure();
     expect((await hook(event("raw-failed-capture", params, "permission_bash"), h.ctx)).block).toBe(true);
-    await assertPendingContext();
+    await assertPendingContext(true);
     respond("Deny");
     expect((await pending).block).toBe(true);
     expect(h.fetchCalls).toHaveLength(0);
@@ -1271,4 +1303,199 @@ describe("strict independent native approval acceptance", () => {
       }
     });
   }
+});
+
+describe("safe final approval diagnostics", () => {
+  test("raw HTTP failure records safe attempt and final human deny without credential/body leakage", async () => {
+    const h = await fakeHost({ select: "Deny", fetchImpl: async () => new Response("SECRET_CANARY_BODY", { status: 401 }) });
+    const tool = await ready(h);
+    expect((await tool.execute("call_http", { command: "echo fixture" }, undefined, undefined, h.ctx)).isError).toBe(true);
+    expect(h.auditEntries).toHaveLength(1);
+    expect(h.auditEntries[0]).toMatchObject({ type: "permission-control.audit.v1", data: {
+      entrypoint: "permission_bash", stage: "execute", outcome: "blocked", source: "human",
+      attempts: [{ target: "primary", status: "failure", failureCode: "HTTP_NON_OK", httpStatus: 401 }] } });
+    expect(JSON.stringify(h.auditEntries)).not.toContain("SECRET_CANARY");
+  });
+  test("model ask remains distinguishable from HTTP failure and never falls back", async () => {
+    const h = await fakeHost({ select: "Deny", config: { ...baseConfig, remoteFallback: { provider: "remote", model: "fallback" } },
+      response: { choices: [{ message: { content: '{"decision":"ask","risk":"unknown","authorization":"unknown","reasonCode":"UNKNOWN_RISK"}' } }] } });
+    const tool = await ready(h);
+    await tool.execute("call_ask", { command: "echo fixture" }, undefined, undefined, h.ctx);
+    expect(h.fetchCalls).toHaveLength(1);
+    expect(h.auditEntries[0].data.attempts).toEqual([expect.objectContaining({ target: "primary", status: "valid", decision: "ask",
+      risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" })]);
+  });
+  test("writer failure changes only diagnostic health, not successful raw execution", async () => {
+    const h = await fakeHost({ appendFailure: true }); const tool = await ready(h);
+    expect((await tool.execute("call_writer", { command: "echo fixture" }, undefined, undefined, h.ctx)).isError).toBeUndefined();
+    expect(h.execCalls).toHaveLength(1);
+    await h.commands.get("permission-control").handler("status", h.ctx);
+    expect(JSON.parse(h.notices.at(-1)!).audit).toMatchObject({ failed: 1, accepted: 0, health: "failed", durability: "not-attested" });
+  });
+  test("native hook/execute/duplicate/invalidation final records retain independent attribution", async () => {
+    const native = fakeNativeRuntime();
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime });
+    const { hook, tool } = await nativeReady(h); const input = { command: "echo fixture" };
+    expect(await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_a", input }, h.ctx)).toBeUndefined();
+    expect(h.auditEntries).toHaveLength(0);
+    expect((await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_a", input }, h.ctx)).block).toBe(true);
+    await tool.execute("call_a", input, undefined, undefined, h.ctx);
+    expect(h.auditEntries[0].data.reasonCode).toBe("DUPLICATE_TOOL_CALL");
+    expect(h.auditEntries[1].data).toMatchObject({ outcome: "executed", source: "primary", reasonCode: "LOW_RISK_AUTHORIZED" });
+    await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_pending", input }, h.ctx);
+    await h.events.get("session_switch")({}, h.ctx);
+    expect(h.auditEntries.at(-1).data).toMatchObject({ outcome: "cancelled", stage: "invalidated" });
+  });
+  test("in-flight cancellation records the called attempt and per-call native execution source survives concurrency", async () => {
+    const native = fakeNativeRuntime();
+    const pending = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime,
+      fetchImpl: async () => new Promise<Response>(() => {}) });
+    const p = await nativeReady(pending);
+    const execution = p.hook({ type: "tool_call", toolName: "bash", toolCallId: "call_cancel", input: { command: "echo fixture" } }, pending.ctx);
+    for (let i = 0; i < 20 && pending.fetchCalls.length === 0; i++) await Promise.resolve();
+    expect(pending.fetchCalls).toHaveLength(1);
+    await pending.events.get("session_switch")({}, pending.ctx);
+    expect((await execution).block).toBe(true);
+    expect(pending.auditEntries).toHaveLength(1);
+    expect(pending.auditEntries[0].data).toMatchObject({ outcome: "cancelled", reasonCode: "CANCELLED",
+      attempts: [{ target: "primary", called: true, failureCode: "CANCELLED" }] });
+    expect(pending.auditEntries[0].data.preModelGates).not.toContain("CANCELLED");
+    expect(pending.auditEntries[0].data.preModelGates).not.toContain("STALE_REVIEW");
+    let release!: () => void;
+    const wait = new Promise<void>(resolve => { release = resolve; });
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime,
+      invokeImpl: async () => { await wait; return { content: [{ type: "text", text: "ok" }] }; } });
+    const { hook, tool } = await nativeReady(h);
+    const input = { command: "echo fixture" };
+    await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_first", input }, h.ctx);
+    const running = tool.execute("call_first", input, undefined, undefined, h.ctx);
+    for (let i = 0; i < 20 && h.invokeCalls.length === 0; i++) await Promise.resolve();
+    expect(h.invokeCalls).toHaveLength(1);
+    await h.commands.get("permission-control").handler("manual", h.ctx);
+    await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_other", input }, h.ctx);
+    release(); await running;
+    expect(h.auditEntries.at(-1).data).toMatchObject({ toolCallId: "call_first", source: "primary", outcome: "executed", reasonCode: "LOW_RISK_AUTHORIZED" });
+    await h.commands.get("permission-control").handler("explain", h.ctx);
+    expect(JSON.parse(h.notices.at(-1)!).source).toBe("primary");
+  });
+
+  test("all payload fields and model/status/explain identities omit canaries", async () => {
+    const canary = "SENSITIVE_CANARY";
+    const h = await fakeHost({ currentModel: model(canary + "_PROVIDER", canary + "_MODEL"),
+      messages: [{ type: "message", message: { role: "user", content: "run " + canary + "_MESSAGE", timestamp: 1 } }] });
+    const tool = await ready(h);
+    await tool.execute("call_" + canary, { command: "echo " + canary, cwd: "/" + canary }, undefined, undefined, h.ctx);
+    await h.commands.get("permission-control").handler("status", h.ctx);
+    await h.commands.get("permission-control").handler("explain", h.ctx);
+    expect(JSON.stringify(h.auditEntries)).not.toContain(canary);
+    expect(h.notices.join(" ")).not.toContain(canary);
+    expect(h.auditEntries[0].data.toolCallId).toBeNull(); expect(h.auditEntries[0].data.toolCallIdDigest).toMatch(/^[a-f0-9]{64}$/u);
+  });
+  test("invalid parameters and unavailable configuration still emit final reasons", async () => {
+    const native = fakeNativeRuntime();
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime });
+    const { hook } = await nativeReady(h);
+    expect((await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_bad", input: { command: "echo fixture", extra: "SECRET_CANARY" } }, h.ctx)).block).toBe(true);
+    expect(h.auditEntries[0].data.preModelGates).toContain("INVALID_PARAMETERS");
+    h.host.getAllTools = () => [];
+    await h.events.get("session_switch")({}, h.ctx);
+    await h.tools.get("permission_bash").execute("call_config", { command: "echo fixture" }, undefined, undefined, h.ctx);
+    expect(h.auditEntries.at(-1).data.preModelGates).toContain("CONFIG_UNAVAILABLE");
+    expect(JSON.stringify(h.auditEntries)).not.toContain("SECRET_CANARY");
+  });
+  test("mysql/mariadb/obclient passwords never reach reviewer, audit or raw approval title", async () => {
+    const secret = "DbPrivateCanaryValue";
+    for (const client of ["mysql", "mariadb", "obclient"]) for (const flag of ["-p" + secret, "-p'" + secret + "'", "--password=" + secret, "--password " + secret]) {
+      const h = await fakeHost({ select: "Deny" }); const tool = await ready(h);
+      await tool.execute("call_db", { command: client + " " + flag + " -P 3306 -e 'SELECT 1'" }, undefined, undefined, h.ctx);
+      expect(h.fetchCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+      expect(h.selectCalls).toHaveLength(1); expect(h.selectCalls[0][0]).not.toContain(secret);
+      expect(JSON.stringify(h.auditEntries)).not.toContain(secret);
+      expect(h.auditEntries[0].data.preModelGates).toContain("SENSITIVE_INPUT");
+    }
+    const quoted = await fakeHost({ select: "Deny" }); const quotedTool = await ready(quoted);
+    await quotedTool.execute("call_db_echo", { command: "echo 'obclient -p" + secret + "'" }, undefined, undefined, quoted.ctx);
+    expect(quoted.fetchCalls).toHaveLength(0); expect(quoted.selectCalls[0][0]).not.toContain(secret);
+    const h = await fakeHost(); const tool = await ready(h);
+    expect((await tool.execute("call_port", { command: "mysql -P 3306 -e 'SELECT 1'" }, undefined, undefined, h.ctx)).isError).toBeUndefined();
+    expect(h.fetchCalls).toHaveLength(1); expect(h.execCalls).toHaveLength(1);
+  });
+});
+
+describe("status diagnostic shell semantics", () => {
+  for (const shellFamily of ["fish", "pwsh", "cmd", "unknown"] as const) {
+    test(`${shellFamily} status expansion is not assumed numeric`, async () => {
+      const native = fakeNativeRuntime({ reviewContext: { shellFamily, sameSettingsInstance: true, nativeDecision: "allow" } });
+      const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime, select: "Deny" });
+      const { hook } = await nativeReady(h);
+      expect((await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_status", input: { command: "echo $?" } }, h.ctx)).block).toBe(true);
+      expect(h.fetchCalls).toHaveLength(0); expect(h.invokeCalls).toHaveLength(0);
+      expect(h.auditEntries[0].data.preModelGates).toContain("UNSUPPORTED_STATUS_SEMANTICS");
+    });
+  }
+  test("native deny remains prior and raw fixed Bash status can reach review", async () => {
+    const denied = fakeNativeRuntime({ decision: "deny", reasonCode: "NATIVE_DENY", reviewContext: { shellFamily: "fish" } });
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: denied.runtime });
+    const { hook } = await nativeReady(h);
+    expect((await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_deny_status", input: { command: "echo $?" } }, h.ctx)).block).toBe(true);
+    expect(h.selectCalls).toHaveLength(0); expect(h.auditEntries[0].data.reasonCode).toBe("NATIVE_DENY");
+    const raw = await fakeHost(); const tool = await ready(raw);
+    expect((await tool.execute("call_raw_status", { command: "echo $?" }, undefined, undefined, raw.ctx)).isError).toBeUndefined();
+    expect(raw.fetchCalls).toHaveLength(1); expect(raw.execCalls).toHaveLength(1);
+  });
+});
+
+describe("original-session diagnostics and raw capture races", () => {
+  for (const mutation of ["session", "mode", "model"] as const) {
+    test(`raw capture ${mutation} mutation cannot mint a new-context ticket`, async () => {
+      let release!: () => void;
+      const wait = new Promise<void>(resolve => { release = resolve; });
+      const native = fakeNativeRuntime(); const originalCapture = native.runtime.capture;
+      native.runtime.capture = async (...args: any[]) => { await wait; return originalCapture(...args); };
+      const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime });
+      const { hook } = await nativeReady(h);
+      let session = "origin-session"; h.ctx.sessionManager.getSessionId = () => session;
+      const input = { command: "echo fixture" };
+      const pending = hook({ type: "tool_call", toolName: "permission_bash", toolCallId: "call_raw_capture", input }, h.ctx);
+      await Promise.resolve();
+      if (mutation === "session") { session = "new-session"; await h.events.get("session_switch")({}, h.ctx); }
+      if (mutation === "mode") await h.commands.get("permission-control").handler("manual", h.ctx);
+      if (mutation === "model") h.setCurrent(model("changed", "changed"));
+      release(); expect((await pending).block).toBe(true);
+      expect(h.fetchCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+      expect(h.auditEntries).toHaveLength(1);
+      expect(h.auditEntries[0].data.sessionIdDigest).toBe(sessionIdDigest("origin-session"));
+      expect(h.auditEntries[0].data.reasonCode).toBe("STALE_REVIEW");
+      await h.commands.get("permission-control").handler("status", h.ctx);
+      expect(JSON.parse(h.notices.at(-1)!).scopedSettingsReady).toBe(false);
+      const result = await h.tools.get("permission_bash").execute("call_raw_capture", input, undefined, undefined, h.ctx);
+      expect(result.isError).toBe(true); expect(h.execCalls).toHaveLength(0);
+    });
+  }
+  test("explain uses terminal observer context instead of mutable global context", async () => {
+    const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } });
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime });
+    const { hook, tool } = await nativeReady(h);
+    const input = { command: "echo fixture" };
+    await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_origin", input }, h.ctx);
+    await tool.execute("call_origin", input, undefined, undefined, h.ctx);
+    // raw capture 更新全局 context，但尚未产生最终 audit。
+    native.runtime.capture = async () => ({ settings: {}, fingerprint: "other", decision: "allow", reasonCode: "NATIVE_ALLOW",
+      reviewContext: {}, diagnostics: { shellFamily: "fish", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } });
+    await hook({ type: "tool_call", toolName: "permission_bash", toolCallId: "call_later", input }, h.ctx);
+    await h.commands.get("permission-control").handler("explain", h.ctx);
+    const result = JSON.parse(h.notices.at(-1)!);
+    expect(result.nativeContext).toEqual(result.diagnostic.nativeContext);
+    expect(result.diagnostic.toolCallId).toBe("call_origin");
+  });
+  test("DB command boundaries preserve nonsecret find while escaped newline passwords stay private", async () => {
+    const ordinary = await fakeHost(); const tool = await ready(ordinary);
+    expect((await tool.execute("call_db_boundary", { command: "mysql -V; find . -path docs" }, undefined, undefined, ordinary.ctx)).isError).toBeUndefined();
+    expect(ordinary.fetchCalls).toHaveLength(1);
+    const secret = "EscapedDbCanary";
+    const guarded = await fakeHost({ select: "Deny" }); const guardedTool = await ready(guarded);
+    await guardedTool.execute("call_db_continuation", { command: "obclient " + String.fromCharCode(92, 10) + " -p" + secret }, undefined, undefined, guarded.ctx);
+    expect(guarded.fetchCalls).toHaveLength(0); expect(guarded.selectCalls[0][0]).not.toContain(secret);
+    expect(JSON.stringify(guarded.auditEntries)).not.toContain(secret);
+  });
 });

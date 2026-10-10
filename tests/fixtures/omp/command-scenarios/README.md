@@ -68,3 +68,11 @@ bun scripts/check-omp-shell-scenarios.ts
 控制流及未支持执行上下文仍有明确能力边界；这些拒绝不应计作普通功能覆盖成功。
 此验收不运行集合中的命令、不读取私有日志或真实凭据，也不证明真实模型判断质量、
 真实宿主集成或已部署会话正在使用新版代码。
+
+2026-10-10 的数字退出码输出支持使用单独的
+`grammar-status-upgrade-20261010.json`：固定 65 个原行 ID、原行摘要、完整解析及
+review eligibility 差量。它由 `scripts/omp-shell-status-oracle.py` 的独立引用/转义
+扫描与冻结 v2 oracle 生成，未调用生产 TypeScript 解析器，也未改写原标签。
+当前纯解析预期合计 10,090 complete / 1,383 unsupported；插件门控还需隐私和
+原生规则检查。该差量描述已知 POSIX 风格 shell 中 `echo`/`printf` 输出 `$?`，
+不证明任意 shell 的状态变量语义，也不意味着模型批准或实际执行。

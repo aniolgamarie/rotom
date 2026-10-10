@@ -10,7 +10,8 @@ import { parseGenericCommands, matchesNativePattern, hasUncertainPatternMatch } 
 test("every rebuilt history scenario matches the independent static parse or conservative boundary", () => {
   const data = readCorpusFile(join(import.meta.dir, "fixtures/omp/command-scenarios/corpus.json.gz")) as any;
   const overlay = JSON.parse(readFileSync(join(import.meta.dir, "fixtures/omp/command-scenarios/grammar-parse-upgrade-20261009.json"), "utf8"));
-  const upgrades = new Map<string, any>(overlay.entries.map((entry: any) => [entry.id, entry.fullParse]));
+  const status = JSON.parse(readFileSync(join(import.meta.dir, "fixtures/omp/command-scenarios/grammar-status-upgrade-20261010.json"), "utf8"));
+  const upgrades = new Map<string, any>([...overlay.entries, ...status.entries].map((entry: any) => [entry.id, entry.fullParse]));
   expect(data.schemaVersion).toBe(1);
   expect(data.publication).toBe("synthetic-public");
   expect(data.oracleVersion).toBe(1);
@@ -23,11 +24,11 @@ test("every rebuilt history scenario matches the independent static parse or con
     if (!isDeepStrictEqual(parseGenericCommands(row.command), upgrades.get(row.id) ?? row.expected)) mismatches.push(row.id);
   }
   expect({ count: mismatches.length, first: mismatches.slice(0, 10) }).toEqual({ count: 0, first: [] });
-  expect(evaluatePublicScenarios(data, overlay)).toMatchObject({ cases: data.summary.publicCases, representedScenarios: 11504,
-    frozenComplete: 9442, frozenUnsupported: 2031, effectiveComplete: 10025, effectiveUnsupported: 1448,
-    upgradedParses: 583, mismatches: 0, thrown: 0, passed: true });
+  expect(evaluatePublicScenarios(data, overlay, status)).toMatchObject({ cases: data.summary.publicCases, representedScenarios: 11504,
+    frozenComplete: 9442, frozenUnsupported: 2031, effectiveComplete: 10090, effectiveUnsupported: 1383,
+    upgradedParses: 648, mismatches: 0, thrown: 0, passed: true });
   expect(evaluatePublicScenarios(data)).toMatchObject({ frozenComplete: 9442, frozenUnsupported: 2031,
-    effectiveComplete: 9442, effectiveUnsupported: 2031, upgradedParses: 0, mismatches: 583, passed: false });
+    effectiveComplete: 9442, effectiveUnsupported: 2031, upgradedParses: 0, mismatches: 648, passed: false });
 });
 
 test("fixed full-parse overlay rejects tampered sources, IDs, structures and metadata", () => {
@@ -103,4 +104,22 @@ test("quotes, comments, continuation and truncation have fixed independent ancho
   expect(parseGenericCommands("echo a &&\n# note\nls")).toEqual({ status: "complete", commands: [
     { connector: "start", argv: ["echo", "a"] }, { connector: "&&", argv: ["ls"] },
   ] });
+});
+
+
+test("fixed numeric status overlay rejects tampering and cannot be inferred from the current parser", () => {
+  const data = readCorpusFile(join(import.meta.dir, "fixtures/omp/command-scenarios/corpus.json.gz")) as any;
+  const base = JSON.parse(readFileSync(join(import.meta.dir, "fixtures/omp/command-scenarios/grammar-parse-upgrade-20261009.json"), "utf8"));
+  const status = JSON.parse(readFileSync(join(import.meta.dir, "fixtures/omp/command-scenarios/grammar-status-upgrade-20261010.json"), "utf8"));
+  for (const change of [
+    (value: any) => value.entries.pop(), (value: any) => value.entries.push(value.entries[0]),
+    (value: any) => value.entries[0].fullParse.commands[0].argv.push("changed"),
+    (value: any) => value.entries[0].sourceRowSha256 = "0".repeat(64),
+    (value: any) => value.sourceOracleSha256 = "0".repeat(64),
+    (value: any) => value.count++, (value: any) => value.unexpected = true,
+  ]) {
+    const corrupted = structuredClone(status); change(corrupted);
+    expect(() => evaluatePublicScenarios(data, base, corrupted)).toThrow();
+  }
+  expect(evaluatePublicScenarios(data, base)).toMatchObject({ mismatches: 65, passed: false });
 });

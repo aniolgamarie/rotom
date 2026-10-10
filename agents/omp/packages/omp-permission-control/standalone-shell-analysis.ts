@@ -3,6 +3,7 @@ export interface ParsedSimpleCommand {
   argv: string[];
   globs?: number[];
   homeExpansions?: number[];
+  statusExpansions?: number[];
   redirections?: { fd: number; operator: string; target: string }[];
 }
 
@@ -21,7 +22,7 @@ const SHELLS = new Set(["sh", "bash", "zsh", "dash", "ksh", "fish"]);
 const INTERPRETERS = new Set(["python", "python3", "node", "ruby", "perl", "pwsh", "powershell"]);
 const REDIRECTS = new Set([">", ">>", "<", ">|", ">&", "<&"]);
 const OPERATORS = [";;&", "&>>", "<<-", "<<<", "&&", "||", ">>", "<<", ">&", "<&", "<>", "&>", "|&", ";;", ";&", ">|", ";", "|", "&", ">", "<", "(", ")"];
-interface Token { kind: "word" | "operator"; value: string; raw: string; start: number; end: number; glob?: boolean; homeExpansion?: boolean }
+interface Token { kind: "word" | "operator"; value: string; raw: string; start: number; end: number; glob?: boolean; homeExpansion?: boolean; statusExpansion?: boolean }
 const unsupported = (): GenericShellParse => ({ status: "unsupported", reason: "unsupported-syntax" });
 
 function sedHasExecution(args: string[]): boolean {
@@ -67,6 +68,7 @@ function tokenize(input: string, partial = false, privacy = false): Token[] | un
     let quote: "'" | '"' | undefined;
     let glob = false;
     let homeExpansion = false;
+    let statusExpansion = false;
     let started = false;
     while (i < input.length) {
       const c = input[i];
@@ -87,6 +89,7 @@ function tokenize(input: string, partial = false, privacy = false): Token[] | un
         i += 2;
       } else if (quote === '"') {
         if (c === '"') quote = undefined;
+        else if (c === "$" && input[i+1] === "?" && !privacy) { statusExpansion = true; value += "$?"; i += 2; continue; }
         else if ((c === "$" || c === "`") && !privacy) return failure();
         else value += c;
         i++;
@@ -103,6 +106,8 @@ function tokenize(input: string, partial = false, privacy = false): Token[] | un
         started = true;
         value += c;
         i++;
+      } else if (c === "$" && input[i+1] === "?" && !privacy) {
+        statusExpansion = true; started = true; value += "$?"; i += 2;
       } else if ("$`{}".includes(c) && !privacy) return failure();
       else {
         if (c === "#" && !started) break;
@@ -113,7 +118,7 @@ function tokenize(input: string, partial = false, privacy = false): Token[] | un
       }
     }
     if (quote && !privacy) return failure();
-    if (started) tokens.push({ kind: "word", value, raw: input.slice(start, i), start, end: i, glob, homeExpansion });
+    if (started) tokens.push({ kind: "word", value, raw: input.slice(start, i), start, end: i, glob, homeExpansion, statusExpansion });
   }
   return tokens;
 }
@@ -132,6 +137,7 @@ export function parseGenericCommands(input: string): GenericShellParse {
   let argv: string[] = [];
   let globs: number[] = [];
   let homeExpansions: number[] = [];
+  let statusExpansions: number[] = [];
   let redirections: NonNullable<ParsedSimpleCommand["redirections"]> = [];
   let needWord = false;
   const flush = () => {
@@ -142,14 +148,16 @@ export function parseGenericCommands(input: string): GenericShellParse {
     const validQuery = query && argv.length > queryStart && !globs.length && !homeExpansions.length &&
       argv.slice(queryStart).every(name => Boolean(name) && (queryStart === 3 || !name.startsWith("-")));
     if (!argv.length || (CONTROL.has(head) && !validQuery) || /^[A-Za-z_][A-Za-z0-9_]*=/u.test(argv[0]) || globs.includes(0) || homeExpansions.includes(0)) return false;
+    // $?只作为echo/printf的数字输出参数；不得成为命令、路径或执行包装器参数。
+    if (statusExpansions.length && (!["echo", "printf"].includes(head) || statusExpansions.includes(0))) return false;
     // 内嵌程序会隐藏后续命令，不能让它绕过配置的 deny/prompt。
     if ((SHELLS.has(head) && argv.slice(1).some(a => /^-[A-Za-z]*c/u.test(a) || a === "--command" || a.startsWith("--command="))) ||
       (INTERPRETERS.has(head) && argv.slice(1).some(a => a.startsWith("-c") || a.startsWith("-e") || ["--eval", "--command"].includes(a) || /^--(?:eval|command)=/u.test(a)))) return false;
     if (head === "find" && argv.some(a => ["-exec", "-execdir", "-ok", "-okdir"].includes(a))) return false;
     if (["awk", "gawk", "mawk", "nawk"].includes(head) && argv.slice(1).some(a => /system\s*\(|\||@/u.test(a) || /^-(?:f|l|E)/u.test(a) || ["--file", "--load", "--exec"].includes(a) || /^--(?:file|load|exec)=/u.test(a))) return false;
     if (head === "sed" && sedHasExecution(argv.slice(1))) return false;
-    commands.push({ connector, argv, ...(globs.length ? { globs } : {}), ...(homeExpansions.length ? { homeExpansions } : {}), ...(redirections.length ? { redirections } : {}) });
-    argv = []; globs = []; homeExpansions = []; redirections = [];
+    commands.push({ connector, argv, ...(globs.length ? { globs } : {}), ...(homeExpansions.length ? { homeExpansions } : {}), ...(statusExpansions.length ? { statusExpansions } : {}), ...(redirections.length ? { redirections } : {}) });
+    argv = []; globs = []; homeExpansions = []; statusExpansions = []; redirections = [];
     return true;
   };
   for (let i = 0; i < tokens.length; i++) {
@@ -163,7 +171,7 @@ export function parseGenericCommands(input: string): GenericShellParse {
     if (token.kind === "operator" && REDIRECTS.has(token.value)) {
       const target = tokens[++i];
       const source = fd ?? (token.value.startsWith("<") ? 0 : 1);
-      if (!target || target.kind !== "word" || !target.value || target.glob || target.homeExpansion || source > 9 ||
+      if (!target || target.kind !== "word" || !target.value || target.glob || target.homeExpansion || target.statusExpansion || source > 9 ||
           ([">&", "<&"].includes(token.value) && (!/^\d+$|^-$/u.test(target.value) || (target.value !== "-" && Number(target.value) > 9)))) return unsupported();
       redirections.push({ fd: source, operator: token.value, target: target.value });
       continue;
@@ -180,6 +188,7 @@ export function parseGenericCommands(input: string): GenericShellParse {
     } else {
       if (token.glob) globs.push(argv.length);
       if (token.homeExpansion) homeExpansions.push(argv.length);
+      if (token.statusExpansion) statusExpansions.push(argv.length);
       argv.push(token.homeExpansion ? token.raw : token.value);
       needWord = false;
     }
@@ -227,7 +236,7 @@ export function visiblePrefixForDenial(input: string): ParsedSimpleCommand[] {
 }
 
 export function hasUncertainPatternMatch(command: ParsedSimpleCommand, pattern: string): boolean {
-  // 通配符与HOME参数均未扩展，精确 native 限制可能作用于解析后的参数。
+  // 通配符、HOME和退出码参数均未扩展，精确 native 限制可能作用于解析后的参数。
   // 宽泛 deny 已在 matchesNativePattern 中先处理；潜在交集保守转人工。
-  return Boolean((command.globs?.length || command.homeExpansions?.length) && pattern.includes(" ") && globRegex(pattern.split(/\s+/u)[0]).test(command.argv[0]));
+  return Boolean((command.globs?.length || command.homeExpansions?.length || command.statusExpansions?.length) && pattern.includes(" ") && globRegex(pattern.split(/\s+/u)[0]).test(command.argv[0]));
 }
