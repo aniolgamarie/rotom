@@ -273,3 +273,35 @@ stat-to-spawn race；这项限制写入 plan 元数据，UI 不展开入口路�
 不存为 executionCommand、plan 或模型输入，也不代表实际入口：普通动态命令保持原通用
 语法原因，late literal clone 仅获得未验证的可能效果提示并转人工；探测异常且已知候选
 仍保守处理。
+
+## 安全审批诊断
+
+公开 `omp.appendEntry` 接收 `permission-control.audit.v1` 最终记录；该诊断是 best-effort，
+不批准命令，不改变阻断、重试、30 秒共享预算或模型请求参数。hook 拒绝、execute 终结、
+未执行票据失效分别有固定 stage；处理中取消会在收齐 attempt 后终结，每次 invocation
+有独立 sequence，不根据共享 last 推断其它调用的来源。raw capture 在 await 前绑定
+generation/mode/session/model/cwd，发生变化时不再铸造新上下文票据。
+
+记录只包含封闭枚举、计数、安全模型身份、固定 HTTP 状态/失败码和 native context。
+valid attempt 记录 decision/risk/authorization/reasonCode，以区分模型主动 ask/deny 与
+HTTP、transport、JSON/shape/schema、timeout/cancel 失败；valid ask/deny 不触发 fallback。
+已结束预算或 caller 取消不再查询备用 target/key/fetch。首个 AbortSignal reason 只用于
+身份比较，不记录其内容；人工窗口与模型阶段开始后不会伪写新的 preModelGates。
+
+原 command/args/cwd/user messages/prompt/URL/headers/response/error message/stack/cause/
+keys 均不写入诊断，也不计算其摘要。仅工具调用身份和原 session 身份允许分域、限长的
+SHA-256 digest，原 ID 不符合严格安全格式时不以明文保存；原 session digest 保留跨会话
+对账来源，不写旧 session 私有接口。`appendEntry` 指向当前 session，记录可能落在新
+session，不能仅凭所在文件推断来源。
+
+`/permission-control status` 显示写入 accepted/failed/health 和安全 diagnostic；
+`/permission-control explain` 有最终记录后以该调用的 outcome/source/reason/chain/context
+为准，避免并发调用混用 context。accepted 仅表示公开 API 返回，不证明 fsync 或持久化；
+health 是最近状态，后续成功可变回 accepted，仍须检查累计 failed。
+
+mysql/mariadb/obclient 的 `-pPASSWORD`、`--password` 值不会进入 reviewer、审计或人工
+标题；`-P` 端口保留，分隔命令不会继承 DB 语境，反斜杠换行续接仍受保护。原生 deny/prompt
+优先；只有 Bash/POSIX 同族的已知 shell context 才接受 tagged `$?` 数字诊断，raw 固定
+Bash 入口另行明确其语义，fish/pwsh/cmd/unknown 保留人工。
+
+完整字段、失败码与边界见 [审批诊断说明](../../../../docs/omp-approval-diagnostics.md)。

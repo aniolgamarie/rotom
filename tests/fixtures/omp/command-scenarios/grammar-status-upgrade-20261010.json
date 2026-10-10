@@ -1,0 +1,4409 @@
+{
+  "schemaVersion": 1,
+  "purpose": "fixed numeric status output eligibility; never approval",
+  "sourceCorpusSha256": "d6e5dc5d68c685d44949a0487f7ff71bd60b28daad228c20ec8070d39a710699",
+  "sourceOracleSha256": "0d713d83e32eb99840afb75186871ce5d47a9a6c9835957fbfff39789eeb6aca",
+  "count": 65,
+  "entries": [
+    {
+      "id": "02119a62475cbae53360fb8b5e6cde63aeab457adb6a3437cc231cc7219f78c9",
+      "sourceRowSha256": "84ca96b781f29547e3840f30484fcd6fcd7a8dccc3cb8a6d3ed6283e27707490",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "fixture_3"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-v",
+              "grep"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "09c11b8b1af4733e40f24441b5ae84e0ae735aaf5e608edd720ea8b6595e2f72",
+      "sourceRowSha256": "e3810c4e775de98ea6ddea87f3dd11497f80cdb473a2490f20baf4dd36f3e7c1",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "grep",
+              "-E",
+              "fixture_1|fixture_2|fixture_3 fixture_4.*fixture_5",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "tail",
+              "-1"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_6",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_7",
+              "--fixture_8"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-v",
+              "^??"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_9:$? (1=fixture_9)"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_10",
+              "--fixture_11",
+              "-1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "0c2fd66d1317de07150991171b52c9117825aeae67dc049a24e4ae0c77419727",
+      "sourceRowSha256": "34cf66d3e9d3a69af0c30366a13b5c15dead254ea813f6010e5dd6acdbe12b16",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "=== fixture_19 fixture_20 fixture_21: ==="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "find",
+              "~/.fixture_9/fixture_4/fixture_10",
+              "-name",
+              "fixture_11-fixture_12.sh"
+            ],
+            "homeExpansions": [
+              1
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_22: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              ""
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "=== fixture_23 fixture_16 fixture_17 fixture_21: ==="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "find",
+              "/REDACTED_PATH",
+              "-name",
+              "fixture_11-fixture_12.sh"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              ""
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "=== fixture_24 fixture_25 fixture_26 fixture_10: ==="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "find",
+              "/REDACTED_PATH",
+              "-name",
+              "fixture_11-fixture_12.sh"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "151f9339fd130e702a6a3e50c11ab73f2601c20ed5b527e7d0c5221670bf302a",
+      "sourceRowSha256": "51b6ba60bfc13de0f594f593248c551e924f019f9012d6dd7f6101eb8fe19adc",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "env",
+              "-i",
+              "fixture_2=/fixture_3/fixture_4:/fixture_4",
+              "fixture_5=fixture_6.fixture_7-1",
+              "/REDACTED_PATH"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_8: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "19be980d29970c44f67e3e345843658294d09dbdb0d979384658ceadb4c3dd93",
+      "sourceRowSha256": "995784478cd06977fbceea41dc767ac134aaa362d6a7acf29e49b851d733181e",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "kill",
+              "-1",
+              "1",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_6 fixture_7: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "1a66352fb3826374b4da7f1c6ada412f384575a347ebb758f73b6fc703deaee3",
+      "sourceRowSha256": "625f4e18d00ec32493d9fd4dd7fcab2851d44a3a6a620930b87841098ca04009",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "kill",
+              "-1",
+              "1"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_5 fixture_6: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "1d3b23f9bcc21902bf92dbdc7cf3d9453230ad56ef7f4002bfca158b15208aab",
+      "sourceRowSha256": "bf29d421ed3d67d5837cb0ab09cb495890105ce08e763d6e09a8b8eadcb34d35",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_4",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_5",
+              "--fixture_3",
+              "local-fixture_6/fixture_7/fixture_8/fixture_7/fixture_9.fixture_8"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_10: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "-e",
+              "\\fixture_11=== fixture_12 fixture_13 fixture_14 ==="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_13",
+              "--fixture_15"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              ""
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_16",
+              "--fixture_17"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "21a1494a89c6434a8cdae41810ccc8a6ff22f981908beece7083534779d2f98d",
+      "sourceRowSha256": "331115a3fdec08c5264cf8ad5d91eec239ebc2dea61e8abd7c41676f8501d5a8",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "/fixture_1/fixture_2/fixture_3",
+              "--fixture_4-fixture_5",
+              "--fixture_6-fixture_7",
+              "fixture_8",
+              "--fixture_9-fixture_10-fixture_11",
+              "--fixture_12-fixture_13",
+              "--fixture_14",
+              "/fixture_14",
+              "--fixture_15",
+              "/fixture_15",
+              "--fixture_16",
+              "/fixture_17",
+              "--fixture_18",
+              "/REDACTED_PATH",
+              "--fixture_19-fixture_20",
+              "/fixture_1",
+              "/fixture_1",
+              "--fixture_19-fixture_20",
+              "/fixture_2",
+              "/fixture_2",
+              "--fixture_19-fixture_20",
+              "/fixture_21",
+              "/fixture_21",
+              "--fixture_19-fixture_20",
+              "/fixture_22",
+              "/fixture_22",
+              "--",
+              "/fixture_1/fixture_2/fixture_3",
+              "--fixture_4-fixture_5",
+              "--fixture_6-fixture_7",
+              "fixture_8",
+              "--fixture_9-fixture_10-fixture_11",
+              "--fixture_14",
+              "/fixture_14",
+              "--fixture_15",
+              "/fixture_15",
+              "--fixture_18",
+              "/REDACTED_PATH",
+              "--fixture_19-fixture_20",
+              "/fixture_1",
+              "/fixture_1",
+              "--fixture_19-fixture_20",
+              "/fixture_2",
+              "/fixture_2",
+              "--fixture_19-fixture_20",
+              "/fixture_21",
+              "/fixture_21",
+              "--fixture_19-fixture_20",
+              "/fixture_22",
+              "/fixture_22",
+              "--",
+              "/fixture_2/true"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_23 fixture_24=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "245ef2d1245df366faaba9a42435cce0967ebf55a47e54cf5f2a4f82321c7a46",
+      "sourceRowSha256": "fdada38699854dcd648733b412b1dc4fa0ac03bac1a7d0e033b7dd719cb18055",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_2",
+              "--fixture_3",
+              "fixture_4",
+              "-p",
+              "fixture_5 fixture_6 fixture_7: fixture_8"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "tail",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_9=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "2da238230b6836304f5c33e5b69b9ed9b12969ddeccee9dcd6ca9abfde43c6a0",
+      "sourceRowSha256": "b0bcaf896b6efbae836165573232e0f8082ed91b28c469c31363fa7f9d7445dc",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "=== fixture_2 ==="
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_3",
+              "--fixture_4",
+              "-1"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "=== fixture_5 fixture_6 fixture_7 ==="
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_3",
+              "fixture_8/fixture_6..fixture_9",
+              "--fixture_4"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "=== fixture_10 fixture_11 ==="
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_12",
+              "--fixture_13",
+              "--fixture_14=%fixture_15 %fixture_16%fixture_17%fixture_18",
+              "fixture_10"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "=== fixture_19 ==="
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_20",
+              "--fixture_21"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-v",
+              "^??"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_22-fixture_23:$? (1=fixture_23)"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "3687cff9db4f52590baf36fe6c75fa3e50ad195360d5d0b15172868f35f43f9a",
+      "sourceRowSha256": "afc6438986819f6b1c9f931140de89602640f8c37dcbf86c6ae7acc0578ffafe",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_3=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_5",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "cat",
+              "/REDACTED_PATH"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "369ced6781f45cf6e35ccb0b28b833e42b7a104a15c39cf130b8971ce61b211f",
+      "sourceRowSha256": "14a34c0c46d955fce96cc8622c4b8961c7263cbfd5fbfe15770e38adc2331c67",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "fixture_2-fixture_3",
+              "-fixture_4",
+              "fixture_5",
+              ":fixture_6!",
+              "fixture_7"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "sleep",
+              "1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "kill-fixture_8",
+              "-fixture_4",
+              "fixture_5"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_9",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "rm",
+              "-f",
+              "fixture_10.fixture_11",
+              "fixture_12/fixture_13.fixture_11",
+              "fixture_12/fixture_12.fixture_11",
+              "fixture_14/*/fixture_8.fixture_11"
+            ],
+            "globs": [
+              5
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_15",
+              "fixture_14/*",
+              "fixture_14",
+              "fixture_12",
+              ".fixture_16-fixture_17"
+            ],
+            "globs": [
+              1
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_15",
+              "fixture_12",
+              "fixture_14"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_9",
+              ".."
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_15",
+              ".fixture_16-fixture_17"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "ls",
+              "-fixture_18",
+              ".fixture_16-fixture_17"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_19=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "37f1b973630ab899de0517d096a6d556ce4b3630dcc529d39a9a80b31007a27a",
+      "sourceRowSha256": "8f3320349cf3d4f42c8669cd9c7783c0bb785604737d38e5a28e35d7d73153f3",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_2",
+              "--fixture_3",
+              "fixture_4",
+              "fixture_5",
+              "--fixture_6",
+              "fixture_7"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-fixture_8",
+              "fixture_9|fixture_10|fixture_11|fixture_12"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_13=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "38972108a907390abdb4b6ac6b89deae3fb242ee2392cc0c65d8af8fc5b05c09",
+      "sourceRowSha256": "3f0172622871da71f75ce20cdb5e7498169d03364ecf3684df075c8e4353852b",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "fixture_3/fixture_4.fixture_5.fixture_6",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_7=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "fixture_3/fixture_8.fixture_5.fixture_6",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_9=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "find",
+              "fixture_3/fixture_10",
+              "-maxdepth",
+              "1",
+              "-type",
+              "fixture_11",
+              "-printf",
+              "%fixture_12\\fixture_13"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "sort"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "41755579553fd2fdcddb2594d8c514dc37a8e4f43b06aa99d19eb4e52326f7f7",
+      "sourceRowSha256": "77ada14f28d0df4a9042229d64f8c3a4eb17bc525b42e40e90350874e9500ba8",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "-r",
+              "\"fixture_2=\\(.fixture_2|fixture_3)\", (.fixture_2[])",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-r",
+              ".fixture_2[]",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "sort"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "uniq",
+              "-fixture_4"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "test",
+              "!",
+              "-e",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_5=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "test",
+              "!",
+              "-e",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_6=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "48c0df288fa0dcbaff847f98ec0138a4b7d7bd91f89e2108312aa32be4d0b65c",
+      "sourceRowSha256": "8051e61b0cacbbf6df1b6a9b14be37393ad3b2d04f87d9193bd7e7788d524951",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "grep",
+              "-E",
+              "fixture_1|fixture_2|fixture_3 fixture_4.*fixture_5",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "tail",
+              "-1"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_6",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_7",
+              "--fixture_8"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-v",
+              "^??"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_9-fixture_10:$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_11",
+              "--fixture_12",
+              "-1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "4ae38e788ecc922ddb6540d33db8069841d93f4b00001a7c5a829080ee4f6422",
+      "sourceRowSha256": "9e81291aa67cb74b2b35f811f2aaa7e9c6c3a7156ac6a7656ab6bc25d9c81c26",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_2",
+              "--fixture_3"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-v",
+              "^??"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4-fixture_5:$? (1=fixture_4)"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_6",
+              "--fixture_7",
+              "-1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "4c87f9e325a1e05aa7595b2ca32f564a6d1d9530625650042e7bc0057ff9d433",
+      "sourceRowSha256": "502be1d71cd2d86870422bba7bb396de7795069a0d7c9785c6ec7e661cd59d15",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "test",
+              "!",
+              "-e",
+              "fixture_1/fixture_2/fixture_3.fixture_4.fixture_5"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "rg",
+              "-n",
+              "fixture_3\\.fixture_4|1 fixture_6|fixture_7 \\(fixture_8\\)",
+              "fixture_1/fixture_9.fixture_10"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_11",
+              "-fixture_12",
+              "fixture_1/fixture_9.fixture_10"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "sed",
+              "-n",
+              "1,fixture_13"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_11",
+              "-fixture_12",
+              "fixture_1/fixture_9.fixture_10"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "sed",
+              "-n",
+              "1,fixture_14"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "55c3ecc143f99e710b0511794d2b8b3b162f1e991699c3c4484fa0e14343d636",
+      "sourceRowSha256": "9fde0ec0c6ead6dc99a6852ff434b7b886b73574d97e3d0699b8217ba8d49d1e",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "-r",
+              ".fixture_2[]",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "wc",
+              "-l"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_3",
+              "-fixture_4",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_5=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_3",
+              "-fixture_4",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_6=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_3",
+              "-fixture_4",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_7=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "56e3df0844ea5a219add4136247bdf37c737b3e11d9b28a627b38280ca3278a5",
+      "sourceRowSha256": "d611ff4e8fafb3388d1ce5f1b8da69874c2929b76f0b1741b934c66d001550fb",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "echo",
+              "=== fixture_1 if fixture_2 fixture_3 fixture_5 ==="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_6",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_7-fixture_8",
+              "fixture_2/"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_9: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              ""
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "=== fixture_10 fixture_11 in fixture_2 ==="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "find",
+              "/REDACTED_PATH",
+              "-type",
+              "fixture_12"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "wc",
+              "-l"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              ""
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "=== fixture_13 fixture_14 fixture_15 fixture_11 ==="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_6",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "ls-fixture_15"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "wc",
+              "-l"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              ""
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "=== fixture_16 fixture_15 fixture_17 fixture_2 ==="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "find",
+              "/REDACTED_PATH",
+              "-fixture_18",
+              "-fixture_19",
+              "*/fixture_2/*",
+              "-type",
+              "fixture_12"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "wc",
+              "-l"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "5cdf20cd6c604c23041a1096ee577c90823b61e0ca56c1cb1e27a4c8a00ae898",
+      "sourceRowSha256": "e033e5d8b183d854a7d690ad9363e1bd8153e2dcc5836d128fcc5e1222f013f2",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "cat",
+              "~/.fixture_1/fixture_2/fixture_3.fixture_4"
+            ],
+            "homeExpansions": [
+              1
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_5:$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "5d653f86c119243fc784903fc84f95bc374f0b41bd28b7baafc247b0e8eabc2b",
+      "sourceRowSha256": "8401c2a03dbbea5a30b6084931b89c4585f018a5bee9569df7317de432d3a25d",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "zsh",
+              "-n",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "printf",
+              "fixture_1=%fixture_2\\fixture_3",
+              "$?"
+            ],
+            "statusExpansions": [
+              2
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "bash",
+              "-n",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "printf",
+              "fixture_4=%fixture_2\\fixture_3",
+              "$?"
+            ],
+            "statusExpansions": [
+              2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "6dede70f8ff477b214b98f3c4fb9ad5ed1dc0a24044867e9893314519345f4ca",
+      "sourceRowSha256": "7c7b61f92077edff177ce17ec23fbe72f318affaa05a5066f9e39a34042a7bfc",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "fixture_2"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_2",
+              "--fixture_3"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "---"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_2",
+              "env",
+              "-i",
+              "fixture_4=/fixture_5/fixture_6:/fixture_6",
+              "/fixture_6/echo",
+              "fixture_7"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_8: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "7200d225df5411cf6b31bd45e8389fc10251cef923bf1d8d9429f015fe4ffae7",
+      "sourceRowSha256": "47b8c5ec84d400411e577dd09c462f385bdb955906c7f3762211c3647d2de960",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "find",
+              "~/.fixture_4",
+              "-name",
+              "fixture_1-fixture_2.sh"
+            ],
+            "homeExpansions": [
+              1
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "=== fixture_5: $? ==="
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "ls",
+              "-la",
+              "/REDACTED_PATH"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "=== fixture_2-fixture_7 fixture_8 fixture_9: $? ==="
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "find",
+              "/REDACTED_PATH",
+              "-name",
+              "fixture_11.fixture_12",
+              "-fixture_16",
+              "/REDACTED_PATH"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "=== fixture_11.fixture_12 fixture_5: $? ==="
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "/REDACTED_PATH",
+              "--fixture_19"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "74b9458fc1447b203f8950274a0e91dfb248fdbaaeec39ca6c483c47b0f3e573",
+      "sourceRowSha256": "baf467da85621b4481b54324639f43adce786765bd37ab1c1dba3bdf58f75b06",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_2",
+              "--fixture_3",
+              "fixture_4",
+              "-p",
+              "fixture_5 fixture_6 fixture_7: fixture_8"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "tail",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_9=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "==="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "ls",
+              "~/.fixture_2"
+            ],
+            "homeExpansions": [
+              1
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "75464b6983ac44900d4b907a83739a83dea3cac4e4c6652efb0fca23f7437e87",
+      "sourceRowSha256": "bde64d8b7567ed304a2fa12ec8db9f5a1f71302493b9574f85008fb5fb0f7460",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_2",
+              "fixture_3/fixture_4/fixture_5.fixture_6",
+              "fixture_7/fixture_8.fixture_6",
+              "fixture_7/fixture_9.fixture_6"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_10",
+              "--fixture_11"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_10",
+              "--fixture_12",
+              "--name-fixture_13"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_10",
+              "--fixture_12",
+              "--fixture_14"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "printf",
+              "fixture_15=%fixture_16\\fixture_17",
+              "$?"
+            ],
+            "statusExpansions": [
+              2
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_18",
+              "--fixture_19"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "80251980bca4cfa7608e0635794f011da672d4e99f517c38bfef169dd57e5973",
+      "sourceRowSha256": "c6606bae6acaf939ee276c198a3a2a76e4b16917cdf0ad174282215973b44bb7",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "{fixture_2:.fixture_3.fixture_2,fixture_4:(.fixture_3.fixture_2|fixture_5),fixture_6:[.fixture_7[]|select(test(\"fixture_8\"))]}",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "test",
+              "!",
+              "-e",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_9=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-e",
+              ".fixture_10[\"fixture_11/fixture_8.fixture_12\"] == fixture_13",
+              "/REDACTED_PATH"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "805d7b2c9563bbff8f5072b10a9c86f1ae392940ef01ed556cb4b02268b48146",
+      "sourceRowSha256": "2c4cf2ce3577f3133f9d2b56b711eeab9ea923977244b86fa24a7b81e84d4bc8",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "=== fixture_2 fixture_3 fixture_4xfixture_5xfixture_6 fixture_7::fixture_8 fixture_9 ==="
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "grep",
+              "-fixture_10",
+              "fixture_8(",
+              "--fixture_11=*.fixture_12",
+              "--fixture_11=*.fixture_13",
+              "fixture_14/",
+              "fixture_15/"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "fixture_16::"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-v",
+              "fixture_17"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "=== fixture_18xfixture_19=$? ==="
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "849e91f5076bda84e775e48301a33fba217b42e4e407e8599afa84b4cda3ed8c",
+      "sourceRowSha256": "cc47890ce34169470a878f07c56e3a4ba66165fcb4c7c49c27e39d45de537fc5",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "fixture_1",
+              "-fixture_2",
+              "--fixture_3=fixture_4",
+              "fixture_5"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_1",
+              "-fixture_2",
+              "--fixture_3=fixture_4",
+              "fixture_6"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_7",
+              "--fixture_8",
+              "fixture_5"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_9-fixture_10",
+              "--fixture_11-fixture_12",
+              "fixture_5",
+              "fixture_13"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_14:$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "8658460a6cc43ce86412b61afac656f3e53212ecdda9e4733732dc8f1622de0f",
+      "sourceRowSha256": "ca174c32a5bf4a3c7a2026869b57dc61c80dfa7ebd4f89fea04469686a5adacf",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "pwd"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_1",
+              "--fixture_2",
+              "--fixture_3-fixture_4=fixture_5"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_6",
+              "--fixture_7"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_6",
+              "--fixture_8"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_6",
+              "--fixture_9",
+              "--fixture_10"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "printf",
+              "fixture_11=%fixture_12\\fixture_13",
+              "$?"
+            ],
+            "statusExpansions": [
+              2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "868ba1f84ef9eb080a7d7e86729e1f969e4e3429c85c9cb9b60ba158fc934dad",
+      "sourceRowSha256": "4ec587beeeae3c64f903734587004dcc4b3658302f535761acc0eacc5702d338",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "find",
+              "/REDACTED_PATH",
+              "-fixture_1",
+              "-type",
+              "fixture_2",
+              "-fixture_3",
+              "-fixture_4"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_5",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "test",
+              "!",
+              "-e",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_6=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "test",
+              "!",
+              "-e",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_7=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "8d5627305503161f59556856a57d6ebe1681fc217dc3bddf6615cdfb76a20eaa",
+      "sourceRowSha256": "e9a0d477f97c75fbee0ee2f7f3c44dd4277919a0363f41c5c18e5a2ced4d0512",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "test",
+              "-e",
+              ".fixture_1/fixture_2.fixture_3"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "printf",
+              "fixture_2=%fixture_4\\fixture_5",
+              "$?"
+            ],
+            "statusExpansions": [
+              2
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "sed",
+              "-n",
+              "1,fixture_6",
+              ".fixture_1/fixture_7/fixture_8-fixture_9.fixture_10"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "8dece73cb3a216318ec2469ab511e20356aaea4b6bc6c624596671d67208b50d",
+      "sourceRowSha256": "385e4071c5cf4fbf927481bfafd88717ddab50f476827e3e28d31b50efb62bf2",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_2",
+              "--fixture_3"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-v",
+              "^??"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4-fixture_5-fixture_6:$? (1=fixture_7)"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_8",
+              "--fixture_9",
+              "-1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "90ad7aa5866ec619f50502989a21b9c7b37eb06f255b33083775e87b42c6d75b",
+      "sourceRowSha256": "ce6178f91955e350379091ba9d422ac83472636af7a2eb9b89383bdc7b0a7271",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "/REDACTED_PATH"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "---"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "grep",
+              "fixture_1-fixture_2",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_3: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "96a0211aa781712e2df11d4d31a55d3e4499f5ad99d422870467ef8436df3d61",
+      "sourceRowSha256": "c90dd6a95ef0bd613b4033c1d5c809b8da3a51443e85d1176e452a8c917e4790",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "=== fixture_2 fixture_3xfixture_4x==="
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_5",
+              "--fixture_6"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-v",
+              "^??"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_2-fixture_7:$? (1=fixture_8)"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "=== fixture_9 ==="
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_10",
+              "fixture_11..fixture_12",
+              "--fixture_13"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "=== fixture_14 ==="
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_5",
+              "-fixture_15"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "=== fixture_16 fixture_12 ==="
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_10",
+              "-1",
+              "--fixture_17=%fixture_18 %fixture_19",
+              "fixture_11"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "a2e3f1e7bd9433eb2aa2ff712e754474f935ac3c210bbf784c269041938ff52c",
+      "sourceRowSha256": "30395d9ab7b6d85c189c72c27121d9a8b9767fad70b220d83c8b895fca40f5c5",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "ls",
+              "/REDACTED_PATH"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "---"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4"
+            ],
+            "redirections": [
+              {
+                "fd": 1,
+                "operator": ">",
+                "target": "/REDACTED_PATH"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "find",
+              "/REDACTED_PATH",
+              "-maxdepth",
+              "1",
+              "-name",
+              "test-find-fixture_5-1.fixture_6",
+              "-fixture_5"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_7 fixture_8: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "ls",
+              "/REDACTED_PATH"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": "||",
+            "argv": [
+              "echo",
+              "fixture_9 fixture_10 fixture_11 (fixture_12 fixture_13 fixture_14)"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "a2ef4889c26507cfde0f3cb2fa5bc13efb1687d29d4ea38ac5ebeaa3959e1fbc",
+      "sourceRowSha256": "966d1519cef479282092366a52f4ef021334588f70618197392a531bb345ce12",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_2",
+              "fixture_3",
+              "fixture_4-fixture_5-fixture_6-fixture_7",
+              "--fixture_8"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_9: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "a321dd73ca4a6e6315faea7d44ff58114bf57ccd7f68526c71af835880cd6f5b",
+      "sourceRowSha256": "5afd4f99a70905882815f1bb0fba51b6e1ba6128fb71b949a64ed025ff266129",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "fixture_1",
+              "--fixture_2",
+              "--fixture_3",
+              "fixture_4"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_1",
+              "--fixture_5=fixture_6",
+              "--find-fixture_7",
+              "fixture_4",
+              "--"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "sed",
+              "-n",
+              "1,fixture_8"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_9",
+              "-a",
+              "--fixture_10",
+              "fixture_4"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-n",
+              "1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_11-fixture_12",
+              "--fixture_13-fixture_14",
+              "fixture_4",
+              "fixture_15"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "a70d81e12ac388884e829bf2df40367566e050a1e00b54676ddd692b77406ffa",
+      "sourceRowSha256": "0ffe2b4965f7641314a8013528c648ec746ea6d06aec6896bbb2021d276ac76f",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "cat",
+              "/REDACTED_PATH"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "---fixture_6: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "a805f684476ca78077f1647cd76b9a0d72e925c0a62dab0d21309fa22b1d7837",
+      "sourceRowSha256": "a85d0eb7a8c7f14dd0949a38688d981810b13dd4f37d2a24a2a383e557d85719",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "/fixture_1/fixture_2",
+              "--fixture_3-fixture_4",
+              "--fixture_5",
+              "1",
+              "--fixture_6",
+              "1",
+              "--fixture_7-fixture_8",
+              "/",
+              "/",
+              "--fixture_9",
+              "/fixture_10",
+              "--fixture_7-fixture_8",
+              "/fixture_11/fixture_1",
+              "/fixture_10",
+              "--fixture_8",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH",
+              "--",
+              "/fixture_10/python3",
+              "-c",
+              "fixture_12 fixture_13,fixture_14; print(fixture_14.fixture_15(),fixture_14.fixture_16()); fixture_17=fixture_13.fixture_13(fixture_13.fixture_18); fixture_17.fixture_8(\"/REDACTED_PATH\"); print(\"fixture_8-ok\")"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_19=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "a8daf7aa911ce575cb41982da796093f1fab96119f9f2e798b00b4920cdcc9ac",
+      "sourceRowSha256": "7fe24a8da13883c7be217eed8f28d8f6c28d07a2cfe741c7fa4ac1098fd9a4f8",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_2",
+              "-1",
+              "--fixture_3=%fixture_4 %fixture_5"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "=== fixture_6 fixture_7 fixture_8 fixture_9 fixture_10/fixture_11/fixture_12 ==="
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_2",
+              "-1",
+              "--fixture_3=%fixture_13"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-n",
+              "fixture_10\\|fixture_11\\|fixture_12"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "grep-fixture_14:$? (1=fixture_15xfixture_16)"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "adad457874626a7c639bbc34dc3e2b9c29452b04f22cdba6a0c7cb3fb70996a0",
+      "sourceRowSha256": "cc254a0b9e933af7e7b54350bf10b05eee2357aded0ffb535dffb220c2297155",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_2",
+              "-fixture_3",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "cat",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "cat",
+              "/REDACTED_PATH"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "b28b1a561fcc25305bdcf385bb317e708e98e768d0093c0097b55a84fe8ffffe",
+      "sourceRowSha256": "b1b663afc186046f294ccce32f24ae586d07fea46e0a07162d52bfb7c5423f13",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "fixture_2",
+              "fixture_3",
+              "--fixture_4",
+              "fixture_5"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "---fixture_6: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "fixture_2",
+              "fixture_3",
+              "--fixture_4",
+              "fixture_7"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "---fixture_6: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "b2ca8b27a699c0f71a26d15c78ce60cd3ca9225b96836d4837038b0b938a3a3e",
+      "sourceRowSha256": "b793d87500c109c00d4f8086586a688d344e3d89755836a063d14be84cbb81d4",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "kill",
+              "-1",
+              "1",
+              "1",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_5 fixture_6: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "b5ac5b4786becf450097acfc4c21b0efb278e597ec3eb43cf3686a504dc6f88b",
+      "sourceRowSha256": "972058780b0e461fcb6dac3155dde38a609a33921b01fa63ed5dd5c953c4996f",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "fixture_3/fixture_4.fixture_5.fixture_6"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_7=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "fixture_3/fixture_8.fixture_5.fixture_6"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_9=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "rg",
+              "-n",
+              "^## fixture_10 fixture_11|^## fixture_12 fixture_13|^## fixture_14 fixture_15|^## fixture_16 fixture_15|^## fixture_10 fixture_17",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "b6be88742f2c3e4c654049a05811179e8013c386e87759ce0110f7809a02fa67",
+      "sourceRowSha256": "80998b9095d37680a6de486cb1f342d0d0dbdd5619a52aa2f7f79c2c8c725b14",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "fixture_2",
+              "npm:fixture_1-fixture_3"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "bcdeabe3f4e4e5ea7ce7ae4ab1c234775f21af9931918bdaf870e86164db0473",
+      "sourceRowSha256": "06308624da546981f410ad939e02d6b5c9d96b17d665f0ab03d3c5cd66387841",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_2",
+              "--fixture_3"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "c10bf2670db6d53217fc63fd86b1c57c84c0e8dc0d50b899c1e66f0d0cb57a3c",
+      "sourceRowSha256": "beb72394ba03b9725de2f66870b2dd90562cb431bdc5de5c2af528e6251750ff",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "fixture_1",
+              "--fixture_2",
+              "--fixture_3",
+              "--fixture_4",
+              "-1",
+              "--fixture_5"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_6-fixture_7",
+              "--fixture_8-fixture_9",
+              "fixture_10",
+              "fixture_11"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_12=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_6-fixture_7",
+              "--fixture_8-fixture_9",
+              "fixture_11",
+              "fixture_10"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_13=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "c3ed51302e2cf80b37ebd3b38e44ac8c51a9c767b265704eb83954ae5499a677",
+      "sourceRowSha256": "3d8364dacba3ef7bd0ca9d452d166cc57dbc923fce332692a80fa7a60d4da77e",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "ls",
+              "-la",
+              "fixture_2"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "---fixture_3---"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "./fixture_2"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "c46c5bcb6384537c571ce752ed362a6690ef335ee8bb25beb12f0ce3359ef887",
+      "sourceRowSha256": "cd145c91804582680c4fe435af22f43a8075367ae77564ca21cdb15b3581aac0",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "grep",
+              "fixture_1",
+              "~/.fixture_2/fixture_3/fixture_4.fixture_5"
+            ],
+            "homeExpansions": [
+              2
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_6:$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "c59b68497011554a90917640d1a103fd813b392e423a43844130140328e01d7c",
+      "sourceRowSha256": "3048657676e3d4d68822497f3623a7bf4bd6cafb460297d28ea38e4b718a0c9a",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_4-fixture_5",
+              "fixture_6/fixture_7/fixture_8-fixture_9/"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_10: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "---"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "cat",
+              "fixture_6/.fixture_3"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "cat",
+              "fixture_6/fixture_7/.fixture_3"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "cb58aa8549920cd34266b1439b78e37e482addfa4c6dd44e4197f03b258e630e",
+      "sourceRowSha256": "1c3ae1c94eded936d4399e65d03b22622c97c18612b8e08c89d062b770b6052b",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "/fixture_1/fixture_2/fixture_3",
+              "--fixture_4-fixture_5",
+              "--fixture_6-fixture_7",
+              "fixture_8",
+              "--fixture_9-fixture_10-fixture_11",
+              "--fixture_12-fixture_13",
+              "--fixture_14",
+              "/fixture_14",
+              "--fixture_15",
+              "/fixture_15",
+              "--fixture_16",
+              "/fixture_17",
+              "--fixture_18",
+              "/REDACTED_PATH",
+              "--fixture_19-fixture_20",
+              "/fixture_1",
+              "/fixture_1",
+              "--fixture_19-fixture_20",
+              "/fixture_2",
+              "/fixture_2",
+              "--fixture_19-fixture_20",
+              "/fixture_21",
+              "/fixture_21",
+              "--fixture_19-fixture_20",
+              "/fixture_22",
+              "/fixture_22",
+              "--",
+              "/fixture_1/fixture_2/fixture_3",
+              "--fixture_4-fixture_5",
+              "--fixture_6-fixture_7",
+              "fixture_8",
+              "--fixture_9-fixture_10-fixture_11",
+              "--fixture_14",
+              "/fixture_14",
+              "--fixture_15",
+              "/fixture_15",
+              "--fixture_20",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH",
+              "--fixture_19-fixture_20",
+              "/fixture_1",
+              "/fixture_1",
+              "--",
+              "/fixture_1/fixture_2/true"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_23 fixture_24=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d0a012b9d6be65cc234c7966d62eec4e7b5d9537122c88118b46a04a7c12ddde",
+      "sourceRowSha256": "93b819f268d20575eb5aef8429f7a520153aa471f11aa32e299c57e7d5e63d89",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "bash",
+              "-n",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_1=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "bash",
+              "-n",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_2=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d25d7bf15c37cf6beec1387620312f20981f36a8034e040798960a3d936f0a44",
+      "sourceRowSha256": "45f5a2e7410009cf6084c013f77578da6ade41b7d0d49daa647708fb3ceec637",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_2",
+              "--fixture_3"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "===== fixture_5 ====="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "grep",
+              "-fixture_6",
+              "fixture_7",
+              "fixture_8/",
+              "fixture_9/",
+              "fixture_10/"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-v",
+              "\\.fixture_11"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "===== fixture_2 fixture_12 ====="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_2",
+              "--fixture_12"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "tail",
+              "-1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d6bd0d1fd02b288028760e3575b9cae386b02d647ff73d0c09388549405fa17a",
+      "sourceRowSha256": "dda08e4624f19cd413060a62bf948c27378897ccc297583314f0ff2d036cefe0",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_2",
+              "--fixture_3",
+              "-1"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "--- fixture_4 fixture_5 ---"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_6",
+              "--fixture_7"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "grep",
+              "-v",
+              "^??"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_8:$? (1=fixture_8)"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "--- fixture_9 fixture_10 fixture_11 ---"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_12",
+              "fixture_13",
+              "fixture_14",
+              "--fixture_15"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "echo",
+              "(fixture_16=fixture_17 fixture_18 fixture_19 fixture_20)"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d846d4fb626b9a20b5e3599af4a2e16d59d7a1668adcdd9acb17be6937d55a35",
+      "sourceRowSha256": "38fb2018e111f8a9fb10f8888ac598bf6c25abbc4a038b55815dea06dad97a72",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_3=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_5=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "d92d7d02ec3ced05ea1f095dbae0634fceea6aad9e14006c5cef6f368895dcbe",
+      "sourceRowSha256": "f1e083cd98685f542be8343bd3399ac39b3ca0e009f3a994b590c169b387d402",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "kill",
+              "1",
+              "1"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "sleep",
+              "1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "fixture_3"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "kill",
+              "-1",
+              "1",
+              "1",
+              "1"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "sleep",
+              "1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "fixture_3"
+            ]
+          },
+          {
+            "connector": "||",
+            "argv": [
+              "echo",
+              "fixture_5 fixture_3 fixture_6"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "e114040e20e7065200094e1666b7cdca25c41374c0b0b8813c04112324bcab08",
+      "sourceRowSha256": "9c9bbd526463ddfeb6867bb25fed2a5bf7c6d0c9514369ae39d73f4002273e97",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "zsh",
+              "-n",
+              "fixture_1/fixture_2.zsh"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "printf",
+              "fixture_3=%fixture_4\\fixture_5",
+              "$?"
+            ],
+            "statusExpansions": [
+              2
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "printf",
+              "fixture_6:\\fixture_5"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "sed",
+              "-n",
+              "1,fixture_7",
+              "/fixture_8/fixture_9"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "printf",
+              "fixture_10="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "-C",
+              "/REDACTED_PATH",
+              "fixture_11-fixture_12",
+              "--fixture_13",
+              "fixture_14"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": "||",
+            "argv": [
+              "true"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "printf",
+              "fixture_15="
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "command",
+              "-v",
+              "fixture_15"
+            ]
+          },
+          {
+            "connector": "||",
+            "argv": [
+              "true"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_15",
+              "--fixture_16"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">",
+                "target": "/dev/null"
+              }
+            ]
+          },
+          {
+            "connector": "||",
+            "argv": [
+              "true"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "e506e36ebb82c71a92ea76068d9b70770897ddcf5ce3f89f3fb2ef4c324bb2fd",
+      "sourceRowSha256": "f4d1f7d2d5e225177adc79d70d4db702df2c06cc0a398717ecfece48beb69d93",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_2-fixture_3"
+            ],
+            "redirections": [
+              {
+                "fd": 1,
+                "operator": ">",
+                "target": "/REDACTED_PATH"
+              },
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "tail",
+              "-1",
+              "/REDACTED_PATH"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ec9a7ddaf641486c195db1cfbf1e140e4c2f0a44e0f36a3401df943757f83577",
+      "sourceRowSha256": "6521e6b09bc690fe20d1f5a5d18cd656d85d78613d7cc5883d7ec5500d89d0c5",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_3=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_4=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_5=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_1",
+              "-fixture_2",
+              "/REDACTED_PATH",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_6=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "efc8a0c7e3ce04db781714cefdbaf9e47b702fbcdbff3449b95e6d90abdec3b0",
+      "sourceRowSha256": "b694cf06b50b6300af9fd1e3fc1f02be9eb77e18936c70e6de91516d0e528cbf",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "test",
+              "-f",
+              ".fixture_1/fixture_2.fixture_3"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "f04dd39008d39b1f56ed52a165760d31250a676ba28a947cb361c98f8b18bf03",
+      "sourceRowSha256": "a0fb8042ec7a1cf3e524d7b7a7fb34874cc1ad13b25a62fb74b9987497e07415",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_1",
+              "/REDACTED_PATH"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "fixture_2",
+              "fixture_3/fixture_4/fixture_5.fixture_6",
+              "fixture_7/fixture_8.fixture_6",
+              "fixture_7/fixture_9.fixture_6"
+            ]
+          },
+          {
+            "connector": "&&",
+            "argv": [
+              "git",
+              "fixture_10",
+              "--fixture_11",
+              "--fixture_12"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "printf",
+              "fixture_13=%fixture_14\\fixture_15",
+              "$?"
+            ],
+            "statusExpansions": [
+              2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "f1318161fa6d2791112b3cd393dfc1f4f3187007625be5e00ae74eff7ad826d1",
+      "sourceRowSha256": "8fefb0758758c1defdf9fed529e85a5736c1d6c7457971c48558d95f489bc9bd",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "git",
+              "fixture_1",
+              "--fixture_2",
+              "--fixture_3",
+              "fixture_4"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_1",
+              "--fixture_5=fixture_6",
+              "fixture_4",
+              "--",
+              "fixture_7/fixture_8/fixture_9",
+              "fixture_7/fixture_10"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "sed",
+              "-n",
+              "1,fixture_11"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "git",
+              "fixture_12-fixture_13",
+              "--fixture_14-fixture_15",
+              "fixture_4",
+              "fixture_16"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_15=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "f5af70fc2797095142c3af771ce7e5ecbe1d97127cd536baa5414055d7f307ea",
+      "sourceRowSha256": "45103131d2bbe724323a0b6c78dfd591faade6122a661f613b2591851c27849f",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "fixture_2",
+              "fixture_5",
+              "npm:fixture_2-fixture_6"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "tail",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "---"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_2",
+              "install",
+              "npm:fixture_2-fixture_6"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "tail",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_3 fixture_4: $?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "f6f289edcf8c4841aad30c4a347f54e50e94ac04be46cba911fb45e0dea4815a",
+      "sourceRowSha256": "5263359fa9587915e575e2d0b974b0445e3b8152c6bd7b6be09e395e5c89c863",
+      "oldGate": "human",
+      "expectedGate": "review",
+      "fullParse": {
+        "status": "complete",
+        "commands": [
+          {
+            "connector": "start",
+            "argv": [
+              "grep",
+              "-n",
+              "fixture_1 fixture_2",
+              "-fixture_3",
+              "1",
+              "fixture_4/fixture_5/fixture_6.fixture_7"
+            ]
+          },
+          {
+            "connector": "|",
+            "argv": [
+              "head",
+              "-1"
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "fixture_8",
+              "--fixture_9-fixture_10",
+              "--fixture_11-fixture_12",
+              "/",
+              "/",
+              "/fixture_13/fixture_14/true"
+            ],
+            "redirections": [
+              {
+                "fd": 2,
+                "operator": ">&",
+                "target": "1"
+              }
+            ]
+          },
+          {
+            "connector": ";",
+            "argv": [
+              "echo",
+              "fixture_15-fixture_16=$?"
+            ],
+            "statusExpansions": [
+              1
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -47,8 +47,13 @@ def redaction_findings(command, identities=()):
         findings.add("identity")
   if re.search(PERSONAL_PATH, command):
     findings.add("personal-path")
-  if re.search(r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])", command):
-    findings.add("ip")
+  # 二次扫描用数字片段+标准库验证，避免与替换器共用同一边界正则。
+  for candidate in re.findall(r"[0-9.]+", command):
+    try:
+      ipaddress.IPv4Address(candidate.strip("."))
+      findings.add("ip")
+    except ValueError:
+      pass
   for match in re.finditer(r"(?<![\w:])[0-9A-Fa-f:]*:[0-9A-Fa-f:]+(?![\w:])", command):
     try:
       ipaddress.IPv6Address(match[0])
@@ -85,7 +90,7 @@ def redaction_findings(command, identities=()):
   ]
   if re.search(r"\bcurl\b", command):
     patterns.append(rf"(?<![\w-])(?:--(?:proxy-user|user|oauth2-bearer)(?:=|\s+)|-[uU]\s*)({VALUE})")
-  if re.search(r"\b(?:mysql|mariadb)\b", command):
+  if re.search(r"\b(?:mysql|mariadb|obclient)\b", command):
     patterns.append(rf"(?<![\w-])-p({VALUE})")
   if re.search(r"\b(?:redis-cli|sqlcmd)\b", command):
     patterns.append(rf"(?:-a|-P)\s+({VALUE})")
@@ -213,7 +218,7 @@ def redact(command, identities=()):
     rf"(?i)(?:-H|--header)\s+({VALUE})",
     rf"(?i)\bBearer\s+({VALUE})",
   ]
-  if re.search(r"\b(?:mysql|mariadb)\b", command):
+  if re.search(r"\b(?:mysql|mariadb|obclient)\b", command):
     sensitive.append(rf"(?<![\w-])-p({VALUE})")
   if re.search(r"\b(?:redis-cli|sqlcmd)\b", command):
     sensitive.append(rf"(?:-a|-P)\s+({VALUE})")
@@ -263,7 +268,7 @@ def redact(command, identities=()):
   secret_values = re.finditer(rf"(?i)\b{SECRET_KEY}\b[\"']?\s*[=:]\s*({VALUE})", command)
   if any(re.search(r"[$`\\]", match[1]) for match in secret_values):
     return None
-  if any(char in command for char in "$\\") and re.search(rf"(?i)--{SECRET_KEY}\b|(?:-H|--header)\s|\b(?:mysql|mariadb|redis-cli|sqlcmd)\b", command):
+  if any(char in command for char in "$\\") and re.search(rf"(?i)--{SECRET_KEY}\b|(?:-H|--header)\s|\b(?:mysql|mariadb|obclient|redis-cli|sqlcmd)\b", command):
     return None
 
   command = re.sub(
@@ -279,7 +284,7 @@ def redact(command, identities=()):
     lambda m: m[1] + mask_value(m[2]), command,
   )
   # 数据库 CLI 的短密码参数有不同的边界约定。
-  if re.search(r"\b(?:mysql|mariadb)\b", command):
+  if re.search(r"\b(?:mysql|mariadb|obclient)\b", command):
     command = re.sub(rf"(?<![\w-])(-p)({VALUE})", lambda m: m[1] + mask_value(m[2]), command)
   if re.search(r"\b(?:redis-cli|sqlcmd)\b", command):
     command = re.sub(rf"((?:-a|-P)\s+)({VALUE})", lambda m: m[1] + mask_value(m[2]), command)
@@ -323,7 +328,7 @@ def redact(command, identities=()):
       cursor = match.end()
     masked_chunks.append(masked + re.sub(EMAIL, "REDACTED_EMAIL", chunk[cursor:]))
   command = "".join(masked_chunks)
-  command = re.sub(r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])", "REDACTED_IP", command)
+  command = re.sub(r"(?:[0-9]{1,3}\.){3}[0-9]{1,3}", "REDACTED_IP", command)
   # IPv6 使用标准库验证，避免把 shell 的冒号语法误作地址。
   def mask_ipv6(match):
     try:
