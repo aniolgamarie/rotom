@@ -1,5 +1,6 @@
 import { isSanitizedReviewPacket, type SanitizedReviewPacket } from "./review-input";
 
+const REVIEW_OUTPUT_TOKENS = 1024;
 const MAX_OUTPUT_BYTES = 4 * 1024;
 const MAX_RESPONSE_BYTES = 64 * 1024;
 const REVIEW_TIMEOUT_MS = 30_000;
@@ -43,7 +44,7 @@ export type ReviewHealth = "unavailable" | "unsupported" | "transport" | "invali
 
 export const REVIEW_FAILURE_CODES = ["TARGET_UNAVAILABLE", "API_UNSUPPORTED", "KEY_UNAVAILABLE", "HTTP_NON_OK",
   "FETCH_FAILED", "RESPONSE_READ_FAILED", "RESPONSE_JSON_INVALID", "RESPONSE_SHAPE_INVALID",
-  "REVIEW_JSON_INVALID", "REVIEW_SCHEMA_INVALID", "INPUT_TOO_LARGE", "INPUT_INVALID", "REQUEST_FAILED", "CANCELLED", "TIMEOUT"] as const;
+  "REVIEW_JSON_INVALID", "REVIEW_SCHEMA_INVALID", "REVIEW_OUTPUT_TRUNCATED", "INPUT_TOO_LARGE", "INPUT_INVALID", "REQUEST_FAILED", "CANCELLED", "TIMEOUT"] as const;
 export type ReviewFailureCode = (typeof REVIEW_FAILURE_CODES)[number];
 export const TRANSPORT_CODES = ["ECONNREFUSED", "ECONNRESET", "EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND",
   "ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT", "UND_ERR_HEADERS_TIMEOUT", "UND_ERR_BODY_TIMEOUT",
@@ -213,7 +214,7 @@ function raceAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
 }
 
 async function request(model: ReviewerModel, prompt: string, runtime: ReviewRuntime, signal: AbortSignal,
-  onCall: () => void): Promise<string> {
+  onCall: () => void): Promise<{ text: string; outputTruncated: boolean }> {
   if (!runtimeCurrent(runtime)) throw new RequestFailure("cancelled", "CANCELLED");
   if (signal.aborted) throw new RequestFailure("cancelled", "CANCELLED");
   if (model.api !== "anthropic-messages" && model.api !== "openai-completions")
@@ -224,9 +225,9 @@ async function request(model: ReviewerModel, prompt: string, runtime: ReviewRunt
   if (!apiKey) throw new RequestFailure("unavailable", "KEY_UNAVAILABLE");
   const anthropic = model.api === "anthropic-messages";
   const body = anthropic
-    ? { model: model.requestModelId ?? model.id, max_tokens: 512, system: SYSTEM,
+    ? { model: model.requestModelId ?? model.id, max_tokens: REVIEW_OUTPUT_TOKENS, system: SYSTEM,
         messages: [{ role: "user", content: prompt }] }
-    : { model: model.requestModelId ?? model.id, max_tokens: 512, temperature: 0,
+    : { model: model.requestModelId ?? model.id, max_tokens: REVIEW_OUTPUT_TOKENS,
         messages: [{ role: "system", content: SYSTEM }, { role: "user", content: prompt }] };
   onCall();
   let response: Response;
@@ -261,26 +262,33 @@ async function request(model: ReviewerModel, prompt: string, runtime: ReviewRunt
     if (error instanceof RequestFailure) throw error;
     throw new RequestFailure("invalid", "RESPONSE_JSON_INVALID");
   }
-  let text: unknown;
+  let text: unknown, outputTruncated = false;
   if (anthropic) {
+    outputTruncated = data.stop_reason === "max_tokens";
     const content = data.content;
     if (!Array.isArray(content) || content.some(item => !item || typeof item !== "object" ||
         Array.isArray(item) || !["text", "thinking", "redacted_thinking"].includes(
           (item as { type?: string }).type ?? ""))) throw new RequestFailure("invalid", "RESPONSE_SHAPE_INVALID");
     // 思考块仅为传输元数据；审查决策只能来自唯一的 text 块。
     const textBlocks = content.filter(item => (item as { type?: string }).type === "text");
-    if (textBlocks.length !== 1) throw new RequestFailure("invalid", "RESPONSE_SHAPE_INVALID");
-    text = (textBlocks[0] as { text?: unknown }).text;
+    if (textBlocks.length > 1 || (!textBlocks.length && !outputTruncated))
+      throw new RequestFailure("invalid", "RESPONSE_SHAPE_INVALID");
+    text = textBlocks.length ? (textBlocks[0] as { text?: unknown }).text : "";
   } else {
     const choices = data.choices;
     if (!Array.isArray(choices) || choices.length !== 1) throw new RequestFailure("invalid", "RESPONSE_SHAPE_INVALID");
-    const message = (choices[0] as { message?: unknown }).message;
+    const choice = choices[0];
+    if (!choice || typeof choice !== "object" || Array.isArray(choice))
+      throw new RequestFailure("invalid", "RESPONSE_SHAPE_INVALID");
+    outputTruncated = (choice as { finish_reason?: unknown }).finish_reason === "length";
+    const message = (choice as { message?: unknown }).message;
     if (!message || typeof message !== "object" || Array.isArray(message) || "tool_calls" in message)
       throw new RequestFailure("invalid", "RESPONSE_SHAPE_INVALID");
     text = (message as { content?: unknown }).content;
   }
+  if (text === null && outputTruncated) text = "";
   if (typeof text !== "string") throw new RequestFailure("invalid", "RESPONSE_SHAPE_INVALID");
-  return text;
+  return { text, outputTruncated };
 }
 
 function resolveTarget(target: "session" | ReviewTarget, runtime: ReviewRuntime): ReviewerModel | undefined {
@@ -304,9 +312,11 @@ async function attempt(target: "session" | ReviewTarget, prompt: string, runtime
   if (!model) return { status: "failure", called: false, health: "unavailable", failureCode: "TARGET_UNAVAILABLE" };
   let called = false;
   try {
-    const text = await request(model, prompt, runtime, signal, () => { called = true; });
+    const { text, outputTruncated } = await request(model, prompt, runtime, signal, () => { called = true; });
     const review = parseStandaloneReview(text);
     if (review) return { status: "valid", review, model, called };
+    // 明确limit标记只分类缺失完整决策；不修复正文，也不拒绝已完整通过严格协议的决定。
+    if (outputTruncated) return { status: "failure", model, called, health: "invalid", failureCode: "REVIEW_OUTPUT_TRUNCATED" };
     let failureCode: ReviewFailureCode = "REVIEW_SCHEMA_INVALID";
     try { parseStandaloneJson(text, MAX_OUTPUT_BYTES); } catch { failureCode = "REVIEW_JSON_INVALID"; }
     return { status: "failure", model, called, health: "invalid", failureCode };
