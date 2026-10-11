@@ -43,7 +43,7 @@ export interface ReviewTarget { provider: string; model: string }
 export type ReviewHealth = "unavailable" | "unsupported" | "transport" | "invalid" | "cancelled" | "timeout";
 
 export const REVIEW_FAILURE_CODES = ["TARGET_UNAVAILABLE", "API_UNSUPPORTED", "KEY_UNAVAILABLE", "HTTP_NON_OK",
-  "FETCH_FAILED", "RESPONSE_READ_FAILED", "RESPONSE_JSON_INVALID", "RESPONSE_SHAPE_INVALID",
+  "FETCH_FAILED", "RESPONSE_READ_FAILED", "RESPONSE_TOO_LARGE", "RESPONSE_JSON_INVALID", "RESPONSE_SHAPE_INVALID",
   "REVIEW_JSON_INVALID", "REVIEW_SCHEMA_INVALID", "REVIEW_OUTPUT_TRUNCATED", "INPUT_TOO_LARGE", "INPUT_INVALID", "REQUEST_FAILED", "CANCELLED", "TIMEOUT"] as const;
 export type ReviewFailureCode = (typeof REVIEW_FAILURE_CODES)[number];
 export const TRANSPORT_CODES = ["ECONNREFUSED", "ECONNRESET", "EHOSTUNREACH", "ENETUNREACH", "ENOTFOUND",
@@ -213,6 +213,36 @@ function raceAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
   });
 }
 
+// 按传输字节累计；超限或取消立即停止，不读取整包正文。
+async function readResponse(response: Response, signal: AbortSignal): Promise<string> {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const stop = () => { void reader.cancel().catch(() => {}); };
+  signal.addEventListener("abort", stop, { once: true });
+  const decoder = new TextDecoder();
+  let bytes = 0, raw = "";
+  try {
+    while (true) {
+      const { value, done } = await raceAbort(reader.read(), signal);
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > MAX_RESPONSE_BYTES) {
+        stop();
+        throw new RequestFailure("invalid", "RESPONSE_TOO_LARGE");
+      }
+      raw += decoder.decode(value, { stream: true });
+    }
+    return raw + decoder.decode();
+  } catch (error) {
+    stop();
+    if (error instanceof RequestFailure) throw error;
+    throw new RequestFailure("transport", "RESPONSE_READ_FAILED", undefined, transportCode(error));
+  } finally {
+    signal.removeEventListener("abort", stop);
+    reader.releaseLock();
+  }
+}
+
 async function request(model: ReviewerModel, prompt: string, runtime: ReviewRuntime, signal: AbortSignal,
   onCall: () => void): Promise<{ text: string; outputTruncated: boolean }> {
   if (!runtimeCurrent(runtime)) throw new RequestFailure("cancelled", "CANCELLED");
@@ -247,7 +277,7 @@ async function request(model: ReviewerModel, prompt: string, runtime: ReviewRunt
   if (!response.ok) throw new RequestFailure("transport", "HTTP_NON_OK",
     Number.isInteger(response.status) && response.status >= 100 && response.status <= 599 ? response.status : undefined);
   let raw: string;
-  try { raw = await raceAbort(response.text(), signal); }
+  try { raw = await readResponse(response, signal); }
   catch (error) {
     if (error instanceof RequestFailure) throw error;
     throw new RequestFailure("transport", "RESPONSE_READ_FAILED", undefined, transportCode(error));

@@ -18,17 +18,31 @@ REPO = Path(__file__).resolve().parents[1]
 
 def route_workspace(tmp_path, native):
   data = configured()
-  data["profile"]["id"] = "shell-route-test"
-  data["machine"] = {"environment": {"inherit": [], "values": {}}}
+  data["profile"].update(id="shell-route-test", agent="omp")
+  data["machine"] = {"paths": {"instances_root": str(tmp_path / "instances"),
+    "state_root": str(tmp_path / "state"), "cache_root": str(tmp_path / "cache")},
+    "environment": {"inherit": [], "values": {}}}
   data["providers"]["fictional"]["credential_ref"] = "secret:placeholder"
   if native is not None:
     data["profile"]["agent_options"]["permission_control"]["native_bash"] = native
-  workspace = SimpleNamespace(profile=data["profile"]["id"], instance=tmp_path / "instance",
+  profile = data["profile"]["id"]
+  workspace = SimpleNamespace(profile=profile, instance=tmp_path / "instance",
+    state_root=tmp_path / "state/omp" / profile, cache=tmp_path / "cache/omp" / profile,
     resolved=SimpleNamespace(data=data))
   adapter = OmpAdapter(REPO)
   spec = adapter.launch_spec(data, cwd=tmp_path, runtime_root=tmp_path / "runtime",
     instance_root=workspace.instance, lock_identity="a" * 64)
   return adapter, workspace, spec
+
+
+def route_environment(adapter, workspace, spec):
+  # 与runtime.run保持同样的generic builder→adapter adjust→validate链路。
+  binding = adapter.runtime_binding(workspace.resolved.data, workspace.instance)
+  adapter.validate_runtime_binding(workspace, binding)
+  env = launch_environment(spec, workspace.resolved.data["machine"], SimpleNamespace(resolve=lambda *a, **kw: None))
+  env = adapter.adjust_launch_environment(workspace, spec, env, binding)
+  adapter.validate_operation_environment(workspace, spec=spec, env=env)
+  return env
 
 
 @pytest.fixture(autouse=True)
@@ -41,7 +55,7 @@ def clear_route_environment(monkeypatch):
 def test_route_binding_preserves_selected_shell_and_only_enables_native(tmp_path, monkeypatch, native):
   monkeypatch.setenv("SHELL", "/bin/zsh")
   adapter, workspace, spec = route_workspace(tmp_path, native)
-  env = launch_environment(spec, workspace.resolved.data["machine"], SimpleNamespace(resolve=lambda *a, **kw: None))
+  env = route_environment(adapter, workspace, spec)
   assert env["SHELL"] == "/bin/zsh"
   assert "SHELL" not in {binding.name for binding in spec.environment}
   assert env.get(NATIVE_EXECUTION_ROUTE_ENV) == (NATIVE_EXECUTION_ROUTE if native else None)
@@ -52,7 +66,7 @@ def test_machine_shell_preference_is_preserved_without_claiming_route(tmp_path, 
   monkeypatch.setenv("SHELL", "/bin/bash")
   adapter, workspace, spec = route_workspace(tmp_path, True)
   workspace.resolved.data["machine"]["environment"]["values"]["SHELL"] = "/bin/zsh"
-  env = launch_environment(spec, workspace.resolved.data["machine"], SimpleNamespace(resolve=lambda *a, **kw: None))
+  env = route_environment(adapter, workspace, spec)
   assert env["SHELL"] == "/bin/zsh"
   assert env[NATIVE_EXECUTION_ROUTE_ENV] == NATIVE_EXECUTION_ROUTE
   adapter.validate_operation_environment(workspace, env=env)
@@ -78,7 +92,7 @@ def test_caller_cannot_supply_route(tmp_path, monkeypatch, value):
 @pytest.mark.parametrize("native,value", [(True, None), (True, "unknown"), (False, NATIVE_EXECUTION_ROUTE), (False, "")])
 def test_final_environment_must_match_route_contract(tmp_path, native, value):
   adapter, workspace, spec = route_workspace(tmp_path, native)
-  env = launch_environment(spec, workspace.resolved.data["machine"], SimpleNamespace(resolve=lambda *a, **kw: None))
+  env = route_environment(adapter, workspace, spec)
   if value is None:
     env.pop(NATIVE_EXECUTION_ROUTE_ENV, None)
   else:

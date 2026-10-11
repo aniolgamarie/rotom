@@ -239,3 +239,61 @@ for (const [api, envelope] of [
   expect(result.primary).toMatchObject({ failureCode: "RESPONSE_SHAPE_INVALID" });
   expect(JSON.stringify(result)).not.toContain("SENSITIVE_CANARY_RESPONSE");
 });
+
+test("stream bytes stop over 64KiB immediately and never use text()", async () => {
+  let pulls = 0, cancelled = 0, textCalls = 0;
+  const response = new Response(new ReadableStream<Uint8Array>({
+    pull(controller) { pulls++; controller.enqueue(new Uint8Array(32 * 1024 + 1)); },
+    cancel() { cancelled++; },
+  }, { highWaterMark: 0 }));
+  response.text = async () => { textCalls++; throw new Error("SENSITIVE_CANARY_RESPONSE"); };
+  const result = await reviewCommand(input, runtime(async () => response));
+  expect(result.primary).toMatchObject({ health: "invalid", failureCode: "RESPONSE_TOO_LARGE" });
+  expect(pulls).toBe(2); expect(cancelled).toBe(1); expect(textCalls).toBe(0);
+  expect(JSON.stringify(result)).not.toContain("SENSITIVE_CANARY_RESPONSE");
+});
+
+test("byte boundary accepts exactly 64KiB including split UTF-8", async () => {
+  const body = JSON.stringify({ choices: [{ message: { content: valid() } }], padding: "é" });
+  const bytes = new TextEncoder().encode(body);
+  const boundary = new Uint8Array(64 * 1024); boundary.fill(32); boundary.set(bytes);
+  const split = bytes.indexOf(0xc3) + 1;
+  const chunks = [boundary.slice(0, split), boundary.slice(split, bytes.length), boundary.slice(bytes.length)];
+  let position = 0;
+  const result = await reviewCommand(input, runtime(async () => new Response(new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (position === chunks.length) { controller.close(); return; }
+      controller.enqueue(chunks[position++]);
+    },
+  }))));
+  expect(result.status).toBe("valid");
+});
+
+test("body read failures retain only fixed code", async () => {
+  const result = await reviewCommand(input, runtime(async () => new Response(new ReadableStream({
+    pull(controller) { controller.error(new Error("SENSITIVE_CANARY_READ")); },
+  }))));
+  expect(result.primary).toMatchObject({ health: "transport", failureCode: "RESPONSE_READ_FAILED" });
+  expect(JSON.stringify(result)).not.toContain("SENSITIVE_CANARY_READ");
+});
+
+test("caller abort cancels a pending stream read without fallback", async () => {
+  const controller = new AbortController();
+  let cancelled = 0, calls = 0;
+  const r = runtime(async () => {
+    calls++;
+    return new Response(new ReadableStream({
+      pull() { controller.abort("SENSITIVE_CANARY_CANCEL"); return new Promise<void>(() => {}); },
+      cancel() { cancelled++; },
+    }, { highWaterMark: 0 }));
+  });
+  const result = await reviewCommand({ ...input, remoteFallback: { provider: "fictional", model: "remote" } }, r, controller.signal);
+  expect(result.primary).toMatchObject({ health: "cancelled", failureCode: "CANCELLED" });
+  expect(cancelled).toBe(1); expect(calls).toBe(1);
+  expect(JSON.stringify(result)).not.toContain("SENSITIVE_CANARY_CANCEL");
+});
+
+test("standard empty Response has no body and fails strict JSON", async () => {
+  const result = await reviewCommand(input, runtime(async () => new Response(null)));
+  expect(result.primary).toMatchObject({ failureCode: "RESPONSE_JSON_INVALID" });
+});

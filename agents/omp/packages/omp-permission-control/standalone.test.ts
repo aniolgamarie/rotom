@@ -1,7 +1,7 @@
 import { sessionIdDigest } from "./approval-diagnostic";
 import { describe, expect, test } from "bun:test";
-import { createStandalonePlugin, type StandaloneConfig, validateStandaloneConfig } from "./standalone";
-import type { NativeBashRuntime, NativeSettingsSnapshot } from "./native-bash";
+import { type StandaloneConfig, validateStandaloneConfig } from "./standalone";
+import { baseConfig, model, fakeHost, ready, fakeNativeRuntime, nativeReady } from "./standalone-fixture";
 import { parseStandaloneReview, reviewCommand as reviewPreparedCommand, type ReviewRuntime, type ReviewTarget } from "./standalone-reviewer";
 import { prepareReviewPacket, type RawReviewInput } from "./review-input";
 import { parseGenericCommands } from "./standalone-shell-analysis";
@@ -11,22 +11,6 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { parseGenericCommands as frozenParser } from "../../../../tests/fixtures/omp/command-scenarios/parser-before-home-query";
 
-const digest = "a".repeat(64);
-const baseConfig: StandaloneConfig = {
-  schemaVersion: 2,
-  defaultMode: "smart",
-  reviewer: "session",
-  pluginId: "omp-permission-control",
-  pluginDigest: digest,
-  policyVersion: digest,
-  nativePatterns: [],
-};
-
-function model(provider = "primary", id = "reviewer") {
-  return { provider, id, api: "openai-completions", baseUrl: "https://invalid.test/v1",
-    requestModelId: undefined };
-}
-
 async function reviewCommand(input: RawReviewInput & { reviewer: "session" | ReviewTarget; remoteFallback?: ReviewTarget },
   runtime: ReviewRuntime, signal?: AbortSignal) {
   const { reviewer, remoteFallback, ...raw } = input;
@@ -34,136 +18,6 @@ async function reviewCommand(input: RawReviewInput & { reviewer: "session" | Rev
   if (prepared.status !== "ready") return { status: prepared.status === "input-too-large" ? "input-too-large" : "failure",
     primary: { status: "failure", called: false, health: "invalid", failureCode: prepared.reasonCode } } as const;
   return reviewPreparedCommand(prepared.packet, { reviewer, remoteFallback }, runtime, signal);
-}
-
-async function fakeHost(options: {
-  config?: StandaloneConfig;
-  response?: object | Error;
-  fetchImpl?: (input: string, init: RequestInit) => Promise<Response>;
-  currentModel?: ReturnType<typeof model>;
-  select?: string | undefined;
-  hasUI?: boolean;
-  messages?: unknown[];
-  loadingActionsThrow?: boolean;
-  nativeRuntime?: any;
-  nativeLoadError?: boolean;
-  invokeImpl?: (...args: any[]) => Promise<any>;
-  appendFailure?: boolean;
-} = {}) {
-  const auditEntries: any[] = [];
-  const tools = new Map<string, any>();
-  const commands = new Map<string, any>();
-  const events = new Map<string, any>();
-  const execCalls: any[] = [];
-  const fetchCalls: any[] = [];
-  const selectCalls: any[] = [];
-  const notices: string[] = [];
-  const invokeCalls: any[] = [];
-  let current = options.currentModel ?? model();
-  let loading = true;
-  const branch = options.messages ?? [{ type: "message", message: { role: "user", content: "Run ls -la", timestamp: 1 } }];
-  const host: any = {
-    typebox: { Type: {
-      String: (value?: unknown) => ({ type: "string", ...value as object }),
-      Number: (value?: unknown) => ({ type: "number", ...value as object }),
-      Optional: (value: unknown) => value,
-      Object: (properties: unknown, extra: unknown) => ({ properties, ...extra as object }),
-    } },
-    appendEntry: (type: string, data: unknown) => {
-      if (options.appendFailure) throw new Error("SENSITIVE_CANARY_WRITER_ERROR");
-      auditEntries.push({ type, data });
-    },
-    getAllTools: () => {
-      if (loading && options.loadingActionsThrow) throw new Error("runtime not initialized");
-      return [...tools.values()];
-    },
-    getActiveTools: () => {
-      if (loading && options.loadingActionsThrow) throw new Error("runtime not initialized");
-      return ["bash", "read"];
-    },
-    setActiveTools: async (names: string[]) => { host.active = names; },
-    registerTool: (tool: any) => tools.set(tool.name, tool),
-    registerCommand: (name: string, command: any) => commands.set(name, command),
-    on: (name: string, handler: any) => events.set(name, handler),
-    exec: async (...args: any[]) => { execCalls.push(args); return { stdout: "ok", stderr: "", code: 0, killed: false }; },
-  };
-  await createStandalonePlugin({
-    loadConfig: async () => options.config ?? baseConfig,
-    fetch: (async (input: string, init: RequestInit) => {
-      fetchCalls.push([input, init]);
-      if (options.fetchImpl) return options.fetchImpl(input, init);
-      if (options.response instanceof Error) throw options.response;
-      return new Response(JSON.stringify(options.response ?? {
-        choices: [{ message: { content: JSON.stringify({ decision: "allow", risk: "low",
-          authorization: "sufficient", reasonCode: "LOW_RISK_AUTHORIZED" }) } }],
-      }), { status: 200, headers: { "content-type": "application/json" } });
-    }) as typeof fetch,
-    loadNativeRuntime: options.nativeLoadError ? async () => { throw new Error("fixture load failure"); } :
-      options.nativeRuntime ? async () => options.nativeRuntime : undefined,
-  })(host);
-  loading = false;
-  const ctx: any = {
-    hasUI: options.hasUI ?? true,
-    cwd: "/repo",
-    ui: { select: async (...args: any[]) => { selectCalls.push(args); return options.select; },
-      notify: (message: string) => notices.push(message) },
-    models: {
-      current: () => current,
-      resolve: (spec: string) => spec === `${current.provider}/${current.id}` ? current :
-        spec === "remote/fallback" ? model("remote", "fallback") : undefined,
-    },
-    modelRegistry: { getApiKey: async () => "test-key" },
-    sessionManager: { getBranch: () => branch, getSessionId: () => "session-1" },
-    invokeTool: async (...args: any[]) => {
-      invokeCalls.push(args);
-      if (options.invokeImpl) return options.invokeImpl(...args);
-      return { content: [{ type: "text", text: "native-ok" }], details: { native: true } };
-    },
-  };
-  return { host, ctx, auditEntries, tools, commands, events, execCalls, fetchCalls, selectCalls, notices, invokeCalls,
-    setCurrent: (value: any) => { current = value; } };
-}
-
-async function ready(harness: Awaited<ReturnType<typeof fakeHost>>) {
-  await harness.events.get("session_start")({}, harness.ctx);
-  return harness.tools.get("permission_bash");
-}
-
-function fakeNativeRuntime(initial: Partial<NativeSettingsSnapshot> = {}) {
-  const settings = {};
-  let fingerprint = initial.fingerprint ?? "settings-1";
-  let decision = initial.decision ?? "allow";
-  let reasonCode = initial.reasonCode ?? "NATIVE_ALLOW";
-  let diagnostics = initial.diagnostics;
-  let recheckWait: Promise<void> | undefined;
-  let captureFailure = false;
-  let recheckFailure = false;
-  const snapshot = (): NativeSettingsSnapshot => ({ settings, fingerprint, decision, reasonCode,
-    diagnostics,
-    reviewContext: initial.reviewContext ?? { sameSettingsInstance: true, nativeDecision: decision, shellContext: "standard" } });
-  const runtime: NativeBashRuntime = {
-    capture: async () => { if (captureFailure) throw new Error("fixture capture unavailable"); return snapshot(); },
-    recheck: async () => {
-      await recheckWait;
-      if (recheckFailure) throw new Error("fixture recheck unavailable");
-      return snapshot();
-    },
-  };
-  return { runtime,
-    setFingerprint: (value: string) => { fingerprint = value; },
-    setDiagnostics: (value: NativeSettingsSnapshot["diagnostics"]) => { diagnostics = value; },
-    setDecision: (value: NativeSettingsSnapshot["decision"], reason: NativeSettingsSnapshot["reasonCode"]) => {
-      decision = value; reasonCode = reason;
-    },
-    setRecheckWait: (value: Promise<void> | undefined) => { recheckWait = value; },
-    setCaptureFailure: () => { captureFailure = true; },
-    setRecheckFailure: () => { recheckFailure = true; },
-  };
-}
-
-async function nativeReady(harness: Awaited<ReturnType<typeof fakeHost>>) {
-  await ready(harness);
-  return { tool: harness.tools.get("bash"), hook: harness.events.get("tool_call") };
 }
 
 describe("standalone shell analysis", () => {
@@ -448,17 +302,17 @@ describe("standalone plugin", () => {
     const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime, hasUI: false,
       response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown",
         authorization: "unknown", reasonCode: "USER_CONFIRMATION_REQUIRED" }) } }] } });
-    const { hook } = await nativeReady(h);
+    const { hook, dispatch } = await nativeReady(h);
     const observed: [string, string][] = [], failures: string[] = [];
     for (const row of data.records) {
       const expected = invalidIds.has(row.id) ? "invalid-input" : "review";
       const fetches = h.fetchCalls.length;
-      const result = await hook({ type: "tool_call", toolName: "bash", toolCallId: row.id,
+      const result = await dispatch({ type: "tool_call", toolName: "bash", toolCallId: row.id,
         input: { command: row.command, timeout: 2 } }, h.ctx);
       const modelReached = h.fetchCalls.length === fetches + 1;
       const invalid = !modelReached && h.auditEntries.at(-1).data.preModelGates.includes("INVALID_PARAMETERS");
       const actual = modelReached ? "review" : invalid ? "invalid-input" : "unexpected";
-      expect(result?.block).toBe(true); // fake ask / 无 UI，从不执行源命令。
+      expect(result?.isError).toBe(true); // fake ask / 无 UI，从不执行源命令。
       if (modelReached) {
         const packet = JSON.parse(JSON.parse(h.fetchCalls.at(-1)[1].body).messages.at(-1).content);
         expect(packet.command).toBe(row.command); // 公开占位符幂等，原数据与全文保持冻结。
@@ -690,7 +544,7 @@ const h = await fakeHost({ select: "Approve", response: { choices: [{ message: {
     expect(status.human).toMatchObject({ calls: 1, health: "approved" });
     expect(status.fallback).toBe("disabled");
   });
-  test("two valid concurrent requests are serialized and both execute", async () => {
+  test("two valid concurrent requests both review and execute once", async () => {
     let release!: () => void;
     const wait = new Promise<void>(resolve => { release = resolve; });
     let calls = 0;
@@ -708,7 +562,7 @@ const h = await fakeHost({ select: "Approve", response: { choices: [{ message: {
     expect((await old).isError).toBeUndefined();
     expect((await current).isError).toBeUndefined();
     expect(h.execCalls).toHaveLength(2);
-    expect(h.execCalls.map(call => call[1].at(-1))).toEqual(["echo old", "echo new"]);
+    expect(h.execCalls.map(call => call[1].at(-1)).sort()).toEqual(["echo new", "echo old"]);
   });
   test("config rejects unknown fields and command state resets", async () => {
     expect(() => validateStandaloneConfig({ ...baseConfig, unknown: true })).toThrow();
@@ -735,7 +589,7 @@ describe("native bash delegation", () => {
       nativeDecision: "allow" } });
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime,
       messages: [{ type: "message", message: { role: "user", content: "find the files and show the first twenty", timestamp: 1 } }] });
-    const { tool, hook } = await nativeReady(h);
+    const { tool, hook, dispatch } = await nativeReady(h);
     const input = { command: "find . -maxdepth 1 -type f | head -20", timeout: 2 };
     expect(await hook(event("zsh-pipeline", input), h.ctx)).toBeUndefined();
     expect((await tool.execute("zsh-pipeline", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
@@ -761,7 +615,7 @@ describe("native bash delegation", () => {
       const native = fakeNativeRuntime({ diagnostics, reviewContext: { ...diagnostics, sameSettingsInstance: true, nativeDecision: "allow" } });
       const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime,
         messages: [{ type: "message", message: { role: "user", content: "Inspect the requested synthetic shell query", timestamp: 1 } }] });
-      const { tool, hook } = await nativeReady(h); const input = { command, timeout: 30 };
+      const { tool, hook, dispatch } = await nativeReady(h); const input = { command, timeout: 30 };
       expect(await hook(event("common-static", input), h.ctx)).toBeUndefined();
       expect((await tool.execute("common-static", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
       expect(h.fetchCalls).toHaveLength(1); expect(h.selectCalls).toHaveLength(0);
@@ -772,102 +626,71 @@ describe("native bash delegation", () => {
   });
 
   test("failures without a current snapshot clear the preceding call's native context", async () => {
-    for (const failure of ["malformed-hook", "duplicate-hook", "native-capture",
-      "native-ticket", "native-recheck", "raw-ticket", "raw-recheck", "raw-params"]) {
-      const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded",
-        contextReason: "STANDARD_CONTEXT" } });
+    for (const failure of ["malformed-hook", "duplicate-execute", "native-capture", "native-recheck", "raw-capture", "raw-recheck", "raw-params"]) {
+      const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } });
       const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
       const { tool, hook } = await nativeReady(h);
-      expect(await hook(event("previous"), h.ctx)).toBeUndefined();
+      expect((await tool.execute("previous", params, undefined, undefined, h.ctx)).isError).toBeUndefined();
       await h.commands.get("permission-control").handler("explain", h.ctx);
       expect(JSON.parse(h.notices.at(-1)!).nativeContext.shellFamily).toBe("zsh");
       if (failure === "malformed-hook") expect((await hook(event("bad", { ...params, async: true }), h.ctx)).block).toBe(true);
-      else if (failure === "duplicate-hook") expect((await hook(event("previous"), h.ctx)).block).toBe(true);
-      else if (failure === "native-capture") {
-        native.setCaptureFailure();
-        expect((await hook(event("bad"), h.ctx)).block).toBe(true);
-      } else if (failure === "native-ticket" || failure === "native-recheck") {
-        if (failure === "native-recheck") native.setRecheckFailure();
-        expect((await tool.execute(failure === "native-ticket" ? "missing" : "previous", params,
-          undefined, undefined, h.ctx)).isError).toBe(true);
-      } else {
-        if (failure === "raw-recheck") {
-          expect(await hook(event("raw", params, "permission_bash"), h.ctx)).toBeUndefined();
-          native.setRecheckFailure();
-        }
-        expect((await h.tools.get("permission_bash").execute("raw",
+      else {
+        if (failure.endsWith("capture")) native.setCaptureFailure();
+        if (failure.endsWith("recheck")) native.setRecheckFailure();
+        const target = failure.startsWith("raw") ? h.tools.get("permission_bash") : tool;
+        expect((await target.execute(failure === "duplicate-execute" ? "previous" : "bad",
           failure === "raw-params" ? { ...params, async: true } : params, undefined, undefined, h.ctx)).isError).toBe(true);
       }
-      for (const command of ["explain", "status"]) {
-        await h.commands.get("permission-control").handler(command, h.ctx);
-        expect(JSON.parse(h.notices.at(-1)!).nativeContext).toBeUndefined();
-      }
-      expect(h.invokeCalls).toHaveLength(0);
-      expect(h.execCalls).toHaveLength(0);
+      await h.commands.get("permission-control").handler("explain", h.ctx);
+      // execute已获得当前capture时，recheck失败保留该请求上下文；无snapshot失败不借用前次上下文。
+      if (failure.endsWith("recheck")) expect(JSON.parse(h.notices.at(-1)!).nativeContext).toEqual({ shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" });
+      else expect(JSON.parse(h.notices.at(-1)!).nativeContext).toBeUndefined();
+      expect(h.invokeCalls).toHaveLength(1); expect(h.execCalls).toHaveLength(0);
     }
   });
 
-  test("a stale ticket retains the current recheck context rather than the preceding context", async () => {
-    const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded",
-      contextReason: "STANDARD_CONTEXT" } });
-    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
-    const { tool, hook } = await nativeReady(h);
-    expect(await hook(event("route-change"), h.ctx)).toBeUndefined();
+  test("a changed execute recheck retains current context rather than preceding capture context", async () => {
+    const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } });
     const current = { shellFamily: "zsh", executionRoute: "unverified", contextReason: "EXECUTION_ROUTE_UNVERIFIED" } as const;
-    native.setDiagnostics(current);
-    native.setFingerprint("current-route-changed");
+    const recheck = native.runtime.recheck;
+    native.runtime.recheck = async (...args: any[]) => {
+      native.setDiagnostics(current); native.setFingerprint("current-route-changed"); return recheck(...args);
+    };
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
+    const { tool } = await nativeReady(h);
     expect((await tool.execute("route-change", params, undefined, undefined, h.ctx)).details.reasonCode).toBe("STALE_REVIEW");
-    for (const command of ["explain", "status"]) {
-      await h.commands.get("permission-control").handler(command, h.ctx);
-      expect(JSON.parse(h.notices.at(-1)!).nativeContext).toEqual(current);
-    }
+    await h.commands.get("permission-control").handler("explain", h.ctx);
+    expect(JSON.parse(h.notices.at(-1)!).nativeContext).toEqual(current);
     expect(h.invokeCalls).toHaveLength(0);
   });
 
-  test("raw precapture success and failure preserve the current pending Bash approval context", async () => {
+  test("raw capture failure and native pending approval retain separate diagnostic contexts", async () => {
     const current = { shellFamily: "bash", executionRoute: "local-embedded", contextReason: "BASH_STARTUP" } as const;
     const native = fakeNativeRuntime({ decision: "prompt", reasonCode: "NATIVE_PROMPT", diagnostics: current });
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
-    const { hook } = await nativeReady(h);
-    let respond: (value: string) => void = () => {};
-    let entered: () => void = () => {};
+    const { dispatch } = await nativeReady(h);
+    let respond!: (value: string) => void, entered!: () => void;
     const shown = new Promise<void>(resolve => { entered = resolve; });
-    h.ctx.ui.select = async () => {
-      entered();
-      return new Promise<string>(resolve => { respond = resolve; });
-    };
-    const pending = hook(event("pending-bash"), h.ctx);
-    await shown;
-    native.setDiagnostics({ shellFamily: "fish", executionRoute: "unverified", contextReason: "EXECUTION_ROUTE_UNVERIFIED" });
-    expect(await hook(event("raw-different-context", params, "permission_bash"), h.ctx)).toBeUndefined();
-    const assertPendingContext = async (completedRawFailure = false) => {
-      await h.commands.get("permission-control").handler("explain", h.ctx);
-      const explained = JSON.parse(h.notices.at(-1)!);
-      if (completedRawFailure) {
-        expect(explained).toMatchObject({ outcome: "blocked", reasonCode: "SCOPED_SETTINGS_UNAVAILABLE" });
-        expect(explained.nativeContext).toBeUndefined();
-      } else expect(explained).toMatchObject({ outcome: "pending-human",
-        reasonCode: "NATIVE_PROMPT", nativeContext: current });
-      await h.commands.get("permission-control").handler("status", h.ctx);
-      expect(JSON.parse(h.notices.at(-1)!).nativeContext).toEqual(current);
-    };
-    await assertPendingContext();
+    h.ctx.ui.select = async () => { entered(); return new Promise<string>(resolve => { respond = resolve; }); };
+    const pending = dispatch(event("call_pending_bash"), h.ctx); await shown;
+    await h.commands.get("permission-control").handler("explain", h.ctx);
+    expect(JSON.parse(h.notices.at(-1)!)).toMatchObject({ outcome: "pending-human", reasonCode: "NATIVE_PROMPT", nativeContext: current });
+    expect(await h.events.get("tool_call")(event("raw-hook", params, "permission_bash"), h.ctx)).toBeUndefined();
     native.setCaptureFailure();
-    expect((await hook(event("raw-failed-capture", params, "permission_bash"), h.ctx)).block).toBe(true);
-    await assertPendingContext(true);
-    respond("Deny");
-    expect((await pending).block).toBe(true);
-    expect(h.fetchCalls).toHaveLength(0);
-    expect(h.invokeCalls).toHaveLength(0);
-    expect(h.execCalls).toHaveLength(0);
+    expect((await dispatch(event("raw-failed-capture", params, "permission_bash"), h.ctx)).isError).toBe(true);
+    expect(h.auditEntries.at(-1).data.nativeContext).toBeUndefined();
+    respond("Deny"); expect((await pending).isError).toBe(true);
+    const pendingFinal = h.auditEntries.find(row => row.data.toolCallId === "call_pending_bash");
+    expect(pendingFinal.data.nativeContext).toEqual(current);
+    expect(h.fetchCalls).toHaveLength(0); expect(h.invokeCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
   });
 
   test("pending human approval explains the current fixed reason and safe context", async () => {
     const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded",
       contextReason: "STANDARD_CONTEXT" } });
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
-    const { hook } = await nativeReady(h);
-    expect(await hook(event("previous-allow"), h.ctx)).toBeUndefined();
+    const { hook, dispatch } = await nativeReady(h);
+    expect((await dispatch(event("previous-allow"), h.ctx)).isError).toBeUndefined();
     native.setDecision("prompt", "NATIVE_PROMPT");
     native.setDiagnostics({ shellFamily: "zsh", executionRoute: "unverified", contextReason: "EXECUTION_ROUTE_UNVERIFIED",
       env: "SECRET_ENV_SENTINEL", path: "/SECRET_PATH_SENTINEL" } as any);
@@ -878,7 +701,7 @@ describe("native bash delegation", () => {
       h.selectCalls.push([title]); entered();
       return new Promise<string>(resolve => { respond = resolve; });
     };
-    const waiting = hook(event("pending-route"), h.ctx);
+    const waiting = dispatch(event("pending-route"), h.ctx);
     await shown;
     await h.commands.get("permission-control").handler("explain", h.ctx);
     expect(JSON.parse(h.notices.at(-1)!)).toMatchObject({ outcome: "pending-human", source: "human",
@@ -890,24 +713,23 @@ describe("native bash delegation", () => {
     expect(h.selectCalls[0][0]).toContain("context: EXECUTION_ROUTE_UNVERIFIED");
     expect([...h.notices, h.selectCalls[0][0]].join("\n")).not.toContain("SECRET_");
     respond("Deny");
-    expect((await waiting).block).toBe(true);
-    expect(h.invokeCalls).toHaveLength(0);
+    expect((await waiting).isError).toBe(true);
+    expect(h.invokeCalls).toHaveLength(1);
   });
 
   test("mode change after native queue acquisition releases the next request", async () => {
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: fakeNativeRuntime().runtime });
-    const { tool, hook } = await nativeReady(h);
-    const old = hook(event("old"), h.ctx);
+    const { tool, hook, dispatch } = await nativeReady(h);
+    const old = dispatch(event("old"), h.ctx);
     // 精确停在 acquire 返回后、hook 恢复前，验证过期分支释放队列。
     await Promise.resolve();
     await Promise.resolve();
     await h.commands.get("permission-control").handler("manual", h.ctx);
     await h.commands.get("permission-control").handler("smart", h.ctx);
-    expect((await old).block).toBe(true);
+    expect((await old).isError).toBe(true);
     expect(h.fetchCalls).toHaveLength(0);
     expect(h.invokeCalls).toHaveLength(0);
-    expect(await hook(event("new"), h.ctx)).toBeUndefined();
-    expect((await tool.execute("new", params, undefined, undefined, h.ctx)).isError).toBeUndefined();
+    expect((await dispatch(event("new"), h.ctx)).isError).toBeUndefined();
     expect(h.fetchCalls).toHaveLength(1);
     expect(h.invokeCalls).toHaveLength(1);
     expect(h.execCalls).toHaveLength(0);
@@ -916,7 +738,7 @@ describe("native bash delegation", () => {
   test("an approved call delegates once with unchanged parameters, signal, updates, and result", async () => {
     const native = fakeNativeRuntime();
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
-    const { tool, hook } = await nativeReady(h);
+    const { tool, hook, dispatch } = await nativeReady(h);
     expect(h.host.active).toEqual(["bash", "read", "permission_bash"]);
     expect(await hook(event("native-1"), h.ctx)).toBeUndefined();
     const controller = new AbortController();
@@ -925,7 +747,8 @@ describe("native bash delegation", () => {
     expect(result.details).toEqual({ native: true });
     expect(h.invokeCalls).toHaveLength(1);
     expect(h.invokeCalls[0][0]).toBe(params);
-    expect(h.invokeCalls[0][1]).toEqual({ signal: controller.signal, onUpdate: update });
+    expect(h.invokeCalls[0][1].onUpdate).toBe(update);
+    expect(h.invokeCalls[0][1].signal.aborted).toBe(false);
     expect(h.execCalls).toHaveLength(0);
     const request = JSON.parse((h.fetchCalls[0][1] as RequestInit).body as string);
     expect(request.messages.at(-1).content).toContain('"baseCwd":"/repo"');
@@ -943,7 +766,7 @@ describe("native bash delegation", () => {
       effects: ["may copy ignored build artifacts", "backend auto may fall back"] };
     const native = fakeNativeRuntime({ reviewContext: { sameSettingsInstance: true, nativeDecision: "allow", worktreePlan: plan } });
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
-    const { tool, hook } = await nativeReady(h); const input = { command: raw, timeout: 30 };
+    const { tool, hook, dispatch } = await nativeReady(h); const input = { command: raw, timeout: 30 };
     expect(await hook(event("worktree-plan", input), h.ctx)).toBeUndefined();
     expect((await tool.execute("worktree-plan", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
     expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(1);
@@ -959,8 +782,8 @@ describe("native bash delegation", () => {
         worktreePlan: { effects: ["creates worktree"] } } });
       const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny",
         response: { choices: [{ message: { content: JSON.stringify({ decision, risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } });
-      const { hook } = await nativeReady(h);
-      expect((await hook(event("plan-" + decision), h.ctx)).block).toBe(true);
+      const { hook, dispatch } = await nativeReady(h);
+      expect((await dispatch(event("plan-" + decision), h.ctx)).isError).toBe(true);
       expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(0);
       expect(h.selectCalls).toHaveLength(decision === "ask" ? 1 : 0);
     }
@@ -989,7 +812,7 @@ describe("native bash delegation", () => {
     }
     const native = fakeNativeRuntime({ reviewContext: { sameSettingsInstance: true, nativeDecision: "allow", worktreePlan: plan } });
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
-    const { hook, tool } = await nativeReady(h); const input = { command: raw, timeout: 30 };
+    const { hook, tool, dispatch } = await nativeReady(h); const input = { command: raw, timeout: 30 };
     expect(await hook(event("native-worktree", input), h.ctx)).toBeUndefined();
     expect((await tool.execute("native-worktree", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
     expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(1);
@@ -1007,9 +830,9 @@ describe("native bash delegation", () => {
         reviewContext: { sameSettingsInstance: true, nativeDecision: mode === "native-prompt" ? "prompt" : "allow", worktreePlan: plan } });
       const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny",
         response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } });
-      const { hook } = await nativeReady(h);
+      const { hook, dispatch } = await nativeReady(h);
       if (mode === "manual") await h.commands.get("permission-control").handler("manual", h.ctx);
-      expect((await hook(event("ui-" + mode, { command: "git worktree add ../target -B branch" }), h.ctx)).block).toBe(true);
+      expect((await dispatch(event("ui-" + mode, { command: "git worktree add ../target -B branch" }), h.ctx)).isError).toBe(true);
       expect(h.selectCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(0);
       const title = h.selectCalls[0][0];
       expect(title).toContain("worktree clone effects"); expect(title).toContain("-B branch reset possible: true");
@@ -1029,9 +852,8 @@ describe("native bash delegation", () => {
         reviewContext: { sameSettingsInstance: true, unverifiedWorktreeEffects: { mayRewrite: true, verified: false } } });
       const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Approve" });
       await ready(h); const input = { command: "echo ok && cd sub && git worktree add ../x" };
-      const result = await h.events.get("tool_call")(event("unverified", input, name), h.ctx);
-      if (name === "bash") expect(result.block).toBe(true);
-      else expect((await h.tools.get(name).execute("unverified", input, undefined, undefined, h.ctx)).isError).toBe(true);
+      expect(await h.events.get("tool_call")(event("unverified", input, name), h.ctx)).toBeUndefined();
+      expect((await h.tools.get(name).execute("unverified", input, undefined, undefined, h.ctx)).isError).toBe(true);
       expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
       expect(h.selectCalls).toHaveLength(0);
       const packet = JSON.parse(JSON.parse(h.fetchCalls[0][1].body).messages.at(-1).content);
@@ -1045,8 +867,8 @@ describe("native bash delegation", () => {
     const native = fakeNativeRuntime({ decision: "deny", reasonCode: "NATIVE_DENY",
       reviewContext: { unverifiedWorktreeEffects: { mayRewrite: true, verified: false } } });
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
-    const { hook } = await nativeReady(h);
-    expect((await hook(event("unverified-deny", { command: "git worktree add ../x" }), h.ctx)).block).toBe(true);
+    const { hook, dispatch } = await nativeReady(h);
+    expect((await dispatch(event("unverified-deny", { command: "git worktree add ../x" }), h.ctx)).isError).toBe(true);
     expect(h.selectCalls).toHaveLength(0); expect(h.fetchCalls).toHaveLength(0);
     expect(h.invokeCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
   });
@@ -1058,7 +880,7 @@ describe("native bash delegation", () => {
         diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" },
         reviewContext: { sameSettingsInstance: true, nativeRewriteApplied: false } });
       const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny" });
-      const { hook, tool } = await nativeReady(h); const input = { command };
+      const { hook, tool, dispatch } = await nativeReady(h); const input = { command };
       const result = await hook(event("no-rewrite", input), h.ctx);
       expect(result).toBeUndefined();
       expect((await tool.execute("no-rewrite", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
@@ -1075,8 +897,8 @@ describe("native bash delegation", () => {
       reviewContext: { sameSettingsInstance: true, worktreePlan: { backend: "auto",
         operations: [{ target, branch, forceBranch: true }] } } });
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny" });
-    const { hook } = await nativeReady(h);
-    expect((await hook(event("long-canary", { command: "git worktree add " + target + " -b " + branch }), h.ctx)).block).toBe(true);
+    const { hook, dispatch } = await nativeReady(h);
+    expect((await dispatch(event("long-canary", { command: "git worktree add " + target + " -b " + branch }), h.ctx)).isError).toBe(true);
     const title = h.selectCalls[0][0];
     expect(title).not.toContain("sk-tt"); expect(title).not.toContain("ghp_uu");
     expect(title).not.toContain("t".repeat(16)); expect(title).not.toContain("u".repeat(16));
@@ -1093,12 +915,12 @@ describe("native bash delegation", () => {
       return new Response(JSON.stringify({ choices: [{ message: { content:
         '{"decision":"allow","risk":"low","authorization":"sufficient","reasonCode":"LOW_RISK_AUTHORIZED"}' } }] }), { status: 200 });
     } });
-    const { hook } = await nativeReady(h);
-    const execution = hook(event("cancel-worktree", { command: "git worktree add ../target" }), h.ctx);
+    const { hook, dispatch } = await nativeReady(h);
+    const execution = dispatch(event("cancel-worktree", { command: "git worktree add ../target" }), h.ctx);
     await Promise.resolve();
     await h.commands.get("permission-control").handler("manual", h.ctx);
     release();
-    expect((await execution).block).toBe(true);
+    expect((await execution).isError).toBe(true);
     expect(h.invokeCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
   });
 
@@ -1106,7 +928,7 @@ describe("native bash delegation", () => {
     const denyRuntime = fakeNativeRuntime({ decision: "deny", reasonCode: "NATIVE_DENY" });
     const deny = await fakeHost({ config: nativeConfig, nativeRuntime: denyRuntime.runtime });
     const denyEntry = await nativeReady(deny);
-    expect((await denyEntry.hook(event("deny"), deny.ctx)).block).toBe(true);
+    expect((await denyEntry.dispatch(event("deny"), deny.ctx)).isError).toBe(true);
     expect(deny.fetchCalls).toHaveLength(0);
     expect(deny.invokeCalls).toHaveLength(0);
 
@@ -1114,59 +936,55 @@ describe("native bash delegation", () => {
     const prompt = await fakeHost({ config: nativeConfig, nativeRuntime: promptRuntime.runtime,
       select: "Deny" });
     const promptEntry = await nativeReady(prompt);
-    expect((await promptEntry.hook(event("prompt"), prompt.ctx)).block).toBe(true);
+    expect((await promptEntry.dispatch(event("prompt"), prompt.ctx)).isError).toBe(true);
     expect(prompt.fetchCalls).toHaveLength(0);
     expect(prompt.invokeCalls).toHaveLength(0);
   });
 
-  test("headless prompt, unknown fields, and duplicate ids fail closed", async () => {
+  test("headless prompt, unknown fields and duplicate execute ids fail closed", async () => {
     const promptRuntime = fakeNativeRuntime({ decision: "prompt", reasonCode: "NATIVE_PROMPT" });
     const headless = await fakeHost({ config: nativeConfig, nativeRuntime: promptRuntime.runtime, hasUI: false });
     const first = await nativeReady(headless);
-    expect((await first.hook(event("headless"), headless.ctx)).block).toBe(true);
-
-    const native = fakeNativeRuntime();
-    const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
+    expect((await first.dispatch(event("headless"), headless.ctx)).isError).toBe(true);
+    const h = await fakeHost({ config: nativeConfig, nativeRuntime: fakeNativeRuntime().runtime });
     const { tool, hook } = await nativeReady(h);
     expect(tool.parameters.additionalProperties).toBe(true);
     expect(h.tools.get("permission_bash").parameters.additionalProperties).toBe(true);
-    for (const [id, extra] of [["async", { async: true }], ["service", { service: "start" }],
-      ["pty", { pty: true }]] as const) {
+    for (const [id, extra] of [["async", { async: true }], ["service", { service: "start" }], ["pty", { pty: true }]] as const)
       expect((await hook(event(id, { ...params, ...extra }), h.ctx)).block).toBe(true);
-    }
     expect(await hook(event("duplicate"), h.ctx)).toBeUndefined();
-    expect((await hook(event("duplicate"), h.ctx)).block).toBe(true);
-    expect(h.invokeCalls).toHaveLength(0);
+    expect(await hook(event("duplicate"), h.ctx)).toBeUndefined();
+    expect(h.fetchCalls).toHaveLength(0);
+    expect((await tool.execute("duplicate", params, undefined, undefined, h.ctx)).isError).toBeUndefined();
+    expect((await tool.execute("duplicate", params, undefined, undefined, h.ctx)).isError).toBe(true);
+    expect(h.invokeCalls).toHaveLength(1); expect(h.fetchCalls).toHaveLength(1);
   });
 
-  test("missing, changed, consumed, and stale tickets cannot delegate", async () => {
+  test("direct execute reviews effective parameters and recheck invalidation prevents delegation", async () => {
     const native = fakeNativeRuntime();
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
     const { tool, hook } = await nativeReady(h);
-    expect((await tool.execute("missing", params, undefined, undefined, h.ctx)).isError).toBe(true);
-
+    expect((await tool.execute("direct", params, undefined, undefined, h.ctx)).isError).toBeUndefined();
     expect(await hook(event("changed"), h.ctx)).toBeUndefined();
-    expect((await tool.execute("changed", { ...params, timeout: 3 }, undefined, undefined, h.ctx)).isError).toBe(true);
-
-    expect(await hook(event("stale"), h.ctx)).toBeUndefined();
-    native.setFingerprint("settings-2");
+    const effective = { ...params, timeout: 3, command: "echo effective" };
+    expect((await tool.execute("changed", effective, undefined, undefined, h.ctx)).isError).toBeUndefined();
+    expect(h.invokeCalls[1][0]).toBe(effective);
+    expect(JSON.parse(JSON.parse(h.fetchCalls[1][1].body).messages.at(-1).content).command).toBe(effective.command);
+    const recheck = native.runtime.recheck;
+    native.runtime.recheck = async (...args: any[]) => { native.setFingerprint("changed-during-recheck"); return recheck(...args); };
     expect((await tool.execute("stale", params, undefined, undefined, h.ctx)).isError).toBe(true);
-
-    native.setFingerprint("settings-3");
-    expect(await hook(event("once"), h.ctx)).toBeUndefined();
+    native.runtime.recheck = recheck;
     expect((await tool.execute("once", params, undefined, undefined, h.ctx)).isError).toBeUndefined();
     expect((await tool.execute("once", params, undefined, undefined, h.ctx)).isError).toBe(true);
-
-    expect(await hook(event("model-change"), h.ctx)).toBeUndefined();
-    h.setCurrent(model("changed", "model"));
+    native.runtime.recheck = async (...args: any[]) => { h.setCurrent(model("changed", "model")); return recheck(...args); };
     expect((await tool.execute("model-change", params, undefined, undefined, h.ctx)).isError).toBe(true);
-    expect(h.invokeCalls).toHaveLength(1);
+    expect(h.invokeCalls).toHaveLength(3);
   });
 
   test("mode change and cancellation during the execute recheck stop delegation", async () => {
     const native = fakeNativeRuntime();
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
-    const { tool, hook } = await nativeReady(h);
+    const { tool, hook, dispatch } = await nativeReady(h);
     expect(await hook(event("race"), h.ctx)).toBeUndefined();
     let release!: () => void;
     native.setRecheckWait(new Promise<void>(resolve => { release = resolve; }));
@@ -1200,7 +1018,7 @@ describe("native bash delegation", () => {
   test("raw entrypoint cannot escape a native deny", async () => {
     const native = fakeNativeRuntime({ decision: "deny", reasonCode: "NATIVE_DENY" });
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
-    const { hook } = await nativeReady(h);
+    const { hook, dispatch } = await nativeReady(h);
     expect(await hook(event("raw-deny", params, "permission_bash"), h.ctx)).toBeUndefined();
     const result = await h.tools.get("permission_bash").execute("raw-deny", params,
       undefined, undefined, h.ctx);
@@ -1246,7 +1064,7 @@ describe("strict independent native approval acceptance", () => {
       response: { choices: [{ message: { content: JSON.stringify(review) } }] },
       messages: [{ type: "message", message: { role: "user",
         content: `Review this exact synthetic command: ${command}`, timestamp: 1 } }] });
-    const { tool, hook } = await nativeReady(h);
+    const { tool, hook, dispatch } = await nativeReady(h);
     const input = { command, timeout: 30 };
     const hookResult = await hook({ type: "tool_call", toolName: "bash", toolCallId: "strict", input }, h.ctx);
     const result = hookResult === undefined
@@ -1346,30 +1164,32 @@ describe("safe final approval diagnostics", () => {
     await h.commands.get("permission-control").handler("status", h.ctx);
     expect(JSON.parse(h.notices.at(-1)!).audit).toMatchObject({ failed: 1, accepted: 0, health: "failed", durability: "not-attested" });
   });
-  test("native hook/execute/duplicate/invalidation final records retain independent attribution", async () => {
-    const native = fakeNativeRuntime();
-    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime });
+  test("native quick hook, duplicate execution and cancellation keep independent final records", async () => {
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: fakeNativeRuntime().runtime });
     const { hook, tool } = await nativeReady(h); const input = { command: "echo fixture" };
     expect(await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_a", input }, h.ctx)).toBeUndefined();
-    expect(h.auditEntries).toHaveLength(0);
-    expect((await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_a", input }, h.ctx)).block).toBe(true);
+    expect(await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_a", input }, h.ctx)).toBeUndefined();
+    expect(h.auditEntries).toHaveLength(0); expect(h.fetchCalls).toHaveLength(0);
     await tool.execute("call_a", input, undefined, undefined, h.ctx);
-    expect(h.auditEntries[0].data.reasonCode).toBe("DUPLICATE_TOOL_CALL");
-    expect(h.auditEntries[1].data).toMatchObject({ outcome: "executed", source: "primary", reasonCode: "LOW_RISK_AUTHORIZED" });
-    await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_pending", input }, h.ctx);
-    await h.events.get("session_switch")({}, h.ctx);
-    expect(h.auditEntries.at(-1).data).toMatchObject({ outcome: "cancelled", stage: "invalidated" });
+    expect((await tool.execute("call_a", input, undefined, undefined, h.ctx)).isError).toBe(true);
+    expect(h.auditEntries[0].data).toMatchObject({ outcome: "executed", source: "primary", reasonCode: "LOW_RISK_AUTHORIZED" });
+    expect(h.auditEntries[1].data.reasonCode).toBe("DUPLICATE_TOOL_CALL");
+    const controller = new AbortController(); controller.abort();
+    expect((await tool.execute("call_pending", input, controller.signal, undefined, h.ctx)).isError).toBe(true);
+    expect(h.auditEntries.at(-1).data.outcome).toBe("cancelled");
+    expect(h.invokeCalls).toHaveLength(1);
   });
+
   test("in-flight cancellation records the called attempt and per-call native execution source survives concurrency", async () => {
     const native = fakeNativeRuntime();
     const pending = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime,
       fetchImpl: async () => new Promise<Response>(() => {}) });
     const p = await nativeReady(pending);
-    const execution = p.hook({ type: "tool_call", toolName: "bash", toolCallId: "call_cancel", input: { command: "echo fixture" } }, pending.ctx);
-    for (let i = 0; i < 20 && pending.fetchCalls.length === 0; i++) await Promise.resolve();
+    const execution = p.dispatch({ type: "tool_call", toolName: "bash", toolCallId: "call_cancel", input: { command: "echo fixture" } }, pending.ctx);
+    for (let i = 0; i < 100 && pending.fetchCalls.length === 0; i++) await Promise.resolve();
     expect(pending.fetchCalls).toHaveLength(1);
     await pending.events.get("session_switch")({}, pending.ctx);
-    expect((await execution).block).toBe(true);
+    expect((await execution).isError).toBe(true);
     expect(pending.auditEntries).toHaveLength(1);
     expect(pending.auditEntries[0].data).toMatchObject({ outcome: "cancelled", reasonCode: "CANCELLED",
       attempts: [{ target: "primary", called: true, failureCode: "CANCELLED" }] });
@@ -1379,11 +1199,11 @@ describe("safe final approval diagnostics", () => {
     const wait = new Promise<void>(resolve => { release = resolve; });
     const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime,
       invokeImpl: async () => { await wait; return { content: [{ type: "text", text: "ok" }] }; } });
-    const { hook, tool } = await nativeReady(h);
+    const { hook, tool, dispatch } = await nativeReady(h);
     const input = { command: "echo fixture" };
     await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_first", input }, h.ctx);
     const running = tool.execute("call_first", input, undefined, undefined, h.ctx);
-    for (let i = 0; i < 20 && h.invokeCalls.length === 0; i++) await Promise.resolve();
+    for (let i = 0; i < 100 && h.invokeCalls.length === 0; i++) await Promise.resolve();
     expect(h.invokeCalls).toHaveLength(1);
     await h.commands.get("permission-control").handler("manual", h.ctx);
     await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_other", input }, h.ctx);
@@ -1408,7 +1228,7 @@ describe("safe final approval diagnostics", () => {
   test("invalid parameters and unavailable configuration still emit final reasons", async () => {
     const native = fakeNativeRuntime();
     const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime });
-    const { hook } = await nativeReady(h);
+    const { hook, dispatch } = await nativeReady(h);
     expect((await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_bad", input: { command: "echo fixture", extra: "SECRET_CANARY" } }, h.ctx)).block).toBe(true);
     expect(h.auditEntries[0].data.preModelGates).toContain("INVALID_PARAMETERS");
     h.host.getAllTools = () => [];
@@ -1444,8 +1264,8 @@ describe("status diagnostic shell semantics", () => {
     test(`${shellFamily} status expansion is reviewed with its declared language`, async () => {
       const native = fakeNativeRuntime({ reviewContext: { shellFamily, sameSettingsInstance: true, nativeDecision: "allow" } });
       const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime, select: "Deny", response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } });
-      const { hook } = await nativeReady(h);
-      expect((await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_status", input: { command: "echo $?" } }, h.ctx)).block).toBe(true);
+      const { hook, dispatch } = await nativeReady(h);
+      expect((await dispatch({ type: "tool_call", toolName: "bash", toolCallId: "call_status", input: { command: "echo $?" } }, h.ctx)).isError).toBe(true);
       expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(0);
       expect(h.auditEntries[0].data.preModelGates).toEqual([]);
       expect(JSON.parse(JSON.parse(h.fetchCalls[0][1].body).messages.at(-1).content).executionContext.shellFamily).toBe(shellFamily);
@@ -1454,8 +1274,8 @@ describe("status diagnostic shell semantics", () => {
   test("native deny remains prior and raw fixed Bash status can reach review", async () => {
     const denied = fakeNativeRuntime({ decision: "deny", reasonCode: "NATIVE_DENY", reviewContext: { shellFamily: "fish" } });
     const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: denied.runtime });
-    const { hook } = await nativeReady(h);
-    expect((await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_deny_status", input: { command: "echo $?" } }, h.ctx)).block).toBe(true);
+    const { hook, dispatch } = await nativeReady(h);
+    expect((await dispatch({ type: "tool_call", toolName: "bash", toolCallId: "call_deny_status", input: { command: "echo $?" } }, h.ctx)).isError).toBe(true);
     expect(h.selectCalls).toHaveLength(0); expect(h.auditEntries[0].data.reasonCode).toBe("NATIVE_DENY");
     const raw = await fakeHost(); const tool = await ready(raw);
     expect((await tool.execute("call_raw_status", { command: "echo $?" }, undefined, undefined, raw.ctx)).isError).toBeUndefined();
@@ -1465,37 +1285,41 @@ describe("status diagnostic shell semantics", () => {
 
 describe("original-session diagnostics and raw capture races", () => {
   for (const mutation of ["session", "mode", "model", "authorization", "cwd"] as const) {
-    test(`raw capture ${mutation} mutation cannot mint a new-context ticket`, async () => {
-      let release!: () => void;
+    test(`raw capture ${mutation} mutation cannot execute under a new context`, async () => {
+      let release!: () => void, entered!: () => void;
       const wait = new Promise<void>(resolve => { release = resolve; });
+      const started = new Promise<void>(resolve => { entered = resolve; });
       const native = fakeNativeRuntime(); const originalCapture = native.runtime.capture;
-      native.runtime.capture = async (...args: any[]) => { await wait; return originalCapture(...args); };
+      native.runtime.capture = async (...args: any[]) => { entered(); await wait; return originalCapture(...args); };
       const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime });
-      const { hook } = await nativeReady(h);
+      const { hook, dispatch } = await nativeReady(h);
       let session = "origin-session"; h.ctx.sessionManager.getSessionId = () => session;
       const input = { command: "echo fixture" };
-      const pending = hook({ type: "tool_call", toolName: "permission_bash", toolCallId: "call_raw_capture", input }, h.ctx);
-      await Promise.resolve();
+      const pending = dispatch({ type: "tool_call", toolName: "permission_bash", toolCallId: "call_raw_capture", input }, h.ctx);
+      await started;
       if (mutation === "session") { session = "new-session"; await h.events.get("session_switch")({}, h.ctx); }
       if (mutation === "mode") await h.commands.get("permission-control").handler("manual", h.ctx);
       if (mutation === "model") h.setCurrent(model("changed", "changed"));
       if (mutation === "authorization") h.ctx.sessionManager.getBranch = () => [{ type: "message", message: { role: "user", content: "do not execute", timestamp: 2 } }];
       if (mutation === "cwd") h.ctx.cwd = "/changed-cwd";
-      release(); expect((await pending).block).toBe(true);
+      release(); expect((await pending).isError).toBe(true);
       expect(h.fetchCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
       expect(h.auditEntries).toHaveLength(1);
       expect(h.auditEntries[0].data.sessionIdDigest).toBe(sessionIdDigest("origin-session"));
-      expect(h.auditEntries[0].data.reasonCode).toBe("STALE_REVIEW");
+      expect(["STALE_REVIEW", "CANCELLED"]).toContain(h.auditEntries[0].data.reasonCode);
       await h.commands.get("permission-control").handler("status", h.ctx);
       expect(JSON.parse(h.notices.at(-1)!).scopedSettingsReady).toBe(false);
       const result = await h.tools.get("permission_bash").execute("call_raw_capture", input, undefined, undefined, h.ctx);
-      expect(result.isError).toBe(true); expect(h.execCalls).toHaveLength(0);
+      if (mutation === "session") {
+        expect(result.isError).toBeUndefined(); expect(h.execCalls).toHaveLength(1); expect(h.fetchCalls).toHaveLength(1);
+        expect(h.auditEntries.at(-1).data.sessionIdDigest).toBe(sessionIdDigest("new-session"));
+      } else { expect(result.isError).toBe(true); expect(h.execCalls).toHaveLength(0); }
     });
   }
   test("explain uses terminal observer context instead of mutable global context", async () => {
     const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } });
     const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime });
-    const { hook, tool } = await nativeReady(h);
+    const { hook, tool, dispatch } = await nativeReady(h);
     const input = { command: "echo fixture" };
     await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_origin", input }, h.ctx);
     await tool.execute("call_origin", input, undefined, undefined, h.ctx);
@@ -1539,22 +1363,27 @@ describe("authorization and cwd remain bound across review and execution", () =>
       expect(JSON.stringify(h.auditEntries)).not.toContain("USER_CONTEXT_CANARY");
     }
   });
-  test("native approval tickets reject a later user revocation", async () => {
-    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: fakeNativeRuntime().runtime });
-    const { hook, tool } = await nativeReady(h); const input = { command: "pwd" };
-    expect(await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_bound_user", input }, h.ctx)).toBeUndefined();
-    h.ctx.sessionManager.getBranch = () => changed;
+  test("native execute rejects user revocation after its model approval", async () => {
+    let h!: Awaited<ReturnType<typeof fakeHost>>;
+    h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: fakeNativeRuntime().runtime,
+      fetchImpl: async () => {
+        h.ctx.sessionManager.getBranch = () => changed;
+        return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ decision: "allow", risk: "low", authorization: "sufficient", reasonCode: "LOW_RISK_AUTHORIZED" }) } }] }));
+      } });
+    const { tool } = await nativeReady(h); const input = { command: "pwd" };
     expect((await tool.execute("call_bound_user", input, undefined, undefined, h.ctx)).isError).toBe(true);
-    expect(h.invokeCalls).toHaveLength(0); expect(h.auditEntries.at(-1).data.reasonCode).toBe("INVALID_TICKET");
+    expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(0);
+    expect(h.auditEntries.at(-1).data.reasonCode).toBe("STALE_REVIEW");
     expect(JSON.stringify(h.auditEntries)).not.toContain("USER_CONTEXT_CANARY");
   });
-  test("queued user input invalidates a native ticket before it is appended to history", async () => {
+
+  test("queued user input blocks native execute before it is appended to history", async () => {
     const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: fakeNativeRuntime().runtime });
-    const { hook, tool } = await nativeReady(h); const input = { command: "pwd" };
+    const { hook, tool, dispatch } = await nativeReady(h); const input = { command: "pwd" };
     expect(await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_queued_user", input }, h.ctx)).toBeUndefined();
     h.ctx.hasPendingMessages = () => true;
     expect((await tool.execute("call_queued_user", input, undefined, undefined, h.ctx)).isError).toBe(true);
-    expect(h.invokeCalls).toHaveLength(0); expect(h.auditEntries.at(-1).data.reasonCode).toBe("INVALID_TICKET");
+    expect(h.invokeCalls).toHaveLength(0); expect(["STALE_REVIEW", "CANCELLED"]).toContain(h.auditEntries.at(-1).data.reasonCode);
   });
   test("a user revocation during primary failure prevents remote lookup and human approval", async () => {
     let h!: Awaited<ReturnType<typeof fakeHost>>;

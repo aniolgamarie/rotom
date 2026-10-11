@@ -37,6 +37,9 @@ def test_kernel_deployment_preserves_reviewed_native_configuration(tmp_path):
   for key, expected in REFERENCE["config"].items():
     if key != "skills":
       expected = deepcopy(expected)
+      if key == "bashInterceptor":
+        # 普通已审查的Bash读取不再被默认工具偏好拦截；显式启用仍由原生执行保留。
+        expected["enabled"] = False
       if key == "retry":
         # 冻结历史快照；仅列明本次 K3 历史保护的六个备用链差量。
         for selector in ("cursor/kimi-k3", "cursor/kimi-k3:high", "cursor/kimi-k3:max",
@@ -177,7 +180,9 @@ def test_complete_kernel_runs_from_repo_with_only_declared_secret_environment(
   call = fake_subprocess.calls[0]
   assert call["cwd"] == workspace.repository
   assert "--no-title" in call["argv"]
-  assert call["env"]["HOME"] == str(native_identity(workspace.profile, workspace.instance).home)
+  assert call["env"]["HOME"] == str(tmp_path / "home")
+  identity = native_identity(workspace.profile, workspace.instance)
+  assert Path(call["env"]["HOME"], call["env"]["PI_CONFIG_DIR"]).resolve() == identity.home / ".omp"
   assert sorted(value for key, value in call["env"].items() if key.startswith("AGENTCFG_OMP_PROVIDER_")) == [
     "synthetic-kimi", "synthetic-zhipu"]
   assert "PI_CONFIG_FILES" not in call["env"]

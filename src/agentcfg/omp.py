@@ -14,7 +14,8 @@ from .adapter import Adapter, AdapterDeclaration, Artifact, DependencyPlan, Envi
 from .schema import AdapterPolicy, AdapterSchemaBundle, AdapterSchemas, AuthenticationClaim, ConfigError
 from .omp_identity import lifecycle_guard, native_identity
 from .omp_discovery import (DISABLED_PROVIDERS, SourcePolicy,
-  assert_native_sources, inspect_project_sources)
+  assert_native_sources, inspect_project_sources, dotenv_names)
+from .omp_execution_environment import capture_execution_environment, validate_execution_environment, XDG_KEYS
 from .omp_env import generated_name
 from .omp_project_roles import project_role_policy
 from .omp_model_presets import MODEL_PRESETS, materialize_presets
@@ -58,7 +59,13 @@ NATIVE_SUBCOMMANDS = {"launch", "acp", "auth-broker", "auth-gateway", "agents", 
 WORKER_SELECTORS = {"__omp_worker_blob_broker", "__omp_worker_computer", "__omp_worker_daemon_broker",
   "__omp_worker_lsp_mux", "__omp_worker_stats_activity", "__omp_worker_terminal_output"}
 CALLER_IDENTITY_ENV = {"OMP_PROFILE", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "PI_PROFILE",
-  "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_CONFIG_FILES", "PI_SESSION_DIR", "PI_CODING_AGENT_SESSION_DIR"}
+  "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_CONFIG_FILES", "PI_SESSION_DIR", "PI_CODING_AGENT_SESSION_DIR",
+  "OMP_AUTH_BROKER_SNAPSHOT_CACHE", "OMP_JUDGMENT_CACHE_DB"}
+# 仅兼容本轮已知旧来源契约；执行时仍使用更完整的新门禁，不放宽项目授权。
+LEGACY_SOURCE_MANIFEST = "4b181b2b4f3dd6e440f1052446e25dabc0ea47fead656c56e243872fee5c221b"
+TOOL_ENVIRONMENT = ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM", "ZDOTDIR",
+  "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "DYLD_FALLBACK_LIBRARY_PATH", "VIRTUAL_ENV", "CONDA_PREFIX",
+  "PYTHONPATH", "NODE_PATH", "NVM_DIR")
 NATIVE_EXECUTION_ROUTE_ENV = "ROTOM_PERMISSION_CONTROL_EXECUTION_ROUTE"
 NATIVE_EXECUTION_ROUTE = "local-native-bash-v1"
 ALLOWED_VALUELESS = {"--help", "-h", "--version", "-v", "--no-title", "--print", "-p"}
@@ -421,7 +428,7 @@ class OmpAdapter(Adapter):
             "compatibility": {"omp": TAG}}):
           raise ConfigError("omp-package-catalog-integrity")
     protected = {NATIVE_EXECUTION_ROUTE_ENV, "HOME", "OMP_PROFILE", "OMP_AUTH_BROKER", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "PI_PROFILE", "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_CONFIG_FILES", "PI_SESSION_DIR",
-                 "PI_CODING_AGENT_SESSION_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"}
+                 "PI_CODING_AGENT_SESSION_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"} | CALLER_IDENTITY_ENV
     machine_env = data["machine"].get("environment", {})
     if protected & (set(machine_env.get("inherit", [])) | set(machine_env.get("values", {}))):
       raise ConfigError("omp-identity-environment-override")
@@ -692,17 +699,33 @@ class OmpAdapter(Adapter):
     operation = classify_operation(arguments)
     if operation == "session":
       validate_model_selection(workspace.resolved.data, arguments)
+
+  def _neutral_dotenv_guard(self, cwd, environment):
+    # 中性命令也会加载cwd的dotenv，但不发现会话项目资源。
+    from .storage import Conflict
+    for name in dotenv_names(environment):
+      path = Path(cwd) / name
+      if path.exists() or path.is_symlink():
+        raise Conflict("OMP检测到未声明的dotenv来源")
+
+  def deployed_operation_guard(self, workspace, cwd, arguments, saved_contract):
+    """读取已部署绑定后，按实际HOME检查来源；在prepare/解析秘密前执行。"""
     options = workspace.resolved.data["profile"]["agent_options"].get("discovery", {})
     policy = SourcePolicy.from_options(options)
-    neutral = operation != "session"
-    if not neutral:
-      self._project_source_report(workspace, cwd, policy)
+    from .process import environment
+    mode_environment = environment(saved_contract["machine"])
+    saved_binding = saved_contract.get("adapter_binding")
+    if classify_operation(arguments) == "session":
+      self._project_source_report(workspace, cwd, policy, environment=mode_environment)
+    else:
+      self._neutral_dotenv_guard(cwd, mode_environment)
     identity = native_identity(workspace.profile, workspace.instance)
     assert_native_sources(identity, self._allowed_native_sources(workspace.resolved.data, identity),
       self._mcp_shape(workspace.resolved.data), policy.project_resources,
       model_providers=_native_model_providers(workspace.resolved.data),
       extension_suffixes=self._extension_suffixes(workspace.resolved.data),
-      permission_control=self._workspace_permission(workspace))
+      permission_control=self._workspace_permission(workspace), environment=mode_environment,
+      execution_environment=saved_binding.get("execution_environment") if isinstance(saved_binding, dict) else None)
 
   def _validate_caller_environment(self):
     import os
@@ -711,17 +734,65 @@ class OmpAdapter(Adapter):
 
   def validate_operation_environment(self, workspace, spec=None, env=None):
     self._validate_caller_environment()
+    execution = self._execution_for_spec(workspace, spec=spec, env=env)
     if env is not None:
       identity = native_identity(workspace.profile, workspace.instance)
       expected = {"HOME": str(identity.home), "XDG_CONFIG_HOME": str(identity.xdg_config),
         "XDG_DATA_HOME": str(identity.xdg_data), "XDG_CACHE_HOME": str(identity.xdg_cache),
         "XDG_STATE_HOME": str(identity.xdg_state)}
-      if any(env.get(name) != value for name, value in expected.items()) or CALLER_IDENTITY_ENV & env.keys():
+      forbidden = CALLER_IDENTITY_ENV
+      if execution is not None:
+        expected = {"HOME": execution["home"], "PI_CONFIG_DIR": execution["config_dir"], **execution["xdg"]}
+        forbidden = CALLER_IDENTITY_ENV - {"PI_CONFIG_DIR"}
+      if any((name in env if value is None else env.get(name) != value) for name, value in expected.items()) or forbidden & env.keys():
         raise ConfigError("omp-operation-environment-mismatch")
       permission = resolve_permission_control(workspace.resolved.data)
       route = NATIVE_EXECUTION_ROUTE if permission and permission.get("nativeBash") else None
       if env.get(NATIVE_EXECUTION_ROUTE_ENV) != route or (route is None and NATIVE_EXECUTION_ROUTE_ENV in env):
         raise ConfigError("omp-operation-environment-mismatch")
+
+  def _mode_environment(self, workspace):
+    from .process import environment
+    return environment(workspace.resolved.data["machine"])
+
+  def _execution_for_spec(self, workspace, *, spec=None, env=None):
+    literals = {item.name: item.value for item in spec.environment if isinstance(item.value, str)} if spec is not None else env or {}
+    if "PI_CONFIG_DIR" not in literals:
+      return None
+    identity = native_identity(workspace.profile, workspace.instance)
+    execution = capture_execution_environment(identity, os.environ)
+    if literals.get("HOME") != execution["home"] or literals.get("PI_CONFIG_DIR") != execution["config_dir"]:
+      raise ConfigError("omp-operation-environment-mismatch")
+    return execution
+
+  def adjust_launch_environment(self, workspace, spec, env, saved_binding):
+    execution = self._execution_for_spec(workspace, spec=spec)
+    saved = saved_binding.get("execution_environment") if isinstance(saved_binding, dict) else None
+    if (saved is not None) != (execution is not None):
+      raise ConfigError("omp-operation-environment-mismatch")
+    if execution is None:
+      return env
+    identity = native_identity(workspace.profile, workspace.instance)
+    if validate_execution_environment(identity, saved, os.environ) != execution:
+      raise ConfigError("omp-operation-environment-mismatch")
+    # 通用builder先构造隔离默认；只变更已声明的用户路径，不修复意外注入。
+    home = Path(execution["home"])
+    initial = {"HOME": str(home), "PI_CONFIG_DIR": execution["config_dir"],
+      "XDG_CONFIG_HOME": str(home / ".config"), "XDG_DATA_HOME": str(home / ".local/share"),
+      "XDG_CACHE_HOME": str(home / ".cache"), "XDG_STATE_HOME": str(home / ".local/state"),
+      "XDG_RUNTIME_DIR": None}
+    if any((name in env if value is None else env.get(name) != value) for name, value in initial.items()):
+      raise ConfigError("omp-operation-environment-mismatch")
+    env = dict(env)
+    for name, value in execution["xdg"].items():
+      if value is None:
+        env.pop(name, None)
+      else:
+        env[name] = value
+    for name in TOOL_ENVIRONMENT:
+      if name not in env and name in os.environ:
+        env[name] = os.environ[name]
+    return env
 
   def validate_before_spawn(self, workspace, cwd, arguments, env):
     self.validate_operation_environment(workspace, env=env)
@@ -729,20 +800,26 @@ class OmpAdapter(Adapter):
     policy = SourcePolicy.from_options(options)
     neutral = classify_operation(arguments) != "session"
     if not neutral:
-      self._project_source_report(workspace, cwd, policy)
+      self._project_source_report(workspace, cwd, policy, environment=env)
+    else:
+      self._neutral_dotenv_guard(cwd, env)
     identity = native_identity(workspace.profile, workspace.instance)
     assert_native_sources(identity, self._allowed_native_sources(workspace.resolved.data, identity),
       self._mcp_shape(workspace.resolved.data), policy.project_resources,
       model_providers=_native_model_providers(workspace.resolved.data),
       extension_suffixes=self._extension_suffixes(workspace.resolved.data),
-      permission_control=self._workspace_permission(workspace))
+      permission_control=self._workspace_permission(workspace),
+      execution_environment=self._execution_for_spec(workspace, env=env), environment=env)
 
   def _extension_suffixes(self, data):
     return tuple("packages/" + plugin_id + "/" + entrypoint
       for plugin_id in data["profile"].get("plugins", ())
       for entrypoint in data["plugins"][plugin_id]["entrypoints"])
 
-  def _project_source_report(self, workspace, cwd, policy):
+  def _project_source_report(self, workspace, cwd, policy, environment=None):
+    if environment is None:
+      from .process import environment as process_environment
+      environment = process_environment(workspace.resolved.data["machine"])
     expected_python = expected_echo = None
     if policy.project_resources:
       from .omp_dependencies import PYTHON_REQUIREMENT, interpreter_identity
@@ -757,7 +834,7 @@ class OmpAdapter(Adapter):
         expected_echo = root / "packages/echo-mcp/server.py"
     return inspect_project_sources(cwd, policy, managed_mcp_ids=workspace.resolved.data.get("mcp", {}),
       expected_python=expected_python, expected_echo=expected_echo,
-      project_model_roles=project_role_policy(workspace.resolved.data))
+      project_model_roles=project_role_policy(workspace.resolved.data), environment=environment)
 
   def _allowed_native_sources(self, data, identity):
     prefix = _native_base(data) + "/"
@@ -786,6 +863,7 @@ class OmpAdapter(Adapter):
 
   def launch_spec(self, data, *, cwd, runtime_root, instance_root, lock_identity):
     identity = native_identity(data["profile"]["id"], instance_root)
+    execution = self._execution_environment(data, identity)
     claimed = {}
     secrets = [EnvironmentBinding(generated_name("provider", provider_id, "key", claimed=claimed),
       SecretRef(provider["credential_ref"]), required=False) for provider_id, provider in sorted(data.get("providers", {}).items())
@@ -802,11 +880,31 @@ class OmpAdapter(Adapter):
     route = ((EnvironmentBinding(NATIVE_EXECUTION_ROUTE_ENV, NATIVE_EXECUTION_ROUTE),)
       if permission and permission.get("nativeBash") else ())
     return LaunchSpec((str(runtime_root / "bin/omp"), "--profile", identity.native_name), cwd, lock_identity,
-      (EnvironmentBinding("HOME", str(identity.home)), EnvironmentBinding("XDG_CONFIG_HOME", str(identity.xdg_config)),
-       EnvironmentBinding("XDG_DATA_HOME", str(identity.xdg_data)), EnvironmentBinding("XDG_CACHE_HOME", str(identity.xdg_cache)),
-       EnvironmentBinding("XDG_STATE_HOME", str(identity.xdg_state)), *route, *secrets))
+      (EnvironmentBinding("HOME", execution["home"]), EnvironmentBinding("PI_CONFIG_DIR", execution["config_dir"]),
+       *route, *secrets))
 
   def runtime_binding(self, data, instance_root):
+    value = self._physical_runtime_binding(data, instance_root)
+    identity = native_identity(data["profile"]["id"], instance_root)
+    value["execution_environment"] = self._execution_environment(data, identity)
+    return value
+
+  def _execution_environment(self, data, identity):
+    execution = capture_execution_environment(identity, os.environ)
+    from .process import environment
+    mode_environment = environment(data["machine"])
+    roots = (Path(execution["home"]), Path(execution["native_paths"]["base_config_root"]),
+      Path(execution["native_paths"]["config_root"]), identity.agent_dir)
+    # load/plan只拒绝实际dotenv来源，不读正文或把待部署字段误判为来源漂移。
+    for root in roots:
+      for name in dotenv_names(mode_environment):
+        path = root / name
+        if path.exists() or path.is_symlink():
+          from .storage import Conflict
+          raise Conflict("OMP检测到未声明的dotenv来源")
+    return execution
+
+  def _physical_runtime_binding(self, data, instance_root):
     identity = native_identity(data["profile"]["id"], instance_root)
     agent = data["profile"]["agent"]
     profile_id = data["profile"]["id"]
@@ -825,7 +923,14 @@ class OmpAdapter(Adapter):
       "storage": {"state_root": str(state_root), "cache_root": str(cache_root)}}
 
   def validate_runtime_binding(self, workspace, saved):
-    expected = self.runtime_binding(workspace.resolved.data, workspace.instance)
+    expected = self._physical_runtime_binding(workspace.resolved.data, workspace.instance)
+    if isinstance(saved, dict) and "execution_environment" in saved:
+      identity = native_identity(workspace.profile, workspace.instance)
+      expected["execution_environment"] = validate_execution_environment(identity, saved["execution_environment"], os.environ)
+    elif isinstance(saved, dict) and isinstance(saved.get("source_policy"), dict):
+      digest = saved["source_policy"].get("manifest_sha256")
+      if digest in (LEGACY_SOURCE_MANIFEST, expected["source_policy"]["manifest_sha256"]):
+        expected["source_policy"]["manifest_sha256"] = digest
     storage = expected["storage"]
     if (saved != expected or Path(storage["state_root"]) != workspace.state_root
         or Path(storage["cache_root"]) != workspace.cache):
@@ -896,6 +1001,12 @@ class OmpAdapter(Adapter):
       validate_layout(identity)
     except Conflict:
       layout_conflict = "xdg-or-identity-layout-conflict"
+    try:
+      execution = capture_execution_environment(identity, os.environ)
+      planned_execution = {"scope": "planned-not-deployed", "status": "ready",
+        "home": execution["home"], "xdg": execution["xdg"], "config_dir": execution["config_dir"]}
+    except Conflict:
+      planned_execution = {"scope": "planned-not-deployed", "status": "path-conflict"}
     keybindings = identity.home / ".omp/agent/keybindings.yml"
     default = None
     if keybindings.is_file() and not keybindings.is_symlink():
@@ -905,6 +1016,7 @@ class OmpAdapter(Adapter):
     sources = self._project_source_report(workspace, cwd, policy) if cwd is not None else ()
     return {"profile_id": identity.profile_id, "native_name": identity.native_name,
       "profile_sha256": identity.profile_hash, "home": str(identity.home), "agent_dir": str(identity.agent_dir),
+      "state_home": str(identity.home), "planned_execution_environment": planned_execution,
       "xdg": {"config": str(identity.xdg_config), "data": str(identity.xdg_data),
         "cache": str(identity.xdg_cache), "state": str(identity.xdg_state)},
       "default_keybindings": default, "account_scope": "native-profile-home", "layout_conflict": layout_conflict,
@@ -998,7 +1110,7 @@ class OmpAdapter(Adapter):
     }
     bundle = AdapterSchemaBundle(self.declaration, documents, OPTIONS,
       lambda kind, value: self.validate(value) if kind == "resolved" else None,
-      policy=lambda docs: AdapterPolicy(deepcopy(docs["agent"]["defaults"]), deepcopy(docs["plugins"]["plugins"]), frozenset(), frozenset({"OMP_PROFILE", "OMP_AUTH_BROKER_URL", "OMP_AUTH_BROKER_TOKEN", "HOME", "PI_PROFILE", "PI_CODING_AGENT_DIR", "PI_CONFIG_DIR", "PI_CONFIG_FILES", "PI_SESSION_DIR", "PI_CODING_AGENT_SESSION_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"})),
+      policy=lambda docs: AdapterPolicy(deepcopy(docs["agent"]["defaults"]), deepcopy(docs["plugins"]["plugins"]), frozenset(), frozenset({"HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"} | CALLER_IDENTITY_ENV)),
       authentication_claims=lambda data: tuple(AuthenticationClaim(provider_id,
         "omp-native-profile" if provider["auth_kind"] == "oauth" else "omp-environment")
         for provider_id, provider in sorted(data["providers"].items())))

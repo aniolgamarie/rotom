@@ -5,6 +5,15 @@
 monkey patch 宿主源码。同名包装与 `ctx.invokeTool` 委托属于官方文档支持的扩展接口。旧 `index.ts` 及 core 文件只通过 `./legacy` 导出保留历史记录，
 不是当前交付入口。
 
+当前审批生命周期：`tool_call` 仅快速验证参数，长期模型/人工审批在 registered `execute`
+中完成。模型最多两个并发槽位，人工 UI 独立排队；capture/recheck 有界并可取消，模式/会话
+切换撤销未执行操作，迟到结果不阻塞新代。已消费执行权的命令只受 caller/host 的运行取消
+影响，不因审批模式切换被误杀。native/raw 共用按会话和 toolCallId 的一次执行账目。
+
+请求同时绑定 Context 快照 cwd 与公开 SessionManager 的实时 cwd；同一会话的调用消费记录
+在切换离开再返回后仍保留。人工确认不能覆盖无法绑定的原生路线。秘密表达式无法安全脱敏
+而保留执行结构时，以 `INPUT_INVALID` 阻止发送和执行；普通动态语法继续作为完整模型输入。
+
 `permission_bash` 覆盖模型发起的 raw non-interactive Bash：它在自身 `execute` 内完成
 原生 pattern 下限、模型审查或人工确认，然后调用公开的 `omp.exec("bash",
 ["--noprofile", "--norc", "-c", command], ...)`。它不改变 command，不读取 shell
@@ -94,14 +103,14 @@ build-inputs lock 记录并校验。旧 core、patch 和历史验收不构成独
 `status` 和 `explain` 只读取内存状态，不解析凭据、不联网，也不显示命令、对话、秘密、
 模型自由文本或异常原文。模式切换会取消 pending 审查并增加 generation；执行前再次核对
 session、generation 和当前模型。新建、恢复、切换和分支会话都重新读取默认模式。
-并行 `permission_bash` 调用由插件队列串行执行；正常的后续调用不会取消前一调用，模式切换、
-会话切换、shutdown 或各调用自身 signal 才会撤销对应 pending 工作。
+并行调用使用有界模型队列与独立人工队列；命令执行不占审批槽位。正常后续调用不取消前一
+调用，模式/会话切换撤销未执行工作，shutdown 或 caller signal 可以取消运行中的对应命令。
 
 ## 自动审批边界
 
-智能模式先保守解析完整的简单或复合命令，对每个 simple argv 匹配配置 patterns。
-任一 deny 直接阻止，任一 prompt 只走人工；模型不能覆盖它们。普通选项（例如 `ls -la`）
-直接交给模型判断，插件没有固定只读命令白名单。动态或不支持的 shell 语法转人工确认。
+智能模式保留辅助分析及明确配置规则。确定命中的 deny 阻止，prompt 走人工，模型不能覆盖。
+其它完整命令在脱敏后进入模型，动态或未支持的语法只是分析信息，不构成提前人审理由。
+插件没有固定只读命令白名单。
 人工选择只有完全匹配 `Approve` 才允许；无 UI、undefined、取消和异常都阻止执行。
 
 这是应用内审批，不是操作系统沙箱。安装和运行以管理器的受管交付流程为准，详见
@@ -116,14 +125,16 @@ session、generation 和当前模型。新建、恢复、切换和分支会话�
 kernel 配方明确开启。注册时决定是否包装，不在活动会话中通过手工改 sidecar 切换入口。
 启用后保留原生 active bash，使 Cursor 按固定工具名发起的 shell 调用可进入插件。
 
-包装与 tool_call 安全钩子位于同一闭包；execute 必须具有钩子捕获的一次性调用票据，不能把
-缺钩子视为通过。票据绑定完整参数、cwd、会话、generation、当前执行模型和真实设置指纹。
-审批后改参、取消、切模式/模型/会话或改变相关设置均使票据失效，最多原生委托一次。
+execute 自身建立请求、捕获原生规则、审查最终参数、重核并消费一次执行权；直接调用
+registered execute 仍完整审批。tool_call 不铸造批准票据，避免后续扩展改参/阻断留下旧批准。
+执行权绑定完整参数、cwd、会话、generation、当前执行模型和真实设置指纹；消费前改变它们
+必须失效，最多原生委托一次。
 
 原生 per-tool deny、pattern deny/prompt 和 critical prompt 不被外层 permission_bash=allow
 或模型结果覆盖。普通 exec/native allow 仍进入模型审查；默认 bash=prompt 保留插件缺失保护。
-执行端与会话设置不同源时人工或阻止；不靠 cwd 相同猜测设置实例。startup/.envrc 和不能可靠分析的 worktree
-重写等未知上下文不能自动批准，也不在审批前运行 shell snapshot 或 direnv preflight。
+执行端与会话设置不同源时阻止；不靠 cwd 相同猜测设置实例。受管本地普通 Bash 的初始化
+元数据作为模型证据，标明其效果/缓存未经检查，不读取 rc 正文或提前运行 snapshot。
+HOME 不一致、路由/设置无法绑定、direnv/prefix 和不能绑定的 worktree 等仍保留能力失败边界。
 默认 interceptor/auto-background 的开关本身不是强制人工的理由，实际结果通过原生委托保留。
 
 Phase 14 生产插件已通过纯测试、固定 SDK 类型检查及隔离官方宿主（含真实人工 UI）；
@@ -136,9 +147,9 @@ Phase 14 生产插件已通过纯测试、固定 SDK 类型检查及隔离官方
 由插件在 hook/execute 两边精确拒绝；配置与 sidecar 仍封闭。传输层可另行转换 strict
 schema，本地拒绝保证不能由 wire schema 或 TypeScript strict 类型检查替代。
 
-Shell snapshot 私有缓存无法查询加载前历史；首批支持从新 CLI 进程启动时加载插件。
-观察到 startup、不同 HOME 或继承 shell 函数后，未知缓存状态在插件生命周期内保持人工，
-即使删除 rc 也不会恢复自动批准；热加载到已有执行进程尚未支持。
+Shell snapshot 私有缓存无法查询历史，插件不声称取得缓存证明。已确认受管本地路线、相同
+HOME 下的普通初始化未知项交给模型；元数据改变仍撤销批准。旧未证明路线保留保守边界，
+不同 HOME 和热加载到无法绑定的宿主不作为已支持行为。
 
 ## 常见 Shell 环境（Phase 15）
 

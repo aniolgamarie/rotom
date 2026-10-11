@@ -1,4 +1,4 @@
-import { privacyWords } from "./standalone-shell-analysis";
+import { parseGenericCommands, privacyWords } from "./standalone-shell-analysis";
 import type { ContextValue } from "./worktree-analysis";
 
 const MAX_BYTES = 24 * 1024;
@@ -7,7 +7,6 @@ const MASK = "[REDACTED]";
 const packets = new WeakSet<object>();
 const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length;
 const FIELD = "(?:[A-Za-z0-9_-]*(?:token|password|passwd|secret|api[_-]?key|credential|cookie)[A-Za-z0-9_-]*)";
-const VALUE = "(?:'[^'\\n]*'|\"[^\"\\n]*\"|[^\\s;&|<>\"']+)";
 const FLAG_FIELD = `(?:${FIELD}|authorization)`;
 const secretField = new RegExp(`^${FIELD}$`, "iu");
 
@@ -34,15 +33,51 @@ export function isSanitizedReviewPacket(value: unknown): value is SanitizedRevie
   return !!value && typeof value === "object" && packets.has(value);
 }
 
-interface Redaction { start: number; end: number }
+interface Redaction { start: number; end: number; replacement?: string; slotStart?: number }
 const placeholder = (value: string) => /^(?:\[?REDACTED\]?|<SECRET_\d+>)$/u.test(value);
+
+// 只定位词法跨度；引号内换行和动态表达式不求值。
+function valueEnd(text: string, start: number, substitutions?: Redaction[], boundaryQuote = "", quotedValue = false): number {
+  let quote = quotedValue ? boundaryQuote : "", i = start;
+  while (i < text.length) {
+    const char = text[i];
+    if (boundaryQuote && char === boundaryQuote && (!quote || quote === boundaryQuote)) break;
+    if (char === "\\" && quote !== "'" && i + 1 < text.length) { i += 2; continue; }
+    if (quote !== "'" && (text.startsWith("$(", i) || char === "`")) {
+      const dynamicStart = i, backtick = char === "`";
+      i += backtick ? 1 : 2;
+      let nesting = 1, innerQuote = "";
+      while (i < text.length && nesting) {
+        const inner = text[i];
+        if (inner === "\\" && innerQuote !== "'") { i += 2; continue; }
+        if (backtick && inner === "`") { i++; nesting = 0; break; }
+        if ((inner === "'" || inner === '"') && (!innerQuote || innerQuote === inner)) {
+          innerQuote = innerQuote ? "" : inner; i++; continue;
+        }
+        if (!innerQuote && !backtick) {
+          if (inner === "(") nesting++;
+          if (inner === ")") nesting--;
+        }
+        i++;
+      }
+      substitutions?.push({ start: dynamicStart, end: i });
+      continue;
+    }
+    if ((char === "'" || char === '"') && (!quote || quote === char)) {
+      quote = quote ? "" : char; i++; continue;
+    }
+    if (!quote && /[\s;&|<>]/u.test(char)) break;
+    i++;
+  }
+  return i;
+}
 
 // 检测已知凭据槽位与格式，不读取文件或环境，也不承诺识别未知秘密。
 function plainRanges(text: string): Redaction[] {
   const ranges: Redaction[] = [];
-  const find = (regex: RegExp, prefixGroup = false) => {
+  const find = (regex: RegExp) => {
     for (const match of text.matchAll(regex)) {
-      let start = match.index! + (prefixGroup ? match[1].length : 0), end = match.index! + match[0].length;
+      let start = match.index!, end = match.index! + match[0].length;
       if ((text[start] === "'" || text[start] === '"') && text[end - 1] === text[start]) { start++; end--; }
       if (!placeholder(text.slice(start, end))) ranges.push({ start, end });
     }
@@ -53,10 +88,24 @@ function plainRanges(text: string): Redaction[] {
   for (const match of text.matchAll(/(\b[A-Za-z][A-Za-z0-9+.-]*:\/\/)([^\s/"'<>]+)@/gu)) {
     if (!placeholder(match[2])) ranges.push({ start: match.index! + match[1].length, end: match.index! + match[0].length - 1 });
   }
-  find(new RegExp(`((?<![A-Za-z0-9_-])${FIELD}["']?\\s*[:=]\\s*)${VALUE}`, "giu"), true);
-  find(new RegExp(`(--${FLAG_FIELD}(?:=|\\s+))${VALUE}`, "giu"), true);
-  find(new RegExp(`(\\bAUTHORIZATION\\s*=\\s*)${VALUE}`, "giu"), true);
-  find(new RegExp(`(\\b(?:Bearer|Basic)\\s+)${VALUE}`, "giu"), true);
+  const comments = privacyWords(text).filter(word => word.raw.startsWith("#"));
+  for (const prefix of [new RegExp(`(?<![A-Za-z0-9_-])${FIELD}["']?\\s*[:=]\\s*`, "giu"),
+    new RegExp(`--${FLAG_FIELD}(?:=|\\s+)`, "giu"), /\bAUTHORIZATION\s*=\s*/giu, /\b(?:Bearer|Basic)\s+/giu]) {
+    for (const match of text.matchAll(prefix)) {
+      let start = match.index! + match[0].length;
+      let boundaryQuote = "";
+      for (let at = 0; at < start; at++) {
+        const comment = comments.find(word => word.start === at);
+        if (comment) { at = comment.end - 1; continue; }
+        const char = text[at];
+        if (char === "\\" && boundaryQuote !== "'") { at++; continue; }
+        if ((char === "'" || char === '"') && (!boundaryQuote || boundaryQuote === char)) boundaryQuote = boundaryQuote ? "" : char;
+      }
+      let end = valueEnd(text, start, undefined, boundaryQuote, /^(?:Bearer|Basic)\s/iu.test(match[0]));
+      if ((text[start] === "'" || text[start] === '"') && text[end - 1] === text[start]) { start++; end--; }
+      if (end > start && !placeholder(text.slice(start, end))) ranges.push({ start, end, slotStart: match.index! });
+    }
+  }
   return ranges;
 }
 
@@ -96,25 +145,30 @@ function credentialRanges(text: string, depth = 0): Redaction[] {
     const splitFlag = new RegExp(`^--${FLAG_FIELD}=?$`, "iu").test(previous) ||
       new RegExp(`^${FLAG_FIELD}=$`, "iu").test(previous) || /^(?:Bearer|Basic)$/iu.test(previous) ||
       (curl && /^(?:--user=?|--proxy-user=?|--oauth2-bearer=?|-[uU])$/u.test(previous));
-    if (splitFlag) { addValue(word.start, word.end); continue; }
+    if (splitFlag) { addValue(word.start, valueEnd(text, word.start)); continue; }
     const folded = foldedSpans(word.raw);
     const local = plainRanges(folded.text);
     // 只有真实 curl header 槽位把裸 Authorization 正文视为凭据；许可说明不属于该槽位。
     if (curl) {
-      const header = /^(?:-H|--header)$/u.test(previous) ? /^(Authorization\s*:\s*)(.+)$/iu.exec(folded.text) :
-        /^((?:-H|--header=)Authorization\s*:\s*)(.+)$/iu.exec(folded.text);
+      const header = /^(?:-H|--header)$/u.test(previous) ? /^(Authorization\s*:\s*)([\s\S]+)$/iu.exec(folded.text) :
+        /^((?:-H|--header=)Authorization\s*:\s*)([\s\S]+)$/iu.exec(folded.text);
       if (header && !/^(?:Bearer|Basic)\s/iu.test(header[2]) && !placeholder(header[2]))
         local.push({ start: header[1].length, end: folded.text.length });
     }
     let prefix: string | undefined;
     if (database && /^-p.+/u.test(folded.text)) prefix = "-p";
     else if (curl) prefix = /^(?:-[uU]|--(?:user|proxy-user|oauth2-bearer)=)(?=.)/u.exec(folded.text)?.[0];
-    if (prefix && !placeholder(folded.text.slice(prefix.length))) local.push({ start: prefix.length, end: folded.text.length });
+    if (prefix && !placeholder(folded.text.slice(prefix.length))) {
+      const start = word.start + folded.ends[prefix.length - 1];
+      addValue(start, valueEnd(text, word.start));
+      local.push({ start: prefix.length, end: folded.text.length });
+    }
     // 例如 echo 'obclient -pVALUE'：保留内嵌程序，仅处理凭据跨度。
     if (depth < 8 && folded.text !== word.raw && /\s/u.test(folded.text)) local.push(...credentialRanges(folded.text, depth + 1));
     for (const range of local) {
       if (range.end <= range.start) continue;
-      ranges.push({ start: word.start + folded.starts[range.start], end: word.start + folded.ends[range.end - 1] });
+      ranges.push({ start: word.start + folded.starts[range.start], end: word.start + folded.ends[range.end - 1],
+        ...(range.slotStart !== undefined ? { slotStart: word.start + folded.starts[range.slotStart] } : {}) });
     }
   }
   return ranges;
@@ -122,13 +176,50 @@ function credentialRanges(text: string, depth = 0): Redaction[] {
 
 export function redactReviewText(text: string, kind: "command" | "user" | "context" | "display"): string {
   const ranges = credentialRanges(text).sort((a, b) => a.start - b.start || a.end - b.end);
+  // 注释中的伪槽位不能跨过实际换行，把下一行操作当作引号凭据删掉。
+  const comments = privacyWords(text).filter(word => word.raw.startsWith("#"));
+  if (ranges.some(range => comments.some(comment => (range.slotStart ?? range.start) >= comment.start && (range.slotStart ?? range.start) < comment.end && range.end > comment.end)))
+    throw new Error("INPUT_INVALID");
   const merged: Redaction[] = [];
   for (const range of ranges) {
     const previous = merged.at(-1);
     if (previous && range.start < previous.end) previous.end = Math.max(previous.end, range.end);
     else merged.push({ ...range });
   }
-  for (const range of merged.reverse()) text = text.slice(0, range.start) + MASK + text.slice(range.end);
+  const substitutions: Redaction[] = [];
+  for (let i = 0; i < text.length;) {
+    if (/\s|[;&|<>]/u.test(text[i])) { i++; continue; }
+    const end = valueEnd(text, i, substitutions);
+    i = Math.max(i + 1, end);
+  }
+  // 此辅助词法扫描不理解case模式、here-doc或注释内右括号。
+  // 只对需要遮蔽的动态凭据限制隐私表示，普通动态命令仍完整送审。
+  for (const dynamic of substitutions) {
+    if (!merged.some(range => range.start < dynamic.end && range.end > dynamic.start)) continue;
+    const raw = text.slice(dynamic.start, dynamic.end), prefix = raw.startsWith("$(") ? 2 : 1;
+    const inner = raw.slice(prefix, -1);
+    if (inner.includes("#") || parseGenericCommands(inner).status !== "complete") throw new Error("INPUT_INVALID");
+  }
+  const safe: Redaction[] = [];
+  for (const range of merged) {
+    let start = range.start;
+    for (const dynamic of substitutions) {
+      if (dynamic.end <= start || dynamic.start >= range.end) continue;
+      if (dynamic.start > start) safe.push({ start, end: dynamic.start });
+      start = Math.max(start, dynamic.end);
+    }
+    if (start < range.end) safe.push({ start, end: range.end });
+  }
+  // 动态表达式完整保留；其中明确的凭据槽位仍用同一职责递归处理。
+  for (const dynamic of substitutions.reverse()) {
+    const raw = text.slice(dynamic.start, dynamic.end);
+    const prefix = raw.startsWith("$(") ? 2 : 1;
+    const inner = raw.slice(prefix, -1);
+    const sanitized = redactReviewText(inner, kind);
+    if (inner !== sanitized) safe.push({ ...dynamic, replacement: raw.slice(0, prefix) + sanitized + raw.slice(-1) });
+  }
+  for (const range of safe.sort((a, b) => b.start - a.start)) text = text.slice(0, range.start) +
+    (range.replacement ?? MASK) + text.slice(range.end);
   return text;
 }
 

@@ -32,8 +32,10 @@ _ENTRY = Path(__file__).resolve().parents[1] / "agentcfg"
 
 
 def pytest_addoption(parser):
-  # 兼容历史调用参数；fixture 始终退休跳过，绝不消费这些材料。
   group = parser.getgroup("omp-permission-control")
+  group.addoption("--omp-standalone-bun", default=None,
+    help="Explicit locked Bun executable for current standalone and official SDK tests")
+  # 兼容历史调用参数；补丁fixture 始终退休跳过，绝不消费这些材料。
   for name in ("omp-build-source", "omp-tool-cache", "omp-dependency-cache"):
     group.addoption("--" + name, default=None, help="Retired host-patch test input (ignored)")
 

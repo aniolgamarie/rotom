@@ -6,7 +6,7 @@
 
 公共配方 [`profiles/omp-kernel.toml`](../profiles/omp-kernel.toml) 选择三个 TF provider 和十一条 TF 模型绑定，包含 `anthropic-messages`、provider compatibility、模型成本、thinking 等级和 fallback chain 的原生映射。它还部署：
 
-- 76 条 Bash 审批 pattern 和 5 条 interceptor；
+- 76 条 Bash 审批 pattern；保留 5 条 interceptor 配置但默认关闭，避免普通已审查命令因工具偏好失败；
 - 5 个 agent、4 个完整 skill，以及作为受管原生 `RULES.md` 原文部署的确认规则；
 - Kanagawa 主题、状态栏及其他受支持的界面设置；
 - `default/smol/slow/plan/task` 五个模型角色；
@@ -105,6 +105,8 @@ OMP_WORKSPACE="$HOME/src/your-project"
 
 ## 项目来源边界
 
+新启动契约保留用户的 HOME、XDG 和运行目录，OMP 账号与会话继续存放在原受管 state-home。旧部署不会自动变更，详见[目录和环境契约](omp-profiles.md#目录和继承)。来源门禁额外核对实际 HOME、受管配置根、活动 profile 配置根、agent 根和项目中的 dotenv，包括有效 `NODE_ENV` 的 mode.local；只检查存在性与链接，不读正文。检测到未声明来源时会在启动前停止。
+
 在普通仓库内启动是允许的。`.agents/`、`.agent/`、`.claude/`、`.codex/`、`.gemini/` 以及顶层 `AGENTS.md`、`CLAUDE.md`、`GEMINI.md` 属于已禁用兼容 provider 的容器或上下文，受管 OMP 不自动加载其正文，单纯存在不会导致拒绝。
 
 真正可被原生 OMP 消费的来源仍严格检查，包括 `.omp` 下的 settings、agents、tools、hooks、skills、MCP，dotenv、SYSTEM/TITLE/APPEND_SYSTEM 等 direct helper。`omp-kernel` 默认没有开启项目资源；需要项目 skill 或 MCP 时，应按[来源政策](omp-profiles.md#来源政策)声明根并接受逐项校验，不能用目录级放行引入额外配置或凭据。来源检查是启动前配置边界，不是操作系统沙箱。
@@ -138,7 +140,8 @@ Linux x64 的既有宿主证据见[真实 smoke](../specs/002-manage-omp-config/
 受管启动提供本地执行路线契约，插件结合公开 CLI 与真实 Settings 核验；无契约的新 Shell
 或 ACP/未知模式仍人工。普通本地工具使用 Brush，不承诺各 Shell 的原生语言。
 `/permission-control explain` 的 `nativeContext` 可以区分 Shell family、执行路线和固定上下文原因。
-默认 find interceptor 仍可能提示改用 glob，这和审批弹窗是不同步骤。实现、验证及平台范围
+历史默认 find interceptor 曾提示改用 glob，这与审批弹窗是不同步骤；当前配方默认关闭此硬拦截，
+用户显式启用时仍保留宿主行为。实现、验证及平台范围
 见 [Shell 验收](acceptance/omp-shell-approval-20261004.md)；使用时需退出旧进程并正常 sync/plan/apply。
 
 Phase 14 基础隔离验收为 335 项包级纯测试、官方 SDK、24 组宿主及真实人工 UI 通过，见[生产插件验收](acceptance/omp-native-bash-approval-20261004.md)。2026-10-04 后续真实 Cursor 验收通过，main 已快进至 `14f34a9`，宿主仍为未修改的官方 v18.4.5。新增预算已使用 6/6（Cursor 3、GLM 3）：无害复合命令自动批准，human=0、delegate=1；原生 deny 阻止执行，reviewer=0、delegate=0。最终包级 339 项/1288 assertions、隔离宿主 25/25 及部署证据见[真实 Cursor 验收](acceptance/omp-cursor-native-approval-20261004.md)。

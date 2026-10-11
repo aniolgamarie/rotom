@@ -20,7 +20,8 @@ def test_only_explicit_openai_codex_login_is_allowed():
       validate_managed_argv(argv)
 
 
-def test_login_uses_neutral_identity_and_does_not_add_session_argument(tmp_path, monkeypatch, fake_subprocess):
+def test_login_uses_neutral_identity_and_does_not_add_session_argument(
+    tmp_path, monkeypatch, fake_subprocess, isolated_environment):
   clear_omp_identity_environment(monkeypatch)
   isolate_runtime_discovery(monkeypatch)
   workspace, _ = runtime_workspace(tmp_path)
@@ -41,7 +42,12 @@ def test_login_uses_neutral_identity_and_does_not_add_session_argument(tmp_path,
   identity = native_identity(workspace.profile, workspace.instance)
   assert tuple(call["argv"][-2:]) == ("login", "openai-codex")
   assert "--no-title" not in call["argv"] and call["cwd"] == identity.home
-  assert call["env"]["HOME"] == str(identity.home)
+  execution = state["current"]["launch"]["adapter_binding"]["execution_environment"]
+  assert call["env"]["HOME"] == str(isolated_environment.home) == execution["home"]
+  assert call["env"]["PI_CONFIG_DIR"] == execution["config_dir"]
+  assert os.path.normpath(os.path.join(call["env"]["HOME"], call["env"]["PI_CONFIG_DIR"])) == str(identity.home / ".omp")
+  assert execution["native_paths"]["auth_db"] == str(identity.agent_dir / "agent.db")
+  assert execution["native_paths"]["sessions"] == str(identity.agent_dir / "sessions")
   assert foreign.read_text() == "OLD_AUTH_SENTINEL"
 
 
