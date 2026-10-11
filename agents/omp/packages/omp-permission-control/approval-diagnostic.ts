@@ -1,19 +1,20 @@
 import { createHash } from "node:crypto";
 import { CONTEXT_REASONS, SHELL_FAMILIES } from "./native-bash";
 import { REVIEW_FAILURE_CODES, TRANSPORT_CODES, type ReviewSequenceResult } from "./standalone-reviewer";
+import type { SanitizedReviewPacket } from "./review-input";
 
 export const AUDIT_TYPE = "permission-control.audit.v1";
 export const GATE_CODES = ["CONFIG_UNAVAILABLE", "INVALID_PARAMETERS", "DUPLICATE_TICKET", "QUEUE_CANCELLED",
   "CONFIGURED_DENY", "NATIVE_DENY", "MANUAL_MODE", "CONFIGURED_PROMPT", "UNSUPPORTED_SYNTAX",
   "NATIVE_PROMPT", "UNSUPPORTED_STATUS_SEMANTICS", "UNSUPPORTED_NATIVE_CONTEXT", "NO_USER_MESSAGES", "SENSITIVE_INPUT", "INPUT_TOO_LARGE",
   "INVALID_TICKET", "STALE_REVIEW", "SCOPED_SETTINGS_UNAVAILABLE", "NATIVE_DELEGATE_UNAVAILABLE",
-  "RUNTIME_FAILURE", "CANCELLED", "INVALIDATED"] as const;
+  "RUNTIME_FAILURE", "CANCELLED", "INVALIDATED", "INPUT_INVALID"] as const;
 const REASONS = ["LOW_RISK_AUTHORIZED", "USER_CONFIRMATION_REQUIRED", "NOT_AUTHORIZED", "CONFLICTING_AUTHORIZATION",
   "HIGH_RISK", "UNKNOWN_RISK", "CONFIG_UNAVAILABLE", "INVALID_OR_UNAVAILABLE", "DUPLICATE_TOOL_CALL",
   "UNSUPPORTED_EXECUTION_CONTEXT", "UNSUPPORTED_STATUS_SEMANTICS", "UNSUPPORTED_SYNTAX", "SCOPED_SETTINGS_UNAVAILABLE", "INVALID_TICKET",
   "STALE_REVIEW", "NATIVE_DELEGATE_UNAVAILABLE", "NATIVE_DENY", "NATIVE_PROMPT", "REVIEW_UNAVAILABLE",
   "NATIVE_EXECUTION_FAILED", "NATIVE_RESULT_ERROR", "RAW_EXECUTION_FAILED", "RUNTIME_FAILURE", "CANCELLED",
-  "NOT_REVIEWED", "DIAGNOSTIC_UNKNOWN"] as const;
+  "NOT_REVIEWED", "DIAGNOSTIC_UNKNOWN", "INPUT_INVALID", "RULE_TARGET_UNVERIFIED", "RULE_CONFIRMATION_REQUIRED"] as const;
 const SOURCES = ["none", "native", "human", "primary", "remote"] as const;
 const DECISIONS = ["allow", "ask", "deny"] as const;
 const RISKS = ["low", "medium", "high", "unknown"] as const;
@@ -41,6 +42,18 @@ function safeCallId(value: unknown): string | null {
 }
 function one<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? value as T : fallback;
+}
+function ruleIds(value: unknown): number[] {
+  return Array.isArray(value) ? [...new Set(value.filter(id => Number.isSafeInteger(id) && id >= 0 && id < 10000))].slice(0, 64) : [];
+}
+function analysis(value: any) {
+  return value ? { status: one(value.status, ["complete", "unsupported", "error"] as const, "error"),
+    matchedRuleIds: ruleIds(value.matchedRuleIds), uncertainRuleIds: ruleIds(value.uncertainRuleIds) } : undefined;
+}
+function inputMetadata(value: any) {
+  return value ? { redacted: value.redacted === true,
+    omittedMessages: Number.isSafeInteger(value.omittedMessages) && value.omittedMessages >= 0 ? value.omittedMessages : 0,
+    authorizationHistoryComplete: value.authorizationHistoryComplete === true } : undefined;
 }
 function nativeContext(value: any) {
   if (!value) return undefined;
@@ -94,6 +107,14 @@ export class ApprovalDiagnostic {
       this.data.preModelGates.push(value);
   }
   context(value: unknown) { try { this.data.nativeContext = nativeContext(value); } catch { this.data.nativeContext = undefined; } }
+  analysis(status: string, matchedRuleIds: number[], uncertainRuleIds: number[]) {
+    this.data.analysis = analysis({ status, matchedRuleIds, uncertainRuleIds });
+  }
+  input(packet: SanitizedReviewPacket) {
+    this.data.reviewInput = inputMetadata({ redacted: packet.privacy.redacted,
+      omittedMessages: packet.contextSelection.omittedMessages,
+      authorizationHistoryComplete: packet.contextSelection.authorizationHistoryComplete });
+  }
   review(result: ReviewSequenceResult) { try { this.data.attempts = safeAttempts(result); } catch { this.data.attempts = []; } }
   approval(value: { source: string; reasonCode: string; chain: string[] }) {
     this.approvalRecorded = true;
@@ -139,7 +160,8 @@ export function createApprovalAudit(append?: (type: string, data: unknown) => vo
             ...(REVIEW_FAILURE_CODES.includes(item.failureCode) ? { failureCode: item.failureCode } : {}),
             ...(TRANSPORT_CODES.includes(item.transportCode) ? { transportCode: item.transportCode } : {}),
             ...(Number.isInteger(item.httpStatus) && item.httpStatus >= 100 && item.httpStatus <= 599 ? { httpStatus: item.httpStatus } : {}),
-          })) };
+          })), ...(call.data.analysis ? { analysis: analysis(call.data.analysis) } : {}),
+          ...(call.data.reviewInput ? { reviewInput: inputMetadata(call.data.reviewInput) } : {}) };
         state.last = record;
         if (!append) throw new Error("audit unavailable");
         append(AUDIT_TYPE, record); state.accepted++; state.health = "accepted";

@@ -2,7 +2,8 @@ import { sessionIdDigest } from "./approval-diagnostic";
 import { describe, expect, test } from "bun:test";
 import { createStandalonePlugin, type StandaloneConfig, validateStandaloneConfig } from "./standalone";
 import type { NativeBashRuntime, NativeSettingsSnapshot } from "./native-bash";
-import { parseStandaloneReview, reviewCommand } from "./standalone-reviewer";
+import { parseStandaloneReview, reviewCommand as reviewPreparedCommand, type ReviewRuntime, type ReviewTarget } from "./standalone-reviewer";
+import { prepareReviewPacket, type RawReviewInput } from "./review-input";
 import { parseGenericCommands } from "./standalone-shell-analysis";
 import { readCorpusFile } from "../../../../scripts/check-omp-command-history";
 import { join } from "node:path";
@@ -24,6 +25,15 @@ const baseConfig: StandaloneConfig = {
 function model(provider = "primary", id = "reviewer") {
   return { provider, id, api: "openai-completions", baseUrl: "https://invalid.test/v1",
     requestModelId: undefined };
+}
+
+async function reviewCommand(input: RawReviewInput & { reviewer: "session" | ReviewTarget; remoteFallback?: ReviewTarget },
+  runtime: ReviewRuntime, signal?: AbortSignal) {
+  const { reviewer, remoteFallback, ...raw } = input;
+  const prepared = prepareReviewPacket(raw);
+  if (prepared.status !== "ready") return { status: prepared.status === "input-too-large" ? "input-too-large" : "failure",
+    primary: { status: "failure", called: false, health: "invalid", failureCode: prepared.reasonCode } } as const;
+  return reviewPreparedCommand(prepared.packet, { reviewer, remoteFallback }, runtime, signal);
 }
 
 async function fakeHost(options: {
@@ -200,7 +210,7 @@ describe("common HOME arguments and command queries", () => {
         const h = await fakeHost({ config: { ...baseConfig, nativePatterns: [{ match: "cat /resolved/private/*", approval }] }, hasUI: false });
         const result = await (await ready(h)).execute("uncertain", { command }, undefined, undefined, h.ctx);
         expect(result.isError).toBe(true);
-        expect(h.fetchCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+        expect(h.fetchCalls).toHaveLength(1); expect(h.execCalls).toHaveLength(0);
       }
     }
     for (const command of ["rm ~/private; echo $(id)", "ls ~/bin; rm ~/.env", "command -v ob; rm ~/private"]) {
@@ -351,7 +361,7 @@ describe("standalone reviewer", () => {
 });
 
 describe("standalone plugin", () => {
-  test("all rebuilt scenarios preserve frozen gates except the exact root-reviewed grammar overlays", async () => {
+  test("frozen parser labels remain unchanged while every valid command reaches model review", async () => {
     const fixture = join(import.meta.dir, "../../../../tests/fixtures/omp/command-scenarios");
     const sha = (raw: string | Uint8Array) => createHash("sha256").update(raw).digest("hex");
     const canonical = (value: any): string => Array.isArray(value) ? "[" + value.map(canonical).join(",") + "]" :
@@ -429,51 +439,55 @@ describe("standalone plugin", () => {
       expect(entry.fullParse.commands.some((command: any) => command.statusExpansions?.length)).toBe(true);
       overrides.set(entry.id, "model");
     }
+    const routing = JSON.parse(readFileSync(join(fixture, "../permission-product-acceptance/routing-policy.json"), "utf8"));
+    expect(routing.corpus.sha256).toBe(sha(corpusRaw));
+    expect(routing.routingContract.modelReachCount).toBe(11472);
+    const invalidIds = new Set<string>(routing.inputValidationCases.map((row: any) => row.id));
     const diagnostics = { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } as const;
     const native = fakeNativeRuntime({ diagnostics, reviewContext: { ...diagnostics, sameSettingsInstance: true, nativeDecision: "allow" } });
-    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime, hasUI: false });
-    const { tool, hook } = await nativeReady(h);
-    let completed = 0, blocked = 0, overlayReviewed = 0, unchanged = 0;
-    const failures: string[] = [], observed: [string, string][] = [];
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime, hasUI: false,
+      response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown",
+        authorization: "unknown", reasonCode: "USER_CONFIRMATION_REQUIRED" }) } }] } });
+    const { hook } = await nativeReady(h);
+    const observed: [string, string][] = [], failures: string[] = [];
     for (const row of data.records) {
-      // 期望仅取固定override或原row，不从current parser推导。
-      const expectedGate = overrides.get(row.id) ?? row.expectedGate;
-      const input = { command: row.command, timeout: 2 };
-      const fetches = h.fetchCalls.length, invoked = h.invokeCalls.length;
-      const result = await hook({ type: "tool_call", toolName: "bash", toolCallId: row.id, input }, h.ctx);
-      const output = result === undefined ? await tool.execute(row.id, input, undefined, undefined, h.ctx) : undefined;
-      const review = result === undefined && !output?.isError && h.fetchCalls.length === fetches+1 &&
-        h.invokeCalls.length === invoked+1 && h.invokeCalls.at(-1)?.[0] === input && h.invokeCalls.at(-1)?.[0].command === row.command;
-      const human = Boolean(result?.block) && h.fetchCalls.length === fetches && h.invokeCalls.length === invoked;
-      const actualGate = review ? "review" : human ? "human" : "unexpected";
-      observed.push([row.id, actualGate]);
-      if (expectedGate === "human") { if (!human) failures.push(row.id); blocked++; }
-      else { if (!review) failures.push(row.id); completed++; }
-      if (overrides.has(row.id)) { if (review) overlayReviewed++; }
-      else if (actualGate === (row.expectedGate === "model" ? "review" : "human")) unchanged++;
+      const expected = invalidIds.has(row.id) ? "invalid-input" : "review";
+      const fetches = h.fetchCalls.length;
+      const result = await hook({ type: "tool_call", toolName: "bash", toolCallId: row.id,
+        input: { command: row.command, timeout: 2 } }, h.ctx);
+      const modelReached = h.fetchCalls.length === fetches + 1;
+      const invalid = !modelReached && h.auditEntries.at(-1).data.preModelGates.includes("INVALID_PARAMETERS");
+      const actual = modelReached ? "review" : invalid ? "invalid-input" : "unexpected";
+      expect(result?.block).toBe(true); // fake ask / 无 UI，从不执行源命令。
+      if (modelReached) {
+        const packet = JSON.parse(JSON.parse(h.fetchCalls.at(-1)[1].body).messages.at(-1).content);
+        expect(packet.command).toBe(row.command); // 公开占位符幂等，原数据与全文保持冻结。
+        expect(h.auditEntries.at(-1).data.attempts[0].decision).toBe("ask");
+        expect(h.auditEntries.at(-1).data.preModelGates).toEqual([]);
+      }
+      observed.push([row.id, actual]);
+      if (actual !== expected) failures.push(row.id);
     }
     const summary = { total: observed.length, review: observed.filter(row => row[1] === "review").length,
-      human: observed.filter(row => row[1] === "human").length, unexpected: observed.filter(row => row[1] === "unexpected").length,
-      expectedReview: completed, expectedHuman: blocked, overlayReviewed, unchanged, failures: failures.length,
-      fakeFetches: h.fetchCalls.length, fakeDelegates: h.invokeCalls.length, fakeExecs: h.execCalls.length, humanSelects: h.selectCalls.length,
-      sourceCorpusSha256: sha(corpusRaw), overlaySha256: sha(overlayRaw), statusOverlaySha256: sha(statusRaw), observationSha256: sha(JSON.stringify(observed)),
+      invalidInput: observed.filter(row => row[1] === "invalid-input").length, failures: failures.length,
+      fakeFetches: h.fetchCalls.length, fakeDelegates: h.invokeCalls.length, fakeExecs: h.execCalls.length,
+      sourceCorpusSha256: sha(corpusRaw), observationSha256: sha(JSON.stringify(observed)),
+      historicalModel: oldModel, historicalHuman: oldHuman,
       riskOrRealHumanQualification: false, shellCommandsExecuted: false };
     const outputDir = process.env.OMP_SHELL_REVIEW_EVIDENCE;
     if (outputDir) {
       const shards = [];
       for (let offset = 0; offset < observed.length; offset += 4096) {
-        const records = observed.slice(offset, offset+4096); const raw = JSON.stringify(records) + "\n";
-        expect(Buffer.byteLength(raw)).toBeLessThanOrEqual(384 * 1024);
+        const records = observed.slice(offset, offset + 4096), raw = JSON.stringify(records) + "\n";
         const name = "actual-gates-" + String(shards.length + 1) + ".json";
         writeFileSync(join(outputDir, name), raw, { mode: 0o600, flag: "wx" });
         shards.push({ name, records: records.length, bytes: Buffer.byteLength(raw), sha256: sha(raw) });
       }
       writeFileSync(join(outputDir, "actual-gates-summary.json"), JSON.stringify({ ...summary, shards }, null, 2) + "\n", { mode: 0o600, flag: "wx" });
     }
-    expect({ total: observed.length, completed, blocked, overlayReviewed, unchanged }).toEqual({ total: 11473, completed: 10078, blocked: 1395, overlayReviewed: 648, unchanged: 10825 });
-    expect({ count: failures.length, first: failures.slice(0, 10) }).toEqual({ count: 0, first: [] });
-    expect(h.fetchCalls).toHaveLength(10078); expect(h.invokeCalls).toHaveLength(10078);
-    expect(h.execCalls).toHaveLength(0); expect(h.selectCalls).toHaveLength(0);
+    expect(summary).toMatchObject({ total: 11473, review: 11472, invalidInput: 1, failures: 0,
+      fakeFetches: 11472, fakeDelegates: 0, fakeExecs: 0 });
+    expect(failures).toEqual([]);
   }, 60000);
   test("loads by registration only before runtime actions are initialized", async () => {
 const h = await fakeHost({ loadingActionsThrow: true });
@@ -509,11 +523,12 @@ const h = await fakeHost({ config: { ...baseConfig, defaultMode: "manual" }, sel
     expect(title).toContain('command: "API_KEY=[REDACTED] env"');
     expect(title).not.toContain("sk-12345678901234567890");
   });
-  test("credential flags, custom secret fields, URL userinfo and quote concatenation never reach the reviewer", async () => {
+  test("credential flags, custom secret fields, URL userinfo and quote concatenation are removed before review and human confirmation", async () => {
     for (const command of ["echo CUSTOM_ACCESS_TOKEN='CanaryOne'CanaryTwo", "echo API'_'KEY=CanaryKey", "echo API'_'KEY=CanaryKey \\", "echo CUSTOM'_'ACCESS_TOKEN=CanaryKey", "echo API_KEY=\\\nCanaryKey", "echo ok # API'_'KEY=CanaryKey", "curl -u CanaryUser:CanaryPass https://example.invalid", "curl -uCanaryUser:CanaryPass https://example.invalid", "curl -u \\\nCanaryUser:CanaryPass https://example.invalid", "curl https://CanaryUser:CanaryPass@example.invalid", "curl --api-key CanaryKey", "echo 'Authorization: Bearer CanaryToken'"]) {
-      const h = await fakeHost({ select: "Deny" });
+      const h = await fakeHost({ select: "Deny", response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } });
       expect((await (await ready(h)).execute("call", { command }, undefined, undefined, h.ctx)).isError).toBe(true);
-      expect(h.fetchCalls).toHaveLength(0);
+      expect(h.fetchCalls).toHaveLength(1);
+      expect(JSON.stringify(h.fetchCalls.map(call => call[1].body))).not.toMatch(/Canary(?:One|Two|User|Pass|Key|Token)/u);
       expect(h.execCalls).toHaveLength(0);
       expect(h.selectCalls).toHaveLength(1);
       expect(JSON.stringify(h.selectCalls)).not.toMatch(/Canary(?:One|Two|User|Pass|Key|Token)/u);
@@ -522,9 +537,10 @@ const h = await fakeHost({ config: { ...baseConfig, defaultMode: "manual" }, sel
     await (await ready(ordinary)).execute("call", { command: "ls -u fixture.txt" }, undefined, undefined, ordinary.ctx);
     expect(JSON.stringify(ordinary.selectCalls)).toContain("ls -u fixture.txt");
     for (const command of ["curl --api'_'key CanaryKey", "echo Be'ar'er CanaryToken", "echo Be'ar'er\" CanaryToken\""]) {
-      const h = await fakeHost({ select: "Deny" });
+      const h = await fakeHost({ select: "Deny", response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } });
       await (await ready(h)).execute("call", { command }, undefined, undefined, h.ctx);
-      expect(h.fetchCalls).toHaveLength(0);
+      expect(h.fetchCalls).toHaveLength(1);
+      expect(JSON.stringify(h.fetchCalls.map(call => call[1].body))).not.toMatch(/Canary(?:One|Two|User|Pass|Key|Token)/u);
       expect(JSON.stringify(h.selectCalls)).not.toMatch(/Canary(?:Key|Token)/u);
     }
   });
@@ -552,7 +568,7 @@ const h = await fakeHost({ config: { ...baseConfig, nativePatterns: [{ match: "r
       undefined, undefined, h.ctx);
     expect(result.isError).toBe(true);
     expect(h.fetchCalls).toHaveLength(0);
-    expect(h.selectCalls).toHaveLength(1);
+    expect(h.selectCalls).toHaveLength(0);
   });
   test("redirect effects, wildcard uncertainty and embedded programs preserve configured gates", async () => {
     for (const [command, pattern, approval] of [
@@ -569,12 +585,14 @@ const h = await fakeHost({ config: { ...baseConfig, nativePatterns: [{ match: "r
       ["awk 'BEGIN{system(\"rm -rf /\")}'", "rm *", "deny"],
       ["sed 'e rm -rf /'", "rm *", "deny"],
     ] as const) {
-      const hardDeny = approval === "deny" && /^(?:rm|cat|echo)\s/u.test(command);
+      const unrelated = command === "python '-cprint(1)'";
+      const uncertain = command === "cat *.txt" && pattern === "cat protected.txt";
+      const hardDeny = approval === "deny" && !unrelated && !uncertain;
       const h = await fakeHost({ config: { ...baseConfig, nativePatterns: [{ match: pattern, approval }] }, hasUI: hardDeny, select: "Approve" });
       const result = await (await ready(h)).execute("call", { command }, undefined, undefined, h.ctx);
-      expect(result.isError).toBe(true);
-      expect(h.fetchCalls).toHaveLength(0);
-      expect(h.execCalls).toHaveLength(0);
+      expect(result.isError).toBe(unrelated ? undefined : true);
+      expect(h.fetchCalls).toHaveLength(unrelated || uncertain ? 1 : 0);
+      expect(h.execCalls).toHaveLength(unrelated ? 1 : 0);
       if (hardDeny) expect(h.selectCalls).toHaveLength(0);
     }
     for (const command of ["ls *.jar 2>/dev/null", "pwd\nls;", "echo ok # ; rm -rf /", "cat '*.txt'"]) {
@@ -591,13 +609,17 @@ const headless = await fakeHost({ response: new Error("offline"), hasUI: false }
     expect((await (await ready(headless)).execute("call", { command: "ls" }, undefined, undefined, headless.ctx)).isError).toBe(true);
     expect(headless.execCalls).toHaveLength(0);
   });
-  test("missing user provenance and secret-like text do not reach model", async () => {
-const noUser = await fakeHost({ messages: [] });
+  test("missing user provenance and redacted user secrets still reach the model", async () => {
+    const ask = { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] };
+    const noUser = await fakeHost({ messages: [], response: ask });
     await (await ready(noUser)).execute("call", { command: "ls" }, undefined, undefined, noUser.ctx);
-    expect(noUser.fetchCalls).toHaveLength(0);
-const secret = await fakeHost({ messages: [{ type: "message", message: { role: "user", content: "API_KEY=sk-12345678901234567890", timestamp: 1 } }] });
+    expect(noUser.fetchCalls).toHaveLength(1); expect(noUser.execCalls).toHaveLength(0);
+    expect(JSON.parse(JSON.parse(noUser.fetchCalls[0][1].body).messages.at(-1).content).genuineUserMessages).toEqual([]);
+    const secret = await fakeHost({ response: ask, messages: [{ type: "message", message: { role: "user", content: "API_KEY=sk-12345678901234567890", timestamp: 1 } }] });
     await (await ready(secret)).execute("call", { command: "env" }, undefined, undefined, secret.ctx);
-    expect(secret.fetchCalls).toHaveLength(0);
+    expect(secret.fetchCalls).toHaveLength(1); expect(secret.execCalls).toHaveLength(0);
+    expect(JSON.parse(JSON.parse(secret.fetchCalls[0][1].body).messages.at(-1).content).genuineUserMessages).toEqual(["API_KEY=[REDACTED]"]);
+    expect(JSON.stringify(secret.fetchCalls)).not.toContain("sk-12345678901234567890");
   });
   test("model or generation change during review blocks execution", async () => {
     const h = await fakeHost();
@@ -804,7 +826,7 @@ describe("native bash delegation", () => {
 
   test("raw precapture success and failure preserve the current pending Bash approval context", async () => {
     const current = { shellFamily: "bash", executionRoute: "local-embedded", contextReason: "BASH_STARTUP" } as const;
-    const native = fakeNativeRuntime({ decision: "prompt", reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", diagnostics: current });
+    const native = fakeNativeRuntime({ decision: "prompt", reasonCode: "NATIVE_PROMPT", diagnostics: current });
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
     const { hook } = await nativeReady(h);
     let respond: (value: string) => void = () => {};
@@ -825,7 +847,7 @@ describe("native bash delegation", () => {
         expect(explained).toMatchObject({ outcome: "blocked", reasonCode: "SCOPED_SETTINGS_UNAVAILABLE" });
         expect(explained.nativeContext).toBeUndefined();
       } else expect(explained).toMatchObject({ outcome: "pending-human",
-        reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", nativeContext: current });
+        reasonCode: "NATIVE_PROMPT", nativeContext: current });
       await h.commands.get("permission-control").handler("status", h.ctx);
       expect(JSON.parse(h.notices.at(-1)!).nativeContext).toEqual(current);
     };
@@ -846,7 +868,7 @@ describe("native bash delegation", () => {
     const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime });
     const { hook } = await nativeReady(h);
     expect(await hook(event("previous-allow"), h.ctx)).toBeUndefined();
-    native.setDecision("prompt", "UNSUPPORTED_EXECUTION_CONTEXT");
+    native.setDecision("prompt", "NATIVE_PROMPT");
     native.setDiagnostics({ shellFamily: "zsh", executionRoute: "unverified", contextReason: "EXECUTION_ROUTE_UNVERIFIED",
       env: "SECRET_ENV_SENTINEL", path: "/SECRET_PATH_SENTINEL" } as any);
     let respond: (value: string) => void = () => {};
@@ -860,11 +882,11 @@ describe("native bash delegation", () => {
     await shown;
     await h.commands.get("permission-control").handler("explain", h.ctx);
     expect(JSON.parse(h.notices.at(-1)!)).toMatchObject({ outcome: "pending-human", source: "human",
-      reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", chain: ["native", "human"], nativeContext: {
+      reasonCode: "NATIVE_PROMPT", chain: ["native", "human"], nativeContext: {
         shellFamily: "zsh", executionRoute: "unverified", contextReason: "EXECUTION_ROUTE_UNVERIFIED" } });
     await h.commands.get("permission-control").handler("status", h.ctx);
     expect(JSON.parse(h.notices.at(-1)!)).toMatchObject({ pending: 1, human: { calls: 1 }, primary: { calls: 1 } });
-    expect(h.selectCalls[0][0]).toContain("reason: UNSUPPORTED_EXECUTION_CONTEXT");
+    expect(h.selectCalls[0][0]).toContain("reason: NATIVE_PROMPT");
     expect(h.selectCalls[0][0]).toContain("context: EXECUTION_ROUTE_UNVERIFIED");
     expect([...h.notices, h.selectCalls[0][0]].join("\n")).not.toContain("SECRET_");
     respond("Deny");
@@ -951,7 +973,7 @@ describe("native bash delegation", () => {
     for (const select of ["Deny", "Approve"]) {
       const native = fakeNativeRuntime({ diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" },
         reviewContext: { sameSettingsInstance: true, nativeDecision: "allow", worktreePlan: plan } });
-      const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select });
+      const h = await fakeHost({ config: { ...nativeConfig, defaultMode: "manual" }, nativeRuntime: native.runtime, select });
       const tool = await ready(h); const input = { command: raw, timeout: 30 };
       expect(await h.events.get("tool_call")(event("raw-worktree", input, "permission_bash"), h.ctx)).toBeUndefined();
       const result = await tool.execute("raw-worktree", input, undefined, undefined, h.ctx);
@@ -1000,29 +1022,22 @@ describe("native bash delegation", () => {
     }
   });
 
-  test("unverified native rewrite effects remain visible only in native human UI", async () => {
-    for (const evidence of ["changed", "helper-unavailable"]) {
-      for (const name of ["bash", "permission_bash"]) {
-        const native = fakeNativeRuntime({ decision: "prompt", reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT",
-          diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "WORKTREE_CONTEXT" },
-          reviewContext: { sameSettingsInstance: true, unverifiedWorktreeEffects:
-            { mayRewrite: true, verified: false, rewriteEvidence: evidence } } });
-        const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny" });
-        await ready(h); const input = { command: "echo ok && cd sub && git worktree add ../x" };
-        const hook = h.events.get("tool_call");
-        if (name === "bash") expect((await hook(event("unverified", input), h.ctx)).block).toBe(true);
-        else {
-          expect(await hook(event("unverified", input, name), h.ctx)).toBeUndefined();
-          expect((await h.tools.get(name).execute("unverified", input, undefined, undefined, h.ctx)).isError).toBe(true);
-        }
-        expect(h.fetchCalls).toHaveLength(0); expect(h.invokeCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
-        expect(h.selectCalls).toHaveLength(1);
-        const title = h.selectCalls[0][0];
-        if (name === "bash") {
-          expect(title).toContain("analysis is incomplete"); expect(title).toContain("local/ignored data");
-          expect(title).toContain("configuration/backend may differ"); expect(title).toContain("hooks may execute local code");
-        } else expect(title).not.toContain("Possible native worktree rewrite");
-      }
+  test("unverified native context is reviewed but cannot bypass execution binding", async () => {
+    for (const name of ["bash", "permission_bash"]) {
+      const native = fakeNativeRuntime({ decision: "prompt", reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT",
+        diagnostics: { shellFamily: "zsh", executionRoute: "local-embedded", contextReason: "WORKTREE_CONTEXT" },
+        reviewContext: { sameSettingsInstance: true, unverifiedWorktreeEffects: { mayRewrite: true, verified: false } } });
+      const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Approve" });
+      await ready(h); const input = { command: "echo ok && cd sub && git worktree add ../x" };
+      const result = await h.events.get("tool_call")(event("unverified", input, name), h.ctx);
+      if (name === "bash") expect(result.block).toBe(true);
+      else expect((await h.tools.get(name).execute("unverified", input, undefined, undefined, h.ctx)).isError).toBe(true);
+      expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+      expect(h.selectCalls).toHaveLength(0);
+      const packet = JSON.parse(JSON.parse(h.fetchCalls[0][1].body).messages.at(-1).content);
+      expect(packet.command).toBe(input.command);
+      expect(packet.executionContext.unverifiedWorktreeEffects).toEqual(name === "bash" ? { mayRewrite: true, verified: false } : undefined);
+      expect(h.auditEntries.at(-1).data.reasonCode).toBe("UNSUPPORTED_EXECUTION_CONTEXT");
     }
   });
 
@@ -1045,16 +1060,11 @@ describe("native bash delegation", () => {
       const h = await fakeHost({ config: nativeConfig, nativeRuntime: native.runtime, select: "Deny" });
       const { hook, tool } = await nativeReady(h); const input = { command };
       const result = await hook(event("no-rewrite", input), h.ctx);
-      if (command === "echo $NAME") {
-        expect(result.block).toBe(true); expect(h.fetchCalls).toHaveLength(0); expect(h.invokeCalls).toHaveLength(0);
-        expect(h.selectCalls[0][0]).toContain("UNSUPPORTED_SYNTAX");
-        expect(h.selectCalls[0][0]).not.toContain("WORKTREE_CONTEXT");
-        expect(h.selectCalls[0][0]).not.toContain("Possible native worktree rewrite");
-      } else {
-        expect(result).toBeUndefined();
-        expect((await tool.execute("no-rewrite", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
-        expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(1); expect(h.invokeCalls[0][0]).toBe(input);
-      }
+      expect(result).toBeUndefined();
+      expect((await tool.execute("no-rewrite", input, undefined, undefined, h.ctx)).isError).toBeUndefined();
+      expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(1);
+      const packet = JSON.parse(JSON.parse(h.fetchCalls[0][1].body).messages[1].content);
+      expect(packet.executionContext.worktreePlan).toBeUndefined(); expect(packet.command).toBe(command);
     }
   });
 
@@ -1279,14 +1289,18 @@ describe("strict independent native approval acceptance", () => {
   }
 
   for (const row of fixture.manual) {
-    test(`strict unsupported structures never review or delegate: ${row.id}`, async () => {
+    test(`formerly unsupported structures enter model before any decision: ${row.id}`, async () => {
       for (const command of [row.command, `pwd && ${row.command}`, `${row.command}; echo done`, `command -v ob | ${row.command}`]) {
-        const result = await run(command, { hasUI: false });
-        expect(result.blocked).toBe(true);
-        expect(result.h.fetchCalls).toHaveLength(0);
-        expect(result.h.selectCalls).toHaveLength(0);
-        expect(result.h.invokeCalls).toHaveLength(0);
-        expect(result.h.execCalls).toHaveLength(0);
+        for (const decision of ["allow", "ask", "deny"] as const) {
+          const result = await run(command, { decision });
+          expect(result.h.fetchCalls).toHaveLength(1);
+          expect(result.h.selectCalls).toHaveLength(decision === "ask" ? 1 : 0);
+          expect(result.h.invokeCalls).toHaveLength(decision === "allow" ? 1 : 0);
+          expect(result.h.execCalls).toHaveLength(0); expect(result.blocked).toBe(decision !== "allow");
+          expect(JSON.parse(JSON.parse(result.h.fetchCalls[0][1].body).messages.at(-1).content).command).toBe(command);
+          expect(result.h.auditEntries.at(-1).data.preModelGates).toEqual([]);
+          if (decision === "allow") expect(result.h.invokeCalls[0][0]).toBe(result.input);
+        }
       }
     });
   }
@@ -1406,16 +1420,19 @@ describe("safe final approval diagnostics", () => {
   test("mysql/mariadb/obclient passwords never reach reviewer, audit or raw approval title", async () => {
     const secret = "DbPrivateCanaryValue";
     for (const client of ["mysql", "mariadb", "obclient"]) for (const flag of ["-p" + secret, "-p'" + secret + "'", "--password=" + secret, "--password " + secret]) {
-      const h = await fakeHost({ select: "Deny" }); const tool = await ready(h);
+      const h = await fakeHost({ select: "Deny", response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } }); const tool = await ready(h);
       await tool.execute("call_db", { command: client + " " + flag + " -P 3306 -e 'SELECT 1'" }, undefined, undefined, h.ctx);
-      expect(h.fetchCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+      expect(h.fetchCalls).toHaveLength(1);
+      expect(JSON.stringify(h.fetchCalls)).not.toContain(secret); expect(h.execCalls).toHaveLength(0);
       expect(h.selectCalls).toHaveLength(1); expect(h.selectCalls[0][0]).not.toContain(secret);
       expect(JSON.stringify(h.auditEntries)).not.toContain(secret);
-      expect(h.auditEntries[0].data.preModelGates).toContain("SENSITIVE_INPUT");
+      expect(h.auditEntries[0].data.preModelGates).toEqual([]);
+      expect(h.auditEntries[0].data.reviewInput.redacted).toBe(true);
     }
-    const quoted = await fakeHost({ select: "Deny" }); const quotedTool = await ready(quoted);
+    const quoted = await fakeHost({ select: "Deny", response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } }); const quotedTool = await ready(quoted);
     await quotedTool.execute("call_db_echo", { command: "echo 'obclient -p" + secret + "'" }, undefined, undefined, quoted.ctx);
-    expect(quoted.fetchCalls).toHaveLength(0); expect(quoted.selectCalls[0][0]).not.toContain(secret);
+    expect(quoted.fetchCalls).toHaveLength(1);
+    expect(JSON.stringify(quoted.fetchCalls)).not.toContain(secret); expect(quoted.selectCalls[0][0]).not.toContain(secret);
     const h = await fakeHost(); const tool = await ready(h);
     expect((await tool.execute("call_port", { command: "mysql -P 3306 -e 'SELECT 1'" }, undefined, undefined, h.ctx)).isError).toBeUndefined();
     expect(h.fetchCalls).toHaveLength(1); expect(h.execCalls).toHaveLength(1);
@@ -1424,13 +1441,14 @@ describe("safe final approval diagnostics", () => {
 
 describe("status diagnostic shell semantics", () => {
   for (const shellFamily of ["fish", "pwsh", "cmd", "unknown"] as const) {
-    test(`${shellFamily} status expansion is not assumed numeric`, async () => {
+    test(`${shellFamily} status expansion is reviewed with its declared language`, async () => {
       const native = fakeNativeRuntime({ reviewContext: { shellFamily, sameSettingsInstance: true, nativeDecision: "allow" } });
-      const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime, select: "Deny" });
+      const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime, select: "Deny", response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } });
       const { hook } = await nativeReady(h);
       expect((await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_status", input: { command: "echo $?" } }, h.ctx)).block).toBe(true);
-      expect(h.fetchCalls).toHaveLength(0); expect(h.invokeCalls).toHaveLength(0);
-      expect(h.auditEntries[0].data.preModelGates).toContain("UNSUPPORTED_STATUS_SEMANTICS");
+      expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(0);
+      expect(h.auditEntries[0].data.preModelGates).toEqual([]);
+      expect(JSON.parse(JSON.parse(h.fetchCalls[0][1].body).messages.at(-1).content).executionContext.shellFamily).toBe(shellFamily);
     });
   }
   test("native deny remains prior and raw fixed Bash status can reach review", async () => {
@@ -1446,7 +1464,7 @@ describe("status diagnostic shell semantics", () => {
 });
 
 describe("original-session diagnostics and raw capture races", () => {
-  for (const mutation of ["session", "mode", "model"] as const) {
+  for (const mutation of ["session", "mode", "model", "authorization", "cwd"] as const) {
     test(`raw capture ${mutation} mutation cannot mint a new-context ticket`, async () => {
       let release!: () => void;
       const wait = new Promise<void>(resolve => { release = resolve; });
@@ -1461,6 +1479,8 @@ describe("original-session diagnostics and raw capture races", () => {
       if (mutation === "session") { session = "new-session"; await h.events.get("session_switch")({}, h.ctx); }
       if (mutation === "mode") await h.commands.get("permission-control").handler("manual", h.ctx);
       if (mutation === "model") h.setCurrent(model("changed", "changed"));
+      if (mutation === "authorization") h.ctx.sessionManager.getBranch = () => [{ type: "message", message: { role: "user", content: "do not execute", timestamp: 2 } }];
+      if (mutation === "cwd") h.ctx.cwd = "/changed-cwd";
       release(); expect((await pending).block).toBe(true);
       expect(h.fetchCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
       expect(h.auditEntries).toHaveLength(1);
@@ -1493,9 +1513,66 @@ describe("original-session diagnostics and raw capture races", () => {
     expect((await tool.execute("call_db_boundary", { command: "mysql -V; find . -path docs" }, undefined, undefined, ordinary.ctx)).isError).toBeUndefined();
     expect(ordinary.fetchCalls).toHaveLength(1);
     const secret = "EscapedDbCanary";
-    const guarded = await fakeHost({ select: "Deny" }); const guardedTool = await ready(guarded);
+    const guarded = await fakeHost({ select: "Deny", response: { choices: [{ message: { content: JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" }) } }] } }); const guardedTool = await ready(guarded);
     await guardedTool.execute("call_db_continuation", { command: "obclient " + String.fromCharCode(92, 10) + " -p" + secret }, undefined, undefined, guarded.ctx);
-    expect(guarded.fetchCalls).toHaveLength(0); expect(guarded.selectCalls[0][0]).not.toContain(secret);
+    expect(guarded.fetchCalls).toHaveLength(1);
+    expect(JSON.stringify(guarded.fetchCalls)).not.toContain(secret); expect(guarded.selectCalls[0][0]).not.toContain(secret);
     expect(JSON.stringify(guarded.auditEntries)).not.toContain(secret);
+  });
+});
+
+describe("authorization and cwd remain bound across review and execution", () => {
+  const changed = [{ type: "message", message: { role: "user", content: "do not run USER_CONTEXT_CANARY", timestamp: 2 } }];
+  test("raw review cannot use an approval after its cwd or user instruction changes", async () => {
+    for (const mutation of ["cwd", "authorization"] as const) {
+      let h!: Awaited<ReturnType<typeof fakeHost>>;
+      h = await fakeHost({ fetchImpl: async () => {
+        if (mutation === "cwd") h.ctx.cwd = "/changed-cwd";
+        else h.ctx.sessionManager.getBranch = () => changed;
+        return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ decision: "allow", risk: "low",
+          authorization: "sufficient", reasonCode: "LOW_RISK_AUTHORIZED" }) } }] }));
+      } });
+      const tool = await ready(h);
+      const result = await tool.execute("call_authorization", { command: "pwd" }, undefined, undefined, h.ctx);
+      expect(result.isError).toBe(true); expect(h.execCalls).toHaveLength(0);
+      expect(h.auditEntries.at(-1).data.reasonCode).toBe("STALE_REVIEW");
+      expect(JSON.stringify(h.auditEntries)).not.toContain("USER_CONTEXT_CANARY");
+    }
+  });
+  test("native approval tickets reject a later user revocation", async () => {
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: fakeNativeRuntime().runtime });
+    const { hook, tool } = await nativeReady(h); const input = { command: "pwd" };
+    expect(await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_bound_user", input }, h.ctx)).toBeUndefined();
+    h.ctx.sessionManager.getBranch = () => changed;
+    expect((await tool.execute("call_bound_user", input, undefined, undefined, h.ctx)).isError).toBe(true);
+    expect(h.invokeCalls).toHaveLength(0); expect(h.auditEntries.at(-1).data.reasonCode).toBe("INVALID_TICKET");
+    expect(JSON.stringify(h.auditEntries)).not.toContain("USER_CONTEXT_CANARY");
+  });
+  test("queued user input invalidates a native ticket before it is appended to history", async () => {
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: fakeNativeRuntime().runtime });
+    const { hook, tool } = await nativeReady(h); const input = { command: "pwd" };
+    expect(await hook({ type: "tool_call", toolName: "bash", toolCallId: "call_queued_user", input }, h.ctx)).toBeUndefined();
+    h.ctx.hasPendingMessages = () => true;
+    expect((await tool.execute("call_queued_user", input, undefined, undefined, h.ctx)).isError).toBe(true);
+    expect(h.invokeCalls).toHaveLength(0); expect(h.auditEntries.at(-1).data.reasonCode).toBe("INVALID_TICKET");
+  });
+  test("a user revocation during primary failure prevents remote lookup and human approval", async () => {
+    let h!: Awaited<ReturnType<typeof fakeHost>>;
+    const lookups: string[] = [];
+    h = await fakeHost({ config: { ...baseConfig, remoteFallback: { provider: "remote", model: "fallback" } }, select: "Approve",
+      fetchImpl: async () => { h.ctx.sessionManager.getBranch = () => changed; return new Response("mock busy", { status: 503 }); } });
+    const resolve = h.ctx.models.resolve;
+    h.ctx.models.resolve = (name: string) => { lookups.push(name); return resolve(name); };
+    const result = await (await ready(h)).execute("call_revoked_failure", { command: "pwd" }, undefined, undefined, h.ctx);
+    expect(result.isError).toBe(true); expect(h.fetchCalls).toHaveLength(1);
+    expect(lookups).not.toContain("remote/fallback"); expect(h.selectCalls).toHaveLength(0);
+    expect(h.execCalls).toHaveLength(0); expect(h.auditEntries.at(-1).data.reasonCode).toBe("STALE_REVIEW");
+  });
+  test("an unresolved deny cannot be manually waived after model failure", async () => {
+    const h = await fakeHost({ config: { ...baseConfig, nativePatterns: [{ match: "cat protected.txt", approval: "deny" }] },
+      response: new Error("mock offline"), select: "Approve" });
+    const result = await (await ready(h)).execute("call_unresolved_deny", { command: "cat *.txt" }, undefined, undefined, h.ctx);
+    expect(result.isError).toBe(true); expect(h.fetchCalls).toHaveLength(1); expect(h.execCalls).toHaveLength(0);
+    expect(h.selectCalls).toHaveLength(0); expect(h.auditEntries.at(-1).data.reasonCode).toBe("RULE_TARGET_UNVERIFIED");
   });
 });
