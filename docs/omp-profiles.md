@@ -9,7 +9,7 @@
 | 名称 | 公共 profile ID，例如 `omp-kernel` | `rotom-` 加配方 ID 的 SHA256 前 24 位 |
 | 管理内容 | 所选公共资源及本机覆盖 | 原生配置、该环境的登录、会话和缓存 |
 | 选择入口 | `agentcfg --profile ID` | 由受管启动 argv 的前置 `--profile NAME` 传入 |
-| 所有权 | machine/local/state 绑定到物理实例 | 位于该实例独立 HOME 内 |
+| 所有权 | machine/local/state 绑定到物理实例 | 位于该实例独立 state-home 内 |
 | 切换影响 | 选择另一独立实例 | 账号、会话和配置跟随实例；旧数据不搬迁 |
 
 名称截断仅用于可读目录名；完整 ID、完整哈希及实际目录都参与归属核对。重命名公共配方会得到新身份，不能靠手工改 native name 接续旧账号。OMP 原生 default 与旧命名 profile 不会被收编。
@@ -28,9 +28,13 @@
     .cache/
 ```
 
-OMP 部分功能不只读取命名 profile，因此独立 HOME 与命名 profile 同时使用。原生默认快捷键继承若发生，只能来自该 HOME 的 `.omp/agent/keybindings.yml`；来源报告列出该路径与摘要，管理器不通过删改默认文件消除继承。
+新部署将工具环境与原生存储分开：工具使用启动者的 HOME 和 XDG 路径，管理器通过生成的相对 `PI_CONFIG_DIR` 与原 `--profile`，继续把 OMP 配置、账号和会话定位到上述 `user-home/.omp`。物理身份与 owner 不变，不搬迁原生数据。旧部署仍按保存的隔离 HOME 契约启动；需要 `plan/apply` 才会应用新契约。
 
-OMP 对 XDG 目录有存在性选择：若出现 `<XDG_CATEGORY>/omp/profiles/<name>`，有效路径可能改变。管理器只创建自身所需 HOME/XDG 基础目录，不创建这些重定向目录；发现此类布局变化返回 4，保留现场供用户处理。
+OMP 部分功能不只读取命名 profile。原生默认快捷键继承仍只能来自受管配置根的 `.omp/agent/keybindings.yml`；来源报告列出该路径与摘要，管理器不通过删改默认文件消除继承。诊断中的 `home`/`state_home` 表示物理存储根，`planned_execution_environment` 明确标记为计划环境，不能据此判断旧部署已经更新。
+
+OMP 在基本终端环境之外继承 Git 配置路径、`ZDOTDIR`、动态库路径、Python/Node/虚拟环境路径等明确名单。其他变量需用机器 `environment.inherit` 或 `environment.values` 声明；不会继承整个终端环境。本轮未改变代理变量策略。非交互工具不保证继承终端交互函数，需要时应显式调用 Bash/zsh 并加载所需配置。普通原生 Bash 工具实际使用官方嵌入式执行后端，不能视为完整 zsh 语言解释器。
+
+OMP 对 XDG 目录有存在性选择：已有 `<XDG_CATEGORY>/omp` 或其 `profiles/<name>` 可能重定向部分账号、缓存与租约目录。管理器核对官方有效路径，拒绝会改变原存储位置的布局，不自动迁移或创建重定向目录；发现此类变化返回 4，保留现场供用户处理。HOME/XDG 与保存契约不一致也需重新审阅 `plan/apply`。
 
 原生选择优先级为显式`--profile`，随后`OMP_PROFILE`/`PI_PROFILE`；命名profile不等于`PI_CODING_AGENT_DIR`重定位。受管入口固定前置argv并拒绝冲突环境。原生default实际位于`.omp/agent`，不在`.omp/profiles/default/agent`。
 

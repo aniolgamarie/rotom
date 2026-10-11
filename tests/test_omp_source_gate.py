@@ -94,6 +94,37 @@ def test_runtime_rejects_unknown_models_provider_and_command_api_key_before_spaw
   assert not fake_subprocess.calls
 
 
+@pytest.mark.parametrize("root_name", ["base", "profile", "agent"])
+@pytest.mark.parametrize("name", [".env", ".env.development.local"])
+@pytest.mark.parametrize("after_prepare", [False, True])
+def test_runtime_rechecks_dotenv_sources_before_spawn(
+    tmp_path, monkeypatch, fake_subprocess, root_name, name, after_prepare):
+  clear_omp_identity_environment(monkeypatch)
+  isolate_runtime_discovery(monkeypatch)
+  workspace, _ = runtime_workspace(tmp_path)
+  identity = native_identity(workspace.profile, workspace.instance)
+  roots = {"base": identity.home / ".omp", "profile": identity.agent_dir.parent,
+    "agent": identity.agent_dir}
+  source = roots[root_name] / name
+
+  def introduce():
+    _write(source, "SYNTHETIC_PRIVATE_BODY=must-not-load\n")
+
+  if after_prepare:
+    original = workspace.adapter.prepare_runtime
+
+    def prepare(workspace, root):
+      original(workspace, root)
+      introduce()
+
+    monkeypatch.setattr(workspace.adapter, "prepare_runtime", prepare)
+  else:
+    introduce()
+  with pytest.raises(Conflict, match="dotenv"):
+    runtime.run(workspace, cwd=tmp_path)
+  assert not fake_subprocess.calls
+
+
 def _write(path, content):
   path.parent.mkdir(parents=True, exist_ok=True)
   path.write_text(content)

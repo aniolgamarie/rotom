@@ -74,6 +74,9 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
     validate_binding = getattr(workspace.adapter, "validate_runtime_binding", None)
     if validate_binding is not None:
       validate_binding(workspace, contract.get("adapter_binding"))
+    deployed_guard = getattr(workspace.adapter, "deployed_operation_guard", None)
+    if deployed_guard is not None:
+      deployed_guard(workspace, effective_cwd, arguments, contract)
     from .deployment import projection, same
     guards = contract.get("runtime_guards", {"files": [], "roots": []})
     if not isinstance(guards, dict) or set(guards) != {"files", "roots"} or any(not isinstance(guards[key], list) for key in guards):
@@ -124,6 +127,9 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
         print(f"run: {missing} 个模型 key 未填写；工具仍可启动，对应模型暂不可调用。\n"
           "填写位置：\n  " + command_line(selector, "model", "status"), file=sys.stderr)
       env = launch_environment(spec, contract["machine"], workspace.secret_store)
+      adjust_environment = getattr(workspace.adapter, "adjust_launch_environment", None)
+      if adjust_environment is not None:
+        env = adjust_environment(workspace, spec, env, contract.get("adapter_binding"))
       import os
       env["PATH"] = os.pathsep.join([*(str(path) for path in workspace.backend.executable_paths(root)), env.get("PATH", "")])
       if validate_environment is not None:

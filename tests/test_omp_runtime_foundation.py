@@ -74,7 +74,7 @@ def test_discovery_manifest_has_exact_disabled_count():
   assert DISABLED_PROVIDERS[-1] == "windsurf"
   repository = Path(__file__).resolve().parents[1]
   manifest = json.loads((repository / "agents/omp/discovery-manifest.json").read_bytes())
-  assert len(NATIVE_ROOT_PATTERNS) == 55
+  assert len(NATIVE_ROOT_PATTERNS) == 72
   assert manifest == discovery_manifest()
   for required in ("$ACTIVE_AGENT/SYSTEM.md", "$DEFAULT_AGENT/SYSTEM_TEMPLATE.md",
       "$ACTIVE_AGENT/PERSONALITY.md", "$DEFAULT_AGENT/PERSONALITY.md",
@@ -86,7 +86,7 @@ def test_discovery_manifest_has_exact_disabled_count():
   assert manifest["projectModelRoles"] == {"file": ".omp/config.yml", "scope": "cwd-only",
     "inspection": "cwd-and-ancestors", "activation": "declared-model-presets-and-project-role-storage",
     "fields": ["modelRoles"]}
-  assert manifest_digest() == "4b181b2b4f3dd6e440f1052446e25dabc0ea47fead656c56e243872fee5c221b"
+  assert manifest_digest() == "b3ec3eb0584c3b8c226a7b9d8410016af6fd7998d43c74da78e13815ec8a092c"
 
 
 def test_source_policy_rejects_roots_when_project_resources_are_off(tmp_path):
@@ -371,7 +371,7 @@ def test_runtime_rechecks_sources_immediately_before_spawn(tmp_path, monkeypatch
   cwd = tmp_path / "work"
   cwd.mkdir()
   workspace.backend.mutate = lambda: (cwd / ".env").write_text("SENTINEL=private")
-  with pytest.raises(Conflict, match="项目配置来源"):
+  with pytest.raises(Conflict, match="dotenv来源"):
     runtime.run(workspace, cwd=cwd)
   assert not fake_subprocess.calls
 

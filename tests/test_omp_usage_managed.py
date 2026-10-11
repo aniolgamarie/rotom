@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -45,7 +46,8 @@ def test_managed_usage_uses_deployed_identity_without_unrelated_secrets(tmp_path
   identity = native_identity(workspace.profile, workspace.instance)
   assert call["argv"][1:] == ["--profile", identity.native_name, "usage", "--json", "--provider", "openai-codex"]
   assert call["cwd"] == identity.home
-  assert call["env"]["HOME"] == str(identity.home)
+  assert call["env"]["HOME"] == str(tmp_path / "home")
+  assert Path(call["env"]["HOME"], call["env"]["PI_CONFIG_DIR"]).resolve() == identity.home / ".omp"
   assert "AGENTCFG_OMP_UNUSED" not in call["env"]
   assert len(call["pass_fds"]) == 3
 

@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import type { WorktreeHelpers } from "./worktree-analysis";
 import { createNativeBashRuntime, executionRoute, type PlainBashParams } from "./native-bash";
+import { baseConfig, fakeHost, nativeReady } from "./standalone-fixture";
 
 function setting<T>(read: (settings: any) => T) {
   return { get: read };
@@ -235,22 +236,42 @@ describe("native bash public approval adapter", () => {
     expect(JSON.stringify([changed.reviewContext, changed.diagnostics])).not.toContain("SECRET_");
   });
 
-  test("verified local Bash preserves startup, inherited function, HOME and native deny guards", async () => {
+  test("managed Bash models initialization evidence and preserves HOME and deny guards", async () => {
     await writeFile(join(home, ".bashrc"), "# fixture\n");
     const { native } = runtime({ home, executionRoute: () => "local-embedded" });
-    expect((await native.capture(root, params)).reviewContext.contextReason).toBe("BASH_STARTUP");
+    const captured = await native.capture(root, params);
+    expect(captured.decision).toBe("allow");
+    expect(captured.reviewContext.contextReason).toBe("BASH_STARTUP");
+    expect(captured.reviewContext.initializationEvidenceOnly).toBe(true);
+    expect(captured.reviewContext.shellInitialization).toMatchObject({ effectsInspected: false, snapshotState: "unverified" });
     await rm(join(home, ".bashrc"));
     expect((await native.capture(root, params)).reviewContext.contextReason).toBe("BASH_SNAPSHOT_UNCERTAIN");
     const envs: Record<string, string>[] = [{ "BASH_FUNC_fixture%%": "() { :; }" }, { HOME: join(root, "different-home") }];
     for (const env of envs) {
       expect((await runtime({ home, env, executionRoute: () => "local-embedded" }).native.capture(root, params)).decision)
-        .toBe("prompt");
+        .toBe(env.HOME ? "prompt" : "allow");
     }
     for (const options of [{ policy: "deny" }, { approval: { tier: "exec", policy: "deny" } }]) {
       const captured = await runtime({ home, shell: "/bin/zsh", prefix: "untrusted", ...options,
         executionRoute: () => "local-embedded" }).native.capture(root, params);
       expect(captured.reasonCode).toBe("NATIVE_DENY");
     }
+  });
+
+  test("ordinary managed Bash startup still requires model review and preserves metadata rechecks", async () => {
+    const body = "DO_NOT_READ_THIS_STARTUP_BODY";
+    await writeFile(join(home, ".bashrc"), body);
+    const { native } = runtime({ home, executionRoute: () => "local-embedded" });
+    const captured = await native.capture(root, params);
+    const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native });
+    h.ctx.cwd = root;
+    const { tool } = await nativeReady(h);
+    expect((await tool.execute("call_startup", params, undefined, undefined, h.ctx)).isError).not.toBe(true);
+    expect(h.fetchCalls).toHaveLength(1); expect(h.invokeCalls).toHaveLength(1);
+    expect(h.fetchCalls[0][1].body).toContain("shellInitialization");
+    expect(h.fetchCalls[0][1].body).not.toContain(body);
+    await writeFile(join(home, ".bashrc"), body + "changed");
+    expect((await native.recheck(captured.settings, root, params)).fingerprint).not.toBe(captured.fingerprint);
   });
 
   test("preserves native deny and prompt decisions", async () => {
@@ -262,6 +283,15 @@ describe("native bash public approval adapter", () => {
   test("unknown native approval shapes fail closed to prompt", async () => {
     expect((await runtime({ home, approval: { unexpected: true } }).native.capture(root, params)).decision)
       .toBe("prompt");
+  });
+
+  test("native prompt retains an independent unsupported execution binding", async () => {
+    const captured = await runtime({ home, shell: "/bin/zsh", executionRoute: () => "unverified",
+      approval: { tier: "exec", override: true } }).native.capture(root, params);
+    expect(captured.decision).toBe("prompt");
+    expect(captured.reasonCode).toBe("NATIVE_PROMPT");
+    expect(captured.bindingSupported).toBe(false);
+    expect(captured.diagnostics?.contextReason).toBe("EXECUTION_ROUTE_UNVERIFIED");
   });
 
   test("settings revision changes invalidate the fingerprint", async () => {

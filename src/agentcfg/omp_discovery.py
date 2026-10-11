@@ -17,14 +17,16 @@ DISABLED_PROVIDERS = ("agent-plugins", "agents-md", "claude-md", "claude", "clau
 DISABLED_MODEL_PROVIDERS = DISABLED_PROVIDERS
 FOREIGN_PROJECT_SOURCES = (".cursor", ".cursorrules")
 DOTENV_NAMES = (".env", ".env.local", ".env.development", ".env.production", ".env.test")
+DOTENV_MODE_PATTERN = r"[A-Za-z0-9][A-Za-z0-9_-]*"
+DOTENV_ROOTS = ("$HOME", "$BASE_CONFIG", "$ACTIVE_CONFIG", "$ACTIVE_AGENT")
 NATIVE_PROFILE_SOURCES = ("settings.json", "config.yml", "models.yml", "permission-control.json", "RULES.md", "AGENTS.md", "TITLE_SYSTEM.md",
   "SYSTEM.md", "SYSTEM_TEMPLATE.md", "APPEND_SYSTEM.md", "PERSONALITY.md", "rules", "skills", "prompts", "extensions", "hooks", "tools",
   "mcp.json", ".mcp.json", "agents", "themes")
-NATIVE_ROOT_PATTERNS = (tuple("$HOME/" + name for name in DOTENV_NAMES) + ("$HOME/.omp/.env",)
-  + tuple("$ACTIVE_AGENT/" + name for name in DOTENV_NAMES)
+NATIVE_ROOT_PATTERNS = (tuple(root + "/" + name for root in DOTENV_ROOTS
+    for name in (*DOTENV_NAMES, ".env.$NODE_ENV", ".env.$NODE_ENV.local"))
   + tuple("$ACTIVE_AGENT/" + name for name in NATIVE_PROFILE_SOURCES)
   + tuple("$DEFAULT_AGENT/" + name for name in NATIVE_PROFILE_SOURCES)
-  + ("$HOME/.omp/plugins/installed_plugins.json", "$HOME/.omp/marketplaces.json"))
+  + ("$BASE_CONFIG/plugins/installed_plugins.json", "$BASE_CONFIG/marketplaces.json"))
 NATIVE_SETTING_CONTROLS = {
   "configExact": ("/skills/enablePiUser", "/skills/enablePiProject", "/mcp/enableProjectConfig", "/enabledProviders",
     "/disabledProviders", "/startup/checkUpdate", "/marketplace/autoUpdate", "/autolearn/enabled", "/extensions"),
@@ -36,6 +38,9 @@ NATIVE_SETTING_CONTROLS = {
 
 def discovery_manifest():
   return {"version": 1, "ancestors": list(DISCOVERY_NAMES), "nativeRoots": list(NATIVE_ROOT_PATTERNS),
+    "dotenv": {"environment": "NODE_ENV", "defaultMode": "development", "modePattern": DOTENV_MODE_PATTERN,
+      "nativeRoots": list(DOTENV_ROOTS), "projectScope": "cwd-and-ancestors",
+      "dynamicNames": [".env.$NODE_ENV", ".env.$NODE_ENV.local"], "inspection": "metadata-only"},
     "ignoredProviderSources": {"paths": list(IGNORED_PROVIDER_SOURCES),
       "reason": "all-loading-providers-disabled-before-discovery"},
     "disabledProviders": list(DISABLED_PROVIDERS),
@@ -69,13 +74,26 @@ class SourcePolicy:
     return cls(manifest_digest(), enabled, roots)
 
 
-def assert_clean_sources(cwd, allowed=()):
+def dotenv_names(environment=None):
+  """只读取明确传入的非秘密模式；不继承当前进程环境。"""
+  mode = None if environment is None else environment.get("NODE_ENV")
+  if mode is None or mode == "":
+    mode = "development"
+  if not isinstance(mode, str) or re.fullmatch(DOTENV_MODE_PATTERN, mode) is None:
+    raise Conflict("OMPNODE_ENV模式无效")
+  return tuple(dict.fromkeys((*DOTENV_NAMES, ".env." + mode, ".env." + mode + ".local")))
+
+
+def assert_clean_sources(cwd, allowed=(), *, environment=None):
   allowed = {Path(item).resolve() for item in allowed}
   current = Path(cwd).resolve()
+  dotenv = dotenv_names(environment)
   while True:
-    for name in DISCOVERY_NAMES:
+    for name in dict.fromkeys((*DISCOVERY_NAMES, *dotenv)):
       candidate = current / name
       if (candidate.exists() or candidate.is_symlink()) and candidate.resolve() not in allowed:
+        if name in dotenv:
+          raise Conflict("OMP检测到未声明的dotenv来源")
         raise Conflict(f"OMP检测到未声明的项目配置来源: {candidate}")
     if current == current.parent:
       break
@@ -173,7 +191,7 @@ def _validate_project_mcp(path, managed_mcp_ids, expected_python, expected_echo)
 
 
 def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=None, expected_echo=None,
-    project_model_roles=None):
+    project_model_roles=None, environment=None):
   """重新读取固定发现路径并返回仅含路径和摘要的非秘密报告。"""
   current = Path(cwd).resolve()
   ancestors = []
@@ -187,16 +205,19 @@ def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=
   if policy.project_resources and (not roots or not roots.issubset(set(ancestors))):
     raise Conflict("OMP项目来源根必须是当前目录或其祖先")
   reports = []
+  dotenv = dotenv_names(environment)
   for directory in ancestors:
     for name in FOREIGN_PROJECT_SOURCES:
       candidate = directory / name
       if source_present(candidate):
         raise Conflict(f"OMP检测到未声明的Cursor项目配置来源: {candidate}")
-    for name in DISCOVERY_NAMES:
+    for name in dict.fromkeys((*DISCOVERY_NAMES, *dotenv)):
       if name == ".omp":
         continue
       candidate = directory / name
       if source_present(candidate):
+        if name in dotenv:
+          raise Conflict("OMP检测到未声明的dotenv来源")
         raise Conflict(f"OMP检测到未声明的项目配置来源: {candidate}")
     omp = directory / ".omp"
     if ".omp" not in DISCOVERY_NAMES:
@@ -235,7 +256,23 @@ def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=
 
 
 def assert_native_sources(identity, allowed=(), mcp_shape=None, project_resources=False, *,
-    model_providers=None, extension_suffixes=(), permission_control=None):
+    model_providers=None, extension_suffixes=(), permission_control=None,
+    execution_environment=None, environment=None):
+  if execution_environment is None:
+    tool_home = identity.home
+    base = identity.home / ".omp"
+    active_config = identity.agent_dir.parent
+  else:
+    from .omp_execution_environment import validate_execution_environment
+    if (type(execution_environment) is not dict
+        or type(execution_environment.get("xdg")) is not dict):
+      raise Conflict("OMP执行环境绑定无效或原生路径发生冲突")
+    caller_paths = dict(execution_environment["xdg"])
+    caller_paths["HOME"] = execution_environment.get("home")
+    binding = validate_execution_environment(identity, execution_environment, caller_paths)
+    tool_home = Path(binding["home"])
+    base = Path(binding["native_paths"]["base_config_root"])
+    active_config = Path(binding["native_paths"]["config_root"])
   allowed = {Path(path) for path in allowed}
   def accepted(path):
     if path.is_symlink():
@@ -250,23 +287,21 @@ def assert_native_sources(identity, allowed=(), mcp_shape=None, project_resource
           return False
       return True
     return False
-  for root in (identity.home, identity.agent_dir):
-    for name in DOTENV_NAMES:
+  dotenv = dotenv_names(environment)
+  for root in dict.fromkeys((tool_home, base, active_config, identity.agent_dir)):
+    for name in dotenv:
       path = root / name
       if path.exists() or path.is_symlink():
         raise Conflict("OMP检测到未声明的dotenv来源")
-  home_env = identity.home / ".omp/.env"
-  if home_env.exists() or home_env.is_symlink():
-    raise Conflict("OMP检测到未声明的dotenv来源")
   source_names = tuple(name for name in NATIVE_PROFILE_SOURCES if name not in ("config.yml", "models.yml"))
-  default_agent = identity.home / ".omp/agent"
+  default_agent = base / "agent"
   for root in (default_agent, identity.agent_dir):
     names = source_names + (("config.yml", "models.yml") if root == default_agent else ())
     for name in names:
       path = root / name
       if (path.exists() or path.is_symlink()) and not accepted(path):
         raise Conflict("OMP检测到未声明的profile配置来源")
-  for path in (identity.home / ".omp/plugins/installed_plugins.json", identity.home / ".omp/marketplaces.json"):
+  for path in (base / "plugins/installed_plugins.json", base / "marketplaces.json"):
     if path.exists() or path.is_symlink():
       raise Conflict("OMP检测到未声明的插件或marketplace来源")
   config = identity.agent_dir / "config.yml"

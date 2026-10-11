@@ -133,3 +133,115 @@ test("empty genuine user history remains model-ready without claiming complete a
   expect(isSanitizedReviewPacket(result.packet)).toBe(true);
   expect(Object.isFrozen(result.packet.genuineUserMessages)).toBe(true);
 });
+
+const multilineGolden: Array<[string, string]> = [
+  ["curl -u CanaryFirst$(touch /fixture/side-effect)CanarySecond https://fixture.invalid", "curl -u [REDACTED]$(touch /fixture/side-effect)[REDACTED] https://fixture.invalid"],
+  ["mysql -pCanaryFirst$(touch /fixture/side-effect)CanarySecond -e 'select 1'", "mysql -p[REDACTED]$(touch /fixture/side-effect)[REDACTED] -e 'select 1'"],
+  ["curl -uCanaryFirst$(touch /fixture/side-effect)CanarySecond https://fixture.invalid", "curl -u[REDACTED]$(touch /fixture/side-effect)[REDACTED] https://fixture.invalid"],
+  ["TOKEN='CanaryFirst\nCanarySecond' curl https://fixture.invalid", "TOKEN='[REDACTED]' curl https://fixture.invalid"],
+  ['TOKEN="CanaryFirst\nCanarySecond" curl https://fixture.invalid', 'TOKEN="[REDACTED]" curl https://fixture.invalid'],
+  ['curl --token "CanaryFirst \\"CanaryQuoted\\"\nCanarySecond" https://fixture.invalid', 'curl --token "[REDACTED]" https://fixture.invalid'],
+  ["TOKEN='CanaryFirst\nCanarySecond'CanaryTail curl https://fixture.invalid", "TOKEN=[REDACTED] curl https://fixture.invalid"],
+  ['TOKEN="CanaryFirst\\\nCanarySecond" curl https://fixture.invalid', 'TOKEN="[REDACTED]" curl https://fixture.invalid'],
+  ["curl -u 'CanaryUser:CanaryFirst\nCanarySecond' -H 'Authorization: Bearer CanaryFirst\nCanarySecond' https://fixture.invalid", "curl -u '[REDACTED]' -H 'Authorization: Bearer [REDACTED]' https://fixture.invalid"],
+  ["curl -H 'Authorization: CanaryFirst\nCanarySecond' https://fixture.invalid", "curl -H 'Authorization: [REDACTED]' https://fixture.invalid"],
+  ["mysql -p'CanaryFirst\nCanarySecond' -e 'select 1'", "mysql -p'[REDACTED]' -e 'select 1'"],
+  ['TOKEN="CanaryFirst$(touch /fixture/side-effect)CanarySecond" curl https://fixture.invalid', 'TOKEN="[REDACTED]$(touch /fixture/side-effect)[REDACTED]" curl https://fixture.invalid'],
+  ['TOKEN=CanaryFirst$(touch /fixture/side-effect)CanarySecond curl https://fixture.invalid', 'TOKEN=[REDACTED]$(touch /fixture/side-effect)[REDACTED] curl https://fixture.invalid'],
+  ['TOKEN="CanaryFirst`touch /fixture/side-effect`CanarySecond" curl https://fixture.invalid', 'TOKEN="[REDACTED]`touch /fixture/side-effect`[REDACTED]" curl https://fixture.invalid'],
+  ['TOKEN="$(echo token=CanaryInner; touch /fixture/side-effect)" curl https://fixture.invalid', 'TOKEN="$(echo token=[REDACTED]; touch /fixture/side-effect)" curl https://fixture.invalid'],
+];
+for (const [index, [raw, expected]] of multilineGolden.entries()) test(`complete literal and dynamic credential span ${index}`, () => {
+  for (const kind of ["command", "user", "context", "display"] as const) {
+    expect(redactReviewText(raw, kind)).toBe(expected);
+    expect(redactReviewText(expected, kind)).toBe(expected);
+  }
+  const prepared = prepareReviewPacket({ command: raw, cwd: "/fixture", userMessages: [raw], executionContext: { label: raw } });
+  expect(prepared.status).toBe("ready");
+  if (prepared.status !== "ready") throw 0;
+  expect(prepared.packet.command).toBe(expected);
+  expect(prepared.packet.genuineUserMessages).toEqual([expected]);
+  expect(prepared.packet.executionContext).toEqual({ label: expected });
+  expect(JSON.stringify(prepared.packet)).not.toContain("Canary");
+});
+
+for (const api of ["openai-completions", "anthropic-messages"]) test(`complete multiline credentials sanitized at both ${api} reviewer exits`, async () => {
+  for (const [raw, expected] of multilineGolden) {
+    const prepared = prepareReviewPacket({ command: raw, cwd: "/fixture", userMessages: [raw], executionContext: { label: raw } });
+    if (prepared.status !== "ready") throw 0;
+    const bodies: string[] = [];
+    const model = { provider: "fictional", id: "primary", api, baseUrl: "https://unused.invalid/v1" };
+    const runtime: ReviewRuntime = { current: () => model, resolve: () => ({ ...model, id: "remote" }),
+      getApiKey: async () => "fictional-key", fetch: async (_url, init) => {
+        bodies.push(init.body as string);
+        if (bodies.length === 1) return new Response(null, { status: 500 });
+        const decision = JSON.stringify({ decision: "ask", risk: "unknown", authorization: "unknown", reasonCode: "UNKNOWN_RISK" });
+        return new Response(JSON.stringify(api === "anthropic-messages" ? { content: [{ type: "text", text: decision }] } :
+          { choices: [{ message: { content: decision } }] }));
+      } };
+    const result = await reviewCommand(prepared.packet, { reviewer: "session", remoteFallback: { provider: "fictional", model: "remote" } }, runtime);
+    expect(result.source).toBe("remote"); expect(bodies.length).toBe(2);
+    for (const body of bodies) {
+      expect(body).not.toContain("Canary");
+      const packet = JSON.parse(JSON.parse(body).messages.at(-1).content);
+      expect(packet.command).toBe(expected);
+      expect(packet.genuineUserMessages).toEqual([expected]);
+      expect(packet.executionContext).toEqual({ label: expected });
+    }
+  }
+});
+
+// 独立canary：允许拒绝复杂动态凭据，绝不能生成删去真实副作用的ready包。
+const unsafePrivacyCases = [
+  "# TOKEN='\ntouch /fixture/comment-effect\n# '\necho safe",
+  "# TOKEN=\ntouch /fixture/comment-prefix-effect",
+  "# Bearer\ntouch /fixture/comment-auth-prefix-effect",
+  "echo safe; # password=\"\ntouch /fixture/comment-double-effect\n# \"\necho after",
+  "# token='fixture\nsecond'\ntouch /fixture/comment-adjacent-effect",
+  'TOKEN="$(case x in x) touch /fixture/case-effect ;; esac)" echo safe',
+  'TOKEN="$(case x in (x) touch /fixture/case-pattern-effect ;; esac)" echo safe',
+  'TOKEN="$(echo safe # )\ntouch /fixture/substitution-comment-effect)" echo safe',
+  'TOKEN="$(cat <<EOF\nfixture)\nEOF\ntouch /fixture/heredoc-effect)" echo safe',
+  'TOKEN="CanaryLiteral$(case x in x) touch /fixture/concat-case-effect ;; esac)CanaryTail" echo safe',
+];
+for (const [index, command] of unsafePrivacyCases.entries()) test(`privacy boundary rejects unsafe secret structure ${index}`, () => {
+  expect(prepareReviewPacket({ ...base, command })).toEqual({ status: "invalid", reasonCode: "INPUT_INVALID" });
+  expect(() => redactReviewText(command, "display")).toThrow("INPUT_INVALID");
+  expect(prepareReviewPacket({ ...base, userMessages: [command] })).toEqual({ status: "invalid", reasonCode: "INPUT_INVALID" });
+  expect(prepareReviewPacket({ ...base, executionContext: { label: command } })).toEqual({ status: "invalid", reasonCode: "INPUT_INVALID" });
+});
+
+const safePrivacyCases: Array<[string, string]> = [
+  ["echo fixture # unrelated ' quote\ntouch /fixture/visible-effect", "echo fixture # unrelated ' quote\ntouch /fixture/visible-effect"],
+  ["echo $(printf '#'); touch /fixture/visible-effect", "echo $(printf '#'); touch /fixture/visible-effect"],
+  ["case x in x) touch /fixture/visible-effect ;; esac", "case x in x) touch /fixture/visible-effect ;; esac"],
+  ["# token=CanaryComment\ntouch /fixture/visible-effect", "# token=[REDACTED]\ntouch /fixture/visible-effect"],
+  ["# TOKEN='CanaryComment'\ntouch /fixture/visible-effect", "# TOKEN='[REDACTED]'\ntouch /fixture/visible-effect"],
+  ["# unrelated ' quote\nTOKEN='CanaryFirst\nCanarySecond' touch /fixture/visible-effect", "# unrelated ' quote\nTOKEN='[REDACTED]' touch /fixture/visible-effect"],
+  ["TOKEN='CanaryFirst\n# CanarySecond' touch /fixture/visible-effect", "TOKEN='[REDACTED]' touch /fixture/visible-effect"],
+  ["TOKEN=\"CanaryFirst # CanarySecond\nCanaryThird\" touch /fixture/visible-effect", "TOKEN=\"[REDACTED]\" touch /fixture/visible-effect"],
+  ["echo '# literal'; TOKEN='CanaryFirst\nCanarySecond' touch /fixture/visible-effect", "echo '# literal'; TOKEN='[REDACTED]' touch /fixture/visible-effect"],
+  ['echo "$(case x in x) touch /fixture/visible-effect ;; esac)"', 'echo "$(case x in x) touch /fixture/visible-effect ;; esac)"'],
+  ['echo "$(echo safe # )\ntouch /fixture/visible-effect)"', 'echo "$(echo safe # )\ntouch /fixture/visible-effect)"'],
+];
+for (const [index, [command, expected]] of safePrivacyCases.entries()) test(`privacy boundary preserves safe nearby commands ${index}`, () => {
+  const prepared = prepareReviewPacket({ ...base, command });
+  expect(prepared.status).toBe("ready");
+  if (prepared.status !== "ready") throw 0;
+  expect(prepared.packet.command).toBe(expected);
+  expect(redactReviewText(command, "display")).toBe(expected);
+  expect(expected).toContain("touch /fixture/visible-effect");
+});
+
+for (const api of ["openai-completions", "anthropic-messages"]) test(`privacy boundary never sends unsafe packet to ${api}`, async () => {
+  let fetches = 0;
+  const model = { provider: "fictional", id: "reviewer", api, baseUrl: "https://unused.invalid/v1" };
+  const runtime: ReviewRuntime = { current: () => model, resolve: () => model, getApiKey: async () => "fictional-key",
+    fetch: async () => { fetches++; throw new Error("UNEXPECTED_FIXTURE_FETCH"); } };
+  for (const command of unsafePrivacyCases) {
+    const prepared = prepareReviewPacket({ ...base, command });
+    expect(prepared.status).toBe("invalid");
+    if (prepared.status === "ready") await reviewCommand(prepared.packet, { reviewer: "session" }, runtime);
+  }
+  expect(fetches).toBe(0);
+});

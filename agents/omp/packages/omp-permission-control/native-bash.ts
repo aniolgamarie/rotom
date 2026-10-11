@@ -70,6 +70,7 @@ export interface NativeSettingsSnapshot {
   fingerprint: string;
   decision: "allow" | "deny" | "prompt";
   reasonCode: "NATIVE_ALLOW" | "NATIVE_DENY" | "NATIVE_PROMPT" | "UNSUPPORTED_EXECUTION_CONTEXT";
+  bindingSupported?: boolean;
   reviewContext: Record<string, ContextValue>;
   diagnostics?: NativeDiagnostics;
 }
@@ -189,14 +190,33 @@ function nativeDecision(approval: unknown): "allow" | "deny" | "prompt" {
   return "prompt";
 }
 
-function settingsFingerprint(modules: NativeModules, settings: SettingsLike): string {
+interface RuntimeObservation {
+  shellSnapshotUncertain: boolean;
+  shells: WeakMap<object, { shell: string; args: string[]; prefix?: string; environment: Array<[string, string]>; version: number }>;
+  shellVersion: number;
+}
+
+function shellObservationVersion(settings: SettingsLike, shell: ReturnType<SettingsLike["getShellConfig"]>, mutable: RuntimeObservation) {
+  const environment = Object.entries(shell.env ?? {}).sort(([a], [b]) => a.localeCompare(b));
+  const previous = mutable.shells.get(settings);
+  if (previous && previous.shell === shell.shell && previous.prefix === shell.prefix &&
+      previous.args.length === shell.args.length && previous.args.every((arg, i) => arg === shell.args[i]) &&
+      previous.environment.length === environment.length && previous.environment.every(([key, value], i) =>
+        key === environment[i][0] && value === environment[i][1])) return previous.version;
+  const version = ++mutable.shellVersion;
+  // SDK内存值仅作本地等值核对，不序列化/哈希认证或环境正文，也不送入模型和日志。
+  mutable.shells.set(settings, { shell: shell.shell, args: [...shell.args], prefix: shell.prefix, environment, version });
+  return version;
+}
+
+function settingsFingerprint(modules: NativeModules, settings: SettingsLike, mutable: RuntimeObservation): string {
   const shell = settings.getShellConfig();
   return digest({
     revision: settings.revision,
     approval: modules.cfgToolsApproval.get(settings),
     patterns: modules.cfgBashPatterns.get(settings),
     compound: modules.cfgBashAllowCompoundCommands.get(settings),
-    shell: { shell: shell.shell, args: shell.args, prefix: shell.prefix ?? null, env: shell.env ?? {} },
+    shellObservationVersion: shellObservationVersion(settings, shell, mutable),
     shellPath: modules.cfgShellPath.get(settings) ?? null,
     interceptor: modules.cfgBashInterceptorEnabled.get(settings),
     interceptorPatterns: modules.cfgBashInterceptorPatterns.get(settings),
@@ -214,7 +234,7 @@ function settingsFingerprint(modules: NativeModules, settings: SettingsLike): st
 
 async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: string,
   params: PlainBashParams, globalSettings: SettingsLike,
-  mutable: { shellSnapshotUncertain: boolean }): Promise<NativeSettingsSnapshot> {
+  mutable: RuntimeObservation): Promise<NativeSettingsSnapshot> {
   const policies = modules.cfgToolsApproval.get(settings);
   const shell = settings.getShellConfig();
   const family = shellFamily(shell.shell);
@@ -246,8 +266,8 @@ async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: 
   };
   if (policies.bash === "deny") {
     return { settings: { scoped: settings, global: globalSettings },
-      fingerprint: digest({ scoped: settingsFingerprint(modules, settings),
-        global: settingsFingerprint(modules, globalSettings), route, routeFingerprint, legacyShellAllowed }),
+      fingerprint: digest({ scoped: settingsFingerprint(modules, settings, mutable),
+        global: settingsFingerprint(modules, globalSettings, mutable), route, routeFingerprint, legacyShellAllowed }),
       decision: "deny", reasonCode: "NATIVE_DENY", reviewContext, diagnostics };
   }
   const clone = modules.cfgWorktreeClone.get(settings);
@@ -290,29 +310,39 @@ async function analyze(modules: NativeModules, settings: SettingsLike, baseCwd: 
       ? "WORKTREE_CONTEXT" : "STANDARD_CONTEXT";
   diagnostics.contextReason = contextReason;
   reviewContext.contextReason = contextReason;
-  const currentFingerprint = digest({ scoped: settingsFingerprint(modules, settings),
-    global: settingsFingerprint(modules, globalSettings), direnv: direnv.marker, startup: startup.marker,
+  // 正常初始化来源不是路由/设置绑定失败；未知效果交给模型，绝不假称snapshot已证明。
+  const initializationEvidenceOnly = route === "local-embedded" && !differentHome && !startup.uncertain &&
+    ["BASH_STARTUP", "BASH_FUNCTIONS", "BASH_SNAPSHOT_UNCERTAIN"].includes(contextReason);
+  if (snapshotContext) reviewContext.shellInitialization = {
+    startupPresent: startup.present, startupMetadataUncertain: startup.uncertain,
+    inheritedFunctions, snapshotState: mutable.shellSnapshotUncertain ? "unverified" : "not-observed",
+    effectsInspected: false,
+  };
+  if (initializationEvidenceOnly) reviewContext.initializationEvidenceOnly = true;
+  const bindingSupported = contextReason === "STANDARD_CONTEXT" || initializationEvidenceOnly;
+  const currentFingerprint = digest({ scoped: settingsFingerprint(modules, settings, mutable),
+    global: settingsFingerprint(modules, globalSettings, mutable), direnv: direnv.marker, startup: startup.marker,
     route, routeFingerprint, legacyShellAllowed,
     physicalCwd: cwd.path ? await realpath(cwd.path).catch(() => "unresolved") : "unavailable",
     worktreeAnalysis: analysis ?? null });
   if (approvalDecision === "deny") {
     return { settings: { scoped: settings, global: globalSettings }, fingerprint: currentFingerprint,
-      decision: "deny", reasonCode: "NATIVE_DENY", reviewContext, diagnostics };
+      decision: "deny", reasonCode: "NATIVE_DENY", bindingSupported, reviewContext, diagnostics };
   }
   if (approvalDecision === "prompt") {
     return { settings: { scoped: settings, global: globalSettings }, fingerprint: currentFingerprint,
-      decision: "prompt", reasonCode: "NATIVE_PROMPT", reviewContext, diagnostics };
+      decision: "prompt", reasonCode: "NATIVE_PROMPT", bindingSupported, reviewContext, diagnostics };
   }
-  if (contextReason !== "STANDARD_CONTEXT") {
+  if (contextReason !== "STANDARD_CONTEXT" && !initializationEvidenceOnly) {
     return { settings: { scoped: settings, global: globalSettings }, fingerprint: currentFingerprint, decision: "prompt",
-      reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", reviewContext, diagnostics };
+      reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", bindingSupported: false, reviewContext, diagnostics };
   }
   return { settings: { scoped: settings, global: globalSettings }, fingerprint: currentFingerprint, decision: "allow",
-    reasonCode: "NATIVE_ALLOW", reviewContext, diagnostics };
+    reasonCode: "NATIVE_ALLOW", bindingSupported: true, reviewContext, diagnostics };
 }
 
 export function createNativeBashRuntime(modules: NativeModules): NativeBashRuntime {
-  const mutable = { shellSnapshotUncertain: false };
+  const mutable: RuntimeObservation = { shellSnapshotUncertain: false, shells: new WeakMap(), shellVersion: 0 };
   return {
     async capture(baseCwd, params) {
       const settings = modules.findScopedSettings(baseCwd);

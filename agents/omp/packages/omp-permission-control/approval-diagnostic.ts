@@ -8,13 +8,15 @@ export const GATE_CODES = ["CONFIG_UNAVAILABLE", "INVALID_PARAMETERS", "DUPLICAT
   "CONFIGURED_DENY", "NATIVE_DENY", "MANUAL_MODE", "CONFIGURED_PROMPT", "UNSUPPORTED_SYNTAX",
   "NATIVE_PROMPT", "UNSUPPORTED_STATUS_SEMANTICS", "UNSUPPORTED_NATIVE_CONTEXT", "NO_USER_MESSAGES", "SENSITIVE_INPUT", "INPUT_TOO_LARGE",
   "INVALID_TICKET", "STALE_REVIEW", "SCOPED_SETTINGS_UNAVAILABLE", "NATIVE_DELEGATE_UNAVAILABLE",
-  "RUNTIME_FAILURE", "CANCELLED", "INVALIDATED", "INPUT_INVALID"] as const;
+  "RUNTIME_FAILURE", "CANCELLED", "INVALIDATED", "INPUT_INVALID", "CONTEXT_TIMEOUT", "REVIEW_QUEUE_TIMEOUT"] as const;
 const REASONS = ["LOW_RISK_AUTHORIZED", "USER_CONFIRMATION_REQUIRED", "NOT_AUTHORIZED", "CONFLICTING_AUTHORIZATION",
   "HIGH_RISK", "UNKNOWN_RISK", "CONFIG_UNAVAILABLE", "INVALID_OR_UNAVAILABLE", "DUPLICATE_TOOL_CALL",
   "UNSUPPORTED_EXECUTION_CONTEXT", "UNSUPPORTED_STATUS_SEMANTICS", "UNSUPPORTED_SYNTAX", "SCOPED_SETTINGS_UNAVAILABLE", "INVALID_TICKET",
   "STALE_REVIEW", "NATIVE_DELEGATE_UNAVAILABLE", "NATIVE_DENY", "NATIVE_PROMPT", "REVIEW_UNAVAILABLE",
   "NATIVE_EXECUTION_FAILED", "NATIVE_RESULT_ERROR", "RAW_EXECUTION_FAILED", "RUNTIME_FAILURE", "CANCELLED",
-  "NOT_REVIEWED", "DIAGNOSTIC_UNKNOWN", "INPUT_INVALID", "RULE_TARGET_UNVERIFIED", "RULE_CONFIRMATION_REQUIRED"] as const;
+  "NOT_REVIEWED", "DIAGNOSTIC_UNKNOWN", "INPUT_INVALID", "RULE_TARGET_UNVERIFIED", "RULE_CONFIRMATION_REQUIRED",
+  "CONTEXT_TIMEOUT", "REVIEW_QUEUE_TIMEOUT"] as const;
+const PHASES = ["capture", "review-queued", "reviewing", "human-queued", "human", "recheck", "executing"] as const;
 const SOURCES = ["none", "native", "human", "primary", "remote"] as const;
 const DECISIONS = ["allow", "ask", "deny"] as const;
 const RISKS = ["low", "medium", "high", "unknown"] as const;
@@ -94,6 +96,15 @@ export class ApprovalDiagnostic {
   reviewStarted = false;
   approvalRecorded = false;
   routingComplete = false;
+  private phaseStarted = Date.now();
+  private currentPhase: string | undefined;
+  get current() {
+    return { toolCallId: safeCallId(this.data.toolCallId), toolCallIdDigest: this.data.toolCallIdDigest,
+      outcome: this.currentPhase === "human" || this.currentPhase === "human-queued" ? "pending-human" :
+        this.currentPhase === "executing" ? "executing" : "reviewing",
+      source: this.data.source, reasonCode: this.data.reasonCode, chain: [...this.data.chain],
+      nativeContext: nativeContext(this.data.nativeContext), phase: this.currentPhase };
+  }
   constructor(sequence: number, id: unknown, entrypoint: string, mode: string, generation: number, sessionId?: unknown) {
     this.data = { version: 1, sequence, toolCallId: safeCallId(id), toolCallIdDigest: toolCallIdDigest(id), sessionIdDigest: sessionIdDigest(sessionId),
       entrypoint: one(entrypoint, ["bash", "permission_bash"] as const, "permission_bash"),
@@ -105,6 +116,19 @@ export class ApprovalDiagnostic {
     for (const value of values) if ((value === "INPUT_TOO_LARGE" ||
         (!this.reviewStarted && !this.approvalRecorded && !this.routingComplete)) && GATE_CODES.includes(value as never) && !this.data.preModelGates.includes(value))
       this.data.preModelGates.push(value);
+  }
+  phase(value: typeof PHASES[number]) {
+    const now = Date.now();
+    if (this.currentPhase) {
+      (this.data.timings ??= []).push({ phase: this.currentPhase, durationMs: Math.max(0, now - this.phaseStarted) });
+    }
+    this.currentPhase = value; this.phaseStarted = now;
+  }
+  finishTiming() {
+    if (this.currentPhase) {
+      (this.data.timings ??= []).push({ phase: this.currentPhase, durationMs: Math.max(0, Date.now() - this.phaseStarted) });
+      this.currentPhase = undefined;
+    }
   }
   context(value: unknown) { try { this.data.nativeContext = nativeContext(value); } catch { this.data.nativeContext = undefined; } }
   analysis(status: string, matchedRuleIds: number[], uncertainRuleIds: number[]) {
@@ -133,6 +157,7 @@ export function createApprovalAudit(append?: (type: string, data: unknown) => vo
     finish(call: ApprovalDiagnostic, stage: string, outcome: string, reasonCode?: string) {
       if (call.done) return;
       call.done = true;
+      call.finishTiming();
       try {
         const record = { version: 1, sequence: Number.isSafeInteger(call.data.sequence) ? call.data.sequence : 0,
           toolCallId: safeCallId(call.data.toolCallId),
@@ -161,7 +186,10 @@ export function createApprovalAudit(append?: (type: string, data: unknown) => vo
             ...(TRANSPORT_CODES.includes(item.transportCode) ? { transportCode: item.transportCode } : {}),
             ...(Number.isInteger(item.httpStatus) && item.httpStatus >= 100 && item.httpStatus <= 599 ? { httpStatus: item.httpStatus } : {}),
           })), ...(call.data.analysis ? { analysis: analysis(call.data.analysis) } : {}),
-          ...(call.data.reviewInput ? { reviewInput: inputMetadata(call.data.reviewInput) } : {}) };
+          ...(call.data.reviewInput ? { reviewInput: inputMetadata(call.data.reviewInput) } : {}),
+          ...(Array.isArray(call.data.timings) ? { timings: call.data.timings.filter((item: any) =>
+            PHASES.includes(item.phase) && Number.isSafeInteger(item.durationMs) && item.durationMs >= 0)
+            .slice(0, 32).map((item: any) => ({ phase: item.phase, durationMs: Math.min(item.durationMs, 86400000) })) } : {}) };
         state.last = record;
         if (!append) throw new Error("audit unavailable");
         append(AUDIT_TYPE, record); state.accepted++; state.health = "accepted";
