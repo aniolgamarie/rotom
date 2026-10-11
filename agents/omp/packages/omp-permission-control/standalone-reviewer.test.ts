@@ -158,3 +158,84 @@ test("forged/raw packet rejected before model/key/fetch; no compatibility branch
   expect(result).toEqual({ status: "failure", primary: { status: "failure", called: false, health: "invalid", failureCode: "INPUT_INVALID" } });
   expect(calls).toBe(0); expect(JSON.stringify(result)).not.toContain("CANARY");
 });
+
+function reviewEnvelope(api: string, content: unknown, limited: boolean) {
+  return api === "anthropic-messages"
+    ? { content: [{ type: "text", text: content }], stop_reason: limited ? "max_tokens" : "end_turn" }
+    : { choices: [{ message: { content }, finish_reason: limited ? "length" : "stop" }] };
+}
+for (const api of ["anthropic-messages", "openai-completions"]) {
+  test(`${api} sends shared 1024 output budget`, async () => {
+    let body: any;
+    const r = runtime(async (_url, init) => { body = JSON.parse(init.body as string);
+      return new Response(JSON.stringify(reviewEnvelope(api, valid(), false))); });
+    r.current = () => ({ ...model, api });
+    const result = await reviewCommand(input, r);
+    expect(result.status).toBe("valid"); expect(body.max_tokens).toBe(1024);
+    expect(body).not.toHaveProperty("temperature");
+    expect(Object.keys(body).sort()).toEqual(api === "anthropic-messages"
+      ? ["max_tokens", "messages", "model", "system"] : ["max_tokens", "messages", "model"]);
+  });
+  for (const [label, content] of [["empty", ""], ["null", null], ["partial JSON", '{"decision":"allow",'],
+    ["incomplete schema", '{"decision":"allow"}']] as const) {
+    test(`${api} explicit limit and ${label} is closed output-truncated failure`, async () => {
+      const r = runtime(async () => new Response(JSON.stringify(reviewEnvelope(api, content, true))));
+      r.current = () => ({ ...model, api });
+      const result = await reviewCommand(input, r);
+      expect(result.primary).toMatchObject({ status: "failure", called: true, health: "invalid", failureCode: "REVIEW_OUTPUT_TRUNCATED" });
+      expect(result.remote).toBeUndefined();
+    });
+  }
+  for (const decision of ["allow", "ask", "deny"]) test(`${api} explicit limit preserves complete strict ${decision} without fallback`, async () => {
+    let calls = 0;
+    const r = runtime(async () => { calls++; return new Response(JSON.stringify(reviewEnvelope(api, valid(decision), true))); });
+    r.current = () => ({ ...model, api });
+    const result = await reviewCommand({ ...input, remoteFallback: { provider: "fictional", model: "remote" } }, r);
+    expect(result.status).toBe("valid"); expect(result.review?.decision).toBe(decision);
+    expect(result.source).toBe("primary"); expect(result.remote).toBeUndefined(); expect(calls).toBe(1);
+  });
+  test(`${api} usage at its output budget does not imply truncation`, async () => {
+    const envelope = { ...reviewEnvelope(api, "{broken", false), usage: { output_tokens: 1024, completion_tokens: 1024 } };
+    const r = runtime(async () => new Response(JSON.stringify(envelope))); r.current = () => ({ ...model, api });
+    expect((await reviewCommand(input, r)).primary).toMatchObject({ failureCode: "REVIEW_JSON_INVALID" });
+  });
+  test(`${api} truncated primary uses one configured remote with the identical packet`, async () => {
+    const otherApi = api === "anthropic-messages" ? "openai-completions" : "anthropic-messages";
+    const prompts: string[] = [];
+    const r = runtime(async (_url, init) => {
+      const body = JSON.parse(init.body as string); prompts.push(body.messages.at(-1).content);
+      return new Response(JSON.stringify(reviewEnvelope(prompts.length === 1 ? api : otherApi,
+        prompts.length === 1 ? null : valid("ask"), prompts.length === 1)));
+    });
+    r.current = () => ({ ...model, api }); r.resolve = () => ({ ...model, id: "remote", api: otherApi });
+    const result = await reviewCommand({ ...input, remoteFallback: { provider: "fictional", model: "remote" } }, r);
+    expect(result.primary).toMatchObject({ failureCode: "REVIEW_OUTPUT_TRUNCATED", called: true });
+    expect(result.source).toBe("remote"); expect(result.review?.decision).toBe("ask");
+    expect(prompts).toHaveLength(2); expect(prompts[0]).toBe(prompts[1]);
+  });
+}
+for (const content of [[], [{ type: "thinking", thinking: "SENSITIVE_CANARY_REASONING" }], [{ type: "redacted_thinking", data: "SENSITIVE_CANARY_REASONING" }]]) {
+  test("Anthropic explicit max_tokens with no text is truncated without retaining reasoning", async () => {
+    const r = runtime(async () => new Response(JSON.stringify({ content, stop_reason: "max_tokens" })));
+    r.current = () => ({ ...model, api: "anthropic-messages" });
+    const result = await reviewCommand(input, r);
+    expect(result.primary).toMatchObject({ failureCode: "REVIEW_OUTPUT_TRUNCATED", health: "invalid" });
+    expect(JSON.stringify(result)).not.toContain("SENSITIVE_CANARY_REASONING");
+  });
+}
+for (const [api, envelope] of [
+  ["anthropic-messages", { content: [{ type: "unknown", text: "SENSITIVE_CANARY_RESPONSE" }], stop_reason: "max_tokens" }],
+  ["anthropic-messages", { content: [{ type: "text", text: valid() }, { type: "text", text: "" }], stop_reason: "max_tokens" }],
+  ["anthropic-messages", { content: [{ type: "text" }], stop_reason: "max_tokens" }],
+  ["anthropic-messages", { content: null, stop_reason: "max_tokens" }],
+  ["anthropic-messages", { content: [{ type: "thinking", thinking: "SENSITIVE_CANARY_RESPONSE" }], stop_reason: "end_turn" }],
+  ["openai-completions", { choices: [{ message: { content: valid(), tool_calls: [] }, finish_reason: "length" }] }],
+  ["openai-completions", { choices: [{ message: { content: [] }, finish_reason: "length" }] }],
+  ["openai-completions", { choices: [null], finish_reason: "length" }],
+  ["openai-completions", reviewEnvelope("openai-completions", null, false)],
+] as const) test(`${api} nonstandard response remains shape error despite limit metadata`, async () => {
+  const r = runtime(async () => new Response(JSON.stringify(envelope))); r.current = () => ({ ...model, api });
+  const result = await reviewCommand(input, r);
+  expect(result.primary).toMatchObject({ failureCode: "RESPONSE_SHAPE_INVALID" });
+  expect(JSON.stringify(result)).not.toContain("SENSITIVE_CANARY_RESPONSE");
+});

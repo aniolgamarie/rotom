@@ -66,3 +66,16 @@ test("analysis and input observations are closed metadata, never pre-model gates
   expect(records[0].preModelGates).toEqual([]);
   expect(JSON.stringify(records)).not.toContain("SECRET_CANARY_RAW");
 });
+
+test("output truncation is retained as a fixed closed failure code without response metadata", () => {
+  const records: any[] = [], audit = createApprovalAudit((_type, data) => records.push(data));
+  const call = audit.begin("call_truncated", "bash", "smart", 1);
+  call.review({ status: "failure", primary: { status: "failure", called: true, health: "invalid",
+    failureCode: "REVIEW_OUTPUT_TRUNCATED", body: "SENSITIVE_CANARY_BODY", response: "SENSITIVE_CANARY_BODY",
+    stopReason: "SENSITIVE_CANARY_BODY", usage: { output_tokens: 1024 }, headers: { authorization: "SENSITIVE_CANARY_BODY" } } } as any);
+  audit.finish(call, "hook", "blocked", "REVIEW_UNAVAILABLE");
+  expect(records[0].attempts).toEqual([{ target: "primary", status: "failure", called: true, failureCode: "REVIEW_OUTPUT_TRUNCATED" }]);
+  expect(JSON.stringify(records)).not.toContain("SENSITIVE_CANARY_BODY");
+  expect(JSON.stringify(records)).not.toContain("output_tokens");
+  expect(records[0].attempts[0]).not.toHaveProperty("stopReason");
+});

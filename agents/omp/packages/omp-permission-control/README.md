@@ -38,6 +38,10 @@ authorization 和 `LOW_RISK_AUTHORIZED`。明确 deny/prompt 和 manual 模式�
 具体保护目标未核清或原生上下文不能绑定时，模型 allow 也不能绕过限制。
 票据同时绑定真实用户指令和开始工作目录；新输入排队、授权变化、模式/会话/设置变化均使旧批准失效。
 已失效的请求不能继续查备用凭据或向备用模型发请求；未确定的 deny 不能因服务故障被人审覆盖。
+两种审查 API 共享 1024 token 输出预算，响应/决策正文仍有独立字节上限。只有服务明确返回
+`max_tokens`（Anthropic）或 `length`（OpenAI），且未形成完整有效的严格决策，才记录
+`REVIEW_OUTPUT_TRUNCATED` 并进入既有故障备用链；完整有效决定仍保留，缺少此标记不推测截断。
+OpenAI 兼容审查请求省略可选 `temperature`，使用 provider 的标准默认值；不按模型名称指定温度。
 
 ## 默认隔离边界
 
