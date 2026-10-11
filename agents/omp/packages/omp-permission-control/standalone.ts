@@ -2,7 +2,8 @@ import { createApprovalAudit, safeIdentity, type ApprovalDiagnostic } from "./ap
 import { lstat, readFile } from "node:fs/promises";
 import { isAbsolute, join, resolve } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
-import { hasUncertainPatternMatch, matchesNativePattern, matchesNativeRaw, parseGenericCommands, privacyWords, visiblePrefixForDenial } from "./standalone-shell-analysis";
+import { checkConfiguredRules } from "./standalone-policy";
+import { prepareReviewPacket, redactReviewText } from "./review-input";
 import { loadNativeBashRuntime, type NativeBashRuntime, type NativeSettingsSnapshot,
   type PlainBashParams, type NativeDiagnostics, SHELL_FAMILIES, CONTEXT_REASONS } from "./native-bash";
 import { parseStandaloneJson, reviewCommand, type ReviewAttempt, type ReviewRuntime, type ReviewTarget,
@@ -68,6 +69,7 @@ interface NativeTicket {
   sessionId: string;
   model: string;
   baseCwd: string;
+  authorization: string;
   settings: object;
   fingerprint: string;
   nativeDecision: NativeSettingsSnapshot["decision"];
@@ -143,92 +145,15 @@ function userMessages(ctx: ExtensionContext): string[] {
   return messages;
 }
 
-const SECRET_FIELD = "(?:(?:token|password|passwd|secret|api[_-]?key|credential|authorization|cookie)[A-Za-z0-9_-]*)";
-const SECRET_VALUE = "(?:'[^'\\n]*'|\"[^\"\\n]*\"|[^\\s;&|<>]+)+";
-
-function databasePasswords(input: string): Array<{ start: number; end: number; flag: string }> {
-  const words = privacyWords(input);
-  const ranges: Array<{ start: number; end: number; flag: string }> = [];
-  let databaseClient = false;
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    if (i && /[;&|\n\r]/u.test(input.slice(words[i - 1].end, word.start).replace(/\\\r?\n/gu, ""))) databaseClient = false;
-    if (/(?:^|[/\\])(?:mysql|mariadb|obclient)(?:\.exe)?$/u.test(word.value)) { databaseClient = true; continue; }
-    if (!databaseClient) continue;
-    if (word.value.startsWith("-p") && word.value.length > 2)
-      ranges.push({ start: word.start, end: word.end, flag: "-p[REDACTED]" });
-    else if (word.value.startsWith("--password="))
-      ranges.push({ start: word.start, end: word.end, flag: "--password=[REDACTED]" });
-    else if (word.value === "--password" && words[i + 1] && !words[i + 1].value.startsWith("-")) {
-      const value = words[++i];
-      ranges.push({ start: value.start, end: value.end, flag: "[REDACTED]" });
-    }
-  }
-  return ranges;
+// 只保留内存中的用户指令绑定，不写入审查包/状态/审计，也不生成秘密摘要。
+function authorizationSignature(ctx: ExtensionContext): string | null {
+  try {
+    if (ctx.hasPendingMessages?.()) return null;
+    return JSON.stringify(userMessages(ctx));
+  } catch { return null; }
 }
 
-function containsSensitiveText(command: string, cwd: string, messages: string[]): boolean {
-  const raw = [command, cwd, ...messages].join("\n");
-  const text = raw + "\n" + privacyWords(raw).map(t => t.value).join(" ");
-  return databasePasswords(raw).length > 0 || privacyWords(raw).some(word => word.raw !== word.value && databasePasswords(word.value).length > 0) || new RegExp(SECRET_FIELD + "[\"']?\\s*[:=]\\s*\\S+|--[A-Za-z0-9_-]*" + SECRET_FIELD + "\\s+\\S+", "iu").test(text) ||
-    /\b(?:Bearer|Basic)\s+\S+|[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s/"'<>]+@/iu.test(text) ||
-    (/\bcurl\b/u.test(text) && /(?<![\w-])(?:--(?:user|proxy-user|oauth2-bearer)(?:=|\s+)|-[uU]\s*)\S+/u.test(text)) ||
-    /\b(?:sk-[A-Za-z0-9_-]{16,}|gh[opusr]_[A-Za-z0-9]{20,}|AKIA[A-Z0-9]{16})\b/u.test(text);
-}
-
-function configuredNativeApproval(config: StandaloneConfig, command: string, shellFamily = "bash"):
-  Approval | "unsupported" | "unsupported-status" {
-  // 硬拒绝不能因后续语法不支持而降成可手工覆盖的提示。
-  if (config.nativePatterns.some(p => p.approval === "deny" && matchesNativeRaw(command, p.match))) return "deny";
-  const parsed = parseGenericCommands(command);
-  if (parsed.status !== "complete") {
-    const denies = config.nativePatterns.filter(p => p.approval === "deny");
-    if (denies.length && visiblePrefixForDenial(command).some(c => denies.some(p => matchesNativePattern(c, p.match) || hasUncertainPatternMatch(c, p.match)))) return "deny";
-    return "unsupported";
-  }
-  let result: Approval = "allow";
-  for (const simple of parsed.commands) {
-    for (const pattern of config.nativePatterns) {
-      if (!matchesNativePattern(simple, pattern.match) && !matchesNativeRaw(command, pattern.match)) {
-        if (pattern.approval !== "allow" && hasUncertainPatternMatch(simple, pattern.match)) {
-          if (pattern.approval === "deny") return "deny";
-          result = "prompt";
-        }
-        continue;
-      }
-      if (pattern.approval === "deny") return "deny";
-      if (pattern.approval === "prompt") result = "prompt";
-    }
-  }
-  if (result === "allow" && parsed.commands.some(simple => simple.statusExpansions?.length) &&
-      !["bash", "sh", "zsh", "dash", "ash", "ksh", "mksh"].includes(shellFamily)) return "unsupported-status";
-  return result;
-}
-
-function redactSensitive(value: string): string {
-  for (const range of databasePasswords(value).reverse())
-    value = value.slice(0, range.start) + range.flag + value.slice(range.end);
-  const words = privacyWords(value);
-  const curl = /\bcurl\b/u.test(value);
-  for (let i = words.length-1; i >= 0; i--) {
-    const word = words[i];
-    const previous = words[i-1]?.value ?? "";
-    const credentialFlag = (curl && /^--(?:user|proxy-user|oauth2-bearer)$|^-[uU]$/u.test(previous)) ||
-      new RegExp("^--[A-Za-z0-9_-]*" + SECRET_FIELD + "$", "iu").test(previous) || /^(?:Bearer|Basic)$/iu.test(previous);
-    const foldedSensitive = word.raw !== word.value && (containsSensitiveText(word.value, "", []) ||
-      (curl && /^(?:-[uU]|--(?:user|proxy-user|oauth2-bearer)=).+/u.test(word.value)));
-    if (credentialFlag || foldedSensitive)
-      value = value.slice(0, word.start) + (word.raw.startsWith("#") ? "# [REDACTED]" : "[REDACTED]") + value.slice(word.end);
-  }
-  return value
-    .replace(new RegExp("((?:-H|--header)\\s+)" + SECRET_VALUE, "gu"), "$1[REDACTED]")
-    .replace(new RegExp("(\\b(?:Bearer|Basic)\\s+)" + SECRET_VALUE, "giu"), "$1[REDACTED]")
-    .replace(/([A-Za-z][A-Za-z0-9+.-]*:\/\/)[^\s/"'<>]+@/gu, "$1[REDACTED]@")
-    .replace(new RegExp(curl ? "((?<![\\w-])(?:--(?:user|proxy-user|oauth2-bearer)(?:=|\\s+)|-[uU]\\s*))" + SECRET_VALUE : "(?!)", "gu"), "$1[REDACTED]")
-    .replace(new RegExp("(" + SECRET_FIELD + "[\"']?\\s*[:=]\\s*)" + SECRET_VALUE, "giu"), "$1[REDACTED]")
-    .replace(new RegExp("(--[A-Za-z0-9_-]*" + SECRET_FIELD + "\\s+)" + SECRET_VALUE, "giu"), "$1[REDACTED]")
-    .replace(/\b(?:sk-[A-Za-z0-9_-]{16,}|gh[opusr]_[A-Za-z0-9]{20,}|AKIA[A-Z0-9]{16})\b/gu, "[REDACTED]");
-}
+const redactSensitive = (value: string) => redactReviewText(value, "display");
 
 function worktreeSummary(plan: NativeSettingsSnapshot["reviewContext"][string] | undefined): string {
   if (!plan || typeof plan !== "object" || Array.isArray(plan)) return "";
@@ -425,58 +350,73 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
       state.native.diagnostics = nativeDiagnostics(native);
       diagnostic?.context(state.native.diagnostics);
       const cwd = effectiveCwd(ctx.cwd, params.cwd) ?? params.cwd ?? ctx.cwd;
-      const configuredGate = configuredNativeApproval(config, params.command,
-        toolName === "permission_bash" ? "bash" : typeof native?.reviewContext.shellFamily === "string"
-          ? native.reviewContext.shellFamily : "unknown");
+      const rules = checkConfiguredRules(params.command, config.nativePatterns);
+      const configuredGate = rules.decision;
+      diagnostic?.analysis(rules.analysis, rules.matchedRuleIds, rules.uncertainRuleIds);
       if (configuredGate === "deny" || native?.decision === "deny") {
         diagnostic?.gates(...(configuredGate === "deny" ? ["CONFIGURED_DENY"] : []),
           ...(native?.decision === "deny" ? ["NATIVE_DENY"] : []));
         return { approved: false, source: "native", reasonCode: "NATIVE_DENY", chain: ["native"] };
       }
       const messages = userMessages(ctx);
-      const nativePrompt = native?.decision === "prompt";
-      const earlyHuman = state.mode === "manual" || configuredGate === "prompt" ||
-        (configuredGate === "unsupported" || configuredGate === "unsupported-status") || nativePrompt || messages.length === 0;
-      const sensitiveInput = !earlyHuman && containsSensitiveText(params.command, cwd, messages);
-      const needsHuman = earlyHuman || sensitiveInput;
+      const unsupportedContext = native?.decision === "prompt" && native.reasonCode === "UNSUPPORTED_EXECUTION_CONTEXT";
+      const nativePrompt = native?.decision === "prompt" && !unsupportedContext;
+      const needsHuman = state.mode === "manual" || configuredGate === "prompt" || nativePrompt;
       diagnostic?.gates(...(state.mode === "manual" ? ["MANUAL_MODE"] : []),
-        ...(configuredGate === "prompt" ? ["CONFIGURED_PROMPT"] : []),
-        ...(configuredGate === "unsupported" ? ["UNSUPPORTED_SYNTAX"] : []),
-        ...(configuredGate === "unsupported-status" ? ["UNSUPPORTED_STATUS_SEMANTICS"] : []),
-        ...(nativePrompt ? [native?.reasonCode === "UNSUPPORTED_EXECUTION_CONTEXT" ? "UNSUPPORTED_NATIVE_CONTEXT" : "NATIVE_PROMPT"] : []),
-        ...(messages.length === 0 ? ["NO_USER_MESSAGES"] : []), ...(sensitiveInput ? ["SENSITIVE_INPUT"] : []));
+        ...(configuredGate === "prompt" ? ["CONFIGURED_PROMPT"] : []), ...(nativePrompt ? ["NATIVE_PROMPT"] : []));
       if (needsHuman) {
-        const reasonCode = native?.reasonCode === "UNSUPPORTED_EXECUTION_CONTEXT" ? native.reasonCode :
-          configuredGate === "unsupported" ? "UNSUPPORTED_SYNTAX" :
-            configuredGate === "unsupported-status" ? "UNSUPPORTED_STATUS_SEMANTICS" :
-            nativePrompt ? "NATIVE_PROMPT" : "USER_CONFIRMATION_REQUIRED";
-        const chain: ApprovalOutcome["chain"] = nativePrompt || configuredGate === "prompt" ?
-          ["native", "human"] : ["human"];
+        const reasonCode = nativePrompt ? "NATIVE_PROMPT" : "USER_CONFIRMATION_REQUIRED";
+        const chain: ApprovalOutcome["chain"] = nativePrompt || configuredGate === "prompt" ? ["native", "human"] : ["human"];
         state.human.calls++;
         state.last = { outcome: "pending-human", source: "human", reasonCode, chain };
         if (diagnostic) diagnostic.routingComplete = true;
         const approved = await humanApprove(ctx, toolName, params.command, cwd, reasonCode, signal,
           state.native.diagnostics?.contextReason, native?.reviewContext.worktreePlan ?? native?.reviewContext.unverifiedWorktreeEffects);
         state.human.health = ctx.hasUI ? (approved ? "approved" : "denied") : "unavailable";
-        return { approved, source: "human", reasonCode,
-          chain };
+        return { approved, source: "human", reasonCode, chain };
       }
       state.last = { outcome: "reviewing", source: "none", reasonCode: "REVIEW_PENDING", chain: [] };
-      if (diagnostic) diagnostic.reviewStarted = true;
-      const result = await reviewCommand({ command: params.command, cwd, userMessages: messages,
-        parameters: { cwd: params.cwd, timeout: params.timeout }, reviewer: config.reviewer,
-        executionContext: { entrypoint: toolName, baseCwd: ctx.cwd, ...(native?.reviewContext ?? {}) },
-        remoteFallback: config.remoteFallback }, reviewRuntime(ctx, dependencies.fetch ?? globalThis.fetch), signal);
+      const prepared = prepareReviewPacket({ command: params.command, cwd, userMessages: messages,
+        parameters: { cwd: params.cwd, timeout: params.timeout },
+        executionContext: { entrypoint: toolName, baseCwd: ctx.cwd, ...(native?.reviewContext ?? {}),
+          shellFamily: toolName === "permission_bash" ? "bash" : typeof native?.reviewContext.shellFamily === "string" ? native.reviewContext.shellFamily : "unknown",
+          shellAnalysis: { status: rules.analysis },
+          ...(config.nativePatterns.length ? { configuredRules: config.nativePatterns.map((rule, id) => ({
+            id, match: rule.match, approval: rule.approval, uncertain: rules.uncertainRuleIds.includes(id) })) } : {}) } });
+      if (prepared.status === "ready") diagnostic?.input(prepared.packet);
+      else diagnostic?.gates(prepared.reasonCode);
+      if (diagnostic) diagnostic.reviewStarted = prepared.status === "ready";
+      const reviewMode = state.mode, reviewGeneration = state.generation, reviewSession = ctx.sessionManager.getSessionId();
+      const reviewCwd = ctx.cwd, reviewAuthorization = JSON.stringify(messages);
+      const isCurrent = () => !signal.aborted && state.mode === reviewMode && state.generation === reviewGeneration &&
+        ctx.cwd === reviewCwd && ctx.sessionManager.getSessionId() === reviewSession && authorizationSignature(ctx) === reviewAuthorization;
+      const runtime = { ...reviewRuntime(ctx, dependencies.fetch ?? globalThis.fetch), isCurrent };
+      const result: ReviewSequenceResult = prepared.status === "ready"
+        ? await reviewCommand(prepared.packet, { reviewer: config.reviewer, remoteFallback: config.remoteFallback },
+          runtime, signal)
+        : { status: prepared.status === "input-too-large" ? "input-too-large" : "failure",
+          primary: { status: "failure", called: false, health: "invalid", failureCode: prepared.reasonCode } };
       diagnostic?.review(result);
-      if (result.status === "input-too-large") diagnostic?.gates("INPUT_TOO_LARGE");
+      if (prepared.status === "invalid") return { approved: false, source: "none", reasonCode: "INPUT_INVALID", chain: [] };
       const chain = recordReview(state, config, result);
+      if (!isCurrent()) return { approved: false, source: "none", reasonCode: signal.aborted ? "CANCELLED" : "STALE_REVIEW", chain };
       if (result.status === "valid") {
         const source = result.source ?? "primary";
         const reasonCode = result.review!.reasonCode;
-        if (result.review!.decision === "allow") return { approved: true, source, reasonCode, chain };
         if (result.review!.decision === "deny") return { approved: false, source, reasonCode, chain };
+        // 接线/设置无法绑定时，模型决定也不能绕过原生执行边界。
+        if (unsupportedContext) return { approved: false, source: "native", reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", chain: [...chain, "native"] };
+        if (result.review!.decision === "allow") {
+          if (rules.uncertainRuleIds.some(id => config!.nativePatterns[id].approval === "deny"))
+            return { approved: false, source: "native", reasonCode: "RULE_TARGET_UNVERIFIED", chain: [...chain, "native"] };
+          if (!rules.uncertainRuleIds.length) return { approved: true, source, reasonCode, chain };
+        }
       }
-      const reasonCode = result.review?.reasonCode ?? "REVIEW_UNAVAILABLE";
+      if (unsupportedContext) return { approved: false, source: "native", reasonCode: "UNSUPPORTED_EXECUTION_CONTEXT", chain: [...chain, "native"] };
+      if (rules.uncertainRuleIds.some(id => config!.nativePatterns[id].approval === "deny"))
+        return { approved: false, source: "native", reasonCode: "RULE_TARGET_UNVERIFIED", chain: [...chain, "native"] };
+      const rulePrompt = result.status === "valid" && result.review!.decision === "allow" && rules.uncertainRuleIds.length > 0;
+      const reasonCode = rulePrompt ? "RULE_CONFIRMATION_REQUIRED" : result.review?.reasonCode ?? "REVIEW_UNAVAILABLE";
       state.human.calls++;
       state.last = { outcome: "pending-human", source: "human", reasonCode, chain: [...chain, "human"] };
       const approved = await humanApprove(ctx, toolName, params.command, cwd, reasonCode, signal,
@@ -579,19 +519,19 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         if (event.toolName === "permission_bash") {
           try {
             const stamp = { generation: state.generation, mode: state.mode, sessionId: ctx.sessionManager.getSessionId(),
-              model: modelIdentity(ctx.models.current()), baseCwd: ctx.cwd };
+              model: modelIdentity(ctx.models.current()), baseCwd: ctx.cwd, authorization: authorizationSignature(ctx) };
             const snapshot = await nativeRuntime.capture(stamp.baseCwd, params);
             state.native.scopedSettingsReady = true;
             diagnostic.context(nativeDiagnostics(snapshot));
             if (diagnostic.invalidated || state.generation !== stamp.generation || state.mode !== stamp.mode ||
-                ctx.sessionManager.getSessionId() !== stamp.sessionId || modelIdentity(ctx.models.current()) !== stamp.model || ctx.cwd !== stamp.baseCwd) {
+                ctx.sessionManager.getSessionId() !== stamp.sessionId || modelIdentity(ctx.models.current()) !== stamp.model || ctx.cwd !== stamp.baseCwd || stamp.authorization === null || authorizationSignature(ctx) !== stamp.authorization) {
               state.native.scopedSettingsReady = false;
               diagnostic.gates("STALE_REVIEW"); audit.finish(diagnostic, "hook", "cancelled", "STALE_REVIEW");
               dropDiagnostic(event.toolCallId, diagnostic);
               return { block: true, reason: "stale bash review" };
             }
             diagnostic.awaitingExecute = true;
-            rawCaptures.set(event.toolCallId, { signature: signature(params), ...stamp,
+            rawCaptures.set(event.toolCallId, { signature: signature(params), ...stamp, authorization: stamp.authorization,
               settings: snapshot.settings, fingerprint: snapshot.fingerprint, nativeDecision: snapshot.decision });
             return undefined;
           } catch {
@@ -615,6 +555,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         try {
           const startSession = ctx.sessionManager.getSessionId();
           const startModel = modelIdentity(ctx.models.current()); const startMode = state.mode;
+          const startCwd = ctx.cwd, startAuthorization = authorizationSignature(ctx);
           const snapshot = await nativeRuntime.capture(ctx.cwd, params);
           hasCurrentSnapshot = true;
           state.native.scopedSettingsReady = true;
@@ -624,7 +565,8 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
           state.native.diagnostics = nativeDiagnostics(checked); diagnostic.context(state.native.diagnostics);
           if (!outcome.approved || pending.signal.aborted || state.generation !== queuedGeneration ||
               state.mode !== startMode || ctx.sessionManager.getSessionId() !== startSession ||
-              modelIdentity(ctx.models.current()) !== startModel || checked.fingerprint !== snapshot.fingerprint ||
+              modelIdentity(ctx.models.current()) !== startModel || ctx.cwd !== startCwd || startAuthorization === null ||
+              authorizationSignature(ctx) !== startAuthorization || checked.fingerprint !== snapshot.fingerprint ||
               checked.decision !== snapshot.decision) {
             state.last = { outcome: "blocked", source: outcome.source,
               reasonCode: outcome.approved ? "STALE_REVIEW" : outcome.reasonCode, chain: outcome.chain };
@@ -636,7 +578,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
           }
           diagnostic.awaitingExecute = true;
           tickets.set(event.toolCallId, { signature: signature(params), generation: queuedGeneration,
-            mode: startMode, sessionId: startSession, model: startModel, baseCwd: ctx.cwd,
+            mode: startMode, sessionId: startSession, model: startModel, baseCwd: startCwd, authorization: startAuthorization,
             settings: snapshot.settings, fingerprint: snapshot.fingerprint, nativeDecision: snapshot.decision });
           state.last = { outcome: "approved", source: outcome.source, reasonCode: outcome.reasonCode,
             chain: outcome.chain };
@@ -661,7 +603,8 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
           const params = plainBashParams(rawParams);
           if (!ticket || !params || ticket.signature !== signature(params) || ticket.generation !== state.generation ||
               ticket.mode !== state.mode || ticket.sessionId !== ctx.sessionManager.getSessionId() ||
-              ticket.model !== modelIdentity(ctx.models.current()) || ticket.baseCwd !== ctx.cwd) {
+              ticket.model !== modelIdentity(ctx.models.current()) || ticket.baseCwd !== ctx.cwd ||
+              authorizationSignature(ctx) !== ticket.authorization) {
             state.native.diagnostics = undefined; diagnostic.context(undefined);
             state.last = { outcome: "blocked", source: "none", reasonCode: "INVALID_TICKET", chain: [] };
             diagnostic.gates("INVALID_TICKET"); audit.finish(diagnostic, "execute", signal?.aborted ? "cancelled" : "blocked", "INVALID_TICKET");
@@ -684,7 +627,8 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
           }
           if (signal?.aborted || ticket.generation !== state.generation || ticket.mode !== state.mode ||
               ticket.sessionId !== ctx.sessionManager.getSessionId() ||
-              ticket.model !== modelIdentity(ctx.models.current()) || ticket.baseCwd !== ctx.cwd) {
+              ticket.model !== modelIdentity(ctx.models.current()) || ticket.baseCwd !== ctx.cwd ||
+              authorizationSignature(ctx) !== ticket.authorization) {
             state.last = { outcome: "blocked", source: "none", reasonCode: "STALE_REVIEW", chain: [] };
             diagnostic.gates("STALE_REVIEW"); audit.finish(diagnostic, "execute", signal?.aborted ? "cancelled" : "blocked", "STALE_REVIEW");
             return textResult("bash blocked", { reasonCode: "STALE_REVIEW" }, true);
@@ -740,12 +684,14 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         }
         const startSession = ctx.sessionManager.getSessionId();
         const startModel = modelIdentity(ctx.models.current()); const startMode = state.mode;
+        const startCwd = ctx.cwd, startAuthorization = authorizationSignature(ctx);
         let hasCurrentSnapshot = false;
         try {
           const rawTicket = rawCaptures.get(toolCallId); rawCaptures.delete(toolCallId);
           if (config.nativeBash === true && (!rawTicket || rawTicket.signature !== signature(params) ||
               rawTicket.generation !== queuedGeneration || rawTicket.mode !== startMode ||
-              rawTicket.sessionId !== startSession || rawTicket.model !== startModel || rawTicket.baseCwd !== ctx.cwd)) {
+              rawTicket.sessionId !== startSession || rawTicket.model !== startModel || rawTicket.baseCwd !== ctx.cwd ||
+              rawTicket.authorization !== startAuthorization)) {
             state.native.diagnostics = undefined; diagnostic.context(undefined);
             diagnostic.gates("INVALID_TICKET"); audit.finish(diagnostic, "execute", signal?.aborted ? "cancelled" : "blocked", "INVALID_TICKET");
             return textResult("permission_bash blocked", { reasonCode: "INVALID_TICKET" }, true);
@@ -764,6 +710,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
           state.native.diagnostics = nativeDiagnostics(nativeChecked); diagnostic.context(state.native.diagnostics);
           if (!outcome.approved || combined.aborted || state.generation !== queuedGeneration || state.mode !== startMode ||
               ctx.sessionManager.getSessionId() !== startSession || modelIdentity(ctx.models.current()) !== startModel ||
+              ctx.cwd !== startCwd || startAuthorization === null || authorizationSignature(ctx) !== startAuthorization ||
               (rawTicket !== undefined && ctx.cwd !== rawTicket.baseCwd)) {
             state.last = { outcome: "blocked", source: outcome.source,
               reasonCode: outcome.approved ? "STALE_REVIEW" : outcome.reasonCode, chain: outcome.chain };

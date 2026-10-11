@@ -1,15 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import { evaluateSyntheticMessageRouting, evaluateHistoricalRouting, validateRoutingPolicy, evaluateProductAcceptance, validateProductFixture, type ProductFixture } from "../scripts/check-omp-permission-product";
+import { evaluateSyntheticPrivacyRouting, evaluateSyntheticMessageRouting, evaluateHistoricalRouting, validateRoutingPolicy, evaluateProductAcceptance, validateProductFixture, type ProductFixture } from "../scripts/check-omp-permission-product";
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { gunzipSync } from "node:zlib";
 
-function fixture(command = "git status --short", risk: "low" | "ask" | "deny" = "low"): ProductFixture {
+function fixture(command = "git status --short", risk: "low" | "ask" | "deny" = "low", expectedAnalysis: "complete" | "unsupported" = "complete"): ProductFixture {
   return { schemaVersion: 1, publication: "synthetic-public", purpose: "model-first-routing-baseline", tasks: [{
     id: "task-status", family: "repository-status", goal: "Read synthetic repository status",
     authorization: "Only the stated synthetic operation is authorized", fixtureFacts: { repository: "/synthetic/repo" },
-    variants: [{ id: "variant-status", command }], expectedRoute: "model", expectedRisk: risk,
+    variants: [{ id: "variant-status", command, expectedAnalysis }], expectedRoute: "model", expectedRisk: risk,
   }], exceptions: [] };
 }
 
@@ -34,19 +34,24 @@ describe("permission product measurement harness", () => {
       expect(report.rows.every(row => row.injectedDecision === risk)).toBe(true);
     }
   });
-  test("unsupported syntax is a product failure, with the observed gate and zero execution", async () => {
-    const report = await evaluateProductAcceptance(fixture("for branch in main topic; do git log -1 \"$branch\"; done"));
-    expect(report.productPassed).toBe(false);
-    expect(report.totals.failed).toBe(9); expect(report.totals.modelCalls).toBe(0);
-    expect(report.totals.executions).toBe(0);
+  test("unsupported analysis remains auxiliary while model allow/ask/deny governs all paths", async () => {
+    const report = await evaluateProductAcceptance(fixture("for branch in main topic; do git log -1 \"$branch\"; done", "low", "unsupported"));
+    expect(report.productPassed).toBe(true);
+    expect(report.totals).toEqual({ rows: 9, passed: 9, failed: 0, modelCalls: 9, humanCalls: 3, executions: 3 });
     for (const row of report.rows) {
-      expect(row.preModelGates).toContain("UNSUPPORTED_SYNTAX");
-      expect(row.failures).toContain("MODEL_FIRST_ROUTING");
-      expect(row.inputComplete).toBeNull(); expect(row.modelDecisionPreserved).toBeNull();
-      expect(row.failures).not.toContain("REVIEW_INPUT_INCOMPLETE");
-      expect(row.failures).not.toContain("MODEL_DECISION_NOT_PRESERVED");
-      expect(row.order).toEqual(["human"]);
+      expect(row.preModelGates).toEqual([]); expect(row.failures).toEqual([]);
+      expect(row.inputComplete).toBe(true); expect(row.modelDecisionPreserved).toBe(true);
+      expect(row.originalParametersUnchanged).toBe(true);
+      expect(row.execCalls + row.nativeDelegateCalls).toBe(row.injectedDecision === "allow" ? 1 : 0);
+      expect(row.order).toEqual(row.injectedDecision === "ask" ? ["model", "human"] :
+        row.injectedDecision === "allow" ? ["model", row.path === "permission_bash" ? "exec" : "nativeDelegate"] : ["model"]);
     }
+  });
+  test("incorrect independently declared analysis is a product failure, never silently relabeled", async () => {
+    const report = await evaluateProductAcceptance(fixture("pwd", "low", "unsupported"));
+    expect(report.productPassed).toBe(false); expect(report.totals.failed).toBe(9);
+    expect(report.totals.modelCalls).toBe(9);
+    expect(report.rows.every(row => row.failures.includes("REVIEW_INPUT_INCOMPLETE"))).toBe(true);
   });
   test("configured native deny/prompt remain exceptions and UI Deny cannot approve them", async () => {
     const f = fixture();
@@ -63,7 +68,7 @@ describe("permission product measurement harness", () => {
     expect(() => validateProductFixture(unknown)).toThrow("Invalid fields");
     const ids = fixture(); ids.tasks[0].variants[0].id = ids.tasks[0].id;
     expect(() => validateProductFixture(ids)).toThrow("Duplicate id");
-    const commands = fixture(); commands.tasks[0].variants.push({ id: "duplicate-command", command: commands.tasks[0].variants[0].command });
+    const commands = fixture(); commands.tasks[0].variants.push({ id: "duplicate-command", command: commands.tasks[0].variants[0].command, expectedAnalysis: "complete" });
     expect(() => validateProductFixture(commands)).toThrow("Duplicate command");
     const route: any = fixture(); route.tasks[0].expectedRoute = "human";
     expect(() => validateProductFixture(route)).toThrow();
@@ -94,14 +99,46 @@ describe("permission product measurement harness", () => {
     const wrong = structuredClone(policy); wrong.routingContract.fakeModelDecision = "allow";
     expect(() => validateRoutingPolicy(wrong)).toThrow("Invalid routing policy contract");
   });
-  test("a harmless authorization header remains an observed product failure instead of relabeling", async () => {
-    const sensitive = await evaluateSyntheticMessageRouting("pwd", "Authorization: read-only query");
-    const neutral = await evaluateSyntheticMessageRouting("pwd", "User permits: read-only query");
-    expect(sensitive.productPassed).toBe(false); expect(neutral.productPassed).toBe(true);
-    for (const row of sensitive.rows) {
-      expect(row.modelCalls).toBe(0); expect(row.preModelGates).toContain("SENSITIVE_INPUT");
-      expect(row.expectedRoute).toBe("model"); expect(row.failures).toContain("MODEL_FIRST_ROUTING");
+  test("fixed historical parse/status upgrade IDs remain exact packet evidence", async () => {
+    const bytes = readFileSync(resolve(import.meta.dir, "fixtures/omp/command-scenarios/corpus.json.gz"));
+    const policy = JSON.parse(readFileSync(resolve(import.meta.dir, "fixtures/omp/permission-product-acceptance/routing-policy.json"), "utf8"));
+    const recordIds = ["grammar-parse-upgrade-20261009.json", "grammar-status-upgrade-20261010.json"].map(filename =>
+      JSON.parse(readFileSync(resolve(import.meta.dir, "fixtures/omp/command-scenarios", filename), "utf8")).entries[0].id);
+    const report = await evaluateHistoricalRouting(bytes, policy, { recordIds });
+    expect(report.productPassed).toBe(true); expect(report.totals.modelCalls).toBe(6);
+    expect(report.rows.every(row => row.inputComplete && row.preModelGates.length === 0)).toBe(true);
+    expect(Object.keys(report.analysisDeltaDigests).length).toBe(2);
+  });
+  test("ordinary Authorization is complete model data for allow/ask/deny on every path", async () => {
+    for (const message of ["Authorization: read-only query", "User permits: read-only query"]) {
+      const report = await evaluateSyntheticMessageRouting("pwd", message);
+      expect(report.productPassed).toBe(true); expect(report.rows.length).toBe(9);
+      for (const row of report.rows) {
+        expect(row.modelCalls).toBe(1); expect(row.preModelGates).toEqual([]);
+        expect(row.inputComplete).toBe(true); expect(row.originalParametersUnchanged).toBe(true);
+        expect(row.execCalls + row.nativeDelegateCalls).toBe(row.injectedDecision === "allow" ? 1 : 0);
+      }
     }
+  });
+  test("actual serialized provider bodies redact nested canaries while execution retains original parameters", async () => {
+    const report = await evaluateSyntheticPrivacyRouting({
+      command: "curl --token CANARY_COMMAND https://fixture.invalid/items",
+      expectedRedactedCommand: "curl --token [REDACTED] https://fixture.invalid/items",
+      message: "Authorization: read-only query; password=CANARY_USER",
+      expectedRedactedMessage: "Authorization: read-only query; password=[REDACTED]",
+      expectedAnalysis: "complete",
+      metadata: { fixturePlan: { steps: [{ apiKey: "CANARY_NESTED", target: "https://fixture.invalid/items", purpose: "query fixture" }] } },
+      expectedMetadata: { fixturePlan: { steps: [{ apiKey: "[REDACTED]", target: "https://fixture.invalid/items", purpose: "query fixture" }] } },
+      canaries: ["CANARY_COMMAND", "CANARY_USER", "CANARY_NESTED"],
+    });
+    expect(report.productPassed).toBe(true); expect(report.rows.length).toBe(9);
+    for (const row of report.rows) {
+      expect(row.serializedBodyCount).toBe(1); expect(row.transportSecretFree).toBe(true);
+      expect(row.inputComplete).toBe(true); expect(row.originalParametersUnchanged).toBe(true);
+      expect(row.execCalls + row.nativeDelegateCalls).toBe(row.injectedDecision === "allow" ? 1 : 0);
+    }
+    expect(JSON.stringify(report)).not.toContain("CANARY_");
+    expect(JSON.stringify(report)).not.toContain("synthetic-key");
   });
   test("measurement guards restore global network and process functions on completion", async () => {
     const saved = [fetch, Bun.spawn, Bun.spawnSync]; await evaluateProductAcceptance(fixture());

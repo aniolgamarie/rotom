@@ -54,3 +54,15 @@ test("session identity digest is separately domain-bound and rejects paths", () 
   expect(sessionIdDigest("session-1")).toMatch(/^[a-f0-9]{64}$/u);
   expect(sessionIdDigest("/private/session/path")).toBeNull(); expect(sessionIdDigest("x".repeat(513))).toBeNull();
 });
+test("analysis and input observations are closed metadata, never pre-model gates", () => {
+  const records: any[] = [], audit = createApprovalAudit((_type, data) => records.push(data));
+  const call = audit.begin("call_metadata", "bash", "smart", 1);
+  call.analysis("unsupported", [70, 0], []);
+  call.data.analysis.command = "SECRET_CANARY_RAW";
+  call.data.reviewInput = { redacted: true, omittedMessages: 3, authorizationHistoryComplete: false, body: "SECRET_CANARY_RAW" };
+  audit.finish(call, "hook", "blocked", "USER_CONFIRMATION_REQUIRED");
+  expect(records[0].analysis).toEqual({ status: "unsupported", matchedRuleIds: [70, 0], uncertainRuleIds: [] });
+  expect(records[0].reviewInput).toEqual({ redacted: true, omittedMessages: 3, authorizationHistoryComplete: false });
+  expect(records[0].preModelGates).toEqual([]);
+  expect(JSON.stringify(records)).not.toContain("SECRET_CANARY_RAW");
+});

@@ -23,8 +23,21 @@ installed-only 本地模型查询，因此 tiny 状态固定为 unavailable，�
 主审只支持 `anthropic-messages` 和 `openai-completions`，共用 30 秒期限，不重试、不跟随
 重定向。Anthropic 响应可包含标准 thinking/redacted_thinking 元数据，审批只读取唯一 text 块；未知块、tool_use、多个或缺失 text 仍失败，严格决策 JSON 不变。只有 transport、unsupported 或严格 JSON 无效才尝试一次不同实际模型的 remote
 fallback；有效 allow/ask/deny 立即终止模型链。自动 allow 必须同时是 low risk、sufficient
-authorization 和 `LOW_RISK_AUTHORIZED`。完整 command、cwd 与真实 user 消息合计超过 24 KiB、
-疑似包含凭据、缺少真实 user 来源或无法保守解析 shell 语法时转人工；无 UI 则阻止。
+authorization 和 `LOW_RISK_AUTHORIZED`。明确 deny/prompt 和 manual 模式可前置处理；
+静态语法分析不支持、缺少 user 消息或发现凭据槽位均不直接转人工。
+完整命令与相关上下文先经过强制脱敏，再交给主审或备用；执行仍绑定原操作。
+凭据值被遮蔽，参数用途、目标及其余操作文本保留；普通 `Authorization:` 许可描述不按凭据处理。
+检测限于凭据槽位和已知格式，不能保证识别任意未知秘密。
+
+脱敏包深冻结并带运行时凭证，传输入口拒绝原操作或伪造包。主审与备用使用相同包。
+此保护覆盖送审模型内容、本插件人审标题/状态/审计；宿主自身保存的原始工具调用和工具返回
+不由插件重写，不能据此声称所有会话日志均已脱敏。实际执行绑定使用本地原操作，
+优先使用已有凭据引用而不是把真实值内联到命令；插件不读取环境/密钥正文来展开引用。
+总输入上限仍为 24 KiB，历史有独立预算，保留首/末消息及明显授权限制并标记省略；
+命令不截断，必要材料无法承载时记录容量故障。模型 ask 或服务失败时才回退人工，无 UI 则阻止。
+具体保护目标未核清或原生上下文不能绑定时，模型 allow 也不能绕过限制。
+票据同时绑定真实用户指令和开始工作目录；新输入排队、授权变化、模式/会话/设置变化均使旧批准失效。
+已失效的请求不能继续查备用凭据或向备用模型发请求；未确定的 deny 不能因服务故障被人审覆盖。
 
 ## 默认隔离边界
 
@@ -40,9 +53,11 @@ authorization 和 `LOW_RISK_AUTHORIZED`。完整 command、cwd 与真实 user �
 - `package.json`：包名、独立入口与 OMP 兼容范围；不含安装脚本或运行时下载。
 - `standalone.ts`：公开扩展 API 接线、session-only 状态、命令、工具和公开 `omp.exec` 执行。
 - `standalone-reviewer.ts`：有界模型输入、严格结果协议和一次远程 fallback。
+- `review-input.ts`：凭据跨度脱敏、嵌套字段/预算校验、只读审查包与运行时凭证。
+- `standalone-policy.ts`：明确配置限制与辅助分析分离，只有具体规则命中可前置处理。
 - `native-bash.ts`：公开原生审批与 Setting 句柄、scoped/global 设置同源检查及上下文核验。
 - `native-bash.test.ts`：虚构原生适配器下的下限、设置变更与执行上下文验证。
-- `standalone-shell-analysis.ts`：用于 native patterns 的保守通用简单命令解析。
+- `standalone-shell-analysis.ts`：native patterns 的辅助分析；其语法边界不是模型准入条件。
 - `standalone.test.ts`：临时假上下文、假 transport 和假 backend 的独立插件测试。
 - `tests/`：扩展纯逻辑测试，由独立 build-inputs 锁校验后的 Bun 运行。
 - `shell-analysis.ts` / `policy.ts`：完整受限命令分析及固定风险下限。

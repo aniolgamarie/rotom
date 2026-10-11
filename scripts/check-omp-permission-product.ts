@@ -13,7 +13,7 @@ export interface ProductFixture {
   publication: "synthetic-public";
   purpose: "model-first-routing-baseline";
   tasks: Array<{ id: string; family: string; goal: string; authorization: string; fixtureFacts: unknown;
-    variants: Array<{ id: string; command: string }>; expectedRoute: "model"; expectedRisk: "low" | "ask" | "deny" }>;
+    variants: Array<{ id: string; command: string; expectedAnalysis: "complete" | "unsupported" }>; expectedRoute: "model"; expectedRisk: "low" | "ask" | "deny" }>;
   exceptions: Array<{ id: string; command: string; policy: "deny" | "prompt"; pattern: string; expectedRoute: "deny" | "human" }>;
 }
 
@@ -43,7 +43,8 @@ export function validateProductFixture(value: unknown): ProductFixture {
         !Array.isArray(task.variants) || !task.variants.length || task.expectedRoute !== "model" ||
         !["low", "ask", "deny"].includes(task.expectedRisk)) throw new Error("Invalid task expectations or facts");
     for (const variant of task.variants) {
-      fields(variant, ["id", "command"], "variant"); unique(ids, variant.id, "id"); unique(commands, variant.command, "command");
+      fields(variant, ["id", "command", "expectedAnalysis"], "variant");
+      if (!["complete", "unsupported"].includes(variant.expectedAnalysis)) throw new Error("Invalid expected auxiliary analysis"); unique(ids, variant.id, "id"); unique(commands, variant.command, "command");
     }
   }
   for (const row of f.exceptions) {
@@ -60,6 +61,7 @@ export interface ProductRow {
   path: Path; expectedRoute: string; expectedRisk: string; injectedDecision: Decision;
   modelCalls: number; humanCalls: number; execCalls: number; nativeDelegateCalls: number;
   order: string[]; inputComplete: boolean | null; modelDecisionPreserved: boolean | null; originalParametersUnchanged: boolean;
+  serializedBodyCount: number; transportSecretFree: boolean;
   reasonCode: string; preModelGates: string[]; outcome: string; failures: string[]; passed: boolean;
 }
 const paths: Path[] = ["permission_bash", "native-bash", "native-zsh"];
@@ -70,17 +72,21 @@ const reviews = {
 };
 
 async function observe(row: { taskId: string; variantId: string; family: string; command: string; message: string;
+  expectedAnalysis: "complete" | "unsupported";
+  expectedRedactedCommand?: string; expectedRedactedMessage?: string;
+  metadata?: Record<string, any>; expectedMetadata?: Record<string, any>; canaries?: string[];
   source: "task" | "exception"; expectedRoute: string; expectedRisk: string; policy?: "deny" | "prompt"; pattern?: string },
   path: Path, decision: Decision): Promise<ProductRow> {
   const tools = new Map<string, any>(); const events = new Map<string, any>();
   const order: string[] = []; const prompts: any[] = []; const audits: any[] = [];
+  let serializedBodyCount = 0, transportSecretFree = true;
   const execs: any[][] = []; const delegates: any[] = []; let humanCalls = 0;
   const diagnostics = { shellFamily: path === "native-zsh" ? "zsh" : "bash",
     executionRoute: "local-embedded", contextReason: "STANDARD_CONTEXT" } as const;
   const settings = {};
   const snapshot: NativeSettingsSnapshot = { settings, fingerprint: "synthetic-settings-1", decision: row.policy ?? "allow",
     reasonCode: row.policy === "deny" ? "NATIVE_DENY" : row.policy === "prompt" ? "NATIVE_PROMPT" : "NATIVE_ALLOW",
-    diagnostics, reviewContext: { ...diagnostics, sameSettingsInstance: true, nativeDecision: row.policy ?? "allow" } };
+    diagnostics, reviewContext: { ...diagnostics, sameSettingsInstance: true, nativeDecision: row.policy ?? "allow", ...row.metadata } };
   const runtime: NativeBashRuntime = { capture: async () => snapshot, recheck: async supplied => {
     if (supplied !== settings) throw new Error("Harness settings identity mismatch"); return snapshot;
   } };
@@ -100,7 +106,10 @@ async function observe(row: { taskId: string; variantId: string; family: string;
   await createStandalonePlugin({ loadConfig: async () => config, loadNativeRuntime: async () => runtime,
     fetch: (async (_input: unknown, init: RequestInit) => {
       order.push("model");
-      const envelope = JSON.parse(String(init.body));
+      serializedBodyCount++;
+      const serializedBody = String(init.body);
+      transportSecretFree &&= (row.canaries ?? []).every(canary => !serializedBody.includes(canary));
+      const envelope = JSON.parse(serializedBody);
       prompts.push(JSON.parse(envelope.messages.at(-1).content));
       return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(reviews[decision]) } }] }), { status: 200 });
     }) as typeof fetch })(host);
@@ -120,10 +129,14 @@ async function observe(row: { taskId: string; variantId: string; family: string;
   if (blocked === undefined) await tools.get(toolName).execute("call_product", input, undefined, undefined, ctx);
   const last = audits.at(-1);
   if (!last) throw new Error("Harness missing terminal audit");
-  const inputComplete = prompts.length === 0 ? null : prompts.length === 1 && prompts[0].command === row.command && prompts[0].cwd === ctx.cwd &&
-    isDeepStrictEqual(prompts[0].parameters, { cwd: input.cwd, timeout: input.timeout }) &&
-    isDeepStrictEqual(prompts[0].genuineUserMessages, [row.message]) &&
-    isDeepStrictEqual(prompts[0].executionContext, { entrypoint: toolName, baseCwd: ctx.cwd, ...snapshot.reviewContext });
+  const expectedPacket = { command: row.expectedRedactedCommand ?? row.command, cwd: ctx.cwd,
+    parameters: { cwd: input.cwd, timeout: input.timeout }, genuineUserMessages: [row.expectedRedactedMessage ?? row.message],
+    executionContext: { entrypoint: toolName, baseCwd: ctx.cwd, ...diagnostics, sameSettingsInstance: true,
+      nativeDecision: row.policy ?? "allow", ...(row.expectedMetadata ?? row.metadata), shellAnalysis: { status: row.expectedAnalysis } },
+    privacy: { redacted: row.expectedRedactedCommand !== undefined || row.expectedRedactedMessage !== undefined || row.expectedMetadata !== undefined,
+      detection: "credential-slots-and-known-formats" },
+    contextSelection: { omittedMessages: 0, authorizationHistoryComplete: true } };
+  const inputComplete = prompts.length === 0 ? null : prompts.length === 1 && isDeepStrictEqual(prompts[0], expectedPacket);
   const originalParametersUnchanged = isDeepStrictEqual(input, before) && (path === "permission_bash"
     ? execs.every(args => args[0] === "bash" && isDeepStrictEqual(args[1], ["--noprofile", "--norc", "-c", row.command]) &&
       args[2].cwd === input.cwd && args[2].timeout === input.timeout * 1000)
@@ -149,12 +162,13 @@ async function observe(row: { taskId: string; variantId: string; family: string;
     expect(humanCalls === (row.expectedRoute === "human" ? 1 : 0), "EXCEPTION_HUMAN_CALL_COUNT");
     expect(last.outcome === "blocked", "EXCEPTION_OUTCOME");
   }
+  expect(transportSecretFree, "SECRET_IN_SERIALIZED_BODY");
   expect(originalParametersUnchanged, "PARAMETERS_CHANGED");
   expect(path === "permission_bash" ? delegates.length === 0 : execs.length === 0, "WRONG_EXECUTION_PATH");
-  return { taskId: row.taskId, variantId: row.variantId, family: row.family, command: row.command, source: row.source,
+  return { taskId: row.taskId, variantId: row.variantId, family: row.family, command: row.expectedRedactedCommand ?? row.command, source: row.source,
     path, expectedRoute: row.expectedRoute, expectedRisk: row.expectedRisk, injectedDecision: decision,
     modelCalls: prompts.length, humanCalls, execCalls: execs.length, nativeDelegateCalls: delegates.length, order,
-    inputComplete, modelDecisionPreserved: prompts.length === 1 ? last.reasonCode === reviews[decision].reasonCode : null, originalParametersUnchanged, reasonCode: last.reasonCode, preModelGates: last.preModelGates,
+    serializedBodyCount, transportSecretFree, inputComplete, modelDecisionPreserved: prompts.length === 1 ? last.reasonCode === reviews[decision].reasonCode : null, originalParametersUnchanged, reasonCode: last.reasonCode, preModelGates: last.preModelGates,
     outcome: last.outcome, failures, passed: failures.length === 0 };
 }
 
@@ -170,11 +184,11 @@ export async function evaluateProductAcceptance(input: unknown) {
       const message = `Goal: ${task.goal}\nUser permits: ${task.authorization}\nKnown synthetic fixture facts: ${JSON.stringify(task.fixtureFacts)}`;
       for (const path of paths) for (const decision of task.expectedRisk === "low" ? ["allow", "ask", "deny"] as const : [task.expectedRisk])
         rows.push(await observe({ taskId: task.id, variantId: variant.id, family: task.family, command: variant.command,
-          message, source: "task", expectedRoute: task.expectedRoute, expectedRisk: task.expectedRisk }, path, decision));
+          message, expectedAnalysis: variant.expectedAnalysis, source: "task", expectedRoute: task.expectedRoute, expectedRisk: task.expectedRisk }, path, decision));
     }
     for (const exception of fixture.exceptions) for (const path of paths)
       rows.push(await observe({ taskId: exception.id, variantId: exception.id, family: "configured-exception", command: exception.command,
-        message: "Apply the explicit synthetic policy before any execution.", source: "exception", expectedRoute: exception.expectedRoute,
+        message: "Apply the explicit synthetic policy before any execution.", expectedAnalysis: "complete", source: "exception", expectedRoute: exception.expectedRoute,
         expectedRisk: exception.policy, policy: exception.policy, pattern: exception.pattern }, path, "allow"));
   } finally { globalThis.fetch = savedFetch; Bun.spawn = savedSpawn; Bun.spawnSync = savedSpawnSync; }
   const failureCategories: Record<string, number> = {};
@@ -189,16 +203,32 @@ export async function evaluateProductAcceptance(input: unknown) {
     failureCategories, productPassed: rows.every(row => row.passed) };
 }
 
-export async function evaluateSyntheticMessageRouting(command: string, message: string) {
+export async function evaluateSyntheticMessageRouting(command: string, message: string, expectedAnalysis: "complete" | "unsupported" = "complete") {
   textField(command, "command"); textField(message, "message");
   const savedFetch = globalThis.fetch; const savedSpawn = Bun.spawn; const savedSpawnSync = Bun.spawnSync;
   const reject = () => { throw new Error("Harness forbids external network or process execution"); };
   globalThis.fetch = reject as typeof fetch; Bun.spawn = reject as typeof Bun.spawn; Bun.spawnSync = reject as typeof Bun.spawnSync;
   try {
     const rows: ProductRow[] = [];
-    for (const path of paths) rows.push(await observe({ taskId: "synthetic-message", variantId: "synthetic-message", family: "message-privacy",
-      command, message, source: "task", expectedRoute: "model", expectedRisk: "low" }, path, "ask"));
+    for (const path of paths) for (const decision of ["allow", "ask", "deny"] as const) rows.push(await observe({ taskId: "synthetic-message", variantId: "synthetic-message", family: "message-privacy",
+      command, message, expectedAnalysis, source: "task", expectedRoute: "model", expectedRisk: "low" }, path, decision));
     return { command, syntheticMessage: message, rows, productPassed: rows.every(row => row.passed) };
+  } finally { globalThis.fetch = savedFetch; Bun.spawn = savedSpawn; Bun.spawnSync = savedSpawnSync; }
+}
+
+export async function evaluateSyntheticPrivacyRouting(input: {
+  command: string; message: string; expectedRedactedCommand: string; expectedRedactedMessage: string;
+  expectedAnalysis: "complete" | "unsupported"; metadata: Record<string, any>; expectedMetadata: Record<string, any>; canaries: string[];
+}) {
+  const savedFetch = globalThis.fetch; const savedSpawn = Bun.spawn; const savedSpawnSync = Bun.spawnSync;
+  const reject = () => { throw new Error("Harness forbids external network or process execution"); };
+  globalThis.fetch = reject as typeof fetch; Bun.spawn = reject as typeof Bun.spawn; Bun.spawnSync = reject as typeof Bun.spawnSync;
+  try {
+    const rows: ProductRow[] = [];
+    for (const path of paths) for (const decision of ["allow", "ask", "deny"] as const)
+      rows.push(await observe({ taskId: "synthetic-privacy", variantId: "synthetic-privacy", family: "credential-slots",
+        ...input, source: "task", expectedRoute: "model", expectedRisk: "low" }, path, decision));
+    return { rows, productPassed: rows.every(row => row.passed) };
   } finally { globalThis.fetch = savedFetch; Bun.spawn = savedSpawn; Bun.spawnSync = savedSpawnSync; }
 }
 
@@ -267,6 +297,18 @@ export async function evaluateHistoricalRouting(corpusBytes: Uint8Array, policyI
   if (options.recordIds !== undefined && (!Array.isArray(options.recordIds) || !options.recordIds.length ||
       new Set(options.recordIds).size !== options.recordIds.length || options.recordIds.some(id => !ids.has(id))))
     throw new Error("Invalid selected corpus IDs");
+  const analysisOverrides = new Map<string, "complete" | "unsupported">();
+  const analysisDeltaDigests: Record<string, string> = {};
+  for (const filename of ["grammar-parse-upgrade-20261009.json", "grammar-status-upgrade-20261010.json"]) {
+    const content = readFileSync(resolve(import.meta.dir, "../tests/fixtures/omp/command-scenarios", filename));
+    analysisDeltaDigests[filename] = createHash("sha256").update(content).digest("hex");
+    const delta = JSON.parse(content.toString("utf8"));
+    if (delta.sourceCorpusSha256 !== corpusDigest || !Array.isArray(delta.entries)) throw new Error("Invalid frozen analysis delta");
+    for (const entry of delta.entries) {
+      if (!ids.has(entry.id) || entry.fullParse?.status !== "complete") throw new Error("Invalid frozen analysis override");
+      analysisOverrides.set(entry.id, "complete");
+    }
+  }
   const selected = options.recordIds ? corpus.records.filter((row: any) => options.recordIds!.includes(row.id)) : corpus.records;
   const rows: Array<Omit<ProductRow, "command" | "order" | "taskId" | "variantId" | "source" | "expectedRisk" | "injectedDecision"> & { recordId: string; historicalExpected: unknown; historicalExpectedGate: string }> = [];
   const savedFetch = globalThis.fetch; const savedSpawn = Bun.spawn; const savedSpawnSync = Bun.spawnSync;
@@ -276,6 +318,7 @@ export async function evaluateHistoricalRouting(corpusBytes: Uint8Array, policyI
     for (const record of selected) for (const path of paths) {
       const result = await observe({ taskId: record.id, variantId: record.id, family: record.category, command: record.command,
         message: "Review this frozen synthetic-public command before execution. Its effects and authorization are uncertain; ask the user when needed. All paths and identifiers are synthetic fixture inputs.",
+        expectedAnalysis: analysisOverrides.get(record.id) ?? record.expected.status,
         source: "task", expectedRoute: policy.inputValidationCases.some((entry: any) => entry.id === record.id) ? "invalid-input-rejected" : "model", expectedRisk: "unknown" }, path, "ask");
       const { command: _command, order: _order, taskId: _taskId, variantId: _variantId, source: _source,
         expectedRisk: _expectedRisk, injectedDecision: _decision, ...measurement } = result;
@@ -294,7 +337,7 @@ export async function evaluateHistoricalRouting(corpusBytes: Uint8Array, policyI
     for (const gate of row.preModelGates) byGate[gate] = (byGate[gate] ?? 0) + 1;
     for (const failure of row.failures) failureCategories[failure] = (failureCategories[failure] ?? 0) + 1;
   }
-  return { schemaVersion: 1, publication: "synthetic-public", purpose: policy.purpose, corpusDigest,
+  return { schemaVersion: 1, publication: "synthetic-public", purpose: policy.purpose, corpusDigest, analysisDeltaDigests,
     routingPolicyDigest: createHash("sha256").update(JSON.stringify(policy)).digest("hex"),
     evidence: "fake-model-public-plugin-entrypoints", realModelQuality: "not-verified", realHostEffects: "not-verified",
     corpusRecordCount: corpus.records.length, evaluatedRecordCount: selected.length, subset: options.recordIds !== undefined,
@@ -312,13 +355,13 @@ if (import.meta.main) {
     const policyPath = resolve(import.meta.dir, "../tests/fixtures/omp/permission-product-acceptance/routing-policy.json");
     const policy = validateRoutingPolicy(JSON.parse(readFileSync(policyPath, "utf8")));
     const corpusPath = resolve(import.meta.dir, "..", policy.corpus.path);
-    const baseline = await evaluateHistoricalRouting(readFileSync(corpusPath), policy);
+    const routing = await evaluateHistoricalRouting(readFileSync(corpusPath), policy);
     const messageObservations = [
       await evaluateSyntheticMessageRouting("pwd", "Authorization: read-only query"),
       await evaluateSyntheticMessageRouting("pwd", "User permits: read-only query"),
     ];
-    const report = { ...baseline, baselineProductPassed: baseline.productPassed, messageObservations,
-      productPassed: baseline.productPassed && messageObservations.every(observation => observation.productPassed) };
+    const report = { ...routing, routingProductPassed: routing.productPassed, messageObservations,
+      productPassed: routing.productPassed && messageObservations.every(observation => observation.productPassed) };
     const reportPath = resolve(args[1]); mkdirSync(dirname(reportPath), { recursive: true });
     writeFileSync(reportPath, JSON.stringify(report) + "\n");
     console.log(JSON.stringify({ ...report.totals, byPath: report.byPath, byCategory: report.byCategory,
