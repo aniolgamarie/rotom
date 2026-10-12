@@ -1,0 +1,19 @@
+# ~/.config/termcfg/zshrc.local — 机器专属配置示例（迁移自 starter zshrc）
+# 由公开 zshrc 末尾 source；此文件不进 Git，放 API key / 代理 / 本地函数。
+
+# ---- mihomo-mgr 代理管理（依赖 starter 仓库位置，按实际路径调整）----
+export STARTER_REPO_DIR="${STARTER_REPO_DIR:-/data/1/private-user/dev_tool/starter}"
+mm() {
+  python3 "$STARTER_REPO_DIR/skill/mihomo-mgr/scripts/mihomo-mgr.py" "$@"
+}
+
+# ---- 本地补全脚本（_mm、_tokensflow 等）----
+fpath=("$HOME/.zsh/completions" $fpath)
+
+# ---- Every Code：强制 Chat Completions API ----
+export OPENAI_WIRE_API=chat
+
+# QODER_DISPATCHER_PATH v1
+path=("$HOME/.qoder/entry" ${path:#"$HOME/.qoder/entry"})
+export PATH
+# END QODER_DISPATCHER_PATH v1

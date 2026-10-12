@@ -1,0 +1,26 @@
+# ~/.config/termcfg/zshenv.local — 机器专属 zshenv 示例（迁移自 starter zshenv）
+# 由 termcfg 管理的 .zshenv 开头 source；在任何 /etc/zshrc → profile.d 之前生效。
+
+# bash 兼容 shim：让 /etc/profile.d/ 中的 bash-only 脚本静默通过。
+# 注意 compinit shim 还修复 obdev git-completion.bash 抢跑 compinit 导致的
+# "compinit:141: parse error"（zshrc 中真正的 compinit 由 zinit/兜底层执行）。
+if (( ! $+commands[complete] )); then
+  complete() { :; }
+  typeset -g STARTER_COMPLETE_SHIM=1
+fi
+if (( ! $+commands[compdef] )); then
+  compdef() { :; }
+  typeset -g STARTER_COMPDEF_SHIM=1
+fi
+if (( ! $+commands[compinit] )); then
+  compinit() { :; }
+  typeset -g STARTER_COMPINIT_SHIM=1
+fi
+
+# Rust 工具链
+[[ -f "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
+
+# QODER_DISPATCHER_PATH v1
+path=("$HOME/.qoder/entry" ${path:#"$HOME/.qoder/entry"})
+export PATH
+# END QODER_DISPATCHER_PATH v1
