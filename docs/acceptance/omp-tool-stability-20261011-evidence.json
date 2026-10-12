@@ -43,6 +43,56 @@
     "native addon startup first failed because root filesystem space was insufficient; retry socket cleanup repaired in fixture only"
   ],
   "deployment": {
-    "status": "not-yet-applied"
+    "status": "applied-and-offline-ready",
+    "date": "2026-10-12",
+    "doctor": {
+      "deployed": true,
+      "changes_pending": 0,
+      "conflicts": false,
+      "drift": false,
+      "recovery_pending": false,
+      "dependencies": "installed",
+      "deployed_dependencies": "installed",
+      "deployed_runtime_matches_current": true,
+      "live": false,
+      "readiness": "offline-ready"
+    },
+    "startupAdmission": {
+      "status": "passed",
+      "realHostStarted": false,
+      "modelRequests": 0,
+      "toolHomeRestored": true,
+      "xdgPreserved": true,
+      "nativeAccountSessionPathsPreserved": true,
+      "allRuntimeGuardsPassed": true,
+      "runtimeIdentity": "5fb5c785405baa089f0283b4f45f4a54a654b671c0ed6ab0a77550a478ab3d59-linux-x64"
+    },
+    "reviewerCredentialReferences": {
+      "reviewer": {
+        "provider": "zhipu_tf",
+        "model": "glm-5.3-flash",
+        "apiKeyConfigured": true
+      },
+      "remoteFallback": {
+        "provider": "kimi_tf",
+        "model": "kimi-for-coding",
+        "apiKeyConfigured": true
+      }
+    },
+    "backup": {
+      "managedStateAndOwner": true,
+      "privatePermissions": "0600 archive / 0700 parent",
+      "accountAndSessionBodiesCopied": false,
+      "keyFilesCopiedOrHashed": false
+    },
+    "emptyHomeDotenvPlaceholder": {
+      "size": 0,
+      "preservedInPrivateBackup": true,
+      "operation": "rename",
+      "contentRead": false
+    },
+    "remotePush": false,
+    "realHostStartedOnMachineAfterApply": false,
+    "externalModelRequests": 0
   }
 }

@@ -2,7 +2,7 @@
 
 日期：2026-10-11。方案见[全链修复方案](../follow-ups/omp-approval-lifecycle-and-environment-2026-10-11.md)。本轮保持官方 OMP v18.8.6 / `f068751e2f1dbdbc195977776d47a26db8697495`，不修改宿主源码、官方二进制或私有执行接口。网络代理延后，执行模型套件、主动权限主审和备用模型选择不变。
 
-状态：实现、离线验收与稳定差量复核已完成。2026-10-12 用户明确授权后，官方宿主隔离验收通过，进入合入和部署步骤；本机部署结果在完成后追加。机器可读记录见[验收证据](omp-tool-stability-20261011-evidence.json)。
+状态：实现、离线验收与稳定差量复核已完成。2026-10-12 用户明确授权后，官方宿主隔离验收通过，已合入 main 并完成本机部署。机器可读记录见[验收证据](omp-tool-stability-20261011-evidence.json)。
 
 ## 行为变化
 
@@ -37,7 +37,7 @@ kernel 默认关闭将 cat/find 等强制改用专用工具的 Bash interceptor�
 | 环境和管理器回归 | 全量 1,205 passed；7 项失败所在的三个模块修正后 35 passed；7 项退休 skip | 全量范围为 OMP 与通用 runtime。失败为旧环境断言/fixture接线，修正后只重验受影响模块，未重跑全量；HOME/XDG、dotenv、混合契约拒绝、环境-only 回滚与账号/owner 哨兵通过 |
 | 官方 CLI 隔离 smoke | exit 0，9 条执行成功 / 1 条 deny，zsh 通过 | 临时 HOME、私有网络/PID namespace、本地假模型、虚构凭据；reviewer 9 次，主模型假服务 2 次，审查并发最高 2，外部请求 0 |
 | 真实 reviewer / Cursor | 本轮未调用 | 追加授权余量仍 2；假模型通过不代表远程服务可用或真实 Cursor 并发已验 |
-| 本机部署 | 本轮未执行 | 没有修改本机密钥、真实 rc、认证库、会话或当前部署 |
+| 本机部署 | apply / doctor / 启动准入通过 | 待变更/漂移/冲突/恢复均0，新包匹配；启动前回调核对真实 HOME/XDG 与原账号/session路径，不启动日常宿主或请求模型 |
 
 默认入口为 `tests/test_omp_standalone.py` 的两个独立 Bun 子进程，避免官方 SDK `mock.module` 污染生产套件。缺 Bun/SDK 明确 skip，错误 SHA/无效可执行文件明确失败，不将缺材料记成通过。退休的宿主补丁测试保持退休。
 
@@ -57,3 +57,13 @@ python -m pytest tests/test_omp_*.py tests/test_runtime.py --ignore=tests/test_o
 官方二进制和本次生产插件实际启动；HOME、XDG app 配置/Unix socket、用户 bin、Git 全局配置、显式 Bash rc 函数、zsh rc 函数与非秘密变量均按合成预期工作。deny 哨兵没有产生文件。没有启动真实 Cursor、付费主模型或真实 reviewer，也没有读取真实用户账号、密钥或 rc 文件正文。
 
 首次 CLI 在模型前因根文件系统仅余约55 MB而不能解包内置组件。释放本轮重复二进制副本，并把已完成 pytest 的临时证据迁至本轮忽略缓存，保留文件、链接及 FIFO 负例，未删除用户数据。重试又发现隔离脚本关闭 Unix socket 后未 unlink，造成后续 worker 在 CLI 启动前停止；修复仅限测试脚本的已核验 socket 路径。中间尝试的日志与最终通过日志分别保留，不将旧 result 文件当作当次成功证据。最终运行使用原正常缓存位置，未使用 native 目录覆盖；官方宿主、生产源码和本机配置在此验证阶段均未修改。
+
+## 本机部署与恢复边界
+
+本地 main 快进合入实现提交 `96659be` 与宿主证据提交 `3c9b088`，没有推送远端。管理器 validate 与 sync 成功，固定官方资产 SHA 校验命中缓存，无需下载。部署前在实例与管理状态独占锁内备份已验证的 deployment.json 和 owner 记录；私人备份位于 profile cache 的 `upgrade-backups/tool-stability-20261012/`，档案0600、目录0700。账号、会话、密钥文件和真实 rc 正文不读、不复制、不哈希；旧配置 previous 与旧运行包保留。
+
+初次 plan 因实际 HOME 下 `.env` 空占位拒绝：仅检查元数据确认普通文件、当前用户所有、大小0、无链接；将其原子移至上述私人备份的 `empty-home-dotenv-before-deploy.env`，未读取正文，没有放宽来源门禁。该文件可移回原路径，但重新出现 `.env` 后，新来源门禁会再次要求处理。公共仓库祖先允许其他用户写入，首次尝试在仓库缓存创建私人备份被路径保护拒绝；改用管理器认可的私人 cache，未降低检查或改变目录权限。
+
+重做 plan：3项预期变更、漂移0、冲突0，仅涉及 `/bashInterceptor`、新包 `/extensions` 和 permission-control sidecar。apply 成功。doctor 为 `offline-ready`，current/deployed dependency 均 installed，待变更0、漂移false、冲突false、recovery_pendingfalse，新包匹配。完整受管启动路径通过所有锁、配置、来源和环境重核后，由回调代替spawn；证明新 HOME/XDG 与原账号/session路径的实际部署绑定，不计作日常宿主启动或真实模型通过。
+
+已配置主审 `zhipu_tf/glm-5.3-flash` 与远程备用 `kimi_tf/kimi-for-coding` 的认证引用均由管理器内部确认可解析，仅记录布尔值。另有3个可选模型密钥未填写；没有填写、读取展示或改写密钥文件。未调用真实模型，此轮费用0，此前剩余额度仍2。
