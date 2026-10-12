@@ -3,8 +3,34 @@ import { isSanitizedReviewPacket, type SanitizedReviewPacket } from "./review-in
 const REVIEW_OUTPUT_TOKENS = 1024;
 const MAX_OUTPUT_BYTES = 4 * 1024;
 const MAX_RESPONSE_BYTES = 64 * 1024;
-const REVIEW_TIMEOUT_MS = 30_000;
-const PRIMARY_WITH_REMOTE_MS = 15_000;
+export interface ReviewTimeouts { primaryMs: number; remoteMs: number; totalMs: number }
+export const DEFAULT_REVIEW_TIMEOUTS: Readonly<ReviewTimeouts> = Object.freeze({ primaryMs: 30_000, remoteMs: 30_000, totalMs: 60_000 });
+export const REVIEW_STAGES = ["resolve-target", "key-lookup", "response-headers", "response-body", "response-parse", "decision-parse"] as const;
+export const REVIEW_TIMEOUT_SOURCES = ["primary-budget", "remote-budget", "total-budget"] as const;
+export interface ReviewTiming {
+  budgetMs: number;
+  remainingTotalMs: number;
+  elapsedMs: number;
+  lastStage: (typeof REVIEW_STAGES)[number];
+  stages: Array<{ stage: (typeof REVIEW_STAGES)[number]; durationMs: number }>;
+  requestBytes?: number;
+  timeoutSource?: (typeof REVIEW_TIMEOUT_SOURCES)[number];
+}
+
+export function resolveReviewTimeouts(value: unknown = undefined, hasRemoteFallback = false): ReviewTimeouts {
+  if (value === undefined) return { ...DEFAULT_REVIEW_TIMEOUTS };
+  if (!value || typeof value !== "object" || Array.isArray(value) ||
+      ![Object.prototype, null].includes(Object.getPrototypeOf(value))) throw new Error("invalid review timeouts");
+  const descriptors = Object.getOwnPropertyDescriptors(value);
+  const names = ["primaryMs", "remoteMs", "totalMs"];
+  if (Reflect.ownKeys(value).length !== 3 || Object.keys(descriptors).some(key => !names.includes(key)) ||
+      Object.values(descriptors).some(field => !("value" in field) || !field.enumerable)) throw new Error("invalid review timeouts");
+  const timeouts = Object.fromEntries(names.map(key => [key, descriptors[key]?.value])) as unknown as ReviewTimeouts;
+  if (Object.values(timeouts).some(number => !Number.isSafeInteger(number) || number < 1000) ||
+      timeouts.primaryMs > 120000 || timeouts.remoteMs > 120000 || timeouts.totalMs > 240000 ||
+      timeouts.totalMs < timeouts.primaryMs + (hasRemoteFallback ? timeouts.remoteMs : 0)) throw new Error("invalid review timeouts");
+  return timeouts;
+}
 
 export const STANDALONE_REASON_CODES = [
   "LOW_RISK_AUTHORIZED",
@@ -36,7 +62,7 @@ export interface ReviewRuntime {
   current(): ReviewerModel | undefined;
   getApiKey(model: ReviewerModel, signal: AbortSignal): Promise<string | undefined>;
   fetch(input: string, init: RequestInit): Promise<Response>;
-  deadlines?: { totalMs: number; primaryMs: number };
+  deadlines?: { totalMs: number; primaryMs: number; remoteMs?: number };
 }
 
 export interface ReviewTarget { provider: string; model: string }
@@ -62,8 +88,8 @@ export function transportCode(error: unknown): TransportCode | undefined {
 }
 
 export type ReviewAttempt =
-  | { status: "valid"; review: StandaloneReview; model: ReviewerModel; called: boolean }
-  | { status: "failure"; model?: ReviewerModel; called: boolean; health: ReviewHealth; failureCode?: ReviewFailureCode; httpStatus?: number; transportCode?: TransportCode };
+  | { status: "valid"; review: StandaloneReview; model: ReviewerModel; called: boolean; timing?: ReviewTiming }
+  | { status: "failure"; model?: ReviewerModel; called: boolean; health: ReviewHealth; failureCode?: ReviewFailureCode; httpStatus?: number; transportCode?: TransportCode; timing?: ReviewTiming };
 
 export interface ReviewSequenceResult {
   status: "valid" | "failure" | "input-too-large";
@@ -203,6 +229,59 @@ class RequestFailure extends Error {
   }
 }
 
+interface AttemptDeadline {
+  target: "primary-budget" | "remote-budget";
+  budgetMs: number;
+  budgetStarted: number;
+  budgetSignal: AbortSignal;
+  totalSignal: AbortSignal;
+  totalStarted: number;
+  totalMs: number;
+}
+
+// 时钟只保存固定阶段和数值，认证、请求/响应正文不进入统计。
+class AttemptClock {
+  private readonly started = performance.now();
+  private stageStarted = this.started;
+  private stage: ReviewTiming["lastStage"] = "resolve-target";
+  private readonly stages: ReviewTiming["stages"] = [];
+  requestBytes?: number;
+  constructor(private readonly deadline: AttemptDeadline) {}
+  enter(stage: ReviewTiming["lastStage"]) {
+    if (this.stage === stage) return;
+    const now = performance.now();
+    this.stages.push({ stage: this.stage, durationMs: Math.max(0, Math.round(now - this.stageStarted)) });
+    this.stage = stage; this.stageStarted = now;
+  }
+  expired(signal: AbortSignal, caller?: AbortSignal): ReviewTiming["timeoutSource"] {
+    if (callerCancelled(signal, caller)) return undefined;
+    if (signal.aborted) {
+      if (this.deadline.budgetSignal.aborted && signal.reason === this.deadline.budgetSignal.reason) return this.deadline.target;
+      if (this.deadline.totalSignal.aborted && signal.reason === this.deadline.totalSignal.reason) return "total-budget";
+      return undefined;
+    }
+    const now = performance.now(), totalEnd = this.deadline.totalStarted + this.deadline.totalMs;
+    const attemptEnd = this.deadline.budgetStarted + this.deadline.budgetMs;
+    // 同步代码可能推迟timer回调；不能因此接受期限之后的结果。
+    if (now >= Math.min(totalEnd, attemptEnd)) return totalEnd <= attemptEnd ? "total-budget" : this.deadline.target;
+    return undefined;
+  }
+  check(signal: AbortSignal) {
+    if (signal.aborted) throw new RequestFailure("cancelled", "CANCELLED");
+    if (this.expired(signal)) throw new RequestFailure("timeout", "TIMEOUT");
+  }
+  finish(signal: AbortSignal, caller?: AbortSignal): ReviewTiming {
+    const now = performance.now();
+    const timeoutSource = this.expired(signal, caller);
+    return { budgetMs: this.deadline.budgetMs,
+      remainingTotalMs: Math.max(0, Math.floor(this.deadline.totalMs - (this.started - this.deadline.totalStarted))),
+      elapsedMs: Math.max(0, Math.round(now - this.started)), lastStage: this.stage,
+      stages: [...this.stages, { stage: this.stage, durationMs: Math.max(0, Math.round(now - this.stageStarted)) }],
+      ...(this.requestBytes !== undefined ? { requestBytes: this.requestBytes } : {}),
+      ...(timeoutSource ? { timeoutSource } : {}) };
+  }
+}
+
 function raceAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
   if (signal.aborted) return Promise.reject(new RequestFailure("cancelled"));
   return new Promise<T>((resolve, reject) => {
@@ -244,14 +323,15 @@ async function readResponse(response: Response, signal: AbortSignal): Promise<st
 }
 
 async function request(model: ReviewerModel, prompt: string, runtime: ReviewRuntime, signal: AbortSignal,
-  onCall: () => void): Promise<{ text: string; outputTruncated: boolean }> {
+  onCall: () => void, clock: AttemptClock): Promise<{ text: string; outputTruncated: boolean }> {
   if (!runtimeCurrent(runtime)) throw new RequestFailure("cancelled", "CANCELLED");
-  if (signal.aborted) throw new RequestFailure("cancelled", "CANCELLED");
+  clock.check(signal);
   if (model.api !== "anthropic-messages" && model.api !== "openai-completions")
     throw new RequestFailure("unsupported", "API_UNSUPPORTED");
+  clock.enter("key-lookup");
   const apiKey = await raceAbort(runtime.getApiKey(model, signal), signal);
   if (!runtimeCurrent(runtime)) throw new RequestFailure("cancelled", "CANCELLED");
-  if (signal.aborted) throw new RequestFailure("cancelled");
+  clock.check(signal);
   if (!apiKey) throw new RequestFailure("unavailable", "KEY_UNAVAILABLE");
   const anthropic = model.api === "anthropic-messages";
   const body = anthropic
@@ -259,7 +339,10 @@ async function request(model: ReviewerModel, prompt: string, runtime: ReviewRunt
         messages: [{ role: "user", content: prompt }] }
     : { model: model.requestModelId ?? model.id, max_tokens: REVIEW_OUTPUT_TOKENS,
         messages: [{ role: "system", content: SYSTEM }, { role: "user", content: prompt }] };
-  onCall();
+  const serialized = JSON.stringify(body);
+  clock.requestBytes = new TextEncoder().encode(serialized).length;
+  clock.check(signal);
+  clock.enter("response-headers"); onCall();
   let response: Response;
   try { response = await raceAbort(runtime.fetch(endpoint(model.baseUrl, anthropic ? "/messages" : "/chat/completions"), {
     method: "POST",
@@ -268,7 +351,7 @@ async function request(model: ReviewerModel, prompt: string, runtime: ReviewRunt
     headers: anthropic
       ? { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" }
       : { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify(body),
+    body: serialized,
   }), signal); }
   catch (error) {
     if (error instanceof RequestFailure) throw error;
@@ -276,6 +359,7 @@ async function request(model: ReviewerModel, prompt: string, runtime: ReviewRunt
   }
   if (!response.ok) throw new RequestFailure("transport", "HTTP_NON_OK",
     Number.isInteger(response.status) && response.status >= 100 && response.status <= 599 ? response.status : undefined);
+  clock.enter("response-body");
   let raw: string;
   try { raw = await readResponse(response, signal); }
   catch (error) {
@@ -283,6 +367,7 @@ async function request(model: ReviewerModel, prompt: string, runtime: ReviewRunt
     throw new RequestFailure("transport", "RESPONSE_READ_FAILED", undefined, transportCode(error));
   }
   let data: Record<string, unknown>;
+  clock.enter("response-parse");
   try {
     const parsed = parseStandaloneJson(raw, MAX_RESPONSE_BYTES);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
@@ -334,31 +419,41 @@ export function callerCancelled(signal: AbortSignal, caller?: AbortSignal): bool
 }
 
 async function attempt(target: "session" | ReviewTarget, prompt: string, runtime: ReviewRuntime,
-  signal: AbortSignal, outerSignal: AbortSignal, callerSignal?: AbortSignal): Promise<ReviewAttempt> {
-  if (!runtimeCurrent(runtime)) return { status: "failure", called: false, health: "cancelled", failureCode: "CANCELLED" };
+  signal: AbortSignal, deadline: AttemptDeadline, callerSignal?: AbortSignal): Promise<ReviewAttempt> {
+  const clock = new AttemptClock(deadline);
+  const finish = (result: ReviewAttempt): ReviewAttempt => ({ ...result, timing: clock.finish(signal, callerSignal) });
+  if (!runtimeCurrent(runtime)) return finish({ status: "failure", called: false, health: "cancelled", failureCode: "CANCELLED" });
   if (signal.aborted) return { status: "failure", called: false,
-    health: callerCancelled(signal, callerSignal) ? "cancelled" : "timeout", failureCode: callerCancelled(signal, callerSignal) ? "CANCELLED" : "TIMEOUT" };
-  const model = resolveTarget(target, runtime);
-  if (!model) return { status: "failure", called: false, health: "unavailable", failureCode: "TARGET_UNAVAILABLE" };
+    health: callerCancelled(signal, callerSignal) ? "cancelled" : "timeout", failureCode: callerCancelled(signal, callerSignal) ? "CANCELLED" : "TIMEOUT",
+    timing: clock.finish(signal, callerSignal) };
+  let model: ReviewerModel | undefined;
   let called = false;
   try {
-    const { text, outputTruncated } = await request(model, prompt, runtime, signal, () => { called = true; });
+    model = resolveTarget(target, runtime);
+    clock.check(signal);
+    if (!model) return finish({ status: "failure", called: false, health: "unavailable", failureCode: "TARGET_UNAVAILABLE" });
+    const { text, outputTruncated } = await request(model, prompt, runtime, signal, () => { called = true; }, clock);
+    if (callerCancelled(signal, callerSignal)) throw new RequestFailure("cancelled", "CANCELLED");
+    if (clock.expired(signal, callerSignal)) throw new RequestFailure("timeout", "TIMEOUT");
+    clock.enter("decision-parse");
     const review = parseStandaloneReview(text);
-    if (review) return { status: "valid", review, model, called };
+    if (clock.expired(signal, callerSignal)) throw new RequestFailure("timeout", "TIMEOUT");
+    if (review) return finish({ status: "valid", review, model, called });
     // 明确limit标记只分类缺失完整决策；不修复正文，也不拒绝已完整通过严格协议的决定。
-    if (outputTruncated) return { status: "failure", model, called, health: "invalid", failureCode: "REVIEW_OUTPUT_TRUNCATED" };
+    if (outputTruncated) return finish({ status: "failure", model, called, health: "invalid", failureCode: "REVIEW_OUTPUT_TRUNCATED" });
     let failureCode: ReviewFailureCode = "REVIEW_SCHEMA_INVALID";
     try { parseStandaloneJson(text, MAX_OUTPUT_BYTES); } catch { failureCode = "REVIEW_JSON_INVALID"; }
-    return { status: "failure", model, called, health: "invalid", failureCode };
+    return finish({ status: "failure", model, called, health: "invalid", failureCode });
   } catch (error) {
+    const expired = clock.expired(signal, callerSignal);
     const health = signal.aborted ? (callerCancelled(signal, callerSignal) ? "cancelled" : "timeout") :
-      error instanceof RequestFailure ? error.health : "transport";
+      expired ? "timeout" : error instanceof RequestFailure ? error.health : "transport";
     const failureCode = signal.aborted ? (callerCancelled(signal, callerSignal) ? "CANCELLED" : "TIMEOUT") :
-      error instanceof RequestFailure ? error.failureCode : "REQUEST_FAILED";
-    return { status: "failure", model, called, health, failureCode,
+      expired ? "TIMEOUT" : error instanceof RequestFailure ? error.failureCode : "REQUEST_FAILED";
+    return finish({ status: "failure", model, called, health, failureCode,
       ...(error instanceof RequestFailure && error.httpStatus !== undefined ? { httpStatus: error.httpStatus } : {}),
       ...((error instanceof RequestFailure ? error.transportCode : transportCode(error)) ?
-        { transportCode: error instanceof RequestFailure ? error.transportCode : transportCode(error) } : {}) };
+        { transportCode: error instanceof RequestFailure ? error.transportCode : transportCode(error) } : {}) });
   }
 }
 
@@ -370,21 +465,31 @@ export async function reviewCommand(packet: SanitizedReviewPacket,
   const current = () => runtimeCurrent(runtime);
   if (!current()) return { status: "failure", primary: { status: "failure", called: false, health: "cancelled", failureCode: "CANCELLED" } };
   const prompt = JSON.stringify(packet);
-  const totalMs = runtime.deadlines?.totalMs ?? REVIEW_TIMEOUT_MS;
+  const totalMs = runtime.deadlines?.totalMs ?? DEFAULT_REVIEW_TIMEOUTS.totalMs;
+  const totalStarted = performance.now();
   const totalTimeout = AbortSignal.timeout(totalMs);
   const outer = signal ? AbortSignal.any([signal, totalTimeout]) : totalTimeout;
-  const primaryMs = selection.remoteFallback ? (runtime.deadlines?.primaryMs ?? PRIMARY_WITH_REMOTE_MS) : totalMs;
-  const primarySignal = AbortSignal.any([outer, AbortSignal.timeout(Math.min(primaryMs, totalMs))]);
-  const primary = await attempt(selection.reviewer, prompt, runtime, primarySignal, outer, signal);
+  const primaryMs = runtime.deadlines?.primaryMs ?? DEFAULT_REVIEW_TIMEOUTS.primaryMs;
+  const primaryStarted = performance.now();
+  const primaryTimeout = AbortSignal.timeout(primaryMs);
+  const primarySignal = AbortSignal.any([outer, primaryTimeout]);
+  const primary = await attempt(selection.reviewer, prompt, runtime, primarySignal,
+    { target: "primary-budget", budgetMs: primaryMs, budgetStarted: primaryStarted, budgetSignal: primaryTimeout, totalSignal: totalTimeout, totalStarted, totalMs }, signal);
   if (!current()) return { status: "failure", primary };
   if (primary.status === "valid") return { status: "valid", review: primary.review, source: "primary", primary };
-  if (signal?.aborted || outer.aborted) return { status: "failure", primary };
+  if (signal?.aborted || outer.aborted || performance.now() - totalStarted >= totalMs) return { status: "failure", primary };
   if (!selection.remoteFallback) return { status: "failure", primary };
   const remoteModel = resolveTarget(selection.remoteFallback, runtime);
   if (!current()) return { status: "failure", primary };
   if (primary.model && remoteModel && primary.model.provider === remoteModel.provider && primary.model.id === remoteModel.id)
     return { status: "failure", primary };
-  const remote = await attempt(selection.remoteFallback, prompt, runtime, outer, outer, signal);
+  // 未指定remoteMs的内部旧测试覆写仍受总上限约束；生产配置始终给出三项额度。
+  const remoteMs = runtime.deadlines?.remoteMs ?? (runtime.deadlines ? totalMs : DEFAULT_REVIEW_TIMEOUTS.remoteMs);
+  const remoteStarted = performance.now();
+  const remoteTimeout = AbortSignal.timeout(remoteMs);
+  const remoteSignal = AbortSignal.any([outer, remoteTimeout]);
+  const remote = await attempt(selection.remoteFallback, prompt, runtime, remoteSignal,
+    { target: "remote-budget", budgetMs: remoteMs, budgetStarted: remoteStarted, budgetSignal: remoteTimeout, totalSignal: totalTimeout, totalStarted, totalMs }, signal);
   if (remote.status === "valid") return { status: "valid", review: remote.review, source: "remote", primary, remote };
   return { status: "failure", primary, remote };
 }

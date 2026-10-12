@@ -52,6 +52,7 @@ def test_kernel_deployment_preserves_reviewed_native_configuration(tmp_path):
   assert permission["schemaVersion"] == 2
   assert permission["defaultMode"] == "smart"
   assert permission["nativeBash"] is True
+  assert permission["reviewTimeouts"] == {"primaryMs": 30000, "remoteMs": 30000, "totalMs": 60000}
   assert permission["reviewer"] == {"provider": "zhipu_tf", "model": "glm-5.3-flash"}
   assert permission["remoteFallback"] == {"provider": "kimi_tf", "model": "kimi-for-coding"}
   assert permission["fallback"] == {"provider": "local", "model": "lfm2.5-230m", "installedOnly": True}

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { CONTEXT_REASONS, SHELL_FAMILIES } from "./native-bash";
-import { REVIEW_FAILURE_CODES, TRANSPORT_CODES, type ReviewSequenceResult } from "./standalone-reviewer";
+import { REVIEW_FAILURE_CODES, REVIEW_STAGES, REVIEW_TIMEOUT_SOURCES, TRANSPORT_CODES, type ReviewSequenceResult } from "./standalone-reviewer";
 import type { SanitizedReviewPacket } from "./review-input";
 
 export const AUDIT_TYPE = "permission-control.audit.v1";
@@ -64,28 +64,81 @@ function nativeContext(value: any) {
   const contextReason = one(value.contextReason, CONTEXT_REASONS, "CWD_UNCERTAIN");
   return { shellFamily, executionRoute, contextReason };
 }
+// 不调用外来 getter，也不遍历未知字段。
+function dataField(value: unknown, key: string): any {
+  try {
+    if (!value || (typeof value !== "object" && typeof value !== "function")) return undefined;
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    return descriptor && "value" in descriptor ? descriptor.value : undefined;
+  } catch { return undefined; }
+}
+function bounded(value: unknown, maximum: number): value is number {
+  return Number.isSafeInteger(value) && (value as number) >= 0 && (value as number) <= maximum;
+}
+function safeTiming(value: unknown) {
+  const budgetMs = dataField(value, "budgetMs"), remainingTotalMs = dataField(value, "remainingTotalMs");
+  const elapsedMs = dataField(value, "elapsedMs"), lastStage = dataField(value, "lastStage");
+  const stages = dataField(value, "stages"), requestBytes = dataField(value, "requestBytes");
+  const timeoutSource = dataField(value, "timeoutSource");
+  if (!bounded(budgetMs, 240000) || !bounded(remainingTotalMs, 240000) || !bounded(elapsedMs, 86400000) ||
+      !REVIEW_STAGES.includes(lastStage) || !Array.isArray(stages)) return undefined;
+  const length = dataField(stages, "length");
+  if (!bounded(length, 6)) return undefined;
+  const safeStages: Array<{ stage: typeof REVIEW_STAGES[number]; durationMs: number }> = [];
+  for (let index = 0; index < length; index++) {
+    const item = dataField(stages, String(index)), stage = dataField(item, "stage"), durationMs = dataField(item, "durationMs");
+    if (REVIEW_STAGES.includes(stage) && bounded(durationMs, 86400000)) safeStages.push({ stage, durationMs });
+  }
+  return { budgetMs, remainingTotalMs, elapsedMs, lastStage, stages: safeStages,
+    ...(bounded(requestBytes, 65536) ? { requestBytes } : {}),
+    ...(REVIEW_TIMEOUT_SOURCES.includes(timeoutSource) ? { timeoutSource } : {}) };
+}
+function safeAttempt(value: unknown, target: "primary" | "remote", flattened = false) {
+  const get = (key: string) => dataField(value, key);
+  const model = get("model"), review = flattened ? value : get("review");
+  const provider = safeIdentity(flattened ? get("provider") : dataField(model, "provider"));
+  const modelId = safeIdentity(flattened ? model : dataField(model, "id"));
+  const decision = dataField(review, "decision"), risk = dataField(review, "risk");
+  const authorization = dataField(review, "authorization"), reasonCode = dataField(review, "reasonCode");
+  const transportCode = get("transportCode"), httpStatus = get("httpStatus"), timing = safeTiming(get("timing"));
+  const common = { target, called: get("called") === true,
+    ...(provider ? { provider } : {}), ...(modelId ? { model: modelId } : {}),
+    ...(timing ? { timing } : {}) };
+  if (get("status") === "valid") return { ...common, status: "valid" as const,
+    ...(DECISIONS.includes(decision) ? { decision } : {}), ...(RISKS.includes(risk) ? { risk } : {}),
+    ...(AUTHORIZATIONS.includes(authorization) ? { authorization } : {}),
+    ...(REVIEW_REASONS.includes(reasonCode) ? { reasonCode } : {}) };
+  return { ...common, status: "failure" as const,
+    failureCode: one(get("failureCode"), REVIEW_FAILURE_CODES, "REQUEST_FAILED"),
+    ...(TRANSPORT_CODES.includes(transportCode) ? { transportCode } : {}),
+    ...(Number.isInteger(httpStatus) && httpStatus >= 100 && httpStatus <= 599 ? { httpStatus } : {}) };
+
+}
 export function safeAttempts(result?: ReviewSequenceResult) {
-  if (!result) return [];
   return (["primary", "remote"] as const).flatMap(target => {
-    const attempt = result[target];
-    if (!attempt) return [];
-    return [{ target, status: attempt.status === "valid" ? "valid" : "failure", called: attempt.called === true,
-      ...(safeIdentity(attempt.model?.provider) ? { provider: safeIdentity(attempt.model?.provider) } : {}),
-      ...(safeIdentity(attempt.model?.id) ? { model: safeIdentity(attempt.model?.id) } : {}),
-      ...(attempt.status === "valid" ? {
-        ...(DECISIONS.includes(attempt.review?.decision) ? { decision: attempt.review.decision } : {}),
-        ...(RISKS.includes(attempt.review?.risk) ? { risk: attempt.review.risk } : {}),
-        ...(AUTHORIZATIONS.includes(attempt.review?.authorization) ? { authorization: attempt.review.authorization } : {}),
-        ...(REVIEW_REASONS.includes(attempt.review?.reasonCode) ? { reasonCode: attempt.review.reasonCode } : {}),
-      } : {}),
-      ...(attempt.status === "failure" ? {
-        failureCode: one(attempt.failureCode, REVIEW_FAILURE_CODES, "REQUEST_FAILED"),
-        ...(TRANSPORT_CODES.includes(attempt.transportCode as never) ? { transportCode: attempt.transportCode } : {}),
-        ...(Number.isInteger(attempt.httpStatus) && attempt.httpStatus! >= 100 && attempt.httpStatus! <= 599
-          ? { httpStatus: attempt.httpStatus } : {}),
-      } : {}),
-    }];
+    const attempt = dataField(result, target);
+    return attempt ? [safeAttempt(attempt, target)] : [];
   });
+}
+const STAGE_LABELS = { "resolve-target": "解析审查目标", "key-lookup": "查找凭据", "response-headers": "等待响应头",
+  "response-body": "读取响应体", "response-parse": "解析响应", "decision-parse": "解析决定" } as const;
+const FAILURE_LABELS: Record<typeof REVIEW_FAILURE_CODES[number], string> = {
+  TARGET_UNAVAILABLE: "审查目标不可用", API_UNSUPPORTED: "接口不支持", KEY_UNAVAILABLE: "凭据不可用",
+  HTTP_NON_OK: "响应状态异常", FETCH_FAILED: "请求失败", RESPONSE_READ_FAILED: "响应读取失败",
+  RESPONSE_TOO_LARGE: "响应过大", RESPONSE_JSON_INVALID: "响应格式无效", RESPONSE_SHAPE_INVALID: "响应结构无效",
+  REVIEW_JSON_INVALID: "决定格式无效", REVIEW_SCHEMA_INVALID: "决定结构无效", REVIEW_OUTPUT_TRUNCATED: "决定输出截断",
+  INPUT_TOO_LARGE: "输入过大", INPUT_INVALID: "输入无效", REQUEST_FAILED: "请求失败", CANCELLED: "审查取消", TIMEOUT: "审查超时",
+};
+export function reviewFailureSummary(result?: ReviewSequenceResult): string {
+  return safeAttempts(result).map(attempt => {
+    const label = attempt.target === "primary" ? "主审" : "备用";
+    if (attempt.status === "valid") return `${label}：${attempt.decision === "allow" ? "允许" : attempt.decision === "deny" ? "拒绝" : "需人工确认"}`;
+    const timing = attempt.timing;
+    const timeout = timing?.timeoutSource === "primary-budget" ? "主审预算到期" :
+      timing?.timeoutSource === "remote-budget" ? "备用预算到期" : timing?.timeoutSource === "total-budget" ? "总预算到期" : undefined;
+    const details = timing ? `${STAGE_LABELS[timing.lastStage as keyof typeof STAGE_LABELS]}，${(timing.elapsedMs / 1000).toFixed(1)}s，` : "";
+    return `${label}：${details}${timeout ?? FAILURE_LABELS[attempt.failureCode]}`;
+  }).join("；");
 }
 
 export class ApprovalDiagnostic {
@@ -173,19 +226,8 @@ export function createApprovalAudit(append?: (type: string, data: unknown) => vo
           reasonCode: reasonCode === undefined ? one(call.data.reasonCode, REASONS, "DIAGNOSTIC_UNKNOWN") : one(reasonCode, REASONS, "DIAGNOSTIC_UNKNOWN"),
           chain: call.data.chain.filter((item: unknown) => SOURCES.includes(item as never) && item !== "none"),
           preModelGates: call.data.preModelGates.filter((item: unknown) => GATE_CODES.includes(item as never)),
-          attempts: call.data.attempts.map((item: any) => ({
-            target: one(item.target, ["primary", "remote"] as const, "primary"),
-            status: one(item.status, ["valid", "failure"] as const, "failure"), called: item.called === true,
-            ...(DECISIONS.includes(item.decision) ? { decision: item.decision } : {}),
-            ...(RISKS.includes(item.risk) ? { risk: item.risk } : {}),
-            ...(AUTHORIZATIONS.includes(item.authorization) ? { authorization: item.authorization } : {}),
-            ...(REVIEW_REASONS.includes(item.reasonCode) ? { reasonCode: item.reasonCode } : {}),
-            ...(safeIdentity(item.provider) ? { provider: safeIdentity(item.provider) } : {}),
-            ...(safeIdentity(item.model) ? { model: safeIdentity(item.model) } : {}),
-            ...(REVIEW_FAILURE_CODES.includes(item.failureCode) ? { failureCode: item.failureCode } : {}),
-            ...(TRANSPORT_CODES.includes(item.transportCode) ? { transportCode: item.transportCode } : {}),
-            ...(Number.isInteger(item.httpStatus) && item.httpStatus >= 100 && item.httpStatus <= 599 ? { httpStatus: item.httpStatus } : {}),
-          })), ...(call.data.analysis ? { analysis: analysis(call.data.analysis) } : {}),
+          attempts: call.data.attempts.map((item: unknown) => safeAttempt(item,
+            one(dataField(item, "target"), ["primary", "remote"] as const, "primary"), true)), ...(call.data.analysis ? { analysis: analysis(call.data.analysis) } : {}),
           ...(call.data.reviewInput ? { reviewInput: inputMetadata(call.data.reviewInput) } : {}),
           ...(Array.isArray(call.data.timings) ? { timings: call.data.timings.filter((item: any) =>
             PHASES.includes(item.phase) && Number.isSafeInteger(item.durationMs) && item.durationMs >= 0)

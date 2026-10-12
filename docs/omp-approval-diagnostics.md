@@ -35,6 +35,7 @@ flowchart TD
 - 入口、模式、配置代次、原生 shell 和执行上下文的固定分类。
 - 审查前的门控原因，以及最终来源、结果和原因码。
 - 主审和远程备用的逐次结果：是否发起请求、模型身份、有效决策或固定失败码、合法 HTTP 状态与白名单传输错误码。
+- 可选 `timing`：`budgetMs`、开始时的 `remainingTotalMs`、`elapsedMs`、`lastStage`、各阶段耗时、`requestBytes` 及 `timeoutSource`。仅记录数字和固定枚举，不记录或哈希正文。
 
 新增审计不保存命令、参数、工作目录、用户消息、提示词、请求头、URL、密钥、模型原始响应、异常消息或堆栈。宿主本身已有的普通会话条目不属于这一新增审计格式；处理历史会话仍须先脱敏。
 
@@ -50,11 +51,23 @@ flowchart TD
 | `FETCH_FAILED` / `RESPONSE_READ_FAILED` | 请求或读取响应失败 | 检查固定传输错误码；不保存异常正文 |
 | `RESPONSE_JSON_INVALID` / `RESPONSE_SHAPE_INVALID` | 响应不符合传输格式 | 检查协议适配及合成兼容测试 |
 | `REVIEW_JSON_INVALID` / `REVIEW_SCHEMA_INVALID` | 决策文本不符合严格协议 | 检查输出截断、结构要求和模型适用性 |
-| `TIMEOUT` | 内部审查预算耗尽 | 检查响应延迟和总预算；不得误报为用户取消 |
+| `TIMEOUT` | 插件本地审查预算耗尽 | 对照 timing 的阶段、耗时与预算来源；不能据此证明远程服务自身超时，不得误报为用户取消 |
 | `CANCELLED` | 调用者取消或会话失效 | 校验撤销和后续不得执行 |
 | 有效 `ask` / `deny` | 模型确实要求确认或拒绝 | 保留决策、风险、授权与原因码；不得换模型直到得到 allow |
 
 执行模型和审查模型分别配置。Cursor 执行模型不等于 Cursor 可充当审查模型；当前独立审查器支持标准 API-key 的 Anthropic Messages 和 OpenAI Chat Completions。主审失败时只在既有预算内尝试配置的远程备用。调用已取消或总预算耗尽后，不继续解析备用目标、查询备用凭据或发起请求。不能凭模型名称或最后健康状态判断 TF 服务的历史失败原因。
+
+2026-10-12 起默认主审与备用各 30000 ms，总计 60000 ms；之前为主审 15000 ms、主备共用
+30000 ms。公开 `review_timeouts` 三项可配置，备用开始时获得自己的计时窗口，仍受总上限约束。
+每次 attempt 的阶段为 `resolve-target`、`key-lookup`、`response-headers`、`response-body`、
+`response-parse`、`decision-parse`；预算来源为 `primary-budget`、`remote-budget`、`total-budget`。
+阶段表示最后到达的处理位置，不能定位远程服务器内部瓶颈。只有序列化后的脱敏请求正文
+字节数进入统计，认证头不计入。旧审计条目没有 timing 也保持兼容。
+
+人工确认标题会说明主审和备用是有效 ask、传输/格式故障还是某项预算耗尽，并显示已知的
+耗时与阶段。主审有效 ask/deny 不启动备用；用户取消与会话失效继续阻止执行，迟到 allow
+不能覆盖新的决定。单调时钟在解析目标、认证返回、发起请求和接受决定的边界检查期限，
+防止同步阻塞推迟计时器回调后仍发出超期请求。
 
 ## 测试要覆盖三层
 

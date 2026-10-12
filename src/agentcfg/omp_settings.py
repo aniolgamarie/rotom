@@ -59,14 +59,21 @@ MODEL_OPTIONS = {"type": "object", "additionalProperties": closed({"name": TEXT,
 ROLE_THINKING = closed({key: THINKING for key in PUBLIC_ROLES})
 IDENTITY_TEXT = {"type": "string", "minLength": 1, "pattern": "^[^\\x00-\\x1f\\x7f]+$(?![\\s\\S])"}
 SHA256 = {"type": "string", "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"}
+DEFAULT_REVIEW_TIMEOUTS = {"primary_ms": 30000, "remote_ms": 30000, "total_ms": 60000}
+REVIEW_TIMEOUTS = closed({key: {"type": "integer", "minimum": 1000,
+  "maximum": 240000 if key == "total_ms" else 120000}
+  for key in DEFAULT_REVIEW_TIMEOUTS}, tuple(DEFAULT_REVIEW_TIMEOUTS))
+NATIVE_REVIEW_TIMEOUTS = closed({native: REVIEW_TIMEOUTS["properties"][public]
+  for public, native in (("primary_ms", "primaryMs"), ("remote_ms", "remoteMs"), ("total_ms", "totalMs"))},
+  ("primaryMs", "remoteMs", "totalMs"))
 PERMISSION_CONTROL = closed({"default_mode": enum("smart", "manual"), "reviewer_model": IDENTITY_TEXT,
-  "native_bash": BOOL,
+  "native_bash": BOOL, "review_timeouts": REVIEW_TIMEOUTS,
   "remote_fallback_model": IDENTITY_TEXT,
   "fallback_model": {"type": "string", "const": "local/lfm2.5-230m"}}, ("default_mode",))
 RUNTIME_VARIANT = enum("official")
 NATIVE_PERMISSION_CONTROL = closed({
   "schemaVersion": {"type": "integer", "const": 2}, "defaultMode": enum("smart", "manual"),
-  "nativeBash": BOOL,
+  "nativeBash": BOOL, "reviewTimeouts": NATIVE_REVIEW_TIMEOUTS,
   "reviewer": {"oneOf": [{"type": "string", "const": "session"},
     closed({"provider": IDENTITY_TEXT, "model": IDENTITY_TEXT}, ("provider", "model"))]},
   "remoteFallback": closed({"provider": IDENTITY_TEXT, "model": IDENTITY_TEXT}, ("provider", "model")),
@@ -106,7 +113,17 @@ def resolve_permission_control(data):
   if (approval.get("bash") != "prompt" or approval.get("permission_bash") != "allow" or
       tools.get("approvalMode") == "yolo"):
     raise ConfigError("omp-permission-native-protection")
-  result = {"defaultMode": config["default_mode"], "reviewer": "session"}
+  timeouts = config.get("review_timeouts", DEFAULT_REVIEW_TIMEOUTS)
+  if any(type(value) is not int for value in timeouts.values()):
+    raise ConfigError("omp-permission-config")
+  minimum_total = timeouts["primary_ms"]
+  if "remote_fallback_model" in config:
+    minimum_total += timeouts["remote_ms"]
+  if timeouts["total_ms"] < minimum_total:
+    raise ConfigError("omp-permission-review-timeouts")
+  result = {"defaultMode": config["default_mode"], "reviewer": "session",
+    "reviewTimeouts": {"primaryMs": timeouts["primary_ms"], "remoteMs": timeouts["remote_ms"],
+      "totalMs": timeouts["total_ms"]}}
   if "native_bash" in config:
     result["nativeBash"] = config["native_bash"]
   requested = tuple(config[key] for key in ("reviewer_model", "remote_fallback_model")

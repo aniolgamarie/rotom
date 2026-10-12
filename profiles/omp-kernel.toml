@@ -25,6 +25,11 @@
 "remote_fallback_model" = "omp-kimi_tf-kimi-for-coding"
 "fallback_model" = "local/lfm2.5-230m"
 
+["agent_options"."permission_control"."review_timeouts"]
+"primary_ms" = 30000
+"remote_ms" = 30000
+"total_ms" = 60000
+
 ["agent_options"."discovery"]
 "project_resources" = false
 "project_roots" = []

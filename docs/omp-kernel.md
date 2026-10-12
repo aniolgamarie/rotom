@@ -31,7 +31,18 @@
 reviewer_model = "omp-zhipu_tf-glm-5.3-flash"
 remote_fallback_model = "omp-kimi_tf-kimi-for-coding"
 fallback_model = "local/lfm2.5-230m"
+
+[overrides.profiles.omp-kernel.agent_options.permission_control.review_timeouts]
+primary_ms = 30000
+remote_ms = 30000
+total_ms = 60000
 ```
+
+审查预算默认主审 30 秒、备用 30 秒、合计最多 60 秒。备用仅在主审不可用或返回无效结果时
+开始自己的计时；有效 ask/deny 不会换模型。`review_timeouts` 可省略；提供时三项均须填写，
+主审/备用各为 1000–120000 ms，总计为 1000–240000 ms，存在备用时总计至少为两者之和。
+`/permission-control status` 显示实际预算，人工弹窗与审计显示阶段、耗时和哪个预算耗尽。
+`TIMEOUT` 表示插件的本地截止时间到达，不能仅凭它断言远程模型服务超时。
 
 原版 OMP 没有公开的 installed-only tiny 推理 API。本地 fallback 保留配置身份，但当前显示 unavailable，插件不调用私有 worker 或下载资源。远程两层均失败时询问用户，无 UI 时阻止。原生标题 tiny 与权限 fallback 相互独立。
 

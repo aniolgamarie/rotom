@@ -29,7 +29,7 @@ credential 或版本管理。
 installed-only tiny 声明、插件与 policy 摘要及原生 patterns。当前公开 API 没有可靠的
 installed-only 本地模型查询，因此 tiny 状态固定为 unavailable，不下载也不调用内部 worker。
 
-主审只支持 `anthropic-messages` 和 `openai-completions`，共用 30 秒期限，不重试、不跟随
+主审只支持 `anthropic-messages` 和 `openai-completions`，主审与备用默认各 30 秒、总计 60 秒，不重试、不跟随
 重定向。Anthropic 响应可包含标准 thinking/redacted_thinking 元数据，审批只读取唯一 text 块；未知块、tool_use、多个或缺失 text 仍失败，严格决策 JSON 不变。只有 transport、unsupported 或严格 JSON 无效才尝试一次不同实际模型的 remote
 fallback；有效 allow/ask/deny 立即终止模型链。自动 allow 必须同时是 low risk、sufficient
 authorization 和 `LOW_RISK_AUTHORIZED`。明确 deny/prompt 和 manual 模式可前置处理；
@@ -307,7 +307,7 @@ stat-to-spawn race；这项限制写入 plan 元数据，UI 不展开入口路�
 ## 安全审批诊断
 
 公开 `omp.appendEntry` 接收 `permission-control.audit.v1` 最终记录；该诊断是 best-effort，
-不批准命令，不改变阻断、重试、30 秒共享预算或模型请求参数。hook 拒绝、execute 终结、
+不批准命令，不改变阻断、重试或已配置的审查预算。hook 拒绝、execute 终结、
 未执行票据失效分别有固定 stage；处理中取消会在收齐 attempt 后终结，每次 invocation
 有独立 sequence，不根据共享 last 推断其它调用的来源。raw capture 在 await 前绑定
 generation/mode/session/model/cwd，发生变化时不再铸造新上下文票据。
@@ -315,6 +315,9 @@ generation/mode/session/model/cwd，发生变化时不再铸造新上下文票�
 记录只包含封闭枚举、计数、安全模型身份、固定 HTTP 状态/失败码和 native context。
 valid attempt 记录 decision/risk/authorization/reasonCode，以区分模型主动 ask/deny 与
 HTTP、transport、JSON/shape/schema、timeout/cancel 失败；valid ask/deny 不触发 fallback。
+每次 attempt 的 `timing` 只保存额度、剩余总额度、耗时、固定阶段、请求正文的字节数与
+预算耗尽来源；不保存正文或认证头。人工标题显示主审/备用的固定失败分类、阶段与耗时，
+避免将插件本地预算耗尽误称为服务端超时。旧记录缺少 timing 时仍能读取。
 已结束预算或 caller 取消不再查询备用 target/key/fetch。首个 AbortSignal reason 只用于
 身份比较，不记录其内容；人工窗口与模型阶段开始后不会伪写新的 preModelGates。
 
@@ -335,3 +338,10 @@ mysql/mariadb/obclient 的 `-pPASSWORD`、`--password` 值不会进入 reviewer�
 Bash 入口另行明确其语义，fish/pwsh/cmd/unknown 保留人工。
 
 完整字段、失败码与边界见 [审批诊断说明](../../../../docs/omp-approval-diagnostics.md)。
+
+原生 sidecar 可选 `reviewTimeouts: {primaryMs, remoteMs, totalMs}`，旧配置缺省使用
+30000/30000/60000。三项必须同时提供且为整数；主审和备用分别为 1000–120000 ms，
+总计为 1000–240000 ms。有远程备用时总额度须覆盖两项额度之和；没有备用时须覆盖主审。
+主审失败后，备用开始自己的额度计时并继续受总上限限制；取消或总额度耗尽后不再调用备用。
+期限包括目标解析、认证与响应处理，使用单调时钟检查，认证或同步代码阻塞计时器也不能
+在期限之后发送新请求或接受迟到决策。`/permission-control status` 显示生效的三项额度。

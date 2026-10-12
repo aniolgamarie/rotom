@@ -1,4 +1,4 @@
-import { createApprovalAudit, safeIdentity, type ApprovalDiagnostic } from "./approval-diagnostic";
+import { createApprovalAudit, safeIdentity, safeAttempts, reviewFailureSummary, type ApprovalDiagnostic } from "./approval-diagnostic";
 import { lstat, readFile } from "node:fs/promises";
 import { isAbsolute, join, resolve } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
@@ -7,7 +7,7 @@ import { prepareReviewPacket, redactReviewText } from "./review-input";
 import { loadNativeBashRuntime, type NativeBashRuntime, type NativeSettingsSnapshot,
   type PlainBashParams, type NativeDiagnostics, SHELL_FAMILIES, CONTEXT_REASONS } from "./native-bash";
 import { parseStandaloneJson, reviewCommand, type ReviewAttempt, type ReviewRuntime, type ReviewTarget,
-  type ReviewerModel, type ReviewSequenceResult } from "./standalone-reviewer";
+  type ReviewerModel, type ReviewSequenceResult, type ReviewTimeouts, type ReviewTiming, resolveReviewTimeouts } from "./standalone-reviewer";
 import { ApprovalQueue, LifecycleFailure, lifecycleLimits, waitFor, type LifecycleLimits } from "./approval-lifecycle";
 
 type Mode = "smart" | "manual";
@@ -25,6 +25,7 @@ export interface StandaloneConfig {
   policyVersion: string;
   nativePatterns: Array<{ match: string; approval: Approval }>;
   nativeBash?: boolean;
+  reviewTimeouts?: ReviewTimeouts;
 }
 
 interface LayerState {
@@ -33,6 +34,7 @@ interface LayerState {
   calls: number;
   failureCode?: string;
   httpStatus?: number;
+  timing?: ReviewTiming;
   health: "idle" | "ready" | "unavailable" | "unsupported" | "transport" | "invalid" | "cancelled" | "timeout";
 }
 
@@ -75,7 +77,7 @@ interface RequestStamp {
 
 const HEX64 = /^[0-9a-f]{64}$/u;
 const CONFIG_KEYS = new Set(["schemaVersion", "defaultMode", "reviewer", "remoteFallback", "fallback",
-  "pluginId", "pluginDigest", "policyVersion", "nativePatterns", "nativeBash"]);
+  "pluginId", "pluginDigest", "policyVersion", "nativePatterns", "nativeBash", "reviewTimeouts"]);
 const TARGET_KEYS = new Set(["provider", "model"]);
 const PLAIN_BASH_KEYS = new Set(["command", "cwd", "timeout"]);
 
@@ -109,6 +111,7 @@ export function validateStandaloneConfig(value: unknown): StandaloneConfig {
         !["allow", "prompt", "deny"].includes(String(pattern.approval)))
       throw new Error("invalid permission-control configuration");
   }
+  resolveReviewTimeouts(value.reviewTimeouts, value.remoteFallback !== undefined);
   return value as unknown as StandaloneConfig;
 }
 
@@ -179,12 +182,12 @@ function worktreeSummary(plan: NativeSettingsSnapshot["reviewContext"][string] |
 
 async function humanApprove(ctx: ExtensionContext, toolName: string, command: string, cwd: string,
   reasonCode: string, signal?: AbortSignal, contextReason?: NativeDiagnostics["contextReason"],
-  plan?: NativeSettingsSnapshot["reviewContext"][string]): Promise<boolean> {
+  plan?: NativeSettingsSnapshot["reviewContext"][string], reviewSummary = ""): Promise<boolean> {
   if (!ctx.hasUI || signal?.aborted) return false;
   try {
     const title = `Allow ${toolName}?\nreason: ${reasonCode}\n` +
       (contextReason ? `context: ${contextReason}\n` : "") + `cwd: ${JSON.stringify(redactSensitive(cwd))}\n` +
-      `command: ${JSON.stringify(redactSensitive(command))}` + worktreeSummary(plan);
+      `command: ${JSON.stringify(redactSensitive(command))}` + worktreeSummary(plan) + (reviewSummary ? "\n" + reviewSummary : "");
     return await ctx.ui.select(title, ["Approve", "Deny"], { signal }) === "Approve";
   } catch {
     return false;
@@ -206,11 +209,13 @@ function configuredTarget(value: "session" | ReviewTarget | undefined): string {
 
 function attemptState(configured: string, attempt: ReviewAttempt | undefined): LayerState {
   if (!attempt) return { configured: safeIdentity(configured) ?? "unsafe-or-unavailable", calls: 0, health: configured === "disabled" ? "unavailable" : "idle" };
+  const timing = safeAttempts({ status: "failure", primary: attempt })[0]?.timing;
   return { configured: safeIdentity(configured) ?? "unsafe-or-unavailable",
     actualModel: attempt.model ? safeIdentity(`${attempt.model.provider}/${attempt.model.id}`) : undefined,
     calls: attempt.called ? 1 : 0, health: attempt.status === "valid" ? "ready" : attempt.health,
     ...(attempt.status === "failure" ? { failureCode: attempt.failureCode,
-      ...(attempt.httpStatus !== undefined ? { httpStatus: attempt.httpStatus } : {}) } : {}) };
+      ...(attempt.httpStatus !== undefined ? { httpStatus: attempt.httpStatus } : {}) } : {}),
+    ...(timing ? { timing } : {}) };
 }
 
 function recordReview(state: State, config: StandaloneConfig, result: ReviewSequenceResult):
@@ -325,12 +330,12 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
 
     const askHuman = async (ctx: ExtensionContext, toolName: string, command: string, cwd: string,
       reasonCode: string, signal: AbortSignal, diagnostic?: ApprovalDiagnostic,
-      contextReason?: NativeDiagnostics["contextReason"], plan?: NativeSettingsSnapshot["reviewContext"][string]) => {
+      contextReason?: NativeDiagnostics["contextReason"], plan?: NativeSettingsSnapshot["reviewContext"][string], review?: ReviewSequenceResult) => {
       diagnostic?.phase("human-queued");
       const release = await humanQueue.acquire(signal, limits.queueTimeoutMs);
       try {
         diagnostic?.phase("human");
-        return await waitFor(() => humanApprove(ctx, toolName, command, cwd, reasonCode, signal, contextReason, plan), signal);
+        return await waitFor(() => humanApprove(ctx, toolName, command, cwd, reasonCode, signal, contextReason, plan, reviewFailureSummary(review)), signal);
       } finally { release(); }
     };
 
@@ -397,7 +402,8 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
       const reviewCwd = ctx.cwd, reviewAuthorization = JSON.stringify(messages);
       const isCurrent = () => !signal.aborted && state.mode === reviewMode && state.generation === reviewGeneration &&
         ctx.cwd === reviewCwd && liveCwd(ctx) === reviewCwd && ctx.sessionManager.getSessionId() === reviewSession && authorizationSignature(ctx) === reviewAuthorization;
-      const runtime = { ...reviewRuntime(ctx, dependencies.fetch ?? globalThis.fetch), isCurrent };
+      const runtime = { ...reviewRuntime(ctx, dependencies.fetch ?? globalThis.fetch), isCurrent,
+        deadlines: resolveReviewTimeouts(config.reviewTimeouts, config.remoteFallback !== undefined) };
       let result: ReviewSequenceResult;
       if (prepared.status === "ready") {
         diagnostic?.phase("review-queued");
@@ -434,7 +440,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
       state.last = { outcome: "pending-human", source: "human", reasonCode, chain: [...chain, "human"] };
       diagnostic?.approval(state.last);
       const approved = await askHuman(ctx, toolName, params.command, cwd, reasonCode, signal, diagnostic,
-        nativeDiagnostics(native)?.contextReason, native?.reviewContext.worktreePlan ?? native?.reviewContext.unverifiedWorktreeEffects);
+        nativeDiagnostics(native)?.contextReason, native?.reviewContext.worktreePlan ?? native?.reviewContext.unverifiedWorktreeEffects, result);
       if (isCurrent()) state.human.health = ctx.hasUI ? (approved ? "approved" : "denied") : "unavailable";
       return { approved, source: "human", reasonCode,
         chain: [...chain, "human"] };
@@ -492,6 +498,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         } else if (command === "status") {
           ctx.ui.notify(JSON.stringify({ mode: state.mode, generation: state.generation,
             configuration: config ? "ready" : "unavailable",
+            reviewTimeouts: config ? resolveReviewTimeouts(config.reviewTimeouts, config.remoteFallback !== undefined) : undefined,
             entrypoints: { raw: "permission_bash", native: nativeRegistered ? "bash" : "disabled" },
             rawNativeCloneCoverage: "not-applicable-raw-shell",
             coverage: state.native.coverage, nativeDelegateAvailable: state.native.delegateAvailable,

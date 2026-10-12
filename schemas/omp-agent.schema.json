@@ -869,6 +869,32 @@
                 "native_bash": {
                   "type": "boolean"
                 },
+                "review_timeouts": {
+                  "type": "object",
+                  "properties": {
+                    "primary_ms": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "maximum": 120000
+                    },
+                    "remote_ms": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "maximum": 120000
+                    },
+                    "total_ms": {
+                      "type": "integer",
+                      "minimum": 1000,
+                      "maximum": 240000
+                    }
+                  },
+                  "required": [
+                    "primary_ms",
+                    "remote_ms",
+                    "total_ms"
+                  ],
+                  "additionalProperties": false
+                },
                 "remote_fallback_model": {
                   "type": "string",
                   "minLength": 1,
@@ -983,6 +1009,32 @@
         },
         "nativeBash": {
           "type": "boolean"
+        },
+        "reviewTimeouts": {
+          "type": "object",
+          "properties": {
+            "primaryMs": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 120000
+            },
+            "remoteMs": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 120000
+            },
+            "totalMs": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 240000
+            }
+          },
+          "required": [
+            "primaryMs",
+            "remoteMs",
+            "totalMs"
+          ],
+          "additionalProperties": false
         },
         "reviewer": {
           "oneOf": [

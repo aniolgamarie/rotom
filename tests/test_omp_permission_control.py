@@ -27,7 +27,8 @@ def configured():
 def test_default_reviewer_is_dynamic_session_selection():
   data = configured()
   before = deepcopy(data)
-  assert resolve_permission_control(data) == {"defaultMode": "smart", "reviewer": "session"}
+  assert resolve_permission_control(data) == {"defaultMode": "smart", "reviewer": "session",
+    "reviewTimeouts": {"primaryMs": 30000, "remoteMs": 30000, "totalMs": 60000}}
   assert data == before
 
 
@@ -37,14 +38,16 @@ def test_explicit_reviewer_and_installed_only_fallback():
     default_mode="manual", reviewer_model="review-small", fallback_model="local/lfm2.5-230m")
   assert resolve_permission_control(data) == {"defaultMode": "manual",
     "reviewer": {"provider": "fictional", "model": "small"},
-    "fallback": {"provider": "local", "model": "lfm2.5-230m", "installedOnly": True}}
+    "fallback": {"provider": "local", "model": "lfm2.5-230m", "installedOnly": True},
+    "reviewTimeouts": {"primaryMs": 30000, "remoteMs": 30000, "totalMs": 60000}}
 
 
 def test_remote_fallback_resolves_independently_from_session_reviewer():
   data = configured()
   data["profile"]["agent_options"]["permission_control"]["remote_fallback_model"] = "review-small"
   assert resolve_permission_control(data) == {"defaultMode": "smart", "reviewer": "session",
-    "remoteFallback": {"provider": "fictional", "model": "small"}}
+    "remoteFallback": {"provider": "fictional", "model": "small"},
+    "reviewTimeouts": {"primaryMs": 30000, "remoteMs": 30000, "totalMs": 60000}}
 
 
 @pytest.mark.parametrize("enabled", [False, True])
