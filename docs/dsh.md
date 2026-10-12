@@ -9,7 +9,7 @@
 | DSH Core | `0.2.0-rc.2` | `639ed015397290b3745d163aafe02ffee4aa3f84`；预发布版 |
 | TUI | `0.14.0` | `c2eee95218d1decfce138f7d31ef7099cc391d00`；未改动 npm 原包 |
 | Cursor Provider | `dsh-cursor-subscription@0.6.12` | `936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8`；未改动原包，通过薄终端适配调用公开 API |
-| 薄终端适配 | `rotom-dsh-cursor-terminal@0.1.0` | 本仓库 `agents/dsh/packages/cursor-terminal`；不复制 OAuth 或 Cursor wire 协议 |
+| 薄终端适配 | `rotom-dsh-cursor-terminal@0.1.1` | 本仓库 `agents/dsh/packages/cursor-terminal`；使用 TUI 公开 QuestionBridge，不复制 OAuth 或 Cursor wire 协议 |
 | 认证 | TUI 的 `./oauth` | 仅挂载 `openai-codex`；不使用旧独立 dsh-auth 包或 OpenAI API key 替代订阅 |
 | 公共运行时 | Cordis `4.0.4` / Schemastery `3.18.4` | 安装检查验证主运行路径模块身份相同 |
 | 工具链 | Node `24.14.0` / npm `11.19.1` / pnpm `11.19.0` | pnpm 原包固定 integrity 并随锁提供；不全局安装 |
@@ -49,6 +49,7 @@ Cursor 的终端入口：
 
 ```text
 /cursor-login
+/cursor-login url
 /cursor-login status
 /cursor-login models
 /cursor-login cancel
@@ -56,24 +57,28 @@ Cursor 的终端入口：
 /model
 ```
 
-打开 `/cursor-login` 返回的 Cursor 浏览器链接；插件进行远端 PKCE 轮询，不猜测 localhost 转发，也不需要常驻 Web UI。`models` 明确刷新账号目录：失败则返回未知/空目录，内置 fallback 不被标成可用模型。用量未查到时显示未知。认证、刷新、注销由上游公开 AuthService/CredentialStore 保管，管理器不导入 IDE/浏览器/钥匙串凭据。注销会取消本适配器的未完成请求并清目录，已发生的副作用无法撤销。
+`/cursor-login` 打开 TUI 原生认证面板，提供完整链接的 Copy、Open browser again 和 Cancel sign-in 操作。面板持续等待本次登录；`/cursor-login url` 重新显示同一登录，重复 start 不另建并行登录。登录有效期由上游决定，适配器另设十分钟观察上限，成功、失败、取消或退出时结束面板。SSH 的系统剪贴板/浏览器能力取决于终端环境；完整链接另存于该实例 `DSH_HOME/cursor-login-url.txt`（0600），只在登录未结束时供用户本机读取，不能发到对话或日志。已有同名文件、符号链接及用户改动不会被覆盖或删除。
+
+插件进行远端 PKCE 轮询，不猜测 localhost 转发，也不需要常驻 Web UI。`models` 明确刷新账号目录，在短通知中只显示数量，完整列表用 `/model`；失败则返回未知/空目录，内置 fallback 不被标成可用模型。用量未查到时显示未知。status/models 的错误不会取消正在等待的登录。认证、刷新、注销由上游公开 AuthService/CredentialStore 保管，管理器不导入 IDE/浏览器/钥匙串凭据。注销会取消本适配器的未完成请求；注销未确认时请求保持暂停，status 显示 paused，显式重新登录成功才恢复。已发生的副作用无法撤销。
 
 本地稳定 provider ID 仍为 `cursor`，原生路由从 `oauth-cursor` 改为 `cursor-subscription`。旧 `agent_options.cursor_port` 已移除；新终端认证不建立该本地代理端口。含旧字段的机器文件严格校验失败，应仅在候选配置副本移除字段，不修改旧部署来源。旧会话的 provider 不被静默重写，旧 oauth-subs 数据不复制或转换成新凭据；新实例需重新登录。未完成真实登录、账号目录、主会话请求、工具往返、续接与额度对应验证之前，不能称为“Cursor 替换已验收”。
 
 ## 设置所有权与 UI
 
-DSH 内核、standard preset、workspace-write + ask 为默认；DSH_TUI_NO_LAUNCHPAD=1 直接进入会话。视觉 minimal 与工具 minimal preset 不混用；本配方没有为了界面削减文件工具、压缩或原生子代理。
+DSH 内核、standard preset、workspace-write + ask 为默认。默认显示原生欢迎页与品牌横幅，采用 Catppuccin Mocha 配色，与 OMP 的暗色主题对齐。`agent_options.show_welcome=false` 可选择直接进入会话；通过公开 `DSH_TUI_NO_LAUNCHPAD` 控制，不修改 TUI。视觉 minimal 与工具 minimal preset 不混用；本配方没有为了界面削减文件工具、压缩或原生子代理。
 
 实际 RC2 `/settings` 写入 `dsh-home/profiles/agentcfg/cordis.patch.yml`。`~/.dsh-tui/settings.json` 不是该版本的活动设置文件；其 npm 包 `lib/settings.json` 是字段目录。本配方保留用户已有文件，不构造不存在的双向同步。
 
 - API providers 及 TUI 的模型/内核/preset/modes 等明确字段使用按行 id 的 `cordis-yaml` 三方比较。未知行、未知字段和未执行的标量 JS 保留；重复 id/重复键、非法结构和受管字段父节点被改成 JS 都失败。
-- whale/idle/minimal、侧栏开关和面板列表只首次初始化。视觉 minimal=true 隐藏完整启动品牌横幅；开发 preset 仍为 standard。默认关闭鲸鱼及空闲动画、收起侧栏，按需打开 todo/jobs/agents/trajectory/info。重复 apply 不恢复用户改变的这些偏好。
-- 主题偏好、home/onboarding 标记也只初始化，沿用 Poimandres 主题资产。主题 capture 是初始化默认提案，不保证双向同步。首次已有非空且未接管的偏好文件会报告冲突，不会覆盖未知字段。
+- whale/idle/minimal、侧栏开关和面板列表只首次初始化。默认 whale=true、minimal=false 显示品牌横幅，whaleIdle=false 避免空闲动画；开发 preset 仍为 standard。收起侧栏，按需打开 todo/jobs/agents/trajectory/info。重复 apply 不恢复用户改变的这些偏好。
+- 主题偏好、home/onboarding 标记也只初始化，默认 `rotom-catppuccin`，同时保留可选择的 Poimandres 资产。主题 capture 是初始化默认提案，不保证双向同步。首次已有非空且未接管的偏好文件会报告冲突，不会覆盖未知字段。已初始化实例不会因 apply 自动改主题；本次手测候选的主题和横幅按用户明确要求，在活动锁释放后逐字段修改。
 - `.dsh-tui` 始终位于实例 `user-home`，HOME/DSH_HOME 身份固定。全局 AGENTS.md、完整两项框架技能、独占 overlay、主题资产和薄启动器按文件管理；账号、会话和日志由原生服务拥有。
 - 薄启动器使用公开 `@deepseek-ai/dsh/profile-boot` 与 launch environment snapshot；不调用 dotenv 发现，不改 Node fs 或上游。业务 cwd 不变，cwd/.env 与 DSH_HOME/.env 不被隐式导入。
 - 原生 packageManager 通过公开启动参数指向拒绝更新的受管入口；普通 TUI 自更新不受支持。独立 CLI/手工修改不能当作受管操作，doctor/run 会检查受管运行包漂移。
 
 常用状态入口是 `/status`、`/tokens`、`/settings`、`/panel`、`/preset` 与 `/permission`。实际快捷键以该版本 `/help` 为准；tmux 的 Ctrl+B 会吃掉默认侧栏键，可在原生设置中重绑。终端图片预览默认关闭，模型自身图片输入能力保留。中文/多行粘贴、窄窗和退出的实际验收范围以记录为准；未运行 SSH/tmux 客户端交互不能据 PTY 推断通过。
+
+`/model` 切换当前会话的模型，不改 Rotom 的全局 main 角色。新会话沿用配方明确指定的 provider/model；恢复已有会话用 `/resume` 打开原生列表并按 Enter，路由从该会话记录恢复。主题、欢迎页和认证面板均使用上游公开入口，Rotom 不维护另一套菜单或会话管理界面。
 
 ## 重试与权限
 
@@ -110,5 +115,7 @@ DSH 不安装 OpenSpec，不自动部署 Spec 工作流/技能，也不使用 Sp
 ```
 
 中文多行/窄窗/原生文件工具/退出的独立入口为 `scripts/smoke-dsh-ui.py --allow-host --runtime ... --evidence ...`（仅本地假模型）。两个新 HOME 的重建入口为 `scripts/smoke-dsh-rebuild.py --allow-install --cache /absolute/task-cache --evidence ...`；记录显式共享下载缓存，不称 cold build。两个脚本均用本任务私人 `/dev/shm` HOME，当前仅在 Linux 运行。
+
+Cursor 原生认证面板的独立入口为 `scripts/smoke-dsh-auth-panel.py --allow-host --runtime ... --evidence ...`，使用真实 TUI/QuestionBridge、假 Coordinator 和明确标记的假长链接，验证面板交互，不访问真实认证。`scripts/check-dsh-cursor-panel.mjs /absolute/runtime` 另测并发、重新显示、错误隔离、注销失败和文件漂移。复制动作的完整参数可验证，真实 SSH 剪贴板和浏览器仍需客户端手测。
 
 默认 pytest 仍隔离 HOME/DSH/XDG、阻断网络和真实子进程。native 脚本使用虚构状态、真实原包和任务临时哨兵，不是账号模型验收；其确定性答复者也不冒称 Perry reviewer 或真人点击。凭据授权、真实账号、完整 AI 审批与会话降级仍是单独阻塞项。

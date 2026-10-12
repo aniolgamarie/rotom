@@ -1,6 +1,6 @@
 {
   "name": "rotom-dsh-cursor-terminal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "exports": {
@@ -12,5 +12,8 @@
   ],
   "dependencies": {
     "dsh-cursor-subscription": "0.6.12"
+  },
+  "peerDependencies": {
+    "@deepseek-harness-tui/dsh-tui": "0.14.0"
   }
 }

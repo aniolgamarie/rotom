@@ -25,7 +25,8 @@ PROVIDER_OPTIONS = closed({"reasoning": {"type": "string", "enum": ["off", "mini
   "retryPolicy": closed({"mode": {"type": "string", "enum": ["normal"]}, "maxRetries": {"type": "integer", "minimum": 0, "maximum": 2}}, ("mode",)),
   "timeoutMs": {"type": "integer", "minimum": 1}})
 OPTIONS = closed({"preset": {"type": "string", "enum": ["standard"]},
-                  "theme": {"type": "string", "enum": ["rotom-poimandres", "auto", "dark", "dark-ansi", "light"]},
+                  "theme": {"type": "string", "enum": ["rotom-catppuccin", "rotom-poimandres", "auto", "dark", "dark-ansi", "light", "claude-dark", "claude-paper", "codex-lavender", "codex-paper"]},
+                  "show_welcome": BOOL,
                   "terminal_images": BOOL,
                   "provider_options": {"type": "object", "additionalProperties": PROVIDER_OPTIONS}},
                  ("preset", "theme", "terminal_images"))
@@ -138,7 +139,7 @@ class DshAdapter(Adapter):
       config["model"] = data["models"][main]["remote_id"]
     for field, value in config.items():
       yield "/dsh-tui/config/" + field, value, Ownership.FIELDS
-    for field, value in {"whale": False, "whaleIdle": False, "minimal": True,
+    for field, value in {"whale": True, "whaleIdle": False, "minimal": False,
         "sidePanel/open": False, "sidePanel/panels": "todo,jobs,agents,trajectory,info"}.items():
       yield "/dsh-tui/config/" + field, value, Ownership.INITIALIZE
 
@@ -164,6 +165,7 @@ class DshAdapter(Adapter):
       ManagedTarget("dsh-home/skills", Ownership.FILE, "skill-directory"),
       ManagedTarget("launch.mjs", Ownership.FILE, "bytes"),
       ManagedTarget("user-home/.dsh-tui/themes/rotom-poimandres.json", Ownership.FILE, "json"),
+      ManagedTarget("user-home/.dsh-tui/themes/rotom-catppuccin.json", Ownership.FILE, "json"),
       *(artifact.target for artifact in self._field_artifacts(data)),
     )
 
@@ -199,6 +201,8 @@ class DshAdapter(Adapter):
       (self.repository / "agents/dsh/templates/launch.mjs").read_bytes()))
     result.append(Artifact(ManagedTarget("user-home/.dsh-tui/themes/rotom-poimandres.json", Ownership.FILE, "json"),
       (self.repository / "agents/dsh/templates/theme.json").read_bytes()))
+    result.append(Artifact(ManagedTarget("user-home/.dsh-tui/themes/rotom-catppuccin.json", Ownership.FILE, "json"),
+      (self.repository / "agents/dsh/templates/theme-catppuccin.json").read_bytes()))
     result.extend(self._field_artifacts(data))
     return tuple(result)
 
@@ -208,7 +212,7 @@ class DshAdapter(Adapter):
   def launch_spec(self, data, *, cwd, runtime_root, instance_root, lock_identity):
     environment = [EnvironmentBinding("DSH_HOME", str(instance_root / "dsh-home")),
       EnvironmentBinding("HOME", str(instance_root / "user-home")),
-      EnvironmentBinding("DSH_TUI_NO_LAUNCHPAD", "1"),
+      EnvironmentBinding("DSH_TUI_NO_LAUNCHPAD", "0" if data["profile"]["agent_options"].get("show_welcome", True) else "1"),
       EnvironmentBinding("DSH_TUI_PRESET", data["profile"]["agent_options"]["preset"]),
       EnvironmentBinding("DSH_PERMISSION_MODE", "workspace-write"),
       EnvironmentBinding("DSH_TELEMETRY_DISABLED", "1")]

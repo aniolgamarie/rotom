@@ -363,8 +363,8 @@ importers:
         specifier: 0.14.0
         version: 0.14.0(7444129616c02bea6ec42625eb05a97d)
       rotom-dsh-cursor-terminal:
-        specifier: file:vendor/rotom-dsh-cursor-terminal-0.1.0.tgz
-        version: file:vendor/rotom-dsh-cursor-terminal-0.1.0.tgz(9ad0b06e94ff025a46218942822d2ed3)
+        specifier: file:vendor/rotom-dsh-cursor-terminal-0.1.1.tgz
+        version: file:vendor/rotom-dsh-cursor-terminal-0.1.1.tgz(802d6815fd5c33aa2d5fbce87406d736)
 
 packages:
 
@@ -4440,9 +4440,11 @@ packages:
     resolution: {integrity: sha512-XQBQ3I8W1Cge0Seh+6gjj03LbmRFWuoszgK9ooCpwYIrhhoO80pfq4cUkU5DkknwfOfFteRwlZ56PYOGYyFWdg==}
     engines: {node: '>= 4'}
 
-  rotom-dsh-cursor-terminal@file:vendor/rotom-dsh-cursor-terminal-0.1.0.tgz:
-    resolution: {integrity: sha512-hmO/uRmgXfBiCnuZf/IvhokjjRqjWp5+aIi3RnuF0oObqu57JeULUSmkR1PKVPwUpc+ImACFb+7ZCyrXb5SXpg==, tarball: file:vendor/rotom-dsh-cursor-terminal-0.1.0.tgz}
-    version: 0.1.0
+  rotom-dsh-cursor-terminal@file:vendor/rotom-dsh-cursor-terminal-0.1.1.tgz:
+    resolution: {integrity: sha512-qwVY8Tct5W+cFUghosM4VzjB3zPpW4vqqf7G7QpmxshlQC7/VQXjiLOtX5t7j1Fb37kicacXFqVppGCYfX0UGA==, tarball: file:vendor/rotom-dsh-cursor-terminal-0.1.1.tgz}
+    version: 0.1.1
+    peerDependencies:
+      '@deepseek-harness-tui/dsh-tui': 0.14.0
 
   run-applescript@7.1.0:
     resolution: {integrity: sha512-DPe5pVFaAsinSaV6QjQ6gdiedWDcRCbUuiQfQa2wmWV7+xC9bGulGI8+TdRmoFkAPaBXk8CrAbnlY2ISniJ47Q==}
@@ -9328,8 +9330,9 @@ snapshots:
 
   retry@0.13.1: {}
 
-  rotom-dsh-cursor-terminal@file:vendor/rotom-dsh-cursor-terminal-0.1.0.tgz(9ad0b06e94ff025a46218942822d2ed3):
+  rotom-dsh-cursor-terminal@file:vendor/rotom-dsh-cursor-terminal-0.1.1.tgz(802d6815fd5c33aa2d5fbce87406d736):
     dependencies:
+      '@deepseek-harness-tui/dsh-tui': 0.14.0(7444129616c02bea6ec42625eb05a97d)
       dsh-cursor-subscription: 0.6.12(9ad0b06e94ff025a46218942822d2ed3)
     transitivePeerDependencies:
       - '@deepseek-ai/cordis'

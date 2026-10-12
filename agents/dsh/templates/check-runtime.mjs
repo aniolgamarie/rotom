@@ -12,7 +12,7 @@ const manifest = (resolve, name) => JSON.parse(readFileSync(resolve.resolve(`${n
 const fail = () => { throw new Error("managed runtime package versions or module identities differ"); };
 for (const [name, version] of Object.entries(expected)) {
   const actual = manifest(require, name);
-  if (actual.name !== name || actual.version !== (name === "rotom-dsh-cursor-terminal" ? "0.1.0" : version)) fail();
+  if (actual.name !== name || actual.version !== (name === "rotom-dsh-cursor-terminal" ? "0.1.1" : version)) fail();
 }
 if (manifest(require, "@deepseek-ai/cordis").version !== "4.0.4"
     || manifest(require, "@deepseek-ai/schemastery").version !== "3.18.4"

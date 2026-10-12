@@ -242,3 +242,35 @@ def test_theme_is_an_initial_preference_and_not_forced_by_environment():
   assert theme.target.ownership is Ownership.INITIALIZE and theme.target.selector == "/theme"
   spec = adapter.launch_spec(data, cwd=Path("/project"), runtime_root=Path("/runtime"), instance_root=Path("/instance"), lock_identity="fixture")
   assert "DSH_TUI_THEME" not in {binding.name for binding in spec.environment}
+
+
+def test_welcome_default_and_visual_preferences_use_public_configuration():
+  import tomllib
+  defaults = tomllib.loads((ROOT / "agents/dsh/agent.toml").read_text())["defaults"]["agent_options"]
+  assert defaults["theme"] == "rotom-catppuccin" and defaults["show_welcome"] is True
+  adapter = DshAdapter(ROOT)
+  data = {"providers": {}, "models": {}, "mcp": {}, "profile": {"roles": {}, "agent_options": defaults}}
+  fields = {path: (value, owner) for path, value, owner in adapter._tui_fields(data)}
+  targets = {target.path for target in adapter.managed_targets(data)}
+  assert {"user-home/.dsh-tui/themes/rotom-catppuccin.json", "user-home/.dsh-tui/themes/rotom-poimandres.json"} <= targets
+  palette = json.loads((ROOT / "agents/dsh/templates/theme-catppuccin.json").read_bytes())["colors"]
+  assert palette["accent"] == "#fab387" and palette["text"] == "#cdd6f4" and palette["background"] == "#1e1e2e"
+  assert fields["/dsh-tui/config/whale"] == (True, Ownership.INITIALIZE)
+  assert fields["/dsh-tui/config/whaleIdle"] == (False, Ownership.INITIALIZE)
+  assert fields["/dsh-tui/config/minimal"] == (False, Ownership.INITIALIZE)
+  assert fields["/dsh-tui/config/sidePanel/open"] == (False, Ownership.INITIALIZE)
+  for welcome in (True, False):
+    data["profile"]["agent_options"] = {**defaults, "show_welcome": welcome}
+    spec = adapter.launch_spec(data, cwd=Path("/project"), runtime_root=Path("/runtime"), instance_root=Path("/instance"), lock_identity="fixture")
+    assert next(binding.value for binding in spec.environment if binding.name == "DSH_TUI_NO_LAUNCHPAD") == ("0" if welcome else "1")
+
+
+@pytest.mark.parametrize("theme", ["rotom-catppuccin", "rotom-poimandres", "claude-dark", "claude-paper", "codex-lavender", "codex-paper"])
+def test_declared_native_and_custom_themes_are_captureable(theme):
+  assert DshAdapter(ROOT).capture({"theme": {"theme": theme}}) == {"agent_options": {"theme": theme}}
+
+
+def test_unknown_custom_theme_is_rejected():
+  from agentcfg.schema import ConfigError
+  with pytest.raises(ConfigError, match="capture-theme-not-supported"):
+    DshAdapter(ROOT).capture({"theme": {"theme": "foreign-custom"}})

@@ -198,12 +198,24 @@ def main():
             raise RuntimeError("FIXTURE_REJECTED")
         if not predicate():
           raise RuntimeError("STAGE_TIMEOUT")
-      result["stage"] = "ui.ready"
-      wait(lambda: b"Context" in transcript and not termios.tcgetattr(slave)[3] & termios.ICANON)
-      # raw mode 早于 useEffect 输入监听器；先等会话帧并继续排空启动输出。
+      def rendered_text():
+        visible = re.sub(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)", "", transcript.decode(errors="replace"))
+        return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", visible)
+      result["stage"] = "ui.welcome"
+      wait(lambda: "Say something, or type / for commands" in rendered_text() and not termios.tcgetattr(slave)[3] & termios.ICANON)
+      # 原生 welcome 的输入框默认获焦点；空 Enter 只关闭启动页，不发送模型请求。
       ready_deadline = time.monotonic() + 1
       while time.monotonic() < ready_deadline:
         pump()
+      result["checks"]["native_welcome_rendered"] = "PASS"
+      os.write(master, b"\r")
+      result["stage"] = "ui.ready"
+      ready_deadline = time.monotonic() + 1
+      while time.monotonic() < ready_deadline:
+        pump()
+      if child.poll() is not None or state["requests"]:
+        raise RuntimeError("WELCOME_EMPTY_SUBMIT")
+      result["checks"]["welcome_empty_enter_no_model_call"] = "PASS"
       result["checks"]["native_ui_ready"] = "PASS"
       result["stage"] = "ui.paste-tool"
       os.write(master, "\x1b[200~中文第一行\n第二行 TASK_MARKER\x1b[201~".encode())
@@ -217,9 +229,7 @@ def main():
       wait(lambda: state["completed"] and target.is_file() and target.read_text() == content)
       # Ink 在窄窗逐段重绘；ANSI 光标控制和换行会拆开可见标记。
       def rendered_marker(marker="UI_DONE_MARKER"):
-        visible = re.sub(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)", "", transcript.decode(errors="replace"))
-        visible = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", visible)
-        return marker in re.sub(r"\s+", "", visible) and len(transcript) > resize_start
+        return marker in re.sub(r"\s+", "", rendered_text()) and len(transcript) > resize_start
       wait(rendered_marker)
       result["checks"].update(chinese_multiline_paste="PASS", narrow_resize="PASS", native_write_tool_roundtrip="PASS")
       result["stage"] = "ui.cancel-stream"
@@ -249,7 +259,7 @@ def main():
       result["overall"], result["stage"] = "PASS", "complete"
     except Exception as error:
       result.update(overall="FAIL", error="FIXTURE_REJECTED" if state.get("error") else str(error) if isinstance(error, RuntimeError)
-        and str(error) in {"NODE_VERSION", "STAGE_TIMEOUT", "EXIT_OR_TTY_RESTORE", "FIXTURE_REJECTED"} else "UI_SMOKE_FAILED", error_location=result["stage"], http=dict(state))
+        and str(error) in {"NODE_VERSION", "STAGE_TIMEOUT", "EXIT_OR_TTY_RESTORE", "FIXTURE_REJECTED", "WELCOME_EMPTY_SUBMIT"} else "UI_SMOKE_FAILED", error_location=result["stage"], http=dict(state))
     finally:
       if child is not None and child.poll() is None:
         child.terminate()

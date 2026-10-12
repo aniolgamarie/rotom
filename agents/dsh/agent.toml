@@ -13,5 +13,6 @@ mcp = []
 
 [defaults.agent_options]
 preset = "standard"
-theme = "rotom-poimandres"
+theme = "rotom-catppuccin"
+show_welcome = true
 terminal_images = false

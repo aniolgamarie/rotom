@@ -62,7 +62,7 @@ def main():
         assert {path.name: path.read_bytes() for path in workspace.state_root.glob("*.json")} == state
         assert not (workspace.state_root / "pending.json").exists()
         with Tree(workspace.instance) as tree:
-          assert workspace.adapter.capture_projection(tree)["theme"]["theme"] == "rotom-poimandres"
+          assert workspace.adapter.capture_projection(tree)["theme"]["theme"] == workspace.resolved.data["profile"]["agent_options"]["theme"]
         status = runtime_packages.status(workspace.backend.root(workspace, lock.identity), lock.identity)
         assert first["changed"] and not second["changed"] and status == "installed"
         case = {"home": number, "fresh": True, "shared_download_cache": True,

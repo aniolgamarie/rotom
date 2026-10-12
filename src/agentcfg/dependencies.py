@@ -44,7 +44,7 @@ def recipe_digest(repository, adapter_id="dsh"):
       raise DependencyError("锁配方缺少声明的原始归档")
     h.update(relative.encode())
     h.update(path.read_bytes())
-    if relative == "vendor/rotom-dsh-cursor-terminal-0.1.0.tgz":
+    if relative == "vendor/rotom-dsh-cursor-terminal-0.1.1.tgz":
       try:
         with tarfile.open(path, "r:gz") as archive:
           for name in ("package.json", "index.mjs"):

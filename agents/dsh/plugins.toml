@@ -18,7 +18,7 @@ conflicts = []
 
 [plugins.cursor-auth]
 package = "rotom-dsh-cursor-terminal"
-version = "0.1.0"
+version = "0.1.1"
 commit = "936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8"
 bundled = false
 enabled = true

@@ -198,9 +198,9 @@ try {
     const ui = ctx.get("settings").describe({ redactSecrets: true }).find(row => row.ns === "dsh-tui")?.value;
     evidence.tui_settings = { whale: ui?.whale, whaleIdle: ui?.whaleIdle, minimal: ui?.minimal,
       sidePanelOpen: ui?.sidePanel?.open, sidePanelPanels: ui?.sidePanel?.panels };
-    assert.equal(ui?.whale, false);
+    assert.equal(ui?.whale, true);
     assert.equal(ui?.whaleIdle, false);
-    assert.equal(ui?.minimal, true);
+    assert.equal(ui?.minimal, false);
     assert.equal(ui?.sidePanel?.open, false);
     assert(evidence.commands.includes("auth") && evidence.commands.includes("cursor-login"));
     assert(evidence.providers.includes("cursor-subscription"));
