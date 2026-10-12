@@ -20,7 +20,7 @@
 
 `plan` 和 `doctor` 不下载或改 HOME 目标。`sync` 只消费已提交的 [mihomo core 锁](../locks/termcfg/mihomo.json)与 [插件锁](../locks/termcfg/plugins.json)，把运行包放到私人 XDG data 目录；目录 0700，归档/非执行资源 0600，需要执行的入口 0700。`apply` 只复制 [逐文件公开来源清单](../terminals/catalog.json)中的非秘密文件，不安装依赖，不启动或重载代理，也不切换现有 shell/tmux 会话。缺少某个 API key、订阅或私人代理配置，不阻止其它组件的 `plan`/`apply`。
 
-维护者升级官方 core 时显式运行 `./termcfg lock --component mihomo --version v1.19.31`。升级单个插件时提供固定 40 位提交，例如 `./termcfg lock --component tmux --plugin tpm --version <完整提交>`；zsh 可省略 `--plugin zinit`。`lock` 会联网、校验完整归档并原子更新仓库锁，须审阅并提交锁差异；普通用户无需执行。`sync` 下载有阶段进度，默认 10 秒连接超时和 300 秒总时限，`--timeout` 接受 10–3600 秒。长等待每 1.5 秒报告阶段心跳。
+维护者升级官方 core 时显式运行 `./termcfg lock --component mihomo --version v1.19.31`。升级单个插件时提供固定 40 位提交，例如 `./termcfg lock --component tmux --plugin tpm --version <完整提交>`；zsh 可省略 `--plugin zinit`。新增插件须同时给出仓库与入口文件，例如 `./termcfg lock --component zsh --plugin zsh-autosuggestions --repo zsh-users/zsh-autosuggestions --entry zsh-autosuggestions.zsh --version <完整提交>`；插件 ID 必须与仓库末段同名（允许 `.` 与 `-`），仓库须在允许前缀内（`tmux-plugins/`、`zdharma-continuum/`、`zdharma/`、`zsh-users/`、`skywind3000/`、`ohmyzsh/`）。`lock` 会联网、校验完整归档并原子更新仓库锁，须审阅并提交锁差异；普通用户无需执行。`sync` 下载有阶段进度，默认 10 秒连接超时和 300 秒总时限，`--timeout` 接受 10–3600 秒。长等待每 1.5 秒报告阶段心跳。
 
 ## 首次接管、备份与恢复
 

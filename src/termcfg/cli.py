@@ -56,6 +56,8 @@ def build_parser() -> Parser:
   lock_parser.add_argument("--component", required=True, choices=sorted(COMPONENTS))
   lock_parser.add_argument("--version", required=True)
   lock_parser.add_argument("--plugin")
+  lock_parser.add_argument("--repo", help="新增插件的 GitHub 仓库（owner/name，须在允许前缀内）")
+  lock_parser.add_argument("--entry", help="新增插件的入口文件相对路径")
   lock_parser.add_argument("--timeout", type=int, default=300)
   sync_parser = commands.add_parser("sync")
   sync_parser.add_argument("--component", required=True, choices=sorted(COMPONENTS))
@@ -332,7 +334,8 @@ def main(argv: list[str] | None = None) -> int:
         plugin = args.plugin or ("zinit" if args.component == "zsh" else None)
         if plugin is None:
           raise TermcfgError(2, "plugin_required")
-        outcome = lock_plugin(args.component, plugin, args.version, timeout=args.timeout)
+        outcome = lock_plugin(args.component, plugin, args.version, repo=args.repo,
+                              entry=args.entry, timeout=args.timeout)
       result = {"command": "lock", **outcome,
                 "overall_ready": True, "ready": True}
     elif args.command == "sync":

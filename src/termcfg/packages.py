@@ -28,6 +28,10 @@ OFFICIAL_API = "https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/"
 MAX_ARCHIVE = 150 * 1024 * 1024
 MAX_BINARY = 200 * 1024 * 1024
 
+# 允许锁定的插件仓库前缀（GitHub owner）；新增插件必须属于这些来源之一。
+_PLUGIN_REPO_PREFIXES = ("tmux-plugins/", "zdharma-continuum/", "zdharma/",
+                         "zsh-users/", "skywind3000/", "ohmyzsh/")
+
 
 def _unpack_single_gzip(data: bytes) -> bytes:
   try:
@@ -101,8 +105,8 @@ def _validate_plugin_asset(asset: dict) -> None:
   identifier = asset["id"]
   repo = asset["repo"]
   commit = asset["commit"]
-  if (not isinstance(identifier, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", identifier) or
-      not isinstance(repo, str) or not repo.startswith(("tmux-plugins/", "zdharma-continuum/")) or
+  if (not isinstance(identifier, str) or not re.fullmatch(r"[a-z0-9][a-z0-9.-]*", identifier) or
+      not isinstance(repo, str) or not repo.startswith(_PLUGIN_REPO_PREFIXES) or
       repo.split("/")[-1] != identifier or not isinstance(commit, str) or len(commit) != 40 or
       any(c not in "0123456789abcdef" for c in commit) or asset["platform"] != "all" or
       asset["url"] != f"https://codeload.github.com/{repo}/tar.gz/{commit}" or
@@ -123,8 +127,13 @@ def _validate_plugin_asset(asset: dict) -> None:
         len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest)):
       raise TermcfgError(2, "invalid_plugin_lock")
     paths.add(str(path))
-  if any(left in Path(right).parents for left in map(Path, paths) for right in paths):
-    raise TermcfgError(2, "plugin_resource_overlap")
+  # O(n) 前缀冲突检测：任一资源的祖先目录若也是资源即冲突。
+  # 原先逐对比较 Path.parents 是 O(n²)，ohmyzsh 这类上千文件的插件会卡数十秒。
+  path_parts = [PurePosixPath(item).parts for item in paths]
+  for parts in path_parts:
+    for depth in range(1, len(parts)):
+      if "/".join(parts[:depth]) in paths:
+        raise TermcfgError(2, "plugin_resource_overlap")
   if asset["entry"] not in paths or not paths:
     raise TermcfgError(2, "plugin_entry_missing")
 
@@ -501,15 +510,28 @@ def lock_mihomo(version: str, *, timeout: int = 300) -> dict:
           "next_command": "./termcfg sync --component mihomo"}
 
 
-def lock_plugin(component: str, plugin_id: str, commit: str, *, timeout: int = 300) -> dict:
+def lock_plugin(component: str, plugin_id: str, commit: str, *, repo: str | None = None,
+                entry: str | None = None, timeout: int = 300) -> dict:
   if component not in {"zsh", "tmux"} or not isinstance(commit, str) or len(commit) != 40 or any(c not in "0123456789abcdef" for c in commit):
     raise TermcfgError(2, "invalid_plugin_version")
   progress = Progress("lock")
   with repository_lease(REPO_ROOT, exclusive=False):
     original, identity = _read_lock_raw(component)
   old = next((item for item in original["assets"][component] if item["id"] == plugin_id), None)
-  if old is None:
-    raise TermcfgError(2, "unknown_plugin")
+  adding = old is None
+  if adding:
+    # 新增插件：必须由维护者显式提供仓库与入口文件，骨架先过一遍格式校验。
+    if not repo or not entry:
+      raise TermcfgError(2, "plugin_add_requires_repo_entry",
+                         "./termcfg lock --component " + component + " --plugin " + plugin_id +
+                         " --repo <owner/name> --entry <path> --version <完整提交>")
+    old = {"id": plugin_id, "repo": repo, "commit": commit,
+           "platform": "all", "url": f"https://codeload.github.com/{repo}/tar.gz/{commit}",
+           "size": 1, "sha256": "0" * 64, "archive": "tar.gz", "entry": entry,
+           "resources": [{"path": entry, "sha256": "0" * 64, "mode": "0600"}]}
+    _validate_plugin_asset(old)
+  elif repo is not None or entry is not None:
+    raise TermcfgError(2, "plugin_already_locked")
   url = f"https://codeload.github.com/{old['repo']}/tar.gz/{commit}"
   progress.stage("resolve", component=component, item=plugin_id)
   data = _download(url, expected_size=None, timeout=timeout, progress=progress, component=component)
@@ -547,7 +569,10 @@ def lock_plugin(component: str, plugin_id: str, commit: str, *, timeout: int = 3
   _validate_plugin_asset(asset)
   _plugin_members(data, asset)
   updated = json.loads(json.dumps(original))
-  updated["assets"][component] = [asset if item["id"] == plugin_id else item for item in original["assets"][component]]
+  if adding:
+    updated["assets"][component] = original["assets"][component] + [asset]
+  else:
+    updated["assets"][component] = [asset if item["id"] == plugin_id else item for item in original["assets"][component]]
   with repository_lease(REPO_ROOT, exclusive=True):
     if _read_lock_raw(component)[1] != identity:
       raise TermcfgError(4, "lock_snapshot_changed", "./termcfg lock --component " + component + " --plugin " + plugin_id + " --version " + commit)
