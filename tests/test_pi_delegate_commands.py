@@ -156,3 +156,13 @@ def test_unknown_command_start_is_kept_and_parent_cancel_does_not_release_worksp
   workspace = host.store.workspaces.read(host.store.workspaces.identify(candidate))
   assert workspace["state"] != "released" and workspace["execution_lease_id"] == request["lease_id"]
   assert host.store.read(request["lease_id"])["grant_generation"] > request["grant_generation"]
+
+
+def test_missing_future_account_anchor_keeps_delegate_denial_without_spawn(tmp_path):
+  controller, host, source, candidate, request, write, args, principal, spawned = fixture(tmp_path)
+  anchor = tmp_path / "future-account/.agentcfg-workspaces"
+  host.config["protected_roots"] = [str(anchor)]
+  bound = command_binding(controller, principal, args)
+  assert str(anchor) in bound["denied_paths"]
+  assert bound["check"]["cwd"] == str(candidate) and bound["check"]["argv"][1:] == ["--fixed"]
+  assert not anchor.exists() and spawned == []

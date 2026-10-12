@@ -16,8 +16,8 @@ from test_pi_commands import fixture
 def setup(tmp_path):
   commands, host, args, principal = fixture(tmp_path)
   from agentcfg.pi_operations import OrdinaryOperations
-  operations = OrdinaryOperations(host)
   manifest = host.manifest(); manifest["plugins"] = ["pi-readseek"]
+  operations = OrdinaryOperations(host)
   manifest["options"]["readseek"] = {"node_tool_ref": "build", "max_seconds": 60, "settings": {"syntaxValidation": "warn"}}
   manifest["options"]["external_tools"]["build"].update(args=[], version="v24.14.0")
   root = Path(__file__).parents[1]

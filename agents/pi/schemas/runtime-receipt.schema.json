@@ -3,7 +3,11 @@
   "type": "object",
   "properties": {
     "schema_version": {
-      "const": 1
+      "type": "integer",
+      "enum": [
+        1,
+        2
+      ]
     },
     "status": {
       "const": "installed"
@@ -200,6 +204,208 @@
         "identity": {
           "type": "string",
           "pattern": "^[0-9a-f]{64}$"
+        },
+        "runtime_files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2048,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+                "minLength": 1
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\\\u0000]+$",
+                "minLength": 1
+              },
+              "transform": {
+                "enum": [
+                  "copy",
+                  "ts-module"
+                ]
+              },
+              "input_digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "mode": {
+                "type": "integer",
+                "const": 384
+              }
+            },
+            "required": [
+              "source",
+              "path",
+              "transform",
+              "input_digest",
+              "digest",
+              "mode"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ai_package": {
+          "type": "string",
+          "pattern": "^(?:@[a-zA-Z0-9_.-]+/)?[a-zA-Z0-9_.-]+$"
+        },
+        "python_bundle": {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "type": "integer",
+              "const": 1
+            },
+            "source": {
+              "const": "agents/pi/runtime/durable-python-bundle.json"
+            },
+            "path": {
+              "const": "runtime/durable-python-bundle.json"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8388608
+            }
+          },
+          "required": [
+            "schema_version",
+            "source",
+            "path",
+            "sha256",
+            "size"
+          ],
+          "additionalProperties": false
+        },
+        "durable_owner": {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "type": "integer",
+              "const": 1
+            },
+            "protocol_version": {
+              "type": "integer",
+              "const": 1
+            },
+            "roles": {
+              "type": "object",
+              "properties": {
+                "owner_node": {
+                  "type": "object",
+                  "properties": {
+                    "source_id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                    },
+                    "path": {
+                      "type": "string",
+                      "const": "bin/pi-node"
+                    }
+                  },
+                  "required": [
+                    "source_id",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "owner_bootstrap": {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "const": "agents/pi/runtime/durable-owner-bootstrap.ts"
+                    },
+                    "path": {
+                      "type": "string",
+                      "const": "runtime/durable-owner-bootstrap.mjs"
+                    },
+                    "transform": {
+                      "type": "string",
+                      "const": "ts-module"
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "path",
+                    "transform"
+                  ],
+                  "additionalProperties": false
+                },
+                "owner_codec": {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "const": "agents/pi/packages/durable-service/src/owner-message.ts"
+                    },
+                    "path": {
+                      "type": "string",
+                      "const": "runtime/durable-owner-message.mjs"
+                    },
+                    "transform": {
+                      "type": "string",
+                      "const": "ts-module"
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "path",
+                    "transform"
+                  ],
+                  "additionalProperties": false
+                },
+                "owner_controller": {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "const": "scripts/pi-durable-owner-controller.py"
+                    },
+                    "path": {
+                      "type": "string",
+                      "const": "supervisor/scripts/pi-durable-owner-controller.py"
+                    },
+                    "transform": {
+                      "type": "string",
+                      "const": "copy"
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "path",
+                    "transform"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "owner_node",
+                "owner_bootstrap",
+                "owner_codec",
+                "owner_controller"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schema_version",
+            "protocol_version",
+            "roles"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -215,7 +421,26 @@
         "capability_ids",
         "identity"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "durable_owner"
+            ]
+          },
+          "then": {
+            "required": [
+              "python_bundle"
+            ],
+            "properties": {
+              "engine": {
+                "const": "node"
+              }
+            }
+          }
+        }
+      ]
     },
     "files": {
       "type": "object",
@@ -316,6 +541,72 @@
     "toolchain_identity": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
+    },
+    "binding_identity": {
+      "type": "object",
+      "properties": {
+        "selection": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "catalog": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "bindings": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "lock": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "slice": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "binding_context": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "runtime": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "profile": {
+          "type": "string",
+          "enum": [
+            "pi-base",
+            "pi-full"
+          ]
+        },
+        "adapter_version": {
+          "type": "string",
+          "const": "pi-1"
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "linux-x86_64",
+            "linux-arm64",
+            "darwin-x86_64",
+            "darwin-arm64"
+          ]
+        }
+      },
+      "required": [
+        "selection",
+        "catalog",
+        "bindings",
+        "lock",
+        "slice",
+        "binding_context",
+        "runtime",
+        "profile",
+        "adapter_version",
+        "platform"
+      ],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,
@@ -330,5 +621,120 @@
     "platform",
     "toolchains",
     "toolchain_identity"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": 1
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "binding_identity"
+          ]
+        },
+        "properties": {
+          "slice": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "runtime_files"
+                  ]
+                },
+                {
+                  "required": [
+                    "ai_package"
+                  ]
+                },
+                {
+                  "required": [
+                    "python_bundle"
+                  ]
+                },
+                {
+                  "required": [
+                    "durable_owner"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "else": {
+        "required": [
+          "binding_identity"
+        ],
+        "properties": {
+          "slice": {
+            "required": [
+              "runtime_files",
+              "ai_package"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "slice": {
+            "required": [
+              "python_bundle"
+            ]
+          }
+        },
+        "required": [
+          "slice"
+        ]
+      },
+      "then": {
+        "properties": {
+          "schema_version": {
+            "const": 2
+          },
+          "binding_identity": {
+            "properties": {
+              "profile": {
+                "const": "pi-full"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "slice": {
+            "required": [
+              "durable_owner"
+            ]
+          }
+        },
+        "required": [
+          "slice"
+        ]
+      },
+      "then": {
+        "properties": {
+          "schema_version": {
+            "const": 2
+          },
+          "binding_identity": {
+            "properties": {
+              "profile": {
+                "const": "pi-full"
+              }
+            }
+          }
+        }
+      }
+    }
   ]
 }

@@ -145,3 +145,62 @@ def test_download_failure_does_not_expose_signed_url(tmp_path, monkeypatch):
   with pytest.raises(DependencyError) as error:
     install(root, stage, source)
   assert "sensitive" not in str(error.value)
+
+
+@pytest.mark.parametrize("format", ["tar.gz", "raw"])
+@pytest.mark.parametrize("fault", [None, "missing", "digest"])
+def test_modern_vendor_assets_never_read_or_fall_back_to_legacy(tmp_path, monkeypatch, format, fault):
+  root, stage, source, calls = fixture(tmp_path, monkeypatch)
+  source["vendor_path"] = "vendor/fixture.bin" if format == "raw" else "vendor/fixture.tgz"
+  if format == "raw":
+    raw = b"synthetic-modern-data"
+    source.update(format="raw", platform="all", size=len(raw), target="data/fixture.bin")
+    source.pop("archive_member")
+  else:
+    raw = archive_bytes([("codex", executable() + b"modern", tarfile.REGTYPE)])
+  source["archive_digest"] = hashlib.sha256(raw).hexdigest()
+  # 旧目录有完全匹配的诱饵；modern缺失或坏摘要也不得补齐。
+  legacy = root / "locks/pi" / source["vendor_path"]
+  legacy.parent.mkdir(parents=True); legacy.write_bytes(raw)
+  modern = root / "locks/pi-modern" / source["vendor_path"]
+  if fault != "missing":
+    modern.parent.mkdir(parents=True); modern.write_bytes(b"bad digest" if fault == "digest" else raw)
+  reads = []
+  from agentcfg.storage import Tree
+  original_read, original_open = Tree.read, Tree.open_read
+  def read(tree, path, **options):
+    reads.append(str(path)); return original_read(tree, path, **options)
+  def open_read(tree, path, **options):
+    reads.append(str(path)); return original_open(tree, path, **options)
+  monkeypatch.setattr(Tree, "read", read); monkeypatch.setattr(Tree, "open_read", open_read)
+  def run():
+    pi_assets.install_assets(root, stage, {"source_ids": ["fixture"]}, {"sources": {"fixture": source}}, "linux-x86_64", lock_family="modern")
+  if fault:
+    with pytest.raises(DependencyError): run()
+    assert not (stage / source["target"]).exists()
+  else:
+    run()
+    assert (stage / source["target"]).read_bytes() == (raw if format == "raw" else executable() + b"modern")
+  assert calls == []
+  vendor_reads = [path for path in reads if path.startswith("locks/")]
+  assert vendor_reads and set(vendor_reads) == {"locks/pi-modern/" + source["vendor_path"]}
+
+
+def test_default_vendor_asset_remains_in_legacy_family(tmp_path, monkeypatch):
+  root, stage, source, calls = fixture(tmp_path, monkeypatch)
+  raw = archive_bytes([("codex", executable(), tarfile.REGTYPE)])
+  source.update(vendor_path="vendor/fixture.tgz", archive_digest=hashlib.sha256(raw).hexdigest())
+  legacy = root / "locks/pi/vendor/fixture.tgz"; legacy.parent.mkdir(parents=True); legacy.write_bytes(raw)
+  modern = root / "locks/pi-modern/vendor/fixture.tgz"; modern.parent.mkdir(parents=True); modern.write_bytes(b"poison")
+  install(root, stage, source)
+  assert (stage / "bin/codex").read_bytes() == executable() and calls == []
+
+
+def test_invalid_asset_family_is_rejected_before_tree_or_download(tmp_path, monkeypatch):
+  from agentcfg.schema import ConfigError
+  from agentcfg.storage import Tree
+  monkeypatch.setattr(Tree, "__init__", lambda *_args, **_kwargs: pytest.fail("filesystem touched before family validation"))
+  monkeypatch.setattr(pi_assets, "open_download", lambda *_args: pytest.fail("download before family validation"))
+  with pytest.raises(ConfigError) as error:
+    pi_assets.install_assets(tmp_path / "missing", tmp_path / "stage", {"source_ids": []}, {"sources": {}}, "linux-x86_64", lock_family="../synthetic-private")
+  assert error.value.code == "pi-lock-layout" and "synthetic-private" not in str(error.value)

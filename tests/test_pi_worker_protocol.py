@@ -15,7 +15,7 @@ def fixture():
   provider = {"baseUrl": "https://fixture.invalid/v1", "api": "openai-completions", "apiKey": "$AGENTCFG_PI_CREDENTIAL_AAAAAAAAAAAAAAAA",
     "models": [{"id": "selected", "input": ["text"]}, {"id": "other", "input": ["text"]}]}
   models = {"providers": {"agentcfg-fake": provider, "unselected": {"apiKey": "unread private sentinel"}}}
-  manifest = {"role_bindings": {"task-keeper-reader": {"managed": True, "tools": ["tk_read"], "model": {"provider": "agentcfg-fake", "model": "selected"}}}}
+  manifest = {"plugins": ["task-keeper"], "role_bindings": {"task-keeper-reader": {"managed": True, "tools": ["tk_read"], "model": {"provider": "agentcfg-fake", "model": "selected"}}}}
   return descriptor, models, manifest
 
 
@@ -65,7 +65,7 @@ def test_supervisor_resolves_worker_with_closed_input_and_selected_environment(t
   ensure_private(runtime)
   definition = "Read the selected project."
   policy = {"schema_version": 1, "default": "deny", "rules": []}
-  manifest = {"permission_policy": policy, "role_bindings": {"task-keeper-reader": {"managed": True,
+  manifest = {"plugins": ["task-keeper"], "permission_policy": policy, "role_bindings": {"task-keeper-reader": {"managed": True,
     "tools": ["tk_read"], "read_roots": ["project"], "write_roots": [], "model": {"provider": "agentcfg-fake", "model": "selected"}}},
     "options": {"task_keeper": {"enabled": True}, "network": {"routes": {"direct": {"mode": "direct", "provider_ids": ["fake"]}}}}}
   _, models, _ = fixture()
@@ -96,6 +96,7 @@ def test_supervisor_resolves_worker_with_closed_input_and_selected_environment(t
     "database": {"root": str(instance / "pi-home/task-keeper"), "filename": "runtime.db", "owner": {"scopeId": "scope", "token": "owner", "epoch": 1}}}
   host = object.__new__(HostSupervisor)
   host.store, host.root, host.runtime_root, host.repository = store, store.root, runtime, tmp_path
+  host.operations = SimpleNamespace(selected_plugins=frozenset(manifest["plugins"]))
   host.config = {"instance_root": str(instance), "engine": "node", "policy_digest": digest(policy), "manifest_digest": digest(manifest)}
   host.server = SimpleNamespace(endpoint=tmp_path / "control.json")
   host.service = SimpleNamespace(issue_capability=lambda *args: "synthetic private capability")

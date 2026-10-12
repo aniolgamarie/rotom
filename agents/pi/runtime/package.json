@@ -175,7 +175,8 @@
     "./web-artifact": {
       "types": "./types/web-artifact.d.ts",
       "default": "./web-artifact.ts"
-    }
+    },
+    "./strict-json": "./strict-json.ts"
   },
   "dependencies": {
     "http-proxy-agent": "7.0.2",

@@ -231,10 +231,12 @@ class Tree:
 
 
 @contextmanager
-def instance_lock(state: Tree, *, shared=False):
+def instance_lock(state: Tree, *, shared=False, create=True):
   """运行可共享读租约；配置写入仍独占，不替换或删除锁文件。"""
+  if type(create) is not bool:
+    raise Conflict("实例锁创建模式无效")
   with state.parent("instance.lock") as (parent, name):
-    fd = os.open(name, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=parent)
+    fd = os.open(name, os.O_RDWR | (os.O_CREAT if create else 0) | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, 0o600, dir_fd=parent)
   try:
     info = os.fstat(fd)
     if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1

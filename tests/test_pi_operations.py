@@ -13,8 +13,10 @@ from test_pi_delegate import fixture
 from test_pi_activity import identity
 
 
-def setup(tmp_path):
+def setup(tmp_path, *, plugins=(), resources=()):
   _, host, args, _ = fixture(tmp_path)
+  host.manifest()["plugins"] = list(plugins)
+  host.manifest()["resource_ids"] = {"extensions": {name: "synthetic-selected-path" for name in resources}}
   policy = host.manifest()["permission_policy"]
   policy["rules"] = [{"id": "project", "kind": "file", "effect": "allow", "root_ref": "project", "relative_path": ".", "match": "subtree",
     "tool_ids": ["read", "write", "edit"], "operations": ["read", "write", "create"]}]
@@ -121,6 +123,7 @@ def test_selected_skill_is_readable_without_exposing_private_instance_siblings(t
     tree.write_state("pi-home/auth.json", b"synthetic private account sentinel")
   skill = root / "pi-home/skills/fixture"
   host.manifest()["resources"] = {"skills": ["pi-home/skills/fixture"]}
+  host.manifest()["resource_ids"]["skills"] = {"fixture": "pi-home/skills/fixture"}
   with Tree(root) as tree: tree.write_state("pi-home/loaded-manifest.json", json_bytes({"resources": {"skills": [{"id": "fixture", "path": str(skill), "digest": tree_digest(skill), "scope": "instance"}]}}))
   request = {"operation_id": "skill", "role_id": "main", "cwd": cwd, "tool_name": "read", "input": {"path": str(skill / "SKILL.md")}}
   ticket = operations.prepare(principal, request)
@@ -130,3 +133,138 @@ def test_selected_skill_is_readable_without_exposing_private_instance_siblings(t
   (skill / "SKILL.md").write_bytes(b"changed after loading")
   with pytest.raises(Conflict): operations.read(principal, {"operation_id": ticket["operation_id"], "offset": 0, "limit": 65536})
   assert (root / "pi-home/auth.json").read_bytes() == b"synthetic private account sentinel"
+
+
+def base_fixture(tmp_path, *, allow=False):
+  """真正解析Base选择；只借原store/worktree替身，不构造Full controller/包。"""
+  import json
+  from agentcfg.pi import PiAdapter
+  from agentcfg.pi_admitted_files import FileOperationAdmissions
+  from agentcfg.pi_supervisor import SupervisorService
+  from agentcfg.workspace_leases import WorkspaceLeases
+  from test_pi_activity import make_store
+  from test_pi_operation_admission import fixture as context_fixture
+  from test_pi_profile_projection import resolved
+  from test_pi_workspace_leases import worktree
+  from test_pi_adapter import ROOT
+
+  source = worktree(tmp_path); (source / "code.txt").write_text("source")
+  data = resolved({"agent_options": {"paths": {"roots": {"project": {"path": str(source), "purpose": "project"}}}}})
+  # 正控是显式自有测试策略，不把Base默认deny声称为自动Writer许可。
+  if allow:
+    data["adapter_documents"]["agent"]["policies"]["project-default"]["rules"] = [{"id": "own-project", "kind": "file", "effect": "allow",
+      "root_ref": "project", "relative_path": ".", "match": "subtree", "tool_ids": ["read", "write", "edit", "ls", "find", "grep"],
+      "operations": ["read", "write", "create", "list", "search"]}]
+  adapter = PiAdapter(ROOT); adapter.validate(data)
+  manifest = json.loads(next(row.content for row in adapter.render(data) if row.target.path == "pi-home/agentcfg-manifest.json"))
+  store, processes = make_store(tmp_path / "controller"); store.workspaces = WorkspaceLeases("fixture-boot")
+  runtime = tmp_path / ("c" * 64); runtime.mkdir(); instance = tmp_path / "instance"; instance.mkdir()
+  host = SimpleNamespace(store=store, root=store.root, runtime_root=runtime, manifest=lambda: manifest,
+    config={"instance_root": str(instance), "lock_identity": "a" * 64, "slice_identity": "b" * 64})
+  def no_spawn(*_): raise AssertionError("ordinary baseline must not launch any process")
+  host.service = SupervisorService(store, no_spawn, no_spawn)
+  operations = OrdinaryOperations(host); host.service.ordinary_handler = operations.handle
+  parent = store.allocate(kind="host", execution_id="parent", task_id=None, attempt_id="parent", lock_identity="a" * 64,
+    slice_identity="b" * 64, policy_digest="c" * 64, candidate_digest=None, planned_workspaces=[])
+  processes.current[202] = identity(202); store.start(parent["lease_id"], store.owner, spawn=lambda _: identity(202))
+  principal = Principal("manager", parent["lease_id"], parent["grant_generation"])
+  current = context_fixture()[1]; current.update(activation_id=store.owner["manager_activation_id"], profile="pi-base", cwd=str(source),
+    runtime_identity=runtime.name, deadline_ms=int(operations.now().timestamp() * 1000) + 60000)
+  bridge = FileOperationAdmissions(operations, context_provider=lambda _: deepcopy(current))
+  assert manifest["profile_id"] == "pi-base" and set(manifest["plugins"]) == {"pi-todo", "loop-guard", "colorful-footer"}
+  assert manifest["role_bindings"] == {} and manifest["resources"]["roles"] == []
+  assert not {"task_keeper", "model_delegate", "processes", "agent_state"} & manifest["options"].keys()
+  assert operations.checkpoints is operations.readseek is operations.web_browser is operations.web_files is None
+  assert host.service.delegate_handler is None
+  assert not list(runtime.iterdir())
+  return bridge, operations, host, source, principal
+
+
+def base_admit(f, request_id, tool, payload):
+  bridge, _, _, _, principal = f
+  prepared = bridge.prepare(principal, request_id, tool, payload)
+  permit = bridge.issue(principal, prepared["operation_id"], operation_digest=prepared["operation_digest"], source="human")
+  return bridge.consume(principal, permit)
+
+
+def base_writer(f, ticket, content, expected=None):
+  _, operations, host, _, principal = f
+  lease = host.store.read(ticket["lease_id"])
+  assert host.store.workspaces.read(lease["planned_workspaces"][0])["state"] == "reserved"
+  operations.stage_write(principal, {"operation_id": ticket["operation_id"], "content": content, "expected_digest": expected})
+  host.store.processes.current[203] = identity(203)
+  host.store.start(lease["lease_id"], host.store.owner, spawn=lambda _: identity(203))
+  assert host.store.workspaces.read(lease["planned_workspaces"][0])["state"] == "active"
+  return Principal("worker", lease["lease_id"], lease["grant_generation"])
+
+
+def test_resolved_base_default_policy_denies_ordinary_io_without_full_services(tmp_path):
+  f = base_fixture(tmp_path)
+  for tool, payload in [("read", {"path": "code.txt"}), ("write", {"path": "new.txt", "content": "blocked"}),
+      ("find", {"pattern": "*.txt"}), ("edit", {"path": "code.txt", "edits": []})]:
+    with pytest.raises(Conflict, match="PERMISSION_DENIED"):
+      base_admit(f, "denied-" + tool, tool, payload)
+  assert not [row for row in f[2].store.records() if row["kind"] == "external"]
+  assert not (f[3] / "new.txt").exists() and (f[3] / "code.txt").read_text() == "source"
+
+
+def test_resolved_base_explicit_project_io_uses_original_admissions_and_workspace_writer(tmp_path):
+  import hashlib
+  f = base_fixture(tmp_path, allow=True); _, operations, host, root, principal = f
+  ticket = base_admit(f, "read", "read", {"path": "code.txt"})
+  assert base64.b64decode(operations.read(principal, {"operation_id": ticket["operation_id"], "offset": 0, "limit": 65536})["data_b64"]) == b"source"
+  for tool, payload in [("ls", {}), ("find", {"pattern": "**/*.txt"}), ("grep", {"pattern": "source"})]:
+    ticket = base_admit(f, tool, tool, payload)
+    assert operations.listing(principal, {"operation_id": ticket["operation_id"]})["entries"] == [{"path": "code.txt", "directory": False}]
+    if tool == "grep": assert base64.b64decode(operations.read(principal, {"operation_id": ticket["operation_id"], "relative_path": "code.txt", "offset": 0, "limit": 65536})["data_b64"]) == b"source"
+  assert not [row for row in host.store.records() if row["kind"] == "external"]
+  for tool, path, content, expected in [("write", "new.txt", "new", None), ("edit", "code.txt", "edited", hashlib.sha256(b"source").hexdigest())]:
+    payload = {"path": path, "content": content} if tool == "write" else {"path": path, "edits": [{"oldText": "source", "newText": "edited"}]}
+    ticket = base_admit(f, tool, tool, payload); worker = base_writer(f, ticket, content, expected)
+    assert operations.perform(worker, {"operation_id": ticket["operation_id"]})["changed"] is True
+    assert (root / path).read_text() == content
+    host.store.processes.current.pop(203); assert host.store.finish(ticket["lease_id"], host.store.owner)["state"] == "reclaimed"
+  assert host.store.processes.signals == []
+
+
+@pytest.mark.parametrize("tool", ["read", "find", "write", "edit"])
+def test_resolved_base_io_errors_propagate_as_fixed_control_failure_without_success_or_mutation(tmp_path, monkeypatch, tool):
+  import errno
+  import hashlib
+  import os
+  from agentcfg.storage import Tree
+  from test_pi_supervisor import request
+  f = base_fixture(tmp_path, allow=True); _, operations, host, root, principal = f
+  payload = {"path": "code.txt"} if tool == "read" else {"pattern": "*.txt"} if tool == "find" else {"path": "code.txt", "content": "must not write"} if tool == "write" else {"path": "code.txt", "edits": []}
+  ticket = base_admit(f, "fails", tool, payload)
+  if tool in ("write", "edit"):
+    worker = base_writer(f, ticket, "must not write", hashlib.sha256(b"source").hexdigest() if tool == "edit" else None)
+    token = host.service.issue_capability("worker", worker.lease_id); method = "ordinary_perform"; args = {"operation_id": ticket["operation_id"]}
+    original = Tree.replace
+    def replace(tree, *args, **kwargs):
+      if tree.root == root: raise OSError(errno.EIO, "synthetic-private-io-detail")
+      return original(tree, *args, **kwargs)
+    monkeypatch.setattr(Tree, "replace", replace)
+  else:
+    token = host.service.issue_capability("manager", principal.lease_id)
+    args = {"operation_id": ticket["operation_id"]}; method = "ordinary_list"
+    if tool == "read":
+      method = "ordinary_read"; args.update(offset=0, limit=65536); original = Tree.open_read
+      def open_read(tree, *args, **kwargs):
+        if tree.root == root: raise OSError(errno.EIO, "synthetic-private-io-detail")
+        return original(tree, *args, **kwargs)
+      monkeypatch.setattr(Tree, "open_read", open_read)
+    else:
+      original = os.listdir; expected = root.stat()
+      def listing(fd):
+        info = os.fstat(fd) if type(fd) is int else None
+        if info and (info.st_dev, info.st_ino) == (expected.st_dev, expected.st_ino): raise OSError(errno.EIO, "synthetic-private-io-detail")
+        return original(fd)
+      monkeypatch.setattr(os, "listdir", listing)
+  reply = host.service.reply(token, os.geteuid(), request(method, args))
+  assert reply == {"schema_version": 1, "ok": False, "exit_code": 6, "error": "PI_CONTROL_REJECTED"}
+  assert "synthetic-private-io-detail" not in repr(reply) and (root / "code.txt").read_text() == "source"
+  assert not (host.root / "activity/ordinary-results" / (ticket["operation_id"] + ".json")).exists()
+  if tool in ("write", "edit"):
+    lease = host.store.read(ticket["lease_id"])
+    assert host.store.workspaces.read(lease["planned_workspaces"][0])["state"] == "active"

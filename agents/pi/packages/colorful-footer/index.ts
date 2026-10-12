@@ -43,6 +43,7 @@ type UsageSummary = {
 	cacheRead: number;
 	cacheWrite: number;
 	cost: number;
+	costKnown: boolean;
 	valid: boolean;
 	branchLength: number;
 };
@@ -226,6 +227,7 @@ let cachedUsage: UsageSummary = {
 	cacheRead: 0,
 	cacheWrite: 0,
 	cost: 0,
+	costKnown: true,
 	valid: false,
 	branchLength: -1,
 };
@@ -282,6 +284,7 @@ function emptyUsage(branchLength = -1): UsageSummary {
 		cacheRead: 0,
 		cacheWrite: 0,
 		cost: 0,
+		costKnown: true,
 		valid: false,
 		branchLength,
 	};
@@ -370,13 +373,14 @@ function getUsage(ctx: any): UsageSummary {
 	}
 
 	const nextUsage = emptyUsage(branch.length);
+	nextUsage.costKnown = (globalThis as any)[Symbol.for("agentcfg.pi.runtime.v1")]?.manifest?.cost_reporting !== "unmetered";
 	nextUsage.valid = true;
 
 	branch.forEach((e) => {
 		if (e.type !== "message" || !e.message || e.message.role !== "assistant")
 			return;
 		const m = e.message as AssistantMessage;
-		if (!m.usage) return;
+		if (!m.usage) { nextUsage.costKnown = false; return; }
 
 		nextUsage.input += m.usage.input || 0;
 		nextUsage.output += m.usage.output || 0;
@@ -385,7 +389,8 @@ function getUsage(ctx: any): UsageSummary {
 
 		const costRecord = m.usage.cost as Record<string, unknown> | undefined;
 		const apiCost =
-			typeof costRecord?.total === "number" ? costRecord.total : 0;
+			typeof costRecord?.total === "number" && Number.isFinite(costRecord.total) && costRecord.total >= 0 ? costRecord.total : 0;
+		if (typeof costRecord?.total !== "number" || !Number.isFinite(costRecord.total) || costRecord.total < 0) nextUsage.costKnown = false;
 		nextUsage.cost += apiCost;
 	});
 
@@ -488,7 +493,7 @@ function renderPrimaryLine(data: RenderData, theme: any): string {
 	const costStr = segment(
 		theme,
 		getColor("cost"),
-		icons.cost + data.usage.cost.toFixed(4),
+		data.usage.costKnown ? icons.cost + data.usage.cost.toFixed(4) : "费用未计量",
 	);
 	const cacheStr =
 		data.cacheTot > 0
@@ -640,7 +645,7 @@ function renderNormalLines(data: RenderData, theme: any): string[] {
 	const costStr = segment(
 		theme,
 		getColor("cost"),
-		icons.cost + data.usage.cost.toFixed(4),
+		data.usage.costKnown ? icons.cost + data.usage.cost.toFixed(4) : "费用未计量",
 	);
 	const sessionBits = [
 		segment(theme, getColor("time"), icons.time + " " + data.dur),
@@ -702,6 +707,8 @@ export default function (pi: ExtensionAPI) {
 	(globalThis as any)[YOLO_INVALIDATE_KEY] = invalidateYoloFooter;
 
 	pi.on("session_start", (_event: unknown, ctx: any) => {
+		// 新会话首帧不能沿用上一会话的模型/费用/工作根缓存。
+		invalidateRenderCache();
 		sessionStartTime = Date.now();
 		turnStartTime = Date.now();
 		turnStartTokens = 0;

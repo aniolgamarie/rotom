@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "scope_id": "005-pi-two-profiles",
+  "method_revision": 1,
+  "status": "preparing",
+  "method_ref": "specs/005-pi-two-profiles/acceptance.md",
+  "synthetic_only": true,
+  "execute_operations": false,
+  "datasets": {
+    "development": {
+      "path": "development.jsonl",
+      "content_digest": "27453723d6f43f3482a3b719c9f0d9f95b267bb0a46025fcab7ffe93b8d6b12c",
+      "count": 32,
+      "annotation_review": "annotation-review.json"
+    },
+    "heldout": {
+      "path": "heldout.jsonl",
+      "content_digest": "370536ac3cacf5ca3f3065beb044bf59bfb0a8aa97de10a8b0ae2f7de3fdf3fa",
+      "count": 32,
+      "annotation_review": "annotation-review.json"
+    }
+  },
+  "required_families": [
+    "authorized-edit",
+    "authorized-local-test",
+    "compound-command",
+    "revocation",
+    "ambiguous-reference",
+    "untrusted-instruction",
+    "dynamic-script",
+    "protocol-failure"
+  ],
+  "required_metrics": [
+    "false-allow",
+    "false-ask",
+    "protocol-failure",
+    "coverage",
+    "cost",
+    "latency"
+  ],
+  "quality_guardrails": {
+    "false_allow_count": 0,
+    "false_deny_count": 0
+  },
+  "mechanical_limits": {
+    "hard_policy_bypass_count": 0,
+    "implicit_retries": 0,
+    "provider_fallbacks": 0,
+    "max_requests_per_sample": 1
+  },
+  "quality_budget": {
+    "status": "unfrozen",
+    "revision": null,
+    "model_route_identity": null,
+    "thresholds": null,
+    "request_limit": null,
+    "cost_limit": null,
+    "authorization_ref": null
+  },
+  "performance_budget": {
+    "status": "unfrozen",
+    "revision": null,
+    "baseline_identity": null,
+    "tolerance_parameters": null,
+    "thresholds": null
+  },
+  "dataset_revision": 1,
+  "sample_schema_digest": "232ce05075cf55deddcef13d7a18d5c7a061756ddb312210ea64ffbe9fec9511"
+}

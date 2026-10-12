@@ -39,8 +39,9 @@ def initialize_openspec(workspace, lock, project):
         raise DependencyError("OpenSpec 所需工具链版本不匹配")
     checked([*argv, "init", "--tools", "agents", "--profile", "core", "--no-animation"], cwd=stage, env=env)
     from contextlib import nullcontext
-    with getattr(workspace.adapter, "project_write_guard", lambda *_: nullcontext())(workspace, project):
-      metadata = getattr(workspace.adapter, "project_metadata_root", lambda *_: None)(workspace, project)
+    with getattr(workspace.adapter, "project_write_guard", lambda *_: nullcontext())(workspace, project) as metadata:
+      # Pi guard返回已在同一协调锁内核验的元数据根，不能在此重入身份查询锁。
+      if metadata is None: metadata = getattr(workspace.adapter, "project_metadata_root", lambda *_: None)(workspace, project)
       return apply_generated(project, stage, metadata_root=metadata)
 
 

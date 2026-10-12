@@ -4,6 +4,7 @@
 vendor 资产不进入版本库；任何机器取得仓库后可用本脚本从 dependencies.json
 固定的 URL 重建完整输入。只接受摘要校验一致的内容；传输失败不留半份可用文件。
 也可以由制品镜像/离线拷贝先把文件放到 locks/pi/<vendor_path>，本脚本同样只做校验。
+现代自建资产必须预先显式构建并导入；这里只校验来源记录、固定输入和归档，不运行构建器。
 """
 import argparse
 import hashlib
@@ -20,12 +21,30 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from agentcfg.schema import ConfigError
+from agentcfg.pi_lock_layout import dependency_layout
 
 
-def load_asset_sources(repository):
-  document = json.loads((repository / "agents/pi/dependencies.json").read_text())
+def load_asset_sources(repository, *, profile=None):
+  layout = dependency_layout(profile=profile)
+  try:
+    document = json.loads((repository / layout.dependencies_path).read_text())
+    if (not isinstance(document, dict) or type(document.get("schema_version")) is not int
+        or document["schema_version"] != layout.schema_version or not isinstance(document.get("sources"), dict)
+        or any(not isinstance(row, dict) for row in document["sources"].values())):
+      raise ValueError()
+  except (OSError, ValueError, UnicodeError):
+    raise ConfigError("pi-asset-input-missing-or-invalid") from None
+  selected = None
+  if profile is not None:
+    try:
+      if type(document["schema_version"]) is not int or document["schema_version"] != layout.schema_version: raise ValueError()
+      selected = set(document["profiles"][profile]["source_ids"])
+      if selected - document["sources"].keys(): raise ValueError()
+    except (KeyError, TypeError, ValueError):
+      raise ConfigError("pi-asset-profile") from None
   sources = []
   for key, source in sorted(document["sources"].items()):
+    if selected is not None and key not in selected: continue
     if source.get("kind") == "asset" and "vendor_path" in source:
       sources.append((key, source))
   return sources
@@ -83,15 +102,29 @@ def fetch(url, source, *, attempts=8, timeout=300):
 def main(argv=None):
   parser = argparse.ArgumentParser(allow_abbrev=False)
   parser.add_argument("--repository", type=Path, default=ROOT)
+  parser.add_argument("--profile", help="只重建所选配方资产；现代配方使用独立锁目录")
   parser.add_argument("--only", action="append", help="只处理指定资产标识，可重复")
   parser.add_argument("--force", action="store_true", help="重下已存在但摘要不匹配的文件（先删除旧文件）")
   args = parser.parse_args(argv)
   repository = args.repository.resolve(strict=True)
-  vendor = repository / "locks/pi/vendor"
-  vendor.mkdir(parents=True, exist_ok=True)
-  missing = []
-  for key, source in load_asset_sources(repository):
+  layout = dependency_layout(profile=args.profile)
+  sources = load_asset_sources(repository, profile=args.profile)
+  vendor = repository / layout.lock_directory / "vendor"
+  for key, source in sources:
     if args.only and key not in args.only: continue
+    if "build_record" in source:
+      from agentcfg.pi_assets import validate_asset
+      from agentcfg.pi_built_assets import MAX_ARCHIVE, load_record, verify_archive
+      from agentcfg.storage import Tree
+      validate_asset(source)
+      record = load_record(repository, layout, source)
+      with Tree(repository, private=False) as checkout:
+        raw = checkout.read(layout.lock_directory + "/" + source["vendor_path"], max_bytes=MAX_ARCHIVE)
+      if raw is None: raise ConfigError("pi-built-asset-import-required")
+      verify_archive(raw[0], source, record)
+      print(key, "built-verified", flush=True)
+      continue
+    vendor.mkdir(parents=True, exist_ok=True)
     target = vendor / Path(source["vendor_path"]).name
     if target.exists():
       raw = target.read_bytes()

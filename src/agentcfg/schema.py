@@ -57,6 +57,7 @@ class AdapterSchemaBundle:
   policy: Callable[[dict], AdapterPolicy] | None = field(default=None, repr=False)
   authentication_claims: Callable[[dict], tuple[AuthenticationClaim, ...]] | None = field(default=None, repr=False)
   validate_selected: Callable[[dict], None] | None = field(default=None, repr=False)
+  profile_policy: Callable[[dict, str], AdapterPolicy] | None = field(default=None, repr=False)
 
 
 @dataclass(frozen=True)

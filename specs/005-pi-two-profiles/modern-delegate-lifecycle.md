@@ -1,0 +1,99 @@
+# 现代委派的同run生命周期
+
+状态：2026-10-06设计中，公开接口取证和根审查后再分派实现。T058–T066整体开放；没有启动Pi/Codex、读取账号、调用模型或启用Full。现有输入捕获增量另已验收，见[请求边界](delegate-request-boundary.md)。
+
+## 目标与已有边界
+
+Pi/Codex入口共用一个执行核心，用户观察的runId保持稳定；消息与继续绑定同一逻辑任务，后端不支持的动作明确拒绝。Task Keeper消费这个核心，不复制其运行队列；Durable另拥有自己的只读持久任务及恢复职责。普通小任务和Full idle不创建Worker或调用模型。
+
+已有`DelegationRuns`负责每实例持久run/request/event/receipt，外层manager/supervisor授予启动权。保留这个权威，避免在插件、CLI或SDK适配器另建持久队列。旧v2的终止后resume显式创建新run/attempt/lease，Pi旧worker还fork新native session，不能以改显示名或隐藏新ID满足同run目标。旧状态和活动实例保留恢复引用，不自动迁移或终止；现代记录格式与运行入口必须明确区分并校验，不能猜版本。
+
+## 身份与继续
+
+一个现代逻辑run绑定可信父宿主/任务来源、选定backend/provider/model、cwd/workspace、RuntimeIdentity/CapabilityBinding、权限及预算身份。模型只能提交任务内容，approved、角色名、taskId或runId本身均不创建权限。SDK native session/thread身份单独登记，不把它当Rotom runId，也不通过最近会话选择或native fork偷偷换任务。
+
+逻辑run可以有多轮执行；每轮有独立attempt、执行租约、请求与结果引用，累计预算属于逻辑任务及可信账户范围。允许新执行进程时仍须证明上一受管Writer终止并回收资源，通过原WorkspaceLease/ExecutionStore取得当前轮租约；同run不是沿用过期grant或租约。恢复只连接已登记的确切native身份；身份缺失、不匹配、后端版本/策略无法兼容或旧执行未知时保留unknown/blocked，不新建会话代替。
+
+requestId幂等域必须绑定可信父任务/会话来源及完整规范请求，不以每次新activation/owner随机值绕过重放保护。当前拥有者与调用权限另外复核，旧身份存在不授权新caller。相同ID/内容只能返回同一逻辑run/动作记录；不同内容或绑定冲突明确失败。响应丢失只查询原动作事实，不能重新发起可能已提交的Worker或消息。
+
+## 公开Pi接口的实际限制
+
+固定未改动1.0.1材料提供同一`AgentSession`的公开`prompt`、steer/followUp、sessionId/sessionFile、subscribe和abort/waitForIdle。它没有Rotom请求幂等、权限、预算或租约语义，需要自有适配组合。候选API本次仅静态核对，不能记native通过。
+
+使用公开prompt参数关闭模板/Skill命令展开，避免委派消息因斜杠内容进入另一个命令路径；受限Worker也不加载能自行推理或启动任务的扩展。输入事件拦截仍是SDK行为，不能凭关闭模板推断实际已发送。直接steer/followUp会自行展开模板，是否使用须在受限资源条件下证明；不调用私有的未展开queue方法。
+
+`PromptOptions.preflightResult`明确标记internal，排除这个接缝。prompt Promise返回void，streaming排队、扩展拦截和settled期间延期均可能提前返回，所以不能用其完成签任务完成或零调用。`agent_end`也可能有retry或后续排队工作；`agent_settled`、队列变化与SDK空闲只记录native观察，不替代监督者的物理终止/资源回收证据。
+
+## 准入、发送与未知结果
+
+所有动作先在原权威控制区登记意图、核对当前来源/权限/预算与原完整绑定，再允许对应后端适配执行。工具事件或模型自报ID不能把受信控制面来源带入Worker。审批、一次许可、ExecutionStore分配与WorkspaceLease继续采用既有顺序和唯一所有者；不为same-run增加绕过路径。
+
+消息被SDK排队与实际模型请求分开记账。不能从prompt次数、agent_start/message_end、队列长度或usage响应推断发送前预算已授权。每次实际模型请求的提交需要公开且经验证的发送接缝；下节已经确定公开的Agent调用派发接缝，但所有物理发送的覆盖仍未验证。没有可靠接缝时不得开放依赖严格计量的能力，不能用替换SDK方法、全局fetch或事后计数补成通过。
+
+发送提交与持久回执之间的失败按unknown保存，预算预留及潜在Writer不释放；只根据同run/动作/native/租约的已绑定事实对账。已知失败、有效结果、协议错误、超时、取消、状态未知分别显示，不把空结果、后端错误或外层退出0包装成完成。用量分known/estimated/unknown/reserved；本地价格计算不冒充账单，缺失不显示0，重启/profile切换/继续不清零。
+
+取消确认只表示收到请求。SDK abort可能等待idle，但不证明Worker/后代结束或资源回收；原监督者证明成立后才能报canceled并释放Writer。配置漂移、撤权或退役阻止下一动作，不能改写已提交动作的事实。未知启动/发送/取消不自动重派、换Provider或换插件重试。
+
+## 提供者替换与验收
+
+首批仍为Pi/Codex，两后端各有自有公开协议适配与冻结能力声明；不需要为当前目标开放任意第三后端动态registry。提供者可替换性通过同一能力契约、固定来源/公开入口/行为声明及候选验证实现。缺能力或兼容证据明确unsupported/unverified，不因安装目录存在签支持。旧run/状态仍引用旧提供者时保留，空闲边界才切换，新执行绑定新identity，不接受旧grant。
+
+默认测试先验证规范请求、同run多动作、同ID冲突、消息顺序、当前绑定、lost ack/unknown、取消与物理停止分离、预算连续和唯一Writer；SDK、后端及进程均替身，原临时HOME/网络守卫保留。稳定diff审查后另准备精确native合成材料，真实后端/账号/模型、两宿主×两后端、实际取消和恢复按授权独立执行。Q4公开协议取证、fake组合与T066 native/live矩阵分列；未验能力不记passed。
+
+实现分派前须由root决定现代记录格式/迁移边界、逻辑run与每轮租约的事务切点、公开发送gate及预算身份、当前拥有者恢复权限。上述关键选择尚在核对；本文不是已实现API、可运行产品命令或开放执行能力的授权。
+
+## 已决定的公开发送组合增量
+
+2026-10-06固定候选的coding-agent为1.0.1，依赖闭包实际解析agent-core/pi-ai均为1.0.2。公开`AgentOptions.streamFn`允许自有构造组合；`prepareRequest`在最终context归一化与凭据解析之前执行，不作为最终提交授权点。现有`createAgentSessionFromServices`没有公开传入上述hook的选项。扩展`before_provider_request`是payload转换且handler异常被捕获后继续，不能用它拒绝发送。
+
+现代委派采用自有底层Agent组合，发送函数单独置于`official-delegate-stream.ts`，不扩展旧`delegate-pi.ts`中替换Runtime方法的历史方案。该发送组件13项默认测试及稳定审查已验收；不创建队列或run记录、不注册入口，控制面仍拥有准入、预算与事务。每次派发核对完整私有模型描述及当前配置，可信gate返回明确允许后再次检查，再调用原公开`ModelRuntime.streamSimple`。传输选项由受信工厂固定，不接受外来凭据、fetch、headers、payload callback或换模型。拒绝和错误遵守公开StreamFn错误事件协议，不把异常秘密正文写入结果；提交异常保留unknown含义。
+
+自有`official-delegate-agent.ts`随后以公开构造器组合一个Agent，21项默认测试及最终稳定审查已验收。它仅暴露受限prompt/steer/followUp、事件订阅、abort/idle及内存观察；原始文本不展开Skill/模板，工具执行前调用受信授权器，SDK动作或观察者失败永久退役并拒绝再次发送。公开TypeBox的非枚举字符串schema元数据按原描述符保留；错误正文仅清理明确的SDK AssistantMessage位置，不改写工具参数或业务JSON。旧17项green及19项中的两个真实red另存，最终21与发送13不累加。
+
+该组合没有原生SessionManager、持久run/动作、产品入口或执行监督授权；cacheSessionId只是缓存标签。固定源码显示订阅者抛错可使SDK再次生成失败事件，beforeToolCall抛错会成为工具错误并可能继续发送，abort也不清队列。这些观察支持上述退役设计，仍不证明SDK实际运行、传输取消或物理停止。五个固定源码摘要和默认组件归档分别位于私有run目录的`pi-delegate-public-agent-lifecycle-evidence/`与`pi-delegate-public-agent/`。
+
+这只证明Agent调用派发前的检查。完整AgentSession还有独立cache warmer请求；自有组合不得加载该附加行为。Provider内部重试、OAuth刷新、HTTP/WebSocket及最终payload变换均须另外资格验证。请求SSE与maxRetries=0只是选项，不能据此证明所有提供者均无重试，也不解决严格输入token上界。合成错误的SDK必填零usage不是整个run账单或释放未知预留的依据。新模块的替身测试与原生SDK验收分开记录，尚不开放Full或严格自动审批。
+
+## Codex固定版本材料与剩余缺口
+
+本地固定目标仍为rust-v0.154.0。初次本地取证没有对应CLI或公开schema，历史缺口报告保留。随后按仓库已登记来源取得官方tag/ref及固定commit源码：tag对象`36eab01061df3cde5f95ec20a526777b430091ba`指向commit `6b9826e3aa83b1a5947db50f4332cb9c65f1b340`，源码归档SHA256 `848c7ffac62e21b14edc2048d2e5b7c82b31c556afa4b0d305da0f7d5aa794f4`。20个选定普通文件逐字节复核，LICENSE/NOTICE匹配已登记来源；没有执行、导入或构建上游源码。固定材料保存在候选目录与私有`codex-delegate-fixed-source-evidence/`归档。官方CLI二进制与native运行仍未验证。
+
+固定源码确认`exec resume`在标识未解析为既有thread时会走新建thread，故现代恢复不采用这个便利回退。公开app-server包含thread/start、thread/resume、turn/start、要求expectedTurnId的turn/steer及turn/interrupt。现代路线选择确切threadId，排除name、path、history、最近会话和fallback；后续控制面还须核验响应确实匹配已登记身份。JSONL/schema字段是固定静态事实，尚不证明运行中message、原生恢复、最终模型、账单或取消的物理效果。
+
+进一步11个固定源码文件的静态取证确认：initialize成功之前其他请求失败，此版本所检查路径没有客户端initialized通知的必需前置；仅threadId的resume在缺失时失败，而history/path可以使threadId被忽略。turn/start内部可选择Started或Steered，并非严格只新建turn，故控制面必须先证明没有活动turn、绑定新回复的确切turnId。message只用带expectedTurnId的steer；新轮不在未知活动状态下发turn/start。thread响应有model/modelProvider，TurnStartResponse没有每turn实际模型字段，不能把线程配置当作模型服务事实。普通interrupt响应等待TurnAborted，仍仅为native生命周期事实，受管进程树终止由监督者另证。静态证据保存在`codex-delegate-appserver-lifecycle-evidence/`，不记native通过。
+
+纯`model_delegate_codex_protocol.py`组件只编码上述五动作，显式指定模型、native modelProvider别名、cwd及只读设置，不读取配置或发送。turn/start使用稳定的readOnly sandboxPolicy并关闭networkAccess；文本保持原字节含义，使用官方`text_elements`字段。稳定生成schema未包含实验性permissions或allowProviderModelFallback，不发送这些字段。approvalPolicy=never及请求sandbox参数不创建Rotom权限，也不证明操作系统隔离。最终离线13项通过固定官方Draft7参数schema，稳定审查无P1/P2，归档`codex-delegate-public-protocol/`。
+
+审查发现原生可变dict的ID校验后重读问题，原版13项中12通过/1失败的线程屏障测试实际输出了变后伪造ID。修后先复制顶层及binding原生dict，输出只用已捕获验证的标量；原12项green和真实red单独保留，不算native探针。相同捕获规则用于现代规范动作，不能因同步函数没有await而忽略外部原生dict的并发修改。
+
+官方当前文档说明exec的JSONL与resume用途，可作为后续取证导航，不能替代0.154.0材料。[官方exec文档](https://learn.chatgpt.com/docs/developer-commands#codex-exec)
+
+官方当前app-server文档可辅助阅读上述固定公开协议；这些动作不证明受管进程与后代物理终止。[官方thread文档](https://learn.chatgpt.com/docs/app-server#threads)、[官方turn文档](https://learn.chatgpt.com/docs/app-server#turns)
+
+本轮读取公开文档并取得固定源码，没有运行Codex、读取账号、下载CLI或部署。剩余native缺口单列环境不足，不阻塞默认实现。后续原生CLI参数/schema观察另准备精确材料并取得对应授权；旧reviewer SDK九场景授权不覆盖它。
+
+## 现代规范动作的已决定输入边界
+
+新格式固定为schema_version=3，纯捕获模块先于任何路径、intent、lease或SDK操作执行，不修改v2的摘要或恢复语义。submit需要request_id、backend（pi/codex）、mode（review/investigate/implement）、preset、task、model（provider_id/model_id）、cwd、timeout_seconds；可选context_artifact、feedback_required、allow_workspace_write、worktree_root规范为null/false缺省。message需要run_id/text；continue需要run_id/text/timeout_seconds；cancel仅需要run_id。所有动作均含schema_version/action/request_id，未知字段和不适用字段失败。status/result是独立只读查询，不伪造成一次新提交。
+
+文本保留内容而不展开命令：UTF8最多65536字节且非空白，合法NUL可作为任务内容；路径为Linux绝对规范词法路径且非根目录、不含NUL，不执行resolve。身份为原生ASCII标识，request_id另允许原生Unicode、最多200字符/800字节且无NUL。model_id允许UTF8原生Unicode但排除控制/格式/代理字符；超时为原生正整数而非bool。实现模式结构上要求显式write选项与worktree_root，其余模式拒绝这些选项；真正Writer权限仍须控制面授予，Pi或后端缺能力时明确unsupported。
+
+可信来源记录独立于模型输入，为控制面提供的instance_id、host（pi/codex/cli）、source_id、task_id及step_id；后两者可以null。source_id必须来自持久父会话/任务的受信登记，不来自模型自报或native缓存标签。task/step标签、该来源记录本身及纯捕获函数均不授权。幂等key只散列此稳定来源及request_id，不含每次activation/owner随机值；完整规范动作另计算request_digest。显式缺省与遗漏缺省产生相同规范submit，改变内容或目标run则同key冲突。当前调用权限、原完整绑定和预算在每次实际动作及重放查询时另行复核，不能以旧来源记录恢复旧owner权力。
+
+这些纯函数不写持久状态、不创建第二队列、不决定是否可执行。纯动作及来源组件16项默认测试和稳定审查已验收；下述非执行意图登记增量另经33项默认验收。跨ExecutionStore、预算和native transcript的事务顺序、unknown恢复与新轮execution_id仍由root决定后实现。
+
+## 第一批持久登记的事务决定
+
+本增量只在既有DelegationRuns控制区登记逻辑run与规范动作意图，尚无Worker/SDK/lease/预算执行。新增prepare_modern_intent及read_modern_intent显式处理schema3；v2路径继续拒绝这个格式，不自动迁移旧状态。submit的run_id由稳定提交key派生为run-加64位摘要，native身份及权限不从这个可计算ID推导。后续动作引用这个既有run，不生成第二个run；同来源同request_id换内容、动作或目标run冲突。
+
+受信binding只包含runtime_identity_digest、capability_binding_digest、config_identity_digest、policy_digest、workspace_identity_digest五个公共身份摘要，以及account_scope_id、budget_scope_id两个非秘密登记引用。它与稳定origin分开；重放时仍须匹配原binding，不把配置变更重新绑定到旧intent。该元数据不是权限证据，真正当前caller、准入、Writer及发送资格在后续控制面核验。
+
+同一原控制区的instance_lock串行登记，不在锁内调用ExecutionStore、SDK、IPC或外来hook。两个持久对象为intents-v3/<key>.json及原run文件：前者保存规范action/origin/绑定摘要，后者保存原origin/binding/submit引用及有序action_keys。先写单份prepare-v3.pending.json，内含完整两个postimage和原run摘要；再创建不可变intent，再原子发布run postimage，最后删除pending并fsync。pending是文件事务恢复记录，不是另一执行队列，也不授予派发权。
+
+只允许恢复这种尚无外部执行的登记事务：pending与所有内部规范摘要必须一致；当前intent必须缺失或等于postimage，run必须等于已登记before或after，复核两者后才完成剩余写入。冲突、模式不安全、未知schema/kind或损坏时保留pending并失败，不能覆盖不匹配文件或猜测未执行。任何新登记先完成或拒绝旧pending，所以崩溃不会使下一动作复用同一个顺序位置。只读查询在pending存在时明确返回恢复待处理，不静默执行修复。默认测试检查四个持久切点、独立重开、幂等冲突、来源/绑定漂移、私有文件及零外部执行。
+
+完整动作链逐key核对规范intent、文件key、run目标、origin及binding摘要，首条必须对应submit摘要，后续不得出现另一个submit。缺失历史intent、复制另一个run的自洽intent或修改历史身份均阻止追加；同key缺失也不能改指其他run重新登记。恢复时只允许完整pending中新最后叶由postimage补建，所有历史引用仍核原文件，且在写新叶之前核完。没有缓存或第二权威索引，扫描成本与大记录容量尚未实测。
+
+本登记组件最终33项默认测试及稳定审查无P1/P2。初29项green、两个实际历史链red、受影响v2三模块21项回归均分列保留；受限UID的28环境失败/1通过没有进入事务，不算green。故障切点采用自有Python异常及真实临时文件，不是进程突然退出、断电或native证据。归档`modern-delegate-intent-registration/`含稳定三源、依赖、守卫、原失败和最终审查；T060整体及产品gate仍未完成。
+
+这是逻辑意图登记组件，不代表message已经排队、continue可启动或cancel终止。后续每轮必须新建round/attempt和唯一execution_id（不能复用旧ExecutionStore按execution_id去重的逻辑run ID），先登记轮意图再分配租约，活动消息不新增Writer。外部提交前另持久sending，回执丢失保持unknown；此登记pending恢复不能用于重发或修复有外部执行的动作。native SessionManager的非幂等append、发送账本和物理终止需要独立控制切点，本文不把这些缺口并入已知安全登记。

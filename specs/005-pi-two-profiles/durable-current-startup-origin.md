@@ -1,0 +1,51 @@
+# 当前 Full 来源：启动调用者与接收 manager
+
+2026-10-07，root 根据8输入两actor限定证据 receipt `430641177d48b1434b7094db757613d40220bf18fd2eb2bd0a463db01795a860` 整理本候选。它补充初始化授权设计中“manager从原Workspace解析”的进程边界，不改变既定Full来源、一次grant、索引、持锁和DB资格。尚未授权写resolver／launcher／manifest／bootstrap schema代码、正式锁或启动宿主。
+
+后续共享身份的边界已由[current公开五字段](durable-current-public-projection.md)及[物理投影方向](durable-source-physical-projection.md)细化：下文“绑定generation”仅指各原actor在其私有方法/引用中核实际来源，不把generation、preimage、whole state或未确认公共的manifest/policy rawhash送入durable_origin/FullSourceView/source_identity。接收者必须有自己的实际来源和本地validator，不从parent JSON恢复原Workspace。完整字段/IO/资格仍未冻结，这一澄清不启用新来源接口。
+
+## 已观察的两个actor
+
+`src/agentcfg/pi_host.py`的module-level `execute(workspace,spec,env,lease_fd,saved,...)` 的调用进程持有原Workspace／saved。它取得runtime root、读installed receipt和实例manifest，再序列化一个config，经原TemporaryFile和subprocess.run交给`scripts/pi-supervisor.py`；config包含runtime／instance／state路径、lock identity、slice identity、policy／manifest digest和启动argv。原binding只参与instance_id摘要；没有单独原binding、current.launch、完整receipt／inventory、原Workspace或选中profile对象。
+
+接收进程构造`HostSupervisor(config,lease_fd=...)`，重读manifest并核policy／完整manifest摘要，再读取profile_id。它没有另一个进程里的原Workspace对象。这里没有新查saved构造、backend inventory或其他producer；所选两源不证明全仓没有其他来源，也不证明现有摘要已经足以承担Durable授权。
+
+因此原startup caller承担首次Full来源捕获，manager承担本地来源重核和私有引用注册。不能要求manager直接调用另一个进程原对象的方法，也不能把新传来的JSON或path/hash变成跨进程原能力。每个actor自己的原方法／receiver和实际producer分别捕获，来源数据与初始化权限分开。
+
+## startup caller的职责
+
+只有真实受管Pi启动入口，使用该次原解析Workspace、实际deployment.current.launch和原启动lease，在已核原lock／完整installed receipt与sealed inventory／当前selection-catalog-bindings之后，才能构造非秘密`DurableStartupDescription`。仅从workspace.backend.root得到路径、原status结果、receipt的selection digest或caller supplied lock identity，不够完成这个捕获。
+
+描述必须绑定：原账户物理身份；完整initial binding／instance／state_root；实际当前deployment与launch字段、generation与兼容信息；正式lock／runtime／slice及所选Full的selection／capability-provider身份；当前manifest／policy与部署记录的完整物理身份；固定owner四角色及其安装路径／source映射／转换前后字节身份、完整source闭包；启动lease／instance保护和原caller的过程身份。哪些字段是原元数据、哪些身份需要实际open/readback和最后核，必须在下一schema/API包逐项定义；不能只用一个“全部已验证”布尔值或泛化摘要代替。
+
+controller interpreter选择也须独立闭合；现有sys.executable或工具链最低版本并不是可运行资格，不能在描述里随意写路径＋digest。当前不决定打包整个Python还是核同一受管interpreter的闭合来源；需要固定来源、实际依赖、隔离导入及pidfd/signal原生前提之后才允许正式描述。该缺口只阻止Durable创建，不能用系统PATH fallback越过它。
+
+不读或复制secret_store、实际credential值、env认证、provider私密headers或秘密摘要；描述只含必要的公开关联和来源身份，完整payload保留在自有私有启动材料中，不进入通用摘要／日志。模型route／task预算属于后续原draft，不由startup description直接授权。业务model tool、普通worker、status／result／watch或用户给出的JSON不能调用来源注册入口生成原引用。
+
+Base未选择Durable时不构造或序列化本描述、不import可选resolver，不新增controller/bootstrap读取。Full的candidate／unqualified／modern launch unavailable不能输出有能力的描述；普通启动沿既有整个runtime gate，不能为Durable放宽damaged sealed package校验。未来健康Full的服务不可用时，仅Durable入口拒绝，不把ordinary editing接在服务初始化job后面。状态可以报告固定unavailable原因，但未知／缺字段不作为描述被静默丢弃或修复。
+
+## 接收manager的本地来源与注册
+
+新的内部startup字段拟命名`durable_origin`；在独立schema/API冻结之前，它不是当前受支持配置。它只由原startup producer经实际受管启动通道交付，不来自control client、模型或public配置。原`execute`的文件bootstrap只是传递非秘密来源数据；字段、UID、文件内容和FD数字不能独立证明创建者，也不变为新的初始化token。
+
+接收manager要通过原受控入口的启动上下文：实际受管instance／lease fd及原store owner／manager activation，固定bootstrap来源和完整字段捕获；在自己的进程保存这些原对象和方法。未知字段、错profile、错instance／binding、旧generation、candidate、缺role、损坏或变动source一律不能注册。原脚本和constructor已有的manifest digest检查只是现有证据，不声称它们已经实现新来源验证。
+
+manager的真实validator必须从上述原受管目录和来源重新取得actual current.launch、原lock、完整receipt／sealed inventory与capability选择，逐项对应startup描述的Full和四角色；descriptor不能自己选新root、Node／controller路径、provider替代或新generation。所有重要实际文件用原物理身份和原字节检查，不只相信启动时hash；最后核变化则原引用stale，不用同名新版重建“等价”引用。actual lookup所需的路径／source、API与IO顺序待逐项冻结，不用当前仅有的state/config摘要假冒完成。
+
+验证成功后只在manager私有表中登记本次`RegisteredReference`，绑定原manager activation／lease generation和validator。public description／dataclass／JSON／摘要／status永远没有初始化／DB／takeover外观。client仅拿不透明draft／service ID；不能提交自己构造的RegisteredReference。manager真正签发grant时，还要核同一私有引用、当前validator、policy/cancel generation和原确认；startup来源正确不等于用户批准初始化。
+
+活动引用保留原deployment／runtime来源；重部署、profile或provider变化让新准入stale并进入已有关闭／unknown处理，不改SID/storage根、不清预算、不在活动引用上热替换。maintenance／已授权迁移另行处理，不能把可重读的描述当接管资格。
+
+## trusted adapter与CLI边界
+
+本稿没有签发专用initializer role。真实role/capability必须在后续控制面包绑定原host lease／加载的可信自有adapter与原UI callback；普通worker／只读user cap／任意source=human字段不能换取此role。原Pi UI literal true只是可信adapter确认事实，不是server独立真人证明，和已接受初始化授权边界一致。
+
+初始化secret只能存在manager私有状态和原匿名通道，不进argv/env/描述/登记/日志；不能为了弥补跨进程来源在文件里长期保存一个通用issuer secret。新CLI提交也需真实新的draft展示／确认和相同专用role流程，当前不存在已支持命令，不在手册中提前提供。
+
+startup和loaded扩展属于可信计算边界；任意修改它们或拥有未受限同UID内存／控制文件权限的外部程序不在本逻辑协议的阻断保证内。受限worker不能继承初始化cap，也不能读写账户控制锚／startup材料。实际mount／继承与adapter注入源必须在产品组合验证，文档或DTO不能代替这些保证。
+
+## 后续实现与验收
+
+下一包仍需root冻结实际current.launch/lock/receipt/catalog/inventory的读取者和exact字段、Python来源、原startup上下文producer/validator、描述schema与唯一文件写入范围，以及initializer principal。没有这些接口，不授权executor以permissive fake开启index IO或生成Formal Full角色；两pipe／主线程pidfd／私有handoff的设计验收也没有补齐它们。
+
+默认使用临时完整受管来源与自有fake启动过程；分别验证原caller捕获→接收本地重核→私有表顺序、合法描述但错原启动上下文拒绝、public构造/重放/跨manager零grant、candidate/missingrole/damagedinventory/旧deployment/receipt/source漂移失效、同一原引用最后核、Base零可选读取、无credential正文／secret摘要／env泄漏、ordinary editing不等待Durable。默认fixture的数据合法性不当正式runtime或真实startup资格。实际宿主／fd／进程组合另审材料和明确授权；旧八场与Recovery3 d61799精确三场授权均已执行验收并闭合，不外推当前来源或进程组合。正式7/100、全部产品gate、严格计量前AUTO OFF保持。

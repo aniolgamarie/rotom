@@ -226,7 +226,7 @@ def execute(args):
   with Tree(runtime.root) as tree:
     ready = tree.read("runtime/native-validation.mjs") is not None and tree.read("supervisor/scripts/pi-native-scenario.py") is not None
   if not ready: return {**base, "status": "not-run", "reason": "native-scenario-entrypoint-missing", "results": []}
-  lock = PiBackend().read_lock(ROOT)
+  lock = PiBackend(profile=runtime.profile).read_lock(ROOT)
   if lock.identity != runtime.lock_identity or lock.metadata["profile_slices"].get(runtime.profile, {}).get("identity") != runtime.slice_identity:
     raise Conflict("PI_NATIVE_SOURCE_RUNTIME_MISMATCH")
   programs = program_bindings(runtime)

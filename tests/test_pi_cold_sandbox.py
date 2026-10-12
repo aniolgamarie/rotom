@@ -85,3 +85,17 @@ def test_system_trust_alias_and_target_both_remain_readable_without_ambient_over
   triples = tuple(zip(calls[0], calls[0][1:], calls[0][2:]))
   assert ("--ro-bind", str(alias), str(alias)) in triples
   assert ("--ro-bind", str(target), str(target)) in triples
+
+
+def test_base_cold_sandbox_uses_node_and_retains_private_install_boundary(tmp_path):
+  tools = programs(tmp_path)
+  base = tmp_path / "base"; base.mkdir(mode=0o700)
+  calls = []
+  runner = isolated_runner(base, "pi-base", tools["uv"], lambda argv, **kwargs: calls.append((argv, kwargs)),
+    programs=tools, system="linux", system_roots=(), trust_paths=())
+  runner([tools["uv"], "sync", "--locked"], cwd=base, env={"HOME": str(base), "PATH": "/unselected"})
+  argv, kwargs = calls[0]
+  assert "--unshare-all" in argv and "--die-with-parent" in argv
+  assert ("--bind", str(base), str(base)) in tuple(zip(argv, argv[1:], argv[2:]))
+  assert "/unselected" not in kwargs["env"]["PATH"]
+  assert not (base / "tool-bin/bun").exists()

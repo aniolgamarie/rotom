@@ -122,10 +122,11 @@ export class Scheduler {
     const job = this.job(jobId), step = job.steps.find((s) => s.id === stepId);
     if (!step) throw new ContractError("UNKNOWN_STEP");
     const id = `step-${digest([jobId, stepId, job.dispatched])}`;
-    return this.store.prepare(this.owner, id, step.kind, { jobId, stepId, snapshot: expectedSnapshot }, [...step.resources, ...extraResources], () => {
+    return this.store.prepare(this.owner, id, step.kind, { jobId, stepId, snapshot: expectedSnapshot, specVersion: job.spec.version, policyDigest: job.spec.policyDigest }, [...step.resources, ...extraResources], () => {
       if (this.scopeDispatched() >= this.scopeStepLimit) throw new ContractError("WORK_SCOPE_STEP_LIMIT");
       const current = this.job(jobId), actual = current.steps.find((s) => s.id === stepId)!;
       if (current.paused || current.cancelled || actual.status !== "pending" || !this.dependenciesPassed(current, actual)
+        || current.spec.version !== job.spec.version || current.spec.policyDigest !== job.spec.policyDigest
         || current.spec.snapshot !== expectedSnapshot || current.dispatched >= current.spec.maxSteps) throw new ContractError("STEP_NOT_READY");
       check?.(id);
       current.dispatched++; actual.status = "running"; actual.intentId = id; actual.readyAt = null;

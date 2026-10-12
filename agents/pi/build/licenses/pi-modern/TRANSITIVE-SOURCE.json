@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "status": "candidate-source-evidence",
+  "candidate_lock_sha256": "f2c0af34b3c0d9195705509c26513de7d8aeb2fa4b6f3d395a2d58ecdd82c4ac",
+  "purpose": "Record exact published declarations and independently sourced license text; not runtime acceptance, deployment or a legal adequacy opinion.",
+  "upstream_packages_modified": false,
+  "records": [
+    {
+      "name": "@aws-sdk/credential-provider-http",
+      "version": "3.972.74",
+      "declared_license": "Apache-2.0",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-http/-/credential-provider-http-3.972.74.tgz",
+      "integrity": "sha512-u91E/hT8f4d1xy0Jl7VG4nVKJ3lxbrZkoBTeSVoJdWBiSEUMwMS/9+e0H/aJVQV//Lt5wuzP+E69v4aRSsNTmw==",
+      "registry_metadata_url": "https://registry.npmjs.org/@aws-sdk%2fcredential-provider-http/3.972.74",
+      "metadata_sha256": "ba1d97dd4e8bcdf01de5d84597bd26523f5187fe82ad3bedd959b169d51bfe97",
+      "package_json_sha256": "6db5ed1c0c41ca8672b0eb663e539f87ed0deb7fc96d241ef766d2b441fe59a1",
+      "git_head": null,
+      "archive_license_or_notice_files": [],
+      "status": "declared-license-with-canonical-supplement",
+      "body": {
+        "path": "APACHE-2.0.txt",
+        "source_url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "bytes": 11358,
+        "kind": "canonical-standard-text",
+        "from_package_archive": false,
+        "exact_upstream_source_commit": null
+      },
+      "limitation": "Exact published package declares Apache-2.0; supplemental standard text is not a recovered AWS LICENSE, copyright notice, NOTICE or exact source commit."
+    },
+    {
+      "name": "@aws-sdk/credential-provider-login",
+      "version": "3.972.79",
+      "declared_license": "Apache-2.0",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-login/-/credential-provider-login-3.972.79.tgz",
+      "integrity": "sha512-L+Z85anONJd8MaiuraO4wRxATCdEejBZ3K3eymzWI5JPXa9sOS9CkIm72PBKqXKX+Z9p9NGMX5AIMXm0LEflgw==",
+      "registry_metadata_url": "https://registry.npmjs.org/@aws-sdk%2fcredential-provider-login/3.972.79",
+      "metadata_sha256": "2b3209804d708f546ba53804f5c62579499439a0afea66063173f101af9272ed",
+      "package_json_sha256": "5993af12213692c03386b8af68d3894c007c87fcbee64356743668aa9ea39696",
+      "git_head": null,
+      "archive_license_or_notice_files": [],
+      "status": "declared-license-with-canonical-supplement",
+      "body": {
+        "path": "APACHE-2.0.txt",
+        "source_url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "bytes": 11358,
+        "kind": "canonical-standard-text",
+        "from_package_archive": false,
+        "exact_upstream_source_commit": null
+      },
+      "limitation": "Exact published package declares Apache-2.0; supplemental standard text is not a recovered AWS LICENSE, copyright notice, NOTICE or exact source commit."
+    },
+    {
+      "name": "@aws-sdk/nested-clients",
+      "version": "3.997.46",
+      "declared_license": "Apache-2.0",
+      "resolved": "https://registry.npmjs.org/@aws-sdk/nested-clients/-/nested-clients-3.997.46.tgz",
+      "integrity": "sha512-oRxtBcka/JGHGs9l9p9IVajGoTP8vTPmoAzdHGy4Qcy9P5vPnDf6nhIeM/COQNY9k/OahImTRaLkHftoXvfcmQ==",
+      "registry_metadata_url": "https://registry.npmjs.org/@aws-sdk%2fnested-clients/3.997.46",
+      "metadata_sha256": "48b3781a23e3730cbd6cc0d2271c5c6cb2140c9555b19d7431ec707ba031152e",
+      "package_json_sha256": "dd334b9f6453d2e9094bf36a10e3a1a5637fa6c43fe38ca42e649e3fae4fdbd3",
+      "git_head": null,
+      "archive_license_or_notice_files": [],
+      "status": "declared-license-with-canonical-supplement",
+      "body": {
+        "path": "APACHE-2.0.txt",
+        "source_url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "bytes": 11358,
+        "kind": "canonical-standard-text",
+        "from_package_archive": false,
+        "exact_upstream_source_commit": null
+      },
+      "limitation": "Exact published package declares Apache-2.0; supplemental standard text is not a recovered AWS LICENSE, copyright notice, NOTICE or exact source commit."
+    },
+    {
+      "name": "proxy-agent-negotiate",
+      "version": "1.1.0",
+      "declared_license": "MIT",
+      "resolved": "https://registry.npmjs.org/proxy-agent-negotiate/-/proxy-agent-negotiate-1.1.0.tgz",
+      "integrity": "sha512-N8IBcM3UgCVzz2L2Lqv8DVntDnnC8/hiV4nEDUPkqq72TPUgYWjQc+bdZlBPZK9LzPAvOY//gAt0S0DApoOXWQ==",
+      "registry_metadata_url": "https://registry.npmjs.org/proxy-agent-negotiate/1.1.0",
+      "metadata_sha256": "41807d237c09eff6120e33932015c4ff9c230872c2df119010db48aa4ae0731e",
+      "package_json_sha256": "7b7c2579ea138d20d4f7699ca78ef16c526f35168dbf694f1d47cc861b0954d4",
+      "git_head": null,
+      "archive_license_or_notice_files": [],
+      "status": "body-scope-unresolved",
+      "body": null,
+      "limitation": "Fixed release tag confirms MIT declaration, but package-scoped license and copyright text have not been located."
+    },
+    {
+      "name": "standardwebhooks",
+      "version": "1.1.1",
+      "declared_license": "MIT",
+      "resolved": "https://registry.npmjs.org/standardwebhooks/-/standardwebhooks-1.1.1.tgz",
+      "integrity": "sha512-bCbX9ZEyFkWPsRz7Bl3NuQUJohmwGSev/yhr7vhaGPlc4AfIrspIRa6cPTBuI1ItmrTDJ4d/S2hCsfe4+vQGnQ==",
+      "registry_metadata_url": "https://registry.npmjs.org/standardwebhooks/1.1.1",
+      "metadata_sha256": "99d04c194edcd30c91b31b8a10e983bed938f27d1becbf45af4a9eb3e84cc27c",
+      "package_json_sha256": "686397f0f0202e0b693cfd3f6241d7a8da3df326f9642867a484fbbd295690b6",
+      "git_head": "b4d2c14fc5b4ccff3ff271e3b087dff812254c59",
+      "archive_license_or_notice_files": [],
+      "status": "fixed-source-body",
+      "body": {
+        "path": "STANDARDWEBHOOKS-1.1.1-LICENSE.txt",
+        "source_url": "https://raw.githubusercontent.com/standard-webhooks/standard-webhooks/b4d2c14fc5b4ccff3ff271e3b087dff812254c59/libraries/LICENSE",
+        "source_api_url": "https://api.github.com/repos/standard-webhooks/standard-webhooks/git/blobs/55b14b3a3ce649a2f1b05428dcc9c6db95b37c04",
+        "blob_sha": "55b14b3a3ce649a2f1b05428dcc9c6db95b37c04",
+        "sha256": "5ec8c7b26b64d881a6706617bed25c049f97f2f35de034c756de8546fd6dbe27",
+        "bytes": 1088,
+        "kind": "fixed-upstream-source-text",
+        "from_package_archive": false,
+        "exact_upstream_source_commit": "b4d2c14fc5b4ccff3ff271e3b087dff812254c59"
+      },
+      "limitation": "Original MIT text from libraries/LICENSE, the parent directory of libraries/javascript at the exact published gitHead. Original JavaScript package.json SHA-256 686397f0f0202e0b693cfd3f6241d7a8da3df326f9642867a484fbbd295690b6 matches the package archive manifest pin byte-for-byte. Body retrieved through the fixed Git blob API; the raw URL locates the same fixed source. This is a source-body sidecar, not text recovered inside the package archive, a legal adequacy conclusion or a complete notice audit."
+    }
+  ],
+  "base_candidate_lock_sha256": "7a6ad8e47f7b165d2c35b218a72e7734cf74a8ee26044d20e993419ba9c5bee1"
+}

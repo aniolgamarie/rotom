@@ -1,0 +1,1 @@
+{"schema":1,"probe":"owner-fd-linux-x64","python":"3.11","node":"24.14.0","sources":["scripts/pi-probe-owner-fd.py","scripts/pi-probe-owner-fd.mjs","scripts/pi-probe-owner-fd-facts.mjs","src/agentcfg/__init__.py","src/agentcfg/storage.py","src/agentcfg/paths.py","tests/fixtures/pi/owner-fd-probe/manifest.json","tests/fixtures/pi/owner-fd-probe/oracle.json"]}

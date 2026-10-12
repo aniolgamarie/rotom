@@ -61,7 +61,7 @@
     "@earendil-works/pi-ai": "*",
     "@earendil-works/pi-coding-agent": "*",
     "@earendil-works/pi-tui": "*",
-    "@agentcfg/pi-runtime": "*"
+    "@agentcfg/pi-runtime": "^1.0.0 || ^2.0.0"
   },
   "peerDependenciesMeta": {
     "@juicesharp/rpiv-i18n": {

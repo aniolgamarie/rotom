@@ -54,8 +54,8 @@ def command_binding(controller, principal, args):
     raise Conflict("DELEGATE_COMMAND_READONLY")
   cwd = configured_path(request["cwd"]).resolve(strict=True)
   source = configured_path(declarations[project_id]["path"]).resolve(strict=True)
-  candidate_identity = host.store.workspaces.identify(cwd)
-  source_identity = host.store.workspaces.identify(source)
+  candidate_identity = host.store.workspaces.identify_git(cwd)
+  source_identity = host.store.workspaces.identify_git(source)
   def common(identity):
     git = Path(identity["git_dir_path"])
     with Tree(git, private=False) as tree: raw = tree.read("commondir")
@@ -72,7 +72,7 @@ def command_binding(controller, principal, args):
   permission = manifest["options"].get("permissions", {})
   if selected & set(permission.get("denied_roots", [])) or writing and project_id in permission.get("readonly_roots", []):
     raise Conflict("PERMISSION_DENIED")
-  private = [Path(path).resolve(strict=True) for path in host.config.get("protected_roots", [])]
+  private = [Path(path).resolve(strict=False) for path in host.config.get("protected_roots", [])]
   denied = [*private, cwd / ".git"]
   roots = {key: cwd if key == project_id else configured_path(declarations[key]["path"]).resolve(strict=True) for key in selected}
   for key, path in roots.items():

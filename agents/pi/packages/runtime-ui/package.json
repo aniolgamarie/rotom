@@ -1,0 +1,17 @@
+{
+  "name": "@agentcfg/pi-runtime",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "exports": {
+    "./capability-policy": {
+      "types": "./capability-policy.d.ts",
+      "import": "./capability-policy.mjs"
+    },
+    "./plugin-settings": {
+      "types": "./plugin-settings.d.ts",
+      "import": "./plugin-settings.mjs"
+    }
+  }
+}

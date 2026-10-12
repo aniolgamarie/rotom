@@ -19,7 +19,8 @@ def test_git_paths_are_nul_delimited_and_unrepresentable_names_fail_explicitly()
     with pytest.raises((ConfigError, Conflict)): decode_git_paths(value)
 
 
-def test_rg_selection_argv_excludes_git_metadata_at_the_source(tmp_path):
+@pytest.mark.parametrize("future_anchor", [False, True, "mounted"], ids=["existing-context", "future-account-anchor", "missing-mounted-denial"])
+def test_rg_selection_argv_excludes_git_metadata_at_the_source(tmp_path, future_anchor):
   """rg --files --hidden 会列出.git；worker绝不能接收Git元数据，必须源头排除（decode拒绝是纵深防线）。"""
   from types import SimpleNamespace
   from agentcfg.pi_readseek_select import selection_jobs
@@ -32,11 +33,21 @@ def test_rg_selection_argv_excludes_git_metadata_at_the_source(tmp_path):
     "permission_policy": {"rules": [{"id": "fixture-rg", "kind": "command", "effect": "allow",
       "tool_ids": ["bash"], "operations": ["execute"], "command_ref": "tool:rg"}]}}
   workspaces = SimpleNamespace(identify=lambda _project: {"worktree_path": str(project), "git_dir_path": str(project / ".git")})
-  host = SimpleNamespace(manifest=lambda: manifest, config={"protected_roots": []}, store=SimpleNamespace(workspaces=workspaces))
+  anchor = (project if future_anchor == "mounted" else tmp_path / "future-account") / ".agentcfg-workspaces"
+  host = SimpleNamespace(manifest=lambda: manifest, config={"protected_roots": [str(anchor)] if future_anchor else []}, store=SimpleNamespace(workspaces=workspaces))
   pending = {"project": str(project), "path": str(project), "cwd": str(project), "params": {}, "tool": "readSeek_grep",
     "ticket": {"timeout_seconds": 300, "write": False}}
   jobs = selection_jobs(SimpleNamespace(host=host), pending)
   assert len(jobs) == 1 and jobs[0]["category"] == "rg"
+  if future_anchor:
+    assert str(anchor) in jobs[0]["denied_paths"] and not anchor.exists()
+    from agentcfg.pi_checks import linux_verifier_argv
+    if future_anchor == "mounted":
+      with pytest.raises(ConfigError, match="pi-check-denial-not-representable"):
+        linux_verifier_argv(jobs[0]["check"], temporary=tmp_path / "scratch", system_roots=(), denied_paths=jobs[0]["denied_paths"])
+      assert not anchor.exists()
+    else:
+      linux_verifier_argv(jobs[0]["check"], temporary=tmp_path / "scratch", system_roots=(), denied_paths=jobs[0]["denied_paths"])
   argv = jobs[0]["check"]["argv"]
   prefix = argv[1:argv.index("--")]
   assert "!.git" in prefix and "!**/.git/**" in prefix and "!.readseek" in prefix

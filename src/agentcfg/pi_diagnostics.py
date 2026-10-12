@@ -129,6 +129,36 @@ def capabilities(projection):
       "dependencies": projection["dependencies"] if enabled else "not-selected", "load_evidence": "not-run", "execution_evidence": "not-run",
       "authentication": "not-inspected" if auth else "not-required", "observed_at": {}, "blockers": [], "location_id": "capability:" + digest(name)[:20]}
     if enabled:
+      if name == "pi-host" and data["profile"]["id"] in ("pi-base", "pi-full"):
+        from .pi_modern_diagnostics import modern_profile_plan
+        resources = options.get("resources", {})
+        discovery = options.get("discovery", {})
+        for role in set(data["profile"]["roles"]) & set(resources.get("roles", [])):
+          declaration = data["adapter_documents"]["agent"]["resources"].get(role, {})
+          if declaration.get("kind") != "role" or declaration.get("model_role") not in data["profile"]["roles"]:
+            from .schema import ConfigError
+            raise ConfigError("pi-modern-diagnostic-plan") from None
+        selections = {kind: list(resources.get(kind, [])) for kind in ("prompts", "themes", "extensions")}
+        selections.update(roles=sorted(set(data["profile"]["roles"]) | set(resources.get("roles", []))),
+          skills=list(data["profile"]["skills"]), plugins=list(data["plugins"]))
+        row["profile_plan"] = modern_profile_plan(profile_id=data["profile"]["id"], identity=identity,
+          selections=selections, discovery={"project_resources": discovery.get("project_resources", False),
+            "external_skills_count": len(discovery.get("external_skills", []))})
+        from .pi_installed_resource_diagnostics import installed_resource_inventory
+        row["profile_plan"]["installed_resource_inventory"] = installed_resource_inventory(
+          context=projection.get("installed_resource_context"), dependencies=projection["dependencies"],
+          profile_id=data["profile"]["id"])
+        from .pi_resource_observations import read_resource_observation
+        state_root = projection.get("resource_observation_state_root")
+        row["profile_plan"]["loaded_resource_observation"] = read_resource_observation(
+          state_root, context=projection.get("resource_observation_context")) if state_root is not None else {
+            "status": "unavailable", "evidence": "authenticated-manager-reported", "liveness": "last-observed-not-live"}
+        row["profile_plan"]["permission_entrypoints"] = {
+          "status": "implementation-entry-matrix", "complete_coverage": False,
+          "entrypoints": {"file": "managed", "model-bash": "managed-if-selected", "user-bash": "blocked",
+            "export": "blocked", "mcp": "managed-if-selected", "extension": "unverified", "worker": "unverified", "service": "unverified"},
+          "isolation_evidence": "unverified"}
+
       if name == "model-delegate:codex":
         from .pi_codex_admission import POLICY_ID
         row["configuration_admission"] = {"policy": POLICY_ID, "status": "not-inspected",

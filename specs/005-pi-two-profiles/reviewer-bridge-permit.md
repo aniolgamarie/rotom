@@ -1,0 +1,17 @@
+# 原bridge reviewer许可接缝
+
+## 当前验收
+
+`ReviewerDecisionControl`可选注入原生`FileAdmissionControl`，必须共享原canonical Admission并已装配原scope控制面。省略mutex时绑定原Host service mutex，指定不同mutex失败；原control永久只绑定一份Decision，退役不清owner。默认独立组件的既有行为保持，产品factory仍未启用。
+
+新`_issue_reviewer_prepared`是仓库自有非RPC方法。安全捕获有界prepared/current后，精确核对原operation row、完整prepared、scoped绑定及原manager principal，再重验pending/context/持久scope。通过原bridge.issue以固定reviewer来源签发，reviewer身份来自原context，不接受模型/参数选择source。原File/Shell bridge因此保存自己的permit映射，现有consume可消费原许可；不在事后手工补map。
+
+锁顺序统一为service→Admission→account/ledger。Decision不持独立新锁后回调service；scope hook沿已验收borrowed路径，不在Admission短锁内反调service或等待SDK/RPC。新方法没有注册manager/model RPC，原人工RPC固定source=human。
+
+未核对原行的foreign/变化prepared拒绝且不清理其他操作。已知原行签发失败沿既有whole-intent清理，未知错误固定`REVIEW_PERMIT_ISSUE_UNKNOWN`；未知permit映射保留，不重签、删除或猜测已发送费用。Decision不能将未知签发归为discarded，`conclude_transport`仍烧原ticket并输出固定reconciliation unknown；账户已经保存的requests/outcome事实保持。存在scope/manager失效时已签许可不可再消费，普通执行或Writer状态不被宣称终止。
+
+## 证据与限制
+
+一次九模块默认运行360项通过（27新增、333关联），21.70秒；三文件稳定独立审查无P1/P2，归档`risk-original-bridge-permit/`。真实改前反例中原Decision签发成功，原control.consume仍失败OPERATION_PERMIT_UNKNOWN；外层UID和无observe的夹具失败分别记录，不算生产红。测试涵盖真实临时scope_required账户、原File/Shell bridge、一次消费与一条假执行租约、原ticket双线程结算仅一胜、持原service锁的issue/consume hook及未知签发切点；没有运行SDK、模型或物理Shell。
+
+生产File/Shell的`requires_human=True`仍是保守默认值。自动allow正控只在测试中显式安装合成policy；当前实际默认仍human-required，无reviewer attempt，原human路径可用。合法自动policy编译、隐私合格prompt、严格输入计量、真实价格/预算/质量及Node/Python私有通道都仍待完成，本组件不作为完整自动审批或Full启用证明。这里只保证同原Host/controller/canonical Admission对象，不保证独立重建对象的全局唯一；实际factory必须保存原对象并遵守已记录恢复边界。正式任务仍7/100。

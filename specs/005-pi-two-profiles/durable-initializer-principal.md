@@ -1,0 +1,45 @@
+# 首次初始化的专用可信 adapter principal
+
+2026-10-07，root 接续已接受的初始化授权与双actor来源设计，选择专用角色和秘密交付路线。本文为候选设计，不实现role／carrier／RPC／SDK接线，不新增受支持CLI或启动宿主。纯消息codec仍无初始化／锁／数据库能力。
+
+## 来源调查与可行性
+
+三源scout证据仅覆盖当前Linux HostSupervisor→spawn_host_namespace→自有exec gate：Popen明确只继承info_write，当前没有extra bootstrap FD参数。outer bwrap child与namespace宿主身份分开登记；自有gate在namespace PID1等待原G，再exec宿主。这个结论没有扫描全仓，也没有检查或执行实际pi-bwrap，不证明worker已隔离新角色。
+
+root核对所选来源常量是bubblewrap v0.13.0，并读取[官方v0.13.0源码](https://raw.githubusercontent.com/containers/bubblewrap/v0.13.0/bubblewrap.c)：monitor进程关闭额外FD时child已经继承；PID1 reaper关闭其他FD的分支与最终exec分支分开。由该源推断，caller显式传给exec分支且未用于bwrap选项的端点有可行交付路线；不是一条已存在的本仓库接口。所选本地binary等同此源、实际--as-pid-1／exec继承和main读后worker无继承仍待独立资格，不能把main源码、tag或FD整数当实测证明。
+
+因此首版不需要修改agent／bwrap上游或提供“任意保留FD”的用户选项，而需要自有host launcher精确增加原受控carrier。接口只接manager私有原carrier引用；校验原producer、host lease与actual Full RegisteredReference表中同一对象，不能让SpawnCommand／普通control参数中的fd整数或public dataclass获得此资格。helper最终映射和单一关闭者在实际代码包另冻。
+
+## 专用角色与签发者
+
+新增的内部角色拟称 `durable-initializer`，只能由原supervisor在actual current Full来源及实际宿主创建上下文成功后私有登记。它与现有manager、delegate、worker、user角色分开；ordinary manager token不能通过新增RPC自行mint这个角色，user端点文件也不保存它。新角色只访问明确初始化draft／确认／提交入口，不扩大为全局管理者或接管角色。
+
+角色绑定原supervisor activation、manager activation、instance、原host lease／grant_generation、实际host process与加载的已锁自有adapter／runtime来源。签发时host尚未完成创建的记录只能pending；服务端核实际host running／alive及原绑定后才能使用。host结束、generation改变、来源stale或activation变化永久拒绝；不用同UID或后来同名host补回。exact role表、认证和方法schema未实现。
+
+角色证明请求来自受信adapter；明确确认仍须同一原draft及UI流程。不能将拥有角色、source=human、调用method、旧permit、reviewer或自动风险判断当用户批准。实际grant另外生成一次token并绑定原draft／完整current引用／policy/cancel/deadline，在原确认严格true且最后核通过后才能消费。角色认证secret与业务一次grant是不同私有状态，不能互相恢复或重放。
+
+## 原匿名carrier到可信宿主
+
+选择一条由supervisor原创建、仅给该Pi宿主读取的匿名pipe传递角色bootstrap。parent保存实际两端及原producer，child端最终高号>=4；它不是controller双pipe，也不使用／覆盖Durable Node的锁3。carrier的固定上限候选2048B，包含固定schema、有限非秘密宿主关联和随机角色token；exact fields与最坏frame长度在后续纯schema包冻结。
+
+parent在可能Popen之前完整写入该有限carrier并关闭自己的writer，失败零角色启用／零额外launch、不重造carrier。原role只能pending；没有grant或持久服务目录。caller不能提供payload／token／端点。host启动一次后parent退休并close-only其child端副本；Node own main同步接收这条已完成的小frame、核来源关联后close-only原端点，才能import SDK／创建runtime或发起可能生成后代的活动。不得把pipe读取写成无界阻塞的普通启动等待；完整frame预装、非阻塞、有界读和EOF/尾数据拒绝都需要真实接口和验证。
+
+数字可作为原launcher生成的非秘密定位参数，token不得进入argv/env、文件、通用context、配置、结果、日志、摘要或异常。接收者仍须原受管启动绑定，数字／FIFO fstat不能独自证明creator。Node封闭模块的私有closure持有角色client，只传给已核自有initializer extension factory；不写入现有global runtime Symbol或公开client.options，也不向模型tool暴露secret。合法bootstrap JSON仍不是server认可的角色，server只查自己原角色表及实际host关联。
+
+原launcher的pass_fds只为该host route加入这一个原read端。Base未选Durable、资格不足的Full及普通worker／Codex／Shell路径保持无carrier／无角色注入。所有新FD及私有管道在SDK和后代创建前关闭；worker启动仍有自己的显式继承列表及无控制锚mount，不借“通常CLOEXEC”概括两层exec或零泄漏。匿名carrier不是防任意同UID外部内存／proc FD读取的屏障；加载的可信扩展、原启动器及未受限同UID外部程序按既定TCB边界处理。
+
+## 角色client与公开SDK factory
+
+实际Pi route只用本仓库launch和公开SDK extension factory注入一个专用自有initializer模块；不改官方SDK对象／原型、不向所有插件公布client。现有official-launch的extensionFactories为空，而official-file-runtime接公开factory集合；这不是现有Durable接线证明，新factory选择、来源闭包和正式Full声明仍待实现及资格。替换Full能力provider须重核能力契约／catalog/source和资格，不能把市场上的同名插件直接给这个角色。
+
+专用client不复用现有SupervisorClient把cap放入子进程env的invoke路径。保留原控制socket和server认证语义，新增固定自有客户端入口通过自己Popen新建的stdin私有pipe接收secret envelope，再调用原控制通道；argv/env不携secret，不挂token文件。client interpreter／source来自同一已资格受管安装和固定Full闭包，不按env或PATH发现。输出及stderr有界、固定错误、无foreign JSON／secret链；超时或丢回执不自动再调用业务method。具体entry source、stdin schema、endpoint物理核和一次调用／取消语义下一包冻结，不能由这段设计扩用当前客户端代码。
+
+可信extension创建原draft，展示本次服务／任务／读写／模型预算关联，使用公开原UI callback和稳定用户意图引用。仅literal true、未取消／过期且同一原draft/current继续；getter异常、重入、session replacement和迟到确认退役。server接受该adapter角色的确认事实，不能独立证明真人操作；这是既定信任边界。缺UI或print/rpc路线无法明确确认时拒绝初始化，不借批次submit或status读取绕过。新的CLI流程另做具体设计，不提前公布命令。
+
+## 拒绝与验收边界
+
+只有已资格Full的实际来源才能注入；缺Python／owner角色／sealed来源／issuer接口只让Durable unavailable，健康ordinary editing不等初始化job。whole damaged runtime仍沿原整体gate拒绝。角色读取失败、坏字段、错来源或丢交付不走env／文件／system fallback，不生成SID、目录、controller或模型请求。
+
+默认使用临时自有来源和fake producer／host／pipe／公开SDK，分别检查：错角色／原host lease／activation／generation／源码零grant；pending角色不认证；public重建引用不mint；secret只到原carrier及专用closure／stdin、不进env/global/日志；Base及worker无额外FD；读取/关闭失败各原端点一次且无launch重试；UI变化／取消／错draft／迟到确认退役。fake source和UI true不验实际TCB或真人，不开启产品factory。
+
+实际host-wrapper→namespace PID1→official own main→publicSDK的角色交付／close／后代零继承组合须另准备材料和授权；旧FD6、fbfea八场和已按d61799精确授权执行验收并闭合的Recovery3三场都不覆盖它。root仍需冻结carrier/schema、source API、host launcher唯一写入范围、client envelope与exact server方法、实际main读取顺序和失败路径；此前不授权executor以permissive fake开启初始化IO。formal7/100、全部产品gate与严格计量前AUTO OFF保持。

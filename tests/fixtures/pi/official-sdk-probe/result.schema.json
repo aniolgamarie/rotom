@@ -1,0 +1,97 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "probe_id": {
+      "const": "official-sdk-1.0.1"
+    },
+    "versions": {
+      "type": "object",
+      "properties": {
+        "pi": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pi_ai": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "pi",
+        "pi_ai"
+      ],
+      "additionalProperties": false
+    },
+    "status": {
+      "enum": [
+        "observed",
+        "failed"
+      ]
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "enum": [
+              "resource-whitelist",
+              "nested-tools",
+              "nested-block",
+              "cancel-propagation",
+              "no-ui-admission",
+              "reload-whitelist"
+            ]
+          },
+          "outcome": {
+            "enum": [
+              "observed",
+              "failed",
+              "not-run"
+            ]
+          },
+          "observations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "boolean",
+                "integer",
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "required": [
+          "case_id",
+          "outcome",
+          "observations"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "probe_id",
+    "versions",
+    "status",
+    "cases",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

@@ -67,3 +67,15 @@ def test_changed_script_cannot_start_an_already_queued_operation(tmp_path):
   (host.runtime_root / "runtime/mcp-script-process.mjs").write_text("changed after admission")
   with pytest.raises(Conflict, match="SERVICE_FILE_CHANGED"):
     commands.command(host.store.read(ticket["lease_id"]), {"operation_id": ticket["operation_id"]})
+
+
+def test_missing_future_account_anchor_keeps_denial_and_fixed_argv(tmp_path):
+  commands, host, principal, args = setup(tmp_path)
+  anchor = tmp_path / "future-account/.agentcfg-workspaces"
+  host.config["protected_roots"] = [str(anchor)]
+  ticket = prepare_script(commands, principal, args)
+  value = commands.records[ticket["operation_id"]]
+  assert str(anchor) in value["denied_paths"]
+  argv = linux_verifier_argv(value["check"], temporary=tmp_path / "scratch", system_roots=(), denied_paths=value["denied_paths"])
+  assert argv[-3:] == ("--no-addons", "--max-old-space-size=128", str(host.runtime_root / "runtime/mcp-script-process.mjs"))
+  assert not anchor.exists()

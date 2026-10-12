@@ -1,0 +1,5 @@
+schema_version = 1
+id = "pi-base"
+agent = "pi"
+# 公共模型沿用 shared/defaults/models.toml；能力默认值来自独立 Base 投影。
+# 正式运行包与启动入口尚未接通，配置解析和渲染不构成可运行验收。

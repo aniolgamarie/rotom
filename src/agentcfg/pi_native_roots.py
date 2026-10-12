@@ -22,7 +22,7 @@ def relative_inside(path, root):
 
 def project_anchor(path):
   # 只复用Git目录身份解析，不将此标签记录或用作启动/终止的boot证明。
-  identity = WorkspaceLeases("native-policy-snapshot").identify(path)
+  identity = WorkspaceLeases("native-policy-snapshot").identify_git(path)
   git = Path(identity["git_dir_path"])
   with Tree(git, private=False) as tree: raw = tree.read("commondir")
   common = (git / raw[0].decode().strip()).resolve(strict=True) if raw else git

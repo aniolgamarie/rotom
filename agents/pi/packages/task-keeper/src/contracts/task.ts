@@ -61,6 +61,9 @@ export interface CheckEvidence {
   policyDigest: string;
   source: "verifier" | "reviewer" | "claim";
   artifactId: string | null;
+  recordRef?: string | null;
+  validity?: "current" | "stale" | "invalid";
+  supportsPassed?: boolean;
 }
 export interface ExecutionContract {
   requested: Record<string, unknown>;
@@ -90,6 +93,7 @@ export interface ExecutionFacts {
   failures: FailureFact[];
   checks: CheckEvidence[];
   claims: string[];
+  evidenceRequired?: boolean;
 }
 
 export interface Receipt {
@@ -123,9 +127,11 @@ export function outcome(spec: TaskSpec, facts: ExecutionFacts): Receipt {
   if (!facts.observation.complete || facts.observation.gaps.length) reasons.push("observation_incomplete");
   if (facts.unknownMutators.length) reasons.push("unknown_mutator");
   const valid = facts.checks.filter((check) => check.status === "passed" && check.source !== "claim" && check.artifactId
+    && (!facts.evidenceRequired || check.validity === "current" && check.supportsPassed === true && !!check.recordRef)
     && check.snapshot === spec.snapshot && check.specVersion === spec.version && check.policyDigest === spec.policyDigest);
   const evidenceIds = new Set(valid.map((check) => check.artifactId));
   const conflicting = (id: string) => facts.checks.some((check) => check.checkId === id && check.source !== "claim"
+    && (!facts.evidenceRequired || check.validity === "current")
     && check.snapshot === spec.snapshot && check.specVersion === spec.version && check.policyDigest === spec.policyDigest && check.status !== "passed");
   for (const failure of facts.failures) {
     if (failure.required && (!failure.resolvedBy || !evidenceIds.has(failure.resolvedBy))) reasons.push(`unresolved:${failure.id}`);

@@ -1,0 +1,1868 @@
+{
+  "schema_version": 1,
+  "purpose": "Static observed source provenance; not legal adequacy, native acceptance or promotion.",
+  "base_lock_sha256": "7a6ad8e47f7b165d2c35b218a72e7734cf74a8ee26044d20e993419ba9c5bee1",
+  "records": [
+    {
+      "path": "node_modules/@earendil-works/chord",
+      "resolved": "https://registry.npmjs.org/@earendil-works/chord/-/chord-1.0.2.tgz",
+      "integrity": "sha512-eUXGZjigyEQsFiT/oBJUOaCrzYZRmqf8AgLrlbyuS4u02hjSVhLYRi3xqk1o4UERCgRfjRegqwj/oucawIR7YQ==",
+      "name": "@earendil-works/chord",
+      "version": "1.0.2",
+      "declared_license": "MIT",
+      "source_commit": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/cd32f7725fdbddbaecdff5b1e68491563394e0ca/LICENSE",
+      "limitation": "Fixed upstream commit body supplements the exact published package; original package remains unchanged."
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-agent-core",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-agent-core/-/pi-agent-core-1.0.2.tgz",
+      "integrity": "sha512-VRfewY1R5mbedJzlm01PxdCmqU8QrSXjXXhV50bp6rvVuT8YYQv1inTXRY4YzssmGAYpkC2rXipJKP5BpBFXew==",
+      "name": "@earendil-works/pi-agent-core",
+      "version": "1.0.2",
+      "declared_license": "MIT",
+      "source_commit": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/cd32f7725fdbddbaecdff5b1e68491563394e0ca/LICENSE",
+      "limitation": "Fixed upstream commit body supplements the exact published package; original package remains unchanged."
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-ai",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-1.0.2.tgz",
+      "integrity": "sha512-JP59xGlSAQ/HhQ6EHN5qmneBlWfDyu6FPPryAvAaSo8A38ubAsEpS9YisCM5Jbbns0srrDffLZonE0OXorHI5A==",
+      "name": "@earendil-works/pi-ai",
+      "version": "1.0.2",
+      "declared_license": "MIT",
+      "source_commit": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/cd32f7725fdbddbaecdff5b1e68491563394e0ca/LICENSE",
+      "limitation": "Fixed upstream commit body supplements the exact published package; original package remains unchanged."
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-codemode",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-codemode/-/pi-codemode-1.0.2.tgz",
+      "integrity": "sha512-tvfDSVz984ra/4y/hIFmYGpP5ojC+C6/ey+DNbjTzfJvbXviW4JYTXwVcm33KAceI0xcOuE+P1yRGLtQgis0/w==",
+      "name": "@earendil-works/pi-codemode",
+      "version": "1.0.2",
+      "declared_license": "MIT",
+      "source_commit": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/cd32f7725fdbddbaecdff5b1e68491563394e0ca/LICENSE",
+      "limitation": "Fixed upstream commit body supplements the exact published package; original package remains unchanged."
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-coding-agent",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-1.0.1.tgz",
+      "integrity": "sha512-B7FGYpHpBPvS+Ux16CbCuVnE9S4v6c2h6ykocPNarC4msD/4JM/eFrCrO2wbRkedJZ25myFozSWHvCOx4QnN+w==",
+      "name": "@earendil-works/pi-coding-agent",
+      "version": "1.0.1",
+      "declared_license": "MIT",
+      "source_commit": "a7229ddc21810d6245105978033b7df645ecc2f7",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/a7229ddc21810d6245105978033b7df645ecc2f7/LICENSE",
+      "limitation": "Fixed upstream commit body supplements the exact published package; original package remains unchanged."
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-mcp",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-mcp/-/pi-mcp-1.0.2.tgz",
+      "integrity": "sha512-ED3+q41xLQkxzdadZIQy68SLYcqCJbve8iGbGkZoWjPJ9OZCPHTKcof24fjMO1LfnbIl1uMfhRBueS6IfdiCbQ==",
+      "name": "@earendil-works/pi-mcp",
+      "version": "1.0.2",
+      "declared_license": "MIT",
+      "source_commit": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/cd32f7725fdbddbaecdff5b1e68491563394e0ca/LICENSE",
+      "limitation": "Fixed upstream commit body supplements the exact published package; original package remains unchanged."
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-telemetry",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-telemetry/-/pi-telemetry-1.0.2.tgz",
+      "integrity": "sha512-Ev5h9TE8nEXHCfRKhWj0qpUFhQgVqNteS95vsM2KNGRGm533vOO2ruDPaEwImBKPMBKXy4omz3D6V2cm41gLOQ==",
+      "name": "@earendil-works/pi-telemetry",
+      "version": "1.0.2",
+      "declared_license": "MIT",
+      "source_commit": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/cd32f7725fdbddbaecdff5b1e68491563394e0ca/LICENSE",
+      "limitation": "Fixed upstream commit body supplements the exact published package; original package remains unchanged."
+    },
+    {
+      "path": "node_modules/@earendil-works/pi-tui",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-tui/-/pi-tui-1.0.2.tgz",
+      "integrity": "sha512-ElfzjnckohEjzHK5Q5iOpqLpQ1YbM/c/XmjBdPVR5k4uoorQPnny5BtT+rvC0cAjVVCUOHWAWppust7FAaEsOQ==",
+      "name": "@earendil-works/pi-tui",
+      "version": "1.0.2",
+      "declared_license": "MIT",
+      "source_commit": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/cd32f7725fdbddbaecdff5b1e68491563394e0ca/LICENSE",
+      "limitation": "Fixed upstream commit body supplements the exact published package; original package remains unchanged."
+    },
+    {
+      "path": "node_modules/@esbuild/linux-x64",
+      "resolved": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.2.tgz",
+      "integrity": "sha512-4xTZr1FUmSoQW4XIWmit3tzQrUTZM+N3P0XV8xROKYF50XfI7xeO90+1bZvNwxIufQ9hDQVRJH5YhgPVF8A/HQ==",
+      "name": "@esbuild/linux-x64",
+      "version": "0.28.2",
+      "declared_license": "MIT",
+      "source_commit": "609683d892977362a0f99026cb74b96263d728a9",
+      "source_body_sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681",
+      "source_body_url": "https://raw.githubusercontent.com/evanw/esbuild/609683d892977362a0f99026cb74b96263d728a9/LICENSE.md",
+      "limitation": "Fixed upstream commit body supplements the exact published package; original package remains unchanged."
+    },
+    {
+      "path": "node_modules/data-uri-to-buffer",
+      "resolved": "https://registry.npmjs.org/data-uri-to-buffer/-/data-uri-to-buffer-4.0.1.tgz",
+      "integrity": "sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==",
+      "name": "data-uri-to-buffer",
+      "version": "4.0.1",
+      "declared_license": "MIT",
+      "source_path": "node_modules/data-uri-to-buffer/README.md",
+      "source_lines": [
+        65,
+        86
+      ],
+      "source_file_sha256": "a7cc4332acfa1f9b6530e01aac77fefe74f2efa32579215fddaa473013f9a25c",
+      "body_section_sha256": "3072ef4a004c4f92b37eae61cdc3e27225c0a7d2f5e144700e40b9c5a5a7a9b9",
+      "limitation": "Only this pinned README contains the observed full MIT body; other README files are not inferred to be licenses."
+    }
+  ],
+  "archive_observation": {
+    "path": ".cache/pi-two-profiles/run-20261004/base-npm-candidate/audit/installed-audit.json",
+    "sha256": "17d18576ca0a80b35ab150f2f5315588f4a0460908209f5c02fdbb737307eb86",
+    "limitation": "Verification is limited to original cached archive identities, package.json bytes and listed root license bytes; no execution or legal adequacy claim.",
+    "packages": [
+      {
+        "path": "node_modules/@anthropic-ai/sdk",
+        "resolved": "https://registry.npmjs.org/@anthropic-ai/sdk/-/sdk-0.129.0.tgz",
+        "integrity": "sha512-MH7LB20kNpGLUpPTe2OG5XvL/KhX8HUO9XyBaFjgFk6TLS4Xjt0VPIuMKywe7POKKPslX+QxSlVok9e+8kG5Nw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/30/7e/cb076d2436918b5293d37b6386e57bcbfca857f0750ef57c816858e0164e932d2e178edd153c8b8c2b2c1eecf38a28fb255fe4314a556893d7bef241b937",
+        "archive_sha256": "dafba131471d2fe98faddbaed7fb8d590efa334dff881fdee6a0d8a6e1e2dfb2",
+        "package_json_sha256": "3da3840a09a3bfeac32aed68cfd7fa9ac952f41a00cabe335f806caa2966f3f1",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "8bf96984ff8bcfae7e48cae76a529e8a25317ba9e02abf7fd3cc64fdf95657a6"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/client-bedrock-runtime",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/client-bedrock-runtime/-/client-bedrock-runtime-3.1127.0.tgz",
+        "integrity": "sha512-IDl/lrPb90aH+pZFHGNDmgH9nAUQj5PlZH1sJ3w7RikctyjHSnY3oNjZhrLoaBoQn/rNK0zsP6OHEqEhj2tdLA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/20/39/7f96b3dbf74687fa96451c63439a01fd9c05108f93e5647d6c277c3b46291cb728c74a7637a0d8d986b2e8681a109ffacd2b4cec3fa38712a1218f6b5d2c",
+        "archive_sha256": "cb983616e2e7a81d0b9f454ca3bbc0892a58e3997e188a82f6c69d65191ab6ed",
+        "package_json_sha256": "d38839f240b6f89020c1abf351691d9749f7d35e6680abd6a6fc4415823c10e0",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "18c295fdd68d4f68418b0209829f241481e93549d9e7b9fcd4b4c029322c8a45"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/core",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/core/-/core-3.978.1.tgz",
+        "integrity": "sha512-LbY9aGsEiznDWmUc30Nwv3aIX/+dbwTx8KfS0yOC3NPYMO+O91e6jkT1azf34FwjOndq8/Q+RcVVZz5xnerwdg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/2d/b6/3d686b048b39c35a651cdf4370bf76885fff9d6f04f1f0a7d2d32382dcd3d830ef8ef757ba8e44f56b37f7e05c233a776af3f43e45c555673e719deaf076",
+        "archive_sha256": "d60cd866facb4f153a73fa256dac3efbdf51c1da07bdc9b8502d23e2438ab541",
+        "package_json_sha256": "f41e316f4145afaa611248576fac940f67e7d1e1c6a1cafa11c444189c98493d",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/credential-provider-env",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-env/-/credential-provider-env-3.972.72.tgz",
+        "integrity": "sha512-xTKO/FWJPozTIXbozVnVGoNBhaGba8TBcx+KyUjRVeOlXE+dUc7GTR1cLvu0uTdIdmemzaFbqqCshXeZA1fZew==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/c5/32/8efc55893e8cd32176e8cd59d51a834185a19b6bc4c1731f8ac948d155e3a55c4f9d51cec64d1d5c2efbb4b937487667a6cda15baaa0ac8577990357d97b",
+        "archive_sha256": "a92813ceee3e1ad6908c0c1ef31b825ed6c0bea0dcfb75e51c48ff68e26a2168",
+        "package_json_sha256": "83cb069a705d40c4d8cac65c4df9f3094d64db8c3105cd15670d2676f730192c",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/credential-provider-http",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-http/-/credential-provider-http-3.972.74.tgz",
+        "integrity": "sha512-u91E/hT8f4d1xy0Jl7VG4nVKJ3lxbrZkoBTeSVoJdWBiSEUMwMS/9+e0H/aJVQV//Lt5wuzP+E69v4aRSsNTmw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/bb/dd/44fe14fc7f8775c72d0997b546e2754a2779716eb664a014de495a0975606248450cc0c4bff7e7b41ff68955057ffcbb79c2eccff84ebdbf86914ac3539b",
+        "archive_sha256": "d721daed3118c28ce3c6af624695e0872ae4baa763ba8066a3ded282113cd1a5",
+        "package_json_sha256": "6db5ed1c0c41ca8672b0eb663e539f87ed0deb7fc96d241ef766d2b441fe59a1",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/credential-provider-ini",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-ini/-/credential-provider-ini-3.973.17.tgz",
+        "integrity": "sha512-ged4KXdBkvIC81bLvNHHuQKdKak/VXhQTR1NWYTTqW0474nlmsxy9O/vlgTIohDDWH3xpBdtVMZRyjb+DnocDA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/81/e7/7829774192f202f356cbbcd1c7b9029d29a93f5578504d1d4d5984d3a96d38ef89e59acc72f4efef9604c8a210c3587df1a4176d54c651ca36fe0e7a1c0c",
+        "archive_sha256": "12a776ea8b9f4a762782e08852ea1bddc8cbbeb23b97fce68d94e8c8fb564019",
+        "package_json_sha256": "825c4827279fad1a15aa72a365f4f91557305259771ab2216682c4f24690c075",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/credential-provider-login",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-login/-/credential-provider-login-3.972.79.tgz",
+        "integrity": "sha512-L+Z85anONJd8MaiuraO4wRxATCdEejBZ3K3eymzWI5JPXa9sOS9CkIm72PBKqXKX+Z9p9NGMX5AIMXm0LEflgw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/2f/e6/7ce5a9ce34977c31a8aeada3b8c11c404c27447a3059dcaddeca6cd623924f5daf6c392f429089bbd8f04aa97297f99f69f4d18c5f90083179b42c47e583",
+        "archive_sha256": "a6e6626b97e1799f77bdbaa384e32bfe0334343088c2e58c259116d48f64dfe5",
+        "package_json_sha256": "5993af12213692c03386b8af68d3894c007c87fcbee64356743668aa9ea39696",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/credential-provider-node",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-node/-/credential-provider-node-3.972.84.tgz",
+        "integrity": "sha512-oHt854odINVwzwsh+c5x69j0ajm4DbqqqVJ+O1ECsCIZeMDAbzFpXItaqP7UZstJj/ATdTk/KFSH0LaNAgV+kA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/a0/7b/7ce78a1d20d570cf0b21f9ce71ebd8f46a39b80dbaaaa9527e3b5102b0221978c0c06f31695c8b5aa8fed466cb498ff01375393f285487d0b68d02057e90",
+        "archive_sha256": "7939272a2fe38d3ede43c155102ea42496fb00efd69fcb8397c409aa35e7fc39",
+        "package_json_sha256": "d107f130cf4631f0b687351fd8d2baf74d8a8496f28a0bd463545306ba9e6f22",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/credential-provider-process",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-process/-/credential-provider-process-3.972.72.tgz",
+        "integrity": "sha512-rLIp2xbMjX/k9/od7APpqq1ZgXXnV0pOL1Th3ZsL8Wu0TRtBsDTVS8iPqcfRFcHakFxPvR04OSTv2ka2qOb/2A==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/ac/b2/29db16cc8d7fe4f7fa1dec03e9aaad598175e7574a4e2f54e1dd9b0bf16bb44d1b41b034d54bc88fa9c7d115c1da905c4fbd1d383924efda46b6a8e6ffd8",
+        "archive_sha256": "b3e694788cdfd1a2e23764d740880d90a7464fb0e8f1102005c9090ee0c56069",
+        "package_json_sha256": "37354078bd4f4ffcaeccfafe9e818b4dd298f4685fcbd6695c13437ff2e2360b",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "2ef1e48ea743d9c82313e6887858f7c1feaddd636f5a3f43926aab0143e67ebd"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/credential-provider-sso",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-sso/-/credential-provider-sso-3.973.16.tgz",
+        "integrity": "sha512-IGihaJfFZYacJJr/odqILCoK7W/mvrZ7cuK7ECn3sAu4vLC6u0V8bS7mCGbdugJ8Aum2tnvqmx0F2MRFp2rn9g==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/20/68/a16897c565869c249affa1da882c2a0aed6fe6beb67b72e2bb1029f7b00bb8bcb0babb457c6d2ee60866ddba027c02e9b6b67bea9b1d05d8c445a76ae7f6",
+        "archive_sha256": "0e90a153844acf6610eaba8d28229067960050f164b17f8864ed0a25c9ef9128",
+        "package_json_sha256": "417af24392691fbaa2023130328fe065688b74e4f69a2dbd96319242f86621c9",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "2ef1e48ea743d9c82313e6887858f7c1feaddd636f5a3f43926aab0143e67ebd"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/credential-provider-sso/node_modules/@aws-sdk/token-providers",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/token-providers/-/token-providers-3.1138.0.tgz",
+        "integrity": "sha512-GpyAr0DD63YOEmYFM6Df+gJuIgC92MMTiBK4FTKfxii5MJ9ge20epR7LyroulscYlG89J+ZB2ivFDPjvfQhzdw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/1a/9c/80af40c3eb760e12660533a0dffa026e2200bdd8c3138812b815329fc628b9309f607b6d1ea51ecbcaba2e96c718946f3d27e641da2bc50cf8ef7d087377",
+        "archive_sha256": "e4d7eeefc730dc4c3a6a7892f53b2f14f1cebd226fe5ca8d76674cee5817bea6",
+        "package_json_sha256": "8680751f73f36f637b0b96dc5ff4b39578af9b3186195726eef4147758153dee",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/credential-provider-web-identity",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-web-identity/-/credential-provider-web-identity-3.972.78.tgz",
+        "integrity": "sha512-/y9WvNtlcPBGLR0qc1a+9J/xtYZfVczvLUOuXaVWylzttH7ewsxwHtjmiJSolNrVSDorIxHGHMU61CbonRkmwA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/ff/2f/56bcdb6570f0462d1d2a7356bef49ff1b5865f55ccef2d43ae5da556ca5cedb47edec2cc701ed8e68894a894dad5483a2b2311c61cc53ad426e89d1926c0",
+        "archive_sha256": "a9fe9064b80778563e2c3d19673a00a9a6407fe2d9359325eee43f16a9828ee1",
+        "package_json_sha256": "f7b5562bbccef5b2387e5b282a7edaf1645da0cab95f2855dc33e8f38c4189af",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "2ef1e48ea743d9c82313e6887858f7c1feaddd636f5a3f43926aab0143e67ebd"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/eventstream-handler-node",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/eventstream-handler-node/-/eventstream-handler-node-3.972.35.tgz",
+        "integrity": "sha512-a8xilRoRaalvSPZdfrs0VY3/BPc0uYhXW56Z/k6nmZ5Vk430LHeowf9APIPq8utM3tMJSNGSSuJMlB9YrPsN+A==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/6b/cc/62951a1169a96f48f65d7ebb34558dff04f734b988575b9e99fe4ea7999e55938df42c77a8c1ff403c83eaf2eb4cded30948d1924ae24c941f58acfb0df8",
+        "archive_sha256": "a3ab078d05609d4bb652ae716449d4aea1dcc9c39f2de0d6de4263a2ec4c0882",
+        "package_json_sha256": "7b7c302e6b7ef729d5c2af0f78657fc18dfc3e3ddcf22d871c9c91375f2ebca5",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/middleware-eventstream",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/middleware-eventstream/-/middleware-eventstream-3.972.30.tgz",
+        "integrity": "sha512-B6gvZlcnRBNWraKgyEjKsbhv+VjtbyHmpU7hmtTHzXpDSxHPpCJnYLpglEOOsF+SFne20DbZC5IVC1aNr2Pb4A==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/07/a8/2f665727441356ada2a0c848cab1b86ff958ed6f21e6a54ee19ad4c7cd7a434b11cfa4226760ba6094438eb05f921677b6d036d90b92150b568daf63dbe0",
+        "archive_sha256": "2616b225eab52b3bda3f2dbdf01c884d7b1cb1d7f23086ffc875afd69f196d70",
+        "package_json_sha256": "0a9a5c5f4c4216f1cc8f29a37ded920bfcb96fd12c18d7b8751a377c895b3e98",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "e345c2ee7df4446e739de7b91535f0c10ddcd909b9753889e943ee637b05db8c"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/middleware-websocket",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/middleware-websocket/-/middleware-websocket-3.972.54.tgz",
+        "integrity": "sha512-bhESdru8u8KosziH8jcVta/NM/dNreeRz2+2aU86si5bfBYOiJ6IiqD+9U4URUcU5WJO3Yw+jO3GLDIHlscXMQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/6e/11/1276bbbcbbc2a8b33887f23715b5afcd33f74dade791cf6fb6694f3ab22e5b7c160e889e888aa0fef54e14454714e5624edd8c3e8cedc62c320796c71731",
+        "archive_sha256": "1c4259747fa40c63f641ba7ae7e669f20784847b37ba760f8b277dce717bbb8f",
+        "package_json_sha256": "c67751a1206d0a8b388ec23b942adf9afe2caba761cd7a3db66825596bce362e",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/nested-clients",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/nested-clients/-/nested-clients-3.997.46.tgz",
+        "integrity": "sha512-oRxtBcka/JGHGs9l9p9IVajGoTP8vTPmoAzdHGy4Qcy9P5vPnDf6nhIeM/COQNY9k/OahImTRaLkHftoXvfcmQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/a1/1c/6d05c91afc91871acf65f69f4855a8c6a133fcbd33e6a00cdd1c6cb841ccbd3f9bcf9c37fa9e121e33f08e40d63d93f39a84899345a2e41dfb685ef7dc99",
+        "archive_sha256": "32c9bfdcdd100106fb86e9c8aae6835030cfde6219acd02c03b547ac7c64a72a",
+        "package_json_sha256": "dd334b9f6453d2e9094bf36a10e3a1a5637fa6c43fe38ca42e649e3fae4fdbd3",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/signature-v4-multi-region",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/signature-v4-multi-region/-/signature-v4-multi-region-3.996.47.tgz",
+        "integrity": "sha512-Zk08macMvQTHzQJCLJVkOlviVoqwYMrpXv4lmLN7b7sAbiMoOK7Go0NYdR5UeF+MW8LIbRmwrNy9u/5VvX1U5g==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/66/4d/3c99a70cbd04c7cd02422c95643a5be2568ab060cae95efe2598b37b6fbb006e232838aec6a34358751e54785f8c5bc2c86d19b0acdcbdbbfe55bd7d54e6",
+        "archive_sha256": "79a30d8771844e2b0741a97bef54295d8acc119713678b4e8e807ab5820b3056",
+        "package_json_sha256": "a500d3298997fbe442acc76fd217dabd4c8310a0085a65578ba868a37d4e3f79",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/token-providers",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/token-providers/-/token-providers-3.1127.0.tgz",
+        "integrity": "sha512-Dv2TMWBshJ+tF6ahs2Sy5bh4Iabsd4GAQqVvE9XZmYmnoaVbpS2QKIKE/HRacc7bTtbjEEvP+laGzHvHlf1CiQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/0e/fd/9331606c849fad17a6a1b364b2e5b87821a6ec77818042a56f13d5d99989a7a1a55ba52d90288284fc745a71cedb4ed6e3104bcffa5686cc7bc795fd4289",
+        "archive_sha256": "d5d3a58a713bbedf87cbfb6a616a0057d1718fd46438bb1cd64b5517cf3c95c0",
+        "package_json_sha256": "fcb7e0ea77d0466b548fe3fc04efa0c13ced2dfbed14c62e7dc0995e1153dcd8",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/types",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/types/-/types-3.974.6.tgz",
+        "integrity": "sha512-v/clNZzZnDxGyvpHMOGpJKVXFAExJzUNAAjaWGdcx8QAcXLGwTaOkw33p5SHAi0YAioK32xB3hWwOekRVfmfKg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/bf/f7/25359cd99c3c46cafa4730e1a924a55714013127350d0008da58675cc7c4007172c6c1368e930df7a79487022d18022a0adf6c41de15b039e91155f99f2a",
+        "archive_sha256": "62fd16d0c491785121b2284a0e18f27a0587355f1b4eb9ae8fe61b5ca58296ff",
+        "package_json_sha256": "bdd916bfcfac454fb2ba9ff2dd2e581d10f946654515ca860bf4b8f4e4b82561",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws-sdk/xml-builder",
+        "resolved": "https://registry.npmjs.org/@aws-sdk/xml-builder/-/xml-builder-3.972.41.tgz",
+        "integrity": "sha512-ctjVSyCMegrWfXlx6VqzSBFI6UqmQ5ZlnfMhdLIiWmhoH8UAQxSCP5N3OpG7X3k4LnS7ou74C4mt20+bfTW2aQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/72/d8/d54b208c7a0ad67d7971e95ab3481148e94aa64396659df32174b2225a68681fc5004314823f93773a91bb5f79382e74bba2eef80b89addb4f9b7d35b669",
+        "archive_sha256": "34b42f96fba802377e95d740663e3213047db5e4edfeddcd58f92ea1ed142c24",
+        "package_json_sha256": "103e94854d3f01cdb7eda3d170d3a8775e4fb107da472a1347418abb76116e08",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@aws/lambda-invoke-store",
+        "resolved": "https://registry.npmjs.org/@aws/lambda-invoke-store/-/lambda-invoke-store-0.3.0.tgz",
+        "integrity": "sha512-sl4Bm6yiMNYrZKkqqDFWN0UfnWhlS8ivKxrYl+6t0gCLrqr8y3B2IqZZbFRkfaVVp7C/baApyh71P+LeE1A2sQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/b2/5e/019baca230d62b64a92aa8315637451f9d68654bc8af2b1ad897eeadd2008baeaafccb707622a6596c54647da555a7b0bf6da029ca1ef53fe2de135036b1",
+        "archive_sha256": "9ad184d7f16e463ca79668bdb5b16be0c421c1d1a289f6d6c5a26f39658cb667",
+        "package_json_sha256": "67dd0cc15cb17df9e12654a78486e710e13a2e96623cb28c683056378fa973dc",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@babel/runtime",
+        "resolved": "https://registry.npmjs.org/@babel/runtime/-/runtime-7.29.7.tgz",
+        "integrity": "sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/36/af/0e8465a264864657a84b1e8c8028b2dc26284fff115e04c189a14af14d7da9b08f1d0a27f32e16484856fe5564b7c053110e6086c3947e74ec920aa3cb87",
+        "archive_sha256": "4d7f1bd502a1a64d47625cc738d13284865f0666d2ed01f244de0adf05b69aa5",
+        "package_json_sha256": "8c4bf20c55e3f3a93df034b12746bf72185cf2acb0ef52847a3465d6e67c61e7",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@earendil-works/chord",
+        "resolved": "https://registry.npmjs.org/@earendil-works/chord/-/chord-1.0.2.tgz",
+        "integrity": "sha512-eUXGZjigyEQsFiT/oBJUOaCrzYZRmqf8AgLrlbyuS4u02hjSVhLYRi3xqk1o4UERCgRfjRegqwj/oucawIR7YQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/79/45/c66638a0c8442c1624ffa0125439a0abcd86519aa7fc0202eb95bcae4b8bb4da18d25612d8462df1aa4d68e141110a045f8d17a0ab08ffa2e71ac0847b61",
+        "archive_sha256": "1188a3dbf0092eea63dc4fcc69da54951ebe62242529708f20fa9bf2a61d2272",
+        "package_json_sha256": "a24d41eefb835e9ea5f36fcfb5750855b5fe8c976b89f1da5499bfec0b5251ea",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@earendil-works/pi-agent-core",
+        "resolved": "https://registry.npmjs.org/@earendil-works/pi-agent-core/-/pi-agent-core-1.0.2.tgz",
+        "integrity": "sha512-VRfewY1R5mbedJzlm01PxdCmqU8QrSXjXXhV50bp6rvVuT8YYQv1inTXRY4YzssmGAYpkC2rXipJKP5BpBFXew==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/55/17/dec18d51e666de749ce59b4d4fc5d0a6a94f10ad25e35d7855e746e9eabbd5b93f18610bf58a74d7458e18cecb26180629902dab5e2a4928fe41a411577b",
+        "archive_sha256": "2f68f6d0908ebab5b8878c12651d4132418cb1af028c0b555574a65646ec8031",
+        "package_json_sha256": "629dfe78c76a34e73cd440afc55b84dd8dc520568ab4060623d1bd98b9bea936",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@earendil-works/pi-ai",
+        "resolved": "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-1.0.2.tgz",
+        "integrity": "sha512-JP59xGlSAQ/HhQ6EHN5qmneBlWfDyu6FPPryAvAaSo8A38ubAsEpS9YisCM5Jbbns0srrDffLZonE0OXorHI5A==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/24/fe/7dc46952010fc7850e841cde6a9a77819567c3caee853cfaf202f01a4a8f00dfcb9b02c1294bd622b0233925b6e7b34b2bac37df2d9a27134397a2b1c8e4",
+        "archive_sha256": "8ac8e5fabd65e0f0ecb8538b6211824859f5997594005d7a03e1f70b38438a17",
+        "package_json_sha256": "d7b35ad32c3172d9b71503fe59e42032f63cc3609d3fee070ea434b4f5fb2998",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@earendil-works/pi-codemode",
+        "resolved": "https://registry.npmjs.org/@earendil-works/pi-codemode/-/pi-codemode-1.0.2.tgz",
+        "integrity": "sha512-tvfDSVz984ra/4y/hIFmYGpP5ojC+C6/ey+DNbjTzfJvbXviW4JYTXwVcm33KAceI0xcOuE+P1yRGLtQgis0/w==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/b6/f7/c3495cfdf38adaff8cbf848166606a4fe688c2f82ebf7b2f8335b8d3cdf26f6d7be25b82584d7c15726df728071e234c5c3ae13e3f5c9118bb50822b34ff",
+        "archive_sha256": "d0c589be82b0e3eb51831eee575bea07aa5eab7607059f170dc43a0e721cc08e",
+        "package_json_sha256": "bad688f86b82f63ba56381c9675caa8590f66c034dec7c397035a1947cece52d",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@earendil-works/pi-coding-agent",
+        "resolved": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-1.0.1.tgz",
+        "integrity": "sha512-B7FGYpHpBPvS+Ux16CbCuVnE9S4v6c2h6ykocPNarC4msD/4JM/eFrCrO2wbRkedJZ25myFozSWHvCOx4QnN+w==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/07/b1/466291e904fbd2f94c75e826c2b959c4f52e2fe9cda1eb292870f35aac2e26b03ff824cfde16b0ab3b6c1b46479d259db99b2168cd2587bc23b1e109cdfb",
+        "archive_sha256": "99c2e1958ac6d4c6a36e7f1c3690ae38778bb397c63e9d611d2c09521be735c5",
+        "package_json_sha256": "fa487897918283976006d8c4f450772a9c90b9674f2a19d5f01e3ab9af35ce8f",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@earendil-works/pi-mcp",
+        "resolved": "https://registry.npmjs.org/@earendil-works/pi-mcp/-/pi-mcp-1.0.2.tgz",
+        "integrity": "sha512-ED3+q41xLQkxzdadZIQy68SLYcqCJbve8iGbGkZoWjPJ9OZCPHTKcof24fjMO1LfnbIl1uMfhRBueS6IfdiCbQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/10/3d/feab8d712d0931cdd69d648432ebc48b61ca8225bbdef2219b1a46685a33c9f4e6423c74ca7287f6e1f8cc3b52df9db225d6e31f85106e792e887dd8826d",
+        "archive_sha256": "0e6b629de8c9a5e16d216df1b086deb62937338dcdae87e6878756bdf9e07026",
+        "package_json_sha256": "a1bdaa1ca96c0fd808bf02f9ff8bc54afc93eca4cf19e6011deb93365ab11718",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@earendil-works/pi-telemetry",
+        "resolved": "https://registry.npmjs.org/@earendil-works/pi-telemetry/-/pi-telemetry-1.0.2.tgz",
+        "integrity": "sha512-Ev5h9TE8nEXHCfRKhWj0qpUFhQgVqNteS95vsM2KNGRGm533vOO2ruDPaEwImBKPMBKXy4omz3D6V2cm41gLOQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/12/fe/61f5313c9c45c709f44a8568f4aa9505850815a8db5e4bde6fb0cd8a3464469b9df7bce3b6aee0cf684c0898128f301297cb8a26cf70fa576726e3580b39",
+        "archive_sha256": "eb142a5eb0455b0bfae4b304266d234da4597314cb2ebed49a6f86baed1da200",
+        "package_json_sha256": "c68b806606821a6247d4710010365509afac68ea317227b40c40d38008c29ea6",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@earendil-works/pi-tui",
+        "resolved": "https://registry.npmjs.org/@earendil-works/pi-tui/-/pi-tui-1.0.2.tgz",
+        "integrity": "sha512-ElfzjnckohEjzHK5Q5iOpqLpQ1YbM/c/XmjBdPVR5k4uoorQPnny5BtT+rvC0cAjVVCUOHWAWppust7FAaEsOQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/12/57/f38e7724a21123cc72b943988ea6a2e943561b33f73f5e68c174f551e64e2ea28ad03e79f2e41b53fabbc2d1c0235550943875805a9a6eb2dec501a12c39",
+        "archive_sha256": "92a6397118e7b8f91f8d1c260027fca7938b256aa0fb364b506e4fd4cdcb7c84",
+        "package_json_sha256": "4a3416e5745dc52ba022e5b4a181253db8d8c6dee844df63fce3d484fad488ec",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@esbuild/linux-x64",
+        "resolved": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.2.tgz",
+        "integrity": "sha512-4xTZr1FUmSoQW4XIWmit3tzQrUTZM+N3P0XV8xROKYF50XfI7xeO90+1bZvNwxIufQ9hDQVRJH5YhgPVF8A/HQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/e3/14/d9af5154992a105b85c85a68addedcd0ad44d933e3773f45d5f3144e298179d177c8ef178ef74fb56d9bcdc3122e7d0f610d0551247e588603d517c03f1d",
+        "archive_sha256": "9573bb2233aab0f9ea7647d5cca9726113cc1768de61d66b17267f4db84488f6",
+        "package_json_sha256": "a3924c1835c7849adeb3d82ac24525da0d4190607b60d05265dc6746bde2ddb8",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@google/genai",
+        "resolved": "https://registry.npmjs.org/@google/genai/-/genai-2.21.0.tgz",
+        "integrity": "sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/f8/f0/ed728dbf67438d7730867a40a8093f8ed55252f7125034de17cd0a571bfb77125fd259632409694544ed4a9a2bce1cf6b8434563518bb51c128267fbf7dd",
+        "archive_sha256": "859e07d3fee1453ced3d60c2d48ce1b88894d2785b23f3cbd850c062bca1dfc6",
+        "package_json_sha256": "64e3cd991d6b4749cd4b3afe46c8a0ad2f5d983f33df94081343797693fdbc81",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@protobufjs/aspromise",
+        "resolved": "https://registry.npmjs.org/@protobufjs/aspromise/-/aspromise-1.1.2.tgz",
+        "integrity": "sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/8f/e8/0a13112e2e62b0bf3dce811397b6b276506db1f028766195316a187eb351761d9fb001c79434b92fcbacca08f551914fbe65642b771b147905e6720e2ea1",
+        "archive_sha256": "0041878b8209f2fa4bcc5e0666355ebc96ff97f360c3054ffe83dbb78ee1c119",
+        "package_json_sha256": "4a39ee1c94f6ee038d2944196aa6167785d3429a91727f828a1274262919e2d8",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@protobufjs/base64",
+        "resolved": "https://registry.npmjs.org/@protobufjs/base64/-/base64-1.1.2.tgz",
+        "integrity": "sha512-AZkcAA5vnN/v4PDqKyMR5lx7hZttPDgClv83E//FMNhR2TMcLUhfRUBHCmSl0oi9zMgDDqRUJkSxO3wm85+XLg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/01/99/1c000e6f9cdfefe0f0ea2b2311e65c7b859b6d3c380296ff3713ffc530d851d9331c2d485f4540470a64a5d288bdccc8030ea4542644b13b7c26f39f972e",
+        "archive_sha256": "d67e6ee6e1445512478cdfc34c12144f579bdd9f06529eef3ef8d88f84031a6a",
+        "package_json_sha256": "7ff6a89f566b95c0f21a5a9cb12df5718f0b06ef96d4186a92d650c0849fa2c5",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@protobufjs/codegen",
+        "resolved": "https://registry.npmjs.org/@protobufjs/codegen/-/codegen-2.0.5.tgz",
+        "integrity": "sha512-zgXFLzW3Ap33e6d0Wlj4MGIm6Ce8O89n/apUaGNB/jx+hw+ruWEp7EwGUshdLKVRCxZW12fp9r40E1mQrf/34g==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/ce/05/c52f35b7029df77ba7745a58f8306226e827bc3bcf67fdaa54686341fe3c7e870fabb96129ec4c0652c85d2ca5510b1656d767e9f6be34135990adfff7e2",
+        "archive_sha256": "20bafed1221bcba23a2450a841998edaef9a56bc2101d6e38c2117dd58a13a01",
+        "package_json_sha256": "818bf10387c19ab09b3814004ec672ab8d975302cdaf2dd65466bdb604764d65",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@protobufjs/eventemitter",
+        "resolved": "https://registry.npmjs.org/@protobufjs/eventemitter/-/eventemitter-1.1.1.tgz",
+        "integrity": "sha512-vW1GmwMZNnL+gMRaovlh9yZX74kc+TTU3FObkkurpMaRtBfLP3ldjS9KQWlwZgraRE0+dheEEoAxdzcJQ8eXZg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/bd/6d/469b03193672fe80c45aa2f961f72657ef891cf934d4dc539b924baba4c691b417cb3f795d8d2f4a416970660ada444d3e76178412803177370943c79766",
+        "archive_sha256": "5536b98cb7062e771c1dadd1828e352ebe40034f1480836f21c776ec372a797c",
+        "package_json_sha256": "d157d364fe4aee21cfd517abff35bca312ff51e6e6e90abdbec16225057e5914",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@protobufjs/fetch",
+        "resolved": "https://registry.npmjs.org/@protobufjs/fetch/-/fetch-1.1.1.tgz",
+        "integrity": "sha512-GpptLrs57adMSuHi3VNj0mAF8dwh36LMaYF6XyJ6JMWlVsc+t42tm1HSEDmOs3A8fC9yyeisgLhsTVQokOZ0zw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/1a/9a/6d2ebb39eda74c4ae1e2dd5363d26005f1dc21dfa2cc69817a5f227a24c5a556c73eb78dad9b51d210398eb3703c7c2f72c9e8ac80b86c4d542890e674cf",
+        "archive_sha256": "54481d9c62debce1c38b0239f2358eeb3b73f7bb1ba3105bd6123fd81b8b7268",
+        "package_json_sha256": "52f997898a745acce5d68751883aad6296bcc2f152468ced0ed30e3c3c5a1c72",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@protobufjs/float",
+        "resolved": "https://registry.npmjs.org/@protobufjs/float/-/float-1.0.2.tgz",
+        "integrity": "sha512-Ddb+kVXlXst9d+R9PfTIxh1EdNkgoRe5tOX6t01f1lYWOvJnSPDBlG241QLzcyPdoNTsblLUdujGSE4RzrTZGQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/0d/d6/fe9155e55ecb7d77e47d3df4c8c61d4474d920a117b9b4e5fab74d5fd656163af26748f0c1946db8d502f37323dda0d4ec6e52d476e8c6484e11ceb4d919",
+        "archive_sha256": "20b3d612d53281b754602d52a8e6a6e09032169d5399e515f6f5e8b7d3de712d",
+        "package_json_sha256": "1cae4ded1bc97375a67fe4608f87ee59990734ea738fabb98e9061ab23669cdf",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@protobufjs/path",
+        "resolved": "https://registry.npmjs.org/@protobufjs/path/-/path-1.1.2.tgz",
+        "integrity": "sha512-6JOcJ5Tm08dOHAbdR3GrvP+yUUfkjG5ePsHYczMFLq3ZmMkAD98cDgcT2iA1lJ9NVwFd4tH/iSSoe44YWkltEA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/e8/93/9c2794e6d3c74e1c06dd4771abbcffb25147e48c6e5e3ec1d87333052eadd998c9000fdf1c0e0713da2035949f4d57015de2d1ff8924a87b8e185a496d10",
+        "archive_sha256": "cc364ee910173c36d5734535a2bb53b8e7e86d2d219f27218158ab3f3dca328c",
+        "package_json_sha256": "b19802dd696ceb8a4aa4839f35ab1c8312e97693d93485ff3c3e4f19cca183c4",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@protobufjs/pool",
+        "resolved": "https://registry.npmjs.org/@protobufjs/pool/-/pool-1.1.0.tgz",
+        "integrity": "sha512-0kELaGSIDBKvcgS4zkjz1PeddatrjYcmMWOlAuAPwAeccUrPHdUqo/J6LiymHHEiJT5NrF1UVwxY14f+fy4WQw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/d2/41/0b6864880c12af7204b8ce48f3d4f79d75ab6b8d87263163a502e00fc0079c714acf1dd52aa3f27a2e2ca61c7122253e4dac5d54570c58d787fe7f2e1643",
+        "archive_sha256": "f721dbd27282d2c7d1c2bf1ae9f7a03cc3ef9cf882fe469a32c14d1dae732703",
+        "package_json_sha256": "7a33b609e770020fe1e09690cfebc23bbdd6e1306e3f0dd98ba5048966cb7fec",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@protobufjs/utf8",
+        "resolved": "https://registry.npmjs.org/@protobufjs/utf8/-/utf8-1.1.2.tgz",
+        "integrity": "sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/6f/55/10c1c119e320a73020fc0c02f55656ef04913dfc85f8153229ec11b5c58a5fdbd48b6b32d2aea5248f8c3b639cbb70254fe84e6d72aa9c234c5e98f907ba",
+        "archive_sha256": "512bce48e5bb53d4351a415be21c6430e33103ecca831439e7e6cfb7aa3fca7d",
+        "package_json_sha256": "80fdb6b9f633023846b6cdf352ea795523abcf27affd4d54afd4b50a90a87411",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@silvia-odwyer/photon-node",
+        "resolved": "https://registry.npmjs.org/@silvia-odwyer/photon-node/-/photon-node-0.3.4.tgz",
+        "integrity": "sha512-bnly4BKB3KDTFxrUIcgCLbaeVVS8lrAkri1pEzskpmxu9MdfGQTy8b8EgcD83ywD3RPMsIulY8xJH5Awa+t9fA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/6e/79/72e01281dca0d3171ad421c8022db69e5554bc96b024ae2d69133b24a66c6ef4c75f1904f2f1bf0481c0fcdf2c03dd13ccb08ba563cc491f90306beb7d7c",
+        "archive_sha256": "5a23015c1cd2c38e3c492dd96929985247b92f52d2ff0fb948d29edca52bc50a",
+        "package_json_sha256": "a1362f6a9e9d942d6b77555f1e40b19a6b3e2cc04bfb8af95e452a6f769fe7db",
+        "root_license_files": [
+          {
+            "path": "LICENSE.md",
+            "sha256": "c984c291167af70cc5fb7c7f4cec9b4560565110b766a718b3e12aba650327a7"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@smithy/core",
+        "resolved": "https://registry.npmjs.org/@smithy/core/-/core-3.35.1.tgz",
+        "integrity": "sha512-i4YPS4B6ts7bjn7UwLnGjiZdprOvHvgGobFZsYK3GIY3E5hIqtj0rReU69BcTpGp+fvtraSNXeG1l+jtJvF55w==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/8b/86/0f4b807ab6cedb8e7ed4c0b9c68e265da6b3af1ef806a1b159b182b7188637139848aad8f4ad1794ebd05c4e91a9f9fbedada48d5de1b597e8ed26f179e7",
+        "archive_sha256": "11c5bf8408030d506e8f37d9968864e137232901b6bf475c3ae3cbafefb512f5",
+        "package_json_sha256": "214f92aba7ee2716d7bc984887bf42213cdca828b73c4ba1ffd69cad2d69ecf0",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@smithy/credential-provider-imds",
+        "resolved": "https://registry.npmjs.org/@smithy/credential-provider-imds/-/credential-provider-imds-4.5.2.tgz",
+        "integrity": "sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/03/db/92767ef6a336d15128add1e89bd135bb9d7b8d3e569e334cdc1a427e9c4ead15c4836e79adc28c5b4c2141ba455072ccc3032bec77bfab4ddb8f4d7a7282",
+        "archive_sha256": "01ce4798200c999ed16b932c90adfa63e83cd9b437bd8809c3ac68ced0310612",
+        "package_json_sha256": "1e3b437bfaf7800cbcd770cc744084ab9e3b6c445196b707fde90e2f66e0403c",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@smithy/fetch-http-handler",
+        "resolved": "https://registry.npmjs.org/@smithy/fetch-http-handler/-/fetch-http-handler-5.8.0.tgz",
+        "integrity": "sha512-ycSJu3tFAQ4v04CBB0agqFMVsSQ1iG3yw+SpgxRqKfaURpQD4CZ8Wn0zPMmSnOuTpTh65Vz+EA0rMrw089wvkA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/c9/c4/89bb7b45010e2fd380810746a0a85315b12435886df2c3e4a983146a29f694469403e0267c5a7d333cc9929ceb93a5387ae55cfe100d2b32bc34f3dc2f90",
+        "archive_sha256": "e8d08130bff1b3aa99e738b9705fc9b5411dd6ce0f14371108a10ae968d79284",
+        "package_json_sha256": "3319f9f00b71ae85d49473c1f5d5a0151c89547d7724753abe8d189471decffe",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@smithy/node-http-handler",
+        "resolved": "https://registry.npmjs.org/@smithy/node-http-handler/-/node-http-handler-4.12.1.tgz",
+        "integrity": "sha512-ThMkboGeONWXAelq9FvGsuJC4rOi+qyC4/zhUF58xYpxUg5sQKx2VXZYJmtNjr4dSuBJ1HeJXETQILCz3wOHvw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/4e/13/246e819e38d59701e96af45bc6b2e242e2b3a2faac82e3fce1505e7cc58a71520e6c40ac76557658266b4d8ebe1d4ae049d477895c44d020b0b3df0387bf",
+        "archive_sha256": "e9d05919fbdee16d095febc4fb5a88da22a8e9e5bb7afc7fbd9d86e4fccf8eeb",
+        "package_json_sha256": "e685e00a1e28371390ffab5711e5300b81743b7a7d5f5bf1a994e40197467221",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@smithy/signature-v4",
+        "resolved": "https://registry.npmjs.org/@smithy/signature-v4/-/signature-v4-5.7.4.tgz",
+        "integrity": "sha512-tHy0K0VtqNd5Y7Y41h0a0Lhh0L1GzC08dTWg0F7vRJWFtTENg7IZikf3wQkanYIRdb7ngoIPMTmqgUi401fEeQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/b4/7c/b42b456da8d77963b638d61d1ad0b861d0bd46cc2d3c7535a0d05eef449585b5310d83b2198a47f7c1091a9d821175bee782820f3139aa8148b8d357c479",
+        "archive_sha256": "3429a3b77e64485b9bb173096a264d3b317547ecd301fb1fb24d4849275ed88e",
+        "package_json_sha256": "d4794533b211f0100c0be02a8d35b677db84d84a7061ad7c0c6bb0bc5394cf11",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@smithy/types",
+        "resolved": "https://registry.npmjs.org/@smithy/types/-/types-4.19.0.tgz",
+        "integrity": "sha512-r7jh49VJxGerfAcTQA6gXcKc+98zOp/tqRwzYjgOE+iSQsP6cEU1hq2QzbuipmP68QtYdY9wKEhiCQZIzHgZ4Q==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/af/b8/e1e3d549c467ab7c0713400ea05dc29cfbdf333a9feda91c3362380e13e89242c3fa70453586ad90cdbba2a663faf10b58758f70284862090648cc7819e1",
+        "archive_sha256": "119a9e5d65890c59e7531443dab575fa19dbf25f1fa125cb30d66ddef2954f28",
+        "package_json_sha256": "3de7840fd63a03c33bb687fbdc4794884598402600b2ee02c68856e78e41bd52",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@stablelib/base64",
+        "resolved": "https://registry.npmjs.org/@stablelib/base64/-/base64-1.0.1.tgz",
+        "integrity": "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/d5/b9/cf42a4b14ae737222e8c841caca160a0e7c8fdeda523b82499ac64a60f136ab72b488b493cbad51e9c0c1364de15e665d7606b15508f73781ab2fa304e49",
+        "archive_sha256": "0130711d2e0d3f87436c7825db1f35bd6134fba2eda64b0df43d781f9b6a596a",
+        "package_json_sha256": "7821116cc9ab0fb2542c1407ac5e34ff78bcc70b2d1295b753a9ea16134b3df7",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "1605b77bebe018db1fc27bd22fbcdeed1335c617937a124299a8b042b42b0fb6"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@types/node",
+        "resolved": "https://registry.npmjs.org/@types/node/-/node-26.6.4.tgz",
+        "integrity": "sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/95/d5/4f0c2ce3edfb1a199acb07436e1ee4ef25cb0d6accac040a8ca25aff720c6b2ddd716eac48af75c988f9c71c9502c63e6c345d6f9d18fd6969eb561e4972",
+        "archive_sha256": "bf2dbf11cfccd34681fc4d5e4d150afce77fd6610224757dbe6c92c8e5149700",
+        "package_json_sha256": "c0bfc803197d095b73cfdf344d2f23a9c92e096f2e1b141e9aaddc309421192d",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/@types/retry",
+        "resolved": "https://registry.npmjs.org/@types/retry/-/retry-0.12.0.tgz",
+        "integrity": "sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/c1/62/8e0a54d38a2cdc6615e73d8e308a4540c267581e9f2ae83982f84254cc032cc9c6fb1c1df62a1f51378fb4804c6398f9994804238144572060133de800bc",
+        "archive_sha256": "7c97db75aba1e8cb911b9ff349ddeae6153fd3b11fa3f3b772c1dd474ea9f8c8",
+        "package_json_sha256": "5d07cffb225eba4439977949ad9e8729620e51d1acc04f60fc8bad712183e063",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/agent-base",
+        "resolved": "https://registry.npmjs.org/agent-base/-/agent-base-9.0.0.tgz",
+        "integrity": "sha512-TQf59BsZnytt8GdJKLPfUZ54g/iaUL2OWDSFCCvMOhsHduDQxO8xC4PNeyIkVcA5KwL2phPSv0douC0fgWzmnA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/4d/07/f9f41b199f2b6df0674928b3df519e7883f89a50bd8e583485082bcc3a1b0776e0d0c4ef310b83cd7b222455c0392b02f6a613d2bf4768b82d1f816ce69c",
+        "archive_sha256": "2361fece924ff86b49991de66bd8e8db0e3bbfcb8d9e1a4443bae89a23cba89f",
+        "package_json_sha256": "13df46dd018fcf2e4231a0f47a1a007dd7d5441d9f8efb108f50f9fb64a17138",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "8d8c55319c7729d57be811c747452636688d54f19701ee0752b6b15ad3771d9a"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/balanced-match",
+        "resolved": "https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz",
+        "integrity": "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/04/ba/e011c453c17da8ea01b118e08dc8cbc64a9df96287ee633c3d87520c4d198aaadb40659554ebb6dd6fd3ebdaf50703cfa3de2dad25f8cee82ebee26c864c",
+        "archive_sha256": "9025508d9125eee531bbc49ce3ae560183975ad595f058c378bd56af4152fb16",
+        "package_json_sha256": "c984e6ae5c41fac085a07a732b665b22e0a26f28b61c692ba18ff458a8ecc95a",
+        "root_license_files": [
+          {
+            "path": "LICENSE.md",
+            "sha256": "d408f38ffa3355c5faec517153295338892eb0f1ea43f57874bb23c6075979b5"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/base64-js",
+        "resolved": "https://registry.npmjs.org/base64-js/-/base64-js-1.5.1.tgz",
+        "integrity": "sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/00/aa/5a6251e7f2de1255b3870b2f9be7e28a82f478bebb03f2f6efadb890269b3b7ca0d3923903af2ea38b4ad42630b49336cd78f2f0cf1abc8b2a68e35a9e58",
+        "archive_sha256": "b1b7a945b52685269083425216d6597e33d97bf21699d656e92fdb3eb5210a85",
+        "package_json_sha256": "9758f3ab8c45e07bb9a368e32f9a8b3729623bbf47cbbb205b32d674ab2a91f0",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "5b37224c080cdcc97c871ada971c224e9926370fe74f11b539aa1cf9f3b1aca1"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/bignumber.js",
+        "resolved": "https://registry.npmjs.org/bignumber.js/-/bignumber.js-9.3.1.tgz",
+        "integrity": "sha512-Ko0uX15oIUS7wJ3Rb30Fs6SkVbLmPBAKdlm7q9+ak9bbIeFf0MwuBsQV6z7+X768/cHsfg+WlysDWJcmthjsjQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/2a/8d/2e5f5e682144bbc09dd16f7d05b3a4a455b2e63c100a7659bbabdf9a93d6db21e15fd0cc2e06c415eb3efe5fbebcfdc1ec7e0f96972b03589726b618ec8d",
+        "archive_sha256": "f5a943ea290e66f64cb9adaaed2ff1b7c4ee02a4cca9d709d9c9c6c222512e82",
+        "package_json_sha256": "192208575108629a3272453526258511a5911a8127ab955371fb1f25ac79e99d",
+        "root_license_files": [
+          {
+            "path": "LICENCE.md",
+            "sha256": "def75ba75d6426f1c3f02addf8e175fbe6e0d8a82e541cbdffc16d2bd8fd7d6a"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/bowser",
+        "resolved": "https://registry.npmjs.org/bowser/-/bowser-2.14.1.tgz",
+        "integrity": "sha512-tzPjzCxygAKWFOJP011oxFHs57HzIhOEracIgAePE4pqB3LikALKnSzUyU4MGs9/iCEUuHlAJTjTc5M+u7YEGg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/b7/33/e3cc2c7280029614e24fd35d68c451ece7b1f3221384ada70880078f138a6a0772e29002ca9d2cd4c94e0c1acf7f882114b879402538d373933ebbb6041a",
+        "archive_sha256": "9701a257a1e25b0caf9740a48979d4d955e61c0e4dfa7508d4a789eb4e41caa0",
+        "package_json_sha256": "b12b643998a1a7febff9933b5a05e53045c722ff4de13fab751391b2d346a974",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "dfde54fedc270c2a305d9a9f993d93f706d34624455a2fd2d2a05ca34d8ae8c3"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/brace-expansion",
+        "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.12.tgz",
+        "integrity": "sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/62/8b/d0debce168b308ac38cd0cc90d4b4d6d79af77aa11211b9c72f1febe47497e770dca8bee6c0a822823de368ae2d94c75a881692d830543854d3d88d12299",
+        "archive_sha256": "ef8448ec78f20b692f04fa6d01f39b5ab34c66404bea3429f5a39c6c9e0be8b4",
+        "package_json_sha256": "8af7dc0916002266f3b01459ef691d9f834d8ecdb0e021263280a50b913d85fa",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "9c63a23124d68cd30cd316a94a1a0bca34f032786df6df69fc4b5f136bac8d2e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/buffer-equal-constant-time",
+        "resolved": "https://registry.npmjs.org/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz",
+        "integrity": "sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/cd/1a/54883c1dff193a003a8f3004c6f2f73d54fae4724ed3d3b388c748278e62409c79d35573501b7bdfbd636e899224c2ef4aaca740d6224a7ec7d357113a34",
+        "archive_sha256": "8f455159e342103e7854ed6a4cc73edbab144d857917c88edefea862f09fe75a",
+        "package_json_sha256": "2d3df7ecb57811cf6fc43be180d9801c7c70928e5388391a6f258d889449ef4e",
+        "root_license_files": [
+          {
+            "path": "LICENSE.txt",
+            "sha256": "751d0e80fb5c828f8c3de198cc760e1e05377e47c8263ab6ee2f10cdc19ba658"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/chalk",
+        "resolved": "https://registry.npmjs.org/chalk/-/chalk-6.0.0.tgz",
+        "integrity": "sha512-2uNTXIuTTxk7ciZgAU1BQcgnchcG0xXnrs6jzkQfj9SsRa9M2s5zE8WT96hS6KmG4MzWHSrvH43DF1m4XRkrFg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/da/e3/535c8b934f193b722660014d4141c827721706d315e7aecea3ce441f8fd4ac45af4cdace7313c593f7a852e8a986e0ccd61d2aef1f8dc31759b85d192b16",
+        "archive_sha256": "85d0ce26b8a6098d3826d9ec17cf16c7a9326dfce3f2545ecc1133581c981399",
+        "package_json_sha256": "5a853fc6dc0c529bc126f97645989e9d60d06a2e9b20f66a6b48b0e8ef9da3ef",
+        "root_license_files": [
+          {
+            "path": "license",
+            "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/cross-spawn",
+        "resolved": "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz",
+        "integrity": "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/b9/5d/903963f69d6ceccb668ca7c69189b862f5d9731791e0879487681f4e893184c834e2249cb1d2ecb9d505ddc966ed00736e6b85c9cd429c6b73b3294777bc",
+        "archive_sha256": "188c320cdc413adfec03098fda72af7a9b02152ba13d3a8f87f172d93ced38ea",
+        "package_json_sha256": "2e106cd9b4ae4e34ead35218371a0d4e172da72515a4f8f97d69a2e1fe3dee82",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "aaa78451b6fecd1b9c4594c796c133c0e90cad100372ff8bc6de615e9ef9adf1"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/data-uri-to-buffer",
+        "resolved": "https://registry.npmjs.org/data-uri-to-buffer/-/data-uri-to-buffer-4.0.1.tgz",
+        "integrity": "sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/d1/1f/629116faebc1c1ed00f14f5be4a6e501b6a739dd8c80c0cc0679414a4688d8fcd58abdd67ef5462d45f1a686a35b4644d256931b9b28578a9145bf671bfc",
+        "archive_sha256": "a5742b1b775d0b29fb562ff7e12f7ca19874e1c47322087b47a79230791642a1",
+        "package_json_sha256": "ad4f90a737ab5d8af4dad265e9218456e3779ca5beb70df38dd5feecf80121dd",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/debug",
+        "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
+        "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/44/6c/305a7c10be455f6af295b76d8518bc3ec5849dcc04709b4aeee83853540dee994e6165cdbc57790ee2cb6062bcab4e52e9baf808f468a28e5b408cd6dca8",
+        "archive_sha256": "89c1ac9c946ee8905a875837114528e97eeae35e03be3190584b2216af43e4a7",
+        "package_json_sha256": "ea8e33d63fe5f3a4c36609b6c3df8e2ef1f8b8ba2fc3a2e1e53cb27291f384af",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "3a61c6c96caf5c1d9b623fb9b04c822b783dfcb78aa7e49c76a3f643e6ed7f95"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/diff",
+        "resolved": "https://registry.npmjs.org/diff/-/diff-8.0.4.tgz",
+        "integrity": "sha512-DPi0FmjiSU5EvQV0++GFDOJ9ASQUVFh5kD+OzOnYdi7n3Wpm9hWWGfB/O2blfHcMVTL5WkQXSnRiK9makhrcnw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/0c/f8/b41668e2494e44bd0574fbe1850ce27d012414545879903f8ecce9d8762ee7dd6a66f6159619f07f3b66e57c770c5532f95a44174a74622bd99a921adc9f",
+        "archive_sha256": "ef51327ad58243cf533326219f5ebaa5029280bd0fafcc11f7c23156639593d6",
+        "package_json_sha256": "372a1ad33bcaded0234d5d327d1164c18968ee3f2e9f362ddd22e4489e91e369",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "eda81a415869e67809f6a9f3fd6056062cb83a462118e07eec5e92b2e0c40ce9"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/ecdsa-sig-formatter",
+        "resolved": "https://registry.npmjs.org/ecdsa-sig-formatter/-/ecdsa-sig-formatter-1.0.11.tgz",
+        "integrity": "sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/9d/a8/25dd162b6cdbfa91091e248a6de8d259cbcb702c1ff6bedcfac8df59e2f44a1cde3f41924811baa88402d283029d9e4b2e63793901d769e6583cb15a1571",
+        "archive_sha256": "487cb94dff2414772c3bb648a5e4e41c03cbbcc64263d08a56e36d735fc848fe",
+        "package_json_sha256": "f8c0805a13487310192db6ae04452c4315f5538ae87d7bc20de2904902c34027",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "50a6b24f8defc31a078aa9799a91d776f83948071574854f12473362aee74d0d"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/esbuild",
+        "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz",
+        "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/1c/a5/4b4bc76f208fb1a0a5bd926ab16d12ab9d61177c926bfc56618499a2a880747b4e7740d605a8e068b9330efe4e6c203e0cbc28940afbfc6fd338877db020",
+        "archive_sha256": "e045f94c235c7adc50e77ba2a579c7bec41b496b6b47c3a7845f7c1e19959a88",
+        "package_json_sha256": "9d0bc453f4e791553c4cc2298ba023b409241fd9801e494741666eb0f6051490",
+        "root_license_files": [
+          {
+            "path": "LICENSE.md",
+            "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/extend",
+        "resolved": "https://registry.npmjs.org/extend/-/extend-3.0.2.tgz",
+        "integrity": "sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/7e/3a/ae0b9f5c0fb0b25babab3572b4141b9f9197288861bcd304ee3ee8d7e7dd1c0794ed967db4136501e12fd601156a8577df665d8b3604be81074f2088a6fe",
+        "archive_sha256": "1d91d0b0faa50cba223fa937c7b5a4a662968b1d78b3e59dca5c917dd5cf72b2",
+        "package_json_sha256": "8d891b3f00bead114c4741d8a594e7aaa59114f53782ec9a9319a619709dc14f",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "97af7428f93afbab9bf79cd09254da1357161794f4255eb1b4599f04dd2d2e7c"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/fast-sha256",
+        "resolved": "https://registry.npmjs.org/fast-sha256/-/fast-sha256-1.3.0.tgz",
+        "integrity": "sha512-n11RGP/lrWEFI/bWdygLxhI+pVeo1ZYIVwvvPkW7azl/rOy+F3HYRZ2K5zeE9mmkhQppyv9sQFx0JM9UabnpPQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/9f/5d/5118ffe5ad610523f6d677280bc6123ea557a8d59608570bef3e45bb6b397facecbe1771d8459d8ae73784f669a4850a69caff6c405c7424cf5469b9e93d",
+        "archive_sha256": "4f897ea2594dc9cfb1250e7d4d0f65b4f105952a802fff2d06990bf1dc2c84f6",
+        "package_json_sha256": "d312f1993364bfb4f217f820ff7f9e0a6b1d87930bfc2605138ab660e8d29806",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "88d9b4eb60579c191ec391ca04c16130572d7eedc4a86daa58bf28c6e14c9bcd"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/fetch-blob",
+        "resolved": "https://registry.npmjs.org/fetch-blob/-/fetch-blob-3.2.0.tgz",
+        "integrity": "sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/ef/20/10a43d94309ccb8b50eabfba856273db68fc7b65f14ae8f888c50e0f7e418fc8dca5d94831f9afee994a2798aaa384ce039df6ccbdd5faa2d5eaf37b2841",
+        "archive_sha256": "4abf0d58a4977fce2240e08c280a2bc59f5363e9553a4f236cea6d74cce40c52",
+        "package_json_sha256": "ee47bb73168049962586a09317017c44b1b10b2a90fc74e5c4561efdb361411b",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a5edccac92c3aa845694dcfaa72a0c098c1ae40d5ca6a37e4e59d778cf8e29bd"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/formdata-polyfill",
+        "resolved": "https://registry.npmjs.org/formdata-polyfill/-/formdata-polyfill-4.0.10.tgz",
+        "integrity": "sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/6e/e7/b01f332f60bdbd8dd7904d520b79c49a64a9edfd12568e8642179396eb467aeff1a648b06438533baa1d4f237cc536d25b6992f9790bb5bcb7daccec23e2",
+        "archive_sha256": "1ff73b4138ea33f0fd0f41b67910409a2c8eb1b71a4cf1a4f8ab738a6e8487e9",
+        "package_json_sha256": "09767e86a596171ef17e8ec4977eb11f530654740fa3105dbbd7cd545753421e",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "435a6437e47e5e479942255680e7fbe5f333d55234ada1c35f6115ca641d5bb4"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/gaxios",
+        "resolved": "https://registry.npmjs.org/gaxios/-/gaxios-7.3.1.tgz",
+        "integrity": "sha512-kB3rzJV7d9juLZh8/56QTXCwQfxyhdOMdyYk1HdQKFtF8TJTDTZQJtixWIwXdE9Jji91mC41DUNpjleo4L4eAQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/90/1d/ebcc957b77d8ee2d987cff9e904d70b041fc7285d38c772624d47750285b45f132530d365026d8b1588c17744f498e2f75982e350d43698e57a8e0be1e01",
+        "archive_sha256": "439c4c3b435011c92f9c725bd461e2253a4e0c6d780f1b7057a45f591c69999c",
+        "package_json_sha256": "6d8ac1fadd9a3e890a0407f04f49dd8b919e418e46d10e65df9cba295ce319ad",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/gaxios/node_modules/agent-base",
+        "resolved": "https://registry.npmjs.org/agent-base/-/agent-base-7.1.4.tgz",
+        "integrity": "sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/32/70/3e613f1fc1f24f801c779bad0c36a6a49b7d173a4c88a07d72ea1b9342f0b43f0646ee48bc35a70b05cacf6cda28f2f119cbb269ba4efe8cc3be094a2f4d",
+        "archive_sha256": "7dd4a61668a9a4e8d4e903f1a254f94d53dafd3f316f2b9b597c5ad8c79cb57e",
+        "package_json_sha256": "7a08cb2fe1d2b788e0a7bf6a9b7597dbeeeae804698c2fbd15de786d284d327c",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "8d8c55319c7729d57be811c747452636688d54f19701ee0752b6b15ad3771d9a"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/gaxios/node_modules/https-proxy-agent",
+        "resolved": "https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-7.0.6.tgz",
+        "integrity": "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/bc/af/4fe7f8947dd97de4023e255c94b88715b5de287efb6b3abdc736d336cb10bd6e731b11da77c74d4e8503678dbf082588b7f159531379815f071fbf2c2e4b",
+        "archive_sha256": "960f89e8e5240882f64249d04a538421dd39d62ffacc138544647cc3251bc0e0",
+        "package_json_sha256": "b08c1977d38f14f4be7fb5be33aab545e3e5a6e2e12100733a6ad97dec995206",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "8d8c55319c7729d57be811c747452636688d54f19701ee0752b6b15ad3771d9a"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/gcp-metadata",
+        "resolved": "https://registry.npmjs.org/gcp-metadata/-/gcp-metadata-8.1.2.tgz",
+        "integrity": "sha512-zV/5HKTfCeKWnxG0Dmrw51hEWFGfcF2xiXqcA3+J90WDuP0SvoiSO5ORvcBsifmx/FoIjgQN3oNOGaQ5PhLFkg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/cd/5f/f91ca4df09e2969f11b40e6af0e7584458519f705db1897a9c037f89f74583b8fd12be88923b9391bdc06c89f9b1fc5a088e040dde834e19a4393e12c592",
+        "archive_sha256": "f9c3f2c868755c074152ecd291733c56c536678b0284c34c3613365bc730db94",
+        "package_json_sha256": "1d50f7d982a12c539356257f1b26631ec06f569b804a596dc926ec8773224fa4",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/get-east-asian-width",
+        "resolved": "https://registry.npmjs.org/get-east-asian-width/-/get-east-asian-width-1.6.0.tgz",
+        "integrity": "sha512-QRbvDIbx6YklUe6RxeTeleMR0yv3cYH6PsPZHcnVn7xv7zO1BHN8r0XETu8n6Ye3Q+ahtSarc3WgtNWmehIBfA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/41/16/ef0c86f1e9892551ee91c5e4de95e311d32bf77181fa3ec3d91dc9d59fbc6fef33b504737caf45c44eef27e987b743e6a1b526ab7375a0b4d5a67a12017c",
+        "archive_sha256": "4451f58e2f5a4ef27ae8b4ba25b64be97d3a8413dc8614a4321a10d418eee6d7",
+        "package_json_sha256": "d263e50dd1a43aee9acda4d7f066e66b0d0bde1f2852ea6e7153750a5e3a3e52",
+        "root_license_files": [
+          {
+            "path": "license",
+            "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/google-auth-library",
+        "resolved": "https://registry.npmjs.org/google-auth-library/-/google-auth-library-10.9.1.tgz",
+        "integrity": "sha512-i1ydyHrqcIxXkWh/uBmVkzCvIuq5yiK2ATndIe5XxKholrG/MTYP9xGYka4sQhrbIAgGjL2B6NOE7rFaiF3fXw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/8b/5c/9dc87aea708c5791687fb819959330af22eab9ca22b60139dd21ee57c4a86896b1bf31360ff7119891ae2c421adb2008068cbd81e8d384eeb15a885ddf5f",
+        "archive_sha256": "499530b85428ea27785a8ea1772458d6b821d2c917cbc1ae8f8843dca9b5327a",
+        "package_json_sha256": "d502e0b8f9b83f97f5f78aaee9ba5e7cd7067a81d2f8f0215c47b2877814a9c9",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/google-logging-utils",
+        "resolved": "https://registry.npmjs.org/google-logging-utils/-/google-logging-utils-1.1.3.tgz",
+        "integrity": "sha512-eAmLkjDjAFCVXg7A1unxHsLf961m6y17QFqXqAXGj/gVkKFrEICfStRfwUlGNfeCEjNRa32JEWOUTlYXPyyKvA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/78/09/8b9230e30050955e0ec0d6e9f11ec2dff7ad66eb2d7b405a97a805c68ff81590a16b10809f4ad45fc1494635f7821233516b7d891163944e56173f2c8abc",
+        "archive_sha256": "3a921c0d4e333f94be726fc2c0ce10025f8d87f8fae5affa01a52b2da7970bbd",
+        "package_json_sha256": "74980e1fd2db59c71a20ddf6accf42704c67da3b905fc5d2134ee39807dad42f",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/graceful-fs",
+        "resolved": "https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.11.tgz",
+        "integrity": "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/45/b2/79fe398570d342703579a3d7939c12c9fc7b33595d0fef76dcf857f89d2feb263f98692e881b288e2f45680585fe9755ab97793ade1fcaac7fa7849d17bd",
+        "archive_sha256": "3961374aa161e6fed80d6f4b6aaf2fb7eafd2c9e5be34e865b375f0114dd099c",
+        "package_json_sha256": "5747d4ba6b17165c6ecac30ab3a331715f41c7ad546e1f1574dab1bdcb116181",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "f65c5d9f22a317b2a10803bd1868461ce6499c2ed7217bc80c0cc772a748789c"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/grok-mermaid",
+        "resolved": "https://registry.npmjs.org/grok-mermaid/-/grok-mermaid-0.2.3.tgz",
+        "integrity": "sha512-/4KopAbsjvuRP9MdPtlDjOHUmUVEohOX73JNcsWpzAtFxh+bq5+Dhb6gzvRieLDwIPQIR3/vy8V1NNTuz4Zsmg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/ff/82/a8a406ec8efb913fd31d3ed9438ce1d4994544a21397ef724d72c5a9cc0b45c61f9bab9f8385bea0cef46278b0f020f408477fefcbc57534d4eecf866c9a",
+        "archive_sha256": "41d02063f53261fe869acb6da0b01838d6ece095d73a7063645ce0442f0d8c88",
+        "package_json_sha256": "2bdc21cc50b7af0096d4000050fe210c58b7bdedb6e6a07f8ecd2a6f2ded2e53",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "d7aefc12620699f8cebff08097f5ec76b984d1ab19d4f5f10608b916fa62ba2f"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/highlight.js",
+        "resolved": "https://registry.npmjs.org/highlight.js/-/highlight.js-10.7.3.tgz",
+        "integrity": "sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/b7/37/1415aba2b1628d1da4643785a397f640d3b8043408c597727f738f34769ae4193839110b2d81a345a817d4a82ab9e2465120472b793b00805fe6daab83ec",
+        "archive_sha256": "292968c31d106f910fdd2e4d73a98d9bdf621e5f6e0244d9f3fbfc3572bea91e",
+        "package_json_sha256": "4f657beb931cb9613e5173414855b2a01e698696c0661d21973bfbbd50e184cf",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "6c081431591d9df696c82dc598fe1423765b8a299b200ed00b281afd0f64c490"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/hosted-git-info",
+        "resolved": "https://registry.npmjs.org/hosted-git-info/-/hosted-git-info-9.0.3.tgz",
+        "integrity": "sha512-Hc+ghLoSt6QaYZUv0WBiIvmMDZuZZ7oaDvdH8MbfOO4lOsxdXLEvuC6ePoGs9H1X9oCLyq6+NVN0MKqD+ydxyg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/1d/cf/a084ba12b7a41a61952fd1606222f98c0d9b9967ba1a0ef747f0c6df38ee253acc5d5cb12fb82e9e3e81acf47d57f6808bcaaebe35537430aa83fb2771ca",
+        "archive_sha256": "b5ba1cfa593f6262c482c2cb34d5703a9f187b29aaaaf1dc045503ebdaceb673",
+        "package_json_sha256": "7c3774e4843581832aec08133a19df318625a91c1ca6c90fef1a328d4e02705e",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "c1476ec53119cd4c8370f91f5152ac76312a29b4fae2d49b5e0e0970fe0fa5ee"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/http-proxy-agent",
+        "resolved": "https://registry.npmjs.org/http-proxy-agent/-/http-proxy-agent-9.1.0.tgz",
+        "integrity": "sha512-2NxoveTT58mjYT4n3RPTEfCZGLMbidoO8XEieXfpSYxu+PQJ1qpx4ypwH6N+uF9twBPIvRRgvkvW5HUTYWENig==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/d8/dc/68bde4d3e7c9a3613e27dd13d311f09918b31b89da0ef171227977e9498c6ef8f409d6aa71e32a701fa37eb85f6dc013c8bd1460be4bd6e4751361610d8a",
+        "archive_sha256": "498cf1c537eabe9bde84d6b07d87f67d63849f7a99c2e2bf98ea7c49af97a76d",
+        "package_json_sha256": "03703c6c566b00d8fd85ba57cd6460b14d0b762f694e26f0efbfe4e5384e3081",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "71368fd0f5b4129191e9afcd1e1ef2dc89a9090d3e4d80bbab92dafd032b3bef"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/https-proxy-agent",
+        "resolved": "https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-9.1.0.tgz",
+        "integrity": "sha512-ag87y7cJJ9/3+GxFr8Oy4O5faDsGRGnBGsJj/YjOSsSx/5eadKLYTMPlzuR6obgoCDDm0abAAZitXXQkMOPSpA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/6a/0f/3bcbb70927dff7f86c45afc3b2e0ee5f683b064469c11ac263fd88ce4ac4b1ff979a74a2d84cc3e5cee47aa1b8280830e6d1a6c00198ad5d742430e3d2a4",
+        "archive_sha256": "f05f86b8d218916a4e8396ce375dcbd547e4ca5aec8fd9adeb2528b5dde940ed",
+        "package_json_sha256": "50d17385a8c63c0ed0e138069617d4d9236ce92bddbe6f52cfec0e3a834c97a0",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "8d8c55319c7729d57be811c747452636688d54f19701ee0752b6b15ad3771d9a"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/ignore",
+        "resolved": "https://registry.npmjs.org/ignore/-/ignore-7.0.8.tgz",
+        "integrity": "sha512-YYNsSlXBjMk92SKnkwvB5LOVSa6OznlFUGcsvrFgNJbJCd0M1XKeFVRc8ZByeCqz32FivYNHJVooLmdqrmvp/Q==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/61/83/6c4a55c18cc93dd922a7930bc1e4b39549ae8ece794550672cbeb1603496c909dd0cd5729e15545cf19072782ab3df6162bd8347255a282e676aae6be9fd",
+        "archive_sha256": "456c4882dee0d43f9c75de2a3e77f1f5ac8b6be55bbb9e0c56bd00bd531d3c3c",
+        "package_json_sha256": "809e28f354aca6ac273e9d455ee2ebd8f2c0e8676d0b62417a5b11ddda4ba8cd",
+        "root_license_files": [
+          {
+            "path": "LICENSE-MIT",
+            "sha256": "9c94db23dc4b1e9aaee5d195668b916afc71efed54af226b66cf0ccc4389c1c0"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/isexe",
+        "resolved": "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz",
+        "integrity": "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/44/7c/4c2e9f659ca1c61d19e0f5016144231b600715a67ebdb2648672addfdfac638155564e18f8aaa2db4cb96aed2b23f01f9f210d44b8210623694ab3241e23",
+        "archive_sha256": "47cfe872e088e28c53b736fef305324b57cc1cfc9f72a9b0f769f92731cb8359",
+        "package_json_sha256": "395c2af9abeeaafe7391974c1eacfb2a2bdeef187f21c3f5582c49e0368e59bf",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/jiti",
+        "resolved": "https://registry.npmjs.org/jiti/-/jiti-2.7.0.tgz",
+        "integrity": "sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/00/2f/fb2687c9bd91abae779635a12725e38b531f89946b7bb4d6b4c198913d3e0c635c267ca8eddbee8eda9daecf6fac92597c39966624c36a7a47bb90a6cd81",
+        "archive_sha256": "8dd0d365fb49c0e7cc42d6a00df6fb2da9056fc24492094346fc34ecdbcf28ca",
+        "package_json_sha256": "aab8aafc42d9aeec14a6e2fe0e15ea1514c0c205a624055a7e776f2ec456283c",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "46231df5a7733c3f52f11b71f3df61813007745b62b09031acfb45fb42d75082"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/json-bigint",
+        "resolved": "https://registry.npmjs.org/json-bigint/-/json-bigint-1.0.0.tgz",
+        "integrity": "sha512-SiPv/8VpZuWbvLSMtTDU8hEfrZWg/mH/nV/b4o0CYbSxu1UIQPLdwKOCIyLQX+VIPO5vrLX3i8qtqFyhdPSUSQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/4a/23/efffc56966e59bbcb48cb530d4f2111fad95a0fe61ff9d5fdbe28d0261b4b1bb550840f2ddc0a3822322d05fe5483cee6facb5f78bcaada85ca174f49449",
+        "archive_sha256": "4c4f502953cfb36cfe1c6c4989676bf9b76899a253237fc0220814b88ff903b6",
+        "package_json_sha256": "1c3b07ce46552112606922f0782b316383529b3da935d637c0606cb38a8caa5a",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "def82c085d05e795fe6a9cb5b70c48e022212355afc0e91d4de047cade28df06"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/json-schema-to-ts",
+        "resolved": "https://registry.npmjs.org/json-schema-to-ts/-/json-schema-to-ts-3.1.1.tgz",
+        "integrity": "sha512-+DWg8jCJG2TEnpy7kOm/7/AxaYoaRbjVB4LFZLySZlWn8exGs3A4OLJR966cVvU26N7X9TWxl+Jsw7dzAqKT6g==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/f8/35/a0f230891b64c49e9cbb90e9bfeff031698a1a45b8d50782c564bc926655a7f1ec46b3703838b251f7ae9c56f536e8ded7f535b197e26cc3b77302a293ea",
+        "archive_sha256": "f6f34e4e453aca8753e9f644ad4fa297ae7011030bfff9e909bf34e31c4cc364",
+        "package_json_sha256": "9439fa620a0f7a930950239ec4445d902c7d29590cddf0985a83bea531b2e81e",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "18a2bfd070b08bd1cc538c90f59989a9523e070e72fe9a9068593c3e82f44fa7"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/jwa",
+        "resolved": "https://registry.npmjs.org/jwa/-/jwa-2.0.1.tgz",
+        "integrity": "sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/85/11/74e1fa8920ff006db92ae4d28637405baf7271950faa859b9f5d5af40efba32b2f776426d764c1c32f810eb687526c25b13aa47c312d6d5c0e61c2a0970e",
+        "archive_sha256": "c8bc0cf9fbbdc9d2f1b6f3f97ab9c1f70130eec6b153f29fd69baa5a6aa8341d",
+        "package_json_sha256": "53610fa0143c2cdef9d280e0c029ededf688930648358d4f3e35a081d75219d8",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "3320319f8a5f42bc4254e65471eca7a5ea4dc8c883c4c24b4868e36b14890bcf"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/jws",
+        "resolved": "https://registry.npmjs.org/jws/-/jws-4.0.1.tgz",
+        "integrity": "sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/10/a2/3f33fcaa3e7706514878e31cf43f14a275716bffeaf4a40ef4fa0218863bfe7adef2c4cfacdbd63e5460e4a2f4687d07a6d1fb3b52f7f8f9898077245db8",
+        "archive_sha256": "ed3a5fb027f8ce1006c8e30a37e88e7cd49824d4873efca8765304b20fe92e12",
+        "package_json_sha256": "a934389f53e2ac8909d5399410c1ede3e35397be9e9f521bde25b61e1fee0b2f",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "3320319f8a5f42bc4254e65471eca7a5ea4dc8c883c4c24b4868e36b14890bcf"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/long",
+        "resolved": "https://registry.npmjs.org/long/-/long-5.3.2.tgz",
+        "integrity": "sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/98/d0/206751a6c8d843ec0baa9d31b7fd5436ea8efad3e65804f2a33efba03bcfa72db61f5fa4d5a493ec781be8a5b758faaa59fe52949e611cd4b799612dd000",
+        "archive_sha256": "68033e466773df7d52c9e59341bb729d83716cd920c56460395724456d646b26",
+        "package_json_sha256": "982e554a35d140981c7962fbba77855563e5890de200f8dc0a249135e4d9acb8",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/lru-cache",
+        "resolved": "https://registry.npmjs.org/lru-cache/-/lru-cache-11.5.3.tgz",
+        "integrity": "sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/53/83/7c160ce65b173c935547f0aafa950835f14ec58ef6f2eb05c75515ff659ec8c166d1320ad16cfd16adbe6ae4d5629ebca9e1241a9a91ca76fb5e708b7152",
+        "archive_sha256": "d18739bbd7d0091d30d2cca58e120c8b70ac09a5a21aa4b2b3e9afb2dc4084d8",
+        "package_json_sha256": "c085d38560434a8915fd1817cd17cee316118078b07f40302b32ef4d8bc760f4",
+        "root_license_files": [
+          {
+            "path": "LICENSE.md",
+            "sha256": "8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/marked",
+        "resolved": "https://registry.npmjs.org/marked/-/marked-18.0.11.tgz",
+        "integrity": "sha512-HnslJfsZkRPBDJRHvVtAaWlZHEpSu7u8LgQuJCELjRKuWR+hpq4A7sLq3p8HaI9ypVoXDXxV34CsQJEe1+J5Aw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/1e/7b/2525fb199113c10c9447bd5b406969591c4a52bbbbbc2e042e24210b8d12ae591fa1a6ae00eec2eade9f07688f72a55a170d7c55df80ac40911ed7e27903",
+        "archive_sha256": "cef55476c7551e73e1a89118fa69fee9f7eef9960e9c774ad266e22ee966b994",
+        "package_json_sha256": "5a43adf708c24038a44ecd5f642bc55e3226f9e8e7997fca20272f32037970e3",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "8e3a3f82f59a60958f56ca08f445647c32a4733dc7ca6c2c46f6eb898471ab9c"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/minimatch",
+        "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-10.2.6.tgz",
+        "integrity": "sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/be/92/d012cf952c2af59d4d015d2d3b99a628170943007d209e042ebadb71230bad0c510c1ead9b957fbcbe98310dd2b72753f08c22627a9efb3a2b536782e5d4",
+        "archive_sha256": "5a3d2c8074a28229665727e47b8a1090941856a7962905efe05d20d3760355f8",
+        "package_json_sha256": "bb847ba240909c9a36d4eaeb4e0efdc3e31182aeef208c1611259a48f282ea75",
+        "root_license_files": [
+          {
+            "path": "LICENSE.md",
+            "sha256": "2c7c5d22ed5a8ee968c64757710979afcd77438c48b4a265b94e615babd8a901"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/ms",
+        "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",
+        "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/e8/59/73b9b4cb646dc9d9afcd542025784863ceae68c601f268253dc985ef70bb2fa1568726afece715c8ebf5d73fab73ed1f7100eb479d23bfb57b45dd645394",
+        "archive_sha256": "f6616e15e530ed552f9daa2d3ce71963947c6bc7c98c9b64fd3e673fd02622c6",
+        "package_json_sha256": "1a6b4d9739790c0b94ab96c8cc0507e281c164c311ff4fbf5e57fb8d26290b40",
+        "root_license_files": [
+          {
+            "path": "license.md",
+            "sha256": "1662fae9b5314d11cf51284e2dcd1f006a354f7343f08712a730fcff9a359801"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/node-domexception",
+        "resolved": "https://registry.npmjs.org/node-domexception/-/node-domexception-1.0.0.tgz",
+        "integrity": "sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/fe/32/99a0ca70d05f06470978fde2d138f03771f717b4b0293f44332e6513fc7b8f0995b207b218f59acc78ac363bf9c522a3d00773d533d6989b4177d760170d",
+        "archive_sha256": "eba234134890897807b85c2bc67cd32d0242eb9be1d1c62513797fdaab60c971",
+        "package_json_sha256": "1ff59c11ab7aef2b2f7fa393e8b871362e21b8a2defbd4922a8f8a5082fbfa06",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "8ec1386f7f078b0c7cd25341cd80f332df902371cda9f40c10ec2b4007b420b7"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/node-fetch",
+        "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-3.3.2.tgz",
+        "integrity": "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/75/10/7bf2cacdfe5ea0a96ba56a1f52af17989f179d7481b7d3e18ea8affd3a52d5c8b8371cf9ebe92a8e59358e5ca4700b6786602919e7d34db9282f4aba6038",
+        "archive_sha256": "615af90e363f8f276b4b54f8e6c163cf3686dce1d8867dd7e52cbed4d38d2dab",
+        "package_json_sha256": "058acbc2474901ffa0b95c3f9d0903111426b118b55f928300e448d7252fc27d",
+        "root_license_files": [
+          {
+            "path": "LICENSE.md",
+            "sha256": "3e2c11dcf3f17ab585baab8faba54772d7872f1c6e026022acd4b4006665efb0"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/openai",
+        "resolved": "https://registry.npmjs.org/openai/-/openai-7.19.0.tgz",
+        "integrity": "sha512-MX2s3u2L5racTO0CC/SWpCOasJQBCJrqLKXK+l82cAhdeF8mPMBEe/gxMm0ZFa2xpKpOFLRjxv5afYEZbBXmbQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/31/7d/acdeed8be6b69c4ced020bf496a4239ab09401089aea2ca5cafa5f3670085d785f263cc0447bf831326d1915adb1a4aa4e14b463c6fe5a7d81196c15e66d",
+        "archive_sha256": "597532dcb9051ee8aa5edadedb57b798b42add68cc5aec1d67e994d0cfad07f1",
+        "package_json_sha256": "8a855f81669a434ce894e2d1ae2f18e9050e93c57d14091f155cd543056bdc30",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "636eb7d79da9bb6d515a4b3fd417aa26679eb3cf16396ddab4bc55fa74e616e4"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/p-retry",
+        "resolved": "https://registry.npmjs.org/p-retry/-/p-retry-4.6.2.tgz",
+        "integrity": "sha512-312Id396EbJdvRONlngUx0NydfrIQ5lsYu0znKVUzVvArzEIt08V1qhtyESbGVd1FGX7UKtiFp5uwKZdM8wIuQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/df/5d/88777f7a11b25dbd138d967814c7437275fac843996c62ed339ca554cd5bc0af3108b74f15d6a86dc8449b1957751465fb50ab62169e6ec0a65d33cc08b9",
+        "archive_sha256": "21112bb484de3120e9e85f1ebe6a66125ecfda48072ae48b0d202693337fb558",
+        "package_json_sha256": "ee4376966f4f8db899019ec955b3dc25fd972e12587a0da10d8313dc7b617b3f",
+        "root_license_files": [
+          {
+            "path": "license",
+            "sha256": "48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/partial-json",
+        "resolved": "https://registry.npmjs.org/partial-json/-/partial-json-0.1.7.tgz",
+        "integrity": "sha512-Njv/59hHaokb/hRUjce3Hdv12wd60MtM9Z5Olmn+nehe0QDAsRtRbJPvJ0Z91TusF0SuZRIvnM+S4l6EIP8leA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/36/3b/ffe7d8476a891bfe14548dc7b71ddbf5db077ad0cb4cf59e4e9669fe9de85ed100c0b11b516c93ef27467dd53bac1744ae65122f9ccf92e25e8420ff2578",
+        "archive_sha256": "30eafeed6fdc25fb2ca24f34c37796d9f98f0bf5e156452b98a2c356762f6322",
+        "package_json_sha256": "42b3ae6c99ec959249f8eb4d3da7fdb44ec1f96ec627fa7f9ca5487a4e80963f",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "cd519ad3d7e012427f978dfb2e3b92ee403d189d7b859ba6bf68fd7e12ca456f"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/path-key",
+        "resolved": "https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz",
+        "integrity": "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/a2/39/9e374a9dfb2d23b3312da18e3caf43deab97703049089423aee90e5fe3595f92cc17b8ab58ae18284e92e7c887079b6e1486ac7ee53aa6d889d2c0b844e9",
+        "archive_sha256": "4b8999acb914830edcd3c5b8fec632b32c6bc759ac3edc86336f5a9e08ba7b92",
+        "package_json_sha256": "25594dab72681c910d9cc919263a4daf27d77a75e0d2c26a4d958d6d6b798f86",
+        "root_license_files": [
+          {
+            "path": "license",
+            "sha256": "48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/proper-lockfile",
+        "resolved": "https://registry.npmjs.org/proper-lockfile/-/proper-lockfile-4.1.2.tgz",
+        "integrity": "sha512-TjNPblN4BwAWMXU8s9AEz4JmQxnD1NNL7bNOY/AKUzyamc379FWASUhc/K1pL2noVb+XmZKLL68cjzLsiOAMaA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/4e/33/4f6e537807001631753cb3d004cf82664319c3d4d34bedb34e63f00a533c9a99cdfbf4558049485cfcad692f69e855bf9799928b2faf1c8f32ec88e00c68",
+        "archive_sha256": "fd78914ba57caecbedbb928fb369510b01fa32e1c0fbca7b63ca16623a7a8968",
+        "package_json_sha256": "23888ecc7abd83a8e98e132da556eda2172792cc04c4e6d157b590667802bd2a",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "aaa78451b6fecd1b9c4594c796c133c0e90cad100372ff8bc6de615e9ef9adf1"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/proper-lockfile/node_modules/retry",
+        "resolved": "https://registry.npmjs.org/retry/-/retry-0.12.0.tgz",
+        "integrity": "sha512-9LkiTwjUh6rT555DtE9rTX+BKByPfrMzEAtnlEtdEwr3Nkffwiihqe2bWADg+OQRjt9gl6ICdmB/ZFDCGAtSow==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/f4/b9/224f08d487aad3e79e43b44f6b4d7f81281c8f7eb333100b67944b5d130af73647dfc228a1a9ed9b5800e0f8e4118edf6097a20276607f6450c2180b52a3",
+        "archive_sha256": "df61c6d197aadc6ab17b489103533bbb0223413558d4222411c162155c30b428",
+        "package_json_sha256": "c0733eb226e2a6572c7c9c2bc8b4a0efabe233971b0dee1e6d62c6898257e1da",
+        "root_license_files": [
+          {
+            "path": "License",
+            "sha256": "01ad164273e8e095abc9dbd1c21e194594a671af7d528cb43ee7b4c903ba7da3"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/protobufjs",
+        "resolved": "https://registry.npmjs.org/protobufjs/-/protobufjs-7.6.6.tgz",
+        "integrity": "sha512-dYDWdjSl5RNb7SgPxGQcRU+GtvP7s2fpkrY0r432PcOIaZ0/rBcxEZnQN67iJhFuQiVw754JDoPruPCNdGsbjg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/75/80/d67634a5e5135bed280fc4641c454f86b6f3fbb367e992b634af8df63dc388699d3fac17311199d037aee226116e422570ef9e090e83ebb8f08d746b1b8e",
+        "archive_sha256": "df0241b3046b505d27396da6eef107f14dffb108f77aa89cfd9611a928eb6dfe",
+        "package_json_sha256": "0e56b70de03bffc143e74311b42ae22b557370a4a1f4b5066568fbc77857639a",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "49d6a1c9a623784c61c6cb70f773f3457faceb1914a13c8560a9823b7631950c"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/proxy-agent-negotiate",
+        "resolved": "https://registry.npmjs.org/proxy-agent-negotiate/-/proxy-agent-negotiate-1.1.0.tgz",
+        "integrity": "sha512-N8IBcM3UgCVzz2L2Lqv8DVntDnnC8/hiV4nEDUPkqq72TPUgYWjQc+bdZlBPZK9LzPAvOY//gAt0S0DApoOXWQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/37/c2/0170cdd4802573cf62f62eabfc0d59ed0e79c2f3f8625789c40d43e4aaaef64cf5206168d073e6dd66504f64af4bccf02f398fff800b744b40c0a6839759",
+        "archive_sha256": "6eec23d5d381a8b0ffafe91c19876d3a052e463618695981a7529f3a8bca1997",
+        "package_json_sha256": "7b7c2579ea138d20d4f7699ca78ef16c526f35168dbf694f1d47cc861b0954d4",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/quickjs-wasi",
+        "resolved": "https://registry.npmjs.org/quickjs-wasi/-/quickjs-wasi-3.6.2.tgz",
+        "integrity": "sha512-FCqGtGOrMgzUiIrMNMA2YnsOxCNwo31dzqXvclXUC6xeT35NJLKXQJsvbeCTjvoFAwZgEAPg8U6+KAPDGXn8Mg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/14/2a/86b463ab320cd4888acc34c036627b0ec42370a37d5dcea5ef7255d40bac5e4f7e4d24b297409b2f6de0938efa050306601003e0f14ebe2803c31979fc32",
+        "archive_sha256": "f1f4349f19a2d849e33ea0ae9bec2e7062b8839f4eceb17c9051ddbaa2720982",
+        "package_json_sha256": "efa1d0d3b440dd7a31f55690d414f9c7f59e6a15395075efee884454c86715c2",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "f7735da3b2531ddf451937117343cfadb853fd8054b499e7a70695dc57ffd184"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/retry",
+        "resolved": "https://registry.npmjs.org/retry/-/retry-0.13.1.tgz",
+        "integrity": "sha512-XQBQ3I8W1Cge0Seh+6gjj03LbmRFWuoszgK9ooCpwYIrhhoO80pfq4cUkU5DkknwfOfFteRwlZ56PYOGYyFWdg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/5d/00/50dc8f16d4281ed127a1fba8238f4dcb6e64455aea2cce02bda280a9c1822b861a0ef34a5fab8714914e439249f07ce7c5b5e470959e7a3d838663215676",
+        "archive_sha256": "7521d8445e845475e888ccb7af473c4afb17aabafefe35a23371a8a8c79b8084",
+        "package_json_sha256": "7ae366b6b8133485abf27abe657c0ffa2d32600611ecf2c4fe5246165bed73d5",
+        "root_license_files": [
+          {
+            "path": "License",
+            "sha256": "01ad164273e8e095abc9dbd1c21e194594a671af7d528cb43ee7b4c903ba7da3"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/safe-buffer",
+        "resolved": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.2.1.tgz",
+        "integrity": "sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/ae/9d/d2a34eca71d9a629b1af81a37141226bedb1954959394bd12ad45fa9a5b468ef4f9879a0f1930e4377c34f37e183e9b8e7626d95b8fb825e6a6e62f9825d",
+        "archive_sha256": "5d181804516c4a693a384272a7bd0e42d17e0d4b301ccfbe408669ccafdcb3e8",
+        "package_json_sha256": "e4018fdbfe625433371f48274fee26f520bbe865e0d8c85bf3aa07424134b90c",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "c7cc929b57080f4b9d0c6cf57669f0463fc5b39906344dfc8d3bc43426b30eac"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/semver",
+        "resolved": "https://registry.npmjs.org/semver/-/semver-7.8.5.tgz",
+        "integrity": "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/63/bf/ca0ec6fc2e3a28669c1aa86cae94ee8342592c8029dc7211c693eb19218e1206f52870c044147e54af57c8e1d57e26f974c3a723bee71a222e34a6e462a0",
+        "archive_sha256": "d85045d4300d7d57c891336b95df532e73f34c22ffcd222452b6d08b9d127d5d",
+        "package_json_sha256": "7c94cb7f2a53c27b20d76386ec144c062894dbcc909cfabd0f728c37874b1776",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/shebang-command",
+        "resolved": "https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz",
+        "integrity": "sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/90/7c/6bdb366962d766acdd6a0e3aeb5ff675ad1d641bc0f1fa09292b51b87979af5ecc26704d614d6056614ce5ada630d7fc99a7a62e0d8efb62dbdb3747660c",
+        "archive_sha256": "9acba5bd18a51e9cdf5898380e4df63f803e1844def64ae1a46f88cff86d556e",
+        "package_json_sha256": "44de390ae5ed6c5f9758b8b9c90b93fa53977d5361731600429f1de08f4b3f30",
+        "root_license_files": [
+          {
+            "path": "license",
+            "sha256": "69dee148a2cc470554dfa7142e830662062394d0fe67cddd379aba90dc60d6b3"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/shebang-regex",
+        "resolved": "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz",
+        "integrity": "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/ef/ef/9d161b5cc77df9dee05aabc0c347836ec417ad0730bb6503a19934089c711de9b4ab5dd884cb30af1b4ed9e3851874b4a1594c97b7933fca1cfc7a471bd4",
+        "archive_sha256": "fedbabaa6db26c6be0183f82777dfa852d59a62f8885de93bd32ebc28758958f",
+        "package_json_sha256": "b8018c6b8cc9900dfd1ac18a54956ba34c453fdc2da5e5fe555ee8f04133a1c5",
+        "root_license_files": [
+          {
+            "path": "license",
+            "sha256": "48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/signal-exit",
+        "resolved": "https://registry.npmjs.org/signal-exit/-/signal-exit-3.0.7.tgz",
+        "integrity": "sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/c2/70/f6644fa5f923c2feea12d2f5de13d2f5fb4c2e68ca8a95fcfd00c528dfc26cc8b48159215c1d1d51ae2eb62d9735daf2ebd606f78e5ee2c10860c2901b19",
+        "archive_sha256": "439623fa6aab91600615ec757eaa137fcab40d3b35dda38df7444c15678f20a8",
+        "package_json_sha256": "cec1bba4c97e0cf653c13c8c79f745aac2232131ee718c93c4236c1b9577a201",
+        "root_license_files": [
+          {
+            "path": "LICENSE.txt",
+            "sha256": "e05b1eaf5b5f99b7ad75cd1f38858ff9a311780b97715ead67936d60bf96aa7e"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/standardwebhooks",
+        "resolved": "https://registry.npmjs.org/standardwebhooks/-/standardwebhooks-1.1.1.tgz",
+        "integrity": "sha512-bCbX9ZEyFkWPsRz7Bl3NuQUJohmwGSev/yhr7vhaGPlc4AfIrspIRa6cPTBuI1ItmrTDJ4d/S2hCsfe4+vQGnQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/6c/26/d7f5913216458fb11cfb065dcdb90509a219b01927afff286beef85a18f95ce007c8aeca4845ae9c3d306e23522d9ab4c327877f4b6842b1f7b8faf4069d",
+        "archive_sha256": "d0bc8fec280c9e30ea3cbc876f44fe71d56f443aeca2bd2bdf745718308d4aed",
+        "package_json_sha256": "686397f0f0202e0b693cfd3f6241d7a8da3df326f9642867a484fbbd295690b6",
+        "root_license_files": [],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/ts-algebra",
+        "resolved": "https://registry.npmjs.org/ts-algebra/-/ts-algebra-2.0.0.tgz",
+        "integrity": "sha512-FPAhNPFMrkwz76P7cdjdmiShwMynZYN6SgOujD1urY4oNm80Ou9oMdmbR45LotcKOXoy7wSmHkRFE6Mxbrhefw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/14/f0/2134f14cae4c33efa3fb71d8dd9a24a1c0cca765837a4a03ae8c3d6ead8e28366f343aef6831d99b478e4ba2d70a397a32ef04a61e444513a3316eb85e7f",
+        "archive_sha256": "f4c3968fd81eb7952e94860eb233558c820397d999149b6e2c689abaa34bc65c",
+        "package_json_sha256": "6c6f692e1a3ad9943c77b5fa4eb04b0f63cb708353c67dcc5d86b35b2f7e5c30",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "18a2bfd070b08bd1cc538c90f59989a9523e070e72fe9a9068593c3e82f44fa7"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/tslib",
+        "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz",
+        "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/a0/91/6ef781d06fe29576e49440bef09e99aa9df98bb0e03f9c087a6fa107d30084a0ad3f98f79753a737c0a0d5f373243ae1cf447b525ca294f7d2016b34bfdb",
+        "archive_sha256": "66f635d5eeabae44807534976913a102cf615b9a045368359c9f79ae6ee2119e",
+        "package_json_sha256": "f02b4851df316f29bdfcd404aa1eb41e4e216b5859015f81fcd3e91caf8be931",
+        "root_license_files": [
+          {
+            "path": "LICENSE.txt",
+            "sha256": "210b19e543130388c68654b7497e967119ce17145f66ab7d85688fbd70f08751"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/typebox",
+        "resolved": "https://registry.npmjs.org/typebox/-/typebox-1.3.27.tgz",
+        "integrity": "sha512-zu+jc1pcy4UiNThxikUr36f0Rybk9PEeCg/NE6adeWr/SKsdNO4EzZHYRDlv2YCVAfj3Odq3dESSo/jNyoBXzA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/ce/ef/a3735a5ccb85223538718a452bdfa7f44726e4f4f11e0a0fcd13a69d796aff48ab1d34ee04cd91d844396fd9809501f8f739dab7744492a3f8cdca8057cc",
+        "archive_sha256": "5a288bcd3d68f44567de84b185e04d205ef7d5b53602846bc3db30fdd219dda3",
+        "package_json_sha256": "c59ddfd977ce941f1e8ee8b0a0b14396c332fa27cc5fa6fa165227ffd5a3992f",
+        "root_license_files": [
+          {
+            "path": "license",
+            "sha256": "e8a7cc256941a26ba8234f04390165243a4d42f74fd6491934140605bf7eae2d"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/undici",
+        "resolved": "https://registry.npmjs.org/undici/-/undici-8.10.2.tgz",
+        "integrity": "sha512-/y4/bH9YNU5hi9NIrpOuvGXFcxrj3CMrV+/AYpowAYTpHn8gX/XPFjNy766FPoYY0miQhdW977JFWKGNhBdwyQ==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/ff/2e/3f6c7f58354e618bd348ae93aebc65c5731ae3dc232b57efc0629a300184e91e7f205ff5cf163372efae853e8618d2689085d5bdefb24558a18d841770c9",
+        "archive_sha256": "740638ae32d78d2646a6727950e365fa26b6fa87913fa096e60ed4afeb4634aa",
+        "package_json_sha256": "d3dc9b2f66b6ea0c406c8305aec87b51e7723c2f0c3c622ccd90d9d056b82464",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/undici-types",
+        "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-8.9.0.tgz",
+        "integrity": "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/29/30/f2453617f2c5a629702290f1c74b273adc244f11331cb728ca16ea5c0ba3812d74f7c6c3747bd685ee6fa6217bad156a545ee79db68c06ee22cece9d2442",
+        "archive_sha256": "3a587851ccbf1021b20eac8a38eb819d7e2a1ab77aa477cb24cae5473a3e78c6",
+        "package_json_sha256": "7f3c1a0498b1b7f74402f76d2958bf5a35fc89403036188dc5f8ede1b4e0638b",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/web-streams-polyfill",
+        "resolved": "https://registry.npmjs.org/web-streams-polyfill/-/web-streams-polyfill-3.3.3.tgz",
+        "integrity": "sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/77/62/562c28af999613488a207bd32c805099aede7bd418a47161989230b59219656d3783946a99d83f2f0fc13f9496bc58659b6fb3e59bcfd725857b2091d967",
+        "archive_sha256": "1ee138d3dc0263ead35c40604da75d7d56c4fa0ef32dc2e3a7fbac10480ebb54",
+        "package_json_sha256": "13e22b076747f7673afc2afad4b932843844b1ffb2e5bd613442937eacdaf7d7",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "81008a3fb78f69f3c4a72a9e005c8582342ab62864371b3ab8e1b6af9041e080"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/which",
+        "resolved": "https://registry.npmjs.org/which/-/which-2.0.2.tgz",
+        "integrity": "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/04/b2/374e5d535b73ef97bd25df2ab763ae22f9ac29c17aac181616924a8cb676d782b303fb28fbae15b492e103c7325a6171a3116e6881aa4a34c10a34c8e26c",
+        "archive_sha256": "a13adf5fddeb769655edce551e81fbb11904b9c9be76d95e41da8c4c499d4edc",
+        "package_json_sha256": "43010039ed5e89f7186960be682b3cb5cda5ab6cdfb06cbfd4f081cf0e7b4260",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/ws",
+        "resolved": "https://registry.npmjs.org/ws/-/ws-8.22.0.tgz",
+        "integrity": "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/61/d8/2073df3bf913b40275ad67fed6abd16d36f72b2f56ff44ed2e77d9968d43e00ebb00030412179d6c9b6866d57a1f6d4ff88e4a4612c2c5b1967153ed433a",
+        "archive_sha256": "ca9b3798b2e11ce8fac6713f50ef0501aa12b09b330623c1dc409dff94e7abc8",
+        "package_json_sha256": "c1ef91ca04eb4754c011c5f0e7638b5078ff71104fada400c44ac761cf93e0b1",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      },
+      {
+        "path": "node_modules/yaml",
+        "resolved": "https://registry.npmjs.org/yaml/-/yaml-2.9.0.tgz",
+        "integrity": "sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==",
+        "archive_path": ".cache/pi-two-profiles/run-20261004/retained-temporary/pi-base-candidate-4lbc4mv4/cache/_cacache/content-v2/sha512/d8/0b/e1357de66fccdde99cbb20d4ed4a9975175e475ba5a7aa3d2cad696428b729625fe03083098b2b86ab629e236605c543e376507edcb735d2c78c2ed2f870",
+        "archive_sha256": "008fa204cb1ba700e0272ba045abbf09a6ffe63456e8146ba97cac6c2ad1ef91",
+        "package_json_sha256": "20b8b197cbd10dad245d45e463dfe58e4c8c25a47e24bc4256ad9ab58bf35683",
+        "root_license_files": [
+          {
+            "path": "LICENSE",
+            "sha256": "5bba27375d93e9119f76c1015f7672cf9ad5f70952296e0842fb2243d6376869"
+          }
+        ],
+        "verified": "This static read verified cached archive SHA-256/SRI, package.json bytes and listed original license bytes against installed candidate."
+      }
+    ]
+  }
+}

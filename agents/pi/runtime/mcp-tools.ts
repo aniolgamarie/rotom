@@ -3,6 +3,7 @@ import { requireOrdinaryHelper } from "./capability-policy.ts";
 import { reject } from "./managed-types.ts";
 
 import { claimTool } from "./tool-ownership.ts";
+import { registerToolLookup } from "./tool-lookups.ts";
 
 const registries = new WeakMap(), defaultOwners = new WeakMap();
 function defaultOwner() {
@@ -28,6 +29,7 @@ export function registerMcpTool(name, server, original, execute, owner = default
   const runtime = owner.runtime;
   if (globalThis[Symbol.for("agentcfg.pi.runtime.v1")] !== runtime) reject("MCP_DIRECT_TOOL_STALE", 4);
   selected(runtime, server, original);
+  registerToolLookup(runtime, "pi-mcp", isBoundMcpTool);
   if (typeof execute !== "function") reject("MCP_DIRECT_TOOL_NAME", 2);
   let records = registries.get(runtime);
   if (!records) registries.set(runtime, records = new Map());
@@ -59,5 +61,6 @@ export function isBoundMcpTool(runtime, name) {
   const record = registries.get(runtime)?.get(name);
   if (!record) return false;
   selected(runtime, record.server, record.original);
+  if (!record.claim.current()) reject("MCP_DIRECT_TOOL_STALE", 4);
   return true;
 }

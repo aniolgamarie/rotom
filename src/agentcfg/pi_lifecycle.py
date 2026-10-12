@@ -5,7 +5,7 @@ import fcntl
 from pathlib import Path
 
 from .deployment import json_bytes
-from .storage import Conflict, Tree
+from .storage import Conflict, Tree, ensure_private
 
 
 def assert_inactive(state_root):
@@ -58,3 +58,32 @@ def guard(workspace, *, allow_active=False, create=True):
       yield tree.fd
     finally:
       fcntl.flock(tree.fd, fcntl.LOCK_UN)
+
+
+@contextmanager
+def source_guard(workspace, *, shared=False, create=True):
+  """现代管理入口：来源先于原实例锁；只交出原 lifecycle fd。"""
+  from .paths import PathError
+  from .pi_profile_config import MODERN_PROFILES
+  from .pi_source_latch import source_latch
+  if (type(shared) is not bool or type(create) is not bool
+      or workspace.profile not in MODERN_PROFILES):
+    raise Conflict("Pi来源 guard 参数无效")
+  binding = {"schema_version": 1, "state_root": str(workspace.state_root),
+    "binding": getattr(workspace, "binding", {"profile": workspace.profile})}
+  expected = json_bytes(binding)
+  try:
+    if create:
+      ensure_private(workspace.instance)
+    with Tree(workspace.instance) as tree:
+      raw = tree.read(".agentcfg-instance.json", max_bytes=len(expected))
+      if raw is None:
+        if not create:
+          raise Conflict("保存的实例归属与恢复目标不匹配")
+      elif raw[1] != 0o600 or raw[0] != expected:
+        raise Conflict("保存的实例归属与恢复目标不匹配")
+  except (OSError, PathError):
+    raise Conflict("无法安全核对Pi实例归属") from None
+  with source_latch(workspace, shared=shared, create=create):
+    with guard(workspace, create=create) as fd:
+      yield fd

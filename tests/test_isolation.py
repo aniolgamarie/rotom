@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+import pwd
 import socket
 import subprocess
 
@@ -33,6 +34,19 @@ def test_isolated_environment_does_not_copy_parent(isolated_environment, monkeyp
   assert set(os.environ) == set(isolated_environment.env) | {
     "UNDECLARED_PARENT_SECRET", "PYTEST_CURRENT_TEST",
   }
+
+
+def test_os_account_home_is_isolated_and_independent_of_profile_home(isolated_environment, monkeypatch):
+  account = pwd.getpwuid(os.geteuid())
+  home = Path(account.pw_dir)
+  assert home.is_relative_to(isolated_environment.root)
+  assert home.is_dir() and home != isolated_environment.home
+  monkeypatch.setenv("HOME", str(isolated_environment.root / "different-profile-home"))
+  assert pwd.getpwuid(os.geteuid()) == account
+  assert pwd.getpwnam(account.pw_name) == account
+  assert pwd.getpwall() == [account]
+  with pytest.raises(KeyError): pwd.getpwuid(os.geteuid() + 10001)
+  with pytest.raises(KeyError): pwd.getpwnam("undeclared-test-account")
 
 
 @pytest.mark.parametrize("attempt", [

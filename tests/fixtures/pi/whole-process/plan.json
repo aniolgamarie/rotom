@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "fixture_id": "pi-whole-process-q3",
+  "execution_state": "prepared-only",
+  "platform": "linux-x86_64",
+  "versions": {
+    "node": "24.14.0",
+    "pi": "1.0.1"
+  },
+  "freeze": {
+    "image_digest": null,
+    "candidate_receipt_sha256": null,
+    "node_sha256": null,
+    "container_uid": null,
+    "container_gid": null,
+    "native_pi_entry": "requires-public-cli-freeze"
+  },
+  "docker": {
+    "privileged": false,
+    "read_only": true,
+    "cap_drop": [
+      "ALL"
+    ],
+    "cap_add": [],
+    "security_opt": [
+      "no-new-privileges:true"
+    ],
+    "network": "none",
+    "host_pid": false,
+    "host_ipc": false,
+    "devices": [],
+    "pid_limit": 32,
+    "memory_mib": 512,
+    "cpu": 1,
+    "init": true,
+    "user": "owner-compatible-nonroot-after-freeze",
+    "tmpfs": {
+      "guest": "/tmp",
+      "bytes": 16777216,
+      "mode": "0700",
+      "owner": "frozen-container-user",
+      "options": [
+        "rw",
+        "noexec",
+        "nosuid",
+        "nodev"
+      ]
+    },
+    "mounts": [
+      {
+        "id": "candidate",
+        "guest": "/candidate",
+        "source_kind": "frozen-candidate",
+        "read_only": true
+      },
+      {
+        "id": "node",
+        "guest": "/node",
+        "source_kind": "frozen-node",
+        "read_only": true
+      },
+      {
+        "id": "fixture",
+        "guest": "/probe/whole-process",
+        "source_kind": "own-frozen-fixture",
+        "read_only": true
+      },
+      {
+        "id": "project",
+        "guest": "/project",
+        "source_kind": "own-private-temp",
+        "read_only": false
+      },
+      {
+        "id": "state",
+        "guest": "/state",
+        "source_kind": "own-private-temp",
+        "read_only": false
+      },
+      {
+        "id": "results",
+        "guest": "/results",
+        "source_kind": "own-private-temp",
+        "read_only": false
+      },
+      {
+        "id": "empty-bin",
+        "guest": "/empty-bin",
+        "source_kind": "own-private-empty",
+        "read_only": true
+      }
+    ]
+  },
+  "budgets": {
+    "cases": 8,
+    "case_timeout_ms": 3000,
+    "child_timeout_ms": 2000,
+    "child_count_per_case": 1,
+    "child_output_bytes": 4096,
+    "result_bytes": 4096,
+    "connect_timeout_ms": 250,
+    "loopback_bytes": 64
+  },
+  "child": {
+    "program": "/node/bin/node",
+    "source": "/probe/whole-process/child.mjs",
+    "allowed_args": [
+      [
+        "allow"
+      ],
+      [
+        "deny"
+      ]
+    ],
+    "shell": false,
+    "env": {
+      "HOME": "/state/pi-home",
+      "PATH": "/empty-bin"
+    }
+  },
+  "paths": {
+    "allowed_input": "/project/allowed.txt",
+    "allowed_output": "/project/allowed-output.txt",
+    "denied_host": "/outside-host/denied.txt",
+    "native_auth": "/state/pi-home/auth.json",
+    "results": "/results"
+  },
+  "network": {
+    "allowed": {
+      "host": "127.0.0.1",
+      "port": 35731
+    },
+    "denied": {
+      "host": "192.0.2.1",
+      "port": 35731
+    }
+  },
+  "cases": [
+    {
+      "id": "allowed-file-read-write",
+      "expected_fact": true,
+      "kind": "file"
+    },
+    {
+      "id": "denied-host-file-read",
+      "expected_fact": false,
+      "kind": "file"
+    },
+    {
+      "id": "denied-host-file-write",
+      "expected_fact": false,
+      "kind": "file"
+    },
+    {
+      "id": "denied-outbound-connect",
+      "expected_fact": false,
+      "kind": "network"
+    },
+    {
+      "id": "allowed-loopback-connect",
+      "expected_fact": true,
+      "kind": "network"
+    },
+    {
+      "id": "allowed-fixed-child",
+      "expected_fact": true,
+      "kind": "child"
+    },
+    {
+      "id": "denied-child-host-read",
+      "expected_fact": false,
+      "kind": "child"
+    },
+    {
+      "id": "container-credential-readable",
+      "expected_fact": true,
+      "kind": "credential-limitation"
+    }
+  ],
+  "prerequisites": [
+    "separate-explicit-native-authorization",
+    "immutable-current-image-node-pi-source-identities",
+    "actual-nonroot-uid-and-private-mount-ownership-verified",
+    "actual-docker-no-host-namespace-network-none-verified",
+    "own-host-sentinel-outside-all-mounts",
+    "parent-observed-positive-and-negative-facts",
+    "confirmed-container-and-child-termination",
+    "no-real-host-account-token-or-home"
+  ],
+  "source_pins": {
+    "malicious-extension.mjs": "3b62e64937fec05086ba3b345c7635b2314bc6de77e76a9ad3220f611dd842d4",
+    "child.mjs": "43ebc47ecc5936c296bfab1e8786f677271cb0bbd01f72c3f212651a4cc3a09b",
+    "loopback.mjs": "1c88c67173cfa4d2f2f6146200b16306129868aeb26d0e5cbaaf31b4a161b208",
+    "allowed.txt": "a5700ced4180bb67fef54d22f9798507730f09384ca5e483f1efe31f3f56102a",
+    "auth.json": "d45bca03748d3887f9ae99a279c01831eb2010d6c96acdf96d86cd13ad436f6c",
+    "README.md": "7e71da32215f2096c2bfbf42377524ee4384e7883140f1aee9677673b71449ef",
+    "plan.schema.json": "6b4775b937c2f2dd7b1ac8ceb49c7491865d02a14e16bacc04ec2d9e51ab8b72",
+    "host-sentinel.txt": "0d880daef87780053c94fdf099939d7dce38c4bd17a783011a102869972576f6"
+  }
+}

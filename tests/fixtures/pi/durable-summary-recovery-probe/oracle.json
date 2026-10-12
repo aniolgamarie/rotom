@@ -1,0 +1,502 @@
+{
+  "schema": 1,
+  "cases": {
+    "summarize-before-send-fresh-bounded-authority": {
+      "schema": 1,
+      "case": "summarize-before-send-fresh-bounded-authority",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "counters": {
+        "old": {
+          "authorize": 1,
+          "prepare": 0,
+          "commitSending": 0,
+          "stream": 0,
+          "complete": 0,
+          "resultFacts": 0,
+          "recordResult": 0,
+          "settle": 0
+        },
+        "fresh": {
+          "authorize": 3,
+          "prepare": 1,
+          "commitSending": 1,
+          "stream": 0,
+          "complete": 1,
+          "resultFacts": 1,
+          "recordResult": 1,
+          "settle": 1
+        }
+      },
+      "sendingReceipts": {
+        "old": [],
+        "fresh": [
+          true
+        ]
+      },
+      "trace": [
+        "old:authorize:1",
+        "old:held",
+        "old:runningCheckpoint",
+        "old:ledgerObserved",
+        "old:closed",
+        "old:heldSettled",
+        "fresh:storedRunning",
+        "fresh:openedPending",
+        "fresh:passiveZero",
+        "fresh:resume",
+        "fresh:authorize:1",
+        "fresh:prepare",
+        "fresh:authorize:2",
+        "fresh:commitSending:true",
+        "fresh:authorize:3",
+        "fresh:completeEntry",
+        "fresh:sendingObserved",
+        "fresh:resultFacts",
+        "fresh:recordResult",
+        "fresh:settle",
+        "fresh:taskTerminal",
+        "fresh:ledgerObserved",
+        "fresh:closed"
+      ],
+      "settings": [
+        {
+          "journalMode": "wal",
+          "synchronous": 2
+        },
+        {
+          "journalMode": "wal",
+          "synchronous": 2
+        }
+      ],
+      "oldTask": {
+        "status": "running",
+        "phase": "summarize",
+        "attempt": 1
+      },
+      "freshStoredTask": {
+        "status": "running",
+        "phase": "summarize",
+        "attempt": 1
+      },
+      "freshOpenTask": {
+        "status": "pending",
+        "phase": "summarize",
+        "attempt": 1
+      },
+      "checkpointMatched": true,
+      "oldClosed": true,
+      "heldSettled": true,
+      "oldSignalAborted": true,
+      "newSignalDifferent": true,
+      "newEnvelopeDifferent": true,
+      "crossEnvelopeMatched": true,
+      "withinEnvelopeMatched": {
+        "old": true,
+        "fresh": true
+      },
+      "sameSignal": {
+        "old": true,
+        "fresh": true
+      },
+      "normalizedOptions": {
+        "maxRetries": 0,
+        "transport": "sse",
+        "cacheRetention": "none",
+        "maxTokens": 64
+      },
+      "beforeResumeZero": true,
+      "ledgerBeforeClose": {
+        "a1": null,
+        "a2": null,
+        "budget": null
+      },
+      "ledgerFreshPassive": {
+        "a1": null,
+        "a2": null,
+        "budget": null
+      },
+      "ledgerFinal": {
+        "a1": null,
+        "a2": {
+          "state": "settled",
+          "sendOutcome": null,
+          "outcome": "completed",
+          "estimatedCostUnits": 2
+        },
+        "budget": {
+          "calls": 1,
+          "reservedCostUnits": "0",
+          "settledCostUnits": "2",
+          "outstanding": false
+        }
+      },
+      "taskOutcome": "completed",
+      "summaryMatched": true,
+      "errorMatched": false,
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "reportCalls": 0,
+      "closed": true,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown"
+    },
+    "summarize-before-send-denied": {
+      "schema": 1,
+      "case": "summarize-before-send-denied",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "counters": {
+        "old": {
+          "authorize": 1,
+          "prepare": 0,
+          "commitSending": 0,
+          "stream": 0,
+          "complete": 0,
+          "resultFacts": 0,
+          "recordResult": 0,
+          "settle": 0
+        },
+        "fresh": {
+          "authorize": 1,
+          "prepare": 0,
+          "commitSending": 0,
+          "stream": 0,
+          "complete": 0,
+          "resultFacts": 0,
+          "recordResult": 0,
+          "settle": 0
+        }
+      },
+      "sendingReceipts": {
+        "old": [],
+        "fresh": []
+      },
+      "trace": [
+        "old:authorize:1",
+        "old:held",
+        "old:runningCheckpoint",
+        "old:ledgerObserved",
+        "old:closed",
+        "old:heldSettled",
+        "fresh:storedRunning",
+        "fresh:openedPending",
+        "fresh:passiveZero",
+        "fresh:resume",
+        "fresh:authorize:1",
+        "fresh:taskTerminal",
+        "fresh:ledgerObserved",
+        "fresh:closed"
+      ],
+      "settings": [
+        {
+          "journalMode": "wal",
+          "synchronous": 2
+        },
+        {
+          "journalMode": "wal",
+          "synchronous": 2
+        }
+      ],
+      "oldTask": {
+        "status": "running",
+        "phase": "summarize",
+        "attempt": 1
+      },
+      "freshStoredTask": {
+        "status": "running",
+        "phase": "summarize",
+        "attempt": 1
+      },
+      "freshOpenTask": {
+        "status": "pending",
+        "phase": "summarize",
+        "attempt": 1
+      },
+      "checkpointMatched": true,
+      "oldClosed": true,
+      "heldSettled": true,
+      "oldSignalAborted": true,
+      "newSignalDifferent": true,
+      "newEnvelopeDifferent": true,
+      "crossEnvelopeMatched": true,
+      "withinEnvelopeMatched": {
+        "old": true,
+        "fresh": true
+      },
+      "sameSignal": {
+        "old": true,
+        "fresh": true
+      },
+      "normalizedOptions": {
+        "maxRetries": 0,
+        "transport": "sse",
+        "cacheRetention": "none",
+        "maxTokens": 64
+      },
+      "beforeResumeZero": true,
+      "ledgerBeforeClose": {
+        "a1": null,
+        "a2": null,
+        "budget": null
+      },
+      "ledgerFreshPassive": {
+        "a1": null,
+        "a2": null,
+        "budget": null
+      },
+      "ledgerFinal": {
+        "a1": null,
+        "a2": null,
+        "budget": null
+      },
+      "taskOutcome": "faulted",
+      "summaryMatched": false,
+      "errorMatched": true,
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "reportCalls": 0,
+      "closed": true,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown"
+    },
+    "summarize-unknown-sending-denied": {
+      "schema": 1,
+      "case": "summarize-unknown-sending-denied",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "counters": {
+        "old": {
+          "authorize": 3,
+          "prepare": 1,
+          "commitSending": 1,
+          "stream": 0,
+          "complete": 0,
+          "resultFacts": 0,
+          "recordResult": 0,
+          "settle": 0
+        },
+        "fresh": {
+          "authorize": 1,
+          "prepare": 0,
+          "commitSending": 0,
+          "stream": 0,
+          "complete": 0,
+          "resultFacts": 0,
+          "recordResult": 0,
+          "settle": 0
+        }
+      },
+      "sendingReceipts": {
+        "old": [
+          true
+        ],
+        "fresh": []
+      },
+      "trace": [
+        "old:authorize:1",
+        "old:prepare",
+        "old:authorize:2",
+        "old:commitSending:true",
+        "old:authorize:3",
+        "old:held",
+        "old:runningCheckpoint",
+        "old:ledgerObserved",
+        "old:closed",
+        "old:heldSettled",
+        "fresh:storedRunning",
+        "fresh:openedPending",
+        "fresh:passiveZero",
+        "fresh:resume",
+        "fresh:authorize:1",
+        "fresh:taskTerminal",
+        "fresh:ledgerObserved",
+        "fresh:closed"
+      ],
+      "settings": [
+        {
+          "journalMode": "wal",
+          "synchronous": 2
+        },
+        {
+          "journalMode": "wal",
+          "synchronous": 2
+        }
+      ],
+      "oldTask": {
+        "status": "running",
+        "phase": "summarize",
+        "attempt": 1
+      },
+      "freshStoredTask": {
+        "status": "running",
+        "phase": "summarize",
+        "attempt": 1
+      },
+      "freshOpenTask": {
+        "status": "pending",
+        "phase": "summarize",
+        "attempt": 1
+      },
+      "checkpointMatched": true,
+      "oldClosed": true,
+      "heldSettled": true,
+      "oldSignalAborted": true,
+      "newSignalDifferent": true,
+      "newEnvelopeDifferent": true,
+      "crossEnvelopeMatched": true,
+      "withinEnvelopeMatched": {
+        "old": true,
+        "fresh": true
+      },
+      "sameSignal": {
+        "old": true,
+        "fresh": true
+      },
+      "normalizedOptions": {
+        "maxRetries": 0,
+        "transport": "sse",
+        "cacheRetention": "none",
+        "maxTokens": 64
+      },
+      "beforeResumeZero": true,
+      "ledgerBeforeClose": {
+        "a1": {
+          "state": "sending",
+          "sendOutcome": "unknown",
+          "outcome": null,
+          "estimatedCostUnits": null
+        },
+        "a2": null,
+        "budget": {
+          "calls": 1,
+          "reservedCostUnits": "10",
+          "settledCostUnits": "0",
+          "outstanding": true
+        }
+      },
+      "ledgerFreshPassive": {
+        "a1": {
+          "state": "sending",
+          "sendOutcome": "unknown",
+          "outcome": null,
+          "estimatedCostUnits": null
+        },
+        "a2": null,
+        "budget": {
+          "calls": 1,
+          "reservedCostUnits": "10",
+          "settledCostUnits": "0",
+          "outstanding": true
+        }
+      },
+      "ledgerFinal": {
+        "a1": {
+          "state": "sending",
+          "sendOutcome": "unknown",
+          "outcome": null,
+          "estimatedCostUnits": null
+        },
+        "a2": null,
+        "budget": {
+          "calls": 1,
+          "reservedCostUnits": "10",
+          "settledCostUnits": "0",
+          "outstanding": true
+        }
+      },
+      "taskOutcome": "faulted",
+      "summaryMatched": false,
+      "errorMatched": true,
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "reportCalls": 0,
+      "closed": true,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown"
+    }
+  },
+  "intents": {
+    "summarize-before-send-fresh-bounded-authority": {
+      "a1": "synthetic-A1-case-1",
+      "a2": "synthetic-A2-case-1",
+      "logicalTaskId": "synthetic-logical-1",
+      "deploymentIdentity": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceIdentity": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "registryIdentity": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "inputIdentity": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "policyIdentity": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "resultRef": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "route": {
+        "provider": "synthetic.invalid",
+        "model": "synthetic-model"
+      },
+      "budget": {
+        "scopeId": "synthetic-scope-1",
+        "maxCalls": 1,
+        "maxCostUnits": 20,
+        "reservationUnits": 10
+      }
+    },
+    "summarize-before-send-denied": {
+      "a1": "synthetic-A1-case-2",
+      "a2": "synthetic-A2-case-2",
+      "logicalTaskId": "synthetic-logical-2",
+      "deploymentIdentity": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceIdentity": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "registryIdentity": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "inputIdentity": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "policyIdentity": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "resultRef": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "route": {
+        "provider": "synthetic.invalid",
+        "model": "synthetic-model"
+      },
+      "budget": {
+        "scopeId": "synthetic-scope-2",
+        "maxCalls": 1,
+        "maxCostUnits": 20,
+        "reservationUnits": 10
+      }
+    },
+    "summarize-unknown-sending-denied": {
+      "a1": "synthetic-A1-case-3",
+      "a2": "synthetic-A2-case-3",
+      "logicalTaskId": "synthetic-logical-3",
+      "deploymentIdentity": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceIdentity": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "registryIdentity": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "inputIdentity": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "policyIdentity": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "resultRef": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "route": {
+        "provider": "synthetic.invalid",
+        "model": "synthetic-model"
+      },
+      "budget": {
+        "scopeId": "synthetic-scope-3",
+        "maxCalls": 1,
+        "maxCostUnits": 20,
+        "reservationUnits": 10
+      }
+    }
+  }
+}

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, realpathSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { privateFile, writePrivate } from "./launch.ts";
+import { privateFile, writePrivate } from "./private-files.ts";
 import { SupervisorClient } from "./supervisor-client.ts";
 import { runManagedWorker, validateWorkerInput } from "./managed-worker.ts";
 import { createGuardedTools } from "./guarded-tools.ts";

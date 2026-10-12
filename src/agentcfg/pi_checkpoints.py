@@ -48,6 +48,8 @@ class Checkpoints:
     scope = {"project": str(project), "roots": roots, "paths": paths, "policy_digest": digest(manifest["permission_policy"]),
       "configuration_digest": self.configuration(manifest), "runtime_identity": self.host.runtime_root.name, "git_dir_identity": workspace["git_dir_identity"], "session_id": args["session_id"],
       "max_checkpoints": config.get("max_checkpoints", 100), "max_files": config.get("max_files", 2000), "max_bytes": config.get("max_bytes", 32 * 1024 * 1024)}
+    # 实现是受管文件快照；非Git范围另绑定登记身份，协调锚变化使旧快照失效。
+    if workspace.get("workspace_kind") == "registered-root": scope["registered_root_id"] = workspace["registered_root_id"]
     scope["scope_digest"] = digest(self.scope_identity(scope))
     return scope, workspace
 

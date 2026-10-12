@@ -63,3 +63,55 @@ def test_missing_result_proof_requires_the_current_worker_and_specific_failure(t
     tree.write_new("activity/worker-homes/fixture-lease/reports/result.json", json_bytes({"attempt_id": attempt,
       "state": "execution_failed", "failure_code": failure, "structured_result": None}))
   assert worker_failure_observed(tmp_path, [lease], {"EVIDENCE_EMPTY", "EVIDENCE_MISSING"}) is expected
+
+
+def modern_fixture(tmp_path):
+  from agentcfg.pi_modern_launcher import COMMANDS
+  root = tmp_path / "modern-runtime"
+  namespace = "pi-base-" + "e" * 64
+  piece = {"package_path": namespace + "/package.json", "lock_path": namespace + "/package-lock.json", "engine": "node",
+    "entrypoint": namespace + "/node_modules/@earendil-works/pi-coding-agent/dist/index.js", "ai_package": "@earendil-works/pi-ai",
+    "identity": "c" * 64, "resource_manifest": {kind: [] for kind in ("extensions", "skills", "prompts", "themes", "roles")}}
+  installed = {"schema_version": 2, "profile_id": "pi-base", "engine": "node", "platform": "linux-x86_64",
+    "runtime_identity": "a" * 64, "lock_identity": "b" * 64, "slice_identity": piece["identity"],
+    "package_path": piece["package_path"], "entrypoint": piece["entrypoint"], "resources": piece["resource_manifest"],
+    "toolchains": {"node": "v24.14.0", "npm": "11.19.1"}, "sdk_package": "@earendil-works/pi-coding-agent",
+    "sdk_version": "1.0.1", "ai_package": piece["ai_package"], "ai_version": "1.0.2"}
+  receipt = {"schema_version": 2, "identity": installed["runtime_identity"], "lock_identity": installed["lock_identity"],
+    "slice_identity": installed["slice_identity"], "platform": installed["platform"], "toolchains": installed["toolchains"],
+    "slice": piece, "binding_identity": {"profile": "pi-base"}}
+  packages = {"node_modules/" + installed["sdk_package"]: {"version": installed["sdk_version"]},
+    "node_modules/" + installed["ai_package"]: {"version": installed["ai_version"]}}
+  with Tree(root, create=True) as tree:
+    tree.write_new("runtime/profile.json", json_bytes(installed)); tree.write_new(".agentcfg-receipt.json", json_bytes(receipt))
+    tree.write_new("runtime/commands.json", json_bytes(COMMANDS))
+    tree.write_new(piece["lock_path"], json_bytes({"packages": packages}))
+    for key, row in packages.items():
+      tree.write_new(namespace + "/" + key + "/package.json", json_bytes({"name": key.removeprefix("node_modules/"), "version": row["version"]}))
+    tree.write_new(piece["entrypoint"], b"synthetic SDK descriptor fixture, never execute")
+    tree.write_new("runtime/official-launch.mjs", b"synthetic launcher fixture, never execute")
+  return root, installed, receipt
+
+
+def test_modern_validation_preserves_separate_sdk_identity_and_requires_actual_seal(tmp_path):
+  root, installed, _ = modern_fixture(tmp_path)
+  value = inspect_runtime(root, check=lambda *_: "installed", current_platform=lambda: "linux-x86_64")
+  assert value.family == "modern" and value.sdk_version == "1.0.1" and value.profile == "pi-base"
+  assert value.entrypoint == installed["entrypoint"]
+  # 合法描述只是默认fixture；原sealed validator必须拒绝，不当真实包资格。
+  with pytest.raises(Conflict): inspect_runtime(root, current_platform=lambda: "linux-x86_64")
+
+
+@pytest.mark.parametrize("fault", ["binding", "sdk", "entrypoint", "extra-profile", "commands", "launcher", "damaged"])
+def test_modern_validation_rejects_installation_or_descriptor_drift(tmp_path, fault):
+  root, installed, receipt = modern_fixture(tmp_path)
+  if fault == "binding": receipt["binding_identity"]["profile"] = "pi-full"
+  if fault == "sdk": installed["sdk_version"] = "uninstalled-version"
+  if fault == "entrypoint": installed["entrypoint"] = "pi-base/node_modules/other/index.js"
+  if fault == "extra-profile": installed["unknown"] = True
+  with Tree(root) as tree:
+    tree.write_state("runtime/profile.json", json_bytes(installed)); tree.write_state(".agentcfg-receipt.json", json_bytes(receipt))
+    if fault == "commands": tree.write_state("runtime/commands.json", json_bytes({"schema_version": 1, "programs": {}}))
+    if fault == "launcher": (root / "runtime/official-launch.mjs").unlink()
+  with pytest.raises((Conflict, ConfigError)):
+    inspect_runtime(root, check=lambda *_: "damaged" if fault == "damaged" else "installed", current_platform=lambda: "linux-x86_64")

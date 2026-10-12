@@ -143,7 +143,7 @@ def launch_single(workspace, request):
 
 def parser():
   value = Arguments(prog="run-model", allow_abbrev=False)
-  value.add_argument("action", choices=("start", "resume", "status", "cancel", "poll", "wait", "probe", "result"))
+  value.add_argument("action", choices=("start", "resume", "status", "cancel", "poll", "wait", "probe", "result", "message"))
   value.add_argument("--instance", type=Path, required=True)
   value.add_argument("--backend", choices=("pi", "codex"))
   value.add_argument("--mode", choices=("review", "investigate", "implement"))
@@ -178,7 +178,7 @@ def main(argv=None):
   supplied = {value.split("=", 1)[0] for value in arguments if value.startswith("--")}
   execution = {"--backend", "--mode", "--preset", "--provider", "--model", "--cwd", "--prompt-file", "--context-artifact", "--context-file",
     "--memory-file", "--feedback-required", "--idempotency-key", "--timeout-seconds", "--allow-workspace-write", "--worktree-root", "--detach", "--observe"}
-  allowed = {"start": execution, "resume": execution | {"--run-id"}, "probe": {"--backend"}, "status": {"--run-id"}, "cancel": {"--run-id"},
+  allowed = {"message": {"--run-id", "--prompt-file", "--idempotency-key"}, "start": execution, "resume": execution | {"--run-id"}, "probe": {"--backend"}, "status": {"--run-id"}, "cancel": {"--run-id"},
     "poll": {"--run-id", "--after", "--wait-seconds"}, "wait": {"--run-id", "--wait-seconds"}, "result": {"--run-id", "--offset", "--limit"}}
   if supplied - allowed[args.action] - {"--instance"}:
     raise ConfigError("delegate-action-option")
@@ -187,6 +187,13 @@ def main(argv=None):
   instance, bound = instance_binding(args.instance)
   if not 0 <= args.wait_seconds <= 60:
     raise ConfigError("delegate-wait-seconds")
+  from .model_delegate_modern_cli import selected as modern_selected, execute as modern_execute
+  if modern_selected(instance, args.run_id if args.action in {"status", "poll", "wait", "result", "cancel"} else None):
+    result = modern_execute(instance, bound, args, endpoint_call)
+    sys.stdout.buffer.write(control_envelope(result))
+    if any(row.get("physical_state") in {"failed", "canceled", "timeout"} for row in result.get("actions", [])): return 5
+    return 4 if result.get("status") in {"unknown", "registered-not-started"} else 0
+  if args.action == "message": raise ConfigError("delegate-modern-action-required")
   if args.action in {"start", "resume", "probe"}:
     from .workspace import load_workspace
     with Tree(Path(bound["state_root"])) as tree:

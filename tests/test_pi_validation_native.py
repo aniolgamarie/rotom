@@ -249,6 +249,12 @@ def test_stop_case_requires_a_physically_started_worker(started):
 def test_parent_loss_host_termination_dispatches_by_platform(tmp_path):
   """darwin撤权后经helper控制通道强停宿主；linux保持pidfd身份信号，均不向裸PID发信号。"""
   from agentcfg.pi_validation_parent_loss import ParentLossSupervisor
+  from agentcfg.activity import digest
+  from agentcfg.deployment import json_bytes
+  from agentcfg.storage import Tree
+  manifest = {"plugins": [], "permission_policy": {"schema_version": 1, "default": "deny", "rules": []}}
+  with Tree(tmp_path) as tree:
+    tree.write_state("pi-home/agentcfg-manifest.json", json_bytes(manifest))
   calls = []
   class Store:
     owner = object()
@@ -259,7 +265,8 @@ def test_parent_loss_host_termination_dispatches_by_platform(tmp_path):
     def stop(self, identity, *, grant_generation, force=False): calls.append(("helper_stop", identity["pid"], grant_generation, force))
     def send_signal(self, identity, number): calls.append(("pidfd_signal", identity["pid"], number))
   supervisor = ParentLossSupervisor({"state_root": str(tmp_path), "instance_root": str(tmp_path), "repository": str(tmp_path),
-    "runtime_root": str(tmp_path), "instance_id": "i", "lock_identity": "l", "slice_identity": "s", "policy_digest": "p",
+    "runtime_root": str(tmp_path), "instance_id": "i", "lock_identity": "l", "slice_identity": "s",
+    "policy_digest": digest(manifest["permission_policy"]), "manifest_digest": digest(manifest),
     "cwd": str(tmp_path), "engine": "node", "argv": []}, lease_fd=tmp_path / "lease", readiness=tmp_path / "ready",
     nonce="n", model_started=lambda: False, kill_platform="darwin")
   supervisor.store = Store(); supervisor.processes = Processes()

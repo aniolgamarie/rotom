@@ -1,0 +1,409 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "fixture_id": {
+      "const": "pi-whole-process-q3"
+    },
+    "platform": {
+      "const": "linux-x86_64"
+    },
+    "versions": {
+      "const": {
+        "node": "24.14.0",
+        "pi": "1.0.1"
+      }
+    },
+    "docker": {
+      "const": {
+        "privileged": false,
+        "read_only": true,
+        "cap_drop": [
+          "ALL"
+        ],
+        "cap_add": [],
+        "security_opt": [
+          "no-new-privileges:true"
+        ],
+        "network": "none",
+        "host_pid": false,
+        "host_ipc": false,
+        "devices": [],
+        "pid_limit": 32,
+        "memory_mib": 512,
+        "cpu": 1,
+        "init": true,
+        "user": "owner-compatible-nonroot-after-freeze",
+        "tmpfs": {
+          "guest": "/tmp",
+          "bytes": 16777216,
+          "mode": "0700",
+          "owner": "frozen-container-user",
+          "options": [
+            "rw",
+            "noexec",
+            "nosuid",
+            "nodev"
+          ]
+        },
+        "mounts": [
+          {
+            "id": "candidate",
+            "guest": "/candidate",
+            "source_kind": "frozen-candidate",
+            "read_only": true
+          },
+          {
+            "id": "node",
+            "guest": "/node",
+            "source_kind": "frozen-node",
+            "read_only": true
+          },
+          {
+            "id": "fixture",
+            "guest": "/probe/whole-process",
+            "source_kind": "own-frozen-fixture",
+            "read_only": true
+          },
+          {
+            "id": "project",
+            "guest": "/project",
+            "source_kind": "own-private-temp",
+            "read_only": false
+          },
+          {
+            "id": "state",
+            "guest": "/state",
+            "source_kind": "own-private-temp",
+            "read_only": false
+          },
+          {
+            "id": "results",
+            "guest": "/results",
+            "source_kind": "own-private-temp",
+            "read_only": false
+          },
+          {
+            "id": "empty-bin",
+            "guest": "/empty-bin",
+            "source_kind": "own-private-empty",
+            "read_only": true
+          }
+        ]
+      }
+    },
+    "budgets": {
+      "const": {
+        "cases": 8,
+        "case_timeout_ms": 3000,
+        "child_timeout_ms": 2000,
+        "child_count_per_case": 1,
+        "child_output_bytes": 4096,
+        "result_bytes": 4096,
+        "connect_timeout_ms": 250,
+        "loopback_bytes": 64
+      }
+    },
+    "child": {
+      "const": {
+        "program": "/node/bin/node",
+        "source": "/probe/whole-process/child.mjs",
+        "allowed_args": [
+          [
+            "allow"
+          ],
+          [
+            "deny"
+          ]
+        ],
+        "shell": false,
+        "env": {
+          "HOME": "/state/pi-home",
+          "PATH": "/empty-bin"
+        }
+      }
+    },
+    "paths": {
+      "const": {
+        "allowed_input": "/project/allowed.txt",
+        "allowed_output": "/project/allowed-output.txt",
+        "denied_host": "/outside-host/denied.txt",
+        "native_auth": "/state/pi-home/auth.json",
+        "results": "/results"
+      }
+    },
+    "network": {
+      "const": {
+        "allowed": {
+          "host": "127.0.0.1",
+          "port": 35731
+        },
+        "denied": {
+          "host": "192.0.2.1",
+          "port": 35731
+        }
+      }
+    },
+    "cases": {
+      "const": [
+        {
+          "id": "allowed-file-read-write",
+          "expected_fact": true,
+          "kind": "file"
+        },
+        {
+          "id": "denied-host-file-read",
+          "expected_fact": false,
+          "kind": "file"
+        },
+        {
+          "id": "denied-host-file-write",
+          "expected_fact": false,
+          "kind": "file"
+        },
+        {
+          "id": "denied-outbound-connect",
+          "expected_fact": false,
+          "kind": "network"
+        },
+        {
+          "id": "allowed-loopback-connect",
+          "expected_fact": true,
+          "kind": "network"
+        },
+        {
+          "id": "allowed-fixed-child",
+          "expected_fact": true,
+          "kind": "child"
+        },
+        {
+          "id": "denied-child-host-read",
+          "expected_fact": false,
+          "kind": "child"
+        },
+        {
+          "id": "container-credential-readable",
+          "expected_fact": true,
+          "kind": "credential-limitation"
+        }
+      ]
+    },
+    "prerequisites": {
+      "const": [
+        "separate-explicit-native-authorization",
+        "immutable-current-image-node-pi-source-identities",
+        "actual-nonroot-uid-and-private-mount-ownership-verified",
+        "actual-docker-no-host-namespace-network-none-verified",
+        "own-host-sentinel-outside-all-mounts",
+        "parent-observed-positive-and-negative-facts",
+        "confirmed-container-and-child-termination",
+        "no-real-host-account-token-or-home"
+      ]
+    },
+    "execution_state": {
+      "enum": [
+        "prepared-only",
+        "frozen-pending-separate-authorization"
+      ]
+    },
+    "freeze": {
+      "type": "object",
+      "properties": {
+        "image_digest": {
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            }
+          ]
+        },
+        "candidate_receipt_sha256": {
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          ]
+        },
+        "node_sha256": {
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          ]
+        },
+        "container_uid": {
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          ]
+        },
+        "container_gid": {
+          "anyOf": [
+            {
+              "const": null
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          ]
+        },
+        "native_pi_entry": {
+          "anyOf": [
+            {
+              "const": "requires-public-cli-freeze"
+            },
+            {
+              "type": "string",
+              "pattern": "^/candidate(?:/(?!\\.{1,2}(?:/|$))[^/\\\\\\x00-\\x1f\\x7f-\\x9f]+)*/node_modules/@earendil-works/pi-coding-agent/dist/cli\\.js(?![\\s\\S])"
+            }
+          ]
+        }
+      },
+      "required": [
+        "image_digest",
+        "candidate_receipt_sha256",
+        "node_sha256",
+        "container_uid",
+        "container_gid",
+        "native_pi_entry"
+      ],
+      "additionalProperties": false
+    },
+    "source_pins": {
+      "type": "object",
+      "properties": {
+        "malicious-extension.mjs": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "child.mjs": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "loopback.mjs": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "allowed.txt": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "auth.json": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "README.md": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "plan.schema.json": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "host-sentinel.txt": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "malicious-extension.mjs",
+        "child.mjs",
+        "loopback.mjs",
+        "allowed.txt",
+        "auth.json",
+        "README.md",
+        "plan.schema.json",
+        "host-sentinel.txt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "fixture_id",
+    "platform",
+    "versions",
+    "docker",
+    "budgets",
+    "child",
+    "paths",
+    "network",
+    "cases",
+    "prerequisites",
+    "execution_state",
+    "freeze",
+    "source_pins"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "execution_state": {
+            "const": "frozen-pending-separate-authorization"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "freeze": {
+            "properties": {
+              "image_digest": {
+                "not": {
+                  "const": null
+                }
+              },
+              "candidate_receipt_sha256": {
+                "not": {
+                  "const": null
+                }
+              },
+              "node_sha256": {
+                "not": {
+                  "const": null
+                }
+              },
+              "container_uid": {
+                "not": {
+                  "const": null
+                }
+              },
+              "container_gid": {
+                "not": {
+                  "const": null
+                }
+              },
+              "native_pi_entry": {
+                "not": {
+                  "const": "requires-public-cli-freeze"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

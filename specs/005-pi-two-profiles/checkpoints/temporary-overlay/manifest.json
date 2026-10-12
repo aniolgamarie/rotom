@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "status": "interrupted-unqualified-proposal",
+  "applied_to_production": false,
+  "automatic_review_rejected_initial_edit": true,
+  "patch_sha256": "8ddd7090aef51c07936bc04c7e8d09069d67f401b5c0e096760d61c945cd24a0",
+  "files": [
+    {
+      "path": "agents/pi/schemas/options.schema.json",
+      "base_sha256": "27ca0de73a2b47a4397cc33240ea58ec851bd8139e5693be40658d62dfd3cd6e",
+      "candidate_sha256": "9d224e4f34682013abe9a6f46a8d8239db780952dffccf590c8353b0ee38be98",
+      "candidate_bytes": 92217
+    },
+    {
+      "path": "src/agentcfg/pi.py",
+      "base_sha256": "8bf38dd837143dea5dd8518ec6e10fb914a1087902264343d41e54938439c5e4",
+      "candidate_sha256": "2b788ecdcf5823834ebbce8e0d397d281b0b6a0f99f4f58b52fc59b99cf0b810",
+      "candidate_bytes": 44591
+    },
+    {
+      "path": "src/agentcfg/pi_checks.py",
+      "base_sha256": "8cc46211d84eed9438c3a5217faf34746597e2c42bec253f46b1b1bae6868175",
+      "candidate_sha256": "14e004515df8261d5b5c82d2eed7943bdc9daa597185b226452090c515a678eb",
+      "candidate_bytes": 21146
+    },
+    {
+      "path": "src/agentcfg/pi_trusted_checks.py",
+      "base_sha256": "a5e341757be23dfc587b0b2c85bcec26ce48b1c899bf60b870c593e3f5bb6ac0",
+      "candidate_sha256": "d5b5894c943f480b564587b50c646bcc2d2c80e8f65226cd832c9ee27f33d236",
+      "candidate_bytes": 15342
+    },
+    {
+      "path": "src/agentcfg/pi_auxiliary.py",
+      "base_sha256": "0fb7a8ae9be08be1401c0e6a1673b95c0f5bf49b4d5d33f0ffab6005993668c6",
+      "candidate_sha256": "037f18555ac8a70edb04dc1a014e33423e97a67c7782a7df7e32b29df38e61ec",
+      "candidate_bytes": 11789
+    },
+    {
+      "path": "scripts/pi-project-check",
+      "base_sha256": "566736bb7385ca15d58f902b530f695b84f6a1aa7b0b2c38b8c057c44c3a7ca0",
+      "candidate_sha256": "7c5d1e335da9f3c9aba18274c5e6544ccece0d68d1355c83ceb84c176a6f6867",
+      "candidate_bytes": 5037
+    },
+    {
+      "path": "agents/pi/packages/task-keeper/src/config.ts",
+      "base_sha256": "a6e7ebb227e735c73016188592a518a6f8d95180cf029ff1373cee69a3631946",
+      "candidate_sha256": "b029adb613655530c6926d57f85c0b6a20340af05f6532465aae62e715b7b805",
+      "candidate_bytes": 24418
+    },
+    {
+      "path": "agents/pi/packages/task-keeper/src/agentcfg-config.ts",
+      "base_sha256": "a9f8026af58054c29721367ee95b95d963288f0b89e58df1d3b9260a11cc5b7f",
+      "candidate_sha256": "3f6cb7b585580fcef23b2c4ee0407faf30cb9699d54713c9becfef3dbd667d7a",
+      "candidate_bytes": 5551
+    },
+    {
+      "path": "agents/pi/packages/task-keeper/src/verification/supervisor.ts",
+      "base_sha256": "3312dd3b471d76bb4e486586dec67c6a800cd900044c1cec056b7b470ec8a850",
+      "candidate_sha256": "5f59183fbb28a9405465bdf300036181e30157d4fd41688cf9148561db3f3e83",
+      "candidate_bytes": 5771
+    },
+    {
+      "path": "agents/pi/packages/task-keeper/src/verification/inputs.ts",
+      "base_sha256": "03e66ec8d7c0d8f5b1849d96dbd4e42ff6c5da3ca16dbcb5808337956aa1e714",
+      "candidate_sha256": "b2dd01c21f2d66f04849e244f2b8772c95ec783cb9016b8b02dd27b384cfa133",
+      "candidate_bytes": 3566
+    }
+  ],
+  "production_reference": "This development checkpoint commit; base_sha256 values verify exact applicable files.",
+  "excluded": [
+    "private runtime state",
+    "account data",
+    "temporary logs",
+    "bytecode",
+    "whole cache tree"
+  ]
+}

@@ -17,9 +17,19 @@ export function fromAgentcfg(defaults: Config, runtime: any): Config {
   const pairs = [["scout", "task-keeper-reader"], ["worker", "task-keeper-writer"], ["reviewer", "task-keeper-reviewer"]];
   if (options.second_view_enabled) pairs.push(["second_view", "task-keeper-second-view"]);
   config.executionProfiles = {};
+  const modern = runtime.installed?.schema_version === 2 && runtime.installed?.profile_id === "pi-full";
+  if (modern && manifest.profile_id !== "pi-full") throw new ContractError("ROLE_BINDING_REQUIRED");
   for (const [name, id] of pairs) {
-    const role = runtime.roleManifest.roles.find((value: any) => value.id === id && value.managed);
-    if (!role) throw new ContractError("ROLE_BINDING_REQUIRED");
+    // 现代全配置由原manifest闭合绑定提供；不制造旧Subagents roleManifest。
+    const role = modern ? manifest.role_bindings?.[id]
+      : runtime.roleManifest.roles.find((value: any) => value.id === id && value.managed);
+    if (!role || role.managed !== true || modern && (
+      Object.keys(role).some(key => !["model", "tools", "read_roots", "write_roots", "managed", "thinking"].includes(key))
+      || !role.model || Object.keys(role.model).sort().join() !== "model,provider"
+      || typeof role.model.provider !== "string" || !role.model.provider
+      || typeof role.model.model !== "string" || !role.model.model
+      || ["tools", "read_roots", "write_roots"].some(key => !Array.isArray(role[key])
+        || role[key].some((value: unknown) => typeof value !== "string" || !value)))) throw new ContractError("ROLE_BINDING_REQUIRED");
     const logical = role.model.provider.replace(/^agentcfg-/, "");
     const networks = Object.entries(manifest.options.network?.routes ?? {}).filter(([, value]: any) => value.provider_ids.includes(logical));
     if (networks.length !== 1) throw new ContractError("NETWORK_BINDING_REQUIRED");
@@ -44,7 +54,10 @@ export function fromAgentcfg(defaults: Config, runtime: any): Config {
   for (const id of options.check_ids) {
     const binding = manifest.options.checks[id];
     config.verificationBindings[id] = { executable: binding.executable, args: binding.args, environment: {}, timeoutMs: binding.timeout_seconds * 1000,
-      kind: binding.kind, parser: binding.parser, minimumTests: binding.minimum_tests, inputs: binding.inputs };
+      kind: binding.kind, parser: binding.parser, minimumTests: binding.minimum_tests, inputs: binding.inputs,
+      ...(Object.hasOwn(binding, "required_test_ids") ? { requiredTestIds: structuredClone(binding.required_test_ids) } : {}),
+      ...(Object.hasOwn(binding, "read_roots") ? { read_roots: structuredClone(binding.read_roots) } : {}),
+      ...(Object.hasOwn(binding, "trusted_inputs") ? { trusted_inputs: structuredClone(binding.trusted_inputs) } : {}) };
   }
   if (options.second_view_enabled) {
     const role = config.roles.second_view, route = config.routes[role.route];

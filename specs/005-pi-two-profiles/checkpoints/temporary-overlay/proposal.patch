@@ -1,0 +1,439 @@
+--- a/agents/pi/schemas/options.schema.json
++++ b/agents/pi/schemas/options.schema.json
+@@ -421,6 +421,13 @@
+               ],
+               "additionalProperties": false
+             }
++          },
++          "execution_mode": {
++            "type": "string",
++            "enum": [
++              "temporary-overlay"
++            ],
++            "description": "仅受管Full/Linux检查；写入只留本次临时覆盖层，退出销毁，输出仅stdout/stderr。"
+           }
+         },
+         "required": [
+--- a/src/agentcfg/pi.py
++++ b/src/agentcfg/pi.py
+@@ -4,6 +4,7 @@
+ import hashlib
+ import json
+ from pathlib import Path
++import sys
+ 
+ import yaml
+ 
+@@ -245,6 +246,11 @@
+     if any("required_test_ids" in binding and (binding.get("kind") != "tests" or binding.get("parser") != "json")
+         for binding in options.get("checks", {}).values()):
+       raise ConfigError("pi-check-test-id-contract")
++    overlay_ids = {name for name, binding in options.get("checks", {}).items() if "execution_mode" in binding}
++    if overlay_ids and (data["profile"]["id"] != "pi-full" or sys.platform != "linux"
++        or not options.get("task_keeper", {}).get("enabled") or "task-keeper" not in data["plugins"]
++        or overlay_ids - set(options["task_keeper"].get("check_ids", []))):
++      raise ConfigError("CHECK_OVERLAY_UNSUPPORTED")
+     if options.get("task_keeper", {}).get("enabled") and engine != "node":
+       raise ConfigError("pi-managed-engine")
+ 
+--- a/src/agentcfg/pi_checks.py
++++ b/src/agentcfg/pi_checks.py
+@@ -3,6 +3,9 @@
+ import os
+ import hashlib
+ import re
++import stat
++import sys
++from contextlib import contextmanager, ExitStack
+ from pathlib import Path
+ 
+ from .activity import digest
+@@ -15,10 +18,14 @@
+ 
+ 
+ def compile_check(binding, *, candidate, executable, read_roots=(), trusted_context=None):
+-  if (set(binding) - FIELDS - {"kind", "parser", "minimum_tests", "inputs", "read_roots", "trusted_inputs", "required_test_ids"} or FIELDS - set(binding) or binding["foreground"] is not True
++  if (set(binding) - FIELDS - {"kind", "parser", "minimum_tests", "inputs", "read_roots", "trusted_inputs", "required_test_ids", "execution_mode"} or FIELDS - set(binding) or binding["foreground"] is not True
+       or type(binding["timeout_seconds"]) is not int or binding["timeout_seconds"] < 1
+       or not isinstance(binding["args"], list) or any(not isinstance(arg, str) or "\0" in arg for arg in binding["args"])):
+     raise ConfigError("pi-check-binding")
++  if "execution_mode" in binding:
++    if binding["execution_mode"] != "temporary-overlay" or sys.platform != "linux" or trusted_context is None:
++      raise ConfigError("CHECK_OVERLAY_UNSUPPORTED")
++    if trusted_context.get("overlay", {}).get("mode") != "temporary-overlay": raise ConfigError("CHECK_OVERLAY_UNSUPPORTED")
+   required_ids = binding.get("required_test_ids")
+   if "required_test_ids" in binding:
+     if (not isinstance(required_ids, list) or not 1 <= len(required_ids) <= 4096
+@@ -42,6 +49,8 @@
+     "read_roots": [str(Path(root).resolve(strict=True)) for root in read_roots],
+     "executable_identity": {"device": info.st_dev, "inode": info.st_ino, "size": info.st_size,
+       "sha256": hashlib.sha256(executable.read_bytes()).hexdigest()}}
++  if "execution_mode" in binding:
++    result.update(execution_mode="temporary-overlay", execution_effect="scratch-only", source_identity=trusted_context["candidate_identity"])
+   result["result_contract"] = {key: binding[key] for key in ("kind", "parser", "minimum_tests", "inputs", "required_test_ids") if key in binding}
+   if trusted_context is not None:
+     from copy import deepcopy
+@@ -57,6 +66,12 @@
+     raise ConfigError("pi-check-sandbox-contract")
+   if check["binding_digest"] != digest({key: value for key, value in check.items() if key != "binding_digest"}):
+     raise Conflict("项目检查绑定已经变化")
++  if "execution_mode" in check:
++    from .pi_guarded_files import root_identity
++    if (check["execution_mode"] != "temporary-overlay" or check.get("execution_effect") != "scratch-only"
++        or sys.platform != "linux" or "trusted_implementation" not in check
++        or root_identity(check["cwd"]) != check.get("source_identity") or check.get("write_roots")):
++      raise Conflict("CHECK_OVERLAY_UNSUPPORTED")
+   if "trusted_implementation" in check:
+     from .pi_trusted_checks import verify_trusted
+     verify_trusted(check)
+@@ -72,8 +87,11 @@
+     raise Conflict("项目检查的可执行程序在准入后发生变化")
+ 
+ 
+-def linux_verifier_argv(check, *, temporary, system_roots=("/usr", "/bin", "/lib", "/lib64"), denied_paths=(), denied_fds=None):
++def linux_verifier_argv(check, *, temporary, system_roots=("/usr", "/bin", "/lib", "/lib64"), denied_paths=(), denied_fds=None, source_fds=None, overlay_scope=None):
+   verify_check(check)
++  if check.get("execution_mode") == "temporary-overlay":
++    return _overlay_argv(check, temporary=temporary, denied_paths=denied_paths, denied_fds=denied_fds,
++      system_roots=system_roots, source_fds=source_fds, overlay_scope=overlay_scope)
+   candidate = Path(check["cwd"])
+   temp = configured_path(str(temporary))
+   if temp.is_relative_to(candidate) or candidate.is_relative_to(temp):
+@@ -118,6 +136,7 @@
+ 
+ 
+ def macos_verifier_policy(check, *, temporary, denied_paths=(), terminal_device=None):
++  if "execution_mode" in check: raise ConfigError("CHECK_OVERLAY_UNSUPPORTED")
+   verify_check(check)
+   import json
+   from .storage import Tree
+@@ -172,3 +191,176 @@
+     result.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_SYSTEM="/dev/null", GIT_CONFIG_GLOBAL="/dev/null",
+       GIT_OPTIONAL_LOCKS="0", GIT_TERMINAL_PROMPT="0", GIT_NO_LAZY_FETCH="1", GIT_NO_REPLACE_OBJECTS="1")
+   return result
++
++
++_OVERLAY_SYSTEM_ROOTS = ("/usr", "/bin", "/lib", "/lib64")
++
++
++def overlay_scope(check, *, denied_paths=(), system_roots=_OVERLAY_SYSTEM_ROOTS, max_entries=250000):
++  """当前Host/helper的纯元数据观察；不是权限票据，不读取任何文件正文。"""
++  from .paths import _absolute_directory
++  from .pi_trusted_checks import _table, _coordinate, _snapshot
++  from .pi_guarded_files import root_identity
++  verify_check(check)
++  if check.get("execution_mode") != "temporary-overlay" or type(max_entries) is not int or not 1 <= max_entries <= 250000:
++    raise ConfigError("CHECK_OVERLAY_UNSUPPORTED")
++  table = _table();candidate = Path(check["cwd"]);sources = [];seen = set()
++  systems = [Path(name).resolve(strict=True) for name in system_roots if Path(name).exists()]
++  def add(path, role, target=None):
++    target = Path(target or path)
++    path = configured_path(str(path))
++    if path.resolve(strict=True) != path: raise Conflict("CHECK_OVERLAY_CANONICAL")
++    if str(target) in seen: return
++    seen.add(str(target));info = path.lstat()
++    if info.st_uid not in (0, os.geteuid()) or info.st_mode & 0o6022: raise Conflict("CHECK_OVERLAY_PERMISSIONS")
++    if not stat.S_ISDIR(info.st_mode) and (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1):
++      raise Conflict("CHECK_OVERLAY_OBJECT")
++    if any(Path(row["mountpoint"]) != path and Path(row["mountpoint"]).is_relative_to(path) for row in table):
++      raise Conflict("CHECK_OVERLAY_SUBMOUNT")
++    device, coordinate = _coordinate(path, table)
++    sources.append({"path": str(path), "target": str(target), "role": role,
++      "kind": "directory" if stat.S_ISDIR(info.st_mode) else "file", "identity": _snapshot(info),
++      "coordinate": [list(device), str(coordinate)]})
++  add(candidate, "candidate")
++  for name in system_roots:
++    path = Path(name)
++    if path.exists(): add(path.resolve(strict=True), "system", target=path)
++  for value in check["read_roots"]: add(Path(value), "readonly")
++  git = candidate / ".git"
++  if git.exists() or git.is_symlink(): add(git, "git")
++  masks = []
++  for value in sorted(set(map(str, denied_paths))):
++    path = configured_path(value)
++    # 缺失leaf只在候选内，普通已存在父目录；祖先不创建、不跟随链接。
++    with _absolute_directory(path.parent) as parent:
++      try: info = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
++      except FileNotFoundError: info = None
++      device, coordinate = _coordinate(path.parent, table);coordinate /= path.name
++      for row in sources:
++        root = Path(row["path"]);rd,rc = row["coordinate"]
++        if list(device) != rd: continue
++        rc = Path(rc)
++        if rc.is_relative_to(coordinate): raise Conflict("CHECK_OVERLAY_ROOT_DENIED")
++        if not coordinate.is_relative_to(rc): continue
++        target = Path(row["target"]) / coordinate.relative_to(rc)
++        # 任何其它可见物理别名拒绝，而非只遮字面路径。
++        if row["role"] != "candidate" or target != path:
++          raise Conflict("CHECK_OVERLAY_ALIAS")
++        if info is None:
++          if path.parent.resolve(strict=True) != path.parent: raise Conflict("CHECK_OVERLAY_CANONICAL")
++          kind = "missing"
++        elif stat.S_ISREG(info.st_mode) and info.st_nlink == 1: kind = "file"
++        elif stat.S_ISDIR(info.st_mode): kind = "directory"
++        else: raise Conflict("CHECK_OVERLAY_MASK_OBJECT")
++        masks.append({"path": str(target), "kind": kind, "identity": None if info is None else _snapshot(info),
++          "parent_identity": _snapshot(os.fstat(parent))})
++  masks.sort(key=lambda row: row["path"])
++  count = 0
++  def inventory(fd, path, role, depth=0):
++    nonlocal count
++    if depth > 64: raise Conflict("CHECK_OVERLAY_LIMIT")
++    before = _snapshot(os.fstat(fd));hasher = hashlib.sha256();names = sorted(os.listdir(fd))
++    for name in names:
++      count += 1
++      if count > max_entries: raise Conflict("CHECK_OVERLAY_LIMIT")
++      child = path / name;info = os.stat(name, dir_fd=fd, follow_symlinks=False)
++      value = {"name": name, "identity": _snapshot(info)}
++      if any(child.is_relative_to(Path(mask["path"])) for mask in masks):
++        pass  # 秘密/deny只stat，绝不递归或读取正文。
++      elif stat.S_ISLNK(info.st_mode):
++        if role != "system": raise Conflict("CHECK_OVERLAY_OBJECT")
++        target = child.resolve(strict=True)
++        if not any(target.is_relative_to(root) for root in systems): raise Conflict("CHECK_OVERLAY_SYSTEM_UNAVAILABLE")
++        target_info = target.lstat()
++        if not stat.S_ISREG(target_info.st_mode) or target_info.st_nlink != 1:
++          raise Conflict("CHECK_OVERLAY_SYSTEM_UNAVAILABLE")
++        td,tc = _coordinate(target, table)
++        for mask in masks:
++          md,mc = _coordinate(Path(mask["path"]).parent, table);mc /= Path(mask["path"]).name
++          if td == md and (tc.is_relative_to(mc) or mc.is_relative_to(tc)):
++            raise Conflict("CHECK_OVERLAY_SYSTEM_UNAVAILABLE")
++        value.update(target=str(target), target_identity=_snapshot(target_info), link=os.readlink(name, dir_fd=fd))
++      elif stat.S_ISDIR(info.st_mode):
++        opened = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=fd)
++        try:
++          if _snapshot(os.fstat(opened)) != _snapshot(info): raise Conflict("CHECK_OVERLAY_DRIFT")
++          value["children"] = inventory(opened, child, role, depth + 1)
++        finally: os.close(opened)
++      elif not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
++        raise Conflict("CHECK_OVERLAY_SYSTEM_UNAVAILABLE" if role == "system" else "CHECK_OVERLAY_OBJECT")
++      if _snapshot(os.stat(name, dir_fd=fd, follow_symlinks=False)) != _snapshot(info):
++        raise Conflict("CHECK_OVERLAY_DRIFT")
++      hasher.update(digest(value).encode())
++    if names != sorted(os.listdir(fd)) or before != _snapshot(os.fstat(fd)): raise Conflict("CHECK_OVERLAY_DRIFT")
++    return hasher.hexdigest()
++  inventories = {}
++  for row in sources:
++    path = Path(row["path"])
++    if row["kind"] == "directory":
++      key = (str(path), row["role"])
++      if key not in inventories:
++        with _absolute_directory(path) as fd: inventories[key] = inventory(fd, path, row["role"])
++      row["inventory"] = inventories[key]
++    else: row["inventory"] = None
++    if _snapshot(path.lstat()) != row["identity"]: raise Conflict("CHECK_OVERLAY_DRIFT")
++  if _table() != table or root_identity(candidate) != check["source_identity"]: raise Conflict("CHECK_OVERLAY_DRIFT")
++  return {"schema_version": 1, "sources": sources, "masks": masks,
++    "namespace": {"euid": os.geteuid(), "uid_map": Path("/proc/self/uid_map").read_text()}}
++
++
++@contextmanager
++def pin_overlay_sources(check, scope, *, denied_paths=(), system_roots=_OVERLAY_SYSTEM_ROOTS):
++  """所有可见来源持FD到exec；原路径与FD/UID再次核，异常close。"""
++  from .paths import _absolute_directory
++  from .pi_trusted_checks import _snapshot
++  if overlay_scope(check, denied_paths=denied_paths, system_roots=system_roots) != scope:
++    raise Conflict("CHECK_OVERLAY_DRIFT")
++  fds = {}
++  try:
++    for row in scope["sources"]:
++      path = Path(row["path"])
++      with _absolute_directory(path.parent) as parent:
++        fd = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC
++          | (os.O_DIRECTORY if row["kind"] == "directory" else 0), dir_fd=parent)
++      fds[row["target"]] = fd
++      if _snapshot(os.fstat(fd)) != row["identity"]: raise Conflict("CHECK_OVERLAY_DRIFT")
++    if overlay_scope(check, denied_paths=denied_paths, system_roots=system_roots) != scope:
++      raise Conflict("CHECK_OVERLAY_DRIFT")
++    yield fds
++    # fakeexec返回时也可检验；真实exec在finally以前替换进程，helper负责不将来源FD留给checker。
++  finally:
++    for fd in fds.values(): os.close(fd)
++
++
++def verify_overlay_sources(check, scope, source_fds, *, denied_paths=(), system_roots=_OVERLAY_SYSTEM_ROOTS):
++  from .pi_trusted_checks import _snapshot
++  verify_check(check)
++  if overlay_scope(check, denied_paths=denied_paths, system_roots=system_roots) != scope:
++    raise Conflict("CHECK_OVERLAY_DRIFT")
++  for row in scope["sources"]:
++    fd = source_fds.get(row["target"])
++    if type(fd) is not int or fd < 3 or _snapshot(os.fstat(fd)) != row["identity"]:
++      raise Conflict("CHECK_OVERLAY_DRIFT")
++
++
++def _overlay_argv(check, *, temporary, denied_paths, denied_fds, system_roots, source_fds, overlay_scope):
++  if not isinstance(source_fds, dict) or not isinstance(overlay_scope, dict): raise Conflict("CHECK_OVERLAY_SOURCE_REQUIRED")
++  verify_overlay_sources(check, overlay_scope, source_fds, denied_paths=denied_paths, system_roots=system_roots)
++  candidate = Path(check["cwd"]);temp = configured_path(str(temporary))
++  if temp.is_relative_to(candidate) or candidate.is_relative_to(temp): raise ConfigError("pi-check-temporary-overlap")
++  argv = ["/usr/bin/bwrap", "--unshare-all", "--cap-drop", "ALL", "--die-with-parent", "--proc", "/proc", "--dev", "/dev", "--bind", str(temp), "/tmp"]
++  for row in overlay_scope["sources"]:
++    if row["role"] in ("candidate", "git"): continue
++    argv += ["--ro-bind", "/proc/self/fd/" + str(source_fds[row["target"]]), row["target"]]
++  argv += ["--overlay-src", "/proc/self/fd/" + str(source_fds[str(candidate)]), "--tmp-overlay", str(candidate)]
++  git = str(candidate / ".git")
++  if git in source_fds: argv += ["--ro-bind", "/proc/self/fd/" + str(source_fds[git]), git]
++  for row in overlay_scope["masks"]:
++    path = row["path"]
++    if row["kind"] == "directory": argv += ["--perms", "0000", "--tmpfs", path, "--remount-ro", path]
++    else:
++      fd = (denied_fds or {}).get(path)
++      if type(fd) is not int or fd < 3 or os.fstat(fd).st_size != 0: raise Conflict("CHECK_OVERLAY_MASK_FD")
++      argv += ["--perms", "0000", "--ro-bind-data", str(fd), path]
++  argv += ["--chdir", str(candidate), "--setenv", "HOME", "/tmp", "--setenv", "TMPDIR", "/tmp", "--", *check["argv"]]
++  return tuple(argv)
+--- a/src/agentcfg/pi_trusted_checks.py
++++ b/src/agentcfg/pi_trusted_checks.py
+@@ -51,6 +51,18 @@
+     "runtime": {key: host.config[key] for key in ("instance_id", "lock_identity", "slice_identity")},
+     "worker_scope": writes, "roots": deepcopy(declarations),
+     "protected_roots": protected}
++  binding = manifest["options"]["checks"][checker_id]
++  if "execution_mode" in binding:
++    task = manifest["options"].get("task_keeper", {})
++    if (binding["execution_mode"] != "temporary-overlay" or sys.platform != "linux"
++        or manifest.get("profile_id") != "pi-full" or "task-keeper" not in manifest.get("plugins", [])
++        or not task.get("enabled") or checker_id not in task.get("check_ids", [])):
++      raise ConfigError("CHECK_OVERLAY_UNSUPPORTED")
++    from .pi_pid_namespace import host_namespace_binary
++    binary = host_namespace_binary(host)
++    if binary != host.runtime_root / "bin/pi-bwrap": raise Conflict("CHECK_OVERLAY_HELPER_UNAVAILABLE")
++    value["overlay"] = {"mode": "temporary-overlay", "effect": "scratch-only",
++      "helper": {"path": str(binary), "snapshot": _scan(_canonical(binary), executable=True)}}
+   if lease is not None:
+     value["lease"] = {key: lease[key] for key in ("lease_id", "grant_generation")}
+   return value
+@@ -162,6 +174,14 @@
+   if binding.get("kind") not in ("build", "tests") or binding.get("parser") not in ("exit-code", "json", "tap", "pytest") or type(binding.get("minimum_tests")) is not int or binding["minimum_tests"] < 1:
+     raise ConfigError("pi-check-result-contract")
+   if binding["kind"] == "tests" and binding["parser"] == "exit-code": raise ConfigError("pi-managed-test-count-required")
++  if "execution_mode" in binding:
++    overlay = context.get("overlay", {})
++    if (binding["execution_mode"] != "temporary-overlay" or sys.platform != "linux"
++        or overlay.get("mode") != binding["execution_mode"] or overlay.get("effect") != "scratch-only"):
++      raise Conflict("CHECK_OVERLAY_UNSUPPORTED")
++    helper = overlay["helper"]
++    if _scan(_canonical(helper["path"]), executable=True) != helper["snapshot"]:
++      raise Conflict("CHECK_OVERLAY_HELPER_UNAVAILABLE")
+   table = _table();candidate = _canonical(candidate);executable = _canonical(executable)
+   if root_identity(candidate) != context["candidate_identity"]: raise Conflict("ROOT_IDENTITY")
+   writes = [];workspace_snapshots = []
+--- a/src/agentcfg/pi_auxiliary.py
++++ b/src/agentcfg/pi_auxiliary.py
+@@ -161,6 +161,13 @@
+         raise Conflict("CHECK_NAMESPACE_HELPER_UNAVAILABLE")
+       value["namespace_helper"] = {"path": str(binary), "sha256": hashlib.sha256(helper[0]).hexdigest()}
+       process_scope = "linux-pid-namespace"
++    if check.get("execution_mode") == "temporary-overlay":
++      from .pi_checks import overlay_scope
++      expected = check["trusted_implementation"]["context"]["overlay"]["helper"]
++      if ("namespace_helper" not in value or value["namespace_helper"]["path"] != expected["path"]
++          or value["namespace_helper"]["sha256"] != expected["snapshot"]["sha256"]):
++        raise Conflict("CHECK_OVERLAY_HELPER_UNAVAILABLE")
++      value["overlay_scope"] = overlay_scope(check, denied_paths=value["denied_paths"])
+     entry = host.repository / "scripts/pi-project-check"
+     argv = (sys.executable, "-I", str(entry), "--input", str(host.root / "activity/auxiliary-inputs" / (lease["lease_id"] + ".json")))
+   else:
+--- a/scripts/pi-project-check
++++ b/scripts/pi-project-check
+@@ -11,7 +11,7 @@
+ # 已密封运行包不能在导入时生成 __pycache__。
+ sys.dont_write_bytecode = True
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+-from agentcfg.pi_checks import check_environment, linux_verifier_argv, macos_verifier_policy
++from agentcfg.pi_checks import check_environment, linux_verifier_argv, macos_verifier_policy, pin_overlay_sources, verify_overlay_sources
+ from agentcfg.pi_control import request
+ from agentcfg.storage import Conflict, Tree, ensure_private
+ 
+@@ -24,7 +24,9 @@
+     raw = tree.read(args.input.name)
+   value = json.loads(raw[0])
+   required = {"check", "temporary", "lease_id", "grant_generation", "denied_paths"}
+-  if set(value) not in (required, required | {"namespace_helper"}):
++  overlay = value.get("check", {}).get("execution_mode") == "temporary-overlay"
++  accepted = (required | {"namespace_helper", "overlay_scope"},) if overlay else (required, required | {"namespace_helper"})
++  if set(value) not in accepted:
+     return 2
+   if "namespace_helper" in value and sys.platform != "linux":
+     return 2
+@@ -38,6 +40,29 @@
+     return 4
+   temporary = Path(value["temporary"])
+   ensure_private(temporary)
++  if overlay:
++    if sys.platform != "linux": return 2
++    from agentcfg.pi_shell_execution import _helper
++    helper = value["namespace_helper"]
++    if type(helper) is not dict or set(helper) != {"path", "sha256"}: return 2
++    with pin_overlay_sources(check, value["overlay_scope"], denied_paths=value["denied_paths"]) as sources:
++      masks = {};descriptor = None
++      try:
++        for row in value["overlay_scope"]["masks"]:
++          if row["kind"] in ("file", "missing"):
++            masks[row["path"]] = os.memfd_create("agentcfg-denied", os.MFD_CLOEXEC)
++        argv = linux_verifier_argv(check, temporary=temporary, denied_paths=value["denied_paths"],
++          denied_fds=masks, source_fds=sources, overlay_scope=value["overlay_scope"])
++        descriptor, _identity = _helper(helper["path"], helper["sha256"])
++        # helper打开后仍重验源、UID映射、entry/manifest；不以cachedscope补权限。
++        verify_overlay_sources(check, value["overlay_scope"], sources, denied_paths=value["denied_paths"])
++        for fd in [*sources.values(), *masks.values()]: os.set_inheritable(fd, True)
++        os.fchdir(sources[check["cwd"]])
++        os.execve(descriptor, (helper["path"], *argv[1:]), check_environment(check, temporary))
++      finally:
++        if descriptor is not None: os.close(descriptor)
++        for fd in masks.values(): os.close(fd)
++    return 6
+   if sys.platform == "linux":
+     denied_fds = {}
+     for item in value["denied_paths"]:
+--- a/agents/pi/packages/task-keeper/src/config.ts
++++ b/agents/pi/packages/task-keeper/src/config.ts
+@@ -18,6 +18,7 @@
+   sharedMutableDirectories?: string[];
+   inputs?: string[];
+   requiredTestIds?: string[];
++  executionMode?: "temporary-overlay";
+   read_roots?: string[];
+   trusted_inputs?: Array<{ root_ref: string; relative_path: string }>;
+   supervisorExecutable?: string;
+@@ -91,6 +92,7 @@
+       environment: { type: "object", additionalProperties: { type: "string" } }, timeoutMs: timeout,
+       kind: { enum: ["build", "tests"] }, parser: { enum: ["exit-code", "json", "tap", "pytest"] }, minimumTests: integer(1),
+       requiredTestIds: { type: "array", minItems: 1, maxItems: 4096, uniqueItems: true, items: idSchema },
++      executionMode: { enum: ["temporary-overlay"] },
+       read_roots: names,
+       trusted_inputs: { type: "array", maxItems: 128, uniqueItems: true, items: shape({ root_ref: idSchema,
+         relative_path: { type: "string", minLength: 1, maxLength: 4096 } }) },
+--- a/agents/pi/packages/task-keeper/src/agentcfg-config.ts
++++ b/agents/pi/packages/task-keeper/src/agentcfg-config.ts
+@@ -55,6 +55,7 @@
+     const binding = manifest.options.checks[id];
+     config.verificationBindings[id] = { executable: binding.executable, args: binding.args, environment: {}, timeoutMs: binding.timeout_seconds * 1000,
+       kind: binding.kind, parser: binding.parser, minimumTests: binding.minimum_tests, inputs: binding.inputs,
++      ...(Object.hasOwn(binding, "execution_mode") ? { executionMode: binding.execution_mode } : {}),
+       ...(Object.hasOwn(binding, "required_test_ids") ? { requiredTestIds: structuredClone(binding.required_test_ids) } : {}),
+       ...(Object.hasOwn(binding, "read_roots") ? { read_roots: structuredClone(binding.read_roots) } : {}),
+       ...(Object.hasOwn(binding, "trusted_inputs") ? { trusted_inputs: structuredClone(binding.trusted_inputs) } : {}) };
+--- a/agents/pi/packages/task-keeper/src/verification/supervisor.ts
++++ b/agents/pi/packages/task-keeper/src/verification/supervisor.ts
+@@ -19,6 +19,7 @@
+   const declared = runtime.manifest.options.checks?.[checkId];
+   if (!declared || binding.executable !== declared.executable || canonical(binding.args) !== canonical(declared.args)
+       || binding.timeoutMs !== declared.timeout_seconds * 1000 || binding.kind !== declared.kind || binding.parser !== declared.parser
++      || (binding.executionMode ?? null) !== (declared.execution_mode ?? null)
+       || binding.minimumTests !== declared.minimum_tests || canonical(binding.inputs ?? []) !== canonical(declared.inputs)
+       || canonical(binding.requiredTestIds ?? null) !== canonical(declared.required_test_ids ?? null)
+       || canonical(binding.read_roots ?? null) !== canonical(declared.read_roots ?? null)
+--- a/agents/pi/packages/task-keeper/src/verification/inputs.ts
++++ b/agents/pi/packages/task-keeper/src/verification/inputs.ts
+@@ -16,6 +16,8 @@
+     const supervisor = verifierSupervisor(binding, cwd);
+     records.push({ checkId, path: `@supervisor:${supervisor.path}`, hash: supervisor.hash });
+     records.push({ checkId, path: "@verification-runtime", hash: supervisor.engineHash });
++    if (binding.executionMode !== undefined) records.push({ checkId, path: "@execution-effect",
++      hash: digest({ mode: binding.executionMode, effect: "scratch-only" }) });
+     // 仅绑定原声明；可信来源与 Writer 隔离仍由原 Host 执行前独立核验。
+     if (binding.read_roots !== undefined || binding.trusted_inputs !== undefined) records.push({ checkId,
+       path: "@trusted-input-declaration", hash: digest({ read_roots: binding.read_roots ?? null, trusted_inputs: binding.trusted_inputs ?? null }) });

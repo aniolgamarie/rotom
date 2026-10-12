@@ -156,3 +156,19 @@ def test_public_only_web_does_not_claim_an_account_requirement(tmp_path):
   p["data"]["profile"]["agent_options"]["network"]["routes"]["web-direct"]["service_ids"] = ["web:public"]
   row = next(row for row in PiAdapter(ROOT).capability_diagnostics(p) if row["id"] == "pi-web")
   assert row["authentication"] == "not-required"
+
+
+def test_modern_host_native_evidence_does_not_verify_source_plan_or_isolation(tmp_path):
+  from test_pi_profile_projection import resolved
+  from agentcfg.pi_diagnostics import diagnostic_identity
+  p = projection(tmp_path); p["data"] = resolved(); p.update(deployed=True, dependencies="installed")
+  p["data"]["profile"]["agent_options"]["diagnostics"] = {"evidence_root": str(tmp_path), "evidence_paths": ["load.json", "execution.json"]}
+  identity = diagnostic_identity(p)
+  for stage in ("load", "execution"):
+    save(tmp_path, stage + ".json", passed("native", capability_id="pi-host", test_case_id=stage, identity=identity))
+  row = next(row for row in PiAdapter(ROOT).capability_diagnostics(p) if row["id"] == "pi-host")
+  assert row["load_evidence"] == row["execution_evidence"] == "verified"
+  assert row["profile_plan"]["diagnostic_identity"] == identity
+  assert all(source["load_evidence"] == "not-run" for source in row["profile_plan"]["selected_sources"])
+  assert row["profile_plan"]["permission_isolation"]["status"] == "not-run"
+  assert row["profile_plan"]["permission_isolation"]["complete_coverage"] is False

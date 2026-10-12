@@ -1,0 +1,67 @@
+# 单一权限来源的审批等级接线
+
+## 决定与实施顺序
+
+原permission-policy仍是唯一来源，effect继续只有allow/deny；allow规则增加可选approval，取human/reviewer/deterministic-policy。缺省按human处理，显式null或未知值失败；deny不接受approval，不能把硬拒绝解释为较低审批等级。先补schema、Node闭合校验与纯聚合，再由root验收实际匹配、prepared绑定和签发消费，最后接公开SDK工具路径。第一阶段不修改生产requires_human、默认政策、permit或RPC，也不以语法可解析宣称功能生效。
+
+重叠规则与多目标操作采用最高审查等级human > reviewer > deterministic-policy，不按顺序或更具体allow覆盖高等级。匹配来自原权限编译/授权路径；模型输入、命令文本、项目说明和子任务不能提供审批等级。纯聚合只处理已匹配等级，不检查deny/root/grant、签发能力或认证来源，不能直接当执行准入。
+
+## 后续准备与许可不变量
+
+文件先完成原deny、物理根、角色/grant、只读/秘密/控制路径与目标检查，再从原匹配集合计算等级；所有覆盖目标的匹配限制都纳入，不能只取最深允许根而遗漏较广manual限制。edit聚合读与写，rename聚合原/目标路径。资源只读特殊路径在没有明确等级投影时保持human，不从资源存在推导普通业务授权。
+
+Shell先完成原command deny/allow、后端、根、环境/网络、保护路径与挂载可表达检查。动态脚本的实际文件IO不可逐次取得SDK审批，因此还必须核对其潜在文件能力与原file规则限制：命令对可见读写根的能力不能绕过其中必须人工/审核的文件区域。未定义或不能可靠表达的交叉匹配保持human/不可用，不能仅凭command allow降级。这个范围需root在实际编译前决定并验证，不能由第一阶段聚合器自行猜测。
+
+prepared政策须携带原等级与policy identity并进入operation_digest，requires_human与等级一致；issue/consume每次从原单一来源重验。旧组件未含新等级时不静默猜新的授权模式，现有兼容行为须单独保留与说明。reviewer级不能用deterministic-policy来源签发；human仍仅受信UI/SDK确认。deterministic级不调用模型；reviewer仅在资格/隐私/严格输入/账户授权/真实模型质量全部成立时进入原ticket流程，缺资格收紧，不冒充有效模型ask。
+
+原FileAdmissionControl/bridge为许可唯一实际消费路线，source由可信路径固定，不从工具参数/模型JSON选。Decision继续共用原service mutex、canonical Admission和原scope owner；未知签发/分配不删除映射、重签、重派或释放Writer。新的自动决定接口如需要manager RPC，必须由root设计其原row、principal、context与能力保存边界，不能把Python原对象ticket直接变成公开字符串能力。
+
+## 验收边界
+
+先验证Python/Node语法一致、缺省与混合模式最高等级、非法字段/类型、安全错误、父策略转换不丢字段；canonical file/command可保留已支持approval，旧absolute-file/argv明确拒绝新字段。再验证原真实临时File/Shell准备与一次permit消费，硬deny与失效次数零、manual覆盖与交叉目标不降级、普通明确deterministic规则无需因write/bash名称一律人工、reviewer模式不能被其他非human来源绕过。最后按现有授权规则验证公开SDK/真实受管执行，default/fake不能代替native、账号或产品gate。
+
+证据依据为`policy-approval-seam/`15来源只读报告与已验收[reviewer-bridge-permit.md](reviewer-bridge-permit.md)。语法与纯聚合阶段已通过独立稳定审查：Python 173项、Node 123项为分别运行的检查，归档在`policy-approval-grammar/`。此阶段没有修改默认政策、prepared生产者、requires_human、许可或RPC；实际缺省等级、匹配投影与签发消费仍须接线。R11与正式任务整体未闭合。
+
+## 已验收的可信组件接缝
+
+FilePolicy成功授权后现已返回approval，原current/deny/物理保护/root/ceiling/grant/Writer检查与最深根选择保留；所有匹配allow纳入，包括不在ceiling的较广根限制，缺省human。list/search与原字面匹配无法表达的物理根别名整体human。两文件增量53项离线检查及稳定审查通过，归档`file-policy-approval/`；尚未以返回值存在推导实际准入已接线。
+
+原OperationAdmissions新六字段policy可显式携带approval，并校验requires_human与等级一致；新等级进入原prepared及operation_digest。签发来源矩阵为human仅human、reviewer仅reviewer/human、deterministic-policy仅deterministic-policy/human；reviewer原资格hook在issue/consume继续成立。原五字段可信组件投影单独保留旧语义，不替新规则作缺省授权猜测。确定性等级的Decision.begin先核对原上下文、prepared、resolution及硬策略，然后返回not-called，先于资格、scope、预算、attempt、ticket分配。三文件269项离线检查及独立稳定审查通过，归档`approval-admission/`。这些组件接缝不证明宿主工厂、跨语言私有RPC、真实模型质量或native完成；正式完成数仍7/100。
+
+写入准备还必须覆盖潜在create：目标文件与所选write根到目标父目录间所有可能创建的路径，无论当前是否存在，都纳入同工具create审批等级；缺create权限收紧为human，实际创建仍遵循原硬拒绝。这样许可消费后文件/目录消失不能降低创建审批要求。edit原强制expected_digest且目标缺失不能成功写入，不扩出创建通路，聚合read/write；rename聚合原两端，不创建父目录。
+
+文件准备投影已接线：preview返回原权限分类并由FileOperationAdmissions放入六字段policy，requires_human从等级产生；issue/consume复算原resolution。缺省规则与资源/枚举仍human，显式det规则的read/write/create可以进入原确定性账本，edit/rename与潜在create取最高等级。四文件227项相关回归及独立稳定审查通过，归档`file-approval-preparation/`。原IO与Writer仍由原账本消费之后的执行通路管理；非deferred历史入口没有新增自动审批接线。Node官方入口与固定来源dispatch在后续阶段接线，R11整体仍未完成。
+
+原manager控制通道新增固定来源`ordinary_admission_issue_deterministic`，闭合参数仅operation_id/context；只允许原prepared明确deterministic-policy，实际签发仍原bridge/current/一次许可，human RPC仍固定human。原service mutex顺序不变；关闭监督者与worker拒绝新签发，scoped确认退役仍拒绝，未知签发回执保留原映射/取消墓碑，不重签、猜测许可或释放Writer。三文件122项相关回归及独立稳定审查通过，归档`deterministic-admission-control/`；Node/factory与真实宿主验收另阶段。
+
+公开文件入口的纯声明校验已独立完成：完整十字段resolution、原tool/generation/policy digest、等级与人工flag一致、guarded backend、无网络/服务、路径4096边界、根覆盖和写workspace集合必须相符；先捕获有界own-data冻结副本，Proxy/accessor不执行，错误固定。完整旧五字段只接受human=True，缺grade不能从False猜自动。最终75项helper检查与稳定审查通过，先前长度补齐前193项四模块检查仅历史证据，分别保留不相加，归档`official-file-resolution/`。声明校验不证明真实根/role/grant/Writer或授权；公开入口的实际dispatch在下一阶段验收。
+
+公开文件入口已接固定来源分派：先捕获原prepare响应的有界冻结副本，全部文件新/旧投影通过完整policy/目标/根校验；新等级还核32hex operation/private refs和原prepared digest。确定性级在有无UI时都不弹窗、不调用reviewer，只请求原manager固定来源RPC并核对返回许可；human/reviewer当前均只接受原可信UI human来源，无UI拒绝并取消自有行。reviewer自动资格未在该工厂接线，没有伪造模型ask。取消/退役/配置漂移/签发迟答仍禁止consume，丢consume回执只读对账且不重发或释放未知Writer。旧分支未知policy.source被接受的真实反例已修复；三个旧fake fixture补成真实完整投影。最终五模块288项、独立稳定审查通过，归档`official-file-approval-dispatch/`；旧218/51仅历史阶段记录，不相加。fake Supervisor/SDK不代表真实IPC/官方SDK/native或全产品完成；生产ls/find/grep分类仍保守human，测试中这些工具的det投影只是通用分派契约。Shell仍原人工门。
+
+## Shell完整能力的保守分类设计（2026-10-06）
+
+新增分类必须消费受信后端通过原mount planner生成的实际plan，不能由模型/工具参数提供plan或grade。原command deny/allow、物理根/别名/子挂载、保护路径遮罩、无网络和backend可用性检查先完成；分类器本身不代替这些授权/OS事实。后端只给旧三字段runtime/helper/plan_digest而不给完整计划时保持human，不从摘要或可用性猜能力。正式factory仍未启用，准备组件不能宣称生产已自动审批。
+
+第一版采用充分条件而非精确最小匹配：原command_ref/bash/execute全部allow匹配取最高等级，缺省human，deny拒绝；另外纳入整个原file allow集合的最高等级，不按tool_ids排除更高限制，也不因路径当前不可见、规则根未选、deny遮罩或原命令名称丢弃限制。这会产生额外人工确认，但能避免仅凭字面坐标忽略未选物理别名、跨工具能力和masked区域误判。后续优化须提供完整物理相交证明，不能直接改成lexical overlap。
+
+每个实际directory mount（workspace及system）都须由原file allow subtree覆盖整个挂载根，分别覆盖read/list/search；writable还须覆盖write/create/delete/rename。一个或多个覆盖规则可共同覆盖操作集合，但exact目录规则或仅部分子路径不能证明整个树的能力；不依赖当前目录为空/当前文件存在，未来新增名称也属于挂载能力。每个只读executable file至少需read覆盖，exact目标或其subtree祖先均可；不会新设第二权限来源。任一能力缺覆盖即human；系统目录未声明原file root/allow时也保持human。原file allow最高等级和command最高等级与覆盖结果再取human > reviewer > deterministic-policy。文件allow仅提供分类的充分条件，不新增Shell的硬授权或扩大原挂载根。
+
+分类器先限制输入为有界原生JSON与原schema，使用原argv编译器的封闭plan校验但不打开FD/构造真实执行能力；输出仅等级，无permit/Writer/模型调用/正文摘要。非法声明固定失败，缺覆盖是合法human结果。测试须覆盖command deny/default/重叠、全树与exact差异、多操作联合覆盖、只读/写入/系统/可执行能力、跨tool及未选根高等级、mask不降级、未来创建、非法/超界输入、调用无副作用。此组件先独立实现验收；后续root把实际plan/current绑定接入原Shell bridge，并同步Python source闭合和Node等级/固定来源分派，在真实factory及原生验收前不宣称产品完成。
+
+现代审批运行文件清单两处遗漏已修复：official-file-resolution.ts与pi_policy_approval.py均显式声明进入pi-base安装树。101项默认验证及稳定独立审查通过，临时95声明文件安装后的Node相对import和Python独立包import已观察，证据归档approval-runtime-closure。正式npm锁/完整运行包部署/官方SDK或产品启动仍未执行；其它本地import闭包正在逐条件核对，不能由两文件修复推导Full齐备。
+
+## 完整计划接入原Shell准备的实际约束（2026-10-06）
+
+纯分类两源已验收327项默认检查及稳定独立审查，归档shell-approval-classification。其声明级结果不作为后端证明。root随后在原ShellOperationAdmissions._compile接可选mount_plan：整个preflight响应先经有界原生JSON捕获；旧三字段后端仍原五字段human。新完整计划须从原part提取的真实根/cwd/可执行/deny/readonly输入，用原compile_mount_plan在当前观察者重新生成（system目录及alias来自受信后端的封闭plan），结构与摘要都一致才记录grade/flag。声称计划增加可见树/可写树、删除遮罩或更换cwd/executable身份不能通过原planner比较。允许system根选择的来源是受信后端工厂，模型/工具参数不携带此字段。
+
+原policy digest、ceiling digest与完整backend绑定，issue/consume沿原_fresh复算；许可仍原fixed-source manager签发、consume原子烧许可之后才分配external/Writer。新六字段Source投影只接受grade/flag一致，旧五字段兼容原行为。临时真实源树及原planner的八模块203项已通过，包含只读/写入两类确定性许可、无提前Writer、伪造plan与漂移拒绝、六字段源FD pin和安装包独立import。helper copy已加入现代Base显式清单，当前96声明文件（25 TS、71 supervisor）。这些证据的system roots为空，不代表真实/usr等目录、helper执行、Node-Python IPC或官方SDK已测；稳定独立阶段审查另存，默认工厂及Node Shell自动路径仍未启用。
+
+Base完整离线diagnostic_identity/render的未选Web导入已修复：只有选择pi-web才加载其静态配置实现；未选非空web仍原pi-web-not-selected，schema/modern projection先验不变。真实无stub身份路径取得1个红例后，最终五模块123项与稳定两源审查通过，归档base-unselected-web。此前该路径仅静态配置检查，没有账号读取、模型或服务调用证据；本修复不声称已验证真实加载或宿主gate。
+
+Shell Source旧五字段兼容已明确为human=True：独立阶段审查发现仅bool校验的P2投影不一致，root取得真实旧False进入目录pin的1项红例后收紧；新六字段按enum/flag一致继续允许，generic Admission旧五字段可信组件语义不扩大更改。最终同八模块204项（22.82秒）替代修前203作为当前证据；旧203与旧review材料保留不相加，增量review02闭合该发现后记录。没有观察到该投影缺口绕过固定manager确定性签发的证据。
+
+完整计划Shell准备阶段已完成稳定增量审查：review02关闭旧五字段P2，五个当前来源SHA与最终204项检查一致，root验收并归档`shell-approval-preparation/`。修前203项与review01作为历史阶段保留。这个归档仅验证组件准备、当前绑定、原许可消费与临时安装闭包；真实系统挂载、helper、跨语言IPC及生产工厂仍单独验收。
+
+公开Shell控制器现已接入原prepared等级及固定来源分派。完整旧五字段只接受human=True；新六字段校验等级/flag一致及原operation/private refs和digest，不能由脚本文字或工具参数决定来源。确定性级有无UI均只走原manager固定确定性RPC；human/reviewer仍只允许可信UI的human确认，无UI时prepare后取消自有行，不签发、不consume、不取私密输入或启动。reviewer自动资格仍未在生产工厂接线，缺资格不会伪造模型ask。原current/取消/退役/迟答及丢consume回执只读对账语义保留；异常协议投影统一绑定失败/退出4，原非法工具输入仍退出2。
+
+此Node阶段四模块一次220项（4.267秒）及稳定两源独立审查通过；共享控制器的额外两模块关联验证另一次145项（0.753秒）通过，两次不相加宣称单次验收。仅一个旧manual Shell无UI测试按实际新路径更新断言，继续明确禁止签发、consume和执行。初次关联运行的旧断言失败与另一模块缺测试resolver导致未收集材料原样保留；最终使用仓库既有mock-guard resolver及网络/真实子进程守卫，没有修改上游。证据归档`official-shell-approval-dispatch/`。这些是假Supervisor/SDK边界的控制流证据，正式工厂、真实SDK/IPC、实际UI身份、安装锁、账号和产品gate仍未完成；默认permission policy没有修改，正式任务完成数仍7/100。

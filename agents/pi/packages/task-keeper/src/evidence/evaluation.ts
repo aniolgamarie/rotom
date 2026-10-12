@@ -1,4 +1,5 @@
 import { finiteInteger, ContractError, digest } from "../contracts/primitives.ts";
+export { summarizeEvidence as evaluateEvidence } from "./records.ts";
 
 export interface EvaluationRun {
   id: string; taskId: string; family: string; split: "development" | "holdout";

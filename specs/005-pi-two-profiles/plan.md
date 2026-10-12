@@ -1,0 +1,1002 @@
+# Implementation Plan: Pi 双 Profile 与可替换能力
+
+**Branch**: `feat/pi-toolkit-upgrade` | **Date**: 2026-10-04 | **Spec**: [spec.md](spec.md)
+
+**Input**: `specs/005-pi-two-profiles/spec.md`，37条需求。
+
+Spec Kit feature为`005-pi-two-profiles`；setup-plan输出的BRANCH是该逻辑feature标识，实际Git分支以上述git查询为准。speckit-plan已完成研究与设计；speckit-tasks将旧74项重排细化为100项，当前执行speckit-implement。本文继续承担ExecPlan职责；旧编号迁移以tasks.md末表为准。
+
+## Summary
+
+交付可独立使用的Base及按需协作的Full。初始候选选择Pi官方v1.0.1系列、原生MCP/Code Mode和原生压缩；以仓库自有适配承担统一权限与进程监督，可选风险审查优先复用成熟公开扩展并保留替换接口，Full复用delegate/TK并接独立Durable服务。按能力契约隔离提供者，替换先验兼容/迁移/恢复，再切换。候选选择是设计决定，精确发行物完整性、正式锁和真实运行证据在实施gate完成，现有0.84.4环境本轮不动。详细选择、替代与排除理由见research.md。
+
+## 执行状态与下一动作
+
+开发分支检查点：正式进度为 **32/100**，八项产品 gate 均未通过；最新状态以仓库根 `STATE.md` 和 [implementation-status.md](implementation-status.md) 为准。下表与其后按日期追加的轮次属于历史记录，不覆盖最新状态。跨机器环境准备、候选代码和原机证据边界见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+
+2026-10-10 选型方向更新：权限控制提供者优先衡量固定版 pi-jev 完整扩展原样复用，再考虑公开接口薄适配；这里包含工具拦截、风险判断、人工确认/放行与拒绝；现有自有risk-review不是默认最终提供者。可配置项不按默认值判不兼容，已有实现不构成保留理由。具体条件及边界见research D17，实际选型在T049–T057执行；Base主线继续。当前快速交接见[implementation-status.md](implementation-status.md)。
+
+完整交付 Base、Full、共享权限、经验证的受限执行、可选模型审批、统一 Pi/Codex 委派、Task Keeper Inspect/Fix、Durable 持久只读任务、维护恢复和当前有效验收。阶段用于控制依赖和风险，工期不构成删减目标的理由。
+
+| 工作状态 | 当前记录 |
+|---|---|
+| 已完成 | 正式T001–T004、T006–T008、T010、T014–T015、T017–T021、T029–T030、T038，共18/100。公开日常工具、长命令及主认证/切换SDK ABI通过；Base CLI区分key缺失/空值。主会话SDK8、Base SDK12及launch/print/Footer组件另有分层验收；不签产品资格 |
+| 进行中 | Base六能力限定1.0.1公开host ABI、原producer/current/sync、两目标cold安装及真正CLI print默认deny/授权read/write/edit已实际验证。Full显式基础候选profile与正常两profile锁已发布，Base current/Full candidate；全局recipe变化后的新锁身份0231d0a9…尚无安装/native资格，旧1c138…证据不升级。正在统一delegate/TK/独立Durable整包接线。已实现原锁内execution-v3单记录sending/预算预留默认阶段38通过，继续核cancel在配置收紧后的准入与封闭状态转移。旧固定Base安装的真实CLI会话分支/真正压缩/全关闭后公开重开最终七次合成HTTP通过，固定任务/产物/失败引用保持，分支和重开后实际read硬拒绝/哨兵不变；独立复核待。真实账号/provider/TUI与五个旧OMP shared Skill资源锁回归失败分列，产品gate仍未验 |
+| 失败待决策 | 无新增待用户技术决定；旧失败与已解决的来源问题按日期保留于下方历史记录，不作为当前阻断。reviewer复用在适用阶段按同条件实证决定 |
+| 环境不足未验证 | 实际完整Base/Full运行、账号/模型、终端、整体隔离和性能gate仍未通过。Linux必需，其余按需；严格计量前AUTO OFF。当前未默认安装pi-jev或调用TypeSafe |
+
+2026-10-11 授权更新：用户明确允许主代理自行判断真实场景测试风险，无风险时直接执行。固定只读候选/自有临时目录/合成账号模型、无真实模型或外部副作用的测试及必要同边界重跑不再逐批请求。真实付费模型、系统或用户环境部署等有实质外部副作用的步骤仍核对对应授权。此更新不把已有失败、未测或环境不足记成通过；下文历史单批授权记录保留。
+
+2026-10-06 当前动作：fbfea Harness／phase Models 八场原生已稳定接受并闭合授权；恢复三场 d61799 仅准备与审查完成，等待本组明确授权。自有 MCP JSON 修复已接受默认35；owner-message 五文件纯组件已接受 Python130／Node51两个独立默认层，62输入 receipt `855780ad9ff15d29dd794c1c84dea0b7bd6f535b8ccd8efb2daeea52ebfbef2f`，不签发原 pipe／锁／writer ready／Db 或 Full。相邻控制通道共同 JSON decoder 和 endpoint bounded-read 设计的 first-type-cut／错误映射已修正，15输入设计 receipt `a01b6740543ed9724128a4ed4fccc25589263b3b842a507b935ddad40fb6fc31`；唯一 writer 正在两文件范围实现及真实旧源同套件 red→green。root 同时准备首次 controller／零SDK bootstrap 的生命周期候选，尚须冻结终止与接收切点，不能据草稿开始原生或开库。正式7/100、产品 gate与严格计量前自动审核关闭不变。以下早期下一动作与文末阶段记录按各自时间保留，当前进度以本段和最新阶段收据为准。
+
+2026-10-07 补充：control两文件稳定47输入已接受，receipt `8d0562b44559c93ceca368afa98ccf10754450cd13b42370f9a0e0f458e03956`，同76真实43fail／33pass→76pass；当前依赖下MCP35另次通过，11输入receipt `50e8ff97771a61af63d09c306bf48bcfbe0c9a727da092ded57051c10efb45a3`，各层不相加。首次controller候选的原 held pidfd／waitid、TERM2s／KILL2s后unknown-held保留原锁、bound／closing持久回执后发送、原wait与producer静止后locked released／close-only算法已有限审查；reply window必须在首可能触发回复的send之前打开、早ACK等完整send／flush及postpure核后才消费的P2已修正，15输入candidate设计receipt `a663193cc70db21fadbb447934b08648a8071b68caddbf417d5f8ce20445f0b0`。具体实现接口、写入范围、stdio预算和held主循环下一包仍由root冻结，尚未授权执行新native。恢复三场d61799仍等待明确回复，其他独立工作继续；总正式7/100／产品gate／严格计量前AUTO OFF保持。
+
+2026-10-07 最新增量：纯 `OwnerReplyWindow` 两文件与独立稳定diff已接受，默认同次111pass（新46／未改message65），33输入receipt `224f37c91c01c3bcb44722b2a04b8ce0ec67212b6b04e3c5d636d2ebadb2270e`；首缺模块collection error仅记未实现，不是behavior red。新窗口不持pipe／send／wait／locks，仅保存全文匹配候选供controller在真实send／flush和postpure后消费。owner来源路线已接受12输入receipt `919dd02e0da71405a85324f7ebef25247168cdec123147a491c1659da74f4a68`：正式固定 `bin/pi-node`、唯一codec／自有bootstrap／显式source闭包、原Full存储注册锚不能因当前profile/runtime改根和清预算；实际resolver／私有初始化仍待冻结。runtime_files的exact单codec映射两行已接受，原源同最终套件12fail／104pass→新源116pass（新25／未改旧91），22输入receipt `22a5b37335f99842c64d04887c257fccf276e114f6c22d7d03dbe50799b0f18a`；codec未改，相关guards与选定依赖pins稳定，未以窄包宣称完整recipe／schema／locks审计或正式运行资格。root只读取得官方Node v24.14.0 tar.gz并匹配官方checksum，选出原Node/LICENSE，原Node bytes还与历史探针本机binary一致；7输入源材料与6输入独立被动核对分别归档。实际archive5627条／3 links，原通用extractor1024条且禁links故不兼容；新独立Node选择接口正在两处澄清后做增量设计审查，不放宽通用guard、不运行／安装Node。d61799恢复三场仍仅待授权；正式7/100、产品gate、AUTO OFF不变。
+
+下一具体动作：接入真实宿主审批控制面、稳定用户意图引用、受管生命周期与累计账号预算，再继续backend/preflight和日常受管采集。独立干净reviewer进程的自有fake SDK五场景已实际观察并审查归档；官方SDK进程组合尚未验证。私有确认scope87项默认测试通过，新十场景官方SDK探针已完成70项父fake、5项纯观测函数测试及静态独立审查，实际运行另行申请授权，见native-intent-scope-probe.md。官方reviewer SDK九项SSE合成探针已获准执行并经父复核通过；产品Shell review02三场景也已稳定验收。reviewer单Worker、私密12-header基线及协议/传输七模块367项默认测试通过，只加载自有假SDK。进程桥66项fake测试、字节framing71项及决定/账本165项组合测试通过；这些组件尚未接产品。官方入口使用固定Node公开ESM条件并有54项受影响回归，真正modern启动仍关闭。日常oracle已就绪，受管采集器、真实前端与默认backend/factory gate仍待完成。许可来源剩两个MIT范围与补充分发，兼容版本未给出已验证替代，不改精确依赖边。Base显式运行清单为25个TS、71条supervisor，正式modern manifest仍未生成。T015/T016继续闭合跨profile恢复；权限、审批、隔离按故事完成，组件不提前勾选整体任务。Base gate需M01–M07的Base适用证据；Full四态、维护/性能和总交付在T093–T100收口。Q4/Q5不作Base前置；其他平台按需可选。
+
+2026-10-07 Node后续：独立纯选择器两文件经root快照切点修正与不同executor稳定复核，最终同次98pass（新74／旧assets24），35输入receipt `237be3655cce3cd8018cb4b223e168cb07a86f23cceacc9e92c6a01b307d202f`。其后normal owner一次自有Python只读官方raw bytes选择复核退出0／stdout183B／stderr0；原Node122466960B与LICENSE156926B均逐字节匹配，10小源pins前后稳定，未执行Node／SDK／native。峰值468388KiB和selector1.553s仅该纯检查观测，不当产品性能。Node显式格式候选已两段复核并接受14输入receipt `4c844d66527d309249f49b42869a01e2342ed75a9ae5a65a748ede4818eab186`：共享声明metadata完整校验与未选正文／选择器／IO零访问分开，Node专用redirect exact／无ambient proxy政策不改旧下载器。具体四文件API包正在独立设计审查，尚未实施或写入真实source／lock／license／factory。恢复三场d61799仍待本组授权；正式7/100、产品gate、AUTO OFF保持。
+
+2026-10-07 Node接线后续：四文件显式format与独立稳定审查已接受，追加五个“合法old source→仅加node_archive”正负控制后同次196pass（新79／旧117），56输入receipt `705861ead8c4283406b0185cdfa4732f5525166659d0d046bceb8a51996c7ee5`。三个资产lazy分支与schema新增pieces逆去均精确复原原bytes，通用limits、旧format和guards不改；新增Nodehelper仅有声明／工具链关联、独立opener、原LICENSE全文一致和stage二目标发布，无ready／部署／Node执行资格。此前官方raw纯选择复核25轻量输入receipt `bffef848a50cb7ee50fb1525852b21b410e0d1dc8333d99256fb247346d99800`保留执行时旧pi_assets闭包身份，后续接线差量独立验收，不把旧闭包SHA称当前。下一包仅准备/tmp实际原字节暂存验证；注册锚四源8输入receipt `f4e73e25a07707e2f08a7ae42eaf1ba996bdc088343064d1d737559da5a12566`显示workspace协调锚跨profile，但账户根producer及service index仍须冻结。d61799原planSHA未变、started不存在，此次改动的四format文件未见于其dict材料引用；没有执行或扩用旧八场授权。正式7/100、产品gate、严格计量前AUTO OFF继续保持。
+
+2026-10-07 暂存与登记后续：实际 Node stage 的 review01 准备被独立复核指出未排除已有 `.pyc`；该版本没有执行，8输入失败准备 receipt `625b8422075c382837be9893c8282bb293fb0916f0a086ab001d240510556bbf` 原样保留。历史 pure 观测保留字节比较，同时补记源码首末 SHA／module.__file__ 未单独证明执行源码的限制。修正后的 review02 仅从全新700私有目录的11份已核验600 `.py` 导入，闭合 inventory 无pyc；一次自有 Python modern/vendor 暂存检查 parent/child均退出0、stdout70B／stderr0，Node122466960B／LICENSE156926B逐字节一致。原源码、材料、fresh副本与外层plan/script/interpreter首末核验通过；选定写量上界235228603B包含暂时归档，不宣称aggregate计量。34输入receipt `ce8d1e3c02514ef777476a47b689a44eb847c58cb0b1f19561d4549a9fa5960e` 已接受，无Node／SDK／native执行、installed／owner／产品资格。
+
+2026-10-07 登记接口后续：账户锚补充6输入receipt `2c2fdfc34a942aada55df31a0f415c1582418ca43dc8144c1c6eb600579eeb41` 与launch/receipt五源9输入receipt `07872d75d8b1bd75514242decec8ab1fd5d50e5a9aed50200ddf0eab1e65a9d1` 已接受。现有workspace登记没有service ID字段，Pi现代launch仍关闭；installed receipt只存selection digest，status仅返回检查状态，二者不能代替原授权引用。新的独立账户控制锚方向和纯十三字段service record已审查、两文件实现稳定接受：同次默认162pass（新97／原owner65），23输入receipt `9f5b96a8fab3767dea958f260a9c7d46513e877dbdcc5786068e05fc60428a8f`、独立0P1/P2。首次容量fixture失败如实保留，不冒充产品red。记录固定首次state/storage关联且三个权限外观False；service index、当前登记引用producer／validator、一次授权与私有初始化／锁序尚待root冻结，不能以合法record或同UID开库。d61799恢复三场仍仅待独立授权，旧八场已完成；正式7/100、产品gate与严格计量前AUTO OFF保持。
+
+2026-10-07 来源后续：官方 Node 完整未修改LICENSE已保存到 `agents/pi/build/licenses/node-v24.14.0/LICENSE`（156926B／4573185d…／0644／nlink1），root独立原字节核对并接受5输入receipt `e20596dc98a3e7e44a67c5353cb046620d0e94c17f9dfcffdacd9ed97344f6f2`；数据复制不运行测试／宿主，不将其当签名或法律兼容证据。候选声明静态5输入receipt `dae23d5601365927d0181c80a9cfd20e785c1d0a743dbb961eac231d685fe535` 显示现代文件当前仅有Base selector，profile与capability/provider的来源闭包要共同变更。root进一步发现 `source_identity` 仍拒绝node_archive／node.tar.gz，故先实现独立纯Node身份投影；9输入设计receipt `351bf667c3375474038fee7a3f4f0fd728497e142a53910292c3393da70a9114` 已接受，唯一writer限定pi_capabilities与新测试，并保留旧可执行源同最终套件真实red→green／旧有效原生projection精确逆还原。新guard／Node的零hook与fresh异常链不外推至所有非法legacy值，未选分支保持lazy。未加真实source row／Full selector／正式manifest或启用factory。首次服务初始化的原授权producer正在限定静态追踪，合法record／UID／摘要仍不代许可。
+
+2026-10-07 Node身份增量已稳定接受：两文件同最终191项检查，原完整源码35fail／156pass（24.82s），修后191pass（25.06s；新35、原capability54／Nodeasset79／profile23）。旧source body／imports／allowlist及合法来源投影逆还原逐字节一致，Node新前缀先核原类型／所有键、独立capture完整六项metadata后用原digest；未知或冲突Node声明不能落回legacy。25输入receipt `12e48393892352682712bc863100cf0e16dc7bfa5c036a0b310860bd6d75d844`、root与独立稳定审查0P1/P2；phase01是同一green执行的副本，不累加。35个red断言观察不当35个独立缺陷，原red早失败后的断言不假定执行。未改真实source／selector／正式锁或角色声明，没有Node／SDK／native执行或installed能力。普通file/Shell许可只绑定operation和当前host上下文，未见task／instance级持久初始化授权；UI确认与transport来源继续有界追踪，service index／初始化IO尚未实施。正式7/100／产品gate／AUTO OFF不变。
+
+2026-10-07 公共Node候选及缓存：已将exact官方Node十字段行加入Base session-runtime五处共同来源闭包，三项revision升2且保持candidate／verified空；完整旧JSON逆去逐字节一致。同最终132检查为旧声明20fail／112pass（全停于缺Node首断言），新声明132pass／24.59s（新20＋未改112），33输入receipt `f275b72d5854d09ccf9e5c1c1139e2d083540f68c673c24b67cdb99da72b2b1b` 已经root和新独立executor稳定审查0P1/P2，scout只提供source/log旁证。线程上限曾拒绝追加reviewer，空闲后新spawn成功，未以scout代替executor。随后exactvendor目标一次排他原样复制56,185,866B官方archive，parent／child均0、stdout43B／stderr0、0.412s、全字节及source／target／parent／声明核验通过；目标600非执行，不重跑或覆盖，13轻量输入receipt `ba91bcceede0b041b5c16bee9c047e1db66a154a939eb3ccaac70bb243ca7855` 已接受，归档不重复大正文。没有Node／SDK／native执行或正式manifest／installed资格。
+
+2026-10-07 初始化方向：15输入source／UI／transport receipt `7e3948581b550f98d2617f183373088ca6f2cd71bcfdb6c05cd87bb4d6986e8e` 显示manager capability之外还绑定活动lease/generation，但UI信任不作独立真人证明，普通permit不含service/task/instance。新独立初始化方向26输入receipt `08ad06493a3f13eaea4813fc3e020fb2527aa8d057cee07fac7ab122abbaec56` 有界0P1/P2；真实Full原reference／validator、专用issuer、原Popen/bootstrap/fd3、index事务和活writer组合五类接缝仍开放，不授权IO实现或开库。另发现已列PiBackend.read_lock的现代分支会需要未列capabilities/runtime_files/Node二helper，当前104行清单的Python方法闭包须继续核对具体调用入口；不将条件性静态缺口说成已观察产品启动失败。d61799仍为本组三场待明确授权，原planSHA／started未变，改动的候选JSON未见于其dict路径材料引用；只作新差量查询，不当全native guard通过。正式7/100／产品gate／严格计量前AUTO OFF保持。
+
+2026-10-07 索引与状态校正：[单份服务索引快照](durable-service-index-snapshot.md)的纯两文件设计已接受11输入receipt `baa4d3d052a31286f038d100d4b54bdc2b32e0940153d83de401b5e6b77c760d`，独立executor配置gpt-6.1-sol／medium、设计0P1/P2。唯一writer正在实现exact快照／关联／编解码；capture每条旧registration还须调用原public encoder核32768B，不能只依赖旧capture。单份逻辑权威包含初始化请求和全部实例映射，减少跨文件发布切点；IO／锁序／ACK／原授权来源仍未实现。root另静态枚举候选104行中的57个自有Python文件，缺少模块的ImportFrom边均位于嵌套代码，不能仅凭存在导入就称启动失败；具体Base调用入口继续有界核查。当前表原AWS“尚未分发”描述已按2026-10-06的modern-license-bundle收据更正：原核验源码、测试、registry、Apache正文摘要仍一致，历史310默认通过，不新跑测试、不改两个MIT未解状态或正式gate。最新八场授权回复对应已完成fbfea，不复用于待答d61799。正式7/100、产品gate、严格计量前AUTO OFF保持。
+
+2026-10-07 具体入口闭合：scout配置gpt-6-luna／high按3＋2自有文件核选定supervisor／project-check入口，未观察其进入PiBackend.read_lock／Node identity；`.pi`导入在task-keeper及credential_ref条件分支，不能据此扩充普通Base打包。74输入静态receipt `7c5d41953ca010069057af7517c011c413800125d5df0e476601e82af0192ea5` 包含root的57文件AST ImportFrom inventory：59缺失边均嵌套，0直接module-body缺失边；不等于所有import种类／所有Base分支／installed或Full运行闭包审计。原caller JSON错归“没有missing边”已保留后更正，仅修正证据表述，没有产品执行或测试重跑。
+
+2026-10-07 索引实现稳定接受：初228／243默认绿稿的最终审查发现encoder容量检查迟于遍历、容量负例重复ID混杂两个P2，14输入open receipt `26425f753ed22015eb9e0c52643cf30500297f682ebe5d777d84a6c1ac8452d8` 保留。仅两文件修后，同最终245检查原完整55db源码2fail／243pass（2.68s），超限实际旧encoder65／64次；新源245pass（2.99s；新148／原registration97）、超限encoder0及合法64／512控制成功。root全新源码／测试及稳定增量、独立executor配置gpt-6.1-sol／medium复审0P1/P2，25输入receipt `a223bfb3424f421c07459a283a7e1ead6896d0be0363637c5f16d467444af4b2` 接受；先前默认计数不累加。本包是无IO纯snapshot，不签发初始化／owner／DB／恢复许可。
+
+2026-10-07 下一有界接口：[固定账户只读发现](durable-service-index-readonly.md)草案的public Tree安全祖先与FileNotFound→None假定经审查有两个P2，8输入open receipt `2fb071d7dcc3a99f9ec542b0d4c4f55114924288d49e815211d07bb18b81e7d0` 保留；root已改为自有不创建stdlib fd遍历、逐段祖先policy和mandatory首次basename stat分支，最终close错误不误报成功。正在增量设计复审，不据初草稿开始IO实施。只读元数据仍不能证明初始化、当前写者／锁、never-created或takeover；后续原current Full／issuer／bootstrap／协调发布及活writer事务仍开放。恢复d61799仍待本组三场授权，正式7/100、产品gate、严格计量前AUTO OFF保持。
+
+2026-10-07 固定账户只读实现稳定接受：原设计两个P2修后12输入设计receipt `da3d6e0498a57f4be6e13d4bcc91c5bf8489024016ca5115d79824cfa59abb84` 已接受，后续仅新增两文件。初工具命名空间69fail／273pass／1skip完整保留；原守卫和源码在正常属主环境342pass／1skip，补充后360pass。root发现native open成功后builtin登记append失败会漏关新fd的晚到P2，32输入open receipt `18c2fdde9b6d937e282bb291259c5d1fdd50dce30656644950992753ffb552f2` 保留，初稳定review01没有root接受。八行修复后，同最终套件原完整761764源码2fail／360pass（2.49s），新源362pass（2.54s／0skip，新readonly117＋旧纯组件245），各阶段不累加。两种有界登记／关闭故障模拟在test teardown前核新fd一次关闭、旧栈继续清理和外部fd保持；不证明实际OS OOM或kernel close失败后物理关闭。root全文关键审查及稳定增量，独立executor配置gpt-6.1-sol／medium最终0P1/P2；28输入receipt `8f1d1e08001e6d07ef6ca0360ff353373a657945e5f2e82e1874f0bbab6c23d3` 接受。固定passwd账户、安全祖先、mandatory首次basename stat与原目录／文件身份只读检查已实施；真实账户、初始化IO／issuer／controller／DB／installed Full仍未资格，缺失元数据不签发fresh或接管许可。d61799仍待本组三场授权，正式7/100、产品gate、严格计量前AUTO OFF保持。
+
+2026-10-07 固定MIT来源差量：scout配置gpt-6-luna／high核两份官方full packument与固定tree，原已选版本仍为当次观察latest，没有自动升级或替换。首metadata准备因不存在Debian CA退出1／零GET后，使用已核本机系统CA并保留TLS核验，两个新full URL各一次GET成功；两个fixed tree GET另成功。standardwebhooks按原npm gitHead `b4d2c14fc5b4ccff3ff271e3b087dff812254c59` 的三个固定Git blob各一次取得，1088B原libraries/LICENSE MIT正文摘要 `5ec8c7b26b64d881a6706617bed25c049f97f2f35de034c756de8546fd6dbe27`；JS package.json原全文摘要686397…恰等已钉发行manifest，version1.1.1／MIT，README列明JS/NPM库。root核原正文／父目录范围，独立executor配置gpt-6.1-sol／medium无P1/P2，27输入source receipt `a9f7f077231bb078db73b437ac90b5da1b76e948ab308a399174f232d7226cd5` 接受，仅授权此一行fixed-source-body与自有旁车，不称archive内正文或法律充分性。proxy当前gitHead缺失，tag树无根或negotiate包目录license，API sha恰等0.0.0旧gitHead；仅记公开ref路径观察，不借其它包MIT／版权。唯一writer限定正文／三个candidate JSON／新默认test；正式锁、上游包、依赖图、Node绑定／revision、candidate与产品gate不改。纯[索引变更](durable-service-index-transitions.md)另进入独立设计审查，初始化IO仍未授权；正式7/100与AUTO OFF不变。
+
+2026-10-07 当前增量验收：standardwebhooks 固定源旁车七文件包已接受30输入receipt `94ec16f1bf57cb147902bede27e25d6de7e7455dae6a739c0f0ad5707c8b7066`；同一最终四组测试在原三份JSON数据上8fail／78pass（18.00s）、新数据86pass（19.53s，无skip）。8个失败均停在旧未解正文／closure首断言，不宣称8个独立产品漏洞或后续断言已执行。146条npm身份fixture与原锁及原registry逐项相同，三份JSON精确逆去恢复原bytes；只有standard正文／状态、5个证据摘要和一个copy声明变化，官方npm依赖内容与边不改。当前105条运行声明含25TS／72supervisor／8许可副本，Python源57份不变；未改Full selector、formal manifest、candidate和verified空列表。剩余未解正文只为proxy-agent-negotiate；实际安装与法律充分性仍未验证。
+
+2026-10-07 索引后继与发布：纯后继设计8输入receipt `037c327f422131697048bd73a3d62865df59aefc281317fb426e8c3a2a1636cd` 已接受，首版同次327pass但独立稳定审查发现三个immutable负例同步改alias、被前置alias检查拦住；21输入原证据receipt `d86a7f72b48e8b24806f7e013b5e785eec27f01aaeac5b7453947835c516f9b3` 保留。源码完整Entry比较正确，仅新测试文件定向修复，尚不计默认实现完成。发布初稿的跨进程协调释放来源P2已保留9输入receipt `93691e270339933b6539b637686ca155ce5cc9066c30172f78fd049df15740cf`；修订设计独立0P1/P2，13输入receipt `ddf1284d7eba7c8fe00b0b2de36f832f4464d44a1516b487a0325132fd0579ec` 已接受。registered ACK只确认metadata；原写者退役／IO静止／明确close之后才通过原私有阶段发送一次release。可能送达后丢send／flush／ACK保留launch unknown，可能已有唯一Node，禁止补发／第二launch／新ID／DB授予；首write前失败才保证零Node。实际currentFull、issuer、bootstrap来源与消息接口仍须冻结，未授权索引IO实现。正式7/100、全部产品gate、严格计量前AUTO OFF不变；旧fbfea八场授权已闭合，d61799三场仍待本组明确授权。
+
+2026-10-07 后继默认修正已闭合：只有新测试变化，before预存目标alias、after关联全集不变且双方原codec合法，binding／instance／state_root的负例独立保护完整Entry immutable比较；state_root与storage_path明确一项耦合。源码08770与旧245测试及guard未变，最终同次327pass／4.62s／无skip；独立gpt-6.1-sol/medium稳定增量0P1/P2，22输入receipt `6a4753f18ca6c356badaf2d4f4d7f2bff4c1d80657a9a1b9c7a02cd7fb5295ab` 已接受。原3.64s日志/P2开放归档保留，未声称生产bug或behavior red，纯capture不授予IO／锁／初始化／数据库能力。原父子通道五源有界证据9输入receipt `3a09a428850ab671306df37c3b5e71b8f9f9707947c6e450f8d80cc462d968f6` 已接受：普通childgate保存原Popen，但现有supervisor启动是单向文件+subprocess.run，路径RPC和纯窗口不等于专用controller双向匿名通道；root继续冻结具体接口。
+
+2026-10-07 私有通道增量：原socketpair候选设计95933105存在两处P2（Python wrapper与rawfd关闭所有权、父issuer的SIGCHLD／无人reap前提），10输入原稿receipt `8e5a36278448493bea7622bd094e34f4f0f1b29047839b88367d2489f6bc1224` 完整保留，未执行或冒充代码失败。root已改为Linux两条pipe2原始端点，原父manager主线程建立自己的disposition、捕获原Popen／heldpidfd／birth后私有单次handoff给受限唯一初始化owner；indexfsync不在普通编辑主循环等待，未静止仍持原协调锁。child只继承两高号正确方向，未知3不关闭；rawwrite额外固定SIGPIPE前提，不称64KiB frame为PIPE_BUF原子写。当前稿ad404c41独立增量审查中，具体schema／currentFull／principal／actualsource／dispatcher和handoff仍未实施，未授权索引IO、native或产品入口。
+
+2026-10-07 私有通道修订稳定接受：原两设计P2已闭合，独立gpt-6.1-sol/medium增量0P1/P2，12输入receipt `cd7dcbe2f7bdd049050f8d3c2d114d5ff0487384ba74c12637a9987c63bf8f34` 已接受ad404c41传输／actor路线。raw pipe无wrapper关闭交接，父侧mainthread/no-reaper/heldpidfd与单一owner handoff明确，SIGPIPE／分片发送／fsync阻塞未知按各自真实条件处理；普通编辑不等待该初始化job。此验收不授权IO代码，实际currentFull、principal、interpreter/source、pure schema、dispatcher/handoff/quota和native仍后续gate，不能以candidate/fake解锁。
+
+2026-10-07 当前来源增量：两actor有界证据8输入receipt `430641177d48b1434b7094db757613d40220bf18fd2eb2bd0a463db01795a860` 已接受；原Workspace/saved在module-level execute调用进程，HostSupervisor接收端只得config，不含完整current.launch／receipt／inventory／binding原对象。root新的startup origin候选明确原caller捕获非秘密来源、接收manager本地重核与私有注册，当前独立设计审查中；不从合法JSON／hash或另进程不存在的对象mint能力。Python具体来源与trusted initializer principal仍待冻结，真实Full gate继续关闭。proxy未使用的npm发布证明pointer已固定GET并独立核subject/SRI声明，14输入receipt `283c9934793c7cae9cb2fae5d4d4423a52ef83783b8c63053a38049097bd010e` 接受未验签npm-hosted声明，仍同b7e5f7提交；签名／包范围MIT正文未闭合，不新获取tar、改依赖图或放行formal锁。
+
+2026-10-07 startup origin方向稳定接受：独立gpt-6.1-sol/medium设计0P1/P2，10输入receipt `0f47caedc7198a5e6865660481d11ed7e7a936ecd192453c116b811e426fd15e` 接受3e507d21的双actor来源职责。原caller捕获描述／receiver本地重核／manager私有注册与initializer principal和确认grant分别有来源，公开描述没有初始化权限；秘密排除、Base零可选读及damaged runtime gate不变。actualproducer/validator/exactschema/interpreter/principal未实施，formal7/100与产品gate继续关闭。Python本机来源首报告生成方式违反子任务禁止Python要求，原误称No Python的记录3输入receipt `e0828aceb79818643099a24f50cbc3e3c5afd04cdfa46525fd429c1dea491b6a` 未接受且保留；root已用原观察环境固定shell核四路径，确认binary原uid0而默认隔离视图映射65534，摘要相同；此静态复核不是解释器行为／来源签名或native资格。
+
+2026-10-07 Python原观察环境静态事实归档：3输入receipt `2bf6a07f370691c097134c148ede3a0d6499a8bcfafc132de21f18217360a73f` 接受root从既有工具chunk0005ec提取的四路径元数据、两文件摘要和首末一致事实；完整stdout未落盘，不伪造逐字原输出，也不重复稳定collector。collector固定shell仅静态查询，root本次固定Python生成记录则明确执行过；首scout的PATH python3实际身份未知，原No Python误称仍保留且未接受。venv指向系统15344B ELF，原uid0/gid0不能单独证明动态库、stdlib、来源签名或pidfd/signal行为；解释器和产品资格仍关闭。继续并行静态Python依赖来源与双pipe纯初始化消息schema设计，不把DTO当原startup／grant能力。
+
+2026-10-07 Python来源路线已设计接受：9输入receipt `633c1c87ec1c90695b4d59b16f0eb7c5fa9cd164c4d9a32019f10c6280f8ca85`、独立executor gpt-6.1-sol/medium 0P1/P2，冻结8db567b8首版“原受管manager同一实际Python安装”的策略；不用PATH／外来path+hash，也不把venv第三方site、15KB ELF或RPM零差异当完整来源。实际producer／validator、loader／stdlib／extension完整闭包、发行与两个actor的原生行为仍需资格，未运行controller或签发Full。reviewer首次PATH Python生成pins及已删除的自有tmp pins偏差完整披露，root接受独立设计判断、不接受首次strictscope合规／subject未执行声明；随后固定Python仅自有报告生成授权不等于native授权。所有真实资格继续false，纯消息层继续推进。
+
+2026-10-07 initializer principal方向已接受：18输入receipt `75601301b9cae5108adff015847e23b5ed29cd32e301e35ec32a93058973dd67`、独立executor gpt-6.1-sol/medium 0P1/P2。专用原host role与一次grant/UI分开，有限原匿名carrier到own main私有factory；专用client secret用自己stdin，不能复用旧env/options/global路径。三源launcher证据显示没有extraFD参数；root核官方v0.13.0 raw C仅支持条件交付可行推断，不验所选binary/真实main后代零继承。carrier/client/method/source/launcher API未实施、native/IO/产品false。九种纯初始化消息candidate7572b0c0已冻结，root固定字面量独立复核P216B/S60B/最大canonical payload33204B；原R/E public cap后嵌object，不把空占位算式当codec正例，独立设计审查后仅授权两NEW纯文件。
+
+2026-10-07 初始化消息设计复核已接受：12输入 receipt `144cfd1d007b98299a6e0c8be83a92304429d3719b89b2971fb69ba90ae2b8a5`，独立 executor gpt-6.1-sol/medium 的稳定八源审查 0P1/P2，root 独立长度算式与错误／类型／record cap 边界验收。已委派同配置 executor 仅新增 `pi_durable_init_message.py` 和对应默认测试，旧源码／测试／守卫不变；实现及默认验收仍未完成。另一独立 executor 同配置只提纯回复窗口方案，slot／acquired 的首次物理产物不能假定在发送前已知，完整回复须保留供原 actor 核验。窗口尚未授权实现；实际 source／principal／pipe／grant／controller／native／产品 gate 全部保持 false。
+
+2026-10-07 初始化纯codec稳定默认验收已接受：26输入 receipt `ed62af290b009f8a45bfc03b6f967cb331ed9906700506f609d53b87bb04920b`，两NEW文件 d1fe35e1／6ecdd45a、首版即通过的指定四suite 402passed/2.42s（exit0、无fail/skip），独立稳定review executor gpt-6.1-sol/medium 0P1/P2，root核关键边界；旧selected源码／测试／守卫稳定，未重复pytest或累加旧场景。pure InitReplyWindow候选 d1540085冻结，原codec作者正独立复核候选API而尚未实施。有限Python RPM来源定位6输入 receipt `cce2e516d2fbc4f02341580ca1b49832d4d88a5b125eea46667a6c4c788d4b87`仅接受header声明／官方版本与SRPM locator，初PATH报告生成器身份未知及错误NoPython文字保留为程序偏离；没有签名／包体／installed-source／native资格。正式7/100、全部产品gate和严格计量前AUTO OFF不变。
+
+2026-10-07 回复窗口设计12输入 receipt `5b86db0e2240df23989d0d5a506be6b30fb1dee3a9f3ffeec155721eb316b7f4`已接受并委派executor gpt-6.1-sol/medium，仅两NEW文件实施。原边界/旧guards/全部产品gate不变。Python来源45输入 receipt `4aa732fa299bbcb7e46afbf8d363b5ce18b40fd45ca4de220d7967f8e14b487f`接受精确两RPM对捕获key的实际签名与digest验证、旧ELF和一次libpython有限对应；首次临时RPM宏缺锁失败保留，root显式固定两最小宏后成功，未安装包或修改系统DB。key从vendor文档locator/TLS获取，独立离线信任锚、完整loader/stdlib/sourceRPM/build/actualmanager/native仍未验。安装来源15输入 receipt `b5b72a82c81290389d5312a32fbcfba466ca256e12ee3a5d446df2d90723a6e2`确认selected slice/profile/receipt缺完整manifest/catalog/providers/source；root新增Full-only sealed来源contract路线候选 b77819a8，现待独立方向复核、exact schema/API未冻。render私有generation不可直接用于source_identity/R.initialdeploymentid或通用state hash，父子actual来源/lease/current/principal/IO仍全部pending，正式7/100、AUTO OFF保持。
+
+2026-10-07 Full来源路线方向复核已接受：独立 executor gpt-6.1-sol/medium 十输入首末稳定、0P1/P2，14输入receipt `34b85a74a8554810991935a18dd52d56f345cdc78eb9aef403f49bdf0ff3bd83`。固定 Full-only sealed origin contract 的方向已闭合；exact public view/schema/cap/canonical、原 source/issuer/current/lease 全链及实现资格仍未冻，不授权 serializer/roles/factory/IO。新回复窗口实现六suite已记录724passed/5.61s，当前独立稳定代码审查中，尚不提前记 root 接受；controller -I-S-B 的公开校验第三方依赖正在 scout 有界取证。formal7/100、产品gate与AUTO OFF保持。
+
+2026-10-07 InitReplyWindow纯实现已稳定接受：两NEW文件58e8bda8/f67dff97，指定六suite首版同次724passed/5.61s（exit0、0fail/skip），30输入receipt `01963ba9f1360d3747aa22fe8ad0e679ae131f1e3316db228e785c9bf7a2d348`；独立executor gpt-6.1-sol/medium 0P1/P2及root关键边界审查，未重跑稳定测试。五类完整关系、有限25+10来源alias、一次消费/永久退役和尾巴前置拒绝均为纯metadata状态组件，实际sender/sourceissuer/lease/OFD/persist/Node资格尚未实现。Full来源方向14输入34b85a74已接受但exactAPI不授权；现有validator eager第三方依赖与原active lease持有链正在补全限定证据。formal7/100、产品gate、AUTO OFF不变。
+
+2026-10-07 controller依赖方向已独立接受：14输入receipt `0774867051647aeef6be7c9098dd03609a309bfba28d073b956e1c61d1f81a01`，executor gpt-6.1-sol/medium 0P1/P2；Full-only固定sealed必需Python闭包保持原I-S-B/strict校验，exact wheel/库成员/API和原生资格未冻。scout两组原lease与九源mutation/reconnect证据23输入receipt `f1225acdb3e59f0e5fcdc28f16769de3060834c30e9500eb06a31a6cabd66ec4`显示普通run拒绝protected旧活动且host退出cancel/drain，不能充当Durable重连。root新增[独立service lifetime候选](durable-independent-lifetime.md)：controller guardian与新activation/sourcehold，source mutation和frontend目的分开；当前只候选，写者close/授权/模型预算/恢复/API全部待冻，旧EOF职责仅初始化范围，不据releaseACK开DB。唯一executor正提原read_lock严格check逐项API映射，scout仅捕获锁定六core wheels公共来源，不运行包。formal7/100、产品gate和AUTO OFF不变。
+
+2026-10-07 当前决策与证据：六个原uv.lock wheels源字节/被动成员清单已接受14输入receipt `325b8f445ab50d96e8ece2ceb0b58f54338dfacd45ffc710f0437457865560a1`，含schema资源与rpds CPython3.11原.so，但未导入/安装、未称完整closure/签名/ABI。plan.created_utc为scout预置文本的记录偏差如实保留，文件mtime/GET记录仅支持顺序而非可信时钟，字节匹配不受影响。独立service lifetime方向经executor gpt-6.1-sol/medium复核0P1/P2，18输入receipt `ed1a63795f5af3390b386c2b7e3f18a922a00ca6f6830d210ea40eaa80102b0c`已接受；新activation/source-hold/原Model-auth-budget私有出处/guard purpose/恢复与原生仍pending。root选择[首个共享resolution内核](durable-lock-resolution-kernel.md)，四输入决策receipt `42dbfd65b0e1c23b23f7942ae1fdfc71830ca2ea04e83edb67e935ca2574f313`；唯一executor仅提取完整原图规则与仓库兼容回接，原schema/recipe/source/archive/build/license/pair/selection检查不删，完整metadata/installed collector API不借此获授权。scout补Node capture/build_record静态mapping，不读取或执行第三方包。正式7/100、全部产品gate、strict metering前AUTO OFF保持，Recovery3仍待该组独立授权。
+
+2026-10-07 resolution内核已稳定默认验收：三文件有限提取，原完整direct/transitive/ancestor/peer/AI/source/归档/HTTPS/sha512规则及read_lock全文保持；初次正常owner六suite278passed/2个v1不适用skip。独立审查发现caller活跃异常context可泄露P2，原19输入receipt `147ec3d1ac4ea1711fbf7b235976151cb29e49da7dfc07a4ee99a7a725ca51ca`保留；新反例在未修源真正1fail/0.57s，最小outgoing ValueError显式清cause/context后最终受影响包47passed/2skip/3.05s，规则/旧基线/guards不变。独立executor gpt-6.1-sol/medium稳定增量0P1/P2及root验收34输入receipt `eab9336f0663f09a3d0f0695f3cd015c03adeebe35983ae372ffe9dc4dc5d3a7`，各轮不相加、不重跑无关旧六套。sandbox原113/修复9个owner guard失败记环境不足而非通过。新共享source还需显式runtime_files/recipe接线，未声称可部署。Node/build/ReadSeek两组静态mapping11/7输入receipt `0065c92a4a7bc9b420e024f4f7a02547849d2b93b07a019440eda219b795be9f`／`32ba5ae4897e5cf35b4d61d1c0408b03457b47f1f79d78ba10b3052ab0d64d14`仅记录原检查及实际installed映射缺口；首scout两个helper超scope/无pre-read pin偏差保留。Python imports10输入receipt `368b668d1baccf9f6ec0fdef6613487cb2d3d5b5fec94c9c86f490c22bd26342`仅接受有限edge，新kernel修复期间pin漂移如实记录；完整v2 invoked依赖仍在补。完整metadata/schema/selection/collector/hold/guardian/activation原生资格未闭合；正式7/100、产品gate、AUTO OFF及Recovery3待授权保持。
+
+2026-10-07 header/resource下一包已选：15输入receipt `38f6a4f7328ac5698a7e8b048244059fce8bea28e1534133f469ea246dc77e9a`与[精确有限接口](durable-lock-header-resource.md)授权唯一executor三文件提取。header只读取自身固定正式schema并核原schema/native版本/identity，明确含IO；保留原read_text/json.loads兼容域，不假装strict installed loader。原recipe失败短路及其后v2 semantic bindings不移动，之后所有仓库实物/许可/selection检查保留。源码/正式schema声明、完整源与实际安装另gate。scout9输入receipt `39346460b6cb4f7521e8a052644b3ee8c1414081d47a78bb6fc04dee9fbe372f`确认v2 lazy launcher→deployment会eager import yaml，且现声明缺kernel/launcher/caps；锁定PyYAML6.0.3单public HTTPS取得806638B原wheel、28成员含原.so，被动9输入receipt `8a886afda47d97203b17469969400875f7e5988dc34e76b7da6d25fcd496a561`接受source-byte事实，不是RECORD/签名/ABI/installed资格。sourcecollector记录自身UID/EUID和真实本地clock，仍无外部可信时钟/发布者签名。当前config/deployment若干ownimports的有限静态closure补证据，不重复已稳定pytest/GET。正式7/100、全部产品gate、AUTO OFF与Recovery3待独立授权保持。
+
+2026-10-07 header/resource三文件稳定默认验收已接受：31输入receipt `a3f02b19f4c809c6cf7de3f45f98d47270e65aaf56049346414073550d69b845`，root全文源码／测试与独立executor gpt-6.1-sol/medium AST／稳定diff复核0P1/P2。首次七suite318pass／5个新测试文案期待失败／2skip，五项修为原ConfigError.args后仅header受影响44pass／零skip；其余六套首轮279pass／2个v1状态不适用skip单独保留，不合并为一次全通过。只替换原schema/version/identity块，recipe及后续bindings／仓库实物检查顺序与独立完整旧基线保持。固定兼容resource loader没有strict installed／完整源资格。三叶imports限定6输入receipt `cb3a96984306dc87e1dac15fa55a51dbe9d7e8081dbce8f826ce2bc622afca4e`补storage/process/runtime_files仅已有own与stdlib edges；所选resolution及v2被调用validator需要core6＋原PyYAML候选，不称全部guardian闭包。root选择[显式selection数据接口](durable-selection-data-api.md)，8输入决策receipt `021b07440c7892bf072c8ba48d33ca778ced1dd2fd6270b86dc37c69f7b09664`；唯一executor两文件实施，原摘要／错误／稳定data与accepted无proof context helper保持，不新增metadata.identity等式或fake PiLock来源。正式7/100、产品gate、AUTO OFF及Recovery3独立授权边界不变。
+
+2026-10-07 selection数据接缝稳定接受：两文件有限增量，30输入receipt `9d7002984b608160eea831169a247613048d22c7d43c0eb6631a8f045c020f49`、独立executor gpt-6.1-sol/medium 0P1/P2及root全diff／测试审查。精确八suite一次365pass／2个旧v1状态不适用skip／52.89s，42新case零skip，无测试失败或重跑；独立完整旧resolver/context/proof基线与前像5256B逐字相等，shared VERSION lazy改向原同对象。formal v1不支持现代选择的设计文字已按原合法域修正，v1 read_lock仍原套件验收；没有新增metadata.identity等式/header gate/错误类别或fake来源对象。Node/build/support源控制仅数据branch，warm IO sentinel不当cold/runtime/source资格。bwrap归档许可helper静态6输入receipt `d93346f0e203de2b3d4431021eaee9794ac17863c7494788e0d14a6743028266`补原byte parser与独立source writer映射，不签实际installed。七wheel离线成员／RECORD／资源库存API正准备精确提案，尚未授权installer/声明/schema或新包导入。正式7/100、产品gate、AUTO OFF及Recovery3授权边界保持。
+
+2026-10-07 Python bundle 所选元数据证据15输入receipt `552a8c24e78a5d8f86a449275b49316f570c8697bc1bff744566b908050ab1f0`已接受；七份raw archive引用既有14/9输入source receipt，不重复复制。只补读必要METADATA/WHEEL/RECORD与entrypoint metadata：163regular files＋4显式空目录；25原Requires-Dist规则在稳定CPython3.11/extras=[]为8active、17inactive。RECORD与原被动全成员hash/size清单对应，不冒称本轮重新stream payload／执行包／完整许可或ABI。root选择先做stdlib data-only声明／ZIP计划／inventory数据校验，固定private flat布局、原字节/RECORD、files600/dirs700，不生成脚本/pyc、不支持.data，无第8 evaluator依赖；当前正补exact字段/ZIP flags/caps/有限规则与独立设计核。actual owned-stage写者、正式Full声明/schema、controller固定来源核和启动仍另gate，不把公开plan当authority。正式7/100、产品gate、AUTO OFF和恢复组三场授权边界保持。
+
+2026-10-07：root 已将七 wheel 被动材料收敛为 [Python bundle 数据契约](durable-python-bundle-data-api.md)：18 个 exact native 数据对象、三 API、固定 caps／ZIP framing／RECORD／metadata／typed grammar／路径规则。目标和 profile 在 declaration 内，planner 返回 detached plain JSON，完全无 payload／写入权；原 archive 仍只在 vendor。本轮独立设计核进行中，只有核通过后才授权唯一 writer 新增 stdlib 模块与合成测试。实际 stage／Full source producer／formal declaration／controller／ABI 仍未冻结或验收；并行 scout 只收集现有 stage hook 的有限调用证据。报告生成错误保留为 data-only 报告失败，不计产品失败；formal7/100 与全部产品 gate 不变。
+
+2026-10-07：Python bundle exact 设计的独立 review01 为0P1/1P2（target与wheel tags缺共享兼容交集）；root补明谓词及合法／无交集对照，并明确 mandatory metadata/license/member 与 extra 引用规则，review02 最小增量为0新/openP1P2。17输入decision receipt `37ec8a479800cded532ba6dbf3242afae0e0be6d7866f979273b73fb1fc3cb97` 已冻结仅两NEW文件的实施，executor正在实现 stdlib 三data API和合成测试。原七 raw archives 本次只引用先前accepted capture，不重复制；设计认可不是测试／安装／原生通过。现有实际stage hook 的有限 scout报告已完成，仍不授新IO/Full/sourcehold权。
+
+2026-10-07：Python bundle两NEW实现test05完整新套件250pass/15.67s，但稳定源码审查为0P1/3P2，尚不接受组件通过：Name连续separator归一化合法域、artifacts建集合前数量界、native大integer在canonical前signed64界。31输入open receipt `2c249c8c42a03ef78eb0aa27808ceb3fe0f18fbbdeb977679df5d89ce04df584` 保留初始稳定来源与五轮测试，root已授权同一唯一writer最小修复并增加合法／无回调／无错误输入编码对照。旧三suite133pass/2旧v1skip只用首轮独立分列，无重复或与250相加。stage hook有限五file观察8输入receipt `0f12f4cdb221831b17a5375124613389370bedd4ef253a6242a822c90ab22b5c`已收录，不授新writer／transaction／sourcehold。当前原七档案数据编译脚本已准备但未运行，等待默认稳定验收；各actual/native/product gate仍false。
+
+2026-10-07 Python bundle稳定修复增量已接受：三处P2在原源同新回归上10fail／13pass，修后受影响54pass，最终完整新套件273pass／15.56s；独立稳定增量0新/openP1/P2，31输入receipt `a21abc0e7118d6ab6ddfe2b3c20da2412bfbec7a10e1b5ac4af4b993ef40108a`。初始250和旧三suite不与273相加。随后当前七原档案的纯数据编译实际inner exit1（0.273s），声明校验已返回、planner固定ValueError，5输入失败receipt `f3243b877a7cc1145287ae44bd972f1a3cbe0d64b2ca6506c2666b6cca2a3c27`；原失败与declaration保留，当前正限域诊断framing和METADATA/WHEEL拒绝原因。外层记录器exit0不记为编译通过；实际档案可用性、stage、Full来源和native仍未验收，不从合成273升级。正式7/100、AUTO OFF和恢复组三场授权边界保持。
+
+2026-10-07 当前Python链路增量：原七数据编译失败定位为PyYAML的合法Dynamic信息被禁，root按PEP643冻结23字段／METADATA-only／不豁免实际字段，并补Metadata2.4双许可互斥；12输入决定receipt `3068a8615b5fff967f3ce2c303076ca17aefadae745dce7b539d6adde95adf53`。同两文件最小修复保留原273全部字节，新增114，原源4真实fail／375deselect，修后完整新套件一次387pass／44.08s／inner0，独立稳定0新/openP1P2，25输入receipt `f43e4cf29f88c91d670ab30700668358149529ede2cfe7c999ad93deff290fff`。同七hash／完全相同declaration的新输出目录数据编译inner0／0.424s，163files／40dirs／4,942,283展开字节／25rules8active17inactive；独立只读证据0新/openP1P2，13输入receipt `c18ae514b853d1226adbf6c6c0545281a5f1ad70e4d8fdfdab559a0055758af2`闭合此前f3243数据失败并保留原记录。没有安装／第三方import／host／ABI／sourcehold资格；新[私有stage组件接口](durable-python-bundle-stage.md)正做有限设计核，借用原scratch FD、全数据preflight、排他prefix、原字节／0600／0700／物理readback／fsync后返回，不接caller plan或假Full来源，未实施或接产品caller。正式7/100、全部产品gate、AUTO OFF与Recovery3授权边界不变。
+
+2026-10-07 stage写入限定包：独立设计review01的0P1/1P2指出body取消可能被close异常覆盖；root冻结body control BaseException原对象优先、否则首次cleanup control BaseException、最后普通固定错误，并明确逐acquisition一次close、继续剩余清理、有界native快照和created身份回读。review02仅五段逆向恢复原draft hash后增量0新/openP1P2，11输入receipt `a879ed74c122118bba516330b48fb445b1b2895ebe4c2fe839c7282cf987e648`接受设计；原draft由编辑后重建而非事前捕获。唯一executor配置gpt-6.1-sol/medium正在实现两个新文件，未改原纯数据内核／hook／schema／正式锁／Base。并行proxy许可五次官方历史查询只找到b7e5f7c发布与84e85ed包提取线索，无实际包级MIT正文；9输入receipt `71a5f82e7ab1dc65f8dbdb03fda757388bd1dab819f1c30530fec9eb86384993`记录未解决，不升级来源或产品gate。正式7/100、AUTO OFF和Recovery3待本组三场明确授权保持。
+
+2026-10-07 scratch IO稳定默认验收：两个NEW文件首版完整199pass仍有一个范围P2（已有目录的无关A/a误拒）；35输入open receipt `463ff8852840ae7ace54563364c2b90b63628fbcc7f59ecd0325b1d584e1611f`保留首版、三guard失败和198pass/1fail测试自身atime顺序问题。唯一writer仅四行源码增量，原199测试全文字节不动、五例append；原源2fail/3pass→同范围5pass、旧受影响27pass→最终完整204pass/18.30s/inner0、UID/EUID1002，稳定增量0新/openP1P2、32输入receipt `f62dee9e792ee77e2daa5fe54da0b1545bbd72ec255da142e5fdc3e96ace5538`已接受默认组件。held FD、所有新身份/集合/readback、inventory/fsync、取消/cleanup语义保持；晚到supervisor实际同名替换补测，无实际Full来源/产品caller。七原档案被动临时IO脚本已准备但尚未执行，source/native/product仍false。source表示静态14输入receipt `08a8a5a02ca1cd1a03dcee502b020b212137c82f3cfa6e609efb3a6d3a9e0f96`和[专门wheel锁方向](durable-wheel-lock-direction.md)0新/openP1P2、9输入receipt `2ff4071ea62305f4c29448b6ed5e46c345f5204acb77b67caf5868c7ab70c7a4`已收录；选择modern预构建wheelkind及Full-only固定小型引用／runtime声明正文，Base无可选正文或decoder，原wholelock通用shape/binding/identity严格保持。exactschema/API和四类循环未授权实施；scout旧手工pin错误保留、不补作旧窗口。正式7/100、AUTO OFF与Recovery3待明确本组三场授权保持。
+
+2026-10-07 七固定档案被动stage IO已完成：原cache预检inner1在任何archive读取/import/output前停止，6输入95ad失败receipt保留；同一被动边界的新helper复制已核三个自有模块原字节到私人目录，标准import且默认cache不存在，原仓库cache不改动。实际inner0/0.527s，164文件含canonical inventory、40目录与c18 plan逐项相等，原成员4,942,283B。独立静态证据0新/openP1P2、21输入receipt `1bd87e9d95564214a40e4489d929ef62bdeb8748bcd07050b2c8106ccf319f73`只验收临时physicaldataIO；不执行第三方或native字节，不是产品Full stage/sourcehold/ABI/许可法律资格。正式锁接线下一包继续冻结，7/100、AUTO OFF及Recovery3待授权保持。
+
+2026-10-07 wheel source/ref精确数据契约已闭合：独立设计首核两P2（离线hostname语法与core导入时点）修后0新/openP1P2，11输入receipt `b4d95038f505562d3b645e5fb9172c28d50f0448a6da316857fcbdf7ff5f31d2`。两NEW源码/测试首版233pass，稳定审查发现调用者字典两遍使用可触发foreign方法的P2；46输入open receipt `11e825172dd32af4520fad623e258dfc1e0bbeefb6d5299672beb8557780aed7`保留四轮和真实事前快照。最小修复单遍捕获typed键值对，原233完整测试不动、15追加；原源9fail/6pass/8errors、修后15pass、最终新套件248pass/3.67s/inner0，独立稳定增量验收进行中。late mutation不强求原子一致性，但不能再调用foreign方法。新[原调用链B1/B2草案](durable-wheel-caller-contract.md)先冻结现代schema/来源、prepared vendor、npm三kind过滤、Full正文配对/数据预检和Base冷路径；B2未完成时_sync提前拒绝带ref的Full而不seal假ready。有限四路/producer/occupied静态证据分别c1a6/38b37/b669；modern launcher的实际输出集合仍待明确。正式7/100、所有产品gate、AUTO OFF和Recovery3待授权保持。
+
+2026-10-07 source-data快照P2已稳定增量闭合，独立executor gpt-6.1-sol/medium 0新/openP1P2；root验收43输入receipt `31d047be350eae7ea6139d86b601c481d852e2596da9faa1501e4523c3789ed7`及单次完整248pass实际证据。B1设计有限核新发现provider主/支持source_version仍强制旧三段，与wheel已冻结一至三段域冲突；正在选择对应实际wheel kind的版本分支，非wheel/host/v1仍原规则，不扩大一般版本域。物理stage、正式source与独立寿命仍另包。
+
+2026-10-07 B1首版稳定审查开放：设计版本P2及原recipe全runtime扫描修订分别保存efe7/92534，Base允许recipe公共声明rawbytes扫描，之后无所选body解析/vendor/core/ZIP。首新suite guard/fixture失败、70及三次73pass分别保留；旧11suite唯一完整轮次705pass/1fail/2skip，原modern generator先调用公开AI校验后定向231pass/2skip。root已审五caller diff和完整新测试，scout独立schema inverse核完整旧JSON深相等；新executor线程额度不足，未声称独立executor。root发现resolution循环跳过空根、package optional/peer未核file白名单的P2，75输入open receipt `810c417b8e4d7ad823b07b8c9d7fe7fe7f2be94cdb1cce5ae3edd0e3187f957e`保存实际七源终点、初始32事前像及七轮日志。现在唯一writer仅解析器和追加新测试，先实际red后green、只解析器与新suite受影响全核；原73前缀和旧tests/guard不动，B1仍未接受。新[B2安装草案](durable-wheel-stage-integration.md)补明相关占位path caps及opaque symlink语义、modern许可循环仅local/git沿原overlay，wheel交原stage成员校验；仍未冻结或授权实现。正式7/100、AUTO OFF、native/source/产品gates与Recovery3待授权不变。
+
+2026-10-07 B1根file引用P2已闭合：旧c0c源与28新增同组实际4fail/24pass/73deselected，修b3cb后28pass，再仅解析器和完整新integration148pass/2skip/17.64s（47原resolution与101integration，两个v1无binding skip）。原24486B/73项前缀逐字保留，旧tests/guards/其它5caller源未变；root审稳定最小diff、全部追加用例、实际red首断言与runner并核7终点，41输入receipt `2991ae630094258852da69880b4b7b615907193c15b2d60d3fab7e83f359f5e7`接受有限B1锁数据接线，开放P1/P2=0。没有独立executor线程，root验收加先前scout独立schema证据如实分列；旧75open及全部旧轮次保留、不合计。B2设计另修归档stage-root vendor路径、不加npm package.parent，要求非根package正例；原现代licence循环仅local/git沿旧overlay，wheel许可交成员物理核。scout有限增量/root最终设计决策后17输入receipt `f6e9928443b32c54ddd0027f2d846122b678a4e82748b3130fe33be14695080c`冻结054753/12101B，唯一writer七文件已授权默认合成实现；旧原像及路径P2历史保留，无B2通过。正式7/100、全部产品/来源/native gate与AUTO OFF仍保持；B1早拒仅在实际hook/readback完成后移除。
+
+2026-10-07 B2实施前限定修订：root与executor发现原B1临时unsupported测试与移除早拒逻辑相互矛盾；仅批准迁移该一个阶段测试，原26870B/101通过历史保留，其它100正文不动，以真实_sync/hook/seal/readback用例替代，不保留只为旧测试的candidate分支。executor另外指出原Tree constructor在上下文close异常时可能未交出dup，root读有限storage/paths行确认依赖边界；新helper改由自身heldFD相对NOFOLLOW bounded reader与立即try/finally管理全部新FD，不改或夸大旧Tree清理保证。actual0547/12101事前像与修后3233/13461保存，8输入receipt `7309747e87e99e680aa0715fed54758a7aabded01a382d6eb594de3c63daee87`修订冻结，原17输入设计历史保留；这是root决策/静态前提修正，无行为red或B2测试通过。唯一writer继续同七文件范围，Formal7/100、native/来源/产品gate/AUTO OFF不变。
+
+2026-10-07 current非秘密投影准备：scout有限原producer/路径/嵌套validator/原身份编码证据经root分别接受13/7/6输入d6dd26/52f5aa/773c45；现有validate_saved_state不核current/launch root公开shape，write_state不返回替换后身份，目录对象与文件tuple须分开，不能导出私有generation或wholebyteshash。新候选durable-current-public-projection.md只规定完整FullSourceView的公开部分，profile/lock/runtime/encoding五字段，不授权孤立签发模块或IO。三P2明确新Pi Full域不由通用producer推导、hex64/固定profile需正式原来源另核、excluded值opaque浅引用不套公开cap，实际原0250稿5521B事前捕获保留，增量设计复核中。B2代码/默认合成测试继续独立实施，sourcehold/currentactor/issuer/Full/native仍未资格。
+
+2026-10-07 B2稳定默认接线已接受：首轮新runtime69通过、integration106通过/3失败，实际原seal成功后的旧receipt schema拒绝ref，40输入open receipt5818a8保留。root仅扩一个回执schema及追加测试，旧schema同定向用例3fail/18pass/109deselected，修后25pass/106deselected，再仅原dependencies/runtimeFiles/完整新integration同次261pass/54.04s（39/91/131，inner0，无skip）；原runtime69及core387/stage204/source-data248不重复，不合计不同轮次。最终八target STOP，root审完整新自有FD/helper/69测试、四caller与完整migration/append diff、原日志及runner；独立scout核逆去三节点与完整旧JSON深相等、inline ref深同B1，root核全部8终点匹配实测，77输入receipt `cde031bb1fd6dc04c9214c7560b5427a169e11d8d67b9fa0b1dff1e75097f839`接受有限合成接线，开放P1/P2=0。唯一722B过期阶段函数删除，原100正文26148B逐字保持，完整B1/101历史不覆盖；实际原seal/activate/status/readback与local/git许可正例执行，NPM/进程仍fake。JSON Schema integer接受1.0，native helper拒绝float先于FD的两例另明确，不改全局checker。没有独立executor线程，root关键判断与scout有限schema证据如实分列。
+
+2026-10-07 current公开部分候选的三P2措辞修订已有限接受：实际原0250/5521B与当前86a37/6588B分别保留，10输入receipt `b19fde9425e975432d0c115944f42928b0acaa5aedef619cf5efb31977e45a95`；新Pi Full/hex64支持域须原实际lock/backend核，excluded私有值只浅捕获opaque引用，不递归/摘要/检查内容。此为完整FullSourceView的一部分设计，不是实际来源/当前actor/issuer或IO资格。下一有界工作核原read_lock严格校验的可复用公开数据核和installed-origin实际producer缺口；不将合法metadata或hash当初始化权，不构造假repo/Workspace。B2默认安装接线通过仍不使正式Full声明/CPython/ABI/来源闭包/长期hold/真实模型或任何产品gate通过，正式7/100、AUTO OFF及Recovery3待独立授权保持。
+
+2026-10-07 installed metadata前置数据核已稳定默认验收：22输入设计冻结705c319d与原数据/IO接缝20输入f259保留，唯一executor gpt-6.1-sol/medium三target STOP后，root验完整新模块/测试、read_lock diff、实际runner/报告/XML及最终pins，106输入receipt `b89202e451ffa8776ceccd7fd3426b4f96471ccbc98918280391359c6384b0c9`接受。最终新suite77pass/10.88s，受影响原九suite同次553pass/2旧v1skip/87.42s，轮次不相加；独立scout gpt-6-luna/high仅核三完整片段逆回原deps b6/23788B、四bare核AST适配和原IO切点，无额外executor代码审查。强引用单遍capture/alias展开预算、strict supplied JSON及固定schema数据入口闭合，不改旧read_lock域或原guard，不重跑未变core/stage/source-data。new01历史66保留，affected01 ENOSPC只剩4096B部分日志与0B XML、inner/counts未知；affected02原安全祖先规则实际248fail/305pass/2skip均记录，改独占/tmp后才得到affected03成功。仅已认领结束fixture字节保留后回收tmp，不触未知活动目录，不将搬运后inode/ctime当连续来源资格。 随后root发现永久pytest整文件hash会阻止后续producer/runtime合法演进，29输入receipt `c938483bac7a95b6f387c48e0503ef3ef10b83d8a140de399d12889db3ce84a9`接受仅6292B迁移审计片段移出：精确逆回完整旧test，所有保留节点/函数字节一致，两生产源不变；实际收集76、新完整suite76pass/10.77s，原553/2仍适用且未重跑。原77及完整逆变换审计保留历史，今后审计读冻结源快照，不冻结未来生产文件。
+
+2026-10-07 installed origin下一完整包：有限producer/完整runtime_identity及_sync函数不变、候选五键材料方向21输入receipt `9b59cee272f4b8d7d20f1550614bfce72c4569bd948d8b75064d556369037fd5`已接受；正式缺bundle row与完整helper/schema闭包，不能补几项声明就称完整。正在限定静态追踪真正数据入口的条件import和固定schema installed路径，决定下一包的exact字段/cap/canonical、Full owner选择谓词、完整闭包与producer/seal/readback测试；origin writer/reader、FullSourceView/sourcehold/初始化资格仍未授权或实现。正式7/100、产品gate、strict metering前AUTO OFF及Recovery3独立授权待答保持。
+
+2026-10-07物理来源有限方向与current-startup措辞已接受：初版73c602/6195B、startup原3e507/8879B及有限设计报告9输入receipt `7fa3bd1216df678e6cfdb345d02037416a9c80c1e823625c88a3d25ca330d5ce`保留；仅三段新增clarification在独立scout（gpt-6-luna/high）逆去后各逐字节还原，8输入receipt `f3663f8a52d8fcca341ed686b6ae14449822f7fc69400629c46af1336f1b96b8`。canonical十进制须在parse/BigInt前限长，size/timing关联不能称隐私不干扰，物理上下文仅交受信actor私有来源通道；“绑定generation”只指原actor私有validator，不进入共享source identity。完整FullSourceView/角色/来源reader/codec及长期hold仍未冻结或实现，不增加资格或新native授权。实际installed-origin producer及完整代码/schema留存缺口由scout下一有界证据包调查，root保留决定；正式7/100、AUTO OFF及Recovery3等待独立授权保持。
+
+## Technical Context
+
+**Language/Version**: 管理器Python 3.11+；公开Pi扩展TypeScript/ESM；两profile初始统一Node v24.14.0、npm 11.19.1（现有工具链声明）。不为新profile引入Bun；候选Pi v1.0.1要求Node >=22.19.0，安装时仍核对完整依赖engines。
+
+**Primary Dependencies**: PyYAML、jsonschema、Jinja2；候选`@earendil-works/pi-coding-agent@1.0.1`及同系列原生MCP/Code Mode；Full候选`@earendil-works/pi-durable@1.0.1`及其匹配pi-ai/chord依赖。Codex后端先采用仓库已有官方CLI 0.154.0资产基线验证公开协议；本轮不升级其全局安装。仓库自有runtime、delegate、TK继续演进；不把旧插件peer条件当作1.0.1兼容证明。
+
+**Storage**: 配置与部署延用现有TOML/JSON、受管Tree与原子替换；普通执行保留`activity.py`文件记录和`workspace_leases.py`跨profile锁。TK继续其已有独立SQLite。Durable选择单服务拥有的官方SQLite存储及独立本地socket入口，不与TK共用权威队列；通过公开数据库适配设置并验证同步持久化，具体顺序见contracts/durable-service.md。
+
+**Testing**: pytest与现有隔离TypeScript runner；默认临时HOME、假进程/模型、禁网络。合成OS、原生宿主、live模型、人工终端和独立oracle分层，63检查/8不变量均有各自证据要求。实际实施检查见执行状态及第13节，不以隔离单元通过代替产品测试。
+
+**Target Platform**: 当前Linux x86_64；本机能否创建所需namespace、容器条件和实际账号可用性属于实施验证。Mac/arm64/WSL按需。
+
+**Project Type**: 现有配置管理CLI、Pi本地扩展、受管执行适配及Full按需本地持久服务；无新公网服务或通用插件平台。
+
+**Performance Goals**: Base/Full idle额外审批模型调用0；Full idle未经请求Worker/Durable启动0；受管Writer每工作区最多1、TK返工最多2轮。启动/交互/内存/模型审查的数值预算按SC-003/SC-007先测基线并在候选结果前冻结，缺预算不能验收，不虚构毫秒或准确率。
+
+**Constraints**: 官方上游不改；公开API不足则失败或重选。受管操作失败不回退宿主；审批不能扩大OS权限；账号/会话/活动实例/旧恢复引用不被替换破坏；秘密不进入通用摘要。正式锁更新须先验发行物及完整依赖，真实宿主与容器执行分别核对前提和授权。
+
+**Scale/Scope**: 个人本机/SSH场景，两个profile、首批Pi/Codex两调用入口及两执行后端、37需求。开发实施最多两个子任务；产品协作并发有界且写入排他，不建设任意DAG或多租户服务。
+
+### 复用边界
+
+- 当前锁仍是Pi 0.84.4；以官方v1.0.1标签确认的公开接口作为首轮升级候选，精确tarball/完整性/全依赖锁及插件兼容尚未运行，不把main文档外推成发行保证。
+- 依赖、资源和三方部署复用`pi_vendor.py`、`pi_dependencies.py`；包选择属于能力绑定，不新建继承DSL。
+- 固定命令已有`pi_commands.py`→`scripts/pi-project-check`→`pi_checks.py`；Linux bwrap是日常隔离首选。验收sandbox与PID生命周期隔离不当作文件/网络安全证据。
+- 旧权限插件实有subagents事件耦合；两profile改用不依赖协作的自有公共扩展+现有权限核心，旧permission-system及session-yolo不进入新默认组合。不能只删除requires。
+- model-delegate复用执行核心，TK改其SubagentsAdapter接同核心；不再把独立pi-subagents调度器作为新产品必装项。恢复分别归执行监督、TK阶段与Durable服务。
+- WorkspaceLeases现有Git目录inode锁只直接覆盖本机Git工作树。非Git目录不能被隐式转Git或成为无锁旁路；选显式受管根登记及独立于profile HOME的本机协调锚扩展身份映射，按同一双进程竞争/别名/恢复契约验证后开放。未登记根拒绝受管写入，并给出登记路径。
+- 公共源码及不可变依赖可共享；账号、会话、许可、任务记录和日志按所有权隔离。共享协调锚仅保存资源占用，不合并两个profile的会话或凭据。
+
+## Constitution Check
+
+| 原则 | 设计约束与复核结果 |
+|---|---|
+| I 公共核心/原生适配 | 复用agentcfg副作用分工；工具特例留适配器；未知字段失败；设计符合 |
+| II 秘密/所有权 | 原生登录所有权不变，不复制token，不把秘密值或其摘要放入通用证据；设计符合 |
+| III 部署/恢复 | 暂存、三方比较、活动锁、pending恢复；配置/二进制/数据回退分开；设计符合 |
+| IV 显式副作用/锁 | render/apply/run不隐式安装；固定完整发行物，隔离候选；设计符合 |
+| V 默认隔离测试/证据 | 默认无真实宿主/账号；mock、OS事实、native、live、人工分别验收；设计符合 |
+| VI 不修改上游 | 审计历史接缝，禁宿主补丁/私有API；公开接口不足进入有界选型；设计符合 |
+
+研究前gate：六项均有明确设计约束，无需宪章例外。设计后gate：复核提供者替换、原生接口、服务owner及恢复契约，六项设计约束仍满足。历史代码的host接缝与openai-proxy全局fetch包装仅记录迁移风险，不能带入新候选。
+
+技术与迁移条款的适用范围：本次升级已接入的Pi，不重开001已关闭的starter迁移。其来源到目标映射以 [resource-manifest.json](../../agents/pi/migration/resource-manifest.json)、[capabilities.toml](../../agents/pi/migration/capabilities.toml) 及关联清单为基线，关闭范围见 [001报告](../../docs/acceptance/pi-spec-closure-20260924/README.md)。T002按research.md D16补充新宿主/两profile对资源与合并、删除、备份、安装行为的差量；T009/T023–T026落实变化，T028/T095核对声明与实际发现。新增或变更来源须记录身份和处置理由；旧清单复用不豁免本次真实加载/兼容验收，也不引入starter绝对路径运行依赖。
+
+“设计符合”不是代码已符合。真实包审计或接口验证发现违例必须停止该候选，不通过关闭保护使测试通过。没有需要写入Complexity Tracking的宪章例外。
+
+## Project Structure
+
+### Documentation (this feature)
+
+```text
+specs/005-pi-two-profiles/
+├── spec.md
+├── plan.md                       # 动态执行/恢复主入口
+├── research.md                   # 研究决定、来源、候选与淘汰条件
+├── data-model.md                 # 身份、所有权和状态迁移
+├── contracts/
+│   ├── execution.md              # 执行/权限/委派共同契约
+│   ├── capability-providers.md   # 提供者选择/替换/卸载契约
+│   └── durable-service.md        # 本地服务、恢复、存储和模型发送边界
+├── quickstart.md                 # 已有命令及待实现的验证场景
+├── acceptance.md
+├── acceptance-scope.json         # v2初始范围，运行身份/检查器未冻结
+├── source-audit.md               # 82能力/38来源的两profile差量
+├── checklists/requirements.md
+├── review.md
+└── tasks.md                      # 100项，按故事排序并记录实施状态
+```
+
+### Source Code (repository root)
+
+```text
+src/agentcfg/          # 依赖、部署、权限、执行监督和委派适配
+agents/pi/runtime/    # 仓库公共扩展及原生接口适配
+agents/pi/packages/   # 自有delegate/TK；拟新增risk-review/durable-service
+agents/pi/            # 依赖声明、插件目录及原生配置生成
+profiles/             # 拟新增pi-base/pi-full
+locks/pi/             # 实施阶段选定正式组合后更新完整锁
+schemas/              # 扩展现有配置与状态校验
+shared/               # 短规则、领域Skill、Full专用委派Skill
+scripts/              # 现有隔离验证/报告入口
+tests/                # 离线与分层fixture
+docs/                 # 手册和验收事实
+```
+
+**Structure Decision**: 在现有仓库职责内修改，不建新应用骨架。新增包路径只是拟议位置；具体文件在任务阶段单一分配，优先复用现有模块。两个服务状态所有者保持分离，接口通过仓库适配，不把宿主或市场插件私有对象暴露给任务流程。
+
+## 4. 最终架构与信任边界
+
+产品profile选择安装/加载能力；审批模式选择人工或智能；执行隔离选择已验证后端。三者不混成一个safe开关。
+
+```text
+Pi / Codex调用入口 ── 共享delegate核心 ── Pi / 官方Codex后端
+       │                       ▲
+       │                 Task Keeper阶段/验收
+       │
+普通工具 → 准备操作 → 硬策略 → 人工/可选模型判断 → 许可复核 → 执行后端
+                                                      │
+                                           OS边界/实际退出/产物
+Durable客户端 → 单服务所有者 → 持久只读任务/受限工具 → 结果与重连
+```
+
+同一领域对象只有一份权威状态。服务端判断权限；前端显示状态与传送真实用户意图。审批器无执行callback，不读任意凭据，不因模型输出获得管理权限。
+
+插件可替换性是R37的交付要求。稳定边界是搜索/编辑、压缩、MCP、进程、委派、流程、持久任务、审查等能力的用户行为与权限约束，包名及其配置留在各自适配层。复用现有依赖与资源清单记录提供者、来源/版本、兼容范围、配置/状态所有者、冲突能力、卸载及回退办法；不新建通用插件框架或统一所有插件API。只为实际有替换风险的边界建立最小适配，原生能力优先直用。
+
+当前插件锁是调查基线，初始升级/保留/替换选择见research.md；T002/T006及高级组件集成阶段将其验证为正式发行组合，失败须记录理由并重选，不能静默退回旧依赖。后续替换先在隔离候选中跑同一能力契约；旧任务绑定旧运行身份，不跨提供者伪装恢复。状态不兼容时提供受支持迁移或明确阻塞，保留旧包和恢复引用；替换后相关证据stale并重验。至少完成一次等价提供者替换及失败恢复演练，再接受可替换性；弃维护不会触发隐式换源安装。
+
+受管工具隔离先假定Pi和已选扩展可信，围住命令/脚本的文件、网络和进程能力。整进程隔离另外验证。规则与执行器安装根位于受限任务写范围之外；插件同进程不能被包装为抵抗恶意插件的安全边界。
+
+## 5. 已选设计与实施验证gate
+
+Phase 0研究决定已在research.md收敛；下表是已选候选的实施验证，不是未填写的规划澄清，也不让用户替我们选择技术。每项产出确切版本、选择/排除理由、正反结果和影响范围。两种有效尝试无新进展后交主代理重决策；不无限试错，也不自动删除目标。
+
+| 验证 | 最小实验 | 通过后决定 | 失败后的路径 |
+|---|---|---|---|
+| Q1 公开接口与加载 | 正式包拦截/适配、嵌套调用、RPC无UI、reload/cancel、项目信任 | 固定接口与覆盖表 | 换正式兼容版或独立受管工具；仍不足则记录阻断 |
+| Q2 日常Shell与隔离 | C++增量构建、缓存、Neovim；越界/禁网/后代停止 | 一个后端供两profile复用 | 比较现有OS封装、独立sandbox-runtime、整环境；不变成内核研发 |
+| Q3 整进程保护 | 既有容器/VM，扩展直接读写联网、认证和终端 | 支持路径或有证据限制 | 不强行引入认证代理/新平台；明确威胁模型 |
+| Q4 Pi/Codex公开协议 | 生命周期、消息、继续、取消、模型身份、权限映射 | 冻结能力协商 | 不支持项明确失败；Writer生命周期未证明不开放写委派 |
+| Q5 Durable恢复/认证 | 固定SDK、单存储、requestId、断前端、kill、重放、模型路线 | 固定存储/registry/恢复职责 | 保留Full未完成；收紧只读工具/重放，禁止伪造恢复 |
+
+Q1/Q2是基础设计闸门；Q4/Q5可在隔离目录固定候选版本做可行性探测，不能更新正式锁或充当最终通过；正式组合交付时重新验收。无需先做高级框架才能使用Base。Q3的不支持结论只满足调查项，不满足已列为必需的整进程能力项；不能偷换发布范围。仅缺组件/授权/测试环境时记not-run或blocked，不据此宣称技术不可行；不支持结论须限定确实验证过的候选与条件。
+
+## 6. 阶段与退出证据
+
+下表P0–P9是设计工作流代号，用户故事优先级以spec为准。tasks.md按US1/US2/US7（P1）及US3–US6（P2）组织；共同Writer前移到基础，US7先验维护机制、最终阶段复验完整组合。
+
+| 阶段 | 产物 | 退出条件 |
+|---|---|---|
+| P0 范围/来源/授权/选型 | 平台/路由、版本、补丁退出、资源映射、范围revision | Q1基本成立，必需/可选/未授权清楚，未知有具体实验 |
+| P1 共享配置/安装 | 两profile切片、组合、状态、候选部署/诊断 | Base不依赖Full，冲突/失败不损坏旧状态 |
+| P2 Base日常能力 | 搜索编辑、会话、认证、长命令、MCP/Code Mode、规则/TUI | 离线和获准真实场景通过；隔离未过仍非完整Base gate |
+| P3 权限/隔离 | 单策略、受管执行、覆盖表、Q2/Q3结果 | OS正反和开发可用性；与P2形成Base候选，补齐维护等gate证据；独立Full实施继续 |
+| P4 模型审批 | 独立扩展、协议/撤销/预算、质量评测 | 机械安全/模型质量分别通过；Base默认无reviewer |
+| P5 统一委派 | 两宿主/两后端、唯一Writer、观察/消息/取消 | 实际executor/model和终态可核对，无重复派发 |
+| P6 Task Keeper | 同核心Inspect/Fix、可信检查/独立review、有界返工 | 输入变化失效，失败/零测试/未知不能误验收 |
+| P7 Durable | 服务、只读任务、重连/恢复/取消/备份 | 恢复与权限故障验收，服务停止不影响普通编辑 |
+| P8 维护/平台 | 升级回退、恢复、资源/性能、平台矩阵 | 必需平台独立证据，无持续泄漏，恢复可操作 |
+| P9 总验收/交付 | 当前报告、两profile演示、手册、切换步骤 | 必需gate全过、无严重未闭合审查项、人工体验有记录 |
+
+账号/平台阻塞时继续独立阶段，保留未过gate。“Base可交付、Full阻塞”可作真实阶段报告，不能因此结束仍有可执行工作的任务。默认入口切换、推送/合并不在默许动作内。
+
+## 7. 执行包、并发与升级条件
+
+- 主代理按当前会话模型与effort负责范围、架构、权限/事务语义、不变量和验收。executor/scout按各自角色TOML配置执行，不在本计划固定模型；启动时核对工具实际提供的角色配置，报告观察到的模型与结果，不宣称已自动切换。
+- 最多两个子任务，默认一写一读。任务包带目标、输入、单一文件所有者、契约、验收命令、升级条件；子代理不再派生。
+- schema、锁、执行/审批协议单一集成者写入。独立review聚焦边界和反例。
+- 前提被推翻、事务/锁/日志顺序不明、扩大范围或两次有效修复失败，交主代理。缺必要人类决定/授权才询问。
+- 验收优先本轮diff/受影响路径；共享基础变更重跑两profile相关测试；无新证据不反复全库review。
+- 最终审查针对写入结束后的稳定diff或commit；修改期间的审查仅作阶段性证据，修正后复核受影响边界。
+- 调研、编译、子代理完成、旧scope通过不等于总完成。范围变更记录动机、原ID、新revision和影响，不悄悄移为可选。
+
+## 8. 生命周期、恢复与迁移
+
+意图先于外部副作用持久化；记录requestId、输入身份、句柄和所有者。句柄落盘前进程可能已启动，数据库缺记录不能证明没运行。重连先对账；unknown禁止补发有副作用任务。
+
+取消先使未执行许可失效，再请求停止，最后确认物理终止/副作用静默；中间状态保留。开始的命令仍可能使用原OS权限，策略收紧需阻止新操作并按策略终止相关进程；不能声称瞬间撤销已打开FD。
+
+唯一Writer跨所有受管profile。未知Writer不释放占用，需只读诊断、身份复核及显式恢复路径，不能永久无解释死锁。不能自动杀用户进程获取锁。
+
+升级准备新运行包和数据副本，验证后在允许的空闲边界激活。配置回滚用三方机制；数据恢复在单存储所有者停止后进行，先验副本。旧程序不得直接开不兼容新schema。旧包只要仍有活动实例或恢复引用就保留，“一次性回退”不授权清理它。日志/产物有上限和保留策略，不清理仍被必需验收引用的证据。
+
+## 9. 性能、质量与证据
+
+先测纯Pi并确定方法/基线，再在候选测量前冻结预算revision；候选不佳先优化，不事后改阈值到刚好通过。方法确实无效时保留旧结果并记录重新冻结理由。
+
+Base先按冻结预算独立测纯Pi/Base两态；Full与总交付补齐纯Pi/Base/Full idle/Full active四态。有效身份未变的基线可复用，变化则重测。各态使用同机同终端、同输入/模型、明确冷暖和样本数。观察启动/首轮、输入滚动、长输出、RSS/CPU、初始上下文/工具元数据、reviewer延迟/调用、idle零隐式模型/Worker/Durable和任务释放。优先局部数据库检查；长构建独立测取消/资源，不把每次全库编译设为默认。
+
+证据身份含相关源码、未跟踪输入、配置、规则、依赖、宿主/模型和检查器版本；输出排除需显式验证，不能只看HEAD。heartbeat、日志增长和用量记账等纯观测变化不属于语义输入，避免每次前进都自我失效；预算仍在准入时实时复核。秘密只引用受控别名，不对秘密值作公共摘要。语义变更使旧结果变成历史，失去当前通过资格。
+
+结果passed/failed/not-run/needs-login/unsupported；执行pending/running/blocked/stalled/finished；有效性current/stale/invalid。finished只表示检查已结束，结果可以失败；未结束执行不得签发通过。机器事实由检查器/后端产生，模型总结不签发通过。可信检查器和规则位于Worker写范围之外。
+
+## 10. 授权与真实阻塞
+
+私密运行记录保存授权来源/范围、真实命令/cwd、句柄、日志引用、退出/未知状态、下一安全动作；公共文档不记token或敏感会话正文。
+
+真实宿主、账号/模型、外部源码传输、新服务收费、切默认和发布核对当前授权；已授权不重复问。需要新授权时先完成独立工作，再提交具体可评审步骤。缺授权只阻塞依赖项，不记通过。
+
+用户停止即停止新派发并核对在途活动。计划不能保证断电、额度耗尽或宿主退出后进程继续。Stop hook只有公开支持且用户信任精确定义才生效；不改信任库、不递归启动Codex、不无限继续；缺失不阻塞产品。
+
+## 11. 恢复与完成判定
+
+恢复时读本文、tasks.md、最新验收索引和私密运行记录，核对diff、版本、进程/会话、schema、近期证据。不重做仍有效研究，不重复提交活动任务。压缩不重置预算、取消、用户限制和失败计数。
+
+继续最低编号、依赖满足且未通过的任务；遇阻塞转独立工作。每轮记观察、决定、验证、下一动作。最终必需平台/账号/体验与全部gate完成后停止扩展并交付。
+
+## 12. 资料导航
+
+[research.md](research.md)：取舍与来源；[data-model.md](data-model.md)：实体/状态；[contracts/execution.md](contracts/execution.md)：接口边界；[capability-providers.md](contracts/capability-providers.md)：替换契约；[durable-service.md](contracts/durable-service.md)：持久服务；[acceptance.md](acceptance.md)：检查定义；[tasks.md](tasks.md)：执行工作；[quickstart.md](quickstart.md)：验证/恢复入口；[review.md](review.md)：规划审查。
+
+实施已开始；尚未迁移用户运行环境、调用真实模型或启用hook。任务、代码和隔离检查的完成不等于产品gate通过。
+
+## 13. 实施现场与决定（2026-10-04）
+
+T001：工作分支`feat/pi-toolkit-upgrade`，起始HEAD为`75584755a08b17dd1e0048d4c0f844c55bd672a5`。开始时仅讨论ZIP与本feature目录未跟踪，既有受跟踪文件无用户改动；不删除、不提交这些资料。默认机器的实际登记文件为workstation，选择omp-kernel，未覆盖默认实例/状态路径；对应目录只发现DSH和OMP，无受管Pi部署。本次不接管原生账号目录、不改变全局默认。当前/proc仅显示执行命名空间，不能据此声明宿主没有活动Pi；任何后续真实部署仍须在操作当时核对活动/恢复引用，unknown保持保护。
+
+运行记录位于工作区忽略目录`.cache/pi-two-profiles/run-20261004/`，目录0700、记录0600，只保留非秘密命令/身份/结果与下一动作。平台事实为Linux x86_64、内核5.10.134-17.2.al8.x86_64；Node v24.14.0，bwrap可执行文件存在，未发现docker；存在文件不等于隔离可用。Python 3.11.11环境从同uv.lock的已准备主仓库复制依赖到独立worktree，经`uv sync --locked --offline --cache-dir .cache/uv`校验16包；未联网安装或启动第三方宿主。
+
+T003模型决定：根据用户提醒核实并沿用Rotom共享默认路径。`shared/defaults/models.toml`的Pi投影选择deepseek_openai/kimi_openai/glm_openai，main为deepseek_flash_openai；来源与模型声明复用`shared/providers.toml`、`shared/models.toml`及本机覆盖。Base/Full不得另建重复模型清单或把profile里的空列表误当作没有共享默认模型。Codex委派仍走官方CLI原生账号边界。这里只冻结配置来源，未读取凭据正文或验证任何账号/付费调用，真实验收授权按具体步骤另核对。
+
+T004实现决定：旧scope v1不变，新任务使用独立v2和严格固定矩阵；检查结果、执行状态及证据有效性分开。实施发现执行枚举缺少终态，补finished表示检查结束，明确不等于passed。独立oracle必须是与scope所选checker及输入/层级绑定的实际工件，不能用任意日志存在或自报成功签发通过；可信checker的生产与Worker写保护由T071/T073等后续任务落实。公开哈希只是身份绑定，不承诺对恶意同UID操作者证明真实O/P/L活动。
+
+T004阶段验收：executor（角色配置gpt-6.1-sol/medium）先写反例、实现及修复；root审查发现并关闭文本oracle/未结束执行漏洞后，scout（角色配置gpt-6-luna/high）对稳定三文件diff独立审查，无剩余阻断。命令为已准备Python 3.11解释器执行`-m pytest -q tests/test_pi_validation_fixture.py tests/test_pi_validation_report.py tests/test_pi_release_gate.py tests/test_pi_validation_live.py tests/test_pi_verification_cli.py`，121 passed；`git diff --check`与编译检查通过。日志/稳定diff/文件SHA保存在上述私密运行目录；该证据只支持T004实现，不使任何S/B/F/P/M/X产品项passed。
+
+T014–T016前置证据：现有Git路径将短时flock放在worktree专属git-dir inode，持久write-lease放在git-dir/agentcfg；不同profile HOME已经共用同一锚。ExecutionStore先落allocating意图，再预留Writer，再保存handle；先保存starting/spawn_committed才spawn；释放先持久终止证明，再标released。PID复用/旧owner状态unknown不释放。已有竞争测试使用线程，不能替代本次要求的两个独立OS进程竞争。非Git目前明确拒绝，尚未开放写入。
+
+非Git登记的root决策方向（待T014反例验证后落实）：复用同一WorkspaceLeases/ExecutionStore，不复制执行队列。注册目录由可信主机控制面基于真实OS账户确定，独立于profile HOME/XDG；只读查询不得创建目录，显式登记才写。登记保存规范路径与dev/inode/uid，工作区与协调锚分别核验，根替换或未知旧lease均失败关闭。路径别名归并，物理嵌套由所有根共同的写入准入协调，不能仅禁止非Git登记掩盖Git嵌套问题；Git专属操作保持明确unsupported。最终目录和schema接入须同时完成临时锚测试注入、受限任务不可写控制目录、跨profile独立进程竞争及崩溃切点证明；这段决定不表示已支持非Git。
+
+T014测试入口决定：当前pytest无独立OS suite；conftest默认阻断Popen/fork/exec/spawn/信号且重定向HOME/XDG，不能用线程结果声称跨进程证明。新增明确opt-in标记与固定合成worker fixture，默认跳过O场景；显式运行仅可启动该测试worker，参数限定临时根/声明场景、无真实认证与第三方宿主，不全局恢复任意子进程权限。Git/非Git真实双进程竞争、owner崩溃切点与PID复用分别留证；这类锁事实不作为文件/网络沙箱证明。共享注册目录测试用显式临时锚注入，不能因OS home resolver绕过默认测试的临时HOME限制。
+
+基础集成调查原状：`PiBackend.read_lock`原先读取所有profile的归档/锁文件，`pi_runtime_packages.validate_installed`原先只核锁内依赖；以下T007/T012阶段已增加选择读取与完整安装图校验，正式新组合仍待T009。`HostSupervisor`当前无条件构造DelegateController并设置handler，不能把“Base profile未选model-delegate插件”当作零Full构造/探测证据；T011及US1入口集成须按实际能力选择分支，普通查询/启动均不得构造Full控制器。共享只读基础运行包可复用，Full专属包、工具、流程Skill及服务启动仍须分别排除。
+
+T008/T010核心阶段验收：新增`pi_capabilities.py`及绑定测试，先红后绿。能力catalog确定归属与单owner，provider不能自行扩大Base或配置/状态所有权；安装来源观测与实际加载资源分开核对，结果快照不可变。root发现旧accepted摘要未绑定提供者实际内容，补8组复现并修复为完整上下文摘要；source/入口/配置/catalog/slice/lock/host/engine变化均使旧证明失效。最终`./.venv/bin/python -m pytest -q tests/test_pi_provider_bindings.py`为77 passed，compileall/diff检查通过，scout对稳定修复定点复核关闭。调用方仍必须从可信验收记录取accepted_binding_digest，不能就地计算helper结果充当通过证明；真实安装树扫描和生产schema调用尚未实现，所以T010/T012仍不勾选。
+
+T007/T012隔离阶段：泛型backend工厂传入所选profile，Pi保持全schema/元数据身份校验，只读取当前切片的归档与package/lock正文；默认未指定profile仍验证全部来源（包括未引用归档）。未验证切片在创建guard/安装前拒绝。安装树扫描完整node_modules图，缺必要、夹带、名称/版本漂移失败，保留optional缺失、alias、bundle与合法.bin兼容。受控隔离回归覆盖Pi依赖/vendor/assets/runtime/adapter及DSH/OMP适配，216 passed；未运行第三方宿主。稳定审查发现PiLock.pairs内部dict可被调用方追加验证范围，下一T010包修为不可变快照；同一带profile的backend已有额外profile约束，该问题属于内部完整性而非已证实外部权限绕过。正式profile/真实安装尚未通过，T007/T012仍未整体勾选。
+
+T010序列化决定：锁v1保留旧语义且不能冒用pi-base/pi-full；v2通过闭合capability_bindings保存catalog/providers/selections，选择必须与切片精确对应。read_lock只为实际核过正文的切片验证绑定，accepted外部上下文证明由可信调用方显式传入，锁文件不能自证验收。运行身份每次复核原绑定；candidate不得经现有sync直接激活。安装收据v2另存闭合的非秘密身份投影并独立重算，旧v1收据算法不变；收据证明安装完整性，不被用来签发产品通过。该包实施中，尚未更新正式锁或候选部署入口。
+
+T007测试包完成；T010序列化/消费阶段最终220 passed。root最终复核恢复误覆盖的4个历史迁移测试，并以5个真实失败反例揭示来源绑定与实际npm直接依赖未交叉核验；已补版本、下载地址、SRI及本地归档精确对应。只对新v2施加该新准入语义，传递alias仍允许，Base缺Full正文正例继续通过。pairs/bindings不可变映射、accepted外部上下文、candidate写前拒绝和v2收据重算一并验证；scout对稳定diff与修复增量复核无剩余阻断。正式配方/profile生成、部署ConfigIdentity及可信验收记录调用仍待集成，T010/T012整体保持未完成。
+
+T014 Git独立进程阶段：新增固定自有Python worker，默认7个OS用例跳过；仅显式`--run-pi-lease-os -m pi_lease_os`开放固定测试文件和worker，所有HOME/XDG/cwd/路径均在临时用例，环境白名单、进程/网络全局guard保留。默认相关lease/isolation/entry回归57 passed、7 skipped、7 subtests passed；显式O层7 passed（2.97秒）。两个不同PID/HOME在真实flock与持久marker下仅一个live active Writer，别名/子目录共锁；os._exit在提交前释放内核锁，落reserved后无回执仍阻止第二Writer。root对稳定diff验收，未改生产lease。非Git、PID复用及完整恢复链仍未验证，不能宣称T014–T016整体通过或沙箱成立。
+
+T015/T016新增实现前发现：Git租约仅按最近Git目录互斥，普通命令可分别授权父Git根与嵌套Git根，普通文件亦可用父project+嵌套write根获得不同key但物理覆盖同一文件。必须补物理根重叠反例及账户级协调；linked worktree也可能位于源树下，不能仅凭common/gitdir区别假定路径不重叠。原Git目录marker和ExecutionStore恢复保护须保留，新协调索引的意图/镜像/释放顺序由root决定后才实现；此发现不通过禁止所有worktree或仅检查单profile配置掩盖。当前没有开放新的受管写入。
+
+T014物理覆盖反例已实证：`tests/test_pi_workspace_overlap.py`的嵌套Git/物理嵌套linked worktree、父先/子先4个反例均在旧实现失败（确实取得第二Writer）；同一execution持有自己的重叠根2个正例通过。账户claim的顺序已由root固定于执行契约第12节，下一步实现及故障恢复验证；这些失败不能被既有Git同根竞争通过覆盖。
+
+T015测试边界修正：只重定向环境HOME无法隔离OS passwd解析，root新增实际失败反例后将默认pytest账户查询限定到独立临时账户根；更换profile HOME不改变该根，未知账户查询拒绝。相关isolation/entry回归45 passed、7 subtests passed。环境的`/tmp/.git`使临时目录被识别为Git后代；该外部标记未改动，非Git单元用例只替换自有Git标记探测seam，对临时用例外祖先模拟无Git，生产逻辑仍检查全部祖先。真实非Git OS层须在显式隔离mount namespace另验，不将该单元替身作为真实非Git证据。
+
+T006 SDK阶段验收：用户授权后执行官方1.0.1包的断网bwrap探针，第05次六项全部observed、exit0、stderr空，结果文件/schema/版本/用例集合和stdout一致性核验通过。入口SHA-256 `76ede8ec15e1f06696548fac7cd609587dfe6e9a9accc8b09a8ebc9607874e4c`。root完成公开onError绑定修复，scout（gpt-6-luna/high）对稳定脚本与实际调用/结果独立审查，无阻断；范围及失败历史见native-sdk-probe.md。该证据只支持隔离SDK接口，不支持RPC人工审批、整进程沙箱或真实模型；T006继续保留未完成。
+
+T016 Git协调阶段：executor（gpt-6.1-sol/medium）实现账户共享claim、v1登记到v2协调初始化、闭合allocation_context、物理祖先冲突和global/local崩溃保护。恢复回归发现grant_generation升代释放与旧流程不兼容，root核对ExecutionStore取消/恢复后明确仅release允许同分配新代终止证明，旧代和不同上下文继续拒绝；相应五项恢复反例已转绿。稳定九文件身份已复核，默认受影响集合199 passed、11 skipped，显式O层11 passed，compileall/diff检查通过。原四项嵌套Git/linked竞争红测已转绿；O使用固定自有Python worker、不同profile HOME、共享临时账户、实际flock与os._exit，不包含第三方宿主或SIGKILL/PID复用证明。root完成阶段审查，独立scout复核进行中。非Git Writer、旧实例迁移门槛及proof保留清理仍未实现，不勾T016整体。
+
+T015–T016非Git接入阶段：上述Git九文件稳定审查已由scout闭合。root随后先写登记根接入反例（11 failed、1 passed），再将非Git身份、局部标记与账户claim接入同一ExecutionStore，补通用文件写入/命令互斥、文件快照和项目维护。scout调用链审计发现Pi OpenSpec提交在maintenance内重入身份查询，root改由guard返回同锁内核验的metadata路径并增加实际initialize_openspec调用链回归。Git专属入口明确拒绝非Git；PID namespace跳过不存在的Git元数据挂载。另一组集成测试发现未取得根的分配补偿会掩盖WORKSPACE_BUSY并留下allocating，root按执行契约细化无修改的never-started missing_ok分支并验证旧Writer字节不变。
+
+本阶段20文件已冻结，默认受影响集合312 passed、12 skipped，Git显式O层12 passed（补无关根两个worker同时活动），编译与diff检查通过；scout稳定审查核对全部hash，未发现可复现阻断。当时非Git仍只有临时文件/假进程层，使用已记录的外部/tmp/.git测试边界；随后独立OS证据见下一段。旧实例激活迁移、协调目录沙箱保护、boot/PID恢复与retention尚待闭合；T014–T016整体继续未勾选。当前无用户部署、模型或账号变更。
+
+T014–T016非Git独立进程阶段：executor（gpt-6.1-sol/medium）新增固定自有Python worker和专用pytest fixture，默认仍禁止真实子进程；显式开关只开放该文件内的固定bwrap命令。只读系统库、仓库模块/schema、准备解释器，仅自有临时树可写、私有/tmp、断网、独立PID namespace，真实/tmp/.git未修改。默认相关回归54 passed、24 skipped；显式`-m pytest -q tests/test_pi_non_git_workspaces_os.py --run-pi-lease-os -m pi_lease_os`为12 passed、14 deselected（6.66秒）。root指出原先先占再拒不足以覆盖同时竞争，追加两进程identify后等待同一gate的别名/父子根竞争：两个parent句柄存活、预留前无claim，一次放行后恰一成功，global/local reserved一致；别名单独准入正例另验。无关根两个claim同时保持、未登记/替换拒绝、预留前os._exit释放flock、预留后无回执保留global/local也有实证。稳定3文件hash/diff与日志已归档；root阶段审查通过，scout最终复核进行中。这只证明自有worker的准入/预留保护，不证明产品工具、SIGKILL/PID复用或完整终止恢复。
+
+T006 RPC准备阶段：executor完成五项RPC探针，默认纯协议/fake-process测试52 passed，Node语法、编译、diff检查通过。root已审查固定只读挂载、关闭网络、空账户与合成Provider、超时/输出限制和事件oracle，并核对8文件hash；原始准备证据归档。此前授权仅覆盖SDK六案例，新增RPC五案例已按AGENTS.md提交具体文档/命令申请，尚未获准或执行；等待不阻止独立实施。范围见[native-rpc-probe.md](native-rpc-probe.md)。
+
+T013内存基础阶段：root实现`pi_operation_admission.py`，闭合受信context/resolution、稳定SDK requestId与控制面operationId、正文内存比较/随机引用、决定digest与reviewer绑定，以及锁内一次消费。默认`-m pytest -q tests/test_pi_operation_admission.py`最终59 passed；涵盖线程竞争、同ID异请求、跨session/profile、取消/过期/重启、许可篡改、后续分配失败不重签、未知后端/能力/字段和私有正文不进入公开投影。scout（gpt-6-luna/high）发现单输入先完整序列化再命中容量限制；root修为序列化前精确大小核算，追加ASCII/转义/Unicode的提前拒绝及字节边界检查，并补文件目标/读写根一致性。默认测试没有调用真实进程或模型，模块尚未接正式入口，不声明旧prepare提前分配Writer、旧正文摘要或旧权限来源问题已经修复。可信resolver、ConfigIdentity、真实UI/决定来源、原ExecutionStore消费链及会话退役清理仍待实现；T013不勾选。
+
+上述非Git OS三文件和T013两文件均在停止写入后由scout复核最终hash与证据；共享gate竞争及准入账本两项修复闭合，无剩余阶段阻断。下一独立包按manifest选择构造HostSupervisor委派控制器，消除未选择Full时仍构造委派状态的路径；同时继续T010完整ConfigIdentity与T013正式接入，RPC原生探针仍等待新增授权。
+
+T014测试包单独完成：root与scout按该任务原文逐项映射，Git的12项O与非Git的12项O分别有实际日志，配合默认根登记/身份/链接/替换回归及固定worker协议，覆盖所要求的跨profile、竞争和崩溃切点。T014现勾选；T015/T016实现与完整恢复、所有产品gate继续未完成，PID复用和产品入口不能由这些合成worker结果替代。
+
+T011监督者选择阶段：executor先以真实HostSupervisor构造链和Full构造/import哨兵复现15 failed、2 passed，再按已核验manifest.plugins选择DelegateController，未选时不导入或构造，选中损坏及manifest错误不吞。旧host测试只补正式冻结manifest与摘要，保留原执行断言。root审查发现未选错误仍映射为普通启动失败并触碰Codex错误模块，追加固定DelegateUnavailable与两个公开入口的DELEGATE_CAPABILITY_UNAVAILABLE/code5；毒化错误格式化导入的反例先5 failed、12 passed，修复后九模块定向回归80 passed（4.43秒），compileall/diff检查通过。稳定四文件hash及红/绿日志归档，root复核完成、scout最终审查进行中。所有进程为替身，真实账号/宿主未运行；正式Base配方、其它控制器选择和完整诊断仍待实现，T011不勾选。
+
+T011最终稳定审查已闭合：scout核对四文件hash、完整构造链、固定原因和无Codex formatter导入的反例，确认没有修改执行记录/恢复顺序或删除旧生命周期断言，无剩余阶段阻断。长期任务继续，下一重点为真实有效ConfigIdentity、受信准备器与ExecutionStore消费接入；新增RPC授权仍待用户回应，不执行依赖该授权的宿主步骤。
+
+T013文件执行顺序阶段：root实现Python deferred prepare/consume/status，executor（gpt-6.1-sol/medium）接入七个TS文件工具并补真实SupervisorService串行消费测试。准备时只核验权限与身份，Writer和普通操作记录推迟到消费；已消费、撤销、过期或结果不明的ID不会重新取得写权。两线程同时消费实际只调用一次allocate、只产生一个reserved Writer；closing仍允许只读状态查询和放弃纯准备，拒绝新准备/消费。分配回执或元数据落盘不明保持unknown，不通过finish忘掉保护。所选只读资源复用parent lease，跨manager访问拒绝。
+
+root审查修复两项增量：只读文件不得依赖写helper的AgentManager；私有请求改为复用准入账本严格编码器，先精确核算大小再序列化，拒绝隐式JSON转换，正文及正文散列不写普通记录。前者新增read/ls无管理器正例先红再绿，后者7 failed/1 passed后转绿。阶段默认Python受影响集合222 passed（13.30秒），TS关联七模块50 passed；compileall、Node语法和diff检查通过，七个实现/测试文件的稳定hash及红绿日志归档。执行对象使用替身，未运行第三方宿主或真实模型；scout（gpt-6-luna/high）已完成稳定复核，无执行顺序阻断。
+
+scout指出分配已提交但UUID未返回时，unknown状态不能定位实际lease。root追加原owner/分配描述快照与status只读查询，身份不符或多个匹配拒绝，查询不改变内存/持久状态，也不准许重试或释放；五个故障反例先失败，修复后最终受影响集合226项通过（11.11秒）。scout最终窄增量复核确认两文件hash一致、实际lease仍受保护且只读定位成立，无剩余阶段阻断；root据此关闭本阶段审查。
+
+该包只接文件执行生命周期，权限配置快照不冒充完整ConfigIdentity，旧native gate非block不冒充human。稳定SDK requestId、可信profile/session/用户意图、policy generation/cancel epoch及正式permit仍须接新扩展；旧高级helper、命令和readseek兼容入口仍保留，需要在正式profile中替换或排除。终态请求有容量上限但会话退役清理尚待完成。T013继续未勾选，产品gate继续未通过；下一步接正式SDK入口与有效ConfigIdentity，再完成可信请求/决定/许可链。
+
+T009/T010官方SDK组合阶段：从legacy启动器提取无宿主依赖的私有文件原语，并从旧资源loader提取纯选择/快照逻辑；新增`official-resources.ts`、`official-settings.ts`、`official-session.ts`。新会话工厂使用官方公开ResourceLoader、SettingsStorage、SessionManager和`createAgentSessionFromServices`，资源和settings精确限定，构造前显式解析共享模型/原生默认/会话保存选择，恢复失败拒绝自动换路由。调用者提供的安装/manifest声明复制冻结；实际工具只允许已给定义的子集。工厂按当前模型、thinking、cwd、settings、资源和可信约束输入投影ConfigIdentity，真实账号内容及其散列不参与。
+
+本阶段executor（gpt-6.1-sol/medium）完成资源loader与设置，root完成会话工厂、身份投影和最终关键修复，scout（gpt-6-luna/high）独立静态核对官方1.0.1公开声明/实现。已修正空systemPrompt实际返回undefined、getModel不保证对象引用稳定、旧设置别名在SDK加载前被误拒三项差异。模型描述在私有内存中完整复制比较，覆盖headers/compat/sampling参数原地变化；该副本不序列化/哈希/输出。设置异步保存期间snapshot拒绝，公开flush后才可通过；队列吞掉保存错误仍不能签发身份。legacy四类迁移先10项失败再转绿，读取不改盘、旧新冲突及未知字段拒绝。
+
+停止写入后的10个实现/测试文件hash与最终定向回归存于私密记录目录的`pi-official-runtime-final-hashes.json`、`pi-official-runtime-final.log`：190 passed、0 failed；七实现文件Node语法检查及diff检查通过。模型和SDK均为冻结接口的替身，没有执行新的第三方宿主或真实账号/模型请求。先前六项SDK探针的证据保持独立，不能覆盖这些新模块的真实兼容性。scout最终逐项核对10文件hash与增量修复，未发现本包新增P1/P2阻断；root完成有界阶段验收。
+
+T009/T010仍未勾选：尚需正式Base/Full配方、精简运行文件安装闭包、官方启动入口与完整许可控制面接线，以及实际Provider非秘密配置/账号路线引用和项目权限上下文的完整身份绑定。`configurationSnapshot`不是准入令牌，不提供全局发送拦截。已静态确认`before_provider_request`/`before_agent_start`异常不会阻断发送，后续实现不得用它们充当fail-closed闸门；完整边界见contracts/execution.md第13节。所有产品gate保持未通过。
+
+T019普通文件执行阶段：executor（gpt-6.1-sol/medium）实现Base/Full直接Supervisor执行，root移除普通文件模块到旧启动器及可选服务模块的静态导入，并用按runtime登记的只读工具查询保留选择与归属检查。单个票据首次await前消耗执行权，start只发送一次；丢失回执只读对账，取消未知保留Writer保护，成功必须同时匹配终止、退出和结果证据。root核对生产Workspace发现state_root与instance_root可独立配置，要求将状态证据定位改为严格Supervisor endpoint布局；独立状态根和实例目录伪造回执的反例先失败，修复后转绿。
+
+本阶段10模块断网mock组合回归115 passed。scout（gpt-6-luna/high）核对稳定10文件，未发现执行/取消/未知保护阻断，另指出MCP lookup未复核claim世代。executor补两个runtime替换反例先红后绿，修复后四模块50 passed；scout对最终两文件SHA及preflight传播路径复核闭合。最终11文件SHA在私密记录目录`pi-base-files-accepted-hashes.json`，115项阶段日志与50项修复后日志分别保存，不将二者相加冒充独立用例数。语法/diff检查通过，没有新运行第三方宿主或真实模型。
+
+该包只是T019的执行边界阶段：官方read/write/edit可用公开operations接管I/O；当前ls/find/grep自有execute仍有原生搜索兼容缺口，具体见source-audit.md。正式profile/CLI、真实用户身份与一次permit接线仍未完成，不勾选T019或产品gate。下一包处理Python普通监督者无条件构造可选控制器的问题，按冻结manifest选择，不清理旧执行/恢复数据。root已先修正Base普通错误路径导入Codex formatter的问题，27项定向回归通过并经scout稳定复核。
+
+T011可选监督控制器阶段已闭合：root先复现未选checkpoint仍导入及错误码不一致（2 failed、5 passed）；executor（gpt-6.1-sol/medium）按冻结plugins/resource_ids选择Readseek、Web、checkpoint并在可选RPC导入前把关，基础文件/命令保留。fixtures改为构造前明确选能力，不以默认全选覆盖问题；旧数据哨兵保持、已选tick顺序不变，web_file_id失选和checkpoint程序有明确code5。28个受影响模块346 passed，整理测试未用import后新模块28 passed。
+
+root与scout进一步发现固定程序分派也须检查选择。root补Codex登录、Pi/Codex委派三入口及Task Keeper workspace/check入口的导入前检查；三组负例和对应选中正例分别先红后绿，最终七模块91 passed。该91项为最后增量回归，和346项阶段集合分别保存，不相加。最终12文件SHA、各红绿日志位于私密记录目录`pi-optional-controllers-accepted-hashes.json`及同名前缀日志；compileall/diff检查通过。scout（gpt-6-luna/high）核对全部最终SHA和新入口分派，未发现本阶段剩余阻断；root完成稳定diff验收。全部为临时HOME、假进程、合成账号数据，没有新增真实宿主执行。
+
+T011整体继续未完成：上述证据支持选择/拒绝/不触及未选实现，尚不证明有效profile诊断、所有加载来源扫描或正式Base安装闭包。T009正式配方/启动、T010非秘密Provider有效配置绑定与T013完整许可接线仍需后续实施；不把本包当作产品验收通过。
+
+
+T010部署模型配置阶段：新profile的Python生成器将API、端点、模型行为及账号路线/凭据非秘密引用投影为model_configuration；models.json与投影共用helper。旧reasoningEffortMap仅在新profile迁移为官方thinkingLevelMap，旧profile原样保留。TS消费者检查私有原生文件、公开SDK getError及实际Model描述，ConfigIdentity区分同名模型的API/endpoint/compat/thinking和凭据引用变化；headers仍只在私有内存比较，不进入摘要。新增共同JSON协议fixture同时由Python生成端和TS消费端验证。
+
+本包定向证据为Python原四模块117项通过、共同协议新增1项通过，TS六模块326项通过及legacy启动器6项通过（两组互不重叠）。默认测试使用合成ModelRuntime/Provider、隔离临时HOME及断网bwrap，没有运行新第三方宿主或真实模型。OAuth缺文件只在已核验私有目录下允许；未知/不透明模型参数明确拒绝。官方API-key默认补全、旧thinking字段和$环境引用均另有只读源码证据。最终稳定hash/独立复核记录存于私有任务日志。
+
+T009/T010整体仍未完成：尚需正式profile/manifest schema、精简安装闭包、公开ModelRuntime初始化与可信Provider实现/认证来源、原生入口及完整准入控制面接线。上述数据核对不证明请求时stream函数/动态注册或全部发送受控；不将假SDK回归计作产品验收，所有产品gate保持未通过。
+
+最终delta另复现模型查询后才产生SDK错误的反例（1 failed / 58 passed），改为每次getModel后立即检查getError；会话/模型两个受影响模块110项通过，包含新建会话和已有snapshot两种迟报错误。此110与上述326有重叠，不相加为独立通过数。其余稳定文件未改。
+
+T009/T010官方初始化与会话检查阶段：新增公开ModelRuntime工厂，以冻结声明生成配置并通过Linux自有只读FD交给SDK，避免SDK重开原文件名时读到替换内容。每进程一个initializer，成功和失败均不隐式重复初始化。API-key-only显式空内存凭据存储；含原生OAuth时显式实例authPath，SDK继续负责账号文件锁、刷新和持久化。关闭初始refresh并显式内存模型缓存；账号格式与provider/type元数据检查发现环境路线被原生或运行时凭据覆盖。账号正文不进入摘要，OAuth正常轮换不改变配置身份。
+
+会话工厂强制接收该runtimeHandle，检查部署摘要一致；创建、新会话、扩展reload后、交付前及后续每个异步configurationSnapshot均重新检查来源。交付前失败dispose会话。原始会话增量红测60 passed / 6 failed，修复后73 passed；初始化三个模块100 passed。最终八个相关TS模块合并回归 **323 passed、0 failed、0 skipped**，其中已包含上述两组，不能相加；另一个Python共同协议回归 **1 passed**。语法与diff检查通过，root和scout对停止写入的八文件及稳定哈希独立复核，无剩余阶段性P1/P2。executor实际角色为gpt-6.1-sol/medium，scout为gpt-6-luna/high。
+
+该阶段的FD不是kernel seal，原生authPath仍按SDK路径/锁协议消费，元数据校验不锁定请求时token；完整内建Provider目录仍是SDK的一部分。新增模块未运行原生SDK或真实账号/模型，旧六项SDK探针不自动覆盖它们。正式profile/schema、选择安装闭包、CLI、所有发送和工具许可、会话退役/取消及原生验证继续未完成；T009/T010不勾选，所有产品gate保持未通过。独立RPC探针仍只准备好，等待此前单独提出的授权。最终证据与稳定diff存私有任务目录的`pi-official-initialization-session-*`工件。
+
+T013账本到实际文件租约阶段：新增FileOperationAdmissions，用受信同步context_provider提供完整上下文，由原deferred文件准备/preview派生真实根、ceiling、策略和后端描述。prepare/issue不分配Writer；consume先不可逆消费许可，再进入原ExecutionStore分配。现代profile的旧文件prepare/deferred/consume RPC缺内部桥身份即拒绝。只读仍复用父租约；选定资源检查原内容；分配已落盘但回执丢失只读查找原lease，unknown和Writer保护不变。初始桥只接受human决定，完整确定性/风险模型策略继续由US2/US3接入。
+
+root复查新增底层准备已finish后仍可issue的反例，得到1 failed / 58 passed，补入prepared物理状态检查后七个相关Python模块 **220 passed**；之后新增两个资源用例，专属文件 **61 passed**（与220重叠，不相加）。初始57项测试写入与生产桥并行，因此没有把首轮全绿误称红测。外层沙箱一次59失败均在临时账户属主核验阶段，记录为环境失败；保留测试自身临时HOME/网络/假进程保护后用正常属主环境重跑，未削弱生产检查。一次回归命令引用不存在的test_pi_resource_reads.py、零测试执行，不计通过；实际资源用例在operation_consumption与admitted_files中验证。
+
+新增私有参数捕获原语，通过Unicode code point排序和有界JSON计量保留完整相等比较，正文不hash；51项TS测试通过，含Proxy零trap拒绝、toJSON方法不执行及数据属性兼容。该原语尚待正式execute wrapper消费。Python编译、TS语法与diff检查通过；root和scout对停止写入的五文件及稳定哈希复核，无阶段性P1/P2。executor为gpt-6.1-sol/medium，scout为gpt-6-luna/high。最终归档使用新生成的`pi-admitted-files-accepted-hashes.json`，不使用仍代表57项测试旧版本的/tmp清单。
+
+本阶段不开放新准入RPC；FileOperationAdmissions暂无正式SDK调用方。input.source不是人类凭证、tool_call后的参数还能改变，所以下一步必须由可信UI/控制入口发布会话/意图/配置与取消代际，在自有execute wrapper内捕获最终参数并prepare/decide/issue/consume。真实用户决定、会话退役及私有比较内存清理、运行中取消、命令与可选工具迁移、正式CLI和原生验证仍待完成；T013保持未完成，不以这次文件桥或全人工初始策略缩减完整计划。
+
+
+T013/T009最终文件准入组合阶段：root新增`FileAdmissionControl`及modern HostSupervisor接线，私有manager RPC核对完整owner/host lease/generation，沿现有串行mutex连接FileOperationAdmissions。新增控制器open/retire与request取消墓碑，取消先于open/prepare时也不能被迟到请求重新开启；上下文/参数变化永久撤销原请求。消费后丢失返回值只读status，unknown与consumed Writer不会因会话退役被遗忘。控制层明确界定human为受信UI通道确认，不把RPC应答、source标签或模型工具ID当真人证明。
+
+executor（gpt-6.1-sol/medium）将最终参数冻结、公开ctx.ui.confirm、异步ConfigIdentity/策略检查和一次性消费接入七个现代文件工具；旧文件preflight路径拒绝，新票据用私有WeakSet只接收一次。readonly状态绑定账本与实际operation，consume不重发；取消、deadline、迟到确认和消费期间配置漂移均不交付执行。root补充正式文件runtime组合：逐session构造工具/控制器并闭包保存配置快照，自有公开facade避免TUI回调覆盖准入退役，不修改SDK对象或原型；退出先retire、原生session.abort、runtime.dispose，失败结果保留。
+
+本轮Python五模块160 passed（7.99秒）；TS最终五模块共同进程270 passed（3.21秒）。TS的184项工具控制器集合和86项会话集合已包含在270中，不重复相加。首次Python红为新模块尚不存在的收集错误；外层沙箱另有44项临时账户目录核验失败，保留默认fixture守卫在正常权限环境重跑通过。TS首次外层沙箱被NETLINK拒绝，修正一次自有测试语法错误后在相同断网bwrap边界通过；这些环境/语法失败不记为产品通过。没有新增运行第三方SDK/宿主、真实账号或模型。
+
+Python稳定五文件与TS稳定六文件的scout最终审查均无阶段P1/P2，root完成关键顺序与稳定hash验收。公开AgentSession可被任意受信调用者直接dispose的限制已记入执行契约；当前核对的TUI/Print退出走runtime facade，未发现实际绕行，不能以此扩展成全宿主安全声明。14个源码/测试/文档文件hash、快照diff及日志归档为私密任务记录`pi-trusted-file-control-accepted-*`。任务T009/T013/T019保持未勾选：正式profile/schema/安装闭包/CLI、搜索原生语义、自动确定性许可及风险reviewer、其它工具/发送路径、底层私有比较内存回收和运行中终止/系统沙箱实证仍待完成。新文件runtime只是待安装组成件，未替换当前默认入口。长期100项目标保持，原生RPC独立授权仍待回应。
+
+T009 Base 配置投影阶段：通用 AdapterSchemaBundle 新增末尾可选 profile_policy hook，按 profile 返回完整默认值及插件目录，无 hook 的 adapter 保持原合并规则和位置参数兼容。Pi 现代配置使用闭合 profile_defaults/profile_plugins，不继承旧 TK/delegate 关闭态选项；新增 pi-base 配置沿用共享模型默认值。Base 渲染不产生旧 subagents/bridge、Full 所有权路径或旧编排提示词，现代启动暂时明确拒绝而不落入旧 launcher。
+
+普通模板、三个普通提示词及共享 C++ Skill 的中立化已接入；后者影响所有选择该 Skill 的 profile，十项领域检查和五项完成检查保持。回归发现迁移目标摘要未同步，已修正 target_sha256/adaptation，保留原始来源和许可证身份。其余旧 profile 的配置、插件图及旧模板路径保持。Full 缺实际新版来源，未注册一个冒充 Full 的 Base 副本，也未把风险扩展和独立 Durable 服务一概塞入 plugins；能力绑定与正式包仍按完整计划实施。
+
+executor（gpt-6.1-sol/medium）实现通用 hook、普通资源及模型测试 fixture，scout（gpt-6-luna/high）核对来源边界并独立审查稳定文件，root 决定配置/能力分层并实现严格 Base 投影。通用 hook 初始 17 项接口缺失红测，八模块 377 passed；模型 fixture 从旧插件继承改为合成现代声明后 46 passed。Base 初始正向解析红测，完成配置后 22 passed。最终相关八模块 **214 passed**，另补真实 render_candidate 展开领域技能与许可证 **1 passed**；214 已包含 hook 的18项、模型46项和 Base22项，不与前述统计相加。无新宿主、网络、账号或模型调用。
+
+期间一次回归命令包含不存在的测试模块，零项执行；外层沙箱回归106项因临时私人目录属主失败，保留临时HOME/断网/假进程守卫在正常属主环境重跑；随后真实摘要漂移为1 failed/209 passed，修正后得到上述214 passed。两类失败分别记录，不能将环境失败算通过或修改安全检查绕过。
+
+稳定代码审查未发现剩余本阶段 P1/P2，工件归档为 `pi-base-profile-projection-accepted-*`。T009 继续未完成：正式 v2 候选/安装锁与 legacy 锁共存策略、精确安装文件集合、公开 SDK CLI 入口、其余普通提示词、Full 各实际提供者及真实验收均未闭合。所有产品 gate 保持未通过，长期100项目标未缩减；原生 RPC 独立探针授权仍待回应。
+
+T009/T010锁家族及候选生成阶段：新增固定的legacy/modern布局，旧profile继续读v1 `locks/pi/`，Base/Full只读v2 `locks/pi-modern/`及独立依赖/构建配方，错家族或缺文件不回退。backend、冷重建、验证fixture、资产安装/获取使用一致选择。v2生成器核对候选状态、能力提供者与实际来源/资源归属；来源ID与能力ID可不同。candidate仍在取得安装guard前拒绝，不把成功生成当成可激活。
+
+root复现现代发布中断会覆盖旧package pair的故障，改为按两文件内容派生目录、manifest最后发布；生成中配方变化的反例先失败，再补生成前后摘要核对。scout进一步发现vendored资产只在发布后被核验，executor补解析前/发布前两次流式检查，范围含聚合读取器检查的未选资产，固定错误、不下载或跨家族补齐。资产红测5 failed，补充大小用例及聚合负控制后两模块32 passed；测试明确区分“保留旧manifest/pair”与“恢复主动破坏的资产后旧锁才可读”。不宣称文件、外部输入和进程跨系统原子。
+
+executor（gpt-6.1-sol/medium）实现布局/资产路径、资产获取测试及最后发布预检修复；root负责家族接线、v2生成、身份/发布顺序及关键故障测试；scout（gpt-6-luna/high）独立审查稳定增量。最终十个相关Python模块一次合并回归 **380 passed、0 failed（57.91秒）**，已包含先前360项、单独资产获取14项和资产修复32项的重叠范围，不相加。AST及diff检查通过。外层沙箱早期回归因临时目录属主失败，保留测试自身临时HOME/断网/假进程守卫后在正常属主环境重跑；原生验证模块仍只执行替身测试，未新增真实宿主、账号或模型调用。
+
+最终源码/测试稳定审查关闭资产预检问题；文档复核发现T079仍指向旧锁，root同步为modern路径，T009/T010也记录相应新路径。稳定20文件hash、diff、红绿日志及审查证据归档为私密任务记录`pi-lock-family-accepted-*`。本阶段没有生成真实modern依赖声明/配方/锁，没有改动当前正式legacy锁，也没有安装或切换默认入口。
+
+T009/T010/T012继续未勾选，所有产品gate未通过。当前recipe_digest仍扫描较宽源码集合，旧安装器仍全量复制TS/Python模块；下一阶段落实已选源码摘要与精确安装集合，拆出Base不需要的WorkerFiles/高级控制器，再接实际现代Base来源和公开SDK CLI。源码证据明确区分共享纯函数、能力拒绝表和实际Full实现，不能仅按名字删模块。Full各故事、剩余普通资源与Linux真实验收继续属于长期100项目标；RPC探针仍等待原有独立授权。
+
+T009/T011普通快照与worker选择阶段：executor（gpt-6.1-sol/medium）将原snapshot函数逐字迁到公共`pi_workspace_snapshot.py`，原WorkerFiles导入保留同函数引用；root将普通workspace_snapshot切到新模块。冻结plugins选择task-keeper后才构造WorkerFiles/source_scope，worker协议在选择检查后导入；未选worker的预检、分配、启动和授权在副作用前拒绝。准入按执行种类判断，不能把委派也使用的worker通道角色一概禁用。
+
+root决定控制面边界和保留的恢复语义，executor编写红例及明确fixture选择。快照初始红为新模块缺失的收集错误，三模块18 passed。worker首轮两个测试缺WorkspaceLeases前置，纠正后真实红例6 failed、2 passed；生产修复后新增取消断言误以为未spawn分配可普通cancel，依原契约改为cancel仍4且预留保持、显式abort_allocation恢复，并另验running旧worker取消仍可达且保护保持。没有改ExecutionStore取消或日志顺序。
+
+最终19个相关Python模块 **449 passed、0 failed（15.84秒）**，包含独立六模块63项及快照18项的重叠范围，不累加。保留既有委派、普通文件准入、执行回执、宿主退出及恢复断言；AST/diff检查通过。全部使用默认临时HOME、断网和假进程/模型守卫，正常属主环境运行，没有新增真实宿主、账户或模型调用。generic SupervisorService fixture显式注入假worker执行器，Host生命周期fixture明确选择TK；这些fixture不充当实际TK产品验收。
+
+安装集合仍未正式落锁或接入安装器。静态证据发现现代两组成入口合计18个TS文件外还需regex-worker URL资源；MIME检测缺失和现有UI扩展的runtime上下文/公开包依赖也已登记source-audit.md，后续须实际闭合。T009/T011及全部产品gate保持未完成，继续实现精确安装清单、现代CLI与真实来源配方，不缩减Full、权限/沙箱或长期100项目标。
+
+scout（gpt-6-luna/high）完成9个停止写入源码/测试的独立审查，两次hash一致；确认快照算法与原实现AST等价、缺能力在副作用前拒绝、委派角色和既有恢复路径保留，没有本阶段P1/P2。root验收最终9文件及两份文档，稳定11文件快照和日志归档为`pi-worker-boundary-accepted-*`。静态安装证据另列Python的32个依赖模块加6个输入入口，共38个文件；这不包含所有按操作触发的lazy依赖，后续装包必须补齐实际入口路径并在裁剪后的目录验证，不能只检查源码仓库里的导入成功。
+
+T009/T010现代文件安装与CLI阶段：root实现v2必需的runtime_files/ai_package、源与转换字节绑定、生成前后和选定锁读取检查，以及独立现代安装器。自有runtime/supervisor目录必须与清单完全相等，声明固定source→target映射和0600模式，额外/缺失/链接/摘要或模式漂移失败；外部资产不得占用这两个目录。生成的命令/启动描述单独核对，AI按slice内实际Node查找层级且存在完整锁记录选择。启动描述采用能力绑定后的runtime身份，seal/status再次核对，更新inventory不能掩盖错误描述或源码。此阶段只在虚构已current的测试切片完成安装机制验收，不把七文件fixture当真实Base闭包，也不放行candidate。
+
+executor（gpt-6.1-sol/medium）实现`official-launch.ts`实际main、公开SDK根解析、所选TUI/print/RPC模式、私有实例/平台/版本/manager握手检查、部署字节漂移检查与冻结UI上下文；另实现无路径I/O的纯Buffer图片识别，接入现代普通read。scout（gpt-6-luna/high）只读核对公开API/生命周期并发现TUI异步后台探测P1：ModelRuntime初始不刷新不能约束之后的catalog/version查询或TMUX探测。root决定在自有入口导入/初始化前强制公开PI_OFFLINE/PI_SKIP_VERSION_CHECK并删除TMUX，executor用2个真实失败反例修复；这不是网络沙箱，也不禁用选定模型的正常请求。没有改动官方SDK、process.exit或上游包。
+
+root扩展回归另外发现`.schema.json`被源码白名单误拒绝，修正后保留生成过程中所选schema漂移、旧manifest保持不变的反例。新测试一度误用sync返回的path字段，改用既有backend.root，仅修fixture。初始Python外层属主映射异常及JS外层bwrap NETLINK限制分别记录，正常属主重跑保留默认临时HOME、假npm/SDK/进程/模型与网络阻断；JS内层bwrap仍断网、仓库只读、只写临时目录。没有新运行第三方宿主或读取真实账号。
+
+最终Python **375 passed、0 failed（12模块，55.84秒）**；JS **187 passed、0 failed（4模块，693.511毫秒）**。分阶段135、123、158、112、156项与最终范围重叠，不累加。实际read MIME接线红例1 failed/86 passed；CLI后台探测红例2 failed/42 passed；单独新模块首轮是缺模块收集失败，不伪称全部功能红测。Python AST、JS语法及diff检查通过。稳定hash、完整工作diff、日志与独立审查归档到私密任务记录。
+
+T009/T010/T019/T026继续未完成，正式现代入口仍`pi-modern-launch-unavailable`，全部产品gate保持未通过。下一阶段必须落实真实Base依赖/配方/逐文件清单、regex-worker与Python lazy运行路径、最小UI公开包导出（capability-policy和plugin-settings），并拆掉Linux host对Codex专属bwrap路径的依赖。新的CLI/MIME增加静态闭包，不能继续使用旧18文件统计。命令/其它公开入口的权限、自动风险判断、OS沙箱、Full全部故事与真实Linux验收继续保留；官方硬退出路径依赖外层监督恢复，尚未实际证明，独立RPC探针仍等待原有授权。
+
+T009所选UI/独立Linux helper阶段：executor（gpt-6.1-sol/medium）完成只有两个公开入口的自有runtime-ui 2.0.0，以及固定bubblewrap源码准备器。root实现现代host对独立受管helper的选择，保持原PID登记/门控/停止/恢复顺序；Base/Full缺失时拒绝，旧Codex入口不变。scout（gpt-6-luna/high）审查稳定10文件时发现现代全局缺少managedRequestScope，root用实际main路径反例复现（1 failed、44 passed）并补自有AsyncLocalStorage生命周期，随后12文件稳定复审关闭该项。此上下文供业务入口显式使用，不能据此声称Full内部请求已全部接线。
+
+宿主/PID相关四模块87 passed；现代launcher/UI两模块63 passed（其中UI18项，不累加）；固定源码准备器41 passed。源码解析另对真实129260字节归档核对固定SHA，保留根/测试目录的同名文件，得到58个含许可证别名的普通文件，没有编译或执行。helper初次测试因fixture误用JSON摘要函数而失败，纠正为字节摘要后通过，不能把这一错误记录成行为红测；源码准备器初始红也是缺模块收集错误。真实源码的人工缓存曾错误按basename覆盖meson.build，仅精确重新提取缓存修复，源归档不变。
+
+本地receipt是受管安装内容记录，不是抵抗同UID同时替换二进制和收据的外部签名。现有host PID范围仍有`--bind / /`，仅用于生命周期，不证明工具或整进程沙箱。独立helper的固定源码与构建依赖已准备，断网构建器正在实施；详细来源和后续验收边界见`native-helper-build.md`。真实现代Base锁/资产与精确Python运行集合继续未完成，不放行candidate、入口或产品gate，也不缩减Full/自动风险判断/OS隔离及100项长期目标。
+
+随后executor完成固定三归档的显式候选构建器，首轮25项mock通过。root实际构建发现工作区共享可写祖先使私人输出拒绝，并补“创建前验证祖先”的真实红例（1 failed、26 passed）与候选标记写失败反例；修复后构建27项与源码41项组合68 passed。编译输出移到新的私人`/tmp`目录，未改任何祖先权限。首次进入编译时还发现系统ld链接依赖未挂载的`/etc/alternatives`，root使用GCC公开-fuse-ld=bfd选项与固定CC解决，工具记录加入ld.bfd，不扩大挂载、不修改上游源码；相关27项再次通过。
+
+run04/run05在两个独立私人工作目录中使用固定bubblewrap 0.13.0、libcap 2.77源码和Meson 1.9.0，各观察退出码0。产物归档64256字节、SHA256为`9672205cfff3f07f1fa9a81a2085a3fc617054c37df5a5cb9fce262a74325068`；helper128368字节、SHA256为`c2ef9427eddbed90e2f52aa6cb3bf08ba514e456d520d19cfbe43af125d79997`。两次归档与candidate记录逐字节相等；静态NEEDED仅libc.so.6，GLIBC符号最高2.28。这是当前系统工具链下的构建证据，不是完全封闭或跨机器构建、helper/Pi行为、PID生命周期或沙箱验证。生成helper没有执行；编译中的配置探测和libcap生成器属于编译步骤。正式built资产来源/锁/安装接线仍待实现，不能把源码URL冒充编译归档URL。下游须要求完整candidate.json及摘要，不能接受标记写失败留下的孤立归档。
+
+
+## 自建资产与辅助来源接线阶段
+
+现代资产新增与URL互斥的build_record，引用固定bubblewrap-v1配方、记录路径和内容摘要；v1禁止此字段。来源记录严格绑定三份输入、构建脚本、bootstrap和实际工具观察，归档精确限定helper/两份许可/内嵌记录四条目。锁读取、生成前后、安装和fetch沿同一家族复核；fetch对built来源只验证，即使force也不删除/下载/构建。显式import-pi-bwrap入口先验证全部材料并预检目标，再排他写入内容寻址文件，不修改manifest或激活。相同0600/0644公共文件可幂等复用；中断片段允许重试，不声称跨文件事务。
+
+接线发现每个直接来源都必须成为能力提供者的旧限制，现以提供者可选support_sources明确辅助包/二进制，逐条固定来源ID、版本或null及内容身份。主/辅助来源均须在能力/profile允许集合内，匹配切片并进入验收/实际安装身份；没有通过新增虚构能力、忽略辅助依赖或放宽Base/Full隔离绕过。候选仍在sync取得写入guard前拒绝。
+
+executor（gpt-6.1-sol/medium）完成纯校验器和导入器；root接入schema/锁/发布/安装/fetch/能力绑定并审查关键边界，scout（gpt-6-luna/high）独立复核稳定文件。新增绑定正例先真实失败；许可证在记录检查后重读发生变化的反例也先失败，安装现检查实际复制字节。后续根审查发现公共Git检出0644文件不能复用及fetch入口未知source字段未闭合，两项均先观察失败再修正。最终11个受影响Python模块合计341 passed（37.90s）；默认临时HOME、禁网和假进程守卫完整保留。先前错误测试模块名导致一次collection未运行，已纠正，不计通过或产品失败。
+
+真实helper候选已导入工作区现代家族：固定输入、候选记录、归档和许可证共七文件1,472,404字节。load_record与verify_archive只读复核通过，二进制摘要保持c2ef9427eddbed90e2f52aa6cb3bf08ba514e456d520d19cfbe43af125d79997；未执行helper或Pi、未读账号、未发布真实Base manifest。本地构建记录不是外部签名/构建认证，不能抵御同时替换本地信任输入的主体。
+
+三款所选UI适配补齐peer：footer的pi-tui，loop-guard的pi-agent-core和自有runtime，todo/loop的runtime限定兼容声明^1.0.0 || ^2.0.0，loop开发依赖钉候选1.x。旧配方仍使用显式runtime1，现代必须使用最小runtime-ui2；声明本身不证明现代UI实际运行通过。静态证据补出53条Python/脚本/schema候选映射，但当前必需入口子集仍未强制命名空间门控/动态模块/六份运行schema，下一包修复并在裁剪树核验。T009/T010/T012及所有产品gate继续未完成，Full/自动风险审批/OS沙箱及100项总目标完整保留。
+
+## 真实 Base 声明与裁剪闭包阶段
+
+真实modern依赖声明和构建配方现已存在，先登记Base的9个直接来源和6个能力提供者；完整Full声明仍待各故事实现。四个官方Pi直接来源采用已核对的候选版本及各自精确gitHead许可来源；自有runtime2与三UI包明确钉选，helper使用上一阶段的固定built来源。没有生成正式modern manifest或激活候选。
+
+新candidate_host_versions只为candidate状态提供待验证版本；verified_host_versions可为空，但两组不能同时为空。current/accepted仍只接受已验证版本，兼容声明变化更新绑定/验收身份。合成生成器、schema和锁读取往返证明未验证候选可如实保存，sync仍在写入guard前拒绝。真实6提供者均未宣称Pi1.0.1原生兼容已通过。
+
+executor（gpt-6.1-sol/medium）补现代必需运行文件与离线JS声明闭包，root登记77条真实文件、候选兼容语义与裁剪Python检查，scout（gpt-6-luna/high）独立审查并调查五项许可缺口。55条Python/脚本/schema包含先前遗漏的permission-policy和operation-grant；8份schema及Linux命名空间入口现在为必要项。裁剪Python目录中自有模块、schema加载和默认拒绝FilePolicy构造通过，删除传递模块后不会回退checkout。22条JS声明的21项静态导入通过，regex-worker只单独核对URL资源；独立查询世代排除module cache掩盖删项。
+
+最终七个相关Python模块308 passed、0 failed（44.31s）；JS两模块48 passed、0 failed（3项新闭包及45项launcher）。前序216、85与6项已被308覆盖，不累加；前阶段341另属不同范围，也不汇总成独立总测试数。正常属主环境执行并保留临时HOME、断网、假进程/模型及JS内层bwrap，未执行真实SDK/UI/helper或读取账号。JS检查不复制生产TS转换逻辑，也不证明动态方法路径；Python导入不证明实际监督恢复或第三方Python环境完整性。
+
+五项传递许可来源的本轮有界检索没有取得完整正文对应：三个AWS发布仍缺精确对应，proxy-agent-negotiate精确版本下未找到正文，standardwebhooks的JS MIT声明不能用仓库根Apache正文替代。结果保留为缺口而非通过，继续影响Q1和正式锁；它不阻止独立实现。T009/T010/T012及所有产品gate继续未完成，正式任务仍为7/100。下一阶段在私人目录构成完整Base候选包并继续来源、命令权限及真实接口验收；不缩减模型审批、OS隔离和Full范围。
+
+## 完整 npm 候选与前端命令边界
+
+executor在私人`/tmp/pi-base-candidate-4lbc4mv4`生成四份自有归档，以原官方候选146包锁为种子完成精确解析与`npm ci --ignore-scripts --no-audit --no-fund`，均退出0。Node24.14.0目录原带npm11.9.0，解析前发现不符并停止；随后从官方registry按SRI准备原版npm11.19.1，仅在私人目录使用，没有改全局或声明版本。
+
+新锁150包仅增加四个自有包，原146包的version/SRI/resolved零变化。当前Linux实际125包，其中124required、1optional；另外25项为其他平台optional，未下载归档且未验。125份可用归档的SRI与包manifest核对通过，四个local包的安装文件逐字节匹配原归档；不能把这些检查描述为所有上游安装文件均逐字节核对。十项local peer满足，engine/必需dependency/peer静态范围问题为0，七项optional peer缺失保持记录。原官方seed物理包含pi-mcp，不是本轮混入Full，亦不证明MCP权限已接线。
+
+单独侧车工具TypeScript5.9.3/@types-node24.12.4用于三份实际UI源码的NodeNext/strict/noEmit检查，均退出0，SDK只读取声明；开发工具没有进入Base图。runtime-ui的声明被实际消费者使用，但其mjs实现未由类型检查证明。未执行候选SDK/UI/helper、npm生命周期脚本或模型，没有生成正式modern manifest、部署或激活；五项许可来源、原生接口和产品gate仍待闭合。
+
+root根据scout的公开命令入口证据继续检查前端，发现noTools关闭模型Bash不关闭TUI的!/!!或RPC bash。现在自有inline扩展通过公开user_bash事件抛固定错误，在受管命令未接线前拒绝；没有patch SDK对象。两个新反例先得到2 failed/87 passed，修复后会话/启动器/源码闭包三模块137 passed、0 failed。公开固定发行物的TUI事件异常路径不回退执行，RPC转错误响应，但尚未原生复验。其它RPC文件入口、扩展直接IO仍有覆盖缺口，详见docs/pi-permissions.md；此拒绝不是R05/T033日常可组合Shell的替代品。
+
+## 日常 Shell 私有准备与一次许可阶段
+
+`pi_shell_preparation.py`现提供受信Shell绑定的纯准备部分。任意组合脚本原样保留在私有输入；公开结果绑定可执行文件、规范工作目录及其物理身份、读写根、deny/readonly/protected约束、策略与时限，不写脚本或脚本散列。解析使用已有严格options/permission-policy schema，保留`project`引用对应本次选定项目。准备阶段无Writer、记录写入或命令执行。
+
+`pi_operation_admission.py`加入`shell-command`闭合目标：禁止公开argv/command和未知字段，只允许已描述的无网络后端。实际prepare结果已与一次许可账本组合测试；换脚本重试、换可执行文件/根/策略/时限均不能复用旧许可，写准备部分未补真实workspace_keys时拒绝入账。当前组件默认人工决定，自动策略、模型审查及真实用户来源仍是必需后续工作。
+
+root新增工作目录替换反例发现：项目根未变时，子目录rename后重建原先仍能消费旧许可。红例1 failed后，将cwd路径及已读取的物理身份加入ceiling_digest，修复后原反例通过。最终七模块316 passed、0 failed（9.63秒）；此前315项和组件62/63项均包含于相关回归，不累计。默认外层属主映射使临时根检查失败的8项环境结果独立保留，正常属主重跑始终保留临时HOME、禁网及假进程守卫。五个Python文件语法与diff检查通过。
+
+执行代理第一次遇到远端连接故障，重新分配给executor后完成实现及常规修复；实际执行模型为gpt-6.1-sol/medium，独立证据/审查为scout gpt-6-luna/high，root负责顺序、最终cwd绑定与验收。固定bubblewrap源码进一步说明了脚本FD复制、seek和关闭行为，这只是后续内存传输设计依据，没有运行helper。
+
+本准备阶段未把Shell准备器接入正式工具、监督RPC或现代运行文件清单。所选helper可用性、完整挂载（含嵌套Git/别名/祖先替换）、真实工作区与Writer、私有脚本交接、流式输出/取消/终止均须继续完成；该准备部分不能作为生产授权。T013/T033不勾选，正式完成仍7/100，全部产品gate保持未通过。后续按执行契约第18节推进可信准备/消费桥和私有脚本通道，再接所选隔离后端及获准原生验收。
+
+用户意图调查也确认不能仅凭input.source、文本或事件顺序给每次工具调用绑定真实请求：公开事件没有贯穿变换、排队和工具执行的关联ID。后续需明确受信前端提交接缝与生命周期，不能简单移除UI确认或凭模型字段生成权限。此限制记录为接口设计工作，不改成全程人工的最终目标，也不削减Base/Full范围。
+
+## Shell 许可到租约及私有输入阶段
+
+`ShellOperationAdmissions`把选定manifest绑定、实际WorkspaceLeases身份及受信backend_preflight结果接入一次许可账本。prepare/issue保持无分配；consume重验后烧许可，再为只读/写Shell都建立独立external租约并关联父host，仅写操作申请Writer。分配前记录unknown，回执丢失只按完整原分配及owner定位，持久记录失败保留实际Writer；不自动重试或释放。
+
+共享FileAdmissionControl新增显式Shell factory，每请求固定bridge，permit只按服务端映射分派，重号或跨bridge失败。内部`ordinary_shell_take_input`只给对应running且存活的worker一次脚本，重验父host、代际、完整allocation、实际根/策略/后端及服务关闭状态。取消和退役拒绝后续取正文，已经取得或状态未知的执行仍保留原租约保护；不把拒发输入等同于停止进程。
+
+最终12个受影响Python模块394 passed、0 failed（15.66秒），包含首批112项和新增4项并发检查，不累计历史数量。并发检查使用Barrier/Event和真实临时存储，观察同一许可仅一个external/Writer、同worker仅一次原样交付，以及取消前后两种交接顺序。另补回执丢失后退役的直接回归，原unknown/Writer保持不变。六个Python文件语法与diff检查通过。正常属主测试保留默认临时HOME、禁网和假进程守卫，没有运行Shell/helper/Pi或真实模型。
+
+executor（gpt-6.1-sol/medium）完成共享控制路由与并发测试，root实现Shell桥、RPC及真实临时租约集成并审查顺序；scout（gpt-6-luna/high）独立核对阶段代码和证据。受信preflight目前仅测试替身，生产HostSupervisor不注入Shell factory，未新增默认执行能力。消费后的SDK上下文变化依赖显式cancel/retire，前端调用链仍须接线验收；账本幂等字节有界保留至activation结束，不声称完整内存擦除。实际helper/挂载/worker/FD/输出/取消/后代终止和正式运行闭包继续未完成，T013/T033及产品gate保持未通过，正式任务仍7/100。
+
+## Shell 源身份与密封脚本 FD 阶段
+
+`pi_shell_script.sealed_script`建立0600/CLOEXEC memfd并完整写入原始UTF-8脚本，添加且检查四项seal，归零偏移后交付；退出关闭自有FD，调用方误关再复用同一整数时不误关外来inode。无memfd或密封失败固定拒绝，不回退磁盘脚本。executor（gpt-6.1-sol/medium）在当前Linux进程内观察真实seal拒绝写入/截断及清理，20项通过；未运行新进程或helper。
+
+root实现`pin_shell_sources`，核对准备器的根、cwd与可执行文件身份，持有独立源FD供后续公开bind-fd接口使用。准备器增加physical.cwd_identity；一次私有worker响应增加已批准resolution的深拷贝，根身份不由worker重新声明。源码内容只对非秘密可执行文件计算身份，脚本及其散列仍不进入公开投影。FD持有能保留被rename目录的原inode，不能据此声称目录内容或普通可执行文件已冻结。
+
+新增源测试起初少一个右括号，收集失败，已修正，不算行为反例。随后root补未知嵌套policy字段反例，确实观察错误对象被交付（1 failed/18 deselected），闭合字段/类型后通过。最终8个直接受影响Python模块243 passed、0 failed（5.47秒），包含先前100项组件和77项组合的重叠，不累计。组合测试覆盖实际许可消费/worker响应到源FD与密封脚本；交付后根替换拒绝，原运行租约保留、脚本不可重取。正常属主重跑保留默认临时HOME/禁网/假进程守卫。
+
+scout（gpt-6-luna/high）核对固定bwrap0.13.0归档：bind-fd/ro-bind-fd是公开接口，仍解析proc magic link并在挂载后核对dev/inode；两者使用递归绑定，不能忽略子挂载。seccomp及add-seccomp-fd是公开接口，读取过滤器后关闭源FD；它不证明本项目已限制Unix socket。现有SpawnCommand/普通命令没有脚本FD接口；host_namespace_binary只做所选modern helper收据检查，host PID路径仍继承宿主文件访问，不能复用为完整工具沙箱。
+
+下一包须形成真实Linux后端计划：固定所选helper/运行身份，用FD绑定源并补子挂载/别名/嵌套Git/deny检查，明确Unix socket与网络限制；所有控制FD及认证环境在脚本入口前移除。实际Shell须在ExecutionStore登记的内核进程范围内启动，不能让普通worker派生未被终止证明覆盖的helper树，也不能在running后偷偷更换lease出生身份。可复用受信bootstrap的PID范围及其门控，但宿主文件访问只属于可信引导阶段，脚本必须经过独立完整文件/网络边界；任何构造失败都结束本次执行，不落回宿主Shell。此执行组装尚未实现或原生验证，当前FD组件未进入正式运行闭包，T013/T033和全部产品gate仍未完成。
+
+## Shell 挂载规划与固定过滤器阶段
+
+executor（gpt-6.1-sol/medium）实现只读`pi_shell_mounts`与纯字节`pi_shell_seccomp`。前者限定当前Linux x86_64，严格解析有界mountinfo，仅提取superblock的ro/rw，其余source/superoptions不纳入计划，按底层设备及目录位置投影deny/readonly。它禁止整个HOME及受保留系统根的别名、系统目录写重叠和递归子挂载；嵌套.git生成已有目标遮罩，工作区硬链接/特殊文件拒绝，普通链接不跟随。目录FD扫描有条目/深度限制和变化检查。系统目录只读、标准末端链接显式重建。此模块仅编译时持有FD，不形成可执行argv或证明最终执行边界。
+
+root审查发现仅检查目录内.git会漏掉整个Git目录的bind别名，新增3个反例真实得到DID NOT RAISE后修复。另发现准备器仅保留字面只读检查，没有把未选为可见根的策略只读路径交给后端。root为physical增加必填readonly_paths和严格源投影；投影反例正常属主环境1 failed后修复。executor再用同根/子树/祖先的3个真实失败别名反例修复挂载层，保留只读正控制。最初mount模块缺失是收集错误；投影反例的外层属主失败是环境结果，均不算行为反例。
+
+固定x86_64 cBPF拒绝架构/x32变化、socket/connect/bind、io_uring、挂载及跨进程访问入口；clone仅检查legacy接口实际可表达的namespace位，clone3返回ENOSYS。scout（gpt-6-luna/high）核对后撤回将CLONE_NEWTIME低位当成legacy clone漏项的初判：该接口低8位是退出信号，unshare/clone3已有拒绝；root澄清注释，未增加错误的位过滤。其余syscall默认允许，匿名socketpair保留；生成器不是完整sandbox。
+
+停止写入后的独立审查还确认一项P2：mountinfo的挂载点可写不等于底层superblock可写。真实反例得到6 failed/4 passed（含写项目DID NOT RAISE），修复为两层均rw才允许声明写；只读项目仍可用，仅提取superblock的ro/rw，source与其余superoptions不纳入计划。最终相同10个直接相关Python模块回归 **416 passed、0 failed（5.72秒）**，包含挂载65项、字节码107项和准备/FD82项的重叠；此前406项已被覆盖，不相加。7个Python AST、10文件空白及git diff检查通过。正常属主运行保留原有临时HOME、禁网、假进程/模型守卫；实际操作仅本进程FD、合成文件树与合成mountinfo。没有安装seccomp、执行mount/helper/Shell/SDK或读取账号。修复后只复核新增变更与对应证据。
+
+固定bwrap源码另证实：缺失挂载目标会被创建，若其父目录已绑定工作区，可能写入业务源。因此计划拒绝缺失或类型不符的mask，实际argv还须保持父源先挂、遮罩最后且不自动创建业务目标。源FD不冻结树，计划返回时句柄已关闭，完整执行器仍必须重新核验、持有实际源及收紧继承FD。所选helper身份、私有worker、注册PID范围、实际挂载顺序、环境、输出/超时/取消和后代终止尚未组装；没有生产backend_preflight或Shell factory，没有正式modern manifest或产品gate。T013/T033保持未勾选，正式计数仍7/100；下一包完成实际执行组装与允许范围内的验证。
+
+## Shell 执行组装与受信启动阶段
+
+`pin_mount_plan`把核验和实际使用的源FD放在同一作用域；新增纯argv编译器、二进制密封FD和`prepare_shell_execution`组合固定helper、脚本、过滤器及文件遮罩。最终exec只接受作用域内一次性对象，在Linux x86_64单线程PID1中再次检查FD身份/密封/偏移和stdio，关闭其他FD，通过保持CLOEXEC的ELF helper FD执行；环境为空，没有按路径重开helper、磁盘脚本或失败回退。
+
+私有worker先验证运行包helper，一次取得脚本后校验操作、租约、代际及已登记出生身份。受信`ordinary-shell`解析器只接受消费后的完整allocation，校验命令声明和入口收据，以固定引用参数启动worker；RPC不能传入进程范围选择器。每个Shell使用独立外层PID命名空间，沿用登记、running持久化、开门的顺序；worker直接exec内层完整隔离helper，保持原租约进程身份。外层绑定宿主根只用于可信引导。固定bwrap源码表明no_new_privs在解析/clone前设置，用户命名空间参数组合受支持，内层setsid不会改变外层monitor的PGID；这些是源码证据，尚无真实运行证明。
+
+运行时限首次构造启动描述时固定，重试不延长。内部tick接入普通操作调度，对过期或撤销且已有权威进程身份的租约请求取消；未知分配不重试、abort或释放Writer。已取走正文的运行也受同一时限约束。取消幂等和Writer保护以真实临时ExecutionStore/WorkspaceLeases验证，完整后代终止和输出回收仍需真实进程验收。
+
+root负责挂载FD作用域、进程范围、私有worker及主监督器接线；executor（gpt-6.1-sol/medium）实现argv/密封数据/执行组装和启动描述，并修复审查发现的helper Path→str不一致、命令声明严格解析与收据核验。后两项红例8 failed/3 passed，修复后四模块117 passed。新增接口的首次红例包含缺模块/缺API，不能把collection错误算行为反例。挂载FD清理回归曾误假设下次open必复用指定整数，改为dup2后验证；这是测试前提修正。
+
+首次合并回归648 passed/7 failed，均为旧FakeShellBridge缺tick接口；补接口并区分定时清理与文件准入转派后，同一22个受影响Python模块最终 **655 passed、0 failed（15.41秒）**。该总数包含此前51/35/33/149/117等阶段回归，不相加。scout（gpt-6-luna/high）对停止写入后的19个代码/测试文件核对SHA并独立复核，无P1/P2；root完成最终范围与证据验收。测试保留临时HOME、禁网、假进程/模型守卫，实际操作仅本进程FD及临时存储，最终exec为替身；未运行新helper、Shell、SDK或真实模型。
+
+本阶段接通内部command/tick/worker，但默认宿主仍没有真实backend_preflight或Shell factory，正式模型工具、运行闭包及前端输出尚未开放；目录和普通可执行文件不承诺冻结。下一步把新入口和传递依赖纳入显式现代运行文件清单，验证裁剪树加载，再完成受信后端可用性证明及获准原生正反控制。T013/T033和全部产品gate保持未通过，正式完成仍7/100。
+
+## Shell 现代运行包声明阶段
+
+Base配方新增10个明确自有来源：`scripts/pi-shell.py`和九个Shell模块。当前运行源码清单87项（22个TS来源、65个supervisor文件），不通配复制未选插件；普通Shell命令表明确指向该入口，现代安装的必要入口集合同时增加它。没有更改旧运行家族、启动默认值、Shell factory或真实backend_preflight，没有创建正式modern manifest。
+
+executor（gpt-6.1-sol/medium）在五个文件内完成声明、生成命令及相关测试。三个先行红例分别缺Base声明、缺生成命令、缺入口未拒绝；最终指定五模块 **197 passed、0 failed（31.16秒）**。测试在真实裁剪临时目录中导入自有模块并核对来源，逐项删掉五种Shell传递依赖后确认无法从checkout补齐；另验证命令/入口字节、0600与安装收据相符，缺入口在读锁、生成和安装三处拒绝，已安装入口漂移为damaged。npm安装、外部进程及模型仍为替身，没有运行脚本入口/helper/SDK。
+
+root审查五文件稳定变更和实际日志，scout独立核对最终文件及包装边界。组件测试不等于脚本入口在新进程中启动或产品动态闭包已通过。下一步据现有native探针材料设计独立Shell后端正反控制，明确允许根成功、越界/网络/socket/env/FD拒绝、超时及后台后代终止；用父侧事实区分后端不可用与隔离有效。真实helper、RPC前端和整Pi隔离授权及证据分别处理，既有SDK六项通过不外推到这些入口。正式完成继续7/100，T013/T033及产品gate不勾选。
+
+
+## Linux helper 诊断准备与 UID 映射缺口（2026-10-05，历史阶段）
+
+新增自有 `pi-probe-shell.py` 及父编排、闭合结果协议、三个固定 fixture，静态校验已构建 helper 和显式 supervisor 来源，生成87输入文件的私密审核目录；实际运行说明及范围见 [native-shell-probe.md](native-shell-probe.md)。本阶段未执行 bwrap、新helper、Shell或SDK，没有读取凭据、部署或切换默认配置。
+
+root负责父流程及关键生命周期，executor（gpt-6.1-sol/medium）实现payload/协议和相关测试，scout（gpt-6-luna/high）独立检查固定源码与停止写入后的变更。修复了错误异常文本比较、HOME父目录未创建、准备API参数不匹配、包内清单可容纳额外项目，以及心跳自然结束可能伪装主动停止等问题。采用现有stdin gate的所有权模式，准备失败和未知登记关闭gate并保留记录，不把wrapper退出当作整个namespace终止。
+
+11个直接相关默认测试模块最终 **676 passed、0 failed（5.19秒）**；包括63项父流程旧子集、协议/worker/UID映射新增测试及相关生产组件回归，旧627及各子集不累加。测试使用临时HOME、禁网、假进程/exec，仅真实操作本进程FD与临时文件。时间协议先行反例10 failed/134 passed后修复；其余接口首次缺失、静态审查修复或测试本身问题单独记录，不把它们包装成行为红例。
+
+最终静态复核暴露 **P1尚未闭合**：非root user namespace只映射当前UID时，root-owned系统文件显示overflow UID，现有路径/可执行来源检查会拒绝。生产host外层绑定整个根时可能更早在helper收据读取拒绝；没有跨namespace权威属主转换契约。固定0.13.0源码仅证明新helper来源，不能断言当前系统bootstrap来自同一版本；本机尚无该命名空间的真实映射观察。新增12项合成反例证实严格失败关闭，未修改通用属主校验。
+
+因此本包的完成边界调整为**可审查的诊断准备**：worker在G之前报告实际UID映射与固定系统属主，父侧登记后核验，兼容才进入边界/错误helper身份/后台后代三项场景；不兼容则保存identity-map/unavailable并停止，helper未执行。该预检不会修复生产身份交接问题。下一步需获准执行该固定诊断以取得本机证据，再由主代理确定跨namespace路径/FD身份交接设计；不能添加overflow UID白名单或伪造通过。正式任务继续7/100，T033不勾选，Base/Full及全部产品gate保持未通过。
+
+
+## Linux helper 原生组件通过与产品交接边界（2026-10-05）
+
+前述待授权诊断已在用户继续指令授权的固定范围执行。run03暴露全namespace信息与PID-only解析契约差异，新增探针专用闭合解析器；run04暴露info早于setsid的登记竞态，改为先等可信bootstrap、再固定出生身份和登记、最后才放行。run05确认系统属主显示65534，严格失败关闭且namespace完整终止。随后选择父侧校验和FD交接，不改变通用owner规则。
+
+父侧在自己的user namespace中准备和固定来源、helper、密封脚本/过滤器/遮罩，绑定原plan摘要。已登记worker只接收密封memfd与精确FD集合，核验出生身份、nonce、helper摘要、父读UID投影及同FD全部快照字段，恢复CLOEXEC并进入原exec白名单；不在子侧重开路径或重编译mountinfo。交接每进程一次尝试，失败耗尽，adopt对象不能再export；该probe-purpose接口不接RPC，不构成产品授权。
+
+真实父侧准备另暴露合法无关叠挂与系统不可访问节点。解析允许不同ID同挂载点，但任一查询祖先存在歧义即拒绝，来源子挂载仍拒绝。明确EACCES/EPERM的系统子目录整体遮罩；系统特殊对象遮罩最近父目录，均投影物理别名、复核目录身份、以只读遮罩实现。工作区/未知errno/来源根及cwd/executable被遮罩仍失败，不把未知内容放行。
+
+run06过期来源在启动前被拒，run07父准备失败均未启动helper。最终run08三项observed、命令退出0：boundary 19/19；helper-mismatch固定拒绝且无正控制；descendants 19/19、108ms主动停止、退出137、心跳1→1。所有namespace记录terminated=true，结束后leader/wrapper出生身份只读复核均dead。父读UID map为1002→1002，worker自读1002→0的坐标差异得到实际观察。原始证据和失败历史见 `native-shell-probe.md` 与 `.cache/pi-two-profiles/run-20261004/shell-native-08/`。
+
+最终14模块842 passed/0 failed（6.14秒），不累加历史子集。executor为gpt-6.1-sol/medium，scout为gpt-6-luna/high；root负责关键语义、编排、原生执行与阶段验收。下一步将此经过验证的交接模式接入产品operation/lease/generation/runtime收据和Writer生命周期，再完成前端输出、超时/取消、必要真实用户场景与默认backend/factory门槛。产品旧worker仍不能凭probe通过自动启用。正式任务保持7/100，T013/T033及Base/Full产品gate不勾选。
+
+## Shell 产品父侧 FD 与租约交接阶段
+
+父侧现在在不可逆许可消费与分配后、ExecutionStore.start之前一次取走私密脚本，并以一个资源作用域跨越命令绑定、starting/spawn_committed、PID1就绪、namespace登记、running和Writer激活、凭证密封及G放行。产品worker只adopt父侧FD，不接监督RPC凭据、不再自行打开来源或重编译挂载。凭证的十个授权字段严格绑定operation/lease、完整allocation摘要、context、runtime/lock/slice、profile和grant generation；摘要不是许可，预期值由受信父侧原记录生成。UID投影复用已原生验证的父读取者语义，仍保留原始来源属主检查。
+
+外层可信引导只挂同一计划来源、只读运行包和依赖，使用私有HOME/tmp。独立scout检查固定bubblewrap 0.13.0源码发现初版普通`--bind /proc/self/fd/N`会realpath后路径重开，缺少FD挂载后身份核验。root改为给每个内层source创建独立dup，外层用`--bind-fd`/`--ro-bind-fd`消费副本；原FD继续交付内层。runtime/deps仅供bootstrap，外层消费其子侧FD即可。executor协议反例用旧投影替身得到真实断言失败，修复后验证副本消费不破坏原FD，作用域退出关闭父侧全部FD。此修复为源码与默认测试证据，尚无产品原生证明。
+
+失败语义沿用既有日志顺序：准备/命令落盘失败留allocating，显式abort仅允许尚未提交的分配；starting持久化后不重发、不自动释放Writer。最终activate失败可能已持久running，仍保留保护；FD/gate清理和包装进程退出不充当整个namespace终止证据。poll在权威终止与输出完成之后才回收。默认故障矩阵覆盖准备、命令落盘、starting、spawn、R/登记、capture、workspace激活、密封、handoff落盘、G写入，及撤销/过期/父会话退出/后端/grant/lock/slice/profile漂移。
+
+Base显式追加handoff/start/identity/probe_info四模块，bootstrap固定`-I -B -S`和两个只读import目录；无环境或.pth回退。默认factory/preflight仍未启用。此前run08固定helper的842项默认回归和三项原生结果属于历史来源快照，不作为新增产品交接的原生证据。T013/T033仍未完成，正式计数保持7/100；下一步为产品路径同边界合成原生验证与前端接线。
+
+产品父侧阶段最终19个受影响模块 **623 passed、0 failed（27.94秒）**，包含局部验证重叠，不累计；独立审查14个代码/测试哈希与root核验一致，24文件阶段快照归档在`.cache/pi-two-profiles/run-20261004/shell-product-parent/`。首次组合621 passed/2 failed是旧选路测试缺父侧prepare替身，已保持该用例只测选路/tick，真实prepare由故障矩阵覆盖。未运行新增产品原生路径。
+
+继续接入真实`compile_mount_plan`时发现首次Writer预留会创建`.git/agentcfg`，改变整体遮罩`.git`目录的nlink/size/mtime/ctime，旧plan_digest因而过期。root新增真实准入→consume→command反例得到1 failed/1 passed的`OPERATION_RESOLUTION_STALE`；没有靠探针提前建目录规避。目录mask身份现仅绑定dev/inode/uid/mode，文件mask仍使用完整快照。整体遮罩的内部子项不属于可读授权资源；替换目录、类型或权限变化仍改变身份，未遮罩树的扫描前后完整snapshot检查保留。修复后三个挂载模块152 passed，包含真实bridge/计划与FD执行的六模块 **215 passed、0 failed（5.02秒）**；独立scout窄增量复核无P1/P2。产品native还未执行，新探针正准备真实service/lease/Writer与固定helper的合成组合。
+
+## 产品 Shell 合成路径验收准备（2026-10-05）
+
+新探针直接使用真实准入、许可消费、Writer预留、监督启动/放行/输出/取消及回收接口，仅manager由当前可信控制器的出生身份模拟。三场景固定为允许、hard deny和后台心跳取消。来源预检绑定Base显式69条supervisor来源、137条父控制器/数据静态闭包，工件只允许全新`/tmp`后代目录；新增或篡改输入、依赖源码漂移和重复运行均拒绝。失败仅持久固定错误类别/白名单代码，未知终止不释放Writer，不停止合成manager。
+
+executor（gpt-6.1-sol/medium）完成静态bundle和生命周期故障矩阵，root完成控制器及关键流程，scout（gpt-6-luna/high）定点审查后两项预检发现已关闭。最终三个默认模块 **82 passed、0 failed（4.34秒）**；稳定代码/测试指纹及7文件快照保存在`.cache/pi-two-profiles/run-20261004/shell-product-probe-offline/`。静态准备和预检通过，确切plan指纹、固定命令、执行边界与尚未覆盖项见[native-shell-product-probe.md](native-shell-product-probe.md)。尚未执行新helper：本次实际产品路径会直接以已核验helper FD建立外层隔离，与run08先使用系统bwrap包围worker不同，已提出这项新增真实执行授权，等待期间继续独立前端实施。默认factory和产品gate仍未启用。
+
+## Shell 前端准入、输出与会话组合（2026-10-05）
+
+文件与Shell现在共用自有固定准入流程，Shell明确确认准确捕获的脚本及根/时限，服务端消费后才将租约交执行器。仅现代manifest显式包含`external_tools.shell`时将Bash与原七个文件工具组合；没有进入legacy命令队列或引入Full管理器。会话切换同步退役文件和Shell控制器，清理使用allSettled等待两者。`user_bash`直接用户命令仍固定拒绝，默认Host factory未开启，不能把模型工具注册当成真实后端可用。
+
+后续固定公开接口复核发现原生`!`/`!!`/RPC Bash不能直接复用该终止契约：SDK在executeBash的signal已aborted时将operations回调的任何错误（包括TERMINATION_UNKNOWN）折叠为普通cancelled，且BashResult无终止证明投影。根决定保留固定拒绝；不降低“有停止/回收证据才报告canceled”的要求，不补丁上游。公开`{result}`分支没有同一abort_bash取消关联，未选用。磁盘扩展排序防护已通过公开加载结果核验和guard-first数组投影实现；拒绝既有冲突handler，并让检查后的公开晚注册仍排在原守卫后。最终一次默认组合251通过、独立稳定复审关闭晚注册P2；这不是插件沙箱或当前SDK原生执行证据。静态SHA、行号及限制见[native-user-bash-limit.md](native-user-bash-limit.md)；不作为OS sandbox不可行或产品前端通过证据。
+
+SDK公开Bash执行器即使注入operations，超阈值仍自行写临时日志且没有公开目录配置。本实现仅复用公开定义，提供固定拒绝的后备operations并覆盖自有execute，不改上游。新执行器启动只发一次operation引用；无私密脚本stage、无RPC脚本取回、无第二执行队列。输出查询绑定manager/operation/完整allocation及child身份，观察不改变租约。缺失`spawn_committed`的真实inspect/reconcile响应通过2个KeyError反例定位并修复，使前端已知未提交的分配可以显式abort，而未知或已提交继续保护。
+
+独立复核发现RPC等待跨deadline后可能误报成功，以及最终stdout+stderr拼接丢失事件顺序，均已修复并留下行为红/绿证据。流式与最终模型展示按全局事件seq保留有界尾部，含提示最多8192 UTF-8字节；二进制解码膨胀也受限。最终capture/exit与进程终止证明分别核对，无drop时额外校验实时两路前1MiB字节数、hash与overflow对照留存收据；有drop明确截断，不能重建未观察的全流。非零保持isError，未知保持失败与Writer保护，不调用官方SDK的临时日志路径。
+
+executor（gpt-6.1-sol/medium）完成共享准入、工具封装与Base声明/裁剪闭包，root负责执行器、Python观察接口和会话组合，scout（gpt-6-luna/high）在停止写入后复核17个文件，无剩余P1/P2。最终8个Node隔离模块 **347 passed、0 failed（3.766秒）**，15个Python受影响模块 **385 passed、0 failed（45.40秒）**；计数不与此前子集相加。阶段证据将归档在`.cache/pi-two-profiles/run-20261004/shell-frontend/`。Base新增两个明确TS来源，目前24个TS声明和69个supervisor来源；无通配、无新第三方运行依赖。
+
+产品探针已重新静态准备review02，review01来源过期的拒绝得到实测，仍未执行helper。真实产品Shell、前端原生行为、默认后端预检/启用、日常C++/Neovim及自动策略仍是未完成项；T013/T020/T033和全部产品gate保留未通过。等待新增真实探针授权期间，继续Q1五项剩余许可证/发布来源核验等独立工作。
+
+## 日常 oracle 与评测统计准备（2026-10-05）
+
+日常材料位于`tests/fixtures/pi/two-profiles/`。C++用六条常量MVCC记录构成边界bug，项目外16项独立oracle静态推导为6个边界失败与10个正控制；当前没有编译、Shell、Neovim或模型执行。初版checker的subprocess PIPE会无界缓存，root决定删除自行执行路径，改为读取未来受管父侧保存的闭合observations，只返回matched/mismatch或not-run，不签产品passed。正式采集仍须现有执行监督、只读oracle挂载、父侧输入身份和独立diff审查，不能直接主机运行编译产物。
+
+scout发现lstat到open的FIFO替换可能阻塞，root补NONBLOCK且保持打开后snapshot复核；真实文件替换的默认反例先红后绿，不启动子进程。最终42 passed/0 failed、6个稳定文件指纹获root与scout一致复核，归档`daily-oracle/`。T027/S06/S07仍未完成，缺少受管采集器、实际工具/会话恢复与真实模型层。
+
+风险统计纯函数将独立标签与观察分开，按六指标及false-deny反例、规则/机械故障/实际模型分类计数；缺记录保留未知调用和费用，不补0。规则未调用不能冒充已验证硬阻断；空分母和缺覆盖不能得到质量通过，gate始终not-evaluated。39项新统计测试与80项既有预算测试合并119 passed/0 failed；稳定来源与审查已归档于`risk-metrics/`。开发/保留语料由executor独立准备后再审标注，没有发送模型、调参或执行被判定命令，T005/T054/T055保持未完成。
+
+传递许可采用独立来源旁车记录：AWS三项精确声明加Apache标准正文，两个MIT范围仍未闭合，安装收据尚未携带补充文件。来源、限制和后续晋级条件已记research/source-audit；不修改第三方文件。新增产品Shell探针的直接helper启动边界仍等待已有问题的明确答复，期间不重复询问，继续无关实施。正式完成计数仍7/100。
+
+## 风险语料初次冻结与响应协议（2026-10-05）
+
+开发集与保留集各32条、八类各4条的样本和标注已冻结为dataset revision 1。固定SHA及分类计数见`tests/fixtures/pi/risk-review/manifest.json`和`annotation-review.json`；整体仍preparing，模型路线、提示、调用/费用及性能预算未冻结。初次冻结前修正了注入家族全部拒绝造成缺失安全正控制、发送前撤销描述歧义、只有脚本身份却缺正文仍标allow三项问题。当前撤销样本不覆盖实际发送后撤销的费用记账，不得把历史请求归零。
+
+scout（gpt-6-luna/high）独立核对语义，executor（gpt-6.1-sol/medium）核对root冻结增量；root确认7个稳定文件指纹和3个未变数据/schema指纹一致。默认语料34项与统计39项合并 **73 passed、0 failed（3.25秒）**，不是新增加73项统计测试；记录在`risk-corpus/`。部分审查元数据通过独立重算核对，未全部写成默认测试断言。没有模型结果、费用观察或质量通过；冻结保留集不能用于候选调优。
+
+自有`risk-review`包新增纯`parseReviewResponse`：最多8192 UTF-8字节、封闭七字段、四个精确绑定、固定决定/原因码，控制端追加source=reviewer。重复键（含转义同名）、未知字段、自由理由、错绑定和非法Unicode均拒绝；expectedBinding拒绝getter/Proxy，返回冻结候选。root补充版本数字舍入反例，将schema_version限定为JSON整数literal 1。最终隔离Node **74 passed、0 failed**，4个稳定来源由scout与root复核并归档`risk-protocol/`。
+
+协议候选不是ApprovalDecision或许可；真实来源、current复核、deadline/cancel、发送计数、用量和一次消费仍待接入。Base来源/锁/默认加载未加入此包；下一步按固定Pi公开API源码证据实现有界、无工具、无重试的传输。T049/T051/T052/T054整体及产品gate保持未完成，正式完成仍7/100。
+
+
+## 产品 Shell 原生证据与 reviewer 传输组件（2026-10-05）
+
+用户已明确授权产品Shell合成探针及同边界必要重跑。review02直接以已核验helper建立隔离，允许与后台取消各19/19布尔断言通过；hard deny为PERMISSION_DENIED且外部child/Writer/执行租约均0。探针整体退出0、没有修复重跑。允许退出0，后台退出137且取消前后heartbeat保持1；取消时Writer仍active，完整namespace终止与输出完成后租约reclaimed/Writer released。8474ms是准备放行到终止的总窗口，不能写为取消耗时。同原观察者PID namespace的只读复核确认两个leader已不存在，作为整namespace证据的补充。
+
+独立executor（gpt-6.1-sol/medium）核对24项原始证据、root核对137个来源SHA；稳定工件保存在`shell-product-native-review02/`。manager合成，未运行Pi/Codex/模型/部署，前端及默认factory未验证。快照证明取消保护与最终回收，没有独立capture-before-release时间戳，精确顺序仍依赖稳定控制流。T013/T033和产品gate继续未完成。先前本文件的“待授权/尚未执行”段落属于各自历史来源阶段，本节记录当前review02观察。
+
+reviewer新增有界fetch、最终请求校验和单attempt传输，连同严格响应parser四模块最终 **240 passed、0 failed/cancelled（482.622222ms）**：74协议、44fetch、82请求、40attempt；不累加历史子集。SDK及平台send均fake，未导入真实SDK或发送模型。仅一次本地send、manual redirect及redirected-2xx拒绝、按需body字节上限、全程双时钟deadline/current/cancel、工具/重试/未知headers拒绝均有默认反例。缺usage保留unknown，SDK默认0和请求模型拷贝不能作远端证据；已发送后的取消保留请求事实，迟到reported usage只更新最小账本，不能成为候选许可。
+
+scout（gpt-6-luna/high）独立审查fetch/请求，executor独立审查root传输与包边界；发现的redirected-2xx和null signal固定错误缺口已先红后绿关闭。root验收稳定10文件SHA，快照、日志、各次真实反例及审查保存在`risk-transport/`。组件没有全局registry、持久费用预留、真实用户来源或一次许可；真实SDK及启用入口仍未接，T049/T051/T052/T053整体保持未完成。
+
+固定OpenAI SDK还会读取OPENAI_LOG、ADMIN_KEY、WEBHOOK_SECRET及custom headers；debug日志发生在最后fetch校验之前，任意自定义header不保证被redact。额外固定源码SHA/行号保存在`risk-sdk-source/root-ambient-environment-evidence.json`。根决定真实SDK在独立干净环境、日志off下初始化，只用公开provider/normalizeContext入口；不临时修改宿主process.env，不patch上游。后续适配须保留父侧实际发送计数、取消未知用量与终止状态，不把Worker环境隔离当成文件/网络sandbox。
+
+许可兼容版本证据保存在`license-followup/compatible-alternatives/`。Pi-AI精确依赖两个proxy父包9.1.0，父包各精确依赖negotiate1.1.0；negotiate不是Pi-AI的直接依赖。Anthropic SDK实际standardwebhooks范围为^1.0.0，但已查兼容来源仍不能闭合JS的MIT正文。未找到可验证替代，不能通过覆盖精确依赖或假定copyright晋级modern锁。正式完成仍7/100。
+
+
+## Reviewer Worker、Header基线与公开ESM解析（2026-10-05）
+
+单Worker SDK桥只在首次stream启动，固定环境仅OPENAI_LOG=off、空argv及唯一公开ESM flag，stdout/stderr drain/drop。父侧有界IPC接回原最终请求/fetch校验，Response.body通过公开ReadableStream transfer，不整段缓存或回退网络；raw metadata逐条ack背压，终态只保留最小文本候选。取消使候选失效，已发请求不归零；close等待独立terminate承诺，未知终止不释放资源。SDK/public export anchor绑定当前slice/package.json，两个入口先验证后import，缺包不借祖先依赖；stat检查依赖受信收据，不是防同UID并发替换的原子模块pin。
+
+createReviewHeaders从显式受信Linux x64、kernel release、Node v24.14.0、OpenAI 7.19.0、timeout和私密key生成冻结12字段，不读环境或反向采信SDK请求。发现8192字节key加Bearer前缀后被S/W误拒，留下两级真实反例：请求层未修96/2fail，修请求层后Worker12/1fail；统一仅Authorization值上限8199，其他值8192与总量上限不变。最长key经过实际自有Worker组合，末尾CR/LF、篡改和额外headers零send。
+
+最终七模块 **367 passed、0 failed/cancelled/skipped（1570.534203ms）**：74协议、44fetch、85请求、40attempt、47fake Worker、13组合、64header。组合中9项实际自有Node Worker，全部SDK包为临时自有fake，四个资格负控零Worker；没有官方SDK、账号、HTTP或模型调用。executor为gpt-6.1-sol/medium，scout为gpt-6-luna/high，root沿会话配置；稳定16文件SHA及窄增量8项独立审查保存在`risk-sdk-worker-headers/`。既有299/240只是历史子集，不累加。
+
+Node会自动克隆父setEnvironmentData map，env不覆盖此通道，静态未发现固定依赖调用不证明map为空。Worker不提供文件/网络OS隔离，V8限制不是外部内存硬上限。未来需要更强边界采用受管独立进程；不改全局map或私有Worker实现。当前隐私/账号/预算/完整许可与product gate仍未验证。
+
+公开SDK/AI根exports仅import条件；旧require resolver的45/1fail定位后改用公开import.meta.resolve(specifier,parentURL)，显式固定Node --experimental-import-meta-resolve。与Base closure受影响两模块最终 **54 passed、0 failed**，稳定来源与scout审查保存在`official-esm-resolution/`；实际modern factory仍不可用，未来启动argv必须包含同一flag，不退回私有dist或require分支。
+
+新的官方reviewer SSE探针仅准备中，九case固定为allow/ask/deny、缺usage、错远端model、发送后取消、response cap、hard deny和必须人工。旧run05的六项SDK接口使用自有streamSimple，不涵盖真实provider/SSE，所以新增原生执行待具体材料完成后单独授权；未授权前只运行假包和父层默认测试。T009/T049/T051/T052/T053整体保持未完成，正式任务仍7/100。
+
+
+## 官方 reviewer SDK 原生探针已准备（2026-10-05）
+
+新探针材料见`native-reviewer-sdk-probe.md`。Node默认7项覆盖九case，仅自有fake SDK和七次自有Worker导入；Python默认60项均fake process/signal，不导入官方SDK。executor发现并留存三个capture异常清理红例，root修复初始化在cleanup外和wait异常跳过pipe close；capture未知失败留下closed执行记录与不可重放marker，不把启动请求当SDK开始，不把终止未知当成功。scout最终复核五个稳定源码/测试SHA，无剩余P1/P2。全部默认日志、来源、审查保存在`risk-sdk-native-preparation/`。
+
+实际prepare及独立preflight均退出0：目录`/tmp/rotom-reviewer-sdk-probe-20261005-review01`，九个自有来源、18,498条candidate记录，plan SHA `401b8244e2e304af8a67961127e3029d2ba0f06689982346b49f86375dee97bb`。仅静态读取/复制，native_started=false。旧run05注入自有streamSimple，不覆盖此次官方provider/SSE，所以新增授权已询问、仍待回答；不是重复询问已授权Shell探针。等待期间继续权限/许可控制面离线接缝盘点，不运行依赖该授权的SDK步骤。product gate和正式任务计数不变。
+
+
+## 官方 reviewer SDK 组件原生验收（2026-10-05）
+
+review02 九项provider/SSE断言及父复核observed，启动器和父run均退出0。七个真实SDK Worker终止已逐项确认，hard/human两项零Worker/零send且用量not-sent/0；已发送后的取消保持一次请求，缺usage保持unknown/null。没有HTTP或外部模型/真实账号调用。review01的SDK九项也观察成功，但父oracle误要求零send场景unknown，父失败原样保留；实际工件离线反例先红后绿，仅修父oracle，当前Python62与Node7隔离检查通过。
+
+scout复核六个当前来源SHA、九个bundle来源/两个控制器，以及全部18498条candidate记录与lock/版本；稳定工件在`risk-sdk-native-review02/`，未发现P1/P2。完整namespace终止、真实账号/质量/账单与产品gate仍未验证。无需重复询问已获准九case同边界重跑；新增执行范围仍另判断。
+
+权限接缝证据见归档的`pi-reviewer-approval-seams.md/json`：现有一次性账本支持受信reviewer来源，但实际RPC与TS仍固定human，prepared file/shell均requires_human=true；没有reviewer request/deny/late-usage持久状态。下一步须由可信控制面选择已授权路线、保留全局一次attempt和预算记录，模型不能传source/human或自行issue，不能仅把模型字符串接到旧human RPC。
+
+## Reviewer 账户状态接线（2026-10-05）
+
+只读接线与规格核对确认：profile-local审批状态不能直接作为累计预算root；现有每工具UUID意图不能作为真实确认scope。存储实现决定见`reviewer-account-store.md`，账户根来自passwd而非HOME/XDG/profile/local配置；准备及更新哨兵绑定非秘密账本的文件身份/摘要，未知进度待恢复，不自动清零。新账户门面和原ledger/登记四模块默认155 passed；稳定五来源的独立审查未发现新增P1/P2，root完成关键顺序验收，证据归档`risk-reviewer-account/`。没有真实账号/SDK或宿主factory接线，临时文件/线程及故障注入不替代真实跨进程崩溃恢复。
+
+root同时补账户协调根保护：Host从已有受信WorkspaceLeases对象派生anchor并追加到copy配置，普通文件与命令保留未来拒绝路径。初始四个反例3 failed/1 passed，八受影响模块217 passed。独立审查发现五个按需selected入口仍strict解析未建控制根，executor先补五个实际调用反例得到5 failed，再仅修protected路径解析；五模块76 passed，挂载范围内缺失deny仍拒绝、不造占位。六Host/策略来源与十消费者来源均已稳定独立审查，旧P2关闭，无新增P1/P2；证据在`risk-account-control-protection/`，两个测试集合分列而不累加历史数字。保留denial路径不是实际namespace遮罩证据，范围内缺失且不可表达的deny仍需拒绝。limits/currency的账户级单一授权来源、真实路线/预算冻结、恢复与产品安装闭包继续未验证，正式任务7/100不变。
+
+自有Python账户OS探针已在run04通过父检查器与worker的六场景：共同go并发claim仅一胜、四个持久化切点突然退出与独立重开、unknown预留及deny跨进程保留。63项默认父检查器测试通过；稳定五来源与原始工件独立审查无该组件剩余P1/P2，私有归档`risk-reviewer-account-os-run04/`保留前三failed材料。非阻塞busy错误明确化、固定PWD、最高输入/缓存预留320及构造屏障均有对应证据。它只运行自有Python，无SDK/真实账号/HTTP/model；schema2共存OS、断电/整个namespace终止与产品factory仍未证，完整产品gate保持false。账户authority纯封闭协议102项通过并独立审查归档，私有存储和精确白名单正在默认验收，未提供真实路线/价目/额度授权。十场景官方SDK意图探针仍已准备等待独立授权；授权未到不执行。
+
+root决定产品reviewer在独立受管干净进程内加载SDK，以避免Pi主进程的Node environmentData map继承不确定性；已验证单Worker仍可留作该专用进程内部SDK隔离组件，不把它直接当主会话通用凭据隔离。先实现有界私密进程通道，再以既有supervisor/namespace生命期和once-permit核心组合；不修改主进程map、上游或私有Worker接口。阶段不启用Full自动审批，正式任务仍7/100。
+
+账户授权存储已完成五模块257项默认验证及稳定审查，显式CLI完成190项回归与human窄修1项独立记录。纯route matcher69项及协议/模型配置回归合计217项通过；安全八字段投影不证明caller provenance，实际公开SDK/private Model baseline接线仍待完成。账户bound授权/发送提交组合与只对账重开入口36项及原账户/存储回归共136项通过并稳定审查，commit与显式update共用账户短锁，迟到facts不因撤权消失。旧OS6材料绑定归档源码，不自动覆盖这些新增语义。证据分别在`risk-reviewer-authority-store/`、`risk-reviewer-authority-cli/`、`risk-reviewer-route/`和`risk-reviewer-account-authority/`；真实价格/额度/质量、跨进程更新与Full gate仍未授权或未验证。
+
+## 共享真实模型的审核接线（2026-10-05）
+
+纯prepared104、SDK contract72、final wire233、Worker174、T228和进程桥271分别有稳定来源、默认检查和独立复审。这些属于不同运行，不求和。bound路径保留公开Model的name/reasoning/input/native maxTokens/compat/map，reasoning off和本次输出cap单列；最终body按明确声明选择普通文本或DeepSeek disabled分支。WorkerData与独立进程argv的identity分别要求run携带匹配packet，不通过packet猜模式或回退legacy。独立进程桥的新增29项仍是paired fake FD，真实自有fresh child传播材料正在升级。细节及阶段归档见[reviewer-shared-model.md](reviewer-shared-model.md)。
+
+输入计量前提尚未解决：PiAI估算器与DeepSeek官方demo均不保证服务端实际输入token上界；response usage不能用于发送前授权。共享T新增受信同步exact-true资格门，缺失/错误/Promise在SDK前零调用；通过后复核取消、配置与deadline，回调不取得认证材料。root已咨询严格规则与显式估算政策的取舍；回答前不改严格规则、不启用Full。fake true不能签输入预算、真实价格、模型质量或产品gate。
+
+原官方reviewer SDK9只覆盖归档旧字节；未执行的fresh-process review02材料因T/W/process来源变化失效，保留历史不执行。未变的intent SDK10来源仍按独立边界单列。当前源码还需真实传播及对应SDK合成验证、可信Host factory、scope/authority一次许可接线与真实质量/预算。原user_bash保持固定拒绝，公开guard排序离线组合251通过不代替插件沙箱。正式完成仍7/100，组件完成不勾整体任务。
+
+## 私有作用域与发送事实接线（2026-10-06）
+
+私有scope RPC适配组件185项、无UI ask组合135项、原operation-scope绑定核心198项及File/Shell共享Admission217项各有独立运行与来源归档，不能相加作为一次总验收。原五字段prepare增加私有闭合reviewer_scope后，原refs、permitted同参重读、漂移撤销、whole-intent清理与未知分配/Writer事实已组合；manager RPC来源仍固定human，requires_human未降低。独立稳定审查发现同Host第二controller可构造，取得1项真实行为红后增加永久Host及canonical Admission对象owner/binder守卫；最终七模块353项通过，稳定增量复核关闭P2。具体实现边界见[reviewer-scoped-prepare.md](reviewer-scoped-prepare.md)，来源与日志在`risk-scoped-admission/`；跨独立重建对象的全局唯一与产品factory尚无该组件证明。
+
+自有最终wire发送gate已在SDK/platform均替身的六模块346项运行中验收：immutable私有请求捕获与复核后，才等待原native Promise/exact true提交确认；迟到确认不复活，平台同步抛错计本地入口1。gate_attempted/gate_acknowledged与实际平台函数入口次数分开，gate之后零本地调用保持unknown。该gate未自动安装账户ticket，官方SDK旧SSE通过不覆盖此新增语义，详见[reviewer-send-boundary.md](reviewer-send-boundary.md)。
+
+根审查发现账户get也走updating/ready事务，不能当纯读取；新增显式observe仅在共享账户短锁内严格核对ready、成员/物理身份与原ledger字节/stat绑定，不写入、修复、初始化或授权。23新增与124关联的一次147项通过、稳定审查无P1/P2，归档`risk-account-observation/`。写前失败可核对reserved，写后未知留下updating并拒绝观察，不推断零请求。新conclude_transport原ticket→gate事实→持久账本归并已在七模块一次252项（59新增、193关联）通过并稳定复核：合格报告先不可逆关闭ticket才观察，不能把committed/null变成not-sent、零费用或重签，归档`risk-transport-settlement/`。新的共享Model/process/父侧gate默认组合六模块一次202项通过（21新增、181关联），仅自有假进程/SDK，生产源码零修改，稳定审查无P1/P2，归档`risk-shared-process-gate/`；计数caller provenance、Node/Python私有RPC与产品factory仍未组合。
+
+共享模型官方SDK11的当前材料为fresh-process shared review02，plan SHA `463b663a3c224b855442efd22e8ad23e700b937c1d940a07087ed247dda8e2d5`；旧shared review01因T/wire来源变化失效。prepare/preflight及父fake131/Node fake14分别通过，未运行官方SDK。当前specific材料已再次提出授权，未收到答复；它不配置账户gate，不能代替组合证明。确认意图async官方SDK13的另一plan `62534d59a3d91602a8ce808d943bb812b801c638ef938c05a1f5f5881803a2c0`同样待对应授权，SDK10属于旧同步来源。此前SDK9授权及其同边界重跑已闭合，不将它扩展到新路径。
+
+执行仍按root会话模型负责锁、未知恢复与最终验收；executor实际gpt-6.1-sol/medium实现，scout实际gpt-6-luna/high定点证据与稳定审查。真实输入token上界、隐私合格prompt投影、账户价格/额度/质量冻结、canonical Host factory及自动permit到bridge消费、真实账号/体验/正式安装闭包仍未完成或未验证；严格输入资格不改，未启用自动reviewer、未部署或切换用户环境。正式任务7/100、全部必需目标及产品gate保持未完成。
+
+官方总context容量的有限证据已另行审查：文档示例1048576包含输入与输出，只能推导实际在context内处理请求的输入不超过该值；未证明超限输入在处理前零计费拒绝，不能据此建立所有尝试请求的发送前计费上界。本地1000000/384000是较小声明能力，本轮不修改模型metadata或authority，也不启用strict资格。证据不足单列为未验证，见[reviewer-shared-model.md](reviewer-shared-model.md)与`risk-context-cap-feasibility/`。
+
+纯TS最终快照→五字段结算报告已在四模块一次226项通过（68新增、158关联），稳定两文件审查无P1/P2，归档`risk-transport-projection/`。它剥离候选own source后重验七字段wire，计数仍仅本地平台入口；不认证快照、不保存ticket或接RPC/factory。原Decision直接Admission签发不能由原bridge消费的缺口已取得真实行为红；可选精确原FileAdmissionControl接线与same service mutex/永久单owner/固定reviewer原bridge签发已在九模块一次360通过（27新增、333关联），稳定独立审查无P1/P2，归档`risk-original-bridge-permit/`，详见[reviewer-bridge-permit.md](reviewer-bridge-permit.md)。生产requires_human未下降，正控仅合成policy。
+
+T025九项普通提示词可选迁移已在两模块一次48项通过（25新增、23既有）并稳定15文件审查，归档`ordinary-prompts/`；工程正文/原源身份与旧profile保持，默认三项不扩大。新增闭合`profile_available_resources.pi-base.prompts`与默认选择分离，未知ID/错kind/scope/canonical路径/旧Full模板失败，不在Python硬编码资源名。源差量见[source-audit.md](source-audit.md)；native发现和T025全范围仍未完成。T011纯离线诊断计划投影已在三模块一次70项通过并稳定四文件审查，归档`modern-offline-diagnostics/`，详见[modern-offline-diagnostics.md](modern-offline-diagnostics.md)。generic host load/execution记录不会作为完整source加载集或所有入口隔离证明；整doctor外层I/O与新纯helper边界分开，实际加载与注入实测仍待完成。
+
+R11后续接线按[permission-approval-plan.md](permission-approval-plan.md)分层实施：先可选allow-rule approval语法与human > reviewer > deterministic-policy纯聚合，缺省human、deny不带approval；再root验收原匹配/跨目标/脚本潜在文件能力、prepared等级与source约束、原bridge一次消费及公开工具。不能仅翻转requires_human，不能因command allow绕过file必须人工区域。首小阶段尚不修改生产floor/default/permit/RPC；当前SDK11/13授权与真实严格输入证明仍独立待定，产品gate不变。
+
+## 单一权限审批等级接线（2026-10-06）
+
+R11语法/纯聚合阶段Python173、Node123分别通过；可信FilePolicy分类53项、原Admission来源约束及确定性零review流程269项、File prepared多目标/潜在create绑定227项、原manager固定确定性来源RPC122项各自通过稳定独立审查。这些是分开的相关检查，不相加。缺省仍human，硬deny/root/ceiling/Writer检查仍成立；文件明确det规则不再因工具名称一律要求UI，edit/rename与write潜在create纳入最高等级。
+
+公开file controller最终五模块288项、稳定五文件独立审查通过，已接固定来源分派、响应冻结、完整新旧policy校验和once consume；旧无approval分支夹带未知policy.source的真实P2反例已修复。确定性来源可headless，human/reviewer现阶段只走可信UI的human应答；这证明控制流要求，不证明真人身份或自动reviewer资格。纯声明helper最终75项，长度修前193仅历史阶段。所有日志与来源分别在`policy-approval-grammar/`、`file-policy-approval/`、`approval-admission/`、`file-approval-preparation/`、`deterministic-admission-control/`、`official-file-resolution/`及`official-file-approval-dispatch/`。详细不变量见[permission-approval-plan.md](permission-approval-plan.md)。
+
+Shell潜在能力只读调查确认command规则并不按file allow收窄整棵挂载目录，system只读根另由可信后端提供；单翻command grade不能证明不会绕过file manual/reviewer区。报告归档`shell-approval-capability-gap/`（只读映射，无测试通过声明），其Node全文件SHA属于调查时旧快照，后续file-only闭合修复不改变Shell人门。后续需以实际挂载完整能力而非命令文本猜测来决定等级，未知/不可表达保持human或不可用。严格reviewer输入资格、隐私prompt、实际质量/价目/额度与canonical Host factory仍未齐；SDK11/13对应授权仍待回答，旧SDK9授权保持闭合，不启用自动reviewer、不部署/切换。正式任务仍7/100，R11、Base/Full产品及当前Linux真实验收均未闭合。
+
+## 现代审批模块的安装闭包修复（2026-10-06）
+
+静态机制核对发现source-wide recipe_digest会收集新文件，但现代安装仅采用显式runtime_files。此前遗漏official-file-resolution.ts与pi_policy_approval.py两条声明，可能使安装后的Node/Python导入失败，源码checkout检查不能排除该问题。现两条声明补齐，真实missing-module红例2 failed，最终runtime-files/base-recipe两模块101 passed（14.53秒）；独立稳定两文件审查无P1/P2，临时安装95个声明文件后Node相对mjs导入与Python独立包导入已观察。归档approval-runtime-closure，不生成正式锁、不启动第三方SDK/宿主或部署。Base当前25条TS、70条supervisor；尚未形成Full运行切片，不能由Base闭包推导Full完整。
+
+RegisteredRoot登记/查询CLI和普通非Git工作区接线已有实现，无需重复实现；当前72项默认验证通过，12个来源hash稳定，归档registered-root-current-verification。本轮未加OS开关/独立进程竞争/真实产品测试，T015/T016整体仍开放。Shell全挂载能力的第一版保守分类规则已在permission-approval-plan.md明确，独立纯组件正在实现，Shell生产人工门保持不变。正式任务7/100与产品gate不变，当前specific SDK11/13及严格输入选择仍待独立回应。
+
+## Shell完整能力分类及Base离线导入边界（2026-10-06）
+
+纯Shell分类组件327项默认检查及稳定两源独立审查通过，全部file allow高等级保留、whole subtree各操作联合覆盖、系统/可执行读能力缺覆盖收紧human，不解析脚本或签发许可，归档shell-approval-classification。原准备桥的完整计划接线203项八模块检查通过，需独立稳定阶段审查后验收；不是靠后端摘要降级，而是从原part通过原物理mount planner重建并结构/摘要比较，再记录grade/current绑定。新helper显式安装使Base当前25条TS、71条supervisor（96运行文件）。生产默认factory/Node自动Shell尚未启用，SDK/native/helper/systemroots实际组合仍未测，后续先通过Node默认反例再接固定来源分派。
+
+Base完整diagnostic_identity→render→validate原未选Web import属于静态配置校验，无网络/认证活动证据。现未选时跳过实现导入但保持非空web配置拒绝；真实完整路径无身份stub测试先红1项，最终五模块123 passed（13.71秒）及稳定两源审查通过，归档base-unselected-web。静态现代本地import扫描在记录source pins上发现25 TS/47边均闭合；可选Full分支未算Base漏包，pi_operations.rules懒加载路径仍unknown，未声称完整动态闭包。正式任务7/100，产品和实际账号/当前Linux整体gate保持false。
+
+Shell准备最终八模块204 passed（22.82秒）及review02稳定复核通过，关闭旧五字段投影允许False的P2；Shell旧兼容现在明确human=True，新六字段grade/flag一致，原通用Admission可信旧组件语义不扩大更改，归档shell-approval-preparation。修前203项仅历史证据。公开Shell控制器的等级分派随后完成：确定性级走固定manager来源且无需UI；human/reviewer当前仅可信UI人工确认，无UI在prepare后取消。异常协议返回统一绑定失败/退出4，原非法输入仍退出2。四模块220项（4.267秒）与稳定两源审查通过，额外关联两模块另一次145项（0.753秒）通过，归档official-shell-approval-dispatch；仅一个旧manual/headless测试断言按新控制流更新，两次不求和宣称一次总验收。生产reviewer资格工厂、真实SDK/IPC、实际系统树/helper、正式锁/安装、账号/模型质量与整体产品gate仍未完成，默认政策没有更改。下一步继续独立US4核心/生命周期缺口取证，不等待未回答的SDK11/13授权或严格输入选择。
+
+## US4现有核心与输入边界增量（2026-10-06）
+
+定点取证确认已有DelegationRuns权威持久run层，原start_unknown不重派、cancel ack非终止、终止后旧resume创建新run。现有三个核心模块正常属主默认34项通过（0.67秒），外层受限UID的26通过/8环境失败单列，13个源/schema/guard摘要稳定。未发现同run message/continue入口；capabilities仅静态声明，BudgetLedger跨重启限制与现代后端公开组合未闭合。报告归档另记，不由旧功能或测试文件存在勾T058–T066。
+
+先做不涉及锁/恢复重写的坏输入修复：部分可选参数在intent/allocate之后的request schema才失败，root决定添加共用纯capture_delegate_arguments并在prepare副作用之前调用，保留合法旧表示和幂等字节；具体边界与默认红绿方法见[委派请求边界](delegate-request-boundary.md)。executor负责两源与新测试，scout另行核对固定Pi公开会话接缝，root保留同run生命周期与迁移决定权。现代工厂、真实协议/账号/预算与产品gate保持未完成。
+
+该请求边界增量随后完成：真实8 failed中3例观察到旧intent副作用，修后新增185用例及相关五模块一次241 passed（2.05秒），三个稳定来源独立审查无P1/P2，root核对保存before diff并验收归档model-delegate-arguments。坏请求现先于manifest/context/路径/intent/allocate失败，同key合法后续仍可用；实际原幂等与request摘要公式、可选表示、principal及旧生命周期不变。旧34与240项运行分列不累加，T058/T060整体仍开放。
+
+固定Pi1.0.1公开会话材料另经静态取证：同一AgentSession支持prompt的steer/followUp模式、公开sessionId/sessionFile、事件和abort；这些API本次未执行。公开prompt的preflightResult字段虽出现在声明中，却明确标记internal，不作为适配接缝。prompt返回void且排队/扩展拦截/settled期间延期等路径可提前返回，不能把Promise完成当逻辑任务结束；agent_end可能继续retry/queued工作，agent_settled也仅SDK事实，physical termination仍监督者证明。旧Pi委派固定0.84.4且单prompt后dispose、旧continuation fork新native会话，不能视为现代US4完成或新增/扩展其宿主方法替换路径。后续以公开会话及单一持久委派核心组合，稳定逻辑run与native会话、每轮lease/预算身份分别绑定。
+
+2026-10-06公开派发组合增量已独立归档：发送StreamFn13项及自有公开Agent21项默认测试分别通过，各自稳定审查无P1/P2；21项之前的两个真实red保留。Agent只在SDK动作失败后永久退役，保留观察者失败，按SDK位置清理错误而不改写业务JSON。静态lifecycle5及transcript16源码摘要另列，SDK abort/idle、消息append和缓存ID均不代替物理停止或持久恢复事实。这些组件不勾T061、不注册产品入口、不启用Full。
+
+Codex固定源码缺口随后解决：官方rust-v0.154.0 tag指向6b9826e3aa83b1a5947db50f4332cb9c65f1b340，归档及选定20个普通文件复核，LICENSE/NOTICE匹配登记来源。固定exec resume的未解析ID会回退新thread，现代路线改选公开app-server确切threadId，不使用便利恢复或内部协议。五动作只读纯编码最终13项通过官方原样参数schema，稳定审查无P1/P2；原12项green及并发改ID导致的真实red分列保留。进一步11源静态取证确认turn/start可steer既有turn、resume排除history/path及interrupt非物理停止，thread模型字段非每turn服务确认。CLI二进制、native/live身份、权限/隔离和最终模型仍未验证，T059/T062整体开放。
+
+规范schema3四动作及稳定来源的纯捕获16项通过，稳定审查无P1/P2，已归档modern-delegate-actions；可选缺省规范一致，key不含activation/owner随机值，改变内容/动作/目标run保持key而完整digest冲突。原run控制区的非执行意图登记事务随后实现，最终正常属主33项通过，稳定审查无P1/P2；初29项及受影响旧v2三模块21项另存，不累加。受限UID的28环境失败/1通过未进入事务，另存。历史message intent丢失或跨run合法intent替换后仍可追加的两个真实red已修复，完整动作链及pending仅新最后叶的恢复边界经定点验证。该增量复用原instance_lock，尚无外部执行；扫描性能、进程崩溃/断电未验。细节见[现代生命周期](modern-delegate-lifecycle.md)，Worker、每轮租约、发送和native transcript仍未接入，不勾T060或产品gate。
+
+## 许可证分发与 Q5 来源增量（2026-10-06）
+
+原许可证旁车未随包交付的静态证据已复核并归档。进一步 35 个源摘要将原 15 项逐一绑定到实际 Base 隔离候选：四个额外 Pi 包和 esbuild 的已固定正文缺运行包引用，data-uri 的完整 MIT 正文在明确的 README 段中；三个 AWS 标准正文补充限制及两项 MIT 来源缺口保持。7 个 fixture 来源摘要另存，未运行 SDK/账号/模型。自有 `licenses/pi-modern/` 已通过既有 runtime_files/收据交付，按完整 registry 图复核来源，不向现代 npm 包增加 LICENSE；见[许可证分发决定](modern-license-bundle.md)。最终 310 项默认测试通过，稳定 20 个源摘要复核及独立审查无开放 P1/P2，归档 `modern-license-bundle/`。两个实际反例（非 Linux 平台及资产许可证同级目录）均已修复，原 red 保留。实际 Base 静态覆盖 146 个外部节点、121 个安装项、25 个明确平台排除项；两项 MIT 未决导致 active 校验拒绝。该增量关闭离线分发缺口，不晋升 candidate、发布正式锁或签原生安装/法律充分性通过。
+
+独立 Q5 已取得官方 `pi-durable@1.0.1` 固定发行材料，核验 SHA512 SRI 和 243 个普通文件摘要；归档 SHA256 `c4bc1ea49653ee972045a5de755756b633e3be0e1528ae32f5f32d82e012db7d`。23 个公开 API/文档摘要和 6 个 Models hook 摘要另经静态复核归档。SQLite 公开 facade 可以设置并读回 WAL/FULL，但官方便利 opener 使用 NORMAL；自有惰性组合按[存储组合决定](durable-storage-composition.md)实施，最终在既有临时 HOME/XDG、断网 bwrap 和网络/子进程守卫下 101 项替身测试通过，稳定独立复审无开放 P1/P2。通用原型方法误认的实际 red、首次修复错误分类失败和原 96 项阶段结果另存，不累加；受限外层 NETLINK_ROUTE 失败未进入测试，不记产品失败。公开 storage.close 要求 Chord Context，工厂显式捕获它，不能用 undefined 或绕过 storage 的读取收尾；真实 owner/Context/SQLite 持久性未验。Harness.open 包含恢复写入，不能用于纯查询开库。
+
+Models 的直接参数缺 task/phase/attempt，hook 返回数组在 shallow copy 后失去数组身份。进一步 20 个来源摘要通过实际 Base 归档/SRI 和 durable SOURCE 补齐公开 Context signal 链：generation/compaction 的 hook signal 与对应 Models options.signal 静态为同一对象；deferred poll/cancel 缺对应 hook，恢复创建新 invocation signal。15 个 pi-ai 公开调用/普通内建 DeepSeek SSE 源码与 4 个支持摘要另存；streamSimple 同步返回公开事件流，异步 gate 需 outer stream，不能改为 Promise。hook 异常会被 SDK 捕获后继续，因此[自有身份组件](durable-call-identity.md)在任何 hook 验证失败后退役，并由 Models 侧 take 独立拒绝；该组件最终 74 项既有隔离守卫下的替身测试及稳定独立复审通过，归档 `durable-public-call-identity/`，不授予发送或计量权。完整网络资格、账本/发送事务和恢复仍开放，以上不签 SDK/SQLite/网络运行通过，T078、T082、T085 和 Full gate 未完成。私有归档包括 `pi-durable-fixed-published-source/`、`pi-durable-public-api-evidence/`、`pi-durable-model-identity-evidence/`、`pi-durable-public-signal-evidence/`、`pi-durable-model-call-protocol-evidence/`、`durable-public-storage-composition/`。
+
+旧 v2 的启动容量检查原在已分配租约后的预检 try 之外，容量已满这一确定未启动结果会留下 start_unknown。仅将三行容量检查移入既有预检：成功核实撤销自己的 allocation 后形成 failed/never-started 的有效收据，撤销失败仍保持受保护的 unknown，不影响占用容量的另一租约或 spawn 提交后的分类。真实旧源 red 两项保留，受影响三模块最终 33 项默认守卫下通过，稳定独立复审无开放 P1/P2，归档 `delegate-capacity-precheck/`。这不构成现代同 run 多轮或整个启动文件事务验收。
+
+共享预算的十个来源摘要另经只读核对，归档 `pi-shared-budget-reuse-evidence/`。reviewer 的账户审批权威、human scope 和单请求布尔 attempt 不等于 Durable task/phase/native attempt；可复用持久预留、不可逆发送提交、unknown 保留、墓碑和受限结算的机制，不能借同名字段恢复发送权。后续分别保留原委派权威和 Durable 自身存储，显式绑定同一可信任务预算引用；不建设全账户精确预算平台，不放宽严格输入资格。
+
+## 当前原生合成证据与 Durable 接线（2026-10-06）
+
+本节更新此前阶段中的待授权状态。用户已明确授权当前共享模型 SDK11 review02，plan SHA `463b663a3c224b855442efd22e8ad23e700b937c1d940a07087ed247dda8e2d5`；11场景已执行、稳定审查、root验收并归档 `risk-shared-sdk11-native-observed-review02/`，授权闭合。8场景使用官方SDK合成请求、3场景零调用；没有账户sending gate，不证明严格输入、真实模型/账单或human身份。实际默认Shared Model与独立进程路径观察不晋升产品gate。
+
+异步意图 SDK13 原review01在13场景观察之后发现父侧缺完整post inventory，保留旧执行且不记当前源码验收。两源最小修复取得旧源8项实际red，97项默认检查及独立稳定复核通过；同边界必要重跑沿用已有授权，review02 plan SHA `b29437c31a8346da3f44317fef9cd435bcce224420537322ffefda1f38425a17` 的13场景已执行、复核并归档 `risk-intent-sdk13-native-observed-review02/`。两次13场景分别保留，不相加。官方公开异步工具ID、并发和迟到resolve/reject属于该合成边界，UI/Provider仍合成，不证明真人或物理停止。
+
+用户已选择保留严格发送前输入上界；未取得计量资格前自动reviewer关闭。该取舍已解决，不再列为待用户技术决定。真实输入上界、隐私prompt、账户价格/额度及质量、canonical Host factory仍是未验证或未完成，不用fake资格替代。另一个 RPC5 当前材料已准备并复核：外层plan SHA `b3fec3bdd20af1b3ecac0905b924d80e12deb017d3057a3894c20f3ebc173911`、五场景、实际脚本命令及弱边界见[native-rpc-probe.md](native-rpc-probe.md)。该独立真实smoke尚待明确答复，尚未执行；不扩展SDK11/13授权。源/完整候选/系统manifest核对完成，不把外层manifest称为父运行时完整post inventory。
+
+Durable自有非发送账本最终76项默认隔离检查、稳定复核及root验收通过，归档 `durable-model-attempt-store/`；它用公开SQLite facade的callback executor做WAL/FULL核验、持久预留/sending/结果及受限结算，lost ack保留unknown且重放不重发。发送identity组件随后增加纯只读check，保留原identity对象引用并复核同signal hook存活；82项默认检查及稳定复核通过，归档 `durable-call-identity-live-check/`。旧74项另存。两者都不签owner、严格token或真实网络资格。
+
+公开AgentSession构造静态跟进的17个源摘要另归档 `pi-public-session-constructor-followup/`：直接公开构造器需显式seed原消息/model/thinking/sessionId，SessionManager.open会为缺失或空文件新建/迁移，不能作严格恢复；Session重新安装工具hook，工具必须有自有execute准入。受控资源/allowlist、禁cache warmer及streamFn组合是候选接缝，尚无构造或恢复运行证明。
+
+[Models派发设计](durable-model-dispatch.md)第一版已在自有Models/流与真实自有SQLite fixture下通过101项默认检查。root与独立稳定复审发现合法terminal reason/stopReason互矛盾、缺失字段可能读取Object.prototype getter两项P2，正在按具体反例修复；101项仅旧版本阶段证据，未验收该组件。后续以原bridge身份逐await复核、持久sending回执后原入口、terminal持久记录与明确结算后发布，以及close之后受限迟到事实为验收边界。正式完成仍7/100，T082/T085/T086及Base/Full完整产品、当前Linux真实总体gate保持未完成/false；没有部署、改上游或切换用户环境。
+
+执行分工以实际工具配置为准：本阶段root按会话模型负责关键判断；executor实际gpt-6.1-sol/medium实现和独立定点复核；scout容量不足，两次未能运行，已记录并以明确只读executor任务补充证据，不声称scout执行完成。原生合成、默认组件、静态证据与环境未验证四类记录分别保留。
+
+RPC5随后收到当前精确材料授权并执行：五场景均observed，各exit0、实际stderr0，正文0/0/0/0/1，abort-late实际signal aborted且迟到原ID确认不重启正文。root运行前后完整manifest、独立复审7源/3系统/选定候选及88项原工件、严格JSONL和五场景oracle均核对，root验收归档 `rpc-native-observed-review02/`，结果SHA `5af4650e9a25e8efb625c9fd3962020310eadb799fe0dac20754fc6e4610ccd6`，本授权闭合。父没有封闭post树/外层manifest运行强制，新post全集仅运行后观察；namespace未独立观测，EOF/settled/exit0不替代整进程树物理终止。真实用户前端/真人身份、账号/模型、产品权限与Linux整体沙箱仍未验证，T006仍含两项MIT来源范围、正式锁与整个组合资格，不由本五项或旧52项推导完成。
+
+Models派发最终119项默认隔离检查及稳定独立增量复审通过，root验收归档 `durable-model-dispatch/`。第一轮实际旧源红113项中12失败、修后113通过；复审同一终态P2发现persist await之后仍需publication前重验，第二轮实际旧源红119项中6失败、最终119通过。两份失败审查及101/113旧阶段原样留存，不相加、不把绿测试当审查通过。完整受限门面已组合原bridge身份逐await复核、三次相同准入、SQLite sending首次明确提交回执后原Models入口、终态先record/明确settle后发布、null/drift route unknown，以及关闭后的旧可信事实受限结算。继承getter/toJSON与合法矛盾/等待期间变更终态均有真实行为反例。源码只改自有模块，守卫/accepted依赖/官方SDK未改；原生Models/Harness、owner、严格输入/Provider全部物理尝试、实际账单/终止仍未资格，不勾T086或Full。
+
+T084进一步18份固定公开registry/tool/恢复来源静态取证已归档 `pi-durable-readonly-registry-evidence/`，无SDK或测试执行；[只读registry决定](durable-readonly-registry.md)明确空registry只带三类task、工具为空，CodingTools不自动安装，自有execute独立准入且首批replay unsafe。跨extension同名覆盖、safe恢复绕过beforeTool/参数处理及工具失败后generation继续均已确定；原source/可信任务授权必须由服务factory核对，native数字ID/callId不授权。真实受限IO与registry实现尚未完成；T083受理/原生task绑定静态事务切点正在继续核对。
+
+T083受理关联随后完成25份普通submit/task、20份公开自有Task/Doc及16份Storage/Db选定来源静态核对并分开归档。普通requestId不能比较完整输入，SubmissionId不等于永久原任务；root按[受理决定](durable-request-admission.md)选择公开Harness/Session同一commit中的自有RootTask与永久session Doc关联，Doc不复制任务执行状态，不另建SQL受理表或拦截Db.transaction。Chord公开copyJson提取可信Draft，业务输入仍拒Proxy/getter；旧持久初始化哨兵反例用本次公开initial调用标记拒绝，不嵌套snapshot。有限requests组件正在默认替身层实施；原生同批提交、完整RootTask正文、owner、取消/物理终止、崩溃及Full整体仍未验收，正式完成保持7/100。
+
+requests有限组件最终69项默认隔离检查及稳定独立复审通过，root验收归档 `durable-request-admission/`；新增三份自有来源，其他accepted组件/守卫/SDK未变。原65绿阶段发现初始化缓存Promise在close/当前权限/方法漂移后仍返回成功，真实旧源新增同4反例为65 passed/4 failed，复用缓存前入口check修复后同69全通过；原52/63/65与旧红不累加、不算旧版验收。工厂使用必填原opaqueContext、同publicSession原receiver、永久完整输入/原ID、同callback私有receipt明确回执，SDK未知异常封闭、lookup不推进/不把缺记录当可重提证明。所有证明仅自有串行原子adopt替身，无SQLite/SDK/owner/正文资格，不勾T083。
+
+进一步12份正文来源及后续依赖/SessionAPI静态准备确认task-ownedconversation可保留native ancestry，input用content，submit/wait会resume且有独立ack窗口；四直接依赖已在现有固定closure中，无需改原node_modules。下一步准备七场景公开createSession+SqliteStorage kernel探针，scope只真实Draft/同batch/持久原ID及lostack，seed conversation批次单列，不用Harness/registry/scheduler或模型。此新路径尚未获native授权；旧SDK11/13/RPC5授权均闭合，不复用。正常进程退出/SQLite读回不推导owner、崩溃/断电、整进程树终止或Full资格。
+
+Kernel依赖/SessionAPI两个22-pin静态准备包随后root验收归档；原直接4依赖、249锁边、公开BACKGROUND_CONTEXT和保留原Storage持久查询分别核对，没有执行SDK。七场景自有准备首轮76项默认替身绿，但稳定复审发现三个P2：当前case finally失败将已启动误记not-run、stdout/state普通比较混淆bool/integer、固定bwrap不支持clearenv。root已决定最小修复及真实旧源反例，旧76/旧plan未验收；实际normal-owner环境将重新prepare固定系统身份，不放宽pin，也不借旧native授权。当前状态见[native-durable-admission-probe.md](native-durable-admission-probe.md)。
+
+只读execute输入另有8份Durable/21份发布依赖和4份支持证据，共33-pin静态包root验收归档`pi-durable-readonly-execute-input-evidence/`。固定pi-ai会Convert/删除optional null，execute不保证原参数值；root决定原AssistantEntry call、持久intent与finalargs完整规范值一致才进入独立control。新增[有限factory设计](durable-readonly-factory.md)明确唯一自有extension、4task/2tool、unsafe replay、公开只读Tx.entry与self/parent getTask、不透明单次ticket、有界固定输出；实际授权控制面/根保护backend/SDK组合仍未实现或资格，不勾T084。
+
+Kernel review02随后83项默认替身绿，root关键异常路径及稳定独立复审无剩余P1/P2，准备层验收归档`durable-kernel-native-preparation-review02/`。当前正常属主plan SHA为`843f3fabe8913b906d840c02afa944d2c878ea15b791b3a806a2148f04077424`；已申请七场景独立原生授权，尚未收到/执行。源码、原错误、旧76三P2、真实旧5+1失败、新83绿和固定材料一并保留；默认数字不构成SDK观察，正式7/100与产品gate不变。
+
+有限readonly factory继续默认mock实现，root将原ticket消费范围定为本模块跨factory共享、close不重置，仍不签跨进程once。设计独立复审发现公开Entry读callback需实际恰一次及原私有冻结回执身份；已补live窗口、outer settle封闭和skip/replace/late零prepare/execute，代码修复/最终验收待完成。此有限registry首批没有Models身份hooks；后续完整Harness工厂必须明确组合原generation/compaction身份bridge与Models119派发、同一固定registry/source身份，不能在冻结后随意加扩展，也不能因本factory默认通过就宣称能发送模型。该集成属于T084/T086整体剩余条件。
+
+当前kernel7授权已收到并实际执行，首场失败及后续两次同边界诊断完整保留；最新document-compare阶段失败，六项not-run，不把83项默认或越过前置步骤算native通过。正在按公开JSON持久语义定位，source/oracle/正常值类型约束不放宽；每次one-shot新目录prepare全部材料。有限readonly factory最终140项守卫默认通过、root全文关键审查和稳定独立增量复审无P1/P2，验收归档durable-readonly-factory-default-review02/；旧134因返回rejectedPromise未观察的P2未验收，真实旧138中3项unhandled失败保留，不相加。普通同realm原Promise仅附双undefined handler观察且仍同步拒绝；未知constructor/species/subclass固定拒绝，但不能普遍消除后台异常。controller/业务根/backend/owner/RootTask以及Models同registry组合仍未资格；T084和正式7/100/products不变。
+
+
+## Durable公开kernel七场验收与后续正文边界（2026-10-06）
+
+最终review05 plan `fa67ab0bcfd1016c408547ac5f9b1188461041e1e9df98fef76d78eddf298ab8`实际七场observed/complete/exit0、stderr0；原typed全值stdout/state/oracle和109项封闭工件一致。parent运行前后及root额外正常属主全量只读核对257项Durable/18498项closure/七项源/system通过，稳定独立executor复审限定范围无P1/P2，root验收归档`durable-kernel-native-observed-review05/`，本七场及同边界修复授权闭合。原三次首场失败及后六not-run各自保留，review03源副本明确为原SHA核验的精确重构，不冒称当时捕获。
+
+必要修复后的纯JSON32项、parent85项及requests79项默认检查各自通过，独立复审和原red记录分层归档，不合计或反推原生证明。完整持久JSON核全键/类型/值/顺序，只忽略合法普通/null原型和对象键顺序；requests同步普通Promise拒绝观察仍不授权。持久oracle用原Storage当前同handle，无cold reopen/owner/Crash/断电资格。
+
+进一步13份公开Root提交/Inbox/Entry静态材料已验收归档`durable-root-submit-input-static-evidence/`。queued可观察当前Inbox完整content；placed/done可按原Sub.entry读原UserEntry；无entry的unanswered可能无完整原content，whenBusy只保留SDK规范后的模式。publicsubmit与持久保存SubID是独立回执窗口，缺记录不证明未提交；只读观察不用submit/wait/resume。接下来由主代理确定自有RootTask完整输入绑定、原ID未知回执、phase进度与停止语义，再做默认替身实现；不引入第二任务队列。Harness/正文/owner/backend/Models同registry组合、真实模型/账单和严格input_tokens仍待资格，自动审核关闭，正式完成7/100与全部产品gate不变。
+
+## 原提交内容观察与同一注册表接线（2026-10-06）
+
+原Submission纯观察组件最终94项默认隔离检查通过，root关键源码及稳定独立增量审查无剩余P1/P2，归档`durable-submission-observation-default-review02/`。初版68项绿之后发现未使用的Entry/Inbox也可能携带非法UserInput并被接受；真实旧源同94项70通过、24失败，修后94通过，失败审查和原日志分别保留。全部原UserInput按固定公开text/image块结构检查，目标仍比较原完整字符串；不把可见文本、requestId、byTaskId或内容观察当原授权。所有返回的originalEnvelopeVerified、authorityVerified、mayResubmit永久false，不读SDK/数据库、不恢复或重新提交，不勾T083/T084。
+
+同一只读extension与Models的新增显式工厂正在默认替身层实施，保留旧六字段无hooks工厂。构造时登记两原公开HookRegistration并使用同一私有原bridge；主代理明确原配置引用检查、外来同步检查后的最终纯复核，以及关闭后仍可限定结算的factsOrigin链。设计旧P2及修订证据归档`durable-model-registry-composition-design/`。额外七份固定来源确认公有snapshot没有agentHooks/taskHooks解析接口，归档`durable-registry-hook-resolution-static/`；只用公开installed/extension/tasks/task与原extension.hooks核结构，不能导入私有helper或冒称真实conversation已选中hooks。另复用已验收的公开TaskRuntime类型，agent(context)确实存在且固定当前phase选择；本构造工厂没有TaskRuntime/Context，接口存在也不等于已核真实选择。构造接线实现与最终审查尚未验收，完整RootTask、单写owner、可信只读backend、Harness和模型资格保持开放。
+
+首轮模型接线同四模块404项绿后，root与独立稳定审查共同发现最后snapshot回调可改变readonly原定义/方法而未复核的P2；404只记阶段。实际旧源新增71项中63通过、8失败，其中七种最后入口变更各发生一次合成底层发送，另一项check错误返回成功。唯一writer正在补仅新有wiring分支的私有finalSourceCheck，不改原provider/bridge/SDK或旧140断言；失败报告、原c747/ffe快照与日志保留，修后最终检查与稳定增量审查尚待完成。
+
+单写owner的五模块静态复用图已验收归档`durable-owner-reuse-static/`，没有锁/进程运行或Node资格。[原锁持有链决定](durable-owner-custody.md)选择专用Python监督者及Node共享同一open-file-description；复用close-only instance_lock，不由父调用LOCK_UN解除仍活子写者的锁。原controller/writer alive/unknown、存储别名或丢回执都不能靠PID、心跳或JSON越过；先所有权再开库/对账。此设计正在独立复审，首个记录接口和实际跨Node持有链尚未实现/资格，T081/T090保持开放。
+
+模型接线P2随后最小修复，最终同四模块412项通过（1902.701155ms），root稳定增量及独立executor复审无开放P1/P2，验收归档`durable-model-registry-default-review02/`四十输入。新增有wiring分支在最后外来snapshot回调后核原完整source/method/token；旧无hooks140、bridge82、provider119源码和断言保持，旧404与实际71中8项失败分别留存。此默认组合不证明真实SDK phase选择/全部发送路径、owner、业务根、严格token或Full，正式7/100与产品gate未改变。
+
+owner持有链设计独立复审发现释放顺序P2：最后锁先close再写released会留下锁外写窗口。root明确原controller仍持EX锁，writer退出/保护IO结束后原子persist+文件/父目录fsync released，确认后零owner写，最后close-only退出；未知回执不finally补造。设计增量复审无开放P1/P2，初版原文与失败报告保留，归档`durable-owner-custody-design/`九输入。首个记录接口仍需root冻结，Node共享fd、双进程/SIGKILL、cold owner恢复尚未运行；设计通过不勾T081/T090。
+
+2026-10-06，Linux owner 记录纯编解码已在稳定源上完成默认验收与独立复审：65 项通过，当前有界范围 P1/P2=0。首轮 54 项中的未初始化 slots 异常和随后 caller 异常上下文 P2 均保留原始失败与修后证据；同一 65 项回归在原完整实现上为 59 pass/6 fail，修后为 65 pass，阶段不累加。固定错误只清自有 Conflict 的 cause/context，不修改 caller 异常。归档 `durable-owner-record-default-review02/` 共 31 输入，codec 只捕获/编解码闭合 Linux 元数据，三个权限属性始终 False。它不证明 OS/Node 持锁、所有者准入、数据库或 T081/T090；原锁下首次创建与既有只读记录范围另见 `durable-owner-record-scope.md`，实现仍待设计复核。
+
+首次 acquired 记录/既有记录只读范围随后完成稳定默认验收：同一组合63项 owner-store +65项 codec 共128通过（0.76秒），root和独立executor限定范围无开放P1/P2，归档 `durable-owner-store-default-review03/` 二十六输入。原123项绿因权限政策误作自有fd清理依据未验收；最小 raw 物理回执修复前相同127项为123通过、4失败，修后127项又因借用 parent 句柄跳过原producer出口未验收。恢复原parent CM显式出口前相同128项为127通过、1失败，首失败均按真实日志保留，不把未执行的后续EBADF断言当失败点。旧123/127阶段独立归档，数字不累加。直接自有句柄raw身份与严格准入分开，borrowed parent仍由原producer关闭；未知不盲关、不重开、主异常优先。共享instance_lock仅增加create=False/NONBLOCK，既有继承锁兼容用例1项另通过，未并入128。
+
+上述默认层的flock/进程观察为替身，没有Node/SDK/数据库准入、旧owner接管或真实内核持有链资格。官方Node24同tag和Linux fdinfo/UAPI静态证据分别归档；低号fd3仍是候选。新增 [六场基础探针](native-owner-fd-probe.md)的自有默认组件已验收：76 项 Python 默认检查（1.05 秒）和未改动的历史纯 facts Node 20 项分别记录。首版67／20绿后发现 HUP-only readiness 和信号前原driver链核验两个P2，原完整源码同新76项实际7失败、69通过，修后76通过；root及独立增量复审无开放P1/P2，归档 `durable-owner-fd-probe-default-review02/` 三十二输入，旧未验收阶段另留存。隔离driver保留namespace init，只拟通过原身份pidfd结束controller或Node，用原锁路径EX/NB竞争和后代原device/inode观察核具体路线。正常属主 plan `d857a88862a7581b5969e0a7436f72fdf874c4b3b70e1b34d21909612d7cfda2` 已准备并完成root／独立材料复审，十三输入归档 `durable-owner-fd-native-prepared-review02/`；native未执行，独立授权请求待答，已闭合SDK7不复用。当前无Node的OwnerRecordScope finally不能作为活写者生命周期；产品controller、原writer/owner ready、完整持久结束和恢复仍开放。正式完成7/100及产品gate保持不变。
+
+压缩恢复的新增九源公开接缝静态材料另归档 `durable-compaction-recovery-public-seam-static/` 十四输入。公开PhaseHandler/TaskRuntime确实提供taskId/conversationId/signal，但当前固定builtin recovered summarize在completeSimple前没有实际调用的通用恢复hook；Session baseContext发布不提供该原invocation signal。既有bridge的未匹配拒绝保持正确，不能从数字ID、checkpoint或输入hash补资格，T086整体仍开放。随后十四份所选公开来源支持有条件的新固定 RegistryReader／完整 TaskDefinition 原phase转发路线，归档 `durable-public-phase-forwarding-static/` 十六输入；六份 invocation 边界材料另归档 `durable-phase-invocation-static/` 八输入。同 invocation 的多 phase 和 running retry 可以共用同一 runtime／Context／signal，不能把 signal 当调用编号；waiting／恢复后另建 invocation。该结论是公开配置可行性，不改变已接受原factory、不热换registry或修改宿主。
+
+主代理已冻结 [公开phase转发组件](durable-public-phase-tasks.md) 的有界设计，七输入归档 `durable-public-phase-tasks-design/`；正在仅自有两新增文件中实施。完整保留原 definition／phase 集合、initial／abort／migrate／hooks、原receiver和原参数，目标phase每次用不同私有lease关联原四字段identity。顺序复用signal允许新record对象；旧identity失效、active重叠拒绝，普通取消不关闭其他任务。原57稿取消全组件关闭P2及c70修订保留，最终00c0文档复审无开放P1/P2；实现／真实SDK／新Reader尚未验收。公开身份不产生永久attempt、发送序号、授权或预算；unknown仍阻止后续付费发送，严格input_tokens未资格前自动审核仍关闭。新的Reader还须核真实ToolExecutionApi.registry与所选snapshot身份，不能直接包装旧Reader后伪报原API；此接线独立设计，不以phase默认检查替代。
+
+公开 phase 组件随后完成默认稳定验收，源9003／测试ea0f／设计f8e7：同67项真实旧完整c89为15失败、52通过，最小修复后67通过（118.857414ms）。首次原身份在外来verify前纯捕获，所有原函数入口使用局部捕获Reflect.apply；原52断言保持。root和独立executor增量复审无开放P1/P2，二十四输入归档 `durable-public-phase-tasks-default-review02/`；原37/39/40/52及未验收P2另存，不相加。它仍不是实际Reader／SDK／发送权限验收。selected Reader工具原身份九pin静态证据十一输入另归档；新的工具必须核真实frontsnapshot且独立核原base来源，不能改写api.registry。
+
+同类原函数动态call入口的新增静态证据影响六个自有模块，主代理已决定仅捕获原生Reflect.apply、保持原接收者／参数／事务与日志顺序，并冻结自己新建的两个hook函数；submission-observation无此类入口。完整旧源反例及最小修复正在默认层实施，两项既有suite明确沿用自有临时Node builtin SQLite，其他入口反例为fake；没有SDK／业务数据库／模型资格。历史默认和原生事实保留，不自动覆盖改过的新源。
+
+fd六场独立授权已收到，按正常属主固定d857 plan实际执行，六场均started／observed／complete／exit0、stderr0，materialIntact=true、parentFailed=false；稳定复审和归档待完成。已观察入口fd3 CLOEXEC、后代同inode零匹配、原controller或Node退出后的具体锁竞争结果，以及错误／高号fd拒绝。controller退出后的孤儿Node状态exitCode=null，namespaceTermination仍unknown；这不证明产品owner ready／released、全部树终止、数据库／恢复或Full资格。正式7/100与产品gate未变。
+
+fd六场随后完成root／独立稳定复审，限定范围开放P1/P2=0，原138节点工件树与严格stdout／state／oracle、六份argv、原材料和系统pins均一致，八十九输入归档 `durable-owner-fd-native-observed-review02/`。本次原生没有失败或重跑；四正例CLOEXEC和固定后代零同inode、两负例拒绝，以及busy／busy／free原锁切点有实际证据。孤儿Node waitstatus仍null，未保存每次pidfd poll/proc退出分支trace，不声称实际HUP-only，namespaceTermination始终unknown。本六场授权闭合，不扩到产品owner／DB／全树或Full；正式7/100与产品gate不变。
+
+原函数入口六源增量随后完成默认稳定验收，root读完整74点diff及实际counter，独立executor复审开放P1/P2=0，六十输入归档 `durable-original-invocation-default-review01/`。完整旧六源与最终同六测试在private own-only bundle实际597通过／7失败（9956.4992ms），当前六suite同次604通过（9779.813876ms）；受影响ModelRegistry另次71通过（438.083443ms），不合成同次675。原修fixture前旧红、603／1模型副本引用断言错误及bundle漏自有metadata未进入suite均保留并分层；原597断言文本保持。两既有suite包含获准的自有临时Node builtin SQLite，新七例为fake，未执行SDK／业务DB／原生持有链／模型。历史native只证明各自当时归档源码，新六源没有自动取得当前SDK资格。
+
+[固定phase Reader设计](durable-public-phase-reader.md)已完成有限设计复审，初c0稿首次foreign后才捕获两token原图的P2保留；修订0bd23明确首次外来回调之前纯capture原图／描述符，设计开放P1/P2=0，九输入归档 `durable-public-phase-reader-design-review02/`。公开订阅／disposer五源静态材料八输入另归档；通知后SDK稍后读snapshot，close不造publication／host停止。独立Reader新两文件正在默认fake层实施，完整phase Models工厂另有主代理草稿，最小私有接口／ready／不循环检查图／bridge Context getter后的最后跨源纯核尚待冻结，不据草稿开始集成。正式7/100、产品gate和严格计量前自动审核关闭均不变。
+
+固定 phase Reader 随后完成稳定默认验收：源766111、测试1e4bd、设计37e934，root完整源码／测试及独立executor复审开放P1/P2=0，二十七输入归档 `durable-public-phase-reader-default-review01/`。首次完整46项实际45通过／1失败，订阅返回的原disposer未在后检前保存，导致原清理计数为零；最小修复后interim46通过。补齐选定方法owner以上完整非通用继承链与新TaskDefinition闭合结构后，完整首次源同最终58项实际48通过／10失败，最终58通过（516.95001ms），各阶段不累加。新增结构限制只用于两个新token，不误收紧原Root／builtin；只冻结自有容器，不修改SDK项目。它不证明真实Harness选择、Models／工具组合或发送／预算／owner／Full。
+
+完整 phase Models 的八pin接缝静态材料十输入另归档 `durable-phase-model-factory-seams-static/`，旧Reader 0bd23原字节与当前37分开保留。[完整工厂设计](durable-phase-model-registry.md)初轮发现两个P2：Reader自关闭未耦合整厂，以及最终检查外来回调可重入保存的phase token。主代理修订为私有inner Reader、实际outer front原身份、统一private qualify(checkBase)覆盖工具每次lexical检查、ready／published分离和仅原phase.check同步调用的可信窗口；还须独立修订复审后才能开始组合实现。预算仍只在运行时原envelope产生，关闭后迟到事实独立记录；既有六／七字段入口不改。正式7/100、产品gate与自动审核关闭不变。
+
+完整设计随后收敛为db8dde：初轮两P2关闭后，新增外层成功订阅回执在跨源后检失败时的一次清理义务；原0e26、c9及各轮报告均保留。最终稳定最小增量复审开放P1/P2=0，十九输入归档 `durable-phase-model-registry-design-review03/`，仅设计验收。Reader组件已验收，root在状态与任务包中授权按该冻结稿实施自有registry／新增组合默认测试；稿首的未授权说明保留为初稿阶段事实，以本记录为当前授权状态。provider、phase Task／Reader、SDK和原六源修复算法不改；只运行受影响readonly／旧Models与新增fake组合，不提前启动SDK／模型／owner，不热换或部署。实现、稳定复审、公开SDK全phase验证及产品资格仍须分别完成。
+
+新增公开driver静态图二十三输入归档 `durable-phase-model-public-driver-static/`：实际Durable1.0.1／pi-ai与chord1.0.2，Harness.open可公开注入原Reader／Models，原submit、running retry、waiting新invocation及真实summarize恢复路径仅作可行性图，不是十一场冻结探针。实际generation不提供maxTokens，公开settings.stream也没有该field，现有严格Provider因此拒绝；不靠未声明设置／手写checkpoint补覆盖。[自有有界输出缺省草稿](durable-sdk-output-default.md)拟从固定公开model.maxTokens为合法缺省产生规范值，由原三次授权／账本审查，不当作预算或实际输出／计费证明，尚待设计复审。原有fake组合仍独立推进，SDK资格未通过。正常thinkingLevel=off不生成own reasoning:undefined；未扩大JSON或可选undefined接受范围。
+
+owner持有链文档另作两处事实增量，原0a311与当前352c原算法可逆一致，七输入归档 `durable-owner-custody-fd-evidence-increment/`。将首稿无Node基础实测改成历史事实，并明确已验收FD6仍不证明长期产品owner／活Node finally／ready／released／SQLite／冷恢复或全树IO，原native授权保持闭合。此为文档证据维护，不新增产品或正式任务通过。
+
+SDK simple 缺省适配设计随后收敛为76aca，root与独立executor限定复审开放P1/P2=0，十六输入归档 `durable-sdk-output-default-design-review03/`。原00eff规范化会掩盖缺省与own同cap之间的来源漂移，a74补原有序keys／prototype／data descriptor／原值引用绑定，最终补首个ai stream factory前纯捕获、返回后立即纯复核再bridge的义务；三轮设计及原文保留，仅设计接受。固定公开model.maxTokens是交给Models的参数选值，后续官方context／thinking可调整，不证明实际输出／账单硬界。旧严格入口保持显式cap，未知字段／own undefined不扩大；provider实现须等当前phase工厂稳定验收后由单一writer承担，未启动SDK／模型或复用原生授权。
+
+phase组合首轮c3／eac同次263项绿（原141＋71、新51）随后独立审查发现工具Context.abortSignal getter可同步重入保存的phase handler，P2=1，三十七输入归档 `durable-phase-model-default-unaccepted-review01/`，未验收。此前SyntaxError退出与两次夹具误期单列，不当产品red。root将两处公共信号读取纳入新分支私有readContextSignal的同步reading门，保留原getter一次／原引用／caller局部取消，finally复位且不跨await、不改SDK或旧入口；db8原文与4797中间捕获保留，522b设计增量限定复审开放P1/P2=0，十输入归档 `durable-phase-model-tool-getter-design-review01/`。只授权同registry／新增组合测试最小修，完整旧c3与相同新增反例真实失败及修后稳定检查尚待完成；provider缺省仍未实施，正式7/100／产品gate不变。
+
+原SDK retry分类的新增六源静态材料十五输入归档 `durable-phase-retry-public-static/`。公开isRetryableAssistantError先排除quota／billing，再匹配503等固定transient文字；当前自有Provider将errorMessage清成dispatch-unknown，这条正常错误路线不会触发原SDK running retry，aborted同样不重试。这是所选源码的静态推论，没有执行helper／Harness或观察实际retry。root保留错误清理与关闭隐式重试的约束，不为探针伪造afterResponse变更或手写checkpoint；先前十一场候选图的自动retry正例须重新设计或明确受限，未冻结或取得授权，不据此勾T086／Q5。
+
+显式用户retry公开接缝另五源调查十二输入归档 `durable-explicit-retry-public-static/`：所选SDK只有input／write submission，没有retry()／continue()或对应request kind。同conversation的新明确input会产生新GenerationTask／invocation；同旧requestId只返原ID且不比完整body，不重做failedturn，自有完整输入幂等冲突约束仍必须在前。新意图不能作为same-task自动retry证据，onYield成功回答hook也不冒充失败重试。此静态图未执行SDK、不发授权或释放unknown，Q5仍按真实覆盖分别判定。
+
+工具getter P2随后在完整旧c3与同最终271项上真实266通过／5失败（5739.674265ms），修后0b13／f984同次271通过（5323.801375ms，原141＋71、新59）；root最小diff／全部新增8例／实际首断言与独立稳定增量复审开放P1/P2=0，二十八输入归档 `durable-phase-model-default-review02/`。三处phase反例旧首失败handler=1、嵌套工具首失败SDK读数=4、抛错getter最后检查未拒分别保留，不夸未执行的后续旧断言；修后post-getTask保留已发生1次读取。原51断言前缀及旧两suite字节保持，真实取消局部拒不影响他任务。仅默认phase组合验收，SDK／owner／账单／Full未资格；root随后授权76aca缺省设计的自有provider／新增fake测试与新phase工厂一处dispatcher选择，旧入口和错误清理不改，文档初稿未授权文字以此及状态为当前授权记录。
+
+compaction retry另两源静态材料十输入归档 `durable-compaction-retry-public-static/`，原summarize也使用相同classifier与公开retry策略，固定dispatch-unknown不进入再次summarize；retry.enabled=false可关闭attempt重试，stream.maxRetries是独立一层。源码正例的summarize→retry→summarize不再经过beforeCompact，不能从attempt字段授新权。未运行helper／SDK或实际配置解析，正例资格仍开放，不将Generation结论直接冒充compaction实测。
+
+owner启动复用的有界静态图十四输入另归档 `durable-owner-launch-public-reuse-static/`，原已验收FD6具体路线为先排他预留fd3、原lockfd dup2到自有槽、pass_fds仅3、两侧close-only，Node固定后代不带原inode；原controller／Node birth与signal前链分开。探针guest路径／命令文件不提升为产品启动协议，现有OwnerRecordScope没有公开launch／update／ready能力，三个资格flag恒false。未重扫138工件或执行任何OS／SDK；产品launch、bound回执及ready／released持久顺序仍由root另定，原FD6授权保持闭合。
+
+Harness＋phase Models候选矩阵随后十三输入归档 `durable-phase-native-candidate-static/`，四必要公开resolveSettings／close／scheduler来源与原SOURCE匹配，原十一候选按初次／压缩／授权／ACK／工具等待／新意图／取消／恢复等真实公开切点收敛，仍未冻结plan或执行。自动retry正例不可在当前隐私清理和retry=false约束下合法证明；实际Runtime／Context完整引用没有公开观测就记unknown。真正summarize恢复仅在原select持久checkpoint、发送前hold且响应原abort、公开close／reopen保留state的条件下可行，必须实测，不手写checkpoint或凭ID补grant；未知sending恢复只拒绝。旧原生授权全部闭合，完整owner／RootTask／业务backend／计量与Full不扩。
+
+SDK-simple缺省组件最终6236／b3fd／6386稳定增量开放P1/P2=0，三十六输入归档 `durable-sdk-simple-default-review01/`。完整首版9ab与同最终66测试真实316项为313通过／3失败（6778.686028ms），修后同次四suite316通过（7468.479321ms，旧120＋71＋59、新66）；factorythrow／畸形stream旧首错误原文与Contextfactory旧stop结果各留存，不夸未执行后断言。缺省cap与raw options完整来源、首次factory前既有bounded request基线及一次allocation异常修复接受；旧strict／三原authorize／持久ACK／unknown与facts算法可逆不变。仅默认组件验收，实际SDK、输出／账单／严格输入及Full未资格。root已授权 [八场Harness基础探针准备](native-durable-phase-model-probe.md) 的自有新增parent／guest／fake Python测试／manifest-oracle，旧SDK／runtime／守卫不改；在准备与稳定材料复审完成前不执行SDK或请求笼统授权。正式7/100／所有产品gate／自动审核关闭保持。
+
+八场公开终态与非noop压缩契约十三输入归档 `durable-phase-native-eight-public-contract-static/`。原manual成功使用submissionId并核write.done.entry；completeSimple授权拒绝抛错走faulted，正常resolved模型error走failed，waitForTask返回完整terminal record；默认fixture依此修正，不放宽SDK。两条idle被动user write、keepRecent0／reserve80／Modelcap64／window8192支持原selectCut末user且前段非空，实际summarize仍待探针。原publicDb JS数值类型仅未来严格读回才有运行资格；同Db捕获不扩initializer或调用storage私有字段。只有静态输入验收，没有SDK执行／新原生授权／产品资格。
+
+八场自有parent／worker／fake Python准备组件首轮79默认通过，稳定定点审查发现真实stdout使用bytearray绕过只对bytes执行的UTF-8检查，开放P2=1；五十三输入归档 `durable-phase-model-probe-default-unaccepted-review01/`，未验收。root授权仅parent／新增测试最小修复：完整旧516源与同最终84测试真实81通过／3失败（0.79s），实际fake capture旧结果observed／complete与应拒的failed／oracle冲突，另两bytearray编码反例DID NOT RAISE；修后8ee2／309d同84通过（0.74s），不同执行不相加，旧失败后的raw/state断言未执行。worker／fixture／runtime／守卫字节不变；当前稳定增量复审待完成，没有actual prepare／SDK／新原生授权，产品gate及正式任务不变。
+
+UTF-8实际capture的稳定最小增量随后P1/P2=0，26pins及一行生产／五新增检查可逆一致，三十二输入归档 `durable-phase-model-probe-default-review02/`；原不接受53输入和79历史保留。同84项81通过／3真实失败至84通过仅证明自有fake默认准备层。root现授权正常属主仅read-only prepare，实际257／18498候选清单及12自有来源／系统身份须核固定plan；尚未运行SDK或申请新原生授权。另十八输入归档 `durable-summary-recovery-exact-public-static/`：无Harness.reopen方法，fresh public storage可先读真实running／summarize，Harness.open转pending保留checkpoint且暂停；getTask／inspect可被动查询，resume／wait才启调度。公开close要求原signal-aware hold释放并join成功，fresh invocation重建signal／Context，CP不持完整envelope／registry源码／模型grant，runtime.now还可能改变消息时间。恢复授权及attempt算法仍由root冻结，不从同task／attempt1补发或重建原引用；这些均为静态source事实，产品gate不变。
+
+八场实际只读prepare正常属主exit0／stderr0，完整257Durable／18498closure清单匹配，12来源／2source chain与固定系统身份核验一致；fbfea36d7b76c3c32d14fbd07bf5d025756ecca6152ddc5d465bfda434186a0f plan3014516字节只含原0700目录／0600单链接plan。root和独立具体材料开放P1/P2=0，二十八输入归档 `durable-phase-model-native-prepared-review01/`；系统UID受限视图映射为65534的差别在正常属主只读层核正，未放宽检查。当前已按AGENTS.md:42请求单独八场断网合成SDK／SQLite授权，尚待用户明确回复，不执行native；历史FD6／kernel等授权仍闭合。所有原准备与失败工件保留，当前0a7文档具体命令／范围／weak boundaries可审，正式7/100／产品gate／自动审核关闭不变。
+## 当前八场原生与三场恢复准备（2026-10-06）
+
+fbfea 八场明确授权后实际一次执行全部 started／observed／complete／exit0／stderr0，root 与独立 executor 稳定原工件审查开放 P1/P2=0。七十三输入归档 `durable-phase-model-native-observed-review01/`，51 普通工件／73 私有目录及 67 pins 闭合，原 typed stdout/state 各自全 oracle 一致；原 plan 不改，授权闭合，无修复或重跑。原成功／合法错误仅一次底层 Model，拒绝零副作用；丢失及重放原 sending ACK 后 Model0，unknown/calls1/reserved `"10"` 保留，未退款。真正压缩核原 summary submissionId→entry/head beta。默认 84 与原生 8 不相加，不扩 RootTask／owner／恢复／真实模型／token／费用／Full 或正式任务。
+
+三场 orderly close／公开 fresh open 恢复设计的 mode=open 错误已在实现前改为原账本 `active`，原失败设计与增量复审各自保留；接受设计八输入归档 `durable-summary-recovery-design-review02/`。新增五文件默认 64 通过（0.58 秒），原 59 另次保存、无行为 red；root 全关键源码与独立稳定组件开放 P1/P2=0，四十七输入归档 `durable-summary-recovery-probe-default-review01/`。真正 CP／signal-aware hold、完整 close＋held-settled 双 barrier、fresh Db／active、paused/passive0／explicitresume、全 canonical input／新原 signal 与 unknown 预留均已写明确断言，尚待本组三场原生运行。实际只读 prepare 0／stderr0，完整 257／18498 清单、十二来源／两个 source-chain／固定系统匹配，当前 d61799a7451795436d280e6805f1359b9901ab34326edf7ae2b33dbf7473db62 plan2997708字节只含私有 plan；具体材料独立审查进行中，尚无此三场授权，不复用八场或 FD6。
+
+MCP stdio JSON 的有界静态 P2 已交唯一 writer 修复：共用 strict UTF-8 decoder、全层 decoded duplicate、NaN／Infinity／overflow finite 检查，固定无原文异常，业务 schema／handshake／控制面权限不改。完整旧源与同最终 35 项实际 24 fail／11 pass 至当前 35 pass（0.39 秒）；原 5＋新 30，首轮两个 stdout fixture 错误单列，不作为产品 red。稳定 source／tests 已 STOP，独立最终增量审查尚待完成，不冒称 supervisor 权限绕过或真实 MCP／宿主资格。
+
+当前正式 7/100、所有产品 gate、reviewer AUTO OFF 保持。四类记录分别保存已完成的有界证据、进行中实现／审查、真实失败待修与环境／计量不足未验证；未验证项不改成通过，也不阻塞无关自有实现。
+
+MCP JSON 修复随后在稳定 source／tests 上完成 root 与独立最终增量复审，开放 P1/P2=0，原 pre-action JSON P2 闭合，三十五输入归档 `delegate-mcp-stdio-json-default-review01/`。移除自有 helper／math 并逆转两 callsite 精确恢复原 378；普通 finite float／startup 无 LF 行为保留，只在解码前拒不合法 wire，不改 schema、控制权限、output 或 wrapper。实际同 35 项旧 24 fail／11 pass 至新 35 pass 分别保存；不称真实 supervisor 权限或宿主 qualification。恢复三场具体 d61799 材料也已独立 0P1/P2，三十输入归档 `durable-summary-recovery-native-prepared-review01/`，当前等待本组三场明确原生授权，其他实现继续。
+
+
+2026-10-07 B3下一完整包已起草：[origin production](durable-installed-origin-production.md)拟在同包完成显式Full四role材料声明、fixed五键canonical envelope、producer/bundle/精确expected集合/原seal/activate/status读回，尚未授权代码或正式锁。限定静态import/分发缺口4输入receipt `377c28e0bb1e7169c5d1d0d73dd85909440769329ee17778a97785fc3122785e`确认metadata调用/module-scope32节点、三第三方roots；当前modern仅Base，缺15个自有module和固定supervisor/schemas/pi-lock.schema.json，不声称动态/第三方/整个controller完整闭包。结束affected03 fixture原字节/软硬链/权限/UID保留后只回收其独占tmp，12输入72dc3fd3留真实审批deadline未启动与唯一分拆retry成功；不改guard或未知tmp、不称连续持有。新候选在有限调用点核对后由root决定exact上下文、声明/schema/格式/cap与写范围；代码/角色数据合法不产生来源或初始化权限，所有产品gate、formal7/100、AUTO OFF和Recovery3待答保持。
+
+2026-10-07 B3已由root冻结为a21fb0cf792617f21d59db12a9e3ac370b29476ccd4f8b4206144e4cb91194cf/19149B，36真实输入receipt `59292bcde6e3dc3a90d948e5811469dc2bd303e6b74483304f522ecc51aefdc3`保留7preimages、3new缺席事实、21readonly/test范围及准备/两次collector失败后第三次限定修复证据。root已明确全部接口/lexical18/raw16MiB独立编码域/同capture上下文/order，唯一executor配置gpt-6.1-sol/medium实际实施10file，不写旧tests/metadata/guards/正式sources或上游。默认验证冻结新suite加10旧files/4targetnodes、临时/tmp独占自动清理；代码结果待STOP稳定验收，32literal不代表完整动态或第三方/解释器/执行来源资格。候选doc的首次未授权说明已按真实前像5846f0f0记录后更新，freeze选错不存在pi_selection_data.py只导致root工件准备失败、preflight无archive，纠正实际pi_capabilities.py后成功，不作产品red。
+
+Recovery3当前d61799/2997708B已收到call_YvGnmZwFtYbFaMxJnSpVH8Eg明确三场及同边界必要重跑授权，scout配置gpt-6-luna/high按原固定命令采集真实执行；这不是新设计授权、不扩场景/guard，不复用fbfea/FD6。原三个目标的运行证据此刻待回，Formal7/100、产品gate、AUTO OFF不变。
+
+
+2026-10-07 Recovery3 d61799明确授权后一次按固定原run-native执行，UID/EUID/GID1002/1002/100，2026-10-07T08:05:26.882898Z–08:05:34.954913Z；inner0/stdout0/stderr0、parentFailed=false/materialIntact=true，全3started/observed/complete/exit0，12own来源与原plan端点相同。root核全部实际raw/state和typed oracle/dynamic规则，scout核48工件21files/27dirs字节副本，46输入receipt `8059bd7f417bca109a35c94726dc33d986fcb220f346924e89eca29be6e1f879`；固定task10/conversation1/history6,8，freshDb先running/summarize后paused pending/passive0、explicitresume；成功仅新预限定A2一次complete并settled2/calls1/reserve0，summary12→entry11/head8。拒绝prepare/send0；unknown原A1 sending/reserve10/calls1在close/passive/final恰等、无退款/A2。namespaceTermination/runtimeReference/chordContextReference仍unknown，不推allPromise/物理停止，非crash/takeover/费用/严格计量/产品资格；未修/未重跑，本exactgrant闭合，原default64与native3分列。
+
+B3实施前原oldtest最后函数的整receipt schema固定hash c6ce848…必与合法optional durable_owner增量冲突。root以实际doc/oldtest/two schema前像125a6816保存并实际标准JSON-only历史verifier exit0，唯一5输入增量receipt `0f8bedc6d2cd21ae5a99bc88f7c03711f5e84ed82b2a290e52e6a2acc19869de`将合同89abe312/20478B范围增加该oldtest最后五行审计迁移及rename，总11file；两个schema读取和sameB1Reference断言、完整其它prefix/tests不变。不排除node或造red，也不让永久pytest冻结以后整个schema/allOf末项位置；本次B3逆旧schema审计同样在不可变工件，不阻未来插件来源/声明演进。实现继续，其他gate保持。
+
+
+2026-10-07 B3默认材料稳定验收：11target STOP后86输入receipt28d18a7c；新83pass与追加真实旧installed保留1pass分别保存，原affected479pass及其56具体未成功节点六小批54pass/2旧v1不适用skip分别核XML，不作一次84/535pass声称。默认origin声明/writer/固定原材料/精确集合/原seal/activate/status接线完成，两历史whole-schema迁移审计移入原快照工件，仅两个获准函数修改、完整40713B旧test字节可逆；旧guards/formal dependencies不变。原有限32模块清单加两已明确selected-call模块及新owner helper，不等于完整安装import/controller闭包。独立限定scout schema/test证据与root完整实现审查分列。六份旧方向文档仅校正已闭合Recovery3授权状态；初始化来源文档同时与既定startup caller/接收manager双actor职责对齐。完整FullSourceView/私有来源validator/principal/持有/解释器仍未闭合，所有产品gate/正式7/100与严格计量前AUTO OFF保持。
+
+B4 installed 只读观察已完成三target稳定默认验收，root 93输入 receipt `7c7e365d3adec97598e45c02bcfe3488c1ddef5e7fa6c3f9e7971c5aa8f456bd`。新93case原轮92pass/1测试fixture错误保留，仅修wheel文件选择并原失败node另次1pass；旧8函数实际10nodes分8批全pass，无skip/error，跨轮结果不相加为一次suite。共享旧status完整顺序和catch域保持；root原AST提取审计的050ef8 final pin未变。new actual stream/stat/inventory/markers边界及两代码P2修复已审查与验证；scaled limits、synthetic wrong UID/重复entry并不签实际Full最大容量、旧validator全链cap、canonical编码峰值、来源资格或持续hold。original installed/source/readers的完整角色与解释器闭包仍待接线。
+
+完整current来源的原producer调查发现PiAdapter仍拒绝modern launch，不能从DSH runtime fixture或手写launch签Full。18输入当前fixture有限receipt `6e33084a6acd565585093386653bc5b197ba74b9ab21970cd294af783adf328d`接受原record/apply/readback测试接缝与selector更正，明确DSH示例域。先按[现代启动契约](modern-launch-contract.md)冻结四文件最小接线：固定官方入口/Node解析flag、profile-aware参数检查和已验证tuple传播。独立executor候选review0P1/1P2，root修正返回ABI后限定复核0新P1/P2，9158B/9d0e3f0f候选已授权四文件默认实现；不移动原运行准入、改变candidate/完整锁/default profile或注入initializer。此默认契约组件不代替实际Base/Full/backend/source/principal/解释器/guardian/native产品验收，AUTO OFF和formal7/100保持。
+
+现代材料分类更正：本次scout首六输入读的是agents/pi/dependencies-modern.json，Basecandidate/official-launch行是声明事实，不是完整锁或实际installed字节证明。root实际lstat固定backend读取路径locks/pi-modern/manifest.json得到FileNotFoundError；所选源码没有可比较的正式锁行，不能声称digest不符或原PiBackend正控制已成立。旧证据保留并由此增量纠正当前实现前提。后续完整锁/安装仍需生产与验收，不阻塞本包default契约接线。
+
+2026-10-07 现代启动默认结果：四文件已 STOP 并由 root 接受197输入receipt 9665b731；原 runtime 顺序/legacy 保持，参数 tuple 传播在 late caller mutation 下实际验。new02一次73pass及新增单项另次1pass、旧六批12nodes全pass分别记账，new01的45fail/27pass保留。现代 resolver 的静态生产与现有合成测试接缝已接受，正式 modern manifest 仍不存在。下一步沿既有 Base 调用图的 pin 差量核必要声明文件；Full capture 的32模块/15缺项不直接等于 Base 必需，不作全量复制。完整正式来源、安装、actual backend/current、SDK/namespace/账号组合及产品 gates 仍待。Recovery3 d61799 已按精确授权一次有限验收并闭合，不能复用；正式7/100、strict计量前AUTO OFF。
+
+2026-10-07 Base闭包增量：当前源码AST揭示pi_lock_resolution是Base supervisor顶层依赖，原105显式行缺它；root冻结唯一声明copy行及新物化冷命名空间实际导入测试，两文件范围，不改任何生产源码/launcher、npm pin或Full选择。该新证据修正历史Full缺项分类，其他14不因此加入Base。真实默认red→green后再冻结候选解析的完整source-domain。固定nvm npm元数据11.9.0不匹配要求；官方11.19.1元数据HTTPS200已核，工具tar的SHA1/SRI及1943files读回由executor完成，尚未运行工具或resolver。真实源资格、角色/长期持有和产品7/100/AUTO OFF保持。
+
+2026-10-07 Base共享声明两文件默认完成，root106输入receipt9b2e909b；声明106行，真实缺模块1fail→新2pass，旧1+8+1共10nodes全pass；最终Full排除常量改为13个真实模块后新2项另次pass。29私有模块从原物化目录导入，不签独立解释器/完整动态闭包/Full来源。封存脚本三个核对错误与实际修复原像另列，非产品失败；没有重复产品测试。官方npm11.19.1材料另13输入b31b4f62接受，SHA1/SRI/1943files核验，未执行工具或resolver。完整source-domain准备清单2202files/230dirs/48443604B与六资产57611422B只是准备，不是sourcehold。下一步冻结独占/tmp候选解析执行器，仅原PiBackend→resolver在副本中写候选；正式锁/安装/角色/hold/native/产品均未签，formal7/100/AUTO OFF保持。
+
+2026-10-07 原Base候选execution02实际inner/wrapper1：固定工具版本检查与npm lock-only通过后，原license-bundle门失败，未成功candidate/readback；root有限失败receipt 79d57cc587f5373a63f10aa7d98255496699aca9d0efc0bcfd509f5edc6cc408。原resolver temp自动清理后生成lock未保留，八固定license与28引用正确，精确失败未知。仅限定自有producer公开rmtree审计保存两个生成JSON诊断，保持原校验/清理与WNOWAIT；默认测试/稳定审查/新冻结后再实际诊断重跑，不放宽license门，不复用native授权。Formal7/100、产品gate、strict计量前AUTO OFF保持。
+
+2026-10-07 execution03一次实际inner/wrapper1但诊断成功，两public JSON完整捕获并核验，有限root receipt 1aef15d032352dcfba94740e9bd20180061f3cb52e011b222b21bd52c97b5c74；pure projection确认146samepaths/order、141sameidentities、5个间接包版本/URL/SRI漂移。原license错误保持，不证明唯一原因。下一最小设计面向固定transitive锁输入可复现，先原完整raw锁与own声明/schema/recipe/producer接缝只读取证，不刷五新版本或放宽原门。未成功candidate/formal/current/Full/source/native/product；Formal7/100、AUTO OFF保持。
+
+2026-10-08本地：固定npm seed默认五文件STOP后root稳定接受，receipt 8b523b5b11378c261e39035f81b9a2689b6386959b3b98a35cb53b8e5f79a3f3；root全文/差量/actual XML与独立最终有限0P1/P2对应。39初轮与6补强、旧六批25分列，current43是跨轮覆盖；真实archives/REGISTRY146为数据事实，未运行npm。下一新source inventory按现collector仅OUT变化生成，完整source pin冻结后再同边界实际开发解析，现有正式锁/安装/Full/sourcehold/native/product资格与AUTO OFF、formal7/100保持。
+
+
+2026-10-08（本地）Q1/T006完成：当前install01（16,653条目，145远程依赖图）的既有发行物／bin／exports／peer／engines／脚本及严格source／installed-license记录，与sdk01六场、rpc01五场、trust03公开reload两场构成本次隔离候选完整证据。RPC5的真实正文0/0/0/0/1与实际事件／状态／哨兵符合原oracle；trust拒绝全0、允许三资源和正文各1。此前公开接口剩余缺口为新安装树RPC与独立项目信任，现已补齐。默认发现不支持.mjs，通过只改自有fixture后缀.js修复；Node探针不支持clearenv的首次失败也保留，未改上游或调用私有API。
+
+root Q1完整性receipt `6b474761df16cd0a4b467ec873705769fb9f7870dc8d746eadf6e6b9c60db5be`，T006已勾选，当前正式8/100。当前RPC12输入receipt `3a5587f46dd9f7591266df53c65b1925a851c1816b90c5b0ea7df3491e1f7bb1`；trust16输入receipt `40bdbb0bc86c6752d62c50d4dced589b2690e1d9ec929fac22125cadc63cd03c`。三个本轮原生授权（Node1/RPC5/trust2）均满足并闭合，旧失败／历史候选／默认测试分层保存。T006只要求固定隔离candidate，不要求此步发布正式锁或激活runtime；CLI首启／保存信任／真人前端、各故事高级接口、真实模型与账单、整体sandbox／sourcehold／controller／Full和产品gate仍分别未验或未完成。严格计量前AUTO OFF，正式manifest／seal／current／deploy未变化。
+
+
+2026-10-11 当前推进：低风险真实测试已获总授权，合成Provider/断网/自有私人目录的同边界必要修复重跑不再逐批询问。纯Pi最终r09已完成3预热/10cold/30同会话、43本地请求；数值预算在任何Base候选结果前冻结，Root 2f334e5c31560b3ab2553df3113356671418ee80fb0faa66d397e910a45348d8。Base原Host/SDK联合测量遇到真实PATH Node身份与退出过渡未知进程观测问题，采样器按现场birth/exe/argv修正并保存每轮失败，不放宽冻结预算。T011 manager加载观察→退出retire→离线doctor接线默认Node129、相关Python126及重复JSON键修复后新模块15分轮通过，当前正正常派生运行包验证，不提升产品gate。
+
+T097可选Stop hook按inactive完整闭合：固定官方1.0.1公开event存在，但scope未选择且用户未信任；启用态故障/无进展/停止/其他会话场景不适用。未执行hook、模型或改全局信任，Root五输入收据e8435b14d0067aa0f37cccb1243a4b26eaa73b458896e4b8b19726db6177832d。正式27/100，八gate仍false；Base剩余产品条件汇总docs/acceptance/pi-two-profiles/base-gate.md。

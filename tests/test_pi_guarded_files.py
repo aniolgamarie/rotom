@@ -35,6 +35,24 @@ def fixture(tmp_path, *, extra_rules=(), writer=True):
   return root, GuardedFiles(compiled, mutation=mutation), state, calls
 
 
+def test_future_account_anchor_under_parent_project_is_denied_without_creating_it(tmp_path):
+  root, files, _, _ = fixture(tmp_path)
+  original = files.policy
+  original.policy["rules"][0]["relative_path"] = "."
+  anchor = root / "os-account" / ".agentcfg-workspaces"
+  # 合成Git父项目覆盖账户控制路径；即使哨兵尚未创建，普通业务目录仍可用。
+  (root / ".git").mkdir()
+  compiled = FilePolicy(policy=original.policy, roots=original.roots, ceiling=original.ceiling,
+    grant=original.grant, mode=original.mode, verify=original.verify, workspace=original.workspace,
+    secret_roots=[anchor])
+  assert compiled.authorize("read", "read", root / "src/a.txt")
+  target = anchor / "reviewer-budget/reviewer-ledger.json"
+  for tool, operation in (("read", "read"), ("write", "create")):
+    with pytest.raises(Conflict, match="PERMISSION_DENIED"):
+      compiled.authorize(tool, operation, target)
+  assert not anchor.exists()
+
+
 def test_guarded_read_write_and_rename_apply_policy_to_real_files(tmp_path):
   root, files, _, calls = fixture(tmp_path)
   assert files.read("read", "src/a.txt") == b"original"
@@ -197,3 +215,82 @@ def test_unbound_parent_file_rule_is_not_silently_ignored(tmp_path):
     "root_ref": "unbound", "relative_path": ".", "match": "subtree"}
   with pytest.raises(ConfigError, match="permission-root-unbound"):
     fixture(tmp_path, extra_rules=[deny])
+
+
+@pytest.mark.parametrize("target_kind", ["secret", "policy", "outside", "symlink"])
+def test_allowed_source_io_cannot_read_or_rewrite_protected_sentinels(tmp_path, sentinel_factory, target_kind):
+  root, files, _, _ = fixture(tmp_path)
+  allowed = root / "src/allowed.txt"; allowed.write_text("allowed source")
+  target = root / "src/protected.txt"; target.write_text("synthetic protected sentinel")
+  if target_kind == "outside":
+    target = tmp_path / "outside.txt"; target.write_text("synthetic outside sentinel")
+  if target_kind == "symlink":
+    outside = tmp_path / "outside.txt"; outside.write_text("synthetic outside sentinel")
+    target.unlink(); target.symlink_to(outside)
+    sentinel = sentinel_factory(outside)
+  else:
+    sentinel = sentinel_factory(target)
+  if target_kind in ("secret", "policy"):
+    # 私密账号与权威配置即便落在允许子树中，也不能由任务重新授权。
+    files.policy.secrets = (target,)
+  assert files.read("read", str(allowed)) == b"allowed source"
+  assert files.write("write", str(allowed), b"changed source")["changed"]
+  for operation in (lambda: files.read("read", str(target)), lambda: files.write("write", str(target), b"must not write")):
+    with pytest.raises(Conflict): operation()
+  sentinel.assert_unchanged()
+  assert allowed.read_bytes() == b"changed source"
+
+
+def test_explicit_ordinary_project_policy_uses_file_authority_and_preserves_default_deny(tmp_path):
+  import tomllib
+  from pathlib import Path
+  from agentcfg.pi_catalog import validate_policy
+  policies = tomllib.loads((Path(__file__).resolve().parents[1] / "agents/pi/agent.toml").read_text())["policies"]
+  assert policies["project-default"]["rules"] == []
+  policy = policies["ordinary-project"]; validate_policy(policy)
+  assert all(row["kind"] == "file" for row in policy["rules"])
+  root, files, state, _ = fixture(tmp_path)
+  before = files.policy
+  files.policy = FilePolicy(policy=policy, roots=before.roots, ceiling=before.ceiling, grant=before.grant, mode="managed",
+    verify=lambda *_: state["valid"], workspace=lambda *_: state["writer"], secret_roots=[root / "private-control"])
+  assert files.read("read", "src/a.txt") == b"original"
+  assert files.write("write", "src/a.txt", b"ordinary change")["changed"]
+  files.rename("edit", "src/a.txt", "src/moved.txt")
+  assert files.policy.authorize("write", "create", "src/next.txt")["approval"] == "deterministic-policy"
+  for path in (root / ".env", root / ".git/HEAD", root / "private-control/future", tmp_path / "outside.txt"):
+    with pytest.raises(Conflict): files.policy.authorize("read", "read", path)
+    with pytest.raises(Conflict): files.policy.authorize("write", "create", path)
+  assert not (root / ".git").exists() and not (root / "private-control").exists()
+  state["writer"] = False
+  with pytest.raises(Conflict, match="WORKSPACE_BUSY"): files.write("write", "src/moved.txt", b"never written")
+  assert (root / "src/moved.txt").read_bytes() == b"ordinary change"
+
+
+def test_agent_policy_schema_matches_existing_approval_and_mcp_reference_contract():
+  from copy import deepcopy
+  import json
+  from pathlib import Path
+  import tomllib
+  from jsonschema import Draft202012Validator
+  from agentcfg.pi_catalog import validate_policy
+  from agentcfg.schema import ConfigError, _strict_schema
+  from agentcfg.pi import PiAdapter
+  root = Path(__file__).resolve().parents[1]
+  schema = json.loads((root / "agents/pi/schemas/agent.schema.json").read_text())
+  _strict_schema(schema)
+  rule_schema = schema["properties"]["policies"]["additionalProperties"]["properties"]["rules"]["items"]
+  validator = Draft202012Validator(rule_schema)
+  allow = tomllib.loads((root / "agents/pi/agent.toml").read_text())["policies"]["ordinary-project"]["rules"][0]
+  assert validator.is_valid(allow)
+  for change in ({"approval": "unknown"}, {"unknown": True}):
+    assert not validator.is_valid({**deepcopy(allow), **change})
+  # 原Adapter文档回调复用共同policy validator；不复制第二套条件schema。
+  with pytest.raises(ConfigError):
+    validate_policy({"schema_version": 1, "default": "deny", "rules": [{**deepcopy(allow), "effect": "deny"}]})
+  document = tomllib.loads((root / "agents/pi/agent.toml").read_text())
+  document["policies"]["ordinary-project"]["rules"][0]["effect"] = "deny"
+  with pytest.raises(ConfigError):
+    PiAdapter(root).schemas().bundles["pi"].validate("agent", document)
+  mcp = {"id": "mcp-explicit", "kind": "command", "effect": "allow", "approval": "human",
+    "tool_ids": ["mcp"], "operations": ["execute"], "command_ref": "mcp:fixture"}
+  assert validator.is_valid(mcp)

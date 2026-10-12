@@ -327,7 +327,8 @@ def _callback(callback, *args):
 
 
 def _adapter_policy(bundle, documents: dict, context: AdapterSchemas, profile_id: str) -> AdapterPolicy:
-  policy = _callback(bundle.policy, documents)
+  policy = (_callback(bundle.profile_policy, documents, profile_id) if bundle.profile_policy is not None
+            else _callback(bundle.policy, documents))
   valid = False
   try:
     valid = (isinstance(policy, AdapterPolicy) and isinstance(policy.defaults, dict)

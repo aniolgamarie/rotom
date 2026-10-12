@@ -4,6 +4,7 @@ from collections import deque
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import pwd
 import socket
 import ssl  # 在 socket 替身安装前定义 SSLSocket；随后实际联网仍被阻断。
 import signal
@@ -29,15 +30,26 @@ def fake_terminal_commands(isolated_environment):
 _REAL_POPEN = subprocess.Popen
 _REAL_KILL = os.kill
 _ENTRY = Path(__file__).resolve().parents[1] / "agentcfg"
+_LEASE_WORKER = Path(__file__).resolve().parent / "fixtures/pi/workspace-lease-worker.py"
+_LEASE_SCENARIOS = ("reserve", "hold-lock", "exit-before-commit", "exit-after-reserved")
 
 
 def pytest_addoption(parser):
+  parser.addoption("--run-pi-lease-os", action="store_true", default=False, help="Run isolated synthetic Pi lease worker processes")
   group = parser.getgroup("omp-permission-control")
   group.addoption("--omp-standalone-bun", default=None,
     help="Explicit locked Bun executable for current standalone and official SDK tests")
   # 兼容历史调用参数；补丁fixture 始终退休跳过，绝不消费这些材料。
   for name in ("omp-build-source", "omp-tool-cache", "omp-dependency-cache"):
     group.addoption("--" + name, default=None, help="Retired host-patch test input (ignored)")
+
+
+def pytest_collection_modifyitems(config, items):
+  if not config.getoption("run_pi_lease_os"):
+    skipped = pytest.mark.skip(reason="synthetic OS lease workers require --run-pi-lease-os")
+    for item in items:
+      if item.get_closest_marker("pi_lease_os") is not None:
+        item.add_marker(skipped)
 
 
 @pytest.fixture(scope="session")
@@ -76,6 +88,19 @@ def isolated_environment(tmp_path, monkeypatch):
   for path in paths.values():
     path.mkdir(parents=True, exist_ok=True)
   cwd.mkdir()
+  # OS 账户home独立于profile HOME；默认测试不得经passwd绕回真实账户目录。
+  account_home = tmp_path / "os-account"
+  account_home.mkdir(mode=0o700)
+  account = pwd.struct_passwd(("synthetic-account", "x", os.geteuid(), os.getegid(), "", str(account_home), ""))
+  def account_by_uid(uid):
+    if uid != account.pw_uid: raise KeyError("test account not declared")
+    return account
+  def account_by_name(name):
+    if name != account.pw_name: raise KeyError("test account not declared")
+    return account
+  monkeypatch.setattr(pwd, "getpwuid", account_by_uid)
+  monkeypatch.setattr(pwd, "getpwnam", account_by_name)
+  monkeypatch.setattr(pwd, "getpwall", lambda: [account])
   env = {name: str(path) for name, path in paths.items()}
   env.update(PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1")
   # 不从父进程挑秘密名称黑名单，直接使用全新的有限环境。
@@ -282,3 +307,142 @@ def entry_python(request, isolated_environment, offline_guards):
       return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
 
   instance.entry_runner = run
+
+
+class LeaseWorkerHandle:
+  """只管理 fixture 已登记的固定 worker；不暴露通用命令入口。"""
+  def __init__(self, process, case):
+    self._process, self.case = process, case
+    self._pid = process.pid
+
+  @property
+  def pid(self):
+    return self._pid
+
+  def poll(self):
+    return self._process.poll()
+
+  def stop(self):
+    if self.poll() is None: (self.case / "stop").touch()
+
+  def crash(self):
+    # 仅杀此fixture持有的自有child；不接收PID/信号，不恢复全局kill。
+    if self._process.pid != self._pid: raise ValueError("fixed worker process required")
+    if self.poll() is None: _REAL_KILL(self._pid, signal.SIGKILL)
+
+  def wait(self, *, timeout=5):
+    if not 0 < timeout <= 10: raise ValueError("bounded worker wait required")
+    return self._process.wait(timeout=timeout)
+
+
+@pytest.fixture
+def pi_lease_worker(request, tmp_path, isolated_environment, offline_guards):
+  """唯一开放固定自有 worker；全局 Popen/fork/network 防护始终保留。"""
+  from types import SimpleNamespace
+  import json
+  handles = []
+
+  def start(case, scenario):
+    case = Path(case)
+    if scenario not in _LEASE_SCENARIOS or not case.is_absolute() or case.parent != tmp_path or case.is_symlink() or not case.is_dir() or case.resolve() != case:
+      raise ValueError("fixed worker case/scenario required")
+    document = case / "case.json"
+    if document.is_symlink() or not document.is_file() or document.stat().st_nlink != 1:
+      raise ValueError("regular worker case required")
+    try:
+      config = json.loads(document.read_bytes())
+      if not isinstance(config, dict) or set(config) != {"role", "workspace"} or config["role"] not in ("one", "two", "holder", "probe") or config["role"] != case.name:
+        raise ValueError()
+      workspace = Path(config["workspace"])
+      if not workspace.is_absolute() or not workspace.resolve(strict=True).is_relative_to(tmp_path) or not workspace.is_dir(): raise ValueError()
+      canonical = workspace.resolve(strict=True)
+      while not (canonical / ".git").exists():
+        if canonical == tmp_path: raise ValueError()
+        canonical = canonical.parent
+      marker = canonical / ".git"
+      if marker.is_symlink(): raise ValueError()
+      git_dir = marker
+      if marker.is_file():
+        if marker.stat().st_nlink != 1: raise ValueError()
+        text = marker.read_text()
+        if not text.startswith("gitdir: ") or text.count("\n") != 1: raise ValueError()
+        git_dir = (canonical / text[8:].strip()).resolve(strict=True)
+        if not git_dir.is_relative_to(tmp_path): raise ValueError()
+        if (git_dir / "gitdir").is_symlink() or (git_dir / "commondir").is_symlink(): raise ValueError()
+        if (git_dir / (git_dir / "gitdir").read_text().strip()).resolve(strict=True) != marker: raise ValueError()
+        if not (git_dir / (git_dir / "commondir").read_text().strip()).resolve(strict=True).is_relative_to(tmp_path): raise ValueError()
+      if not git_dir.is_dir() or (git_dir / "HEAD").is_symlink() or (git_dir / "HEAD").read_bytes() != b"ref: refs/heads/fixture\n": raise ValueError()
+      account_home = tmp_path / "os-account"
+      if account_home.is_symlink() or not account_home.is_dir() or account_home.resolve() != account_home or account_home.stat().st_uid != os.geteuid() or account_home.stat().st_mode & 0o777 != 0o700: raise ValueError()
+      if any((case / name).is_symlink() for name in ("ready", "go", "stop", "exit", "active.json", "result.json", "persisted")): raise ValueError()
+    except (OSError, ValueError, TypeError, KeyError):
+      raise ValueError("worker workspace must stay within test case") from None
+    if not request.config.getoption("run_pi_lease_os") or request.node.get_closest_marker("pi_lease_os") is None or request.node.path.name != "test_pi_workspace_leases_os.py":
+      raise RuntimeError("synthetic worker requires explicit opt-in marker")
+    if _LEASE_WORKER.is_symlink() or not _LEASE_WORKER.is_file() or _LEASE_WORKER.resolve() != _LEASE_WORKER:
+      raise ValueError("fixed repository worker required")
+    env = {}
+    for key, directory in (("HOME", "home"), ("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "data"), ("XDG_CACHE_HOME", "cache"), ("XDG_STATE_HOME", "state"), ("TMPDIR", "tmp"), ("PATH", "empty-bin")):
+      path = case / directory
+      if path.is_symlink(): raise ValueError("worker environment path must stay in case")
+      path.mkdir(exist_ok=True); env[key] = str(path)
+    env.update(LC_ALL="C.UTF-8", PYTHONUTF8="1", PYTHONDONTWRITEBYTECODE="1")
+    command = [sys.executable, "-I", str(_LEASE_WORKER), str(case), scenario]
+    process = _REAL_POPEN(command, cwd=case, env=env, shell=False, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+    handle = LeaseWorkerHandle(process, case); handles.append(handle)
+    return handle
+
+  yield SimpleNamespace(start=start, handles=handles)
+  for handle in handles:
+    if handle.poll() is None:
+      handle.stop()
+      try: handle.wait(timeout=2)
+      except subprocess.TimeoutExpired:
+        # 仅超时清理本 fixture 登记且仍存活的子进程；不触碰任何宿主进程。
+        if handle.poll() is None:
+          try: _REAL_KILL(handle.pid, signal.SIGTERM)
+          except ProcessLookupError: pass
+        try: handle.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+          if handle.poll() is None:
+            try: _REAL_KILL(handle.pid, signal.SIGKILL)
+            except ProcessLookupError: pass
+          handle.wait(timeout=2)
+    handle._process.stdout.close(); handle._process.stderr.close()
+
+
+@pytest.fixture
+def pi_non_git_worker(request, tmp_path, isolated_environment, offline_guards):
+  """只开放固定非Gitworker的bwrap入口；保留全局进程/联网守卫。"""
+  import importlib.util
+  from types import SimpleNamespace
+  worker = Path(__file__).resolve().parent / "fixtures/pi/non-git-workspace-worker.py"
+  spec = importlib.util.spec_from_file_location("fixed_non_git_worker", worker)
+  protocol = importlib.util.module_from_spec(spec); spec.loader.exec_module(protocol)
+  handles = []
+
+  def start(case, scenario):
+    if not request.config.getoption("run_pi_lease_os") or request.node.get_closest_marker("pi_lease_os") is None or request.node.path.name != "test_pi_non_git_workspaces_os.py":
+      raise RuntimeError("fixed non-Git worker requires explicit opt-in")
+    if worker.is_symlink() or worker.resolve() != worker or not worker.is_file(): raise ValueError("fixed worker required")
+    command = protocol.invocation(case, tmp_path, scenario, sys.executable)
+    process = _REAL_POPEN(command, cwd=case, env={}, shell=False, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+    handle = LeaseWorkerHandle(process, Path(case)); handles.append(handle)
+    return handle
+
+  yield SimpleNamespace(start=start, handles=handles)
+  for handle in handles:
+    if handle.poll() is None:
+      handle.stop()
+      try: handle.wait(timeout=2)
+      except subprocess.TimeoutExpired:
+        if handle.poll() is None:
+          try: _REAL_KILL(handle.pid, signal.SIGTERM)
+          except ProcessLookupError: pass
+        try: handle.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+          if handle.poll() is None:
+            try: _REAL_KILL(handle.pid, signal.SIGKILL)
+            except ProcessLookupError: pass
+          handle.wait(timeout=2)
+    handle._process.stdout.close(); handle._process.stderr.close()

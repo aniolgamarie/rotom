@@ -226,3 +226,35 @@ def test_project_maintenance_rejects_an_existing_writer_without_changing_marker(
   with pytest.raises(Conflict, match="WORKSPACE_BUSY"):
     with manager.maintenance(root): pytest.fail("must not write while another lease exists")
   assert manager.read(planned) == saved
+
+
+def test_worker_opt_in_never_restores_default_process_or_network_guards(tmp_path, pi_lease_worker, request):
+  import os
+  import socket
+  import subprocess
+  import sys
+  with pytest.raises(RuntimeError, match="process disabled"):
+    subprocess.Popen([sys.executable, "-c", "pass"])
+  with pytest.raises(RuntimeError, match="network disabled"):
+    socket.socket()
+  with pytest.raises(RuntimeError, match="process disabled"):
+    os.fork()
+  if not request.config.getoption("run_pi_lease_os"):
+    root = worktree(tmp_path); case = tmp_path / "one"; case.mkdir()
+    (case / "case.json").write_text(json.dumps({"role": "one", "workspace": str(root)}))
+    with pytest.raises(RuntimeError, match="opt-in"):
+      pi_lease_worker.start(case, "reserve")
+    assert pi_lease_worker.handles == []
+
+
+@pytest.mark.parametrize("fault", ["duplicate", "large", "integer-float"])
+def test_local_marker_is_bounded_and_strict(tmp_path, fault):
+  manager = WorkspaceLeases("fixture-boot")
+  planned = manager.identify(worktree(tmp_path)); lease = allocation(planned)
+  manager.reserve(planned, lease)
+  path = Path(planned["git_dir_path"]) / "agentcfg/write-lease.json"
+  value = json.loads(path.read_bytes())
+  if fault == "duplicate": path.write_text('{"schema_version":1,"schema_version":1}')
+  if fault == "large": path.write_bytes(b" " * (1024 * 1024 + 1))
+  if fault == "integer-float": value["grant_generation"] = 1.0; path.write_text(json.dumps(value))
+  with pytest.raises(Conflict): manager.assert_reserved(planned, lease)

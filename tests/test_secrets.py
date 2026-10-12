@@ -88,3 +88,28 @@ def test_invalid_local_secrets_never_reach_schema_error_context(tmp_path, secret
     config.load_local(path)
   assert caught.value.__context__ is None
   assert "PRIVATE-CANARY" not in "".join(traceback.format_exception(caught.value))
+
+
+@pytest.mark.parametrize("values,reason,message", [
+  ({}, "missing", "所需凭据未配置"),
+  ({"private-key": ""}, "empty", "已配置凭据为空"),
+])
+def test_required_resolution_distinguishes_missing_and_empty_without_reference(values, reason, message):
+  secrets = api()
+  store = secrets.SecretStore(values)
+  with pytest.raises(secrets.CredentialError) as caught:
+    store.resolve(SecretRef("secret:private-key"))
+  assert caught.value.reason == reason
+  assert message in str(caught.value)
+  assert caught.value.exit_code == 3
+  assert "private-key" not in str(caught.value)
+  assert "credential-" in str(caught.value)
+  assert store.resolve(SecretRef("secret:private-key"), required=False) is None
+
+
+def test_generic_credential_error_keeps_legacy_text_and_safe_reason():
+  secrets = api()
+  for error in (secrets.CredentialError(), secrets.CredentialError(reason=CANARY)):
+    assert error.reason == "invalid"
+    assert str(error) == "凭据无效或所需凭据缺失"
+    assert CANARY not in repr(error)

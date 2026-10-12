@@ -112,3 +112,16 @@ def test_macos_terminal_writes_are_limited_to_own_device(tmp_path):
       macos_verifier_policy(check, temporary=tmp_path / "temporary", terminal_device=device)
   with pytest.raises(Conflict, match="TERMINAL_DENIED"):
     macos_verifier_policy(check, temporary=tmp_path / "temporary", terminal_device="/dev/ttys012", denied_paths=["/dev"])
+
+
+def test_explicit_trusted_inputs_cannot_be_silently_ignored_by_an_ordinary_check(tmp_path, monkeypatch):
+  binding, candidate, executable = fixture(tmp_path)
+  effects = []
+  monkeypatch.setattr("subprocess.run", lambda *args, **kwargs: effects.append(args))
+  binding["trusted_inputs"] = [{"root_ref": "checker", "relative_path": "check.js"}]
+  with pytest.raises(ConfigError, match="CHECK_TRUSTED_CONTEXT_REQUIRED"):
+    compile_check(binding, candidate=candidate, executable=executable)
+  assert effects == []
+  binding["trusted_inputs"] = []
+  check = compile_check(binding, candidate=candidate, executable=executable)
+  assert "trusted_implementation" not in check

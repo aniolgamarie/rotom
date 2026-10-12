@@ -3,6 +3,7 @@
 from .adapter import SecretRef
 from .config import read_local_document
 from .presentation import command_line, table
+from .secrets import CredentialError
 from .secret_files import credential_section, key_location, secrets_path, section_label
 from .workspace import load_workspace
 
@@ -20,8 +21,12 @@ def show_model_status(args):
     origin = "全局默认" if provider_id in default_providers else "profile 扩展"
     if provider["auth_kind"] == "api-key":
       reference = provider["credential_ref"]
-      ready = workspace.secret_store.resolve(SecretRef(reference), required=False) is not None
-      key_state = "已填写" if ready else "未填写"
+      try:
+        workspace.secret_store.resolve(SecretRef(reference))
+        ready, key_state = True, "已填写"
+      except CredentialError as error:
+        ready = False
+        key_state = {"missing": "未填写", "empty": "为空"}.get(error.reason, "无效")
       name = reference.removeprefix("secret:")
       path = key_location(document, args.local, name)
       section = credential_section(document, args.local, name, provider_id=provider_id)
@@ -43,7 +48,7 @@ def show_model_status(args):
   if missing_urls:
     pending.append(f"{len(set(missing_urls.values()))} 个地址待填写（阻止部署）")
   if missing_keys:
-    pending.append(f"{len(missing_keys)} 个 key 未填写（对应模型不可调用）")
+    pending.append(f"{len(missing_keys)} 个 key 未填写或为空（对应模型不可调用）")
   print("  " + ("；".join(pending) if pending else "未发现 URL / key 缺项"))
   print("  配置视图；未检查部署同步、账号登录或服务连通性。\n")
   table(("Provider", "来源", "地址", "认证", "模型数"), rows)

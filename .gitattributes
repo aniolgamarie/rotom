@@ -3,3 +3,7 @@ locks/dsh/vendor/*.patch -whitespace
 
 # 上游许可证通知按锁定原始字节保存，不改写其历史尾随空格。
 locks/omp/upstream/THIRD-PARTY-NOTICES.txt -whitespace -text
+
+# 现代固定来源许可按原字节验收；候选patch的空上下文空格属于diff语法。
+agents/pi/build/licenses/** -whitespace -text
+specs/005-pi-two-profiles/checkpoints/**/*.patch -whitespace

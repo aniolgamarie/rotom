@@ -1,5 +1,6 @@
 """Linux 宿主与 Codex 的内核进程范围；PID 1 退出后内核终止该命名空间全部后代。"""
 import json
+import hashlib
 import os
 from pathlib import Path
 import selectors
@@ -12,6 +13,7 @@ import sys
 import time
 
 from .deployment import json_bytes
+from .paths import safe_id
 from .pi_catalog import validate
 from .storage import Conflict, Tree
 
@@ -123,10 +125,11 @@ def namespace_argv(host, command, info_fd):
   for row in host.manifest()["options"].get("paths", {}).get("roots", {}).values():
     paths.setdefault(Path(row["path"]), row["purpose"] == "write")
   workspace = host.store.workspaces.identify(command.cwd)
-  git = Path(workspace["git_dir_path"])
-  paths.setdefault(git, False)
-  with Tree(git, private=False) as tree: common = tree.read("commondir")
-  if common: paths.setdefault((git / common[0].decode().strip()).resolve(strict=True), False)
+  if workspace["git_dir_path"] is not None:
+    git = Path(workspace["git_dir_path"])
+    paths.setdefault(git, False)
+    with Tree(git, private=False) as tree: common = tree.read("commondir")
+    if common: paths.setdefault((git / common[0].decode().strip()).resolve(strict=True), False)
   paths[host.runtime_root] = False
   if Path("/") in paths: raise Conflict("PID命名空间根绑定过宽")
   argv = [str(binary), "--unshare-pid", "--as-pid-1", "--die-with-parent", "--cap-drop", "ALL", "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp"]
@@ -163,15 +166,57 @@ def spawn_namespace(host, command, environment, streams):
       if fd is not None: os.close(fd)
 
 
-def host_namespace_argv(host, command, info_fd, token):
-  binary = host.runtime_root / "bin/codex-resources/bwrap"
+def host_namespace_binary(host):
+  """固定运行家族选择helper；现代宿主不回退到Codex资产、PATH或系统安装。"""
+  try:
+    profile = host.manifest()["profile_id"]
+    safe_id(profile)
+    with Tree(host.runtime_root) as tree:
+      raw = tree.read("runtime/profile.json", max_bytes=1024 * 1024)
+      if raw is None: raise ValueError()
+      installed = json.loads(raw[0])
+      version = installed["schema_version"]
+      modern = profile in ("pi-base", "pi-full")
+      if type(version) is not int or version not in (1, 2) or (version == 2) != modern:
+        raise ValueError()
+      if not modern:
+        return host.runtime_root / "bin/codex-resources/bwrap"
+      receipt_raw = tree.read(".agentcfg-receipt.json", max_bytes=16 * 1024 * 1024)
+      if receipt_raw is None or receipt_raw[1] != 0o600: raise ValueError()
+      receipt = json.loads(receipt_raw[0])
+      if (type(receipt["schema_version"]) is not int or receipt["schema_version"] != 2
+          or installed["profile_id"] != profile or installed["runtime_identity"] != host.runtime_root.name
+          or receipt["identity"] != host.runtime_root.name or host.repository != host.runtime_root / "supervisor"
+          or any(installed[key] != host.config[key] or receipt[key] != host.config[key] for key in ("lock_identity", "slice_identity"))):
+        raise ValueError()
+      # 完整包/来源验证由启动前安装收据检查负责；这里在spawn前重验实际helper、门控与描述。
+      # 本地收据不是对可同时改写二进制与收据的同UID主体的外部可信证明。
+      binary = None
+      for name, mode in (("bin/pi-bwrap", 0o700), ("supervisor/scripts/pi-namespace-exec.py", 0o600), ("runtime/profile.json", 0o600)):
+        current = tree.read(name, max_bytes=16 * 1024 * 1024)
+        expected = receipt["files"][name]
+        if (current is None or current[1] != mode or expected != {"kind": "file", "mode": mode,
+            "sha256": hashlib.sha256(current[0]).hexdigest()}): raise ValueError()
+        if name == "bin/pi-bwrap": binary = current[0]
+      from .pi_assets import binary_platform
+      from .pi_dependencies import platform_id
+      if binary_platform(binary) != platform_id() or not platform_id().startswith("linux-"):
+        raise ValueError()
+    return host.runtime_root / "bin/pi-bwrap"
+  except Exception:
+    raise Conflict("宿主PID命名空间helper未绑定到所选运行包") from None
+
+
+def host_namespace_argv(host, command, info_fd, token, *, control_directory=False):
+  binary = host_namespace_binary(host)
   gate = host.repository / "scripts/pi-namespace-exec.py"
   if binary.is_symlink() or not binary.is_file() or gate.is_symlink() or not gate.is_file():
     raise Conflict("PID命名空间固定入口缺失")
   # 这里只增加内核进程范围，完整继承调用者已有挂载权限；不改变宿主的原有文件授权。
   return [str(binary), "--unshare-pid", "--as-pid-1", "--die-with-parent", "--cap-drop", "ALL",
     "--bind", "/", "/", "--proc", "/proc", "--dev", "/dev", "--chdir", str(command.cwd), "--info-fd", str(info_fd),
-    "--", sys.executable, "-B", "-I", str(gate), "--host-gate", token, "--", *command.argv]
+    "--", sys.executable, "-B", "-I", str(gate), "--host-gate", token,
+    *(["--control-directory"] if control_directory else []), "--", *command.argv]
 
 
 def verify_host_gate(connection, identity, info):
@@ -181,7 +226,7 @@ def verify_host_gate(connection, identity, info):
     raise Conflict("宿主PID命名空间门控身份不匹配")
 
 
-def spawn_host_namespace(host, command, environment, streams):
+def spawn_host_namespace(host, command, environment, streams, *, control_directory=False):
   """宿主含短命控制客户端；用内核范围覆盖父退出时尚未被轮询发现的后代。"""
   token = secrets.token_hex(32)
   listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -190,7 +235,8 @@ def spawn_host_namespace(host, command, environment, streams):
   child = connection = None
   try:
     listener.bind("\0agentcfg-host-gate-" + token); listener.listen(1)
-    child = subprocess.Popen(host_namespace_argv(host, command, info_write, token), cwd=command.cwd,
+    child = subprocess.Popen(host_namespace_argv(host, command, info_write, token,
+      **({"control_directory": True} if control_directory else {})), cwd=command.cwd,
       env=environment, pass_fds=(info_write,), start_new_session=True, **streams)
     os.close(info_write); info_write = None
     info = read_namespace_info(info_read)

@@ -1605,13 +1605,56 @@
             "enum": [
               "exit-code",
               "json",
-              "tap"
+              "tap",
+              "pytest"
             ]
           },
           "minimumTests": {
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991
+          },
+          "requiredTestIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4096,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+            }
+          },
+          "read_roots": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+            },
+            "uniqueItems": true
+          },
+          "trusted_inputs": {
+            "type": "array",
+            "maxItems": 128,
+            "uniqueItems": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "root_ref": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z0-9_.:-]{1,200}$"
+                },
+                "relative_path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                }
+              },
+              "required": [
+                "root_ref",
+                "relative_path"
+              ],
+              "additionalProperties": false
+            }
           },
           "inputs": {
             "type": "array",
@@ -1635,7 +1678,26 @@
           "parser",
           "minimumTests"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "requiredTestIds"
+              ]
+            },
+            "then": {
+              "properties": {
+                "kind": {
+                  "const": "tests"
+                },
+                "parser": {
+                  "const": "json"
+                }
+              }
+            }
+          }
+        ]
       }
     },
     "telemetryBindings": {

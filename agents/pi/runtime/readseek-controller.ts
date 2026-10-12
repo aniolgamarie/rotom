@@ -3,8 +3,9 @@ import { createHash, randomUUID } from "node:crypto";
 import { SupervisedStdioTransport } from "./supervised-stdio.ts";
 import { requireOrdinaryHelper } from "./capability-policy.ts";
 import { closed, reject } from "./managed-types.ts";
+import { readseekToolNames } from "./tool-ownership.ts";
+export { readseekToolNames } from "./tool-ownership.ts";
 
-export const readseekToolNames = new Set(["edit", "grep", "search", "refs", "rename", "def", "digest", "view", "write"].map(name => "readSeek_" + name));
 class ReadseekTransport extends SupervisedStdioTransport {
   constructor(runtime, admission) { super(runtime, "readseek", { errorPrefix: "READSEEK" }); this.admission = admission; }
   binding() {

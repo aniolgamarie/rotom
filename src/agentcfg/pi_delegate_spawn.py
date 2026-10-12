@@ -48,6 +48,9 @@ def resolve_delegate(host, lease, program, payload):
   entry = host.runtime_root / relative_path(definition["entrypoint"])
   if not entry.is_file() or entry.is_symlink():
     raise DependencyError("委托后端入口缺失")
+  if request["run_id"] in getattr(host.delegates, "modern_attempts", {}):
+    from .pi_delegate_modern_spawn import resolve_modern_delegate
+    return resolve_modern_delegate(host, lease, value, definition, entry)
   temporary = host.root / "activity/delegate-homes" / lease["lease_id"]
   ensure_private(temporary); ensure_private(temporary / "tmp")
   models, credentials = {}, {}

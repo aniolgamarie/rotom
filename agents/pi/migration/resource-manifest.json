@@ -8,8 +8,8 @@
       "source_git_blob": "384ac9753ef23aeca7ebb9cb495017deec6910a3",
       "source_mode": "100644",
       "target_path": "shared/skills/cpp-database-kernel/SKILL.md",
-      "target_sha256": "977bd7868bc537cdc1f5cc444b1019e194578c731df6730c3eb42aa1e1d4483a",
-      "adaptation": "agentcfg-mode-routing"
+      "target_sha256": "f38d4cc5a4f674de66c57fa56f91cbd0eee2a1a1d46f5f2a522bb3f523eebc19",
+      "adaptation": "profile-independent-domain-checks"
     },
     {
       "source_path": "pi/skills/neovim-plugin-development/SKILL.md",
@@ -250,6 +250,78 @@
       "target_path": "agents/pi/prompts/implement.md",
       "target_sha256": "082c129b76364ea1f3682d7a4125e52c4ad75a86361b81245a30d9225c43e364",
       "adaptation": "new-agentcfg-entry"
+    },
+    {
+      "source_path": "pi/prompts/commit.md",
+      "source_git_blob": "b96a24c8c667b63428385bfe2a41215169c9815e",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/ordinary/commit.md",
+      "target_sha256": "b202d1d53b6595a194b1e4bfabb7d5f5e66aef4e9cb5e5db32c0f2e37a57b275",
+      "adaptation": "ordinary-parent-session-routing-preserves-engineering-content"
+    },
+    {
+      "source_path": "pi/prompts/debug.md",
+      "source_git_blob": "de6fbf20b969ccdfa51e74c8b2e37d1d941ec5ec",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/ordinary/debug.md",
+      "target_sha256": "73bda70f4014966f0cd50762db6d8d41e9d4eb9bd5c1e12b0141be28522c0065",
+      "adaptation": "ordinary-parent-session-routing-preserves-engineering-content"
+    },
+    {
+      "source_path": "pi/prompts/docs.md",
+      "source_git_blob": "3866b05b40020571e8e08835813c1fe1c0f12096",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/ordinary/docs.md",
+      "target_sha256": "f810e38df2bb2c97cdc38631b4651cc0f1981d7436d5bdc1afb602467bc8cebf",
+      "adaptation": "ordinary-parent-session-routing-preserves-engineering-content"
+    },
+    {
+      "source_path": "pi/prompts/explain.md",
+      "source_git_blob": "a0bbf49369d11c83e391a77f5e566d4553d5e0dc",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/ordinary/explain.md",
+      "target_sha256": "342701176e99c12847c529e94c81c1206fcc52f7fdd6cdfb5d9c079a3bd122d5",
+      "adaptation": "ordinary-parent-session-routing-preserves-engineering-content"
+    },
+    {
+      "source_path": "pi/prompts/perf.md",
+      "source_git_blob": "0afe321dc25c2bbec1870365c345722061ea04d9",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/ordinary/perf.md",
+      "target_sha256": "c221587d4374b40f9d6a1ae317084cd475afe4c5c4b28ff0e3a2a29d11d62a82",
+      "adaptation": "ordinary-parent-session-routing-preserves-engineering-content"
+    },
+    {
+      "source_path": "pi/prompts/pr.md",
+      "source_git_blob": "536106b2570b1b4a5a24ba7e0938931a5841dd47",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/ordinary/pr.md",
+      "target_sha256": "70f79606114fe2c973844a25603c80c21967605dea8367d593f27b83b5293e04",
+      "adaptation": "ordinary-parent-session-routing-preserves-engineering-content"
+    },
+    {
+      "source_path": "pi/prompts/refactor.md",
+      "source_git_blob": "8390bc7a895d23c29fa9c1507425d13917271e04",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/ordinary/refactor.md",
+      "target_sha256": "9f9a6320cbfbb608c761bee5a914ed387c15aa99ee56b83b9d31b7a6d6cc0ef5",
+      "adaptation": "ordinary-parent-session-routing-preserves-engineering-content"
+    },
+    {
+      "source_path": "pi/prompts/security.md",
+      "source_git_blob": "395b8d3140181033fbda3fa4e4fa94ac658ffbf4",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/ordinary/security.md",
+      "target_sha256": "41c348a9f912f0d43efb0aaba31e3ffa40c9a9d2117075ac2634dccf0fd2b42c",
+      "adaptation": "ordinary-parent-session-routing-preserves-engineering-content"
+    },
+    {
+      "source_path": "pi/prompts/test.md",
+      "source_git_blob": "72dadaea7d01f295d2b3a810cc68db60e3b96e74",
+      "source_mode": "100644",
+      "target_path": "agents/pi/prompts/ordinary/test.md",
+      "target_sha256": "4e8e1b15b84f0a4a33d8f95c8ee62073a986c231563095480f17861eb5024b32",
+      "adaptation": "ordinary-parent-session-routing-preserves-engineering-content"
     }
   ],
   "license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"

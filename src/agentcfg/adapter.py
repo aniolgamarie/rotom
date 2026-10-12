@@ -245,7 +245,7 @@ class Adapter(ABC, Generic[Config, NativeProjection, CaptureProposal]):
   def capability_diagnostics(self, projection):
     return None
 
-  def dependency_backend(self):
+  def dependency_backend(self, *, profile=None):
     raise NotImplementedError("adapter must provide dependency_backend")
 
   @property

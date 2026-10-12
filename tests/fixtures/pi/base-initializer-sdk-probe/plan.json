@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "probe_id": "base-initializer-sdk-1.0.1",
+  "state": "requires-final-freeze",
+  "versions": {
+    "pi": "1.0.1",
+    "pi_ai": "1.0.2",
+    "node": "24.14.0"
+  },
+  "source_root": "/source",
+  "candidate_root": "/candidate",
+  "node_root": "/node",
+  "work_root": "/work",
+  "cases": [
+    "api-key-default",
+    "native-oauth-source",
+    "native-auth-format-denied"
+  ],
+  "provider": {
+    "id": "agentcfg-synthetic-init",
+    "model": "selected",
+    "api": "openai-completions",
+    "base_url": "https://synthetic.invalid/unused",
+    "native_provider": "openai-codex",
+    "native_model": "gpt-5.3-codex-spark"
+  },
+  "sentinels": [
+    "OWN_FAILED_TASK_SENTINEL",
+    "OWN_UNFINISHED_TASK_SENTINEL"
+  ],
+  "source_pins": {},
+  "candidate_pins": {},
+  "limits": {
+    "case_timeout_ms": 5000,
+    "total_timeout_ms": 60000,
+    "max_result_bytes": 65536
+  },
+  "candidate_inventory": null
+}

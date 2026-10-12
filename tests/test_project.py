@@ -18,6 +18,36 @@ def generated(tmp_path):
   return stage
 
 
+def test_pi_initialization_consumes_metadata_from_the_held_guard(tmp_path, monkeypatch):
+  from contextlib import nullcontext
+  from pathlib import Path
+  from types import SimpleNamespace
+  import shutil
+  import agentcfg.pi_lifecycle as lifecycle
+  import agentcfg.project as module
+  import agentcfg.runtime as runtime
+  from agentcfg.pi import PiAdapter
+  from test_pi_workspace_leases import worktree
+  stage = generated(tmp_path); target = worktree(tmp_path)
+  adapter = PiAdapter(Path(__file__).resolve().parents[1])
+  backend = SimpleNamespace(status=lambda *_: "installed", openspec_argv=lambda *_: ["synthetic-openspec"])
+  workspace = SimpleNamespace(adapter=adapter, backend=backend, cache=tmp_path / "cache")
+  calls = []
+  def checked(argv, *, cwd, env):
+    calls.append(argv)
+    shutil.copytree(stage, cwd, dirs_exist_ok=True)
+    return ""
+  monkeypatch.setattr(module, "checked", checked)
+  monkeypatch.setattr(runtime, "runtime_identity", lambda *_: "f" * 64)
+  monkeypatch.setattr(lifecycle, "guard", lambda _: nullcontext())
+  # guard已有已核验身份时，旧metadata查询路径会重入账户锁，必须不再调用。
+  monkeypatch.setattr(adapter, "project_metadata_root", lambda *_: pytest.fail("metadata identity lookup reentered held guard"))
+  assert module.initialize_openspec(workspace, {}, target)["changed"] == 2
+  assert len(calls) == 1
+  assert (target / ".git/agentcfg-project/.agentcfg-openspec.json").is_file()
+  assert not (target / ".agentcfg-openspec.json").exists()
+
+
 def test_project_target_only_idempotent_and_conflicts(tmp_path):
   stage = generated(tmp_path)
   target = tmp_path / "项目 空格"

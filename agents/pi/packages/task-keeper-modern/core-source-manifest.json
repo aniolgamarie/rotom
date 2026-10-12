@@ -1,0 +1,482 @@
+{
+  "schema_version": 2,
+  "transform": "own-runtime-node24-transform",
+  "compiler": {
+    "name": "node",
+    "version": "v24.14.0",
+    "sha256": "e237a2839d0cbdc9a9a2adda1a184afc0f5b20306ffbe923af5686550472d8a8",
+    "api": "node:module.stripTypeScriptTypes",
+    "mode": "transform"
+  },
+  "files": [
+    {
+      "source": "agents/pi/packages/task-keeper/config.schema.json",
+      "path": "config.schema.json",
+      "source_sha256": "cb49c14c3c5d82df819ea0cfb1a958f9f548b1addaffdef35ed6adbec850a530",
+      "sha256": "cb49c14c3c5d82df819ea0cfb1a958f9f548b1addaffdef35ed6adbec850a530",
+      "size": 48339
+    },
+    {
+      "source": "agents/pi/packages/task-keeper-modern/core.ts",
+      "path": "core.mjs",
+      "source_sha256": "bc00192f29ba1e70f9414fb2213d35b436ad3cdf226953f223c3c8928828d25b",
+      "sha256": "02e5a10eed263ba3ba1d8aad7970c0dcdf629ebbb867cd84352d71bfe89129cb",
+      "size": 208
+    },
+    {
+      "source": "agents/pi/packages/task-keeper-modern/index.ts",
+      "path": "index.mjs",
+      "source_sha256": "448c4ff0de14c1b812e2206b8c92a387d0822c9c0dc19fbd4d4d1eae65d7cde4",
+      "sha256": "180d090136257dddf29a0f4b45ae0007e75a25d56f5df682ad6f4848cf3045e1",
+      "size": 361
+    },
+    {
+      "source": "agents/pi/runtime/auxiliary-executor.ts",
+      "path": "runtime/auxiliary-executor.mjs",
+      "source_sha256": "a7a146c9df6d71464549c5a0591d703a353249be1b2622cc165e063d71526f5a",
+      "sha256": "89306422fd74313a92e613978b20865974ac704444a57f918dd2909ccdb5ba52",
+      "size": 20691
+    },
+    {
+      "source": "agents/pi/runtime/guarded-tools.ts",
+      "path": "runtime/guarded-tools.mjs",
+      "source_sha256": "12d37a27a8b02f15e2653f9ba082c4b6d5cb0818726fde0e2361d4a926e02022",
+      "sha256": "8398617a8faac40913aa5728e3c1ffc26ad4ff76fb47faa74b452a4d949a91a5",
+      "size": 10308
+    },
+    {
+      "source": "agents/pi/runtime/managed-observation.ts",
+      "path": "runtime/managed-observation.mjs",
+      "source_sha256": "77e27fc32c98e0868e82e61875d8b72e6da93a5b2f0f9870f3bc358bf9eccda4",
+      "sha256": "a67e9f0c6c2e04c7e62cc6cc9487928c8c9bb6cf4b7e09684e25bc219a7a8912",
+      "size": 8624
+    },
+    {
+      "source": "agents/pi/runtime/managed-types.ts",
+      "path": "runtime/managed-types.mjs",
+      "source_sha256": "73cad6ee3bcf33fe58fd0d34dd1298eb71280d62b1a034a595c824726c4cdae7",
+      "sha256": "e5b74d48e095c3300bfe46134c671ecbcab8faf46ba483f31f8fef86391f04f6",
+      "size": 9791
+    },
+    {
+      "source": "agents/pi/runtime/private-files.ts",
+      "path": "runtime/private-files.mjs",
+      "source_sha256": "15df3f350e9869bab3ed5db34b4032a2947c1f1e3daaccbb74157fc1920b25b7",
+      "sha256": "315ef5a6be6750bf533ab036865b2a19d0940608bb43e20af2a30198c99c105c",
+      "size": 2587
+    },
+    {
+      "source": "agents/pi/runtime/private-operation-input.ts",
+      "path": "runtime/private-operation-input.mjs",
+      "source_sha256": "a7392cb1a0fdb5c51a20cbb3b4e617f6c7ec1487f286eb197d3a3e29e3f7c0a4",
+      "sha256": "d540c66e1b969800abba4a06f156fd23e1b8741961e2fb91a7bbb6717f857747",
+      "size": 4824
+    },
+    {
+      "source": "agents/pi/runtime/shell-operation-executor.ts",
+      "path": "runtime/shell-operation-executor.mjs",
+      "source_sha256": "ff31c61602fc658295f11811fc70830a92f3de41354a7a444e891a7f1e8c6ed1",
+      "sha256": "f13519bc7164589e59a819a74dd32294650cbfccc743f84f398fb9c3a53e5344",
+      "size": 12602
+    },
+    {
+      "source": "agents/pi/runtime/strict-json.ts",
+      "path": "runtime/strict-json.mjs",
+      "source_sha256": "74a241bcbeb106653ff4180969a94713d55dc818cb933b3c9a26db5f4db83125",
+      "sha256": "05e1b26ef7b8896d8922483f34a36f95ab3916466f10cd060e28128c05edc448",
+      "size": 1949
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/adapters/capabilities.ts",
+      "path": "src/adapters/capabilities.mjs",
+      "source_sha256": "2ce7da412e10ead21dee4e0e071f5ececfe7de7402b28da00d7f501399995a00",
+      "sha256": "40789bffe51bbef4ce453aa137bce9295ac9664e027d29e1a3277fcca8275fb0",
+      "size": 1633
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/adapters/child-contract.ts",
+      "path": "src/adapters/child-contract.mjs",
+      "source_sha256": "34fa11f2e781618b342d84c55945fd4f6b8d5bd59f8514fd691b24150def0b5d",
+      "sha256": "cbac0181549bdad76e1a4341e44ebbd3c1e7d7af839f691d7ee7826e6fb986a7",
+      "size": 466
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/adapters/child-reporter.ts",
+      "path": "src/adapters/child-reporter.mjs",
+      "source_sha256": "45d531a35629b65706754257a5e61dfca53bf72c0461c03497b66ad120898dec",
+      "sha256": "f8a56df0f9bbc14a9ae666adf041ffa973f704327f30f83abaf17802c1853d07",
+      "size": 1325
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/adapters/process-identity.ts",
+      "path": "src/adapters/process-identity.mjs",
+      "source_sha256": "dac7c7f99d9cff3ea20b0415deb1a31923010e60a12d3e3ab7fa11b7410b17a0",
+      "sha256": "c501e87c6ea6c54cef7020455152757a46e563c6a6a09abb4c3dc4b0ce11a938",
+      "size": 2354
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/adapters/route-requirements.ts",
+      "path": "src/adapters/route-requirements.mjs",
+      "source_sha256": "9e8dcf8bec7252ef534ab9052f8a337fcc65f667e295d86b1d91a73d6d28e844",
+      "sha256": "124047cf722d146902cb7fea7f99b56fb2d9e9a360466a52f4af914fd7ce623a",
+      "size": 2439
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/adapters/task-keeper-identity.ts",
+      "path": "src/adapters/task-keeper-identity.mjs",
+      "source_sha256": "d011915e62f38416bccef15cc31425ec4477c9e6cda1167a341a1e2f22716222",
+      "sha256": "f3ffb36765f7b1eef519c14f5031b02c46e991b72fd6ba0d014436baa66c1ba4",
+      "size": 1376
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/adapters/telemetry.ts",
+      "path": "src/adapters/telemetry.mjs",
+      "source_sha256": "72bdf67046516b14aba3f8c315faab4358939069dc21b6f2482304ba8a928264",
+      "sha256": "f85910e1a22eecdf9f0b0c73b4aeedc6f9330984786744a8398fc572e29cd2fb",
+      "size": 1634
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/agentcfg-config.ts",
+      "path": "src/agentcfg-config.mjs",
+      "source_sha256": "a9f8026af58054c29721367ee95b95d963288f0b89e58df1d3b9260a11cc5b7f",
+      "sha256": "85a60858a2e027b32e2b2287786fa4cefba5fb00a3c807a7cb69ccefeb85dfcd",
+      "size": 6575
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/config.ts",
+      "path": "src/config.mjs",
+      "source_sha256": "a6e7ebb227e735c73016188592a518a6f8d95180cf029ff1373cee69a3631946",
+      "sha256": "aaf0c460ccbf5b1b50e85f2b267205d094ce41fb8d34e81b20fdaeae4ca03db0",
+      "size": 28506
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/contracts/budget.ts",
+      "path": "src/contracts/budget.mjs",
+      "source_sha256": "e4c7e33e8f739f09eaeb748d188993caba58d2ea3dc831910cb9eb1256162158",
+      "sha256": "41932fffac698b823b22f184d39df10cf8b620a2cbf722cbb53c33dc1c2b8133",
+      "size": 1088
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/contracts/events.ts",
+      "path": "src/contracts/events.mjs",
+      "source_sha256": "110263cb549defcfd47397439cb0a83f4f9f4914d0f196be004bf4cf38523884",
+      "sha256": "01c3b69e1024314628edcfda6a7fb8c1543aea8e98ddfd06b0d7457160c6a4b2",
+      "size": 1005
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/contracts/intents.ts",
+      "path": "src/contracts/intents.mjs",
+      "source_sha256": "3f331f0683cd45b7c2d00ee7fb9a3d3a358ec3210b9bc797bf9d7358a72997d8",
+      "sha256": "edfbe15d86d4b6704e01f3297e95cd7592950fd1e8c5cdb8d4e5a0fbdab330eb",
+      "size": 182
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/contracts/ownership.ts",
+      "path": "src/contracts/ownership.mjs",
+      "source_sha256": "1e1633e559694305227c41af62d5480bf1ecb495205010009e66b31744c7f4c1",
+      "sha256": "208914e440940b1b7d4b50b7ac7dfebe20ee75020afb6b6c69e8b9d21123744a",
+      "size": 201
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/contracts/primitives.ts",
+      "path": "src/contracts/primitives.mjs",
+      "source_sha256": "207848a4f986b8551de83ae37aedeb1d045ee0aec1c19998568321c9d5b49f3f",
+      "sha256": "02aec84891527cd3afdd3f9fe80c4a68dbf24173c3832ffad198301f238a8c96",
+      "size": 2105
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/contracts/resources.ts",
+      "path": "src/contracts/resources.mjs",
+      "source_sha256": "9dde63f5c58cbf84b96719b9a8e2ed0f055964dda60aea3cbf3d11e480c1cf04",
+      "sha256": "dacdde35077373a00c0f87c76c08f47fd71e401c882830ab70544cce9b068425",
+      "size": 1338
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/contracts/task.ts",
+      "path": "src/contracts/task.mjs",
+      "source_sha256": "a0161697691d4754444d71c3c7f9ad3ea67748e414850ef400770c167c732567",
+      "sha256": "cf894c4cfb82204b0d2c554c61de0673000a1a904f016fff9a18b0b74677d8c0",
+      "size": 6259
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/contracts/writers.ts",
+      "path": "src/contracts/writers.mjs",
+      "source_sha256": "50f6b8dadab1dd67894fc78c3669f44d1ee78fcd67bfcb14e8f0d2b3e5ed2438",
+      "sha256": "f2845b23ffb28461f2e21b90de3d4596f46d471c409da10b5cdd83e62a2f2520",
+      "size": 293
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/evidence/context.ts",
+      "path": "src/evidence/context.mjs",
+      "source_sha256": "6f6f825954b041feca4fe042ed14a807f38a7b9d1af8e04f4a3ae0aba0593c2b",
+      "sha256": "7f412e0d2eb74b92b17a1c8e520cee92d6c355129238969608e518871e2c1b8f",
+      "size": 9474
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/evidence/decision-ledger.ts",
+      "path": "src/evidence/decision-ledger.mjs",
+      "source_sha256": "c29ae02e31dddfad4471bee59735c668a7a348940524a586b5f50199b017721c",
+      "sha256": "fd7e69b333500cbf053c28399acf9ba3fe8e86c9eea8996b24194c13eb930ca5",
+      "size": 1901
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/evidence/packet.ts",
+      "path": "src/evidence/packet.mjs",
+      "source_sha256": "56080d0519d25847bc035913ba71f03746ffd6d9590fc279e4db627dec632245",
+      "sha256": "be43a07cf3ba40a272478e093ec1996975cec669d7fbdae9a251bbcecee161df",
+      "size": 5277
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/evidence/producer.ts",
+      "path": "src/evidence/producer.mjs",
+      "source_sha256": "0776b31a177d094b488022a89267265306b157d322526c8404a5be03fd9d3d80",
+      "sha256": "a519354326efe92100e6cd8f916adb8f7e6ccc7c67231c3e81f2695091308504",
+      "size": 10322
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/evidence/records.ts",
+      "path": "src/evidence/records.mjs",
+      "source_sha256": "ffda1901a6f3178752c740271a2db32058bde952cf4228d11199f5c873228f9b",
+      "sha256": "9a73819b10ac3d31d3efb5566dae74d4add17acfb7b35beef514c9799bb06698",
+      "size": 12183
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/orchestration/decisions.ts",
+      "path": "src/orchestration/decisions.mjs",
+      "source_sha256": "4991a2bce2cdf245fc330c6ae0470b485abb90554112459fa0e8c8aaf10bf3cb",
+      "sha256": "edea19f9f91cff97c2b525fdc85d5128bebfece5df7476615e9bde369ecfeecc",
+      "size": 4296
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/orchestration/fairness.ts",
+      "path": "src/orchestration/fairness.mjs",
+      "source_sha256": "ee402d5d5222ea92cc82522dcf6bbb1b43b0470ffc2b780ba7c7582771c2c581",
+      "sha256": "63a3ea68132ed2d109985877726ee04b6e0f0d99a2fb40ef8de794b9df16021d",
+      "size": 1141
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/orchestration/policy.ts",
+      "path": "src/orchestration/policy.mjs",
+      "source_sha256": "abcc1f7b4aefd1a47e7facb6abce238f7f4bec84a64052f0eea8168ca3ce4e39",
+      "sha256": "9e709eb51fc073c75615bb0972ad91e8a0b74a94127c6842eb7f2fc736b33229",
+      "size": 3663
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/orchestration/recovery.ts",
+      "path": "src/orchestration/recovery.mjs",
+      "source_sha256": "bce0223cb90161eb002da426ad8c31e6409b53c63b5eb31c59835f8f7990bb82",
+      "sha256": "7089c800545f793e77fd0fd0387890dc2999108d926a18d72ef4a2da41d9969d",
+      "size": 2247
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/orchestration/scheduler.ts",
+      "path": "src/orchestration/scheduler.mjs",
+      "source_sha256": "b4e10093a404c26d0908b7f37700e10bdaf525a847dcd4389a4be921eeec900c",
+      "sha256": "53a52f512b6d762b3b713950ede99106489227c9dc65e09965dc7c901a2c7261",
+      "size": 19474
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/orchestration/service-core.ts",
+      "path": "src/orchestration/service-core.mjs",
+      "source_sha256": "22c1af89df4eca5510e051843bee0e60793f7be3ef69f2b934464783db29068b",
+      "sha256": "261592026b1e3a2b141c8544635f160fe1e070aad21d08e8129995d5298792f5",
+      "size": 168238
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/orchestration/work-scope.ts",
+      "path": "src/orchestration/work-scope.mjs",
+      "source_sha256": "53c07ded92105305e0a1c5823133b998a13fe8655ac58624e9a2738c22d25c74",
+      "sha256": "07569ccdfa8de899d2a657495b96e2b1609acc3092f87b08b760ee618c7c802c",
+      "size": 2971
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/orchestration/workflow-plan.ts",
+      "path": "src/orchestration/workflow-plan.mjs",
+      "source_sha256": "6a31722098e2add2d59c50fc67f099902aa08f8f2076e6fb695dd72a0629dc46",
+      "sha256": "a25693e1014bd2a55bf01694c046124d379f818f1a0f43ec59748ccb47826c35",
+      "size": 5757
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/policies/calendar.ts",
+      "path": "src/policies/calendar.mjs",
+      "source_sha256": "aa212fedcc8e1836ffefd8f6c506fb89cc00db49f54ac948a8e7d6d4827785c8",
+      "sha256": "44fac375e380ad82f11011b5dd968719f990984a1d00bd0c900b794bb79c5076",
+      "size": 2555
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/policies/configuration.ts",
+      "path": "src/policies/configuration.mjs",
+      "source_sha256": "0fcaffed41c016d65ec6a5ade96028949ad79909b2f37b18ea4a8f8727c9314a",
+      "sha256": "36b2b1850a02b7e0127de50ee4a6f6999ab0f3b75887edd173957886f219eed3",
+      "size": 13493
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/policies/opinion.ts",
+      "path": "src/policies/opinion.mjs",
+      "source_sha256": "dad519edbc4de9be1f914a4b660c70a678569568c371d8a67aac68a147c261a0",
+      "sha256": "73db9637b6b934535dbd9367d4f488588b9a0d66294630aa7ea1e678c721103b",
+      "size": 1811
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/policies/recovery.ts",
+      "path": "src/policies/recovery.mjs",
+      "source_sha256": "ac4ad08912d0cf1a538c2f666e204a1ccf516c1f149dcb61c73fe2d61b5f5102",
+      "sha256": "6a81e8ad06a6110b27a3f87bc755f37237f98b2a0779b21721d41cab508322f8",
+      "size": 4638
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/policies/selection.ts",
+      "path": "src/policies/selection.mjs",
+      "source_sha256": "4ed50e1847fe1dd5eae3cb6fc5fa1c35c714cf05d837fb73646ff86255161fe7",
+      "sha256": "a268bbdb2459d574c4c76fb04c4fce0be90bf34b187085846b041a1f6a2edd97",
+      "size": 4896
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/reliability/classifier.ts",
+      "path": "src/reliability/classifier.mjs",
+      "source_sha256": "3e472e75198020e3f66794553ad89d8f2c6b382db1faec01f9cce34ddb2b3e81",
+      "sha256": "c63324080919d30bdccde93328d71ad760f9de09148af0b5e8701d0dd5e148d4",
+      "size": 5132
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/reliability/incidents.ts",
+      "path": "src/reliability/incidents.mjs",
+      "source_sha256": "25e4dc9333d6269b8ab3f289d6577ffb827e78798b56eac08aa8529b808e5076",
+      "sha256": "f1926674cb0e8e4451f0f93181cf5c92b60c5ee97a051fe85a31b92e7590e04d",
+      "size": 7982
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/reliability/stages.ts",
+      "path": "src/reliability/stages.mjs",
+      "source_sha256": "3364e73ea13797a2434945b6fdbdc1a92218f6961963232bc1af2ee75564a31b",
+      "sha256": "9aa068d5fb8f7a352cfa33561a6eae6085a6cbbca206f23b9e0c61f032fd958f",
+      "size": 2450
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/store/artifacts.ts",
+      "path": "src/store/artifacts.mjs",
+      "source_sha256": "1f977285b1aa62f8b554089b49cc4d38ffb01ae8843b582a0ca783c21737d672",
+      "sha256": "f7b99a184ac3bf07d678f70027b376db892be951b54694408db60746d4d7f95c",
+      "size": 2539
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/store/database.ts",
+      "path": "src/store/database.mjs",
+      "source_sha256": "f68307135a2d00a9e189e1c51f0c278010adbe6062c02cff9d335baa7b6a0198",
+      "sha256": "7ef8da1d1560a18d31f6aaa13964e06784ffb77a68638c999f2504f96b66a316",
+      "size": 20199
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/store/location.ts",
+      "path": "src/store/location.mjs",
+      "source_sha256": "267112241bed25141917a6994337dc345395805d23a057487b12bfaac3eea0f7",
+      "sha256": "6c4192e4a541561326f4ddfd6ce70f2bc5b8914227e5309bb7cf7d8684c9e8f2",
+      "size": 3046
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/store/schema.ts",
+      "path": "src/store/schema.mjs",
+      "source_sha256": "27f6c581051fb3d8d20a24215c73234f2b685e54b6c08b819a5e5b6c4a65d1d0",
+      "sha256": "04ed82555e4ca576db2ec6d081f7672d1a3eff2cc9f957474924d15aafff4188",
+      "size": 705
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/usage/capture.ts",
+      "path": "src/usage/capture.mjs",
+      "source_sha256": "13e88775f8c53b25c6050b623a342dfa4f7307c60baece6b816111c501eb1fdd",
+      "sha256": "ad269e0d1714c970c0f89ff381568b92616a0e6fd2b589a02aa2dcedb3289b6e",
+      "size": 7075
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/usage/comparison.ts",
+      "path": "src/usage/comparison.mjs",
+      "source_sha256": "7df6691f58f4972927429b1d3317e7f401410408eb63c3671da98f403df7ad64",
+      "sha256": "3ce99e88691a136ef3d1fd65e4460bab7e3191c3dce611807376b7dd5036a849",
+      "size": 8516
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/usage/ledger.ts",
+      "path": "src/usage/ledger.mjs",
+      "source_sha256": "c4f3a27ceac1de89024c0ef6ddb434d595f70c3d9de2967c3239f204ea81355a",
+      "sha256": "f3907a9cd50d119ab96e552472ad53445a66c168197a0880c6223e642dd8ac4e",
+      "size": 20095
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/usage/managed.ts",
+      "path": "src/usage/managed.mjs",
+      "source_sha256": "f10f42ea9646a2395e642f0656332a81d55a868f89e1a20d94ecb14b423b3ee8",
+      "sha256": "8a27207c146a490fcb1e5c8cfeb4810ee6ad20aed547b5a385ab2b3f85a6452e",
+      "size": 3846
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/usage/pricing.ts",
+      "path": "src/usage/pricing.mjs",
+      "source_sha256": "28d35ebbbfd7aa9eff30a332e4a3383bba33244ffa96f03a0884bb5416f15cbd",
+      "sha256": "4bd8045bbfd2f379b00e4525be7ff353c756a4ebf23d9d81fc168c07a05d756f",
+      "size": 3299
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/verification/inputs.ts",
+      "path": "src/verification/inputs.mjs",
+      "source_sha256": "03e66ec8d7c0d8f5b1849d96dbd4e42ff6c5da3ca16dbcb5808337956aa1e714",
+      "sha256": "4e12cc9d0345b2f940797f36cfb1c04baf203ccb25e799948d0b79affd0686df",
+      "size": 3344
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/verification/read-causality.ts",
+      "path": "src/verification/read-causality.mjs",
+      "source_sha256": "ba8fabbb1b36c6c8edcb5dab20e1e27b190c0e324c0c552ca814920bcff14d83",
+      "sha256": "f70b7170c23c6008731ea0a25ccd413ed694fcd01e63af9ee44129ee93071851",
+      "size": 1601
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/verification/reuse.ts",
+      "path": "src/verification/reuse.mjs",
+      "source_sha256": "94e92f029e9e9d7a72cb0f0c0dd919502c2024a9df4d76a025576b8ad79373c7",
+      "sha256": "b258748b391cdfd17833831fd4d08212f36e6099bfb91f8d75bda86ca8d9984d",
+      "size": 2686
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/verification/review.ts",
+      "path": "src/verification/review.mjs",
+      "source_sha256": "f7a10d04af548de76ebee78363f978dd6c27545a422aad40d279f4edb930cb91",
+      "sha256": "56213b8c43e0a9f1ce57ae5422a6ffc3c0d4a2d5dab919cfde1bb197e8073d7a",
+      "size": 9728
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/verification/runner.ts",
+      "path": "src/verification/runner.mjs",
+      "source_sha256": "93d4b5652d31d428d4235099a77407988cc3c2928f0f8a7997b15f7ac3991053",
+      "sha256": "fe330b600206d9bafa069367f0ebf3c5bca6f2163f40159802f41823ec5bde21",
+      "size": 11818
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/verification/supervisor.ts",
+      "path": "src/verification/supervisor.mjs",
+      "source_sha256": "3312dd3b471d76bb4e486586dec67c6a800cd900044c1cec056b7b470ec8a850",
+      "sha256": "dbab98adea6f78c1ce8c2f023ea07071f9fef4a22f97a11c932b77d7bbae7105",
+      "size": 5537
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/workspace/async-workspace.ts",
+      "path": "src/workspace/async-workspace.mjs",
+      "source_sha256": "710c027c38727f2dcb31317c95f7d483446213d00482fe3e4b70a9ee1265eb5b",
+      "sha256": "4f468923c7a315c0b395336e65029c02115bebc909f5f9637da6b8cffddf1368",
+      "size": 1472
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/workspace/shared-resources.ts",
+      "path": "src/workspace/shared-resources.mjs",
+      "source_sha256": "f0677bdd05184260fbbb55622f1b1c9685b4ddebcb34ec2ee0b6ba0afde73244",
+      "sha256": "b4aca966f88e854e02847790ec989b307021d542e34688fa70bdd4a548a23b6d",
+      "size": 1384
+    },
+    {
+      "source": "agents/pi/packages/task-keeper/src/workspace/worktree.ts",
+      "path": "src/workspace/worktree.mjs",
+      "source_sha256": "af5f880f2c43fc2dcbf1f7b7f12aa34e35c4d8eed7aaacf0b7f6d055e2a84c09",
+      "sha256": "fbbae14bc97d05ac30a8555d95e4f419d193304f9252b92f163bf70838d7f466",
+      "size": 27908
+    }
+  ]
+}

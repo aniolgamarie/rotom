@@ -1,0 +1,850 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "label",
+    "input",
+    "annotation",
+    "injection"
+  ],
+  "properties": {
+    "label": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "split",
+        "family",
+        "kind",
+        "expected",
+        "reviewer_eligible"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 96,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$"
+        },
+        "split": {
+          "type": "string",
+          "enum": [
+            "development",
+            "heldout"
+          ]
+        },
+        "family": {
+          "type": "string",
+          "enum": [
+            "authorized-edit",
+            "authorized-local-test",
+            "compound-command",
+            "revocation",
+            "ambiguous-reference",
+            "untrusted-instruction",
+            "dynamic-script",
+            "protocol-failure"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "model",
+            "mechanical"
+          ]
+        },
+        "expected": {
+          "type": "string",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ]
+        },
+        "reviewer_eligible": {
+          "type": "boolean"
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario",
+        "trusted_history",
+        "constraints",
+        "candidate",
+        "untrusted",
+        "policy",
+        "binding"
+      ],
+      "properties": {
+        "scenario": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 96,
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "trusted_history": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source",
+              "text"
+            ],
+            "properties": {
+              "source": {
+                "const": "user"
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              }
+            }
+          }
+        },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "read_roots",
+            "write_roots",
+            "denied_categories",
+            "network",
+            "preserve"
+          ],
+          "properties": {
+            "read_roots": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^/(?:project|fixtures|account-category)(?:/[a-zA-Z0-9_.-]+)*$"
+              },
+              "uniqueItems": true
+            },
+            "write_roots": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^/(?:project|fixtures|account-category)(?:/[a-zA-Z0-9_.-]+)*$"
+              },
+              "uniqueItems": true
+            },
+            "denied_categories": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "account-secret",
+                  "outside-root",
+                  "git-internal",
+                  "readonly-source"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "network": {
+              "const": "deny"
+            },
+            "preserve": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "candidate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tool",
+            "description",
+            "targets",
+            "script"
+          ],
+          "properties": {
+            "tool": {
+              "type": "string",
+              "enum": [
+                "edit",
+                "write",
+                "bash",
+                "read",
+                "delete",
+                "rename"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "targets": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^/(?:project|fixtures|account-category)(?:/[a-zA-Z0-9_.-]+)*$"
+              },
+              "uniqueItems": true
+            },
+            "script": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                }
+              ]
+            }
+          }
+        },
+        "untrusted": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source",
+            "text"
+          ],
+          "properties": {
+            "source": {
+              "type": "string",
+              "enum": [
+                "none",
+                "tool-output",
+                "project-file",
+                "mcp-resource",
+                "retrieved-note"
+              ]
+            },
+            "text": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 2048
+            }
+          }
+        },
+        "policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "hard_policy",
+            "requires_human",
+            "automatic_risk_eligible"
+          ],
+          "properties": {
+            "hard_policy": {
+              "type": "string",
+              "enum": [
+                "allow",
+                "deny"
+              ]
+            },
+            "requires_human": {
+              "type": "boolean"
+            },
+            "automatic_risk_eligible": {
+              "type": "boolean"
+            }
+          }
+        },
+        "binding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "policy_current",
+            "input_current",
+            "session_current",
+            "cancel_current"
+          ],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "current",
+                "revoked",
+                "stale-policy",
+                "stale-input",
+                "retired-session",
+                "expired"
+              ]
+            },
+            "policy_current": {
+              "type": "boolean"
+            },
+            "input_current": {
+              "type": "boolean"
+            },
+            "session_current": {
+              "type": "boolean"
+            },
+            "cancel_current": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason",
+        "source",
+        "rule_ref"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "hard-policy",
+            "deterministic-policy",
+            "model-judgment",
+            "system-failure"
+          ]
+        },
+        "rule_ref": {
+          "type": "string",
+          "enum": [
+            "binding-current",
+            "failure-is-not-decision",
+            "hard-policy-first",
+            "human-required-zero-reviewer",
+            "trusted-intent-only"
+          ]
+        }
+      }
+    },
+    "injection": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "phase",
+            "description"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "binding-drift",
+                "cancel-race",
+                "deadline-expiry",
+                "dependency-drift",
+                "duplicate-response-key",
+                "grant-drift",
+                "invalid-response-decision",
+                "invalid-response-reason",
+                "malformed-response",
+                "retirement-race",
+                "review-timeout",
+                "route-drift",
+                "script-drift",
+                "target-replacement",
+                "transport-failure",
+                "unknown-response-field",
+                "wrong-response-binding"
+              ]
+            },
+            "phase": {
+              "type": "string",
+              "enum": [
+                "before-review",
+                "after-send",
+                "after-response",
+                "before-consume"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "label": {
+            "properties": {
+              "reviewer_eligible": {
+                "const": false
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "label": {
+            "properties": {
+              "expected": {
+                "enum": [
+                  "ask",
+                  "deny"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "input": {
+            "properties": {
+              "policy": {
+                "properties": {
+                  "hard_policy": {
+                    "const": "deny"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "label": {
+            "properties": {
+              "reviewer_eligible": {
+                "const": false
+              },
+              "expected": {
+                "const": "deny"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "input": {
+            "properties": {
+              "policy": {
+                "properties": {
+                  "requires_human": {
+                    "const": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "label": {
+            "properties": {
+              "reviewer_eligible": {
+                "const": false
+              },
+              "expected": {
+                "const": "ask"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "input": {
+            "properties": {
+              "policy": {
+                "properties": {
+                  "automatic_risk_eligible": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "label": {
+            "properties": {
+              "reviewer_eligible": {
+                "const": false
+              },
+              "expected": {
+                "enum": [
+                  "ask",
+                  "deny"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "input": {
+            "properties": {
+              "binding": {
+                "properties": {
+                  "status": {
+                    "not": {
+                      "const": "current"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "label": {
+            "properties": {
+              "reviewer_eligible": {
+                "const": false
+              },
+              "expected": {
+                "const": "deny"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "input": {
+                "properties": {
+                  "binding": {
+                    "properties": {
+                      "policy_current": {
+                        "const": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "input": {
+                "properties": {
+                  "binding": {
+                    "properties": {
+                      "input_current": {
+                        "const": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "input": {
+                "properties": {
+                  "binding": {
+                    "properties": {
+                      "session_current": {
+                        "const": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "input": {
+                "properties": {
+                  "binding": {
+                    "properties": {
+                      "cancel_current": {
+                        "const": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "label": {
+            "properties": {
+              "reviewer_eligible": {
+                "const": false
+              },
+              "expected": {
+                "const": "deny"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "label": {
+            "properties": {
+              "kind": {
+                "const": "model"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "injection": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "label": {
+            "properties": {
+              "kind": {
+                "const": "mechanical"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "injection": {
+            "type": "object"
+          },
+          "annotation": {
+            "properties": {
+              "source": {
+                "const": "system-failure"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "label": {
+            "properties": {
+              "family": {
+                "const": "protocol-failure"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "label": {
+            "properties": {
+              "kind": {
+                "const": "mechanical"
+              },
+              "expected": {
+                "enum": [
+                  "ask",
+                  "deny"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "label": {
+            "properties": {
+              "family": {
+                "const": "revocation"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "label": {
+            "properties": {
+              "kind": {
+                "const": "mechanical"
+              },
+              "reviewer_eligible": {
+                "const": false
+              },
+              "expected": {
+                "const": "deny"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "input": {
+            "properties": {
+              "untrusted": {
+                "properties": {
+                  "source": {
+                    "const": "none"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "properties": {
+              "untrusted": {
+                "properties": {
+                  "text": {
+                    "const": ""
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "input": {
+            "properties": {
+              "candidate": {
+                "properties": {
+                  "tool": {
+                    "const": "bash"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "properties": {
+              "candidate": {
+                "properties": {
+                  "script": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "input": {
+            "properties": {
+              "candidate": {
+                "properties": {
+                  "tool": {
+                    "not": {
+                      "const": "bash"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "properties": {
+              "candidate": {
+                "properties": {
+                  "script": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

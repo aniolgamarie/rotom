@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "probe_id": {
+      "const": "official-rpc-1.0.1"
+    },
+    "versions": {
+      "const": {
+        "pi": "1.0.1",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      }
+    },
+    "lock_sha256": {
+      "const": "f2c0af34b3c0d9195705509c26513de7d8aeb2fa4b6f3d395a2d58ecdd82c4ac"
+    },
+    "provider": {
+      "const": {
+        "id": "synthetic-rpc-probe",
+        "api": "synthetic-rpc-probe",
+        "model": "synthetic-model",
+        "base_url": "https://synthetic.invalid/unused",
+        "api_key": "synthetic-no-account"
+      }
+    },
+    "cases": {
+      "const": [
+        "timeout",
+        "cancelled",
+        "wrong-id",
+        "abort-late",
+        "confirmed"
+      ]
+    },
+    "confirmation_timeout_ms": {
+      "const": 1000
+    },
+    "files": {
+      "const": {
+        "worker.mjs": "a57ae7440da298a15d1f040704cb5b6bfecef63d40bc1b432f0e8d8be3067779",
+        "extension.mjs": "efd0c116d31f4d6b6ee12de84140049880db3107bc7c7b8772034afa0836539b"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "probe_id",
+    "versions",
+    "lock_sha256",
+    "provider",
+    "cases",
+    "confirmation_timeout_ms",
+    "files"
+  ],
+  "additionalProperties": false
+}

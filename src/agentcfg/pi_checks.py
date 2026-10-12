@@ -2,6 +2,7 @@
 
 import os
 import hashlib
+import re
 from pathlib import Path
 
 from .activity import digest
@@ -13,11 +14,20 @@ from .storage import Conflict
 FIELDS = {"executable", "args", "project_root", "timeout_seconds", "foreground"}
 
 
-def compile_check(binding, *, candidate, executable, read_roots=()):
-  if (set(binding) - FIELDS - {"kind", "parser", "minimum_tests", "inputs", "read_roots"} or FIELDS - set(binding) or binding["foreground"] is not True
+def compile_check(binding, *, candidate, executable, read_roots=(), trusted_context=None):
+  if (set(binding) - FIELDS - {"kind", "parser", "minimum_tests", "inputs", "read_roots", "trusted_inputs", "required_test_ids"} or FIELDS - set(binding) or binding["foreground"] is not True
       or type(binding["timeout_seconds"]) is not int or binding["timeout_seconds"] < 1
       or not isinstance(binding["args"], list) or any(not isinstance(arg, str) or "\0" in arg for arg in binding["args"])):
     raise ConfigError("pi-check-binding")
+  required_ids = binding.get("required_test_ids")
+  if "required_test_ids" in binding:
+    if (not isinstance(required_ids, list) or not 1 <= len(required_ids) <= 4096
+        or any(type(value) is not str or not re.fullmatch(r"[a-zA-Z0-9_.:-]{1,200}", value) for value in required_ids)
+        or len(set(required_ids)) != len(required_ids)
+        or binding.get("kind") != "tests" or binding.get("parser") != "json"):
+      raise ConfigError("pi-check-test-id-contract")
+  if trusted_context is None and binding.get("trusted_inputs"):
+    raise ConfigError("CHECK_TRUSTED_CONTEXT_REQUIRED")
   candidate = Path(candidate).resolve(strict=True)
   executable = configured_path(str(executable))
   if executable.is_symlink() or not executable.is_file() or not os.access(executable, os.X_OK):
@@ -32,7 +42,12 @@ def compile_check(binding, *, candidate, executable, read_roots=()):
     "read_roots": [str(Path(root).resolve(strict=True)) for root in read_roots],
     "executable_identity": {"device": info.st_dev, "inode": info.st_ino, "size": info.st_size,
       "sha256": hashlib.sha256(executable.read_bytes()).hexdigest()}}
-  result["result_contract"] = {key: binding[key] for key in ("kind", "parser", "minimum_tests", "inputs") if key in binding}
+  result["result_contract"] = {key: binding[key] for key in ("kind", "parser", "minimum_tests", "inputs", "required_test_ids") if key in binding}
+  if trusted_context is not None:
+    from copy import deepcopy
+    from .pi_trusted_checks import compile_trusted
+    result["trusted_implementation"] = compile_trusted(binding, candidate, executable, trusted_context)
+    result["trusted_binding"] = deepcopy(binding)
   result["binding_digest"] = digest(result)
   return result
 
@@ -42,6 +57,9 @@ def verify_check(check):
     raise ConfigError("pi-check-sandbox-contract")
   if check["binding_digest"] != digest({key: value for key, value in check.items() if key != "binding_digest"}):
     raise Conflict("项目检查绑定已经变化")
+  if "trusted_implementation" in check:
+    from .pi_trusted_checks import verify_trusted
+    verify_trusted(check)
   if "web_cli_port" in check:
     if (type(check["web_cli_port"]) is not int or not 1024 <= check["web_cli_port"] <= 65535
         or len(check.get("socket_paths", [])) != 1):

@@ -1,0 +1,243 @@
+{
+  "schema": 1,
+  "cases": {
+    "normal": {
+      "schema": 1,
+      "case": "normal",
+      "nativeStarted": true,
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "seedBatches": 1,
+      "componentCommits": 2,
+      "taskWrites": 1,
+      "taskBatches": 1,
+      "rowCount": 1,
+      "nativeProxyObserved": true,
+      "sameBatch": true,
+      "frozenReceipt": true,
+      "accepted": true,
+      "submitRejected": false,
+      "initializeRejected": false,
+      "resubmitBlocked": false,
+      "persistentDocMatched": true,
+      "docBound": true,
+      "sentinelUnchanged": false,
+      "conflictsRejected": 0,
+      "bodyCalls": 0,
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "closed": true,
+      "batchCount": 2
+    },
+    "concurrent-conflicts": {
+      "schema": 1,
+      "case": "concurrent-conflicts",
+      "nativeStarted": true,
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "seedBatches": 1,
+      "componentCommits": 13,
+      "taskWrites": 1,
+      "taskBatches": 1,
+      "rowCount": 1,
+      "nativeProxyObserved": true,
+      "sameBatch": true,
+      "frozenReceipt": true,
+      "accepted": true,
+      "submitRejected": false,
+      "initializeRejected": false,
+      "resubmitBlocked": false,
+      "persistentDocMatched": true,
+      "docBound": true,
+      "sentinelUnchanged": false,
+      "conflictsRejected": 4,
+      "bodyCalls": 0,
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "closed": true,
+      "batchCount": 2
+    },
+    "lost-submit-ack": {
+      "schema": 1,
+      "case": "lost-submit-ack",
+      "nativeStarted": true,
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "seedBatches": 1,
+      "componentCommits": 2,
+      "taskWrites": 1,
+      "taskBatches": 1,
+      "rowCount": 1,
+      "nativeProxyObserved": true,
+      "sameBatch": true,
+      "frozenReceipt": false,
+      "accepted": false,
+      "submitRejected": true,
+      "initializeRejected": false,
+      "resubmitBlocked": true,
+      "persistentDocMatched": true,
+      "docBound": true,
+      "sentinelUnchanged": false,
+      "conflictsRejected": 0,
+      "bodyCalls": 0,
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "closed": true,
+      "batchCount": 2
+    },
+    "lost-initialize-ack": {
+      "schema": 1,
+      "case": "lost-initialize-ack",
+      "nativeStarted": true,
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "seedBatches": 1,
+      "componentCommits": 1,
+      "taskWrites": 0,
+      "taskBatches": 0,
+      "rowCount": 0,
+      "nativeProxyObserved": true,
+      "sameBatch": false,
+      "frozenReceipt": false,
+      "accepted": false,
+      "submitRejected": false,
+      "initializeRejected": true,
+      "resubmitBlocked": true,
+      "persistentDocMatched": true,
+      "docBound": true,
+      "sentinelUnchanged": false,
+      "conflictsRejected": 0,
+      "bodyCalls": 0,
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "closed": true,
+      "batchCount": 1
+    },
+    "active-missing": {
+      "schema": 1,
+      "case": "active-missing",
+      "nativeStarted": true,
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "seedBatches": 1,
+      "componentCommits": 0,
+      "taskWrites": 0,
+      "taskBatches": 0,
+      "rowCount": 0,
+      "nativeProxyObserved": false,
+      "sameBatch": false,
+      "frozenReceipt": false,
+      "accepted": false,
+      "submitRejected": false,
+      "initializeRejected": true,
+      "resubmitBlocked": false,
+      "persistentDocMatched": true,
+      "docBound": false,
+      "sentinelUnchanged": false,
+      "conflictsRejected": 0,
+      "bodyCalls": 0,
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "closed": true,
+      "batchCount": 0
+    },
+    "old-sentinel": {
+      "schema": 1,
+      "case": "old-sentinel",
+      "nativeStarted": true,
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "seedBatches": 1,
+      "componentCommits": 1,
+      "taskWrites": 0,
+      "taskBatches": 0,
+      "rowCount": 0,
+      "nativeProxyObserved": true,
+      "sameBatch": false,
+      "frozenReceipt": false,
+      "accepted": false,
+      "submitRejected": false,
+      "initializeRejected": true,
+      "resubmitBlocked": false,
+      "persistentDocMatched": true,
+      "docBound": false,
+      "sentinelUnchanged": true,
+      "conflictsRejected": 0,
+      "bodyCalls": 0,
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "closed": true,
+      "batchCount": 1
+    },
+    "late-close": {
+      "schema": 1,
+      "case": "late-close",
+      "nativeStarted": true,
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "seedBatches": 1,
+      "componentCommits": 2,
+      "taskWrites": 1,
+      "taskBatches": 1,
+      "rowCount": 1,
+      "nativeProxyObserved": true,
+      "sameBatch": true,
+      "frozenReceipt": false,
+      "accepted": false,
+      "submitRejected": true,
+      "initializeRejected": false,
+      "resubmitBlocked": true,
+      "persistentDocMatched": true,
+      "docBound": true,
+      "sentinelUnchanged": false,
+      "conflictsRejected": 0,
+      "bodyCalls": 0,
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "closed": true,
+      "batchCount": 2
+    }
+  }
+}

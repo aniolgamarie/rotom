@@ -13,7 +13,10 @@ from agentcfg.pi_control import read_frame, request
 
 
 def main():
-  result = request(os.environ["AGENTCFG_SUPERVISOR_ENDPOINT"], os.environ["AGENTCFG_SUPERVISOR_CAPABILITY"], read_frame(sys.stdin.buffer))
+  directory = os.environ.get("AGENTCFG_SUPERVISOR_DIRECTORY_FD")
+  if directory not in (None, "3"): raise ValueError("control-directory-invalid")
+  result = request(os.environ["AGENTCFG_SUPERVISOR_ENDPOINT"], os.environ["AGENTCFG_SUPERVISOR_CAPABILITY"], read_frame(sys.stdin.buffer),
+    inherited_directory_fd=3 if directory == "3" else None)
   sys.stdout.write(json.dumps(result, separators=(",", ":")) + "\n")
   return 0
 

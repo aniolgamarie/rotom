@@ -51,6 +51,39 @@ schema_version = 1
 default = "deny"
 rules = []
 
+# 用户明确选择且绑定project根时，普通文件操作直行；不授予命令或服务能力。
+[policies.ordinary-project]
+schema_version = 1
+default = "deny"
+[[policies.ordinary-project.rules]]
+id = "project-files"
+kind = "file"
+effect = "allow"
+approval = "deterministic-policy"
+tool_ids = ["read", "write", "edit", "ls", "find", "grep"]
+operations = ["read", "write", "create", "rename", "list", "search"]
+root_ref = "project"
+relative_path = "."
+match = "subtree"
+[[policies.ordinary-project.rules]]
+id = "project-git-deny"
+kind = "file"
+effect = "deny"
+tool_ids = ["read", "write", "edit", "ls", "find", "grep"]
+operations = ["read", "write", "create", "rename", "list", "search"]
+root_ref = "project"
+relative_path = ".git"
+match = "subtree"
+[[policies.ordinary-project.rules]]
+id = "project-env-deny"
+kind = "file"
+effect = "deny"
+tool_ids = ["read", "write", "edit", "ls", "find", "grep"]
+operations = ["read", "write", "create", "rename", "list", "search"]
+root_ref = "project"
+relative_path = ".env"
+match = "exact"
+
 # 仅供显式选择的受管候选工具。FilePolicy 仍检查角色、task grant 与写租约。
 [policies.task-keeper-candidate]
 schema_version = 1
@@ -363,3 +396,153 @@ scope = "global"
 kind = "extension"
 path = "agents/pi/extensions/notify.ts"
 scope = "global"
+
+# 独立投影不继承旧 defaults 的调度器、角色或关闭态 Full 配置。
+[profile_defaults.pi-base]
+providers = []
+models = []
+rules = ["chinese", "terminal", "cpp-local-search"]
+skills = ["cpp-database-kernel", "neovim-plugin-development", "safe-linux-scripting"]
+plugins = ["pi-todo", "loop-guard", "colorful-footer"]
+mcp = []
+
+[profile_defaults.pi-base.agent_options.runtime]
+engine = "node"
+
+[profile_defaults.pi-base.agent_options.resources]
+roles = []
+prompts = ["ordinary-implement", "ordinary-plan", "ordinary-review"]
+themes = ["everforest-dark"]
+extensions = []
+
+[profile_defaults.pi-base.agent_options.ui]
+theme = "everforest-dark"
+quiet_startup = true
+hide_thinking = false
+
+[profile_defaults.pi-base.agent_options.discovery]
+project_resources = false
+external_skills = []
+
+[profile_defaults.pi-base.agent_options.permissions]
+policy_ref = "project-default"
+readonly_roots = []
+denied_roots = []
+
+[profile_defaults.pi-base.agent_options.compaction]
+owner = "native"
+
+[resources.ordinary-implement]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/implement.md"
+scope = "global"
+
+[resources.ordinary-plan]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/plan.md"
+scope = "global"
+
+[resources.ordinary-review]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/review.md"
+scope = "global"
+
+[resources.ordinary-commit]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/commit.md"
+scope = "global"
+
+[resources.ordinary-debug]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/debug.md"
+scope = "global"
+
+[resources.ordinary-docs]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/docs.md"
+scope = "global"
+
+[resources.ordinary-explain]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/explain.md"
+scope = "global"
+
+[resources.ordinary-perf]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/perf.md"
+scope = "global"
+
+[resources.ordinary-pr]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/pr.md"
+scope = "global"
+
+[resources.ordinary-refactor]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/refactor.md"
+scope = "global"
+
+[resources.ordinary-security]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/security.md"
+scope = "global"
+
+[resources.ordinary-test]
+kind = "prompt"
+path = "agents/pi/prompts/ordinary/test.md"
+scope = "global"
+
+# 可选资源不改变默认加载；这里只授权普通提示词声明。
+[profile_available_resources.pi-base]
+prompts = ["ordinary-implement", "ordinary-plan", "ordinary-review", "ordinary-commit", "ordinary-debug", "ordinary-docs", "ordinary-explain", "ordinary-perf", "ordinary-pr", "ordinary-refactor", "ordinary-security", "ordinary-test"]
+
+# Full 候选目前仅选择已验公共普通基础；高级服务必须另行接线和选择。
+[profile_defaults.pi-full]
+providers = []
+models = []
+rules = ["chinese", "terminal", "cpp-local-search"]
+skills = ["cpp-database-kernel", "neovim-plugin-development", "safe-linux-scripting"]
+plugins = ["pi-todo", "loop-guard", "colorful-footer", "model-delegate", "task-keeper"]
+mcp = []
+
+[profile_defaults.pi-full.agent_options.runtime]
+engine = "node"
+
+[profile_defaults.pi-full.agent_options.resources]
+roles = []
+prompts = ["ordinary-implement", "ordinary-plan", "ordinary-review"]
+themes = ["everforest-dark"]
+extensions = []
+
+[profile_defaults.pi-full.agent_options.ui]
+theme = "everforest-dark"
+quiet_startup = true
+hide_thinking = false
+
+[profile_defaults.pi-full.agent_options.discovery]
+project_resources = false
+external_skills = []
+
+[profile_defaults.pi-full.agent_options.permissions]
+policy_ref = "project-default"
+readonly_roots = []
+denied_roots = []
+
+[profile_defaults.pi-full.agent_options.compaction]
+owner = "native"
+
+
+# 可选高级候选显式关闭；没有预算或来源资格不阻止普通主会话。
+[profile_defaults.pi-full.agent_options.model_delegate]
+enabled = false
+backends = []
+allowed_modes = ["review", "investigate"]
+presets = ["general", "review"]
+max_run_seconds = 300
+context_budget_tokens = 4096
+readonly_retries = 0
+
+[profile_defaults.pi-full.agent_options.task_keeper]
+enabled = false
+second_view_enabled = false
+max_second_view_rounds = 2

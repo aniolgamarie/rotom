@@ -18,7 +18,7 @@ def selection_jobs(controller, pending):
   search = Path(pending["cwd"]) if pending["params"].get("workspace", False) else Path(pending["path"])
   permission = host.manifest()["permission_policy"]
   declarations = options.get("paths", {}).get("roots", {})
-  denied = [configured_path(row).resolve(strict=True) for row in host.config.get("protected_roots", [])]
+  denied = [configured_path(row).resolve(strict=False) for row in host.config.get("protected_roots", [])]
   denied += [configured_path(declarations[name]["path"]).resolve(strict=True) for name in options.get("permissions", {}).get("denied_roots", [])]
   for rule in permission["rules"]:
     if rule["kind"] != "file" or rule["effect"] != "deny": continue

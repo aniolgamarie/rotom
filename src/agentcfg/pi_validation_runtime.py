@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .paths import PathError, relative_path
 from .pi_dependencies import platform_id
-from .pi_runtime_packages import status
+from .pi_runtime_packages import MAX_RECEIPT, status
 from .pi_scope import PROFILES
 from .schema import ConfigError
 from .storage import Conflict, Tree
@@ -36,6 +36,8 @@ class ValidationRuntime:
   slice_identity: str
   entrypoint: str
   toolchains: dict
+  sdk_version: str = "0.84.4"
+  family: str = "legacy"
 
   def public_identity(self):
     return {"profile": self.profile, "engine": self.engine, "platform": self.platform, "runtime_identity": self.identity,
@@ -47,14 +49,35 @@ def inspect_runtime(root, *, check=status, current_platform=platform_id):
   if root.is_symlink() or not root.is_dir() or root.resolve(strict=True) != root: raise ConfigError("pi-validation-runtime-path")
   with Tree(root) as tree:
     profile_raw = tree.read("runtime/profile.json", max_bytes=8 * 1024 * 1024)
-    receipt_raw = tree.read(".agentcfg-receipt.json", max_bytes=64 * 1024 * 1024)
+    receipt_raw = tree.read(".agentcfg-receipt.json", max_bytes=MAX_RECEIPT)
   if profile_raw is None or receipt_raw is None: raise Conflict("PI_VALIDATION_RUNTIME_UNSEALED")
   try:
     installed, receipt = json.loads(profile_raw[0]), json.loads(receipt_raw[0])
     package = relative_path(receipt["slice"]["package_path"])
     entry = relative_path(installed["entrypoint"])
     if len(package.parts) != 2 or package.name != "package.json": raise ValueError()
-    profile = package.parts[0]
+    # 现代producer以内容身份命名package目录；逻辑profile取自严格原描述与binding。
+    profile = installed.get("profile_id") if installed.get("schema_version") == 2 else package.parts[0]
+    if profile in ("pi-base", "pi-full"):
+      # 现代安装使用原sealed收据与公开profile校验，不套旧001的SDK/场景矩阵。
+      from .pi_modern_launcher import validate_profile
+      if (type(installed.get("schema_version")) is not int or installed["schema_version"] != 2
+          or type(receipt.get("schema_version")) is not int or receipt["schema_version"] != 2
+          or receipt["binding_identity"]["profile"] != profile or installed["profile_id"] != profile
+          or installed["engine"] != "node" or installed["platform"] != current_platform()
+          or installed["platform"] != receipt["platform"] or installed["runtime_identity"] != receipt["identity"]
+          or installed["lock_identity"] != receipt["lock_identity"] or installed["slice_identity"] != receipt["slice_identity"]
+          or installed["toolchains"] != receipt["toolchains"] or installed["sdk_package"] != "@earendil-works/pi-coding-agent"):
+        raise ValueError()
+      if check(root, installed["runtime_identity"]) != "installed": raise Conflict("PI_VALIDATION_RUNTIME_DAMAGED")
+      validate_profile(root, receipt["slice"], identity=installed["runtime_identity"], lock_identity=installed["lock_identity"],
+        toolchains=installed["toolchains"], profile_id=profile)
+      with Tree(root) as tree:
+        if tree.read(str(entry)) is None or tree.read("runtime/official-launch.mjs") is None:
+          raise Conflict("PI_VALIDATION_RUNTIME_ENTRYPOINT")
+      return ValidationRuntime(root, profile, "node", installed["platform"], installed["runtime_identity"],
+        installed["lock_identity"], installed["slice_identity"], str(entry), dict(installed["toolchains"]),
+        sdk_version=installed["sdk_version"], family="modern")
     if (profile not in PROFILES or installed["schema_version"] != 1 or installed["engine"] != PROFILES[profile]
         or installed["platform"] != current_platform() or installed["platform"] != receipt["platform"]
         or installed["runtime_identity"] != receipt["identity"] or installed["lock_identity"] != receipt["lock_identity"]

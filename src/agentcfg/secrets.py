@@ -14,9 +14,12 @@ class CredentialError(Exception):
 
   exit_code = 3
 
-  def __init__(self, reference=None):
+  def __init__(self, reference=None, *, reason="invalid"):
     suffix = ("；定位 " + credential_id(reference) + "，执行 doctor 后在私人 locations.json 中查找对应 secret 引用") if reference else ""
-    super().__init__("凭据无效或所需凭据缺失" + suffix)
+    self.reason = reason if type(reason) is str and reason in ("missing", "empty") else "invalid"
+    message = {"missing": "所需凭据未配置", "empty": "已配置凭据为空",
+               "invalid": "凭据无效或所需凭据缺失"}[self.reason]
+    super().__init__(message + suffix)
 
 
 def _valid_values(values: object) -> bool:
@@ -52,8 +55,8 @@ class SecretStore:
     if not isinstance(reference, SecretRef) or type(required) is not bool:
       raise CredentialError()
     value = self.__values.get(reference.reference[len("secret:"):])
-    if not value:
+    if value is None or value == "":
       if required:
-        raise CredentialError(reference.reference)
+        raise CredentialError(reference.reference, reason="missing" if value is None else "empty")
       return None
     return value

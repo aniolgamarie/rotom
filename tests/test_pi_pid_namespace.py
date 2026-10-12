@@ -36,13 +36,76 @@ def test_host_namespace_retains_existing_filesystem_and_separate_input_gate(tmp_
   with Tree(runtime, create=True) as tree:
     tree.write_new("bin/codex-resources/bwrap", b"fixture")
     tree.write_new("supervisor/scripts/pi-namespace-exec.py", b"fixture")
-  host = SimpleNamespace(runtime_root=runtime, repository=runtime / "supervisor")
+    tree.write_new("runtime/profile.json", b'{"schema_version":1}')
+  host = SimpleNamespace(runtime_root=runtime, repository=runtime / "supervisor", manifest=lambda: {"profile_id": "pi-default"})
   command = SimpleNamespace(cwd=tmp_path, argv=("fixture-host", "--interactive"))
   argv = host_namespace_argv(host, command, 42, "a" * 64)
   assert "--unshare-pid" in argv and "--as-pid-1" in argv and "--cap-drop" in argv
   at = argv.index("--bind")
   assert argv[at:at + 3] == ["--bind", "/", "/"]
   assert argv[-5:] == ["--host-gate", "a" * 64, "--", "fixture-host", "--interactive"]
+
+
+def modern_host(tmp_path, monkeypatch, profile="pi-base"):
+  from agentcfg.pi_dependencies import digest
+  monkeypatch.setattr("agentcfg.pi_dependencies.platform_id", lambda: "linux-x86_64")
+  runtime = tmp_path / ("a" * 64)
+  identity = {"lock_identity": "b" * 64, "slice_identity": "c" * 64}
+  installed = {"schema_version": 2, "profile_id": profile, "runtime_identity": runtime.name, **identity}
+  binary = bytearray(64); binary[:6] = b"\x7fELF\x02\x01"; binary[16:18] = (3).to_bytes(2, "little"); binary[18:20] = (62).to_bytes(2, "little")
+  with Tree(runtime, create=True) as tree:
+    tree.replace("bin/pi-bwrap", bytes(binary), mode=0o700, expected=None)
+    tree.write_new("bin/codex-resources/bwrap", b"unselected legacy binary; never execute")
+    tree.write_new("supervisor/scripts/pi-namespace-exec.py", b"synthetic gate; never execute")
+    tree.write_new("runtime/profile.json", json_bytes(installed))
+    files = {}
+    for path in ("bin/pi-bwrap", "supervisor/scripts/pi-namespace-exec.py", "runtime/profile.json"):
+      raw = tree.read(path); files[path] = {"kind": "file", "sha256": digest(raw[0]), "mode": raw[1]}
+    # 单元测试仅构造本次helper消费的收据字段，不声称完整安装收据通过。
+    tree.write_new(".agentcfg-receipt.json", json_bytes({"schema_version": 2, "identity": runtime.name, **identity, "files": files}))
+  return SimpleNamespace(runtime_root=runtime, repository=runtime / "supervisor", config=identity,
+    manifest=lambda: {"profile_id": profile})
+
+
+@pytest.mark.parametrize("profile", ["pi-base", "pi-full"])
+def test_modern_host_uses_only_sealed_independent_helper(tmp_path, monkeypatch, profile):
+  from agentcfg.pi_pid_namespace import host_namespace_argv
+  host = modern_host(tmp_path, monkeypatch, profile)
+  command = SimpleNamespace(cwd=tmp_path, argv=("synthetic-host", "--print"))
+  argv = host_namespace_argv(host, command, 42, "a" * 64)
+  assert argv[0] == str(host.runtime_root / "bin/pi-bwrap")
+  assert "--unshare-pid" in argv and "--as-pid-1" in argv and "--unshare-net" not in argv
+  assert argv[argv.index("--bind"):argv.index("--bind") + 3] == ["--bind", "/", "/"]
+  assert argv[-5:] == ["--host-gate", "a" * 64, "--", "synthetic-host", "--print"]
+
+
+@pytest.mark.parametrize("fault", ["missing", "modified", "nonexecuting", "symlink", "hardlink", "receipt", "receipt-identity", "slice", "profile", "gate", "gate-mode", "unsafe-gate-root", "unknown-profile", "downgrade", "mixed-family"])
+def test_modern_host_never_falls_back_to_codex_or_system_helper(tmp_path, monkeypatch, fault):
+  from agentcfg.pi_pid_namespace import host_namespace_argv
+  host = modern_host(tmp_path, monkeypatch)
+  binary = host.runtime_root / "bin/pi-bwrap"
+  if fault == "missing": binary.unlink()
+  if fault == "modified": binary.write_bytes(b"untrusted")
+  if fault == "nonexecuting": binary.chmod(0o600)
+  if fault in ("symlink", "hardlink"):
+    other = tmp_path / "other"; binary.rename(other)
+    if fault == "symlink": binary.symlink_to(other)
+    else: os.link(other, binary)
+  if fault in ("receipt", "receipt-identity"):
+    path = host.runtime_root / ".agentcfg-receipt.json"
+    if fault == "receipt": path.unlink()
+    else:
+      value = json.loads(path.read_bytes()); value["identity"] = "f" * 64; path.write_bytes(json_bytes(value))
+  if fault == "slice": host.config["slice_identity"] = "f" * 64
+  if fault == "profile": host.manifest = lambda: {"profile_id": "pi-full"}
+  if fault == "gate": (host.repository / "scripts/pi-namespace-exec.py").write_bytes(b"changed")
+  if fault == "gate-mode": (host.repository / "scripts/pi-namespace-exec.py").chmod(0o700)
+  if fault == "unsafe-gate-root": host.repository = tmp_path
+  if fault == "unknown-profile": host.manifest = lambda: {"profile_id": None}
+  if fault == "downgrade": host.manifest = lambda: {"profile_id": "pi-default"}
+  if fault == "mixed-family": (host.runtime_root / "runtime/profile.json").write_bytes(b'{"schema_version":1}')
+  command = SimpleNamespace(cwd=tmp_path, argv=("synthetic-host",))
+  with pytest.raises(Conflict): host_namespace_argv(host, command, 42, "a" * 64)
 
 
 def test_every_profile_locks_both_linux_host_namespace_helpers():
@@ -117,16 +180,18 @@ def test_namespace_worker_matches_immutable_birth_not_namespace_local_pid_number
     assert not same_namespace_process(expected, {**actual, key: value})
 
 
-def test_namespace_argv_binds_private_paths_and_keeps_runtime_readonly(tmp_path):
+@pytest.mark.parametrize("non_git", [False, True])
+def test_namespace_argv_binds_private_paths_and_keeps_runtime_readonly(tmp_path, non_git):
   runtime, state, instance, project, python_root = (tmp_path / name for name in ("runtime", "state", "instance", "project", "python"))
   for path in (runtime, state, instance, project, python_root): ensure_private(path)
   with Tree(runtime) as tree:
     tree.write_new("bin/codex-resources/bwrap", b"fixture, never execute")
     tree.write_new("supervisor/scripts/pi-namespace-exec.py", b"fixture")
-  with Tree(project) as tree: tree.write_new(".git/HEAD", b"fixture")
+  if not non_git:
+    with Tree(project) as tree: tree.write_new(".git/HEAD", b"fixture")
   host = SimpleNamespace(runtime_root=runtime, root=state, repository=runtime / "supervisor", config={"instance_root": str(instance)},
     manifest=lambda: {"options": {"paths": {"roots": {"project": {"path": str(project), "purpose": "project"}}}}},
-    store=SimpleNamespace(workspaces=SimpleNamespace(identify=lambda _: {"git_dir_path": str(project / ".git")})))
+    store=SimpleNamespace(workspaces=SimpleNamespace(identify=lambda _: {"git_dir_path": None if non_git else str(project / ".git")})))
   command = SimpleNamespace(cwd=project, argv=("/fixture/python", "/fixture/worker"))
   argv = namespace_argv(host, command, 42)
   assert "--as-pid-1" in argv and "--unshare-pid" in argv and "--unshare-net" not in argv
@@ -134,6 +199,7 @@ def test_namespace_argv_binds_private_paths_and_keeps_runtime_readonly(tmp_path)
   assert ("--bind", str(instance), str(instance)) in mounts
   assert ("--ro-bind", str(runtime), str(runtime)) in mounts
   assert ("--bind", "/", "/") not in mounts
+  assert (("--ro-bind", str(project / ".git"), str(project / ".git")) in mounts) is (not non_git)
   assert argv[-2:] == list(command.argv)
 
 

@@ -64,6 +64,10 @@ class CLIParser(argparse.ArgumentParser):
       getattr(parsed, name) is not None for name in ("machine", "local", "profile")
     ):
       self.fail("init-local 仅使用子命令后的 --machine；全局选择器不适用")
+    if parsed.command == "workspace" and any(getattr(parsed, name) is not None for name in ("machine", "local", "profile")):
+      self.fail("workspace 不接受机器或 profile 选择器")
+    if parsed.command == "pi-reviewer-authority" and any(getattr(parsed, name) is not None for name in ("machine", "local", "profile")):
+      self.fail("pi-reviewer-authority 不接受机器、local 或 profile 选择器")
     if parsed.command == "profiles" and any(
       getattr(parsed, name) is not None for name in ("machine", "local", "profile")
     ):
@@ -192,6 +196,28 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     subparsers = parser.add_subparsers(dest="command", title="命令")
+
+    maintenance = subparsers.add_parser("pi-maintenance", help="Pi提供者替换状态与显式配置恢复；不重派旧工作")
+    maintenance_sub = maintenance.add_subparsers(dest="maintenance_command", required=True)
+    for name in ("status", "recover", "uninstall"):
+      command = maintenance_sub.add_parser(name)
+      if name == "uninstall": command.add_argument("--runtime-identity", required=True, metavar="HEX64", help="明确受管旧包身份；有未知引用则拒绝删除")
+      command.add_argument("--format", choices=("auto", "human", "json"), default="auto")
+
+    workspace = subparsers.add_parser("workspace", help="显式登记与查询非Git工作根；不授予写入许可")
+    workspace_sub = workspace.add_subparsers(dest="workspace_command", required=True)
+    for name in ("register", "inspect", "list"):
+      command = workspace_sub.add_parser(name)
+      if name != "list": command.add_argument("--path", required=True)
+      command.add_argument("--format", choices=("auto", "human", "json"), default="auto")
+
+    authority = subparsers.add_parser("pi-reviewer-authority", help="显式账户授权工件；不会启用reviewer或调用模型")
+    authority_sub = authority.add_subparsers(dest="authority_command", required=True)
+    for name in ("show", "create", "update"):
+      command = authority_sub.add_parser(name)
+      if name != "show": command.add_argument("--document", required=True, metavar="PATH", help="用户自有、单链接普通0600的私有JSON文件（最多16KiB）")
+      if name == "update": command.add_argument("--expected-identity", required=True, metavar="HEX64", help="先show观察的当前live identity")
+      command.add_argument("--format", choices=("human", "json"), default="human")
 
     # init-local: 初始化本地配置
     init_local = subparsers.add_parser(
@@ -394,6 +420,12 @@ def main(argv: list[str] | None = None) -> int:
 
     # 分发命令
     try:
+        if args.command == "pi-reviewer-authority":
+            from .pi_reviewer_authority_cli import cmd_reviewer_authority
+            return cmd_reviewer_authority(args)
+        if args.command == "workspace":
+            from .pi_registered_roots import cmd_workspace
+            return cmd_workspace(args)
         if args.command == "profiles":
             from . import commands
             return commands.cmd_profiles(args)

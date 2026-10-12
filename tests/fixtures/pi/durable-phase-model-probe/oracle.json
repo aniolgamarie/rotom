@@ -1,0 +1,607 @@
+{
+  "schema": 1,
+  "cases": {
+    "generation-success": {
+      "schema": 1,
+      "case": "generation-success",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "nativeTaskKind": "pi.generation",
+      "nativeTaskStatus": "terminal",
+      "nativeTaskOutcome": "completed",
+      "counters": {
+        "authorize": 3,
+        "prepare": 1,
+        "commitSending": 1,
+        "stream": 1,
+        "complete": 0,
+        "resultFacts": 1,
+        "recordResult": 1,
+        "settle": 1
+      },
+      "sendingReceipts": [
+        true
+      ],
+      "trace": [
+        "authorize:1",
+        "prepare",
+        "authorize:2",
+        "commitSending:true",
+        "authorize:3",
+        "streamEntry",
+        "sendingObserved",
+        "resultFacts",
+        "recordResult",
+        "settle",
+        "taskTerminal"
+      ],
+      "envelopeMatched": true,
+      "sameSignal": true,
+      "normalizedOptions": {
+        "maxTokens": 64,
+        "maxRetries": 0,
+        "transport": "sse",
+        "timeoutMs": 1000,
+        "cacheRetention": "none"
+      },
+      "cap": 64,
+      "ledger": {
+        "state": "settled",
+        "sendOutcome": null,
+        "resultOutcome": "completed",
+        "estimatedCostUnits": 2,
+        "reservedCostUnits": "0",
+        "settledCostUnits": "2",
+        "calls": 1,
+        "outstanding": false
+      },
+      "ledgerReadSources": [
+        "model-body",
+        "final"
+      ],
+      "summaryObserved": false,
+      "submissionStatus": "done",
+      "sanitizedErrorObserved": false,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown",
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "modelBodyFailed": false,
+      "reportCalls": 0,
+      "closed": true,
+      "errorReason": null,
+      "resultBindingsMatched": true,
+      "historyWrites": 0
+    },
+    "generation-denied": {
+      "schema": 1,
+      "case": "generation-denied",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "nativeTaskKind": "pi.generation",
+      "nativeTaskStatus": "terminal",
+      "nativeTaskOutcome": "failed",
+      "counters": {
+        "authorize": 1,
+        "prepare": 0,
+        "commitSending": 0,
+        "stream": 0,
+        "complete": 0,
+        "resultFacts": 0,
+        "recordResult": 0,
+        "settle": 0
+      },
+      "sendingReceipts": [],
+      "trace": [
+        "authorize:1",
+        "taskTerminal"
+      ],
+      "envelopeMatched": true,
+      "sameSignal": true,
+      "normalizedOptions": {
+        "maxTokens": 64,
+        "maxRetries": 0,
+        "transport": "sse",
+        "timeoutMs": 1000,
+        "cacheRetention": "none"
+      },
+      "cap": 64,
+      "ledger": null,
+      "ledgerReadSources": [
+        "final-absent"
+      ],
+      "summaryObserved": false,
+      "submissionStatus": "unanswered",
+      "sanitizedErrorObserved": true,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown",
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "modelBodyFailed": false,
+      "reportCalls": 0,
+      "closed": true,
+      "errorReason": "model_error",
+      "resultBindingsMatched": true,
+      "historyWrites": 0
+    },
+    "generation-error-no-retry": {
+      "schema": 1,
+      "case": "generation-error-no-retry",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "nativeTaskKind": "pi.generation",
+      "nativeTaskStatus": "terminal",
+      "nativeTaskOutcome": "failed",
+      "counters": {
+        "authorize": 3,
+        "prepare": 1,
+        "commitSending": 1,
+        "stream": 1,
+        "complete": 0,
+        "resultFacts": 1,
+        "recordResult": 1,
+        "settle": 1
+      },
+      "sendingReceipts": [
+        true
+      ],
+      "trace": [
+        "authorize:1",
+        "prepare",
+        "authorize:2",
+        "commitSending:true",
+        "authorize:3",
+        "streamEntry",
+        "sendingObserved",
+        "resultFacts",
+        "recordResult",
+        "settle",
+        "taskTerminal"
+      ],
+      "envelopeMatched": true,
+      "sameSignal": true,
+      "normalizedOptions": {
+        "maxTokens": 64,
+        "maxRetries": 0,
+        "transport": "sse",
+        "timeoutMs": 1000,
+        "cacheRetention": "none"
+      },
+      "cap": 64,
+      "ledger": {
+        "state": "settled",
+        "sendOutcome": null,
+        "resultOutcome": "failed",
+        "estimatedCostUnits": 2,
+        "reservedCostUnits": "0",
+        "settledCostUnits": "2",
+        "calls": 1,
+        "outstanding": false
+      },
+      "ledgerReadSources": [
+        "model-body",
+        "final"
+      ],
+      "summaryObserved": false,
+      "submissionStatus": "unanswered",
+      "sanitizedErrorObserved": true,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown",
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "modelBodyFailed": false,
+      "reportCalls": 0,
+      "closed": true,
+      "errorReason": "model_error",
+      "resultBindingsMatched": true,
+      "historyWrites": 0
+    },
+    "compaction-success": {
+      "schema": 1,
+      "case": "compaction-success",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "nativeTaskKind": "pi.compaction",
+      "nativeTaskStatus": "terminal",
+      "nativeTaskOutcome": "completed",
+      "counters": {
+        "authorize": 3,
+        "prepare": 1,
+        "commitSending": 1,
+        "stream": 0,
+        "complete": 1,
+        "resultFacts": 1,
+        "recordResult": 1,
+        "settle": 1
+      },
+      "sendingReceipts": [
+        true
+      ],
+      "trace": [
+        "authorize:1",
+        "prepare",
+        "authorize:2",
+        "commitSending:true",
+        "authorize:3",
+        "completeEntry",
+        "sendingObserved",
+        "resultFacts",
+        "recordResult",
+        "settle",
+        "taskTerminal"
+      ],
+      "envelopeMatched": true,
+      "sameSignal": true,
+      "normalizedOptions": {
+        "maxTokens": 64,
+        "maxRetries": 0,
+        "transport": "sse",
+        "timeoutMs": 1000,
+        "cacheRetention": "none"
+      },
+      "cap": 64,
+      "ledger": {
+        "state": "settled",
+        "sendOutcome": null,
+        "resultOutcome": "completed",
+        "estimatedCostUnits": 2,
+        "reservedCostUnits": "0",
+        "settledCostUnits": "2",
+        "calls": 1,
+        "outstanding": false
+      },
+      "ledgerReadSources": [
+        "model-body",
+        "final"
+      ],
+      "summaryObserved": true,
+      "submissionStatus": null,
+      "sanitizedErrorObserved": false,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown",
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "modelBodyFailed": false,
+      "reportCalls": 0,
+      "closed": true,
+      "errorReason": null,
+      "resultBindingsMatched": true,
+      "historyWrites": 2
+    },
+    "compaction-denied": {
+      "schema": 1,
+      "case": "compaction-denied",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "nativeTaskKind": "pi.compaction",
+      "nativeTaskStatus": "terminal",
+      "nativeTaskOutcome": "faulted",
+      "counters": {
+        "authorize": 1,
+        "prepare": 0,
+        "commitSending": 0,
+        "stream": 0,
+        "complete": 0,
+        "resultFacts": 0,
+        "recordResult": 0,
+        "settle": 0
+      },
+      "sendingReceipts": [],
+      "trace": [
+        "authorize:1",
+        "taskTerminal"
+      ],
+      "envelopeMatched": true,
+      "sameSignal": true,
+      "normalizedOptions": {
+        "maxTokens": 64,
+        "maxRetries": 0,
+        "transport": "sse",
+        "timeoutMs": 1000,
+        "cacheRetention": "none"
+      },
+      "cap": 64,
+      "ledger": null,
+      "ledgerReadSources": [
+        "final-absent"
+      ],
+      "summaryObserved": false,
+      "submissionStatus": null,
+      "sanitizedErrorObserved": true,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown",
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "modelBodyFailed": false,
+      "reportCalls": 0,
+      "closed": true,
+      "errorReason": null,
+      "resultBindingsMatched": true,
+      "historyWrites": 2
+    },
+    "compaction-error-no-retry": {
+      "schema": 1,
+      "case": "compaction-error-no-retry",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "nativeTaskKind": "pi.compaction",
+      "nativeTaskStatus": "terminal",
+      "nativeTaskOutcome": "failed",
+      "counters": {
+        "authorize": 3,
+        "prepare": 1,
+        "commitSending": 1,
+        "stream": 0,
+        "complete": 1,
+        "resultFacts": 1,
+        "recordResult": 1,
+        "settle": 1
+      },
+      "sendingReceipts": [
+        true
+      ],
+      "trace": [
+        "authorize:1",
+        "prepare",
+        "authorize:2",
+        "commitSending:true",
+        "authorize:3",
+        "completeEntry",
+        "sendingObserved",
+        "resultFacts",
+        "recordResult",
+        "settle",
+        "taskTerminal"
+      ],
+      "envelopeMatched": true,
+      "sameSignal": true,
+      "normalizedOptions": {
+        "maxTokens": 64,
+        "maxRetries": 0,
+        "transport": "sse",
+        "timeoutMs": 1000,
+        "cacheRetention": "none"
+      },
+      "cap": 64,
+      "ledger": {
+        "state": "settled",
+        "sendOutcome": null,
+        "resultOutcome": "failed",
+        "estimatedCostUnits": 2,
+        "reservedCostUnits": "0",
+        "settledCostUnits": "2",
+        "calls": 1,
+        "outstanding": false
+      },
+      "ledgerReadSources": [
+        "model-body",
+        "final"
+      ],
+      "summaryObserved": false,
+      "submissionStatus": null,
+      "sanitizedErrorObserved": true,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown",
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "modelBodyFailed": false,
+      "reportCalls": 0,
+      "closed": true,
+      "errorReason": "model_error",
+      "resultBindingsMatched": true,
+      "historyWrites": 2
+    },
+    "generation-lost-sending-ack": {
+      "schema": 1,
+      "case": "generation-lost-sending-ack",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "nativeTaskKind": "pi.generation",
+      "nativeTaskStatus": "terminal",
+      "nativeTaskOutcome": "failed",
+      "counters": {
+        "authorize": 2,
+        "prepare": 1,
+        "commitSending": 1,
+        "stream": 0,
+        "complete": 0,
+        "resultFacts": 0,
+        "recordResult": 0,
+        "settle": 0
+      },
+      "sendingReceipts": [
+        true
+      ],
+      "trace": [
+        "authorize:1",
+        "prepare",
+        "authorize:2",
+        "commitSending:true",
+        "taskTerminal"
+      ],
+      "envelopeMatched": true,
+      "sameSignal": true,
+      "normalizedOptions": {
+        "maxTokens": 64,
+        "maxRetries": 0,
+        "transport": "sse",
+        "timeoutMs": 1000,
+        "cacheRetention": "none"
+      },
+      "cap": 64,
+      "ledger": {
+        "state": "sending",
+        "sendOutcome": "unknown",
+        "resultOutcome": null,
+        "estimatedCostUnits": null,
+        "reservedCostUnits": "10",
+        "settledCostUnits": "0",
+        "calls": 1,
+        "outstanding": true
+      },
+      "ledgerReadSources": [
+        "final"
+      ],
+      "summaryObserved": false,
+      "submissionStatus": "unanswered",
+      "sanitizedErrorObserved": true,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown",
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "modelBodyFailed": false,
+      "reportCalls": 0,
+      "closed": true,
+      "errorReason": "model_error",
+      "resultBindingsMatched": true,
+      "historyWrites": 0
+    },
+    "generation-replayed-sending-ack": {
+      "schema": 1,
+      "case": "generation-replayed-sending-ack",
+      "versions": {
+        "durable": "1.0.1",
+        "chord": "1.0.2",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      },
+      "nativeStarted": true,
+      "phase": "complete",
+      "settings": {
+        "journalMode": "wal",
+        "synchronous": 2
+      },
+      "nativeTaskKind": "pi.generation",
+      "nativeTaskStatus": "terminal",
+      "nativeTaskOutcome": "failed",
+      "counters": {
+        "authorize": 2,
+        "prepare": 1,
+        "commitSending": 2,
+        "stream": 0,
+        "complete": 0,
+        "resultFacts": 0,
+        "recordResult": 0,
+        "settle": 0
+      },
+      "sendingReceipts": [
+        true,
+        false
+      ],
+      "trace": [
+        "authorize:1",
+        "prepare",
+        "authorize:2",
+        "commitSending:true",
+        "commitSending:false",
+        "taskTerminal"
+      ],
+      "envelopeMatched": true,
+      "sameSignal": true,
+      "normalizedOptions": {
+        "maxTokens": 64,
+        "maxRetries": 0,
+        "transport": "sse",
+        "timeoutMs": 1000,
+        "cacheRetention": "none"
+      },
+      "cap": 64,
+      "ledger": {
+        "state": "sending",
+        "sendOutcome": "unknown",
+        "resultOutcome": null,
+        "estimatedCostUnits": null,
+        "reservedCostUnits": "10",
+        "settledCostUnits": "0",
+        "calls": 1,
+        "outstanding": true
+      },
+      "ledgerReadSources": [
+        "final"
+      ],
+      "summaryObserved": false,
+      "submissionStatus": "unanswered",
+      "sanitizedErrorObserved": true,
+      "runtimeReference": "unknown",
+      "chordContextReference": "unknown",
+      "rootBodyCalls": 0,
+      "backendCalls": 0,
+      "modelBodyFailed": false,
+      "reportCalls": 0,
+      "closed": true,
+      "errorReason": "model_error",
+      "resultBindingsMatched": true,
+      "historyWrites": 0
+    }
+  }
+}

@@ -159,3 +159,87 @@ enabled = true
 requires = []
 conflicts = []
 engines = ["node", "bun"]
+
+# Base 候选扩展目录；版本只是来源选择，兼容性须由现代运行包单独验收。
+
+[profile_plugins.pi-base.pi-todo]
+capability_id = "todo"
+model_tools = ["todo"]
+package = "@juicesharp/rpiv-todo"
+version = "2.9.0-agentcfg.1"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[profile_plugins.pi-base.loop-guard]
+capability_id = "loop-protection"
+model_tools = []
+package = "starter-pi-loop-guard"
+version = "0.1.0"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[profile_plugins.pi-base.colorful-footer]
+capability_id = "footer"
+model_tools = []
+package = "starter-pi-colorful-footer"
+version = "0.1.0"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+# Full 候选普通插件与 Base 同来源；不加载历史调度桥。
+[profile_plugins.pi-full.pi-todo]
+capability_id = "todo"
+model_tools = ["todo"]
+package = "@juicesharp/rpiv-todo"
+version = "2.9.0-agentcfg.1"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[profile_plugins.pi-full.loop-guard]
+capability_id = "loop-protection"
+model_tools = []
+package = "starter-pi-loop-guard"
+version = "0.1.0"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+[profile_plugins.pi-full.colorful-footer]
+capability_id = "footer"
+model_tools = []
+package = "starter-pi-colorful-footer"
+version = "0.1.0"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node", "bun"]
+
+# 现代Full自有候选；不加载历史subagents/legacy Task Keeper入口。
+[profile_plugins.pi-full.model-delegate]
+capability_id = "unified-delegate"
+model_tools = []
+package = "@agentcfg/pi-model-delegate"
+version = "3.0.0"
+enabled = true
+requires = []
+conflicts = []
+engines = ["node"]
+
+[profile_plugins.pi-full.task-keeper]
+capability_id = "task-workflow"
+model_tools = []
+package = "@agentcfg/pi-task-keeper"
+version = "3.0.0"
+enabled = true
+requires = ["model-delegate"]
+conflicts = []
+engines = ["node"]

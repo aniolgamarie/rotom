@@ -1,3 +1,5 @@
+export { createEvidenceRecord, reduceEvidence, summarizeEvidence } from "./records.ts";
+export type { EvidenceRecord, EvidenceView, CurrentEvidenceContext, VerifiedArtifactFact } from "./records.ts";
 import { finiteInteger, systemClock, type Clock } from "../contracts/primitives.ts";
 
 export function recoveryStatusText(record: { status: string; reason: string; notBefore: number; attempts: number; intentId: string | null; deadlineAt?: number | null }, now: number) {
@@ -11,9 +13,10 @@ export function recoveryStatusText(record: { status: string; reason: string; not
   return `${text} · attempts ${record.attempts}`;
 }
 
-export interface JobStatusView { id: string; status: string; reason: string; snapshot: string | null; routeNotBefore?: number; stageDeadline?: number | null; scheduleNotBefore?: number | null }
+export interface JobStatusView { id: string; status: string; reason: string; snapshot: string | null; routeNotBefore?: number; stageDeadline?: number | null; scheduleNotBefore?: number | null; evidenceCurrentness?: "recorded_not_reobserved" | "reobserved" | "unavailable" }
 export function jobStatusText(job: JobStatusView, now: number) {
   let text = `${job.id.slice(-8)}:${job.status}`;
+  if(job.evidenceCurrentness&&job.evidenceCurrentness!=="reobserved")text+=" · recorded evidence; currentness not verified";
   if (["COMPLETED", "PARTIAL"].includes(job.status) && job.snapshot) text += `@${job.snapshot.slice(-8)}`;
   if(job.status === "QUEUED" && job.scheduleNotBefore!=null)text+=` · start >=${Math.max(0,Math.ceil((job.scheduleNotBefore-now)/1000))}s`;
   if(job.status === "PAUSED" && job.reason.includes("scheduled"))text+=` · ${job.reason}`;

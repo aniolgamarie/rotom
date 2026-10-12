@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .paths import relative_path
+from .pi_lock_layout import dependency_layout
 from .process import DependencyError
 from .storage import Tree
 
@@ -19,10 +20,18 @@ MAX_BINARY = 512 * 1024 * 1024
 
 
 def validate_asset(source):
-  url = urlsplit(source["url"])
-  if (url.scheme != "https" or not url.hostname or url.username is not None
-      or url.password is not None or url.query or url.fragment or url.port not in (None, 443)):
-    raise ValueError("pi-asset-url-invalid")
+  if source.get("format") == "node.tar.gz":
+    from .pi_node_asset import capture_node_asset
+    capture_node_asset(source)
+    return
+  if "build_record" in source:
+    from .pi_built_assets import validate_reference
+    validate_reference(source)
+  else:
+    url = urlsplit(source["url"])
+    if (url.scheme != "https" or not url.hostname or url.username is not None
+        or url.password is not None or url.query or url.fragment or url.port not in (None, 443)):
+      raise ValueError("pi-asset-url-invalid")
   data = source.get("format") == "raw"
   if data:
     if source["platform"] != "all" or type(source.get("size")) is not int or not 1 <= source["size"] <= 4 * 1024**3 or "archive_member" in source:
@@ -44,6 +53,9 @@ def validate_asset_platforms(piece, manifest):
     source = manifest["sources"][key]
     if source["kind"] != "asset":
       continue
+    if source.get("format") == "node.tar.gz":
+      from .pi_node_asset import validate_node_asset_toolchain
+      validate_node_asset_toolchain(source, manifest.get("toolchains"))
     platforms = targets.setdefault(source["target"], set())
     if source["platform"] in platforms:
       raise ValueError("pi-asset-platform-collision")
@@ -103,7 +115,8 @@ def extract_binary(stream, source):
   return result
 
 
-def install_assets(repository, stage, piece, manifest, platform):
+def install_assets(repository, stage, piece, manifest, platform, *, lock_family="legacy"):
+  layout = dependency_layout(family=lock_family)
   selected = [(key, manifest["sources"][key]) for key in piece["source_ids"]
     if manifest["sources"][key]["kind"] == "asset" and manifest["sources"][key]["platform"] in (platform, "all")]
   if len({source["target"] for _, source in selected}) != len(selected):
@@ -111,16 +124,28 @@ def install_assets(repository, stage, piece, manifest, platform):
   with Tree(repository, private=False) as checkout, Tree(stage) as target:
     for key, source in selected:
       try:
+        if source.get("format") == "node.tar.gz":
+          from .pi_node_asset import install_node_asset
+          install_node_asset(checkout, target, key, source, manifest.get("toolchains"), layout)
+          continue
         validate_asset(source)
+        built_record = None
+        if "build_record" in source:
+          from .pi_built_assets import load_record, verify_archive
+          built_record = load_record(repository, layout, source)
         licenses = {}
         for index, name in enumerate(source["license_files"]):
           raw = checkout.read(name, max_bytes=1024 * 1024)
           if raw is None:
             raise DependencyError("Pi发行物许可证缺失")
           licenses[f"licenses/{key}/{index}-{Path(name).name}"] = raw[0]
+        if built_record is not None:
+          from .pi_built_assets import LICENSE_DIGESTS
+          if sorted(hashlib.sha256(raw).hexdigest() for raw in licenses.values()) != sorted(LICENSE_DIGESTS.values()):
+            raise DependencyError("Pi自建发行物许可证摘要不匹配")
         if source.get("format") == "raw":
           if "vendor_path" in source:
-            with checkout.open_read("locks/pi/" + source["vendor_path"], max_bytes=source["size"]) as (stream, _):
+            with checkout.open_read(layout.lock_directory + "/" + source["vendor_path"], max_bytes=source["size"]) as (stream, _):
               install_data(target, stream, source)
           else:
             with open_download(source["url"]) as stream: install_data(target, stream, source)
@@ -129,7 +154,7 @@ def install_assets(repository, stage, piece, manifest, platform):
         with tempfile.TemporaryFile(dir=stage) as archive:
           checksum, size = hashlib.sha256(), 0
           if "vendor_path" in source:
-            raw = checkout.read("locks/pi/" + source["vendor_path"], max_bytes=MAX_ARCHIVE)
+            raw = checkout.read(layout.lock_directory + "/" + source["vendor_path"], max_bytes=MAX_ARCHIVE)
             if raw is None:
               raise DependencyError("Pi发行物归档缺失")
             archive.write(raw[0])
@@ -145,7 +170,8 @@ def install_assets(repository, stage, piece, manifest, platform):
           if checksum.hexdigest() != source["archive_digest"]:
             raise DependencyError("Pi发行物归档摘要不匹配")
           archive.seek(0)
-          binary = extract_binary(archive, source)
+          binary = (verify_archive(archive.read(), source, built_record) if built_record is not None
+            else extract_binary(archive, source))
         if target.read(source["target"]) is not None:
           raise DependencyError("Pi发行物入口已经存在")
         target.replace(source["target"], binary, mode=0o700, expected=None)

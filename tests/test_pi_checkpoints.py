@@ -10,7 +10,7 @@ from test_pi_activity import identity
 
 
 def fixture(tmp_path):
-  operations, host, cwd, manager = setup(tmp_path)
+  operations, host, cwd, manager = setup(tmp_path, resources=["git-checkpoint"])
   manifest = host.manifest()
   manifest["resource_ids"] = {"extensions": {"git-checkpoint": "extension"}}
   manifest["options"]["checkpoints"] = {"paths": ["src"], "max_files": 10, "max_bytes": 10000}

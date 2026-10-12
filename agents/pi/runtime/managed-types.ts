@@ -1,6 +1,7 @@
 // managed-executor-v1 的封闭边界；数据校验不执行模型、工具或子进程。
 import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
+import { types } from "node:util";
 
 const protocolErrorBrand = Symbol.for("agentcfg.pi.protocol-error.v1");
 export class ProtocolError extends Error {
@@ -32,10 +33,15 @@ export function assertOwner(owner) {
 }
 
 export function assertRule(rule) {
+  if (types.isProxy(rule)) reject();
+  const approval = rule && typeof rule === "object" ? Object.getOwnPropertyDescriptor(rule, "approval") : undefined;
+  if (approval && (!Object.hasOwn(approval, "value") || !approval.enumerable
+      || typeof approval.value !== "string" || !["human", "reviewer", "deterministic-policy"].includes(approval.value))) reject();
   const common = ["id", "kind", "effect", "tool_ids", "operations"];
-  if (rule?.kind === "file") closed(rule, [...common, "root_ref", "relative_path", "match"]);
-  else if (rule?.kind === "command") closed(rule, [...common, "command_ref"]);
+  if (rule?.kind === "file") closed(rule, [...common, "root_ref", "relative_path", "match"], ["approval"]);
+  else if (rule?.kind === "command") closed(rule, [...common, "command_ref"], ["approval"]);
   else reject();
+  if (approval && rule.effect !== "allow") reject();
   if (!/^[a-z][a-z0-9_-]{0,63}$/.test(rule.id) || !["allow", "deny"].includes(rule.effect) || !list(rule.tool_ids) || !rule.tool_ids.length
       || !list(rule.operations) || !rule.operations.length) reject();
   if (rule.kind === "file") {
@@ -43,7 +49,7 @@ export function assertRule(rule) {
         || isAbsolute(rule.relative_path) || rule.relative_path.includes("\\")
         || rule.relative_path !== "." && rule.relative_path.split("/").some(part => !part || part === "." || part === "..")
         || rule.operations.some(op => !["read", "list", "search", "write", "create", "delete", "rename"].includes(op))) reject();
-  } else if (!/^(check|tool):[a-z][a-z0-9_-]{0,63}$/.test(rule.command_ref) || canonical(rule.operations) !== '["execute"]') reject();
+  } else if (!/^(check|tool|mcp):[a-z][a-z0-9_-]{0,63}$/.test(rule.command_ref) || canonical(rule.operations) !== '["execute"]') reject();
   return rule;
 }
 
@@ -93,4 +99,21 @@ export function assertEvent(value) {
       || !(value.process_identity === null || typeof value.process_identity === "object")) reject();
   if (value.process_identity !== null) assertProcess(value.process_identity);
   return value;
+}
+
+
+// 纯分类不等于许可；调用方负责匹配/deny/root/ceiling与缺省human。
+export function aggregateApproval(modes) {
+  const invalid = () => reject("APPROVAL_CLASSIFICATION_INVALID", 2);
+  if (types.isProxy(modes) || !Array.isArray(modes) || Object.getPrototypeOf(modes) !== Array.prototype) invalid();
+  const size = Object.getOwnPropertyDescriptor(modes, "length").value;
+  if (size < 1 || size > 4096 || Reflect.ownKeys(modes).length !== size + 1) invalid();
+  const captured = [];
+  for (let index = 0; index < size; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(modes, String(index));
+    if (!descriptor || !descriptor.enumerable || !Object.hasOwn(descriptor, "value")
+        || typeof descriptor.value !== "string" || !["human", "reviewer", "deterministic-policy"].includes(descriptor.value)) invalid();
+    captured.push(descriptor.value);
+  }
+  return ["human", "reviewer", "deterministic-policy"].find(mode => captured.includes(mode));
 }

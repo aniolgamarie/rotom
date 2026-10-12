@@ -69,7 +69,7 @@ def prepare_review(commands, principal, args):
   name, binding, declaration = validate_binding(options, name=options.get("slopchop", {}).get("git_tool_ref"))
   project = configured_path(declaration["path"]).resolve(strict=True)
   cwd = configured_path(args["cwd"]).resolve(strict=True)
-  parent_workspace = commands.host.store.workspaces.identify(project)
+  parent_workspace = commands.host.store.workspaces.identify_git(project)
   if not cwd.is_relative_to(project):
     raise Conflict("GIT_REVIEW_PROJECT_UNBOUND")
   def metadata_roots(identity):
@@ -81,7 +81,7 @@ def prepare_review(commands, principal, args):
   parents = metadata_roots(parent_workspace)
   markers = []
   try:
-    workspace = commands.host.store.workspaces.identify(cwd)
+    workspace = commands.host.store.workspaces.identify_git(cwd)
     metadata = metadata_roots(workspace)
   except Conflict:
     # Git 子模块的 gitdir 通常没有 linked-worktree backlink；只读审查仍可在父授权内进行。

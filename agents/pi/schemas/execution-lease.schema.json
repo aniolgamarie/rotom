@@ -484,8 +484,15 @@
             "minLength": 1
           },
           "git_dir_path": {
-            "type": "string",
-            "minLength": 1
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "canonical_worktree_identity": {
             "type": "object",
@@ -511,27 +518,41 @@
             "additionalProperties": false
           },
           "git_dir_identity": {
-            "type": "object",
-            "properties": {
-              "device": {
-                "type": "integer",
-                "minimum": 0
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "device": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "inode": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "uid": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "device",
+                  "inode",
+                  "uid"
+                ],
+                "additionalProperties": false
               },
-              "inode": {
-                "type": "integer",
-                "minimum": 1
-              },
-              "uid": {
-                "type": "integer",
-                "minimum": 0
+              {
+                "type": "null"
               }
-            },
-            "required": [
-              "device",
-              "inode",
-              "uid"
-            ],
-            "additionalProperties": false
+            ]
+          },
+          "workspace_kind": {
+            "const": "registered-root"
+          },
+          "registered_root_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
           }
         },
         "required": [
@@ -543,7 +564,47 @@
           "canonical_worktree_identity",
           "git_dir_identity"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "properties": {
+              "git_dir_path": {
+                "type": "string"
+              },
+              "git_dir_identity": {
+                "type": "object"
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "workspace_kind"
+                  ]
+                },
+                {
+                  "required": [
+                    "registered_root_id"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "required": [
+              "workspace_kind",
+              "registered_root_id"
+            ],
+            "properties": {
+              "git_dir_path": {
+                "type": "null"
+              },
+              "git_dir_identity": {
+                "type": "null"
+              }
+            }
+          }
+        ]
       },
       "uniqueItems": true
     },

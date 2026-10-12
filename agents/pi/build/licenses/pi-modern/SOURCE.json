@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "status": "candidate-source-evidence",
+  "license": "MIT",
+  "license_file": "LICENSE",
+  "license_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+  "packages": {
+    "pi-host": {
+      "package": "@earendil-works/pi-coding-agent",
+      "version": "1.0.1",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-1.0.1.tgz",
+      "integrity": "sha512-B7FGYpHpBPvS+Ux16CbCuVnE9S4v6c2h6ykocPNarC4msD/4JM/eFrCrO2wbRkedJZ25myFozSWHvCOx4QnN+w==",
+      "git_head": "a7229ddc21810d6245105978033b7df645ecc2f7",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/a7229ddc21810d6245105978033b7df645ecc2f7/LICENSE",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48"
+    },
+    "pi-ai": {
+      "package": "@earendil-works/pi-ai",
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-1.0.2.tgz",
+      "integrity": "sha512-JP59xGlSAQ/HhQ6EHN5qmneBlWfDyu6FPPryAvAaSo8A38ubAsEpS9YisCM5Jbbns0srrDffLZonE0OXorHI5A==",
+      "git_head": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/cd32f7725fdbddbaecdff5b1e68491563394e0ca/LICENSE",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48"
+    },
+    "pi-tui": {
+      "package": "@earendil-works/pi-tui",
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-tui/-/pi-tui-1.0.2.tgz",
+      "integrity": "sha512-ElfzjnckohEjzHK5Q5iOpqLpQ1YbM/c/XmjBdPVR5k4uoorQPnny5BtT+rvC0cAjVVCUOHWAWppust7FAaEsOQ==",
+      "git_head": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/cd32f7725fdbddbaecdff5b1e68491563394e0ca/LICENSE",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48"
+    },
+    "pi-agent-core": {
+      "package": "@earendil-works/pi-agent-core",
+      "version": "1.0.2",
+      "resolved": "https://registry.npmjs.org/@earendil-works/pi-agent-core/-/pi-agent-core-1.0.2.tgz",
+      "integrity": "sha512-VRfewY1R5mbedJzlm01PxdCmqU8QrSXjXXhV50bp6rvVuT8YYQv1inTXRY4YzssmGAYpkC2rXipJKP5BpBFXew==",
+      "git_head": "cd32f7725fdbddbaecdff5b1e68491563394e0ca",
+      "source_body_url": "https://raw.githubusercontent.com/earendil-works/pi/cd32f7725fdbddbaecdff5b1e68491563394e0ca/LICENSE",
+      "source_body_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48"
+    }
+  }
+}

@@ -6,10 +6,12 @@ import { assertSessionBoundary, compactionOwner } from "./capability-policy.ts";
 import { PermissionAccess } from "./permission-access.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 // 固定 SDK 启动入口；直接导入本模块不启动宿主，测试通过显式假 SDK 注入。
-import { constants, closeSync, fstatSync, lstatSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { lstatSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
+import { privateFile, writePrivate } from "./private-files.ts";
+export { privateBytes, privateFile, writePrivate } from "./private-files.ts";
 import { installPackagePolicy, loaderOptions, parseArguments, selectResources, restrictExtensions } from "./resource-loader.ts";
 import { SupervisorClient } from "./supervisor-client.ts";
 import { ManagedBackend } from "./managed-backend.ts";
@@ -22,30 +24,6 @@ function failure(code, exitCode = 2) {
   const error = new Error(code);
   error.exitCode = exitCode;
   throw error;
-}
-
-export function privateBytes(path) {
-  const parent = lstatSync(dirname(path));
-  if (!parent.isDirectory() || parent.isSymbolicLink() || parent.uid !== process.getuid() || (parent.mode & 0o777) !== 0o700) failure("pi-private-directory", 4);
-  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-  try {
-    const info = fstatSync(fd);
-    if (!info.isFile() || info.nlink !== 1 || info.uid !== process.getuid() || (info.mode & 0o777) !== 0o600) failure("pi-private-file", 4);
-    return readFileSync(fd);
-  } finally { closeSync(fd); }
-}
-export function privateFile(path) { return privateBytes(path).toString("utf8"); }
-
-export function writePrivate(path, text) {
-  const parent = lstatSync(dirname(path));
-  if (!parent.isDirectory() || parent.isSymbolicLink() || parent.uid !== process.getuid() || (parent.mode & 0o777) !== 0o700) failure("pi-private-directory", 4);
-  const temporary = path + "." + randomUUID();
-  try {
-    writeFileSync(temporary, text, { mode: 0o600, flag: "wx" });
-    renameSync(temporary, path);
-  } finally {
-    try { unlinkSync(temporary); } catch (error) { if (error.code !== "ENOENT") throw error; }
-  }
 }
 
 export function settingsStorage(path, { compaction = "native" } = {}) {

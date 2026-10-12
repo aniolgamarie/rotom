@@ -47,7 +47,7 @@ def codex_command(executable, request, output, *, permissions, resume_token=None
       or any(not isinstance(key, str) or value not in {"read", "write", "deny"} for key, value in permissions.items())):
     raise ConfigError("delegate-permission-profile-required")
   filesystem = "{" + ",".join(json.dumps(key, ensure_ascii=False) + "=" + json.dumps(value) for key, value in sorted(permissions.items())) + "}"
-  # 参数已按官方 rust-v0.154.0 exec/shared-options/config schema 核对；不使用 shell 字符串。
+  # 按固定路线构造argv，不使用shell字符串；0.154.0官方参数/schema兼容证据待Q4复核。
   settings = ['default_permissions="agentcfg-delegate"', 'permissions.agentcfg-delegate.filesystem=' + filesystem,
     'permissions.agentcfg-delegate.network.enabled=false', 'project_doc_max_bytes=0', 'approval_policy="never"', 'cli_auth_credentials_store="file"', 'shell_environment_policy.inherit="none"',
     'shell_environment_policy.set.PATH="/usr/bin:/bin"',

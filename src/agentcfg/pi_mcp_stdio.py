@@ -7,10 +7,15 @@ from .storage import Conflict
 def prepare_stdio(operations, principal, args):
   closed(args, ("operation_id", "server_name"))
   host = operations.host; manifest = host.manifest()
-  if principal.role != "manager" or "pi-mcp" not in manifest.get("plugins", []): raise Conflict("MCP_STDIO_CONTEXT")
+  native = manifest.get("profile_id") in ("pi-base", "pi-full") and "native_mcp" in manifest
+  if principal.role != "manager" or not native and "pi-mcp" not in manifest.get("plugins", []): raise Conflict("MCP_STDIO_CONTEXT")
   if not isinstance(args["server_name"], str): raise ConfigError("pi-mcp-server")
   selected = manifest["options"].get("mcp", {}).get("servers", {}).get(args["server_name"])
   if not selected or selected["transport"] != "stdio": raise ConfigError("pi-mcp-stdio-binding")
+  if native:
+    projected = manifest["native_mcp"].get("bindings", {}).get(args["server_name"])
+    if not projected or projected.get("transport") != "stdio" or projected.get("command_ref") != selected["command_ref"]:
+      raise Conflict("MCP_STDIO_CONTEXT")
   if not isinstance(args["operation_id"], str) or not 1 <= len(args["operation_id"]) <= 180: raise ConfigError("pi-operation-id")
   name = selected["command_ref"]
   binding = manifest["options"].get("external_tools", {}).get(name)

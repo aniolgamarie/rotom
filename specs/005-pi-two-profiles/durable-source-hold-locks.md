@@ -1,0 +1,37 @@
+# 长期来源保护与现有锁的分工
+
+2026-10-08 root候选。本文根据实际Pi调用链收窄下一步方案，尚未冻结SourceHold实现、guardian生命期或完整FullSourceView。只记录已查到的保护、选定方向和必须先解决的接线；不授予controller、来源、初始化、DB或运行资格。
+
+## 已观察的锁和包根
+
+PiBackend的包根为`workspace.instance/runtimes/<identity>`。不同instance即使identity相同也得到不同路径；不能假定它们共用cache中的运行包。路径别名及绕过正常caller的外部修改尚未证明。
+
+`storage.instance_lock`锁定`state_root/instance.lock`，Pi默认EX。`pi_lifecycle.guard`另外锁定instance目录，默认EX，并检查本state_root的activity leases。Pi没有`runtime_guard`、`run_lifecycle_guard`或`shared_run_lease`覆盖；runtime通过lifecycle和state两把锁进入。Pi sync在这两把锁的范围内做repair、rename、seal、activation和backup removal；`Tree.write_state/replace`及backup删除helper自己不取得这些锁。lease记录扫描是一项准入检查，不是另一把锁。
+
+状态和lifecycle原FD传给supervisor并保留至child work；这里没有证明它们能直接作为长期Durable SourceHold。source、索引、storage、workspace Writer和进程回执仍是不同职责。bounded只读证据存于`controller-source-mutator-lock-evidence-review01/`；真实运行、跨进程并发、完整actor覆盖和持有语义没有在该证据中验证。
+
+## 选择的方向
+
+长期保护不得直接复制既有EX实例锁作为SourceHold。这样会继续阻止同实例后来的普通Pi启动，且与原activity/store生命周期混淆。也不把EX改成SH作为交接：这会改变原OFD上所有副本的锁语义，转换本身不能当无间隙保护。
+
+下一包评估独立的来源读写latch：实际来源reader及长期holder持SH，改变受保护部署／运行包的mutator持EX，均用非阻塞准入。所有参与者必须使用同一原协调对象；路径、hex、UID、公开tuple或新JSON记录不能自行证明这一关系。root将候选固定锚收敛至原`workspace.instance`中的自有`source.lock`，不放入源码／运行包manifest，不由业务参数选路径。`instance`和`state_root`是可分别配置的路径，既有lifecycle也特意绑定instance目录；采用state_root作为唯一source锚会额外依赖每个caller都先完成原instance归属检查，不能只凭逻辑profile名推断锚相同。此调整消除这项设计依赖，不声称已证明现有caller可绕过保护。完整API仍须冻结首次创建、权限／single-link／original named关系、原Tree和实际caller引用、原OFD副本及失败回执；不能从候选路径重新打开一个文件来冒充原持有关系。
+
+source latch、lifecycle、state锁的顺序应统一为source→lifecycle→state。原状态／lifecycle锁继续服务其已有事务和运行职责；新latch不放宽这些检查。健康普通启动只需短准入和reader保护，不等待Durable初始化或模型任务。长期holder只保存自己的来源保护，不在foreground退出后继续保存旧EX实例／state锁。
+
+reader只保护此次明确选择的当前部署及installed source。account/state目录的普通activity元数据写入不应因目录mtime变化使来源失效；文件投影和目录对象投影沿用已定义的不同字段。业务workspace写入、索引准入及storage EX锁不由source SH授权。Base未选择Full时不能导入、读取或探测Durable来源／guardian；是否需要共享的普通部署保护与这个Full功能边界须在接线包明确，不能因为一个Full latch而让Base查服务数据。
+
+## 实现前必须闭合的接线
+
+1. 明确全部受保护source slots和真正改变它们的caller。apply、rollback、sync/repair/activation是已观察的候选；repo lock生成、render/cache/proposal和local/model编辑并不自动等于替换当前installed source，必须逐项决定。不能把源码里缺一个optional hook直接判作实际竞态。
+2. 把reader／mutator的真实入口接至同一锚并保持固定顺序。直接helper绕行、同物理root的路径别名、已有未知保护和latch被替换等情形须失败或stale；不按同名重新创建来补持有证据。
+3. 把来源FD生命期传给独立受信holder，明确谁原始取得、谁登记、何时一次交接、谁最终close-only。保留对象／原function／receiver，而非通过DTO或fd数字重建能力。普通Node、worker、SDK及受限工具不继承source保护或初始化端点。
+4. 独立holder在manager／foreground退出后仍保护必要来源；它与controller的实际childwatch、IO静止及unknown持有链要一起设计。不能从EOF、PID字段或一次ACK推断可以释放。原EX锁退休与新SH长期保护不得形成未保护窗口。
+5. 把停止与源替换分开。activity恢复／取消若只处理原进程和账本，不能因默认取得source EX而永远无法停止持SH的服务；凡能替换受保护来源的维护仍须EX。真实caller分类、授权边界和恢复协议未冻结，不能由executor自行改变。
+
+这些是root待决策的实现前提，不是缺用户偏好；继续默认实现和证据工作，不据此请求用户批准抽象方案。完整FullSourceView、原caller／receiver的私有validator、initializer principal、主线程handoff/quota和guardian具体入口仍未形成，不能提前签发registered reference。
+
+## 验收方式
+
+默认采用临时受管来源和自有假producer，验证两个source reader可同时准入、source EX与SH冲突、统一锁顺序、foreign/proxy/unknown来源拒绝、原named对象漂移、一次FD交接、close异常不重试、manager消失或迟到ACK时unknown保持保护。普通编辑与新的普通启动必须有正控制：长期holder已明确退役旧lifecycle/state EX描述符，仅仍持来源SH，此时不等待初始化job，也不能偷偷释放source来换通过。该测试只验source latch兼容性；原foreground或其它owner仍持lifecycle/state EX时，新启动仍应遵守现有拒绝，不允许第二个同实例运行绕过EX保护。mutator负控制必须观察实际拒绝及零替换，不能只检查布尔标志。
+
+真实SH/EX、原OFD传递、持有者崩溃、controller退出和最后释放另备独立Linux合成材料。默认测试不代表这些已通过，旧FD6／Recovery3授权不能覆盖新组合。没有上述接线和真实证据前SourceHold不可用，正式7/100、产品gate未通过、严格计量前AUTO OFF保持。

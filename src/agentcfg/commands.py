@@ -163,6 +163,9 @@ def cmd_apply(args):
 def apply_candidate(w, lock, candidate, *, expected_plan=None):
   guard = getattr(w.adapter, "apply_lifecycle_guard", None) or getattr(w.adapter, "lifecycle_guard", None)
   with guard(w) if guard else nullcontext():
+    if w.agent == "pi" and w.profile in ("pi-base", "pi-full"):
+      from . import pi_replacement
+      return pi_replacement.apply(w, candidate, runtime.record(w, lock), pi_replacement.descriptor(lock, w.profile), expected_plan=expected_plan)
     return deployment.apply(w.instance, w.state_root, candidate, w.binding, runtime.record(w, lock),
       expected_plan=expected_plan)
 
@@ -218,7 +221,23 @@ def cmd_rollback(args):
   w = workspace(args)
   guard = getattr(w.adapter, "lifecycle_guard", None)
   with guard(w) if guard else nullcontext():
+    if w.agent == "pi" and w.profile in ("pi-base", "pi-full"):
+      from .pi_replacement import rollback
+      return output(w, "rollback", rollback(w), args=args)
     return output(w, "rollback", deployment.rollback(w.instance, w.state_root, w.binding), args=args)
+
+
+def cmd_pi_maintenance(args):
+  w = workspace(args)
+  if w.agent != "pi" or w.profile not in ("pi-base", "pi-full"):
+    raise ConfigError("pi-maintenance-profile")
+  from . import pi_replacement
+  if args.maintenance_command == "status":
+    return output(w, "pi-maintenance", pi_replacement.status(w), args=args)
+  with w.adapter.lifecycle_guard(w):
+    if args.maintenance_command == "uninstall":
+      return output(w, "pi-maintenance", pi_replacement.uninstall(w, args.runtime_identity), args=args)
+    return output(w, "pi-maintenance", pi_replacement.recover(w), args=args)
 
 
 def cmd_lock(args):
@@ -302,6 +321,9 @@ def cmd_doctor(args):
       "authentication": "not-inspected; use native auth status", "live": False,
       "notes": list(w.adapter.doctor({}))}
   result["required_toolchain"] = w.backend.toolchain(lock)
+  if w.agent == "pi" and w.profile in ("pi-base", "pi-full"):
+    from .pi_replacement import status
+    result["replacement"] = status(w)
   identity_report = getattr(w.adapter, "identity_diagnostics", None)
   if identity_report is not None:
     result["identity"] = identity_report(w)
@@ -316,8 +338,31 @@ def cmd_doctor(args):
     drift = current_plan(w, lock, w.candidate(lock.identity))
     result.update(drift=bool(drift.drift), conflicts=bool(drift.conflicts), changes_pending=len(drift.changes))
   result["diagnostics"] = write_diagnostics(w, lock, drift)
-  capabilities = getattr(w.adapter, "capability_diagnostics", lambda _: None)({"data": w.resolved.data, "repository": w.repository, "deployed": result["deployed"] and not result["recovery_pending"] and not result.get("changes_pending") and not result.get("conflicts") and not result.get("drift"),
-    "dependencies": result["dependencies"], "lock_identity": lock.identity, "runtime_identity": runtime.runtime_identity(w, lock)})
+  projection = {"data": w.resolved.data, "repository": w.repository, "deployed": result["deployed"] and not result["recovery_pending"] and not result.get("changes_pending") and not result.get("conflicts") and not result.get("drift"),
+    "dependencies": result["dependencies"], "lock_identity": lock.identity, "runtime_identity": runtime.runtime_identity(w, lock)}
+  if w.agent == "pi" and w.profile in ("pi-base", "pi-full") and lock.metadata.get("schema_version") == 2:
+    selected = lock.validated_bindings.get(w.profile)
+    if selected is not None and selected.state == "current":
+      from copy import deepcopy
+      piece = lock.metadata["profile_slices"][w.profile]
+      projection["installed_resource_context"] = {"profile_id":w.profile,
+        "runtime_root":w.backend.root(w, projection["runtime_identity"]), "lock_identity":lock.identity,
+        "runtime_identity":projection["runtime_identity"], "slice_identity":piece["identity"],
+        "expected_resources":deepcopy(piece["resource_manifest"])}
+  if w.agent == "pi" and w.profile in ("pi-base", "pi-full"):
+    # 原部署指针/当前非秘密manifest只作历史观察的新鲜度比较；不启动Host或读取账号。
+    projection["resource_observation_state_root"] = w.state_root
+    if saved["current"] is not None:
+      import json
+      from .activity import digest
+      with Tree(w.instance) as instance:
+        observed_manifest = instance.read("pi-home/agentcfg-manifest.json", max_bytes=1024 * 1024)
+      if observed_manifest is not None:
+        expected = projection.get("installed_resource_context")
+        if expected is not None:
+          projection["resource_observation_context"] = {key: expected[key] for key in ("profile_id", "lock_identity", "slice_identity", "runtime_identity")}
+          projection["resource_observation_context"]["manifest_digest"] = digest(json.loads(observed_manifest[0]))
+  capabilities = getattr(w.adapter, "capability_diagnostics", lambda _: None)(projection)
   if capabilities is not None: result["capabilities"] = capabilities
   if args.live:
     checks = getattr(w.adapter, "live_diagnostics", lambda _: None)(w.resolved.data)

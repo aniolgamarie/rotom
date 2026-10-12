@@ -1,0 +1,22 @@
+{
+  "name": "@agentcfg/pi-risk-review",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Private bound reviewer protocol and controlled transport components",
+  "exports": {
+    "./protocol": "./src/protocol.ts",
+    "./wire-fetch": "./src/wire-fetch.ts",
+    "./request-wire": "./src/request-wire.ts",
+    "./transport": "./src/transport.ts",
+    "./sdk-worker": "./src/sdk-worker.ts",
+    "./request-headers": "./src/request-headers.ts"
+  },
+  "scripts": {
+    "test": "node ../../../../scripts/test-pi-mock.mjs agents/pi/packages/risk-review/tests/protocol.test.ts agents/pi/packages/risk-review/tests/wire-fetch.test.ts agents/pi/packages/risk-review/tests/request-wire.test.ts agents/pi/packages/risk-review/tests/transport.test.ts agents/pi/packages/risk-review/tests/sdk-worker.test.ts agents/pi/packages/risk-review/tests/sdk-worker-integration.test.ts agents/pi/packages/risk-review/tests/request-headers.test.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {}
+}

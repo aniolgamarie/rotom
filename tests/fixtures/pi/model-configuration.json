@@ -1,0 +1,127 @@
+{
+  "registry_native": {
+    "pi": {
+      "compat": {
+        "thinkingFormat": "deepseek",
+        "requiresReasoningContentOnAssistantMessages": true,
+        "reasoningEffortMap": {
+          "medium": "high",
+          "high": "max"
+        }
+      }
+    }
+  },
+  "model_settings": {
+    "reasoning": true,
+    "thinking_level_map": {
+      "medium": "low",
+      "max": "xhigh"
+    },
+    "disabled_thinking_levels": [
+      "high"
+    ]
+  },
+  "manifest": {
+    "provider_bindings": {
+      "agentcfg-fictional": {
+        "logical_id": "fictional",
+        "auth_kind": "api-key",
+        "owner": "pi-environment"
+      }
+    },
+    "allowed_models": [
+      {
+        "provider": "agentcfg-fictional",
+        "model": "fictional-chat"
+      }
+    ],
+    "model_configuration": {
+      "schema_version": 1,
+      "providers": {
+        "agentcfg-fictional": {
+          "logical_id": "fictional",
+          "auth_kind": "api-key",
+          "owner": "pi-environment",
+          "credential_ref": "secret:fixture",
+          "config": {
+            "api": "openai-completions",
+            "baseUrl": "https://example.invalid/v1",
+            "models": [
+              {
+                "id": "fictional-chat",
+                "input": [
+                  "text"
+                ],
+                "reasoning": true,
+                "compat": {
+                  "thinkingFormat": "deepseek",
+                  "requiresReasoningContentOnAssistantMessages": true
+                },
+                "thinkingLevelMap": {
+                  "medium": "low",
+                  "high": null,
+                  "max": "xhigh"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "native": {
+    "providers": {
+      "agentcfg-fictional": {
+        "api": "openai-completions",
+        "baseUrl": "https://example.invalid/v1",
+        "models": [
+          {
+            "id": "fictional-chat",
+            "input": [
+              "text"
+            ],
+            "reasoning": true,
+            "compat": {
+              "thinkingFormat": "deepseek",
+              "requiresReasoningContentOnAssistantMessages": true
+            },
+            "thinkingLevelMap": {
+              "medium": "low",
+              "high": null,
+              "max": "xhigh"
+            }
+          }
+        ],
+        "apiKey": "$AGENTCFG_PI_CREDENTIAL_A524644266885E16"
+      }
+    }
+  },
+  "effective_model": {
+    "id": "fictional-chat",
+    "input": [
+      "text"
+    ],
+    "reasoning": true,
+    "compat": {
+      "thinkingFormat": "deepseek",
+      "requiresReasoningContentOnAssistantMessages": true
+    },
+    "thinkingLevelMap": {
+      "medium": "low",
+      "high": null,
+      "max": "xhigh"
+    },
+    "provider": "agentcfg-fictional",
+    "api": "openai-completions",
+    "baseUrl": "https://example.invalid/v1",
+    "name": "fictional-chat",
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "contextWindow": 128000,
+    "maxTokens": 16384
+  }
+}

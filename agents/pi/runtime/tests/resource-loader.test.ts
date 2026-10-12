@@ -126,3 +126,18 @@ test("a selected plugin absent from the installed resource manifest cannot silen
   f.manifest.plugins.push("missing-todo");
   assert.throws(() => selectResources(f), /pi-resource-selected-plugin-missing/);
 });
+
+test("modern user plugin IDs select installed capability owners through closed explicit metadata", () => {
+  const f = fixture();
+  Object.assign(f.manifest, { profile_id: "pi-base", plugins: ["pi-todo"],
+    plugin_capabilities: { "pi-todo": { capability_id: "todo", model_tools: ["todo"] } } });
+  f.installed.extensions[0].capability_id = "todo";
+  assert.deepEqual(selectResources(f).resources.extensions.map(row => row.id), ["selected"]);
+  for (const mapping of [undefined, {}, { "pi-todo": { capability_id: "todo", model_tools: [], unknown: true } },
+    { "pi-todo": { capability_id: "todo", model_tools: ["todo", "todo"] } }]) {
+    f.manifest.plugin_capabilities = mapping;
+    assert.throws(() => selectResources(f), /pi-resource/);
+  }
+  f.manifest.plugins = []; f.manifest.plugin_capabilities = null;
+  assert.throws(() => selectResources(f), /pi-resource/);
+});

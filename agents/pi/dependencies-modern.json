@@ -1,0 +1,2518 @@
+{
+  "schema_version": 2,
+  "toolchains": {
+    "node": "v24.14.0",
+    "npm": "11.19.1",
+    "bun": "1.4.0"
+  },
+  "platforms": [
+    "linux-x86_64"
+  ],
+  "sources": {
+    "pi-host": {
+      "kind": "npm",
+      "package": "@earendil-works/pi-coding-agent",
+      "version": "1.0.1",
+      "license_files": [
+        "LICENSE"
+      ],
+      "license_sources": {
+        "LICENSE": "agents/pi/build/licenses/pi-modern/LICENSE"
+      },
+      "resources": {
+        "extensions": [],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-ai": {
+      "kind": "npm",
+      "package": "@earendil-works/pi-ai",
+      "version": "1.0.2",
+      "license_files": [
+        "LICENSE"
+      ],
+      "license_sources": {
+        "LICENSE": "agents/pi/build/licenses/pi-modern/LICENSE"
+      },
+      "resources": {
+        "extensions": [],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-tui": {
+      "kind": "npm",
+      "package": "@earendil-works/pi-tui",
+      "version": "1.0.2",
+      "license_files": [
+        "LICENSE"
+      ],
+      "license_sources": {
+        "LICENSE": "agents/pi/build/licenses/pi-modern/LICENSE"
+      },
+      "resources": {
+        "extensions": [],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-agent-core": {
+      "kind": "npm",
+      "package": "@earendil-works/pi-agent-core",
+      "version": "1.0.2",
+      "license_files": [
+        "LICENSE"
+      ],
+      "license_sources": {
+        "LICENSE": "agents/pi/build/licenses/pi-modern/LICENSE"
+      },
+      "resources": {
+        "extensions": [],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-runtime-ui": {
+      "kind": "local",
+      "package": "@agentcfg/pi-runtime",
+      "version": "2.0.0",
+      "license_files": [
+        "NOTICE"
+      ],
+      "resources": {
+        "extensions": [],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "colorful-footer": {
+      "kind": "local",
+      "package": "starter-pi-colorful-footer",
+      "version": "0.1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "loop-guard": {
+      "kind": "local",
+      "package": "starter-pi-loop-guard",
+      "version": "0.1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-todo": {
+      "kind": "local",
+      "package": "@juicesharp/rpiv-todo",
+      "version": "2.9.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "AGENTCFG-NOTICE.md"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "pi-bwrap-linux-x86_64": {
+      "archive_digest": "9672205cfff3f07f1fa9a81a2085a3fc617054c37df5a5cb9fce262a74325068",
+      "archive_member": "bin/pi-bwrap",
+      "build_record": {
+        "digest": "5308fbf91bf839b3559f157e0552382a8d3dd93c29a275cb85b17ef31a3f00b7",
+        "path": "build-records/5308fbf91bf839b3559f157e0552382a8d3dd93c29a275cb85b17ef31a3f00b7.json",
+        "recipe": "bubblewrap-v1"
+      },
+      "format": "tar.gz",
+      "kind": "asset",
+      "license_files": [
+        "agents/pi/build/licenses/bubblewrap-0.13.0/COPYING",
+        "agents/pi/build/licenses/libcap-2.77/License"
+      ],
+      "platform": "linux-x86_64",
+      "target": "bin/pi-bwrap",
+      "vendor_path": "vendor/pi-bwrap-9672205cfff3f07f1fa9a81a2085a3fc617054c37df5a5cb9fce262a74325068.tar.gz"
+    },
+    "pi-node-linux-x86_64": {
+      "kind": "asset",
+      "format": "node.tar.gz",
+      "url": "https://nodejs.org/download/release/v24.14.0/node-v24.14.0-linux-x64.tar.gz",
+      "platform": "linux-x86_64",
+      "archive_digest": "dbf5b8665dec15e59e6359a517fefb47b23fdb9152d8def975b9bca3dfc6d355",
+      "archive_member": "node-v24.14.0-linux-x64/bin/node",
+      "target": "bin/pi-node",
+      "license_files": [
+        "agents/pi/build/licenses/node-v24.14.0/LICENSE"
+      ],
+      "vendor_path": "vendor/node-v24.14.0-linux-x64-dbf5b8665dec15e59e6359a517fefb47b23fdb9152d8def975b9bca3dfc6d355.tar.gz",
+      "node_archive": {
+        "schema": 1,
+        "release": "v24.14.0",
+        "platform": "linux-x86_64",
+        "archive_sha256": "dbf5b8665dec15e59e6359a517fefb47b23fdb9152d8def975b9bca3dfc6d355",
+        "binary_sha256": "e237a2839d0cbdc9a9a2adda1a184afc0f5b20306ffbe923af5686550472d8a8",
+        "license_sha256": "4573185d56580da2b890ba34a85a409257640f1c5632eade4300137266194d18"
+      }
+    },
+    "model-delegate-modern": {
+      "kind": "local",
+      "package": "@agentcfg/pi-model-delegate",
+      "version": "3.0.0",
+      "license_files": [
+        "NOTICE"
+      ],
+      "resources": {
+        "extensions": [
+          "index.ts"
+        ],
+        "skills": [
+          "skills/managed-delegation"
+        ],
+        "prompts": [],
+        "themes": []
+      }
+    },
+    "task-keeper-modern": {
+      "kind": "local",
+      "package": "@agentcfg/pi-task-keeper",
+      "version": "3.0.0",
+      "license_files": [
+        "NOTICE"
+      ],
+      "resources": {
+        "extensions": [
+          "index.mjs"
+        ],
+        "skills": [
+          "skills/managed-workflow"
+        ],
+        "prompts": [],
+        "themes": []
+      }
+    }
+  },
+  "profiles": {
+    "pi-base": {
+      "engine": "node",
+      "npm_dependency_overrides": {
+        "@earendil-works/pi-ai@1.0.2": {
+          "http-proxy-agent@9.1.0": "9.0.0",
+          "https-proxy-agent@9.1.0": "9.0.0"
+        }
+      },
+      "npm_resolution_seed": {
+        "source": "agents/pi/build/resolutions/pi-base.package-lock.json",
+        "sha256": "56d868785015785b3ea7ef1b188cbaff51f41b39049d8b0dc433b74c4139ed7f"
+      },
+      "source_ids": [
+        "pi-host",
+        "pi-ai",
+        "pi-tui",
+        "pi-agent-core",
+        "pi-runtime-ui",
+        "colorful-footer",
+        "loop-guard",
+        "pi-todo",
+        "pi-bwrap-linux-x86_64",
+        "pi-node-linux-x86_64"
+      ],
+      "entrypoint": "node_modules/@earendil-works/pi-coding-agent/dist/index.js",
+      "ai_package": "@earendil-works/pi-ai",
+      "runtime_files": [
+        {
+          "source": "agents/pi/runtime/file-operation-executor.ts",
+          "path": "runtime/file-operation-executor.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/image-mime.ts",
+          "path": "runtime/image-mime.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/managed-types.ts",
+          "path": "runtime/managed-types.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/model-config-source.ts",
+          "path": "runtime/model-config-source.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-file-admission.ts",
+          "path": "runtime/official-file-admission.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-file-resolution.ts",
+          "path": "runtime/official-file-resolution.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-file-runtime.ts",
+          "path": "runtime/official-file-runtime.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-launch.ts",
+          "path": "runtime/official-launch.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-model-runtime.ts",
+          "path": "runtime/official-model-runtime.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-models.ts",
+          "path": "runtime/official-models.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-resources.ts",
+          "path": "runtime/official-resources.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-session.ts",
+          "path": "runtime/official-session.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-settings.ts",
+          "path": "runtime/official-settings.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-shell-tool.ts",
+          "path": "runtime/official-shell-tool.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/ordinary-operations.ts",
+          "path": "runtime/ordinary-operations.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/private-files.ts",
+          "path": "runtime/private-files.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/private-operation-input.ts",
+          "path": "runtime/private-operation-input.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/regex-search.ts",
+          "path": "runtime/regex-search.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/regex-worker.ts",
+          "path": "runtime/regex-worker.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/resource-selection.ts",
+          "path": "runtime/resource-selection.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/shell-operation-executor.ts",
+          "path": "runtime/shell-operation-executor.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/strict-json.ts",
+          "path": "runtime/strict-json.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/supervisor-client.ts",
+          "path": "runtime/supervisor-client.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/tool-lookups.ts",
+          "path": "runtime/tool-lookups.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/tool-ownership.ts",
+          "path": "runtime/tool-ownership.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/schemas/options.schema.json",
+          "path": "supervisor/agents/pi/schemas/options.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/execution-lease.schema.json",
+          "path": "supervisor/agents/pi/schemas/execution-lease.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/operation-grant.schema.json",
+          "path": "supervisor/agents/pi/schemas/operation-grant.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/permission-policy.schema.json",
+          "path": "supervisor/agents/pi/schemas/permission-policy.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/process-identity.schema.json",
+          "path": "supervisor/agents/pi/schemas/process-identity.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/stop-recovery-plan.schema.json",
+          "path": "supervisor/agents/pi/schemas/stop-recovery-plan.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/stop-recovery.schema.json",
+          "path": "supervisor/agents/pi/schemas/stop-recovery.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/termination-evidence.schema.json",
+          "path": "supervisor/agents/pi/schemas/termination-evidence.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/workspace-write-lease.schema.json",
+          "path": "supervisor/agents/pi/schemas/workspace-write-lease.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-control.py",
+          "path": "supervisor/scripts/pi-control.py",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-exec.py",
+          "path": "supervisor/scripts/pi-exec.py",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-file-operation.py",
+          "path": "supervisor/scripts/pi-file-operation.py",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-namespace-exec.py",
+          "path": "supervisor/scripts/pi-namespace-exec.py",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-project-check",
+          "path": "supervisor/scripts/pi-project-check",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-shell.py",
+          "path": "supervisor/scripts/pi-shell.py",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-supervisor.py",
+          "path": "supervisor/scripts/pi-supervisor.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/__init__.py",
+          "path": "supervisor/src/agentcfg/__init__.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/activity.py",
+          "path": "supervisor/src/agentcfg/activity.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/activity_linux.py",
+          "path": "supervisor/src/agentcfg/activity_linux.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/activity_macos.py",
+          "path": "supervisor/src/agentcfg/activity_macos.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/adapter.py",
+          "path": "supervisor/src/agentcfg/adapter.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/config.py",
+          "path": "supervisor/src/agentcfg/config.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/deployment.py",
+          "path": "supervisor/src/agentcfg/deployment.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/local_values.py",
+          "path": "supervisor/src/agentcfg/local_values.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/merge.py",
+          "path": "supervisor/src/agentcfg/merge.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/model_defaults.py",
+          "path": "supervisor/src/agentcfg/model_defaults.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/native_projection.py",
+          "path": "supervisor/src/agentcfg/native_projection.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/paths.py",
+          "path": "supervisor/src/agentcfg/paths.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_admission_control.py",
+          "path": "supervisor/src/agentcfg/pi_admission_control.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_admitted_files.py",
+          "path": "supervisor/src/agentcfg/pi_admitted_files.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_admitted_shell.py",
+          "path": "supervisor/src/agentcfg/pi_admitted_shell.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_approval.py",
+          "path": "supervisor/src/agentcfg/pi_shell_approval.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_assets.py",
+          "path": "supervisor/src/agentcfg/pi_assets.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_catalog.py",
+          "path": "supervisor/src/agentcfg/pi_catalog.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_checks.py",
+          "path": "supervisor/src/agentcfg/pi_checks.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_commands.py",
+          "path": "supervisor/src/agentcfg/pi_commands.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_control.py",
+          "path": "supervisor/src/agentcfg/pi_control.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_dependencies.py",
+          "path": "supervisor/src/agentcfg/pi_dependencies.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_guarded_files.py",
+          "path": "supervisor/src/agentcfg/pi_guarded_files.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_host.py",
+          "path": "supervisor/src/agentcfg/pi_host.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_lock_layout.py",
+          "path": "supervisor/src/agentcfg/pi_lock_layout.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_lock_resolution.py",
+          "path": "supervisor/src/agentcfg/pi_lock_resolution.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_operation_admission.py",
+          "path": "supervisor/src/agentcfg/pi_operation_admission.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_operations.py",
+          "path": "supervisor/src/agentcfg/pi_operations.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_policy_approval.py",
+          "path": "supervisor/src/agentcfg/pi_policy_approval.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_output.py",
+          "path": "supervisor/src/agentcfg/pi_output.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_pid_namespace.py",
+          "path": "supervisor/src/agentcfg/pi_pid_namespace.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_registered_roots.py",
+          "path": "supervisor/src/agentcfg/pi_registered_roots.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_resource_reads.py",
+          "path": "supervisor/src/agentcfg/pi_resource_reads.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_services.py",
+          "path": "supervisor/src/agentcfg/pi_services.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_argv.py",
+          "path": "supervisor/src/agentcfg/pi_shell_argv.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_execution.py",
+          "path": "supervisor/src/agentcfg/pi_shell_execution.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_handoff.py",
+          "path": "supervisor/src/agentcfg/pi_shell_handoff.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_identity.py",
+          "path": "supervisor/src/agentcfg/pi_shell_identity.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_mounts.py",
+          "path": "supervisor/src/agentcfg/pi_shell_mounts.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_preparation.py",
+          "path": "supervisor/src/agentcfg/pi_shell_preparation.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_probe_info.py",
+          "path": "supervisor/src/agentcfg/pi_shell_probe_info.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_script.py",
+          "path": "supervisor/src/agentcfg/pi_shell_script.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_seccomp.py",
+          "path": "supervisor/src/agentcfg/pi_shell_seccomp.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_sources.py",
+          "path": "supervisor/src/agentcfg/pi_shell_sources.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_start.py",
+          "path": "supervisor/src/agentcfg/pi_shell_start.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_worker.py",
+          "path": "supervisor/src/agentcfg/pi_shell_worker.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_supervisor.py",
+          "path": "supervisor/src/agentcfg/pi_supervisor.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_terminal.py",
+          "path": "supervisor/src/agentcfg/pi_terminal.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_workspace_claims.py",
+          "path": "supervisor/src/agentcfg/pi_workspace_claims.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_workspace_snapshot.py",
+          "path": "supervisor/src/agentcfg/pi_workspace_snapshot.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/process.py",
+          "path": "supervisor/src/agentcfg/process.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/process_tracking.py",
+          "path": "supervisor/src/agentcfg/process_tracking.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/schema.py",
+          "path": "supervisor/src/agentcfg/schema.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/secret_files.py",
+          "path": "supervisor/src/agentcfg/secret_files.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/secrets.py",
+          "path": "supervisor/src/agentcfg/secrets.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/storage.py",
+          "path": "supervisor/src/agentcfg/storage.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/workspace_leases.py",
+          "path": "supervisor/src/agentcfg/workspace_leases.py",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/PROXY-PARENTS-SOURCE.json",
+          "path": "licenses/pi-modern/PROXY-PARENTS-SOURCE.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/REGISTRY-pi-base.json",
+          "path": "licenses/pi-modern/REGISTRY-pi-base.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/SOURCE.json",
+          "path": "licenses/pi-modern/SOURCE.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/TRANSITIVE-SOURCE.json",
+          "path": "licenses/pi-modern/TRANSITIVE-SOURCE.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/SUPPLEMENT-SOURCE.json",
+          "path": "licenses/pi-modern/SUPPLEMENT-SOURCE.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/LICENSE",
+          "path": "licenses/pi-modern/LICENSE",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/APACHE-2.0.txt",
+          "path": "licenses/pi-modern/APACHE-2.0.txt",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/ESBUILD-LICENSE.md",
+          "path": "licenses/pi-modern/ESBUILD-LICENSE.md",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/STANDARDWEBHOOKS-1.1.1-LICENSE.txt",
+          "path": "licenses/pi-modern/STANDARDWEBHOOKS-1.1.1-LICENSE.txt",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_license_bundle.py",
+          "path": "supervisor/src/agentcfg/pi_license_bundle.py",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/runtime/official-mcp.ts",
+          "path": "runtime/official-mcp.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-mcp-controller.ts",
+          "path": "runtime/official-mcp-controller.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-mcp-http.ts",
+          "path": "runtime/official-mcp-http.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-mcp-stdio.ts",
+          "path": "runtime/official-mcp-stdio.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/mcp-stdio.ts",
+          "path": "runtime/mcp-stdio.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/supervised-stdio.ts",
+          "path": "runtime/supervised-stdio.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/mcp-http.ts",
+          "path": "runtime/mcp-http.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/runtime-module.ts",
+          "path": "runtime/runtime-module.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/capability-policy.ts",
+          "path": "runtime/capability-policy.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "src/agentcfg/pi_admitted_mcp.py",
+          "path": "supervisor/src/agentcfg/pi_admitted_mcp.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_mcp_stdio.py",
+          "path": "supervisor/src/agentcfg/pi_mcp_stdio.py",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/runtime/official-model-scope.ts",
+          "path": "runtime/official-model-scope.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "src/agentcfg/pi_resource_observations.py",
+          "path": "supervisor/src/agentcfg/pi_resource_observations.py",
+          "transform": "copy"
+        }
+      ]
+    },
+    "pi-full": {
+      "engine": "node",
+      "npm_dependency_overrides": {
+        "@earendil-works/pi-ai@1.0.2": {
+          "http-proxy-agent@9.1.0": "9.0.0",
+          "https-proxy-agent@9.1.0": "9.0.0"
+        }
+      },
+      "npm_resolution_seed": {
+        "source": "agents/pi/build/resolutions/pi-full.package-lock.json",
+        "sha256": "0188a8a98baedcbda486b0c97453d651e531c13d51e3096a569fcafaf4f0de4b"
+      },
+      "source_ids": [
+        "pi-host",
+        "pi-ai",
+        "pi-tui",
+        "pi-agent-core",
+        "pi-runtime-ui",
+        "colorful-footer",
+        "loop-guard",
+        "pi-todo",
+        "pi-bwrap-linux-x86_64",
+        "pi-node-linux-x86_64",
+        "model-delegate-modern",
+        "task-keeper-modern"
+      ],
+      "entrypoint": "node_modules/@earendil-works/pi-coding-agent/dist/index.js",
+      "ai_package": "@earendil-works/pi-ai",
+      "runtime_files": [
+        {
+          "source": "agents/pi/runtime/file-operation-executor.ts",
+          "path": "runtime/file-operation-executor.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/image-mime.ts",
+          "path": "runtime/image-mime.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/managed-types.ts",
+          "path": "runtime/managed-types.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/model-config-source.ts",
+          "path": "runtime/model-config-source.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-file-admission.ts",
+          "path": "runtime/official-file-admission.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-file-resolution.ts",
+          "path": "runtime/official-file-resolution.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-file-runtime.ts",
+          "path": "runtime/official-file-runtime.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-launch.ts",
+          "path": "runtime/official-launch.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-model-runtime.ts",
+          "path": "runtime/official-model-runtime.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-models.ts",
+          "path": "runtime/official-models.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-resources.ts",
+          "path": "runtime/official-resources.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-session.ts",
+          "path": "runtime/official-session.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-settings.ts",
+          "path": "runtime/official-settings.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-shell-tool.ts",
+          "path": "runtime/official-shell-tool.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/ordinary-operations.ts",
+          "path": "runtime/ordinary-operations.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/private-files.ts",
+          "path": "runtime/private-files.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/private-operation-input.ts",
+          "path": "runtime/private-operation-input.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/regex-search.ts",
+          "path": "runtime/regex-search.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/regex-worker.ts",
+          "path": "runtime/regex-worker.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/resource-selection.ts",
+          "path": "runtime/resource-selection.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/shell-operation-executor.ts",
+          "path": "runtime/shell-operation-executor.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/strict-json.ts",
+          "path": "runtime/strict-json.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/supervisor-client.ts",
+          "path": "runtime/supervisor-client.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/tool-lookups.ts",
+          "path": "runtime/tool-lookups.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/tool-ownership.ts",
+          "path": "runtime/tool-ownership.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/schemas/options.schema.json",
+          "path": "supervisor/agents/pi/schemas/options.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/execution-lease.schema.json",
+          "path": "supervisor/agents/pi/schemas/execution-lease.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/operation-grant.schema.json",
+          "path": "supervisor/agents/pi/schemas/operation-grant.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/permission-policy.schema.json",
+          "path": "supervisor/agents/pi/schemas/permission-policy.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/process-identity.schema.json",
+          "path": "supervisor/agents/pi/schemas/process-identity.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/stop-recovery-plan.schema.json",
+          "path": "supervisor/agents/pi/schemas/stop-recovery-plan.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/stop-recovery.schema.json",
+          "path": "supervisor/agents/pi/schemas/stop-recovery.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/termination-evidence.schema.json",
+          "path": "supervisor/agents/pi/schemas/termination-evidence.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/workspace-write-lease.schema.json",
+          "path": "supervisor/agents/pi/schemas/workspace-write-lease.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-control.py",
+          "path": "supervisor/scripts/pi-control.py",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-exec.py",
+          "path": "supervisor/scripts/pi-exec.py",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-file-operation.py",
+          "path": "supervisor/scripts/pi-file-operation.py",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-namespace-exec.py",
+          "path": "supervisor/scripts/pi-namespace-exec.py",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-project-check",
+          "path": "supervisor/scripts/pi-project-check",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-shell.py",
+          "path": "supervisor/scripts/pi-shell.py",
+          "transform": "copy"
+        },
+        {
+          "source": "scripts/pi-supervisor.py",
+          "path": "supervisor/scripts/pi-supervisor.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/__init__.py",
+          "path": "supervisor/src/agentcfg/__init__.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/activity.py",
+          "path": "supervisor/src/agentcfg/activity.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/activity_linux.py",
+          "path": "supervisor/src/agentcfg/activity_linux.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/activity_macos.py",
+          "path": "supervisor/src/agentcfg/activity_macos.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/adapter.py",
+          "path": "supervisor/src/agentcfg/adapter.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/config.py",
+          "path": "supervisor/src/agentcfg/config.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/deployment.py",
+          "path": "supervisor/src/agentcfg/deployment.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/local_values.py",
+          "path": "supervisor/src/agentcfg/local_values.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/merge.py",
+          "path": "supervisor/src/agentcfg/merge.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/model_defaults.py",
+          "path": "supervisor/src/agentcfg/model_defaults.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/native_projection.py",
+          "path": "supervisor/src/agentcfg/native_projection.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/paths.py",
+          "path": "supervisor/src/agentcfg/paths.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_admission_control.py",
+          "path": "supervisor/src/agentcfg/pi_admission_control.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_admitted_files.py",
+          "path": "supervisor/src/agentcfg/pi_admitted_files.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_admitted_shell.py",
+          "path": "supervisor/src/agentcfg/pi_admitted_shell.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_approval.py",
+          "path": "supervisor/src/agentcfg/pi_shell_approval.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_assets.py",
+          "path": "supervisor/src/agentcfg/pi_assets.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_catalog.py",
+          "path": "supervisor/src/agentcfg/pi_catalog.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_checks.py",
+          "path": "supervisor/src/agentcfg/pi_checks.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_commands.py",
+          "path": "supervisor/src/agentcfg/pi_commands.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_control.py",
+          "path": "supervisor/src/agentcfg/pi_control.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_dependencies.py",
+          "path": "supervisor/src/agentcfg/pi_dependencies.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_guarded_files.py",
+          "path": "supervisor/src/agentcfg/pi_guarded_files.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_host.py",
+          "path": "supervisor/src/agentcfg/pi_host.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_lock_layout.py",
+          "path": "supervisor/src/agentcfg/pi_lock_layout.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_lock_resolution.py",
+          "path": "supervisor/src/agentcfg/pi_lock_resolution.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_operation_admission.py",
+          "path": "supervisor/src/agentcfg/pi_operation_admission.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_operations.py",
+          "path": "supervisor/src/agentcfg/pi_operations.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_policy_approval.py",
+          "path": "supervisor/src/agentcfg/pi_policy_approval.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_output.py",
+          "path": "supervisor/src/agentcfg/pi_output.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_pid_namespace.py",
+          "path": "supervisor/src/agentcfg/pi_pid_namespace.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_registered_roots.py",
+          "path": "supervisor/src/agentcfg/pi_registered_roots.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_resource_reads.py",
+          "path": "supervisor/src/agentcfg/pi_resource_reads.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_services.py",
+          "path": "supervisor/src/agentcfg/pi_services.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_argv.py",
+          "path": "supervisor/src/agentcfg/pi_shell_argv.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_execution.py",
+          "path": "supervisor/src/agentcfg/pi_shell_execution.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_handoff.py",
+          "path": "supervisor/src/agentcfg/pi_shell_handoff.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_identity.py",
+          "path": "supervisor/src/agentcfg/pi_shell_identity.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_mounts.py",
+          "path": "supervisor/src/agentcfg/pi_shell_mounts.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_preparation.py",
+          "path": "supervisor/src/agentcfg/pi_shell_preparation.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_probe_info.py",
+          "path": "supervisor/src/agentcfg/pi_shell_probe_info.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_script.py",
+          "path": "supervisor/src/agentcfg/pi_shell_script.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_seccomp.py",
+          "path": "supervisor/src/agentcfg/pi_shell_seccomp.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_sources.py",
+          "path": "supervisor/src/agentcfg/pi_shell_sources.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_start.py",
+          "path": "supervisor/src/agentcfg/pi_shell_start.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_shell_worker.py",
+          "path": "supervisor/src/agentcfg/pi_shell_worker.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_supervisor.py",
+          "path": "supervisor/src/agentcfg/pi_supervisor.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_terminal.py",
+          "path": "supervisor/src/agentcfg/pi_terminal.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_workspace_claims.py",
+          "path": "supervisor/src/agentcfg/pi_workspace_claims.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_workspace_snapshot.py",
+          "path": "supervisor/src/agentcfg/pi_workspace_snapshot.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/process.py",
+          "path": "supervisor/src/agentcfg/process.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/process_tracking.py",
+          "path": "supervisor/src/agentcfg/process_tracking.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/schema.py",
+          "path": "supervisor/src/agentcfg/schema.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/secret_files.py",
+          "path": "supervisor/src/agentcfg/secret_files.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/secrets.py",
+          "path": "supervisor/src/agentcfg/secrets.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/storage.py",
+          "path": "supervisor/src/agentcfg/storage.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/workspace_leases.py",
+          "path": "supervisor/src/agentcfg/workspace_leases.py",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/PROXY-PARENTS-SOURCE.json",
+          "path": "licenses/pi-modern/PROXY-PARENTS-SOURCE.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/SOURCE.json",
+          "path": "licenses/pi-modern/SOURCE.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/TRANSITIVE-SOURCE.json",
+          "path": "licenses/pi-modern/TRANSITIVE-SOURCE.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/SUPPLEMENT-SOURCE.json",
+          "path": "licenses/pi-modern/SUPPLEMENT-SOURCE.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/LICENSE",
+          "path": "licenses/pi-modern/LICENSE",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/APACHE-2.0.txt",
+          "path": "licenses/pi-modern/APACHE-2.0.txt",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/ESBUILD-LICENSE.md",
+          "path": "licenses/pi-modern/ESBUILD-LICENSE.md",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/STANDARDWEBHOOKS-1.1.1-LICENSE.txt",
+          "path": "licenses/pi-modern/STANDARDWEBHOOKS-1.1.1-LICENSE.txt",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_license_bundle.py",
+          "path": "supervisor/src/agentcfg/pi_license_bundle.py",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/runtime/official-mcp.ts",
+          "path": "runtime/official-mcp.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-mcp-controller.ts",
+          "path": "runtime/official-mcp-controller.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-mcp-http.ts",
+          "path": "runtime/official-mcp-http.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-mcp-stdio.ts",
+          "path": "runtime/official-mcp-stdio.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/mcp-stdio.ts",
+          "path": "runtime/mcp-stdio.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/supervised-stdio.ts",
+          "path": "runtime/supervised-stdio.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/mcp-http.ts",
+          "path": "runtime/mcp-http.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/runtime-module.ts",
+          "path": "runtime/runtime-module.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/capability-policy.ts",
+          "path": "runtime/capability-policy.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "src/agentcfg/pi_admitted_mcp.py",
+          "path": "supervisor/src/agentcfg/pi_admitted_mcp.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_mcp_stdio.py",
+          "path": "supervisor/src/agentcfg/pi_mcp_stdio.py",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/runtime/official-model-scope.ts",
+          "path": "runtime/official-model-scope.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "src/agentcfg/model_delegate_actions.py",
+          "path": "supervisor/src/agentcfg/model_delegate_actions.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/model_delegate_v3_intents.py",
+          "path": "supervisor/src/agentcfg/model_delegate_v3_intents.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/model_delegate_v3_execution.py",
+          "path": "supervisor/src/agentcfg/model_delegate_v3_execution.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/model_delegate_modern_cli.py",
+          "path": "supervisor/src/agentcfg/model_delegate_modern_cli.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_delegate_sources.py",
+          "path": "supervisor/src/agentcfg/pi_delegate_sources.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_delegate_modern_spawn.py",
+          "path": "supervisor/src/agentcfg/pi_delegate_modern_spawn.py",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/runtime/official-delegate.ts",
+          "path": "runtime/official-delegate.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-delegate-agent.ts",
+          "path": "runtime/official-delegate-agent.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-delegate-stream.ts",
+          "path": "runtime/official-delegate-stream.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-delegate-worker.ts",
+          "path": "runtime/official-delegate-worker.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-delegate-worker-main.ts",
+          "path": "runtime/official-delegate-worker-main.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-task-keeper.ts",
+          "path": "runtime/official-task-keeper.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/official-task-keeper-delegate.ts",
+          "path": "runtime/official-task-keeper-delegate.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "agents/pi/runtime/guarded-tools.ts",
+          "path": "runtime/guarded-tools.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "shared/skills/model-delegate/schemas/request-v2.json",
+          "path": "supervisor/shared/skills/model-delegate/schemas/request-v2.json",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/schemas/event-v2.json",
+          "path": "supervisor/shared/skills/model-delegate/schemas/event-v2.json",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/schemas/context-v2.json",
+          "path": "supervisor/shared/skills/model-delegate/schemas/context-v2.json",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/schemas/feedback-v2.json",
+          "path": "supervisor/shared/skills/model-delegate/schemas/feedback-v2.json",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/schemas/receipt-v2.json",
+          "path": "supervisor/shared/skills/model-delegate/schemas/receipt-v2.json",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/presets/scout.md",
+          "path": "supervisor/shared/skills/model-delegate/presets/scout.md",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/presets/plan.md",
+          "path": "supervisor/shared/skills/model-delegate/presets/plan.md",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/presets/general.md",
+          "path": "supervisor/shared/skills/model-delegate/presets/general.md",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/presets/challenge.md",
+          "path": "supervisor/shared/skills/model-delegate/presets/challenge.md",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/presets/review.md",
+          "path": "supervisor/shared/skills/model-delegate/presets/review.md",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/presets/research.md",
+          "path": "supervisor/shared/skills/model-delegate/presets/research.md",
+          "transform": "copy"
+        },
+        {
+          "source": "shared/skills/model-delegate/presets/context.md",
+          "path": "supervisor/shared/skills/model-delegate/presets/context.md",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/FULL-ADDED-SOURCE.json",
+          "path": "licenses/pi-modern/FULL-ADDED-SOURCE.json",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/FULL-ajv-LICENSE.txt",
+          "path": "licenses/pi-modern/FULL-ajv-LICENSE.txt",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/FULL-fast-deep-equal-LICENSE.txt",
+          "path": "licenses/pi-modern/FULL-fast-deep-equal-LICENSE.txt",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/FULL-fast-uri-LICENSE.txt",
+          "path": "licenses/pi-modern/FULL-fast-uri-LICENSE.txt",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/FULL-json-schema-traverse-LICENSE.txt",
+          "path": "licenses/pi-modern/FULL-json-schema-traverse-LICENSE.txt",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/FULL-require-from-string-LICENSE.txt",
+          "path": "licenses/pi-modern/FULL-require-from-string-LICENSE.txt",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/build/licenses/pi-modern/REGISTRY-pi-full.json",
+          "path": "licenses/pi-modern/REGISTRY-pi-full.json",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_auxiliary.py",
+          "path": "supervisor/src/agentcfg/pi_auxiliary.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_trusted_checks.py",
+          "path": "supervisor/src/agentcfg/pi_trusted_checks.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_input_snapshots.py",
+          "path": "supervisor/src/agentcfg/pi_input_snapshots.py",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/runtime/workspace-main.ts",
+          "path": "runtime/workspace-main.mjs",
+          "transform": "ts-module"
+        },
+        {
+          "source": "src/agentcfg/pi_worker_files.py",
+          "path": "supervisor/src/agentcfg/pi_worker_files.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/model_delegate.py",
+          "path": "supervisor/src/agentcfg/model_delegate.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/model_delegate_context.py",
+          "path": "supervisor/src/agentcfg/model_delegate_context.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_delegate.py",
+          "path": "supervisor/src/agentcfg/pi_delegate.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_delegate_files.py",
+          "path": "supervisor/src/agentcfg/pi_delegate_files.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_delegate_policy.py",
+          "path": "supervisor/src/agentcfg/pi_delegate_policy.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_lock_metadata.py",
+          "path": "supervisor/src/agentcfg/pi_lock_metadata.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_modern_launcher.py",
+          "path": "supervisor/src/agentcfg/pi_modern_launcher.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_node_archive.py",
+          "path": "supervisor/src/agentcfg/pi_node_archive.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_node_asset.py",
+          "path": "supervisor/src/agentcfg/pi_node_asset.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_owner_origin.py",
+          "path": "supervisor/src/agentcfg/pi_owner_origin.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_runtime_files.py",
+          "path": "supervisor/src/agentcfg/pi_runtime_files.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_runtime_packages.py",
+          "path": "supervisor/src/agentcfg/pi_runtime_packages.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_task_keeper_sources.py",
+          "path": "supervisor/src/agentcfg/pi_task_keeper_sources.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/runtime_packages.py",
+          "path": "supervisor/src/agentcfg/runtime_packages.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_delegate_spawn.py",
+          "path": "supervisor/src/agentcfg/pi_delegate_spawn.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/model_delegate_backends.py",
+          "path": "supervisor/src/agentcfg/model_delegate_backends.py",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_worker_protocol.py",
+          "path": "supervisor/src/agentcfg/pi_worker_protocol.py",
+          "transform": "copy"
+        },
+        {
+          "source": "agents/pi/schemas/runtime-receipt.schema.json",
+          "path": "supervisor/agents/pi/schemas/runtime-receipt.schema.json",
+          "transform": "copy"
+        },
+        {
+          "source": "src/agentcfg/pi_resource_observations.py",
+          "path": "supervisor/src/agentcfg/pi_resource_observations.py",
+          "transform": "copy"
+        }
+      ]
+    }
+  },
+  "build_steps": [],
+  "capability_bindings": {
+    "schema_version": 1,
+    "catalog": {
+      "schema_version": 1,
+      "revision": 4,
+      "capabilities": {
+        "session-runtime": {
+          "profiles": [
+            "pi-base",
+            "pi-full"
+          ],
+          "required": true,
+          "contract_version": "1",
+          "owner_domain": "session-runtime",
+          "single_owner": true,
+          "config_fields": [
+            "/options/runtime",
+            "/models",
+            "/options/ui/theme",
+            "/options/ui/quiet_startup",
+            "/options/ui/hide_thinking"
+          ],
+          "state_owners": [
+            "native-sessions"
+          ],
+          "source_ids": [
+            "pi-host",
+            "pi-ai",
+            "pi-agent-core",
+            "pi-tui",
+            "pi-bwrap-linux-x86_64",
+            "pi-node-linux-x86_64"
+          ],
+          "resource_ids": []
+        },
+        "native-tools": {
+          "profiles": [
+            "pi-base",
+            "pi-full"
+          ],
+          "required": true,
+          "contract_version": "1",
+          "owner_domain": "native-tools",
+          "single_owner": true,
+          "config_fields": [
+            "/options/permissions",
+            "/options/paths"
+          ],
+          "state_owners": [],
+          "source_ids": [
+            "pi-host",
+            "pi-bwrap-linux-x86_64"
+          ],
+          "resource_ids": []
+        },
+        "compaction": {
+          "profiles": [
+            "pi-base",
+            "pi-full"
+          ],
+          "required": true,
+          "contract_version": "1",
+          "owner_domain": "compaction",
+          "single_owner": true,
+          "config_fields": [
+            "/options/compaction"
+          ],
+          "state_owners": [],
+          "source_ids": [
+            "pi-host"
+          ],
+          "resource_ids": []
+        },
+        "footer": {
+          "profiles": [
+            "pi-base",
+            "pi-full"
+          ],
+          "required": true,
+          "contract_version": "1",
+          "owner_domain": "footer",
+          "single_owner": true,
+          "config_fields": [
+            "/options/ui/footer"
+          ],
+          "state_owners": [],
+          "source_ids": [
+            "colorful-footer",
+            "pi-tui"
+          ],
+          "resource_ids": [
+            "colorful-footer"
+          ]
+        },
+        "loop-protection": {
+          "profiles": [
+            "pi-base",
+            "pi-full"
+          ],
+          "required": true,
+          "contract_version": "1",
+          "owner_domain": "loop-protection",
+          "single_owner": true,
+          "config_fields": [
+            "/options/loop_guard"
+          ],
+          "state_owners": [
+            "loop-guard-records"
+          ],
+          "source_ids": [
+            "loop-guard",
+            "pi-runtime-ui",
+            "pi-agent-core",
+            "pi-tui"
+          ],
+          "resource_ids": [
+            "loop-guard"
+          ]
+        },
+        "todo": {
+          "profiles": [
+            "pi-base",
+            "pi-full"
+          ],
+          "required": true,
+          "contract_version": "1",
+          "owner_domain": "todo",
+          "single_owner": true,
+          "config_fields": [
+            "/options/todo"
+          ],
+          "state_owners": [
+            "todo-records"
+          ],
+          "source_ids": [
+            "pi-todo",
+            "pi-runtime-ui",
+            "pi-ai",
+            "pi-tui"
+          ],
+          "resource_ids": [
+            "pi-todo"
+          ]
+        },
+        "unified-delegate": {
+          "profiles": [
+            "pi-full"
+          ],
+          "required": false,
+          "contract_version": "3",
+          "owner_domain": "unified-delegate",
+          "single_owner": true,
+          "config_fields": [
+            "/options/model_delegate"
+          ],
+          "state_owners": [
+            "delegate-logical"
+          ],
+          "source_ids": [
+            "model-delegate-modern"
+          ],
+          "resource_ids": [
+            "model-delegate-modern",
+            "model-delegate-modern-skill"
+          ]
+        },
+        "task-workflow": {
+          "profiles": [
+            "pi-full"
+          ],
+          "required": false,
+          "contract_version": "3",
+          "owner_domain": "task-workflow",
+          "single_owner": true,
+          "config_fields": [
+            "/options/task_keeper"
+          ],
+          "state_owners": [
+            "task-workflow"
+          ],
+          "source_ids": [
+            "task-keeper-modern"
+          ],
+          "resource_ids": [
+            "task-keeper-modern",
+            "task-keeper-modern-skill"
+          ]
+        }
+      },
+      "source_profiles": {
+        "pi-host": [
+          "pi-base",
+          "pi-full"
+        ],
+        "pi-ai": [
+          "pi-base",
+          "pi-full"
+        ],
+        "pi-tui": [
+          "pi-base",
+          "pi-full"
+        ],
+        "pi-agent-core": [
+          "pi-base",
+          "pi-full"
+        ],
+        "pi-runtime-ui": [
+          "pi-base",
+          "pi-full"
+        ],
+        "colorful-footer": [
+          "pi-base",
+          "pi-full"
+        ],
+        "loop-guard": [
+          "pi-base",
+          "pi-full"
+        ],
+        "pi-todo": [
+          "pi-base",
+          "pi-full"
+        ],
+        "pi-bwrap-linux-x86_64": [
+          "pi-base",
+          "pi-full"
+        ],
+        "pi-node-linux-x86_64": [
+          "pi-base",
+          "pi-full"
+        ],
+        "model-delegate-modern": [
+          "pi-full"
+        ],
+        "task-keeper-modern": [
+          "pi-full"
+        ]
+      },
+      "resource_profiles": {
+        "colorful-footer": [
+          "pi-base",
+          "pi-full"
+        ],
+        "loop-guard": [
+          "pi-base",
+          "pi-full"
+        ],
+        "pi-todo": [
+          "pi-base",
+          "pi-full"
+        ],
+        "model-delegate-modern": [
+          "pi-full"
+        ],
+        "task-keeper-modern": [
+          "pi-full"
+        ],
+        "model-delegate-modern-skill": [
+          "pi-full"
+        ],
+        "task-keeper-modern-skill": [
+          "pi-full"
+        ]
+      }
+    },
+    "providers": {
+      "pi-native-session-v1": {
+        "provider_id": "pi-native-session-v1",
+        "capability_id": "session-runtime",
+        "source_id": "pi-host",
+        "source_version": "1.0.1",
+        "source_identity": "47b77db67e0087a7616a65d423c8f14495f019cd5f3ae8f9122e7e60c8e92b04",
+        "contract_version": "1",
+        "verified_host_versions": [
+          "1.0.1"
+        ],
+        "candidate_host_versions": [
+          "1.0.1"
+        ],
+        "engines": [
+          "node"
+        ],
+        "requires": [],
+        "conflicts": [],
+        "public_entrypoints": [
+          "@earendil-works/pi-coding-agent#createAgentSessionRuntime",
+          "@earendil-works/pi-coding-agent#createAgentSessionFromServices",
+          "runtime/official-launch.mjs"
+        ],
+        "config_fields": [
+          "/options/runtime",
+          "/models",
+          "/options/ui/theme",
+          "/options/ui/quiet_startup",
+          "/options/ui/hide_thinking"
+        ],
+        "state_owners": [
+          "native-sessions"
+        ],
+        "resource_ids": [],
+        "migration_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "uninstall_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "rollback_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "support_sources": [
+          {
+            "source_id": "pi-ai",
+            "source_version": "1.0.2",
+            "source_identity": "a7cd9cb69ef3745e17ea3f2e6a63d399a83cd950bd4ed3f50f6042a5dbeab0ae"
+          },
+          {
+            "source_id": "pi-agent-core",
+            "source_version": "1.0.2",
+            "source_identity": "8356cb9d4efb2d52006ba16523329ac3a9b6e0b6f4e7be36f9550fd0d781b307"
+          },
+          {
+            "source_id": "pi-tui",
+            "source_version": "1.0.2",
+            "source_identity": "e1792ca3dee8224312aa73113c27293beac5ae9a1f597f1809d991e89ef486b3"
+          },
+          {
+            "source_id": "pi-bwrap-linux-x86_64",
+            "source_version": null,
+            "source_identity": "72be38f6b541146daa8f9d854e00eff03dd9ca2978d01fa31a217e6d90e21884"
+          },
+          {
+            "source_id": "pi-node-linux-x86_64",
+            "source_version": null,
+            "source_identity": "de0e7d78f97d21efb33ceef4949f73e3813314d4ce56ed9a7e4a98c2874c3865"
+          }
+        ]
+      },
+      "pi-native-tools-v1": {
+        "provider_id": "pi-native-tools-v1",
+        "capability_id": "native-tools",
+        "source_id": "pi-host",
+        "source_version": "1.0.1",
+        "source_identity": "47b77db67e0087a7616a65d423c8f14495f019cd5f3ae8f9122e7e60c8e92b04",
+        "contract_version": "1",
+        "verified_host_versions": [
+          "1.0.1"
+        ],
+        "candidate_host_versions": [
+          "1.0.1"
+        ],
+        "engines": [
+          "node"
+        ],
+        "requires": [
+          "session-runtime"
+        ],
+        "conflicts": [],
+        "public_entrypoints": [
+          "@earendil-works/pi-coding-agent#createAgentSessionFromServices",
+          "runtime/official-file-runtime.mjs"
+        ],
+        "config_fields": [
+          "/options/permissions",
+          "/options/paths"
+        ],
+        "state_owners": [],
+        "resource_ids": [],
+        "migration_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "uninstall_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "rollback_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "support_sources": [
+          {
+            "source_id": "pi-bwrap-linux-x86_64",
+            "source_version": null,
+            "source_identity": "72be38f6b541146daa8f9d854e00eff03dd9ca2978d01fa31a217e6d90e21884"
+          }
+        ]
+      },
+      "pi-native-compaction-v1": {
+        "provider_id": "pi-native-compaction-v1",
+        "capability_id": "compaction",
+        "source_id": "pi-host",
+        "source_version": "1.0.1",
+        "source_identity": "47b77db67e0087a7616a65d423c8f14495f019cd5f3ae8f9122e7e60c8e92b04",
+        "contract_version": "1",
+        "verified_host_versions": [
+          "1.0.1"
+        ],
+        "candidate_host_versions": [
+          "1.0.1"
+        ],
+        "engines": [
+          "node"
+        ],
+        "requires": [
+          "session-runtime"
+        ],
+        "conflicts": [],
+        "public_entrypoints": [
+          "@earendil-works/pi-coding-agent#AgentSession.compact"
+        ],
+        "config_fields": [
+          "/options/compaction"
+        ],
+        "state_owners": [],
+        "resource_ids": [],
+        "migration_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "uninstall_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "rollback_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ]
+      },
+      "rotom-footer-v1": {
+        "provider_id": "rotom-footer-v1",
+        "capability_id": "footer",
+        "source_id": "colorful-footer",
+        "source_version": "0.1.0",
+        "source_identity": "063795013ec1793b85d98090f8e8b7419ac26b3c655ab56bedfebb418eb8ed13",
+        "contract_version": "1",
+        "verified_host_versions": [
+          "1.0.1"
+        ],
+        "candidate_host_versions": [
+          "1.0.1"
+        ],
+        "engines": [
+          "node"
+        ],
+        "requires": [
+          "session-runtime"
+        ],
+        "conflicts": [],
+        "public_entrypoints": [
+          "starter-pi-colorful-footer/index.ts"
+        ],
+        "config_fields": [
+          "/options/ui/footer"
+        ],
+        "state_owners": [],
+        "resource_ids": [
+          "colorful-footer"
+        ],
+        "migration_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "uninstall_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "rollback_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "support_sources": [
+          {
+            "source_id": "pi-tui",
+            "source_version": "1.0.2",
+            "source_identity": "e1792ca3dee8224312aa73113c27293beac5ae9a1f597f1809d991e89ef486b3"
+          }
+        ]
+      },
+      "rotom-loop-guard-v1": {
+        "provider_id": "rotom-loop-guard-v1",
+        "capability_id": "loop-protection",
+        "source_id": "loop-guard",
+        "source_version": "0.1.0",
+        "source_identity": "a1874efc13461ff4bc161f2a92a6995ab4f88d5b28beab8afe133bbd17fcc661",
+        "contract_version": "1",
+        "verified_host_versions": [
+          "1.0.1"
+        ],
+        "candidate_host_versions": [
+          "1.0.1"
+        ],
+        "engines": [
+          "node"
+        ],
+        "requires": [
+          "session-runtime"
+        ],
+        "conflicts": [],
+        "public_entrypoints": [
+          "starter-pi-loop-guard/index.ts",
+          "@agentcfg/pi-runtime/capability-policy"
+        ],
+        "config_fields": [
+          "/options/loop_guard"
+        ],
+        "state_owners": [
+          "loop-guard-records"
+        ],
+        "resource_ids": [
+          "loop-guard"
+        ],
+        "migration_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "uninstall_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "rollback_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "support_sources": [
+          {
+            "source_id": "pi-runtime-ui",
+            "source_version": "2.0.0",
+            "source_identity": "d2d0b8a70b426e32caf21b9e4c9e76bee994ead2595db2010ea506a160c20d3e"
+          },
+          {
+            "source_id": "pi-agent-core",
+            "source_version": "1.0.2",
+            "source_identity": "8356cb9d4efb2d52006ba16523329ac3a9b6e0b6f4e7be36f9550fd0d781b307"
+          },
+          {
+            "source_id": "pi-tui",
+            "source_version": "1.0.2",
+            "source_identity": "e1792ca3dee8224312aa73113c27293beac5ae9a1f597f1809d991e89ef486b3"
+          }
+        ]
+      },
+      "rotom-todo-v1": {
+        "provider_id": "rotom-todo-v1",
+        "capability_id": "todo",
+        "source_id": "pi-todo",
+        "source_version": "2.9.0-agentcfg.1",
+        "source_identity": "53c4e780062738b465f72d09c93c1e54209b38fcf47e751e973979fba32762c7",
+        "contract_version": "1",
+        "verified_host_versions": [
+          "1.0.1"
+        ],
+        "candidate_host_versions": [
+          "1.0.1"
+        ],
+        "engines": [
+          "node"
+        ],
+        "requires": [
+          "session-runtime"
+        ],
+        "conflicts": [],
+        "public_entrypoints": [
+          "@juicesharp/rpiv-todo/index.ts",
+          "@agentcfg/pi-runtime/plugin-settings"
+        ],
+        "config_fields": [
+          "/options/todo"
+        ],
+        "state_owners": [
+          "todo-records"
+        ],
+        "resource_ids": [
+          "pi-todo"
+        ],
+        "migration_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "uninstall_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "rollback_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "support_sources": [
+          {
+            "source_id": "pi-runtime-ui",
+            "source_version": "2.0.0",
+            "source_identity": "d2d0b8a70b426e32caf21b9e4c9e76bee994ead2595db2010ea506a160c20d3e"
+          },
+          {
+            "source_id": "pi-ai",
+            "source_version": "1.0.2",
+            "source_identity": "a7cd9cb69ef3745e17ea3f2e6a63d399a83cd950bd4ed3f50f6042a5dbeab0ae"
+          },
+          {
+            "source_id": "pi-tui",
+            "source_version": "1.0.2",
+            "source_identity": "e1792ca3dee8224312aa73113c27293beac5ae9a1f597f1809d991e89ef486b3"
+          }
+        ]
+      },
+      "rotom-unified-delegate-v3": {
+        "provider_id": "rotom-unified-delegate-v3",
+        "capability_id": "unified-delegate",
+        "source_id": "model-delegate-modern",
+        "source_version": "3.0.0",
+        "source_identity": "ab3a98a5dcdb3d05c23d5163a5d0a83a00f693bd3264f70276a05713439c8476",
+        "contract_version": "3",
+        "verified_host_versions": [],
+        "candidate_host_versions": [
+          "1.0.1"
+        ],
+        "engines": [
+          "node"
+        ],
+        "requires": [
+          "session-runtime",
+          "native-tools"
+        ],
+        "conflicts": [],
+        "public_entrypoints": [
+          "@agentcfg/pi-model-delegate/index.ts"
+        ],
+        "config_fields": [
+          "/options/model_delegate"
+        ],
+        "state_owners": [
+          "delegate-logical"
+        ],
+        "resource_ids": [
+          "model-delegate-modern",
+          "model-delegate-modern-skill"
+        ],
+        "migration_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "uninstall_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "rollback_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "support_sources": []
+      },
+      "rotom-task-workflow-v3": {
+        "provider_id": "rotom-task-workflow-v3",
+        "capability_id": "task-workflow",
+        "source_id": "task-keeper-modern",
+        "source_version": "3.0.0",
+        "source_identity": "bffaa3e2665312ac5313b3ecb9e47680e95b8aee026d97cab77d8574dda3c9d9",
+        "contract_version": "3",
+        "verified_host_versions": [],
+        "candidate_host_versions": [
+          "1.0.1"
+        ],
+        "engines": [
+          "node"
+        ],
+        "requires": [
+          "unified-delegate"
+        ],
+        "conflicts": [],
+        "public_entrypoints": [
+          "@agentcfg/pi-task-keeper/index.mjs"
+        ],
+        "config_fields": [
+          "/options/task_keeper"
+        ],
+        "state_owners": [
+          "task-workflow"
+        ],
+        "resource_ids": [
+          "task-keeper-modern",
+          "task-keeper-modern-skill"
+        ],
+        "migration_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "uninstall_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "rollback_refs": [
+          "specs/005-pi-two-profiles/contracts/capability-providers.md"
+        ],
+        "support_sources": []
+      }
+    },
+    "selections": {
+      "pi-base": {
+        "schema_version": 1,
+        "profile": "pi-base",
+        "revision": 2,
+        "source_revision": 4,
+        "state": "current",
+        "bindings": [
+          {
+            "capability_id": "session-runtime",
+            "provider_id": "pi-native-session-v1"
+          },
+          {
+            "capability_id": "native-tools",
+            "provider_id": "pi-native-tools-v1"
+          },
+          {
+            "capability_id": "compaction",
+            "provider_id": "pi-native-compaction-v1"
+          },
+          {
+            "capability_id": "footer",
+            "provider_id": "rotom-footer-v1"
+          },
+          {
+            "capability_id": "loop-protection",
+            "provider_id": "rotom-loop-guard-v1"
+          },
+          {
+            "capability_id": "todo",
+            "provider_id": "rotom-todo-v1"
+          }
+        ]
+      },
+      "pi-full": {
+        "schema_version": 1,
+        "profile": "pi-full",
+        "revision": 2,
+        "source_revision": 4,
+        "state": "candidate",
+        "bindings": [
+          {
+            "capability_id": "session-runtime",
+            "provider_id": "pi-native-session-v1"
+          },
+          {
+            "capability_id": "native-tools",
+            "provider_id": "pi-native-tools-v1"
+          },
+          {
+            "capability_id": "compaction",
+            "provider_id": "pi-native-compaction-v1"
+          },
+          {
+            "capability_id": "footer",
+            "provider_id": "rotom-footer-v1"
+          },
+          {
+            "capability_id": "loop-protection",
+            "provider_id": "rotom-loop-guard-v1"
+          },
+          {
+            "capability_id": "todo",
+            "provider_id": "rotom-todo-v1"
+          },
+          {
+            "capability_id": "unified-delegate",
+            "provider_id": "rotom-unified-delegate-v3"
+          },
+          {
+            "capability_id": "task-workflow",
+            "provider_id": "rotom-task-workflow-v3"
+          }
+        ]
+      }
+    }
+  }
+}

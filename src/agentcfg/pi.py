@@ -13,6 +13,7 @@ from .render import render_rules
 from .schema import AdapterPolicy, AdapterSchemaBundle, AdapterSchemas, AuthenticationClaim, ConfigError, validate_document
 from .storage import Tree, ensure_private
 from .paths import configured_path
+from .pi_profile_config import MODERN_PROFILES, profile_policy, validate_projection
 
 
 def closed(properties, required=()):
@@ -42,9 +43,9 @@ class PiAdapter(Adapter):
   def __init__(self, repository):
     self.repository = Path(repository)
 
-  def dependency_backend(self):
+  def dependency_backend(self, *, profile=None):
     from .pi_dependencies import PiBackend
-    return PiBackend()
+    return PiBackend(profile=profile)
 
   def route(self, data, provider_id):
     provider = data["providers"][provider_id]
@@ -56,11 +57,17 @@ class PiAdapter(Adapter):
     profile = data["profile"]
     options = profile["agent_options"]
     check("options", options)
+    if "input_snapshot" in options:
+      from .pi_input_snapshots import scope_policy
+      policy = scope_policy(options["input_snapshot"])
+      if any(policy.values()) and (profile["id"] != "pi-full" or not options.get("task_keeper", {}).get("enabled") or "task-keeper" not in profile["plugins"]):
+        raise ConfigError("INPUT_SNAPSHOT_CONTEXT_REQUIRED")
     validate_document("registry", {"schema_version": 1, **{key: data[key] for key in ("providers", "models", "rules", "skills", "mcp")}})
     if profile["agent"] != "pi" or set(profile["roles"].values()) - data["models"].keys():
       raise ConfigError("pi-model-reference")
     if set(profile["plugins"]) != data["plugins"].keys():
       raise ConfigError("pi-plugin-selection")
+    validate_projection(data)
     engine = options.get("runtime", {}).get("engine", "node")
     for plugin in data["plugins"].values():
       if (not plugin["enabled"] or engine not in plugin["engines"]
@@ -68,9 +75,17 @@ class PiAdapter(Adapter):
           or set(plugin["conflicts"]) & data["plugins"].keys()):
         raise ConfigError("pi-plugin-combination")
     from .pi_mcp import configuration as mcp_configuration
-    mcp_configuration(data)
-    from .pi_web import configuration as web_configuration
-    web_configuration(data)
+    modern = profile["id"] in ("pi-base", "pi-full")
+    mcp_configuration(data, native=modern)
+    if modern:
+      from .pi_mcp import official_configuration
+      official_configuration(data, allowed_tools=options.get("mcp", {}).get("allowed_tools", {}))
+    if "pi-web" in data["plugins"]:
+      from .pi_web import configuration as web_configuration
+      web_configuration(data)
+    elif options.get("web", {}):
+      # 未选能力仍拒绝其配置，但离线Base校验不加载可选Web实现。
+      raise ConfigError("pi-web-not-selected")
     bindings = data["adapter_documents"]["bindings"]
     for identity, provider in data["providers"].items():
       if provider["auth_kind"] == "api-key":
@@ -154,6 +169,9 @@ class PiAdapter(Adapter):
       codex_api_base_url(codex["api_base_url"])
     for route in options.get("network", {}).get("routes", {}).values():
       services = set(route.get("service_ids", []))
+      if modern and route["mode"] != "direct" and set(route["provider_ids"]) & data["providers"].keys():
+        # 原生主模型尚无公开逐请求代理接线；不能接受代理声明后静默直连。
+        raise ConfigError("pi-native-provider-route-unavailable")
       selected_services = {"mcp:" + name for name in data["mcp"]}
       selected_services |= {"web:" + name for name in options.get("web", {}).get("services", {})}
       if (not route["provider_ids"] and not services or set(route["provider_ids"]) - data["providers"].keys()
@@ -216,10 +234,17 @@ class PiAdapter(Adapter):
         raise ConfigError("pi-permission-root-reference")
       if rule["kind"] == "command":
         kind, name = rule["command_ref"].split(":", 1)
-        if name not in options.get("checks" if kind == "check" else "external_tools", {}):
+        selected = options.get("mcp", {}).get("servers", {}) if kind == "mcp" else options.get("checks" if kind == "check" else "external_tools", {})
+        if name not in selected:
           raise ConfigError("pi-permission-command-reference")
     if any(binding["project_root"] not in roots or set(binding.get("read_roots", [])) - roots.keys() for binding in options.get("checks", {}).values()):
       raise ConfigError("pi-check-root-reference")
+    if any(item["root_ref"] not in roots or item["root_ref"] not in binding.get("read_roots", [])
+        for binding in options.get("checks", {}).values() for item in binding.get("trusted_inputs", [])):
+      raise ConfigError("pi-check-trusted-root-reference")
+    if any("required_test_ids" in binding and (binding.get("kind") != "tests" or binding.get("parser") != "json")
+        for binding in options.get("checks", {}).values()):
+      raise ConfigError("pi-check-test-id-contract")
     if options.get("task_keeper", {}).get("enabled") and engine != "node":
       raise ConfigError("pi-managed-engine")
 
@@ -278,28 +303,8 @@ class PiAdapter(Adapter):
         continue
       route = self.route(data, identity)
       prefix = ("providers", route)
-      values = {"baseUrl": provider["base_url"], "api": data["adapter_documents"]["bindings"]["protocols"][provider["protocol"]]}
-      models = []
-      for model_id, model in data["models"].items():
-        if model["provider"] != identity:
-          continue
-        native = {"id": model["remote_id"], "input": model["input"]}
-        if "name" in model:
-          native["name"] = model["name"]
-        if "reasoning" in model:
-          native["reasoning"] = model["reasoning"]
-        native.update(deepcopy(model.get("native", {}).get("pi", {})))
-        for key, target in (("context_window", "contextWindow"), ("max_output_tokens", "maxTokens")):
-          if key in model:
-            native[target] = model[key]
-        native_options = options.get("model_settings", {}).get(model_id, {})
-        for key, target in (("reasoning", "reasoning"), ("thinking_level_map", "thinkingLevelMap")):
-          if key in native_options:
-            native[target] = deepcopy(native_options[key])
-        if "disabled_thinking_levels" in native_options:
-          native.setdefault("thinkingLevelMap", {}).update({level: None for level in native_options["disabled_thinking_levels"]})
-        models.append(native)
-      values["models"] = models
+      from .pi_model_config import provider_config
+      values = provider_config(data, identity, strict=data["profile"]["id"] in ("pi-base", "pi-full"))
       for name, value in values.items():
         yield ManagedTarget("pi-home/models.json", Ownership.FIELDS, "json", pointer(*prefix, name)), value
       token = "$" + key_variable(identity)
@@ -325,19 +330,31 @@ class PiAdapter(Adapter):
 
   def managed_targets(self, data):
     self.validate(data)
+    modern = data["profile"]["id"] in MODERN_PROFILES
+    native_paths = ["pi-home/auth.json", "pi-home/sessions"]
+    if data["profile"]["id"] != "pi-base":
+      native_paths += ["pi-home/task-keeper", "codex-home", "cursor-home", "pi-home/cursor-cache"]
     fixed = [ManagedTarget("pi-home/agentcfg-manifest.json", Ownership.FILE, "json"),
       ManagedTarget("pi-home/AGENTS.md", Ownership.FILE, "text"),
       ManagedTarget("pi-home/APPEND_SYSTEM.md", Ownership.FILE, "text"),
       ManagedTarget("pi-home/keybindings.json", Ownership.INITIALIZE, "json"),
-      ManagedTarget("pi-home/subagents.json", Ownership.FILE, "json"),
-      ManagedTarget("pi-home/agentcfg-runtime-api.mjs", Ownership.FILE, "text"),
       ManagedTarget("pi-home/skills", Ownership.FILE, "skill-directory"),
       ManagedTarget(".agentcfg-instance.json", Ownership.RUNTIME, "json"),
-      *[ManagedTarget(path, Ownership.RUNTIME, "native") for path in ("pi-home/auth.json", "pi-home/sessions", "pi-home/task-keeper", "codex-home", "cursor-home", "pi-home/cursor-cache")],
+      *[ManagedTarget(path, Ownership.RUNTIME, "native") for path in native_paths],
       ManagedTarget("runtimes", Ownership.PACKAGE, "npm")]
+    if not modern:
+      fixed += [ManagedTarget("pi-home/subagents.json", Ownership.FILE, "json"),
+        ManagedTarget("pi-home/agentcfg-runtime-api.mjs", Ownership.FILE, "text")]
     return tuple(fixed + [target for target, _ in self._fields(data)] + [target for _, _, target in self._resources(data)])
 
   def render(self, data):
+    modern = data["profile"]["id"] in MODERN_PROFILES
+    if data["profile"]["id"] in ("pi-base", "pi-full"):
+      from .pi_model_config import validate_endpoint
+      # 新profile的端点错误固定且无输入正文，先于通用registry文本校验。
+      if isinstance(data["providers"], dict):
+        for provider in data["providers"].values():
+          if isinstance(provider, dict) and provider.get("auth_kind") == "api-key": validate_endpoint(provider.get("base_url"))
     self.validate(data)
     artifacts = [Artifact(target, encode(value)) for target, value in self._fields(data)]
     resource_paths = {key: [] for key in ("roles", "prompts", "themes", "extensions", "skills")}
@@ -406,8 +423,22 @@ class PiAdapter(Adapter):
       "allowed_models": [{"provider": self.route(data, model["provider"]), "model": model["remote_id"]} for model in data["models"].values()],
       "model_bindings": {role: {"provider": self.route(data, data["models"][model]["provider"]), "model": data["models"][model]["remote_id"]}
         for role, model in data["profile"]["roles"].items()}}
+    if data["profile"]["id"] in ("pi-base", "pi-full"):
+      from .pi_model_config import model_configuration
+      manifest["model_configuration"] = model_configuration(data, self.route)
+      # SDK的默认零费率不是已计量费用；CNY/时段价未投影前不显示为免费。
+      manifest["cost_reporting"] = "unmetered"
+      manifest["plugin_capabilities"] = {name: {"capability_id": row["capability_id"],
+        "model_tools": list(row["model_tools"])} for name, row in data["plugins"].items()}
     from .pi_mcp import configuration as mcp_configuration
-    if "pi-mcp" in data["plugins"]: manifest["mcp_config"] = mcp_configuration(data)
+    if data["profile"]["id"] in ("pi-base", "pi-full"):
+      from .pi_mcp import official_configuration
+      native = official_configuration(data, allowed_tools=options.get("mcp", {}).get("allowed_tools", {}))
+      if native is not None:
+        manifest["native_mcp"] = native
+        # 受管HTTP/stdio仍消费同一registry路由投影，不加载旧MCP插件。
+        manifest["mcp_config"] = mcp_configuration(data, native=True)
+    elif "pi-mcp" in data["plugins"]: manifest["mcp_config"] = mcp_configuration(data)
     if "pi-web" in data["plugins"]:
       from .pi_web import configuration as web_configuration
       manifest.update(web_configuration(data))
@@ -429,16 +460,19 @@ class PiAdapter(Adapter):
       "maxConcurrent": 2, "maxConcurrentForeground": 2, "workflowsEnabled": False,
       "schedulingEnabled": False, "worktreeIsolation": False, "strictAgentFiles": True}
     with Tree(self.repository, private=False) as tree:
-      templates = {name: tree.read("agents/pi/templates/" + name) for name in ("AGENTS.template.md", "APPEND_SYSTEM.template.md", "keybindings.template.jsonc")}
+      template_root = "agents/pi/templates/" + ("ordinary/" if modern else "")
+      templates = {name: tree.read(template_root + name) for name in ("AGENTS.template.md", "APPEND_SYSTEM.template.md")}
+      templates["keybindings.template.jsonc"] = tree.read("agents/pi/templates/keybindings.template.jsonc")
     if not all(templates.values()):
       raise ConfigError("pi-template-missing")
     # 此输入为仓库固定 JSONC，逐行注释被移除；不接受用户原生文件作为模板。
     keybindings = json.loads("\n".join(line for line in templates["keybindings.template.jsonc"][0].decode().splitlines() if not line.lstrip().startswith("//")))
     rules = render_rules(self.repository, tuple(data["rules"][key] for key in data["profile"]["rules"]), {})
-    from .pi_extension_bridge import bridge_source
-    artifacts.append(Artifact(ManagedTarget("pi-home/agentcfg-runtime-api.mjs", Ownership.FILE, "text"), bridge_source()))
+    if not modern:
+      from .pi_extension_bridge import bridge_source
+      artifacts.extend((Artifact(ManagedTarget("pi-home/agentcfg-runtime-api.mjs", Ownership.FILE, "text"), bridge_source()),
+        Artifact(ManagedTarget("pi-home/subagents.json", Ownership.FILE, "json"), encode(subagents))))
     artifacts.extend((Artifact(ManagedTarget("pi-home/agentcfg-manifest.json", Ownership.FILE, "json"), encode(manifest)),
-      Artifact(ManagedTarget("pi-home/subagents.json", Ownership.FILE, "json"), encode(subagents)),
       Artifact(ManagedTarget("pi-home/keybindings.json", Ownership.INITIALIZE, "json"), encode(keybindings)),
       Artifact(ManagedTarget("pi-home/APPEND_SYSTEM.md", Ownership.FILE, "text"), templates["APPEND_SYSTEM.template.md"][0]),
       Artifact(ManagedTarget("pi-home/AGENTS.md", Ownership.FILE, "text"), rules + b"\n" + templates["AGENTS.template.md"][0])))
@@ -448,6 +482,16 @@ class PiAdapter(Adapter):
     return DependencyPlan(tuple(plugin["package"] + "@" + plugin["version"] for plugin in data["plugins"].values()))
 
   def lifecycle_guard(self, workspace):
+    if workspace.profile in MODERN_PROFILES:
+      from .pi_lifecycle import source_guard
+      return source_guard(workspace)
+    from .pi_lifecycle import guard
+    return guard(workspace)
+
+  def run_lifecycle_guard(self, workspace):
+    if workspace.profile in MODERN_PROFILES:
+      from .pi_lifecycle import source_guard
+      return source_guard(workspace, shared=True)
     from .pi_lifecycle import guard
     return guard(workspace)
 
@@ -457,7 +501,10 @@ class PiAdapter(Adapter):
 
   def launch_spec(self, data, *, cwd, runtime_root, instance_root, lock_identity):
     self.validate_selected(data)
+    modern = data["profile"]["id"] in MODERN_PROFILES
     engine = data["profile"]["agent_options"].get("runtime", {}).get("engine", "node")
+    if modern and engine != "node":
+      raise ConfigError("pi-profile-engine")
     env = [EnvironmentBinding("HOME", str(instance_root / "user-home")),
       EnvironmentBinding("PI_CODING_AGENT_DIR", str(instance_root / "pi-home")),
       EnvironmentBinding("PI_CODING_AGENT_SESSION_DIR", str(instance_root / "pi-home/sessions"))]
@@ -488,12 +535,13 @@ class PiAdapter(Adapter):
     for route, binding in data["profile"]["agent_options"].get("network", {}).get("routes", {}).items():
       if binding.get("credential_ref") and (set(binding.get("provider_ids", [])) & data["providers"].keys() or binding.get("service_ids")):
         env.append(EnvironmentBinding(route_key_variable(route), SecretRef(binding["credential_ref"])))
-    flags = ()
+    flags = ("--experimental-import-meta-resolve",) if modern else ()
     if engine == "bun":
       flags = ("--no-install", "--no-env-file", "--no-macros", "--config=" + str(runtime_root / "runtime/bunfig.locked.toml"),
         "--tsconfig-override=" + str(runtime_root / "runtime/tsconfig.locked.json"))
       env.extend((EnvironmentBinding("BUN_OPTIONS", ""), EnvironmentBinding("BUN_RUNTIME_TRANSPILER_CACHE_PATH", "0")))
-    return LaunchSpec((engine, *flags, str(runtime_root / "runtime/launch.mjs"), "--manifest", str(instance_root / "pi-home/agentcfg-manifest.json")), cwd, lock_identity, tuple(env))
+    entry = "runtime/official-launch.mjs" if modern else "runtime/launch.mjs"
+    return LaunchSpec((engine, *flags, str(runtime_root / entry), "--manifest", str(instance_root / "pi-home/agentcfg-manifest.json")), cwd, lock_identity, tuple(env))
 
   def prepare_runtime(self, workspace, root):
     directories = ["pi-home", "user-home", "pi-home/sessions"]
@@ -506,8 +554,57 @@ class PiAdapter(Adapter):
     return [{"argv": [engine, "--version"], "version": lock.metadata["toolchains"][engine], "match": "exact"}]
 
   def runtime_guards(self, data):
-    return {"files": ["pi-home/agentcfg-manifest.json", "pi-home/subagents.json", "pi-home/AGENTS.md", "pi-home/APPEND_SYSTEM.md", "pi-home/agentcfg-runtime-api.mjs"],
-      "roots": ["pi-home/agents", "pi-home/extensions", "pi-home/skills"]}
+    files = ["pi-home/agentcfg-manifest.json", "pi-home/AGENTS.md", "pi-home/APPEND_SYSTEM.md"]
+    if data["profile"]["id"] not in MODERN_PROFILES:
+      files += ["pi-home/subagents.json", "pi-home/agentcfg-runtime-api.mjs"]
+    return {"files": files, "roots": ["pi-home/agents", "pi-home/extensions", "pi-home/skills"]}
+
+  def validate_arguments_for(self, data, arguments):
+    if data["profile"]["id"] not in MODERN_PROFILES:
+      self.validate_arguments(arguments)
+      return None
+    failed = False
+    try:
+      if type(arguments) not in (tuple, list):
+        raise ValueError()
+      captured = tuple(arguments)
+      if any(type(arg) is not str or "\0" in arg or any(0xD800 <= ord(char) <= 0xDFFF for char in arg) for arg in captured):
+        raise ValueError()
+      mode = None; thinking = False; messages = False; separated = False; index = 0
+      while index < len(captured):
+        arg = captured[index]; index += 1
+        if separated:
+          messages = True
+        elif arg == "--":
+          separated = True
+        elif arg in ("--help", "-h"):
+          continue
+        elif arg in ("--print", "--mode"):
+          if mode is not None:
+            raise ValueError()
+          mode = "print" if arg == "--print" else "rpc"
+          if arg == "--mode":
+            if index == len(captured) or captured[index] != "rpc":
+              raise ValueError()
+            index += 1
+        elif arg == "--thinking":
+          if thinking or index == len(captured) or captured[index] not in ("off", "minimal", "low", "medium", "high", "xhigh", "max"):
+            raise ValueError()
+          thinking = True; index += 1
+        elif arg.startswith("-"):
+          raise ValueError()
+        else:
+          messages = True
+      if mode == "rpc" and messages:
+        raise ValueError()
+    except Exception:
+      failed = True
+    if failed:
+      try: raise ConfigError("pi-arguments")
+      except ConfigError as error:
+        error.__cause__ = None; error.__context__ = None
+        raise
+    return captured
 
   def validate_arguments(self, arguments):
     args = iter(arguments)
@@ -557,7 +654,13 @@ class PiAdapter(Adapter):
 
   def project_metadata_root(self, workspace, project):
     from .workspace_leases import WorkspaceLeases
-    return Path(WorkspaceLeases("project-maintenance").identify(project)["git_dir_path"]) / "agentcfg-project"
+    leases = WorkspaceLeases("project-maintenance")
+    return self._project_metadata_path(leases, leases.identify(project))
+
+  @staticmethod
+  def _project_metadata_path(leases, planned):
+    if planned["git_dir_path"] is not None: return Path(planned["git_dir_path"]) / "agentcfg-project"
+    return leases.claims.registry.anchor / "project-metadata" / planned["registered_root_id"]
 
   def project_write_guard(self, workspace, project):
     from contextlib import contextmanager
@@ -567,8 +670,9 @@ class PiAdapter(Adapter):
     def protected_project():
       with guard(workspace):
         # 只包住父进程同步的产物 CAS，不在业务树中执行 OpenSpec 子进程。
-        with WorkspaceLeases("project-maintenance").maintenance(project):
-          yield
+        leases = WorkspaceLeases("project-maintenance")
+        with leases.maintenance(project) as planned:
+          yield self._project_metadata_path(leases, planned)
     return protected_project()
 
   def diagnostic_exit_code(self, capabilities):
@@ -592,9 +696,13 @@ class PiAdapter(Adapter):
     bindings = closed({"schema_version": {"type": "integer", "const": 1}, "protocols": mapping(string),
       "oauth": mapping(closed({"route": string, "owner": string}, ("route", "owner")))}, ("schema_version", "protocols", "oauth"))
     plugin = closed({"package": string, "version": string, "enabled": {"type": "boolean"},
+      "capability_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+      "model_tools": {"type": "array", "maxItems": 64, "uniqueItems": True,
+        "items": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"}},
       "requires": strings, "conflicts": strings, "engines": {"type": "array", "items": {"type": "string", "enum": ["node", "bun"]}, "uniqueItems": True}}, ("package", "version", "enabled", "requires", "conflicts", "engines"))
     documents = {"agent": read_schema("agent"), "bindings": bindings,
-      "plugins": closed({"schema_version": {"type": "integer", "const": 1}, "plugins": mapping(plugin)}, ("schema_version", "plugins"))}
+      "plugins": closed({"schema_version": {"type": "integer", "const": 1}, "plugins": mapping(plugin),
+        "profile_plugins": closed({name: mapping(plugin) for name in MODERN_PROFILES})}, ("schema_version", "plugins"))}
 
     def validate(kind, value):
       if kind == "resolved":
@@ -612,4 +720,4 @@ class PiAdapter(Adapter):
       return tuple(AuthenticationClaim(key, data["adapter_documents"]["bindings"]["oauth"][key]["owner"] if provider["auth_kind"] == "oauth" else "pi-environment") for key, provider in data["providers"].items())
 
     return AdapterSchemas({"pi": AdapterSchemaBundle(self.declaration, documents, read_schema("options"), validate,
-      policy=policy, authentication_claims=claims, validate_selected=self.validate_selected)})
+      policy=policy, authentication_claims=claims, validate_selected=self.validate_selected, profile_policy=profile_policy)})

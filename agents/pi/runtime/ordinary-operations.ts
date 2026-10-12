@@ -2,22 +2,23 @@
 import { searchText } from "./regex-search.ts";
 import { createHash, randomUUID } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
-import { privateBytes, privateFile } from "./launch.ts";
-import { canonical, reject } from "./managed-types.ts";
-import { isBoundWebTool } from "./web-tools.ts";
-import { isBoundMcpTool } from "./mcp-tools.ts";
-import { readseekToolNames } from "./readseek-controller.ts";
+import { privateBytes, privateFile } from "./private-files.ts";
+import { canonical, closed, reject } from "./managed-types.ts";
+import { isBoundExtensionTool } from "./tool-lookups.ts";
+import { readseekToolNames } from "./tool-ownership.ts";
+import { executeFileOperation } from "./file-operation-executor.ts";
 
 export class OrdinaryOperations {
-  constructor(sdk, runtime, { mime = () => null, pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)) } = {}) {
-    this.sdk = sdk; this.runtime = runtime; this.supervisor = runtime.supervisor; this.mime = mime; this.pause = pause;
+  #admittedTickets = new WeakSet();
+  constructor(sdk, runtime, { fileAdmission, mime = () => null, pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)) } = {}) {
+    this.sdk = sdk; this.runtime = runtime; this.supervisor = runtime.supervisor; this.mime = mime; this.pause = pause; this.fileAdmission = fileAdmission;
   }
   async preflight(event, ctx, _snapshot, roleId = "main") {
     if (readseekToolNames.has(event.toolName)) {
       if (!this.runtime.readseek) reject("READSEEK_EXECUTOR_UNAVAILABLE", 5);
       return this.runtime.readseek.prepare(event, ctx, roleId);
     }
-    if (isBoundMcpTool(this.runtime, event.toolName) || isBoundWebTool(this.runtime, event.toolName)) {
+    if (isBoundExtensionTool(this.runtime, event.toolName)) {
       if (roleId !== "main") reject("ROLE_CEILING", 4);
       return { kind: "service", tool_name: event.toolName };
     }
@@ -32,13 +33,66 @@ export class OrdinaryOperations {
     if (["bash", "editor"].includes(event.toolName)) return this.supervisor.call("ordinary_command_prepare", {
       operation_id: randomUUID(), role_id: roleId, cwd: ctx.cwd, tool_name: event.toolName, input: event.input });
     if (!["read", "write", "edit", "rename", "ls", "find", "grep"].includes(event.toolName)) reject("ORDINARY_TOOL_NOT_BOUND", 5);
-    const ticket = await this.supervisor.call("ordinary_prepare", { operation_id: randomUUID(), role_id: roleId, cwd: ctx.cwd,
+    if (["pi-base", "pi-full"].includes(this.runtime.manifest.profile_id)) reject("OPERATION_ADMISSION_REQUIRED", 4);
+    const ticket = await this.supervisor.call("ordinary_prepare_deferred", { operation_id: randomUUID(), role_id: roleId, cwd: ctx.cwd,
       tool_name: event.toolName, input: event.input });
     return { ...ticket, kind: "file", tool_name: event.toolName };
   }
+  async fileEntry(id, name, input, signal, ctx, roleId) {
+    if (["pi-base", "pi-full"].includes(this.runtime.manifest.profile_id)) {
+      if (roleId !== "main" || typeof this.fileAdmission?.admit !== "function") reject("OPERATION_ADMISSION_REQUIRED", 4);
+      const admitted = await this.fileAdmission.admit({ id, toolName: name, input, signal, ctx });
+      if (admitted?.ticket?.kind !== "file" || admitted.ticket.state !== "consumed" || typeof admitted.ticket.lease_id !== "string"
+          || !admitted.ticket.lease_id || !admitted.input || !Object.isFrozen(admitted.input)) reject("OPERATION_ADMISSION_REQUIRED", 4);
+      this.#admittedTickets.add(admitted.ticket);
+      return admitted;
+    }
+    const ticket = roleId === "main" ? this.runtime.permissionAccess.take(id, name, input, ctx)
+      : await this.preflight({ toolCallId: id, toolName: name, input }, ctx, this.runtime.permissionAccess.require(), roleId);
+    return { ticket, input };
+  }
+  async consume(ticket, signal) {
+    if (ticket.kind !== "file") return ticket;
+    if (["pi-base", "pi-full"].includes(this.runtime.manifest.profile_id)) {
+      if (!this.#admittedTickets.has(ticket)) reject("OPERATION_ADMISSION_REQUIRED", 4);
+      this.#admittedTickets.delete(ticket);
+      if (signal?.aborted) { await this.abort(ticket); reject("GRANT_REVOKED", 4); }
+      return ticket;
+    }
+    if (ticket.state !== "prepared" || ticket.lease_id !== null) reject("ORDINARY_CONSUME_REPLAY", 4);
+    if (signal?.aborted) { await this.abort(ticket); reject("GRANT_REVOKED", 4); }
+    if (ticket.write && !["pi-base", "pi-full"].includes(this.runtime.manifest.profile_id)
+        && !globalThis[Symbol.for("agentcfg.pi.managed.v1")]?.manager) { await this.abort(ticket); reject("CAPABILITY_MISSING", 5); }
+    const identityKeys = ["operation_id", "write", "path", "request_digest"];
+    const identity = value => Object.fromEntries(identityKeys.map(key => [key, value[key]]));
+    const expected = canonical(identity(ticket));
+    ticket.state = "consuming";
+    let observed;
+    try { observed = await this.supervisor.call("ordinary_consume", { operation_id: ticket.operation_id }); }
+    catch {
+      // 丢失回执只读对账，不重发一次性consume，也不放弃未知Writer保护。
+      try { observed = await this.supervisor.call("ordinary_status", { operation_id: ticket.operation_id }); }
+      catch { ticket.state = "unknown"; reject("ORDINARY_CONSUME_UNKNOWN", 4); }
+    }
+    try {
+      closed(observed, [...identityKeys, "lease_id", "state"]);
+      if (observed.state !== "consumed" || typeof observed.lease_id !== "string" || !observed.lease_id
+          || canonical(identity(observed)) !== expected) reject("ORDINARY_CONSUME_UNKNOWN", 4);
+    } catch { ticket.state = "unknown"; reject("ORDINARY_CONSUME_UNKNOWN", 4); }
+    ticket.lease_id = observed.lease_id; ticket.state = "consumed";
+    if (signal?.aborted) { await this.abort(ticket); reject("GRANT_REVOKED", 4); }
+    return ticket;
+  }
+  async finish(ticket) {
+    if (["consuming", "unknown"].includes(ticket.state)) return;
+    await this.supervisor.call("ordinary_finish", { operation_id: ticket.operation_id }).catch(() => {});
+  }
   async abort(ticket) {
+    if (ticket.kind === "file" && ticket.state === "terminated") return;
     if (ticket.kind === "readseek") return this.runtime.readseek.abort(ticket);
     if (ticket.kind === "service") return;
+    if (["consuming", "unknown"].includes(ticket.state)) reject("ORDINARY_CONSUME_UNKNOWN", 4);
+    if (ticket.kind === "file" && ticket.state === "prepared" && ticket.lease_id === null) { await this.finish(ticket); return; }
     if (ticket.write || ticket.kind === "command") {
       const observed = await this.supervisor.call("inspect", { lease_id: ticket.lease_id });
       await this.supervisor.call(observed.state === "allocating" ? "abort_allocation" : "cancel", { lease_id: ticket.lease_id });
@@ -59,6 +113,9 @@ export class OrdinaryOperations {
     return { bytes: Buffer.concat(chunks), digest: checksum };
   }
   async write(ticket, content, expectedDigest, signal, callbacks = {}) {
+    if (ticket.kind === "file" && ["pi-base", "pi-full"].includes(this.runtime.manifest.profile_id)) {
+      return executeFileOperation({ supervisor: this.supervisor, instanceRoot: this.runtime.instanceRoot, ticket, content, expectedDigest, signal, pause: this.pause });
+    }
     const entry = globalThis[Symbol.for("agentcfg.pi.managed.v1")];
     if (!entry?.manager) { await this.abort(ticket); reject("CAPABILITY_MISSING", 5); }
     if (signal?.aborted) { await this.abort(ticket); reject("GRANT_REVOKED", 4); }
@@ -150,13 +207,14 @@ export class OrdinaryOperations {
       }
     }
   }
-  tools(cwd, roleId = "main") {
+  tools(cwd, roleId = "main", { filesOnly = false } = {}) {
     const factories = { read: this.sdk.createReadToolDefinition, write: this.sdk.createWriteToolDefinition, edit: this.sdk.createEditToolDefinition };
     const files = Object.entries(factories).map(([name, factory]) => {
       const definition = factory(cwd);
       return { ...definition, execute: async (id, input, signal, update, ctx) => {
-        const ticket = roleId === "main" ? this.runtime.permissionAccess.take(id, name, input, ctx)
-          : await this.preflight({ toolCallId: id, toolName: name, input }, ctx, this.runtime.permissionAccess.require(), roleId);
+        const admitted = await this.fileEntry(id, name, input, signal, ctx, roleId), ticket = admitted.ticket;
+        input = admitted.input;
+        await this.consume(ticket, signal);
         let baseline;
         const read = async path => { const value = await this.read(ticket, path); baseline = value.digest; return value.bytes; };
         const operations = { access: async path => { if (resolve(path) !== ticket.path) reject("ORDINARY_OPERATION_PATH", 4); }, readFile: read,
@@ -164,10 +222,10 @@ export class OrdinaryOperations {
           writeFile: async (path, content) => { if (resolve(path) !== ticket.path) reject("ORDINARY_OPERATION_PATH", 4); await this.write(ticket, content, name === "edit" ? baseline : null, signal); } };
         try { return await factory(ctx.cwd, { operations }).execute(id, input, signal, update, ctx); }
         catch (error) { if (ticket.write) await this.abort(ticket).catch(() => {}); throw error; }
-        finally { await this.supervisor.call("ordinary_finish", { operation_id: ticket.operation_id }).catch(() => {}); }
+        finally { await this.finish(ticket); }
       } };
     });
-    for (const name of ["bash", "editor"]) {
+    for (const name of filesOnly ? [] : ["bash", "editor"]) {
       const definition = name === "bash" && this.sdk.createBashToolDefinition ? this.sdk.createBashToolDefinition(cwd) : {
         name, label: "Bound editor", parameters: { type: "object", properties: { command: { type: "string", minLength: 1 }, timeout: { type: "integer", minimum: 1 } }, required: ["command"], additionalProperties: false } };
       files.push({ ...definition, description: "Execute a configured foreground command as agentcfg:COMMAND_ID (or its exact bound argv). The command needs explicit command_ref permission and declared filesystem roots; arbitrary shell expressions are rejected.",
@@ -186,33 +244,36 @@ export class OrdinaryOperations {
     files.push({ name: "rename", label: "Rename file", description: "Rename one authorized file without overwriting an existing destination. Both paths require rename permission and workspace leases.",
       parameters: { type: "object", properties: { path: { type: "string", minLength: 1 }, destination: { type: "string", minLength: 1 } }, required: ["path", "destination"], additionalProperties: false },
       execute: async (id, input, signal, _update, ctx) => {
-        const ticket = roleId === "main" ? this.runtime.permissionAccess.take(id, "rename", input, ctx)
-          : await this.preflight({ toolCallId: id, toolName: "rename", input }, ctx, this.runtime.permissionAccess.require(), roleId);
+        const admitted = await this.fileEntry(id, "rename", input, signal, ctx, roleId), ticket = admitted.ticket;
+        input = admitted.input;
+        await this.consume(ticket, signal);
         try {
           await this.write(ticket, null, null, signal);
           return { content: [{ type: "text", text: "File renamed." }], details: {} };
         } catch (error) { await this.abort(ticket).catch(() => {}); throw error; }
-        finally { await this.supervisor.call("ordinary_finish", { operation_id: ticket.operation_id }).catch(() => {}); }
+        finally { await this.finish(ticket); }
       } });
     for (const [name, factory] of [["ls", this.sdk.createLsToolDefinition], ["find", this.sdk.createFindToolDefinition]]) {
       if (!factory) continue;
       const definition = factory(cwd);
-      files.push({ ...definition, description: name === "find" ? "Find authorized files by glob, honoring local .gitignore rules; Git metadata is excluded." : definition.description, execute: async (id, input, _signal, _update, ctx) => {
-        const ticket = roleId === "main" ? this.runtime.permissionAccess.take(id, name, input, ctx)
-          : await this.preflight({ toolCallId: id, toolName: name, input }, ctx, this.runtime.permissionAccess.require(), roleId);
+      files.push({ ...definition, description: name === "find" ? "Find authorized files by glob, honoring local .gitignore rules; Git metadata is excluded." : definition.description, execute: async (id, input, signal, _update, ctx) => {
+        const admitted = await this.fileEntry(id, name, input, signal, ctx, roleId), ticket = admitted.ticket;
+        input = admitted.input;
+        await this.consume(ticket, signal);
         try {
           const result = await this.supervisor.call("ordinary_list", { operation_id: ticket.operation_id });
           const text = result.entries.map(row => row.path + (row.directory ? "/" : "")).join("\n") + (result.truncated ? "\n[Results truncated; narrow the scope.]" : "");
           return { content: [{ type: "text", text: text || "No matching entries." }], details: { truncated: result.truncated } };
-        } finally { await this.supervisor.call("ordinary_finish", { operation_id: ticket.operation_id }).catch(() => {}); }
+        } finally { await this.finish(ticket); }
       } });
     }
     if (this.sdk.createGrepToolDefinition) {
       const definition = this.sdk.createGrepToolDefinition(cwd);
       files.push({ ...definition, description: "Search authorized files using literal text or bounded JavaScript regular expressions. Narrow the path when the scan is truncated.",
         execute: async (id, input, signal, _update, ctx) => {
-          const ticket = roleId === "main" ? this.runtime.permissionAccess.take(id, "grep", input, ctx)
-            : await this.preflight({ toolCallId: id, toolName: "grep", input }, ctx, this.runtime.permissionAccess.require(), roleId);
+          const admitted = await this.fileEntry(id, "grep", input, signal, ctx, roleId), ticket = admitted.ticket;
+          input = admitted.input;
+          await this.consume(ticket, signal);
           try {
             const listing = await this.supervisor.call("ordinary_list", { operation_id: ticket.operation_id });
             const result = []; const limit = input.limit ?? 100;
@@ -228,7 +289,7 @@ export class OrdinaryOperations {
             const truncated = listing.truncated || result.length >= limit;
             return { content: [{ type: "text", text: result.map(row => row.path + ":" + row.line + ": " + row.text).join("\n")
               + (truncated ? "\n[Search truncated; narrow the scope.]" : "") || "No matches." }], details: { truncated, matches: result.length } };
-          } finally { await this.supervisor.call("ordinary_finish", { operation_id: ticket.operation_id }).catch(() => {}); }
+          } finally { await this.finish(ticket); }
         } });
     }
     return files;

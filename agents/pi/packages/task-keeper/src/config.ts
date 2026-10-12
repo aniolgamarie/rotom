@@ -17,6 +17,9 @@ export interface Profile { tools: string[]; requiredCapabilities: string[]; time
 export interface VerificationBinding {
   sharedMutableDirectories?: string[];
   inputs?: string[];
+  requiredTestIds?: string[];
+  read_roots?: string[];
+  trusted_inputs?: Array<{ root_ref: string; relative_path: string }>;
   supervisorExecutable?: string;
   executable: string; args: string[]; environment: Record<string, string>; timeoutMs: number;
   kind: "build" | "tests"; parser: "exit-code" | "json" | "tap" | "pytest"; minimumTests: number;
@@ -84,10 +87,14 @@ export const CONFIG_SCHEMA = {
     workflow: shape({ recipes: { type: "array", items: { enum: ["direct", "critique"] }, uniqueItems: true },
       requiredChecks: shape({ inspect: names, fix: names }), optionalChecks: shape({ inspect: names, fix: names }),
       allowPartial: { type: "boolean" }, risk: { enum: ["low", "medium", "high", "unknown"] }, reuseReviews: { type: "boolean" } }),
-    verificationBindings: map(shape({ sharedMutableDirectories: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true }, executable: { type: "string", minLength: 1 }, args: { type: "array", items: { type: "string" } },
+    verificationBindings: map({ ...shape({ sharedMutableDirectories: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true }, executable: { type: "string", minLength: 1 }, args: { type: "array", items: { type: "string" } },
       environment: { type: "object", additionalProperties: { type: "string" } }, timeoutMs: timeout,
       kind: { enum: ["build", "tests"] }, parser: { enum: ["exit-code", "json", "tap", "pytest"] }, minimumTests: integer(1),
-      inputs: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true }, supervisorExecutable: { type: "string", minLength: 1 } }, ["executable", "args", "environment", "timeoutMs", "kind", "parser", "minimumTests"])),
+      requiredTestIds: { type: "array", minItems: 1, maxItems: 4096, uniqueItems: true, items: idSchema },
+      read_roots: names,
+      trusted_inputs: { type: "array", maxItems: 128, uniqueItems: true, items: shape({ root_ref: idSchema,
+        relative_path: { type: "string", minLength: 1, maxLength: 4096 } }) },
+      inputs: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true }, supervisorExecutable: { type: "string", minLength: 1 } }, ["executable", "args", "environment", "timeoutMs", "kind", "parser", "minimumTests"]), allOf: [{ if: { required: ["requiredTestIds"] }, then: { properties: { kind: { const: "tests" }, parser: { const: "json" } } } }] }),
     telemetryBindings: map(shape({ path: { type: "string", minLength: 1 }, accountBinding: idSchema, bucket: idSchema, source: idSchema, freshnessMs: timeout, minimumRemaining: integer(1) })),
     advisor: shape({ mode: { const: "off" } }), evidence: shape({ packetByteBudget: integer(1, 16 * 1024 * 1024) }),
     storage: shape({ path: { type: "string", minLength: 1, maxLength: 4096 } }),

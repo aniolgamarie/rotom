@@ -5,6 +5,13 @@ import type { TaskSpec } from "../contracts/task.ts";
 import { ContractError } from "../contracts/primitives.ts";
 import type { PlanStep } from "./scheduler.ts";
 
+export const MAX_FIXED_SEMANTIC_REPLANS = 2;
+
+/** 首次实现计一次；固定流程最多允许随后两轮返工，配置只能收紧。 */
+export function fixedWorkflowAttemptLimit(configured: number, planned = configured): number {
+  return Math.min(3, configured, planned);
+}
+
 export function workflowRequirements(config: Pick<Config, "workflow">, workflow: "inspect" | "fix") {
   const reviewId = workflow === "fix" ? "independent-review" : "scope-evidence-review";
   const required = [...new Set([...config.workflow.requiredChecks[workflow], reviewId])];
@@ -16,13 +23,15 @@ export function fixedWorkflowPlan(config: Config, input: { id: string; workScope
   policyDigest: string; snapshot: string; workspaceLock: string; sharedWriteResources?: SharedWriteResources; secondOpinion?: boolean }): { spec: TaskSpec; steps: PlanStep[] } {
   if (config.workflow.recipes.includes("cascade")) throw new ContractError("CASCADE_REMOVED");
   if (input.workflow === "fix") assertWriterAllowed(config.limits.writersPerJob);
+  const attempts = fixedWorkflowAttemptLimit(config.limits.semanticAttemptsPerImplementationTask);
+  if (attempts === 0) throw new ContractError("SEMANTIC_ATTEMPTS_DISABLED");
   const { reviewId, required, optional } = workflowRequirements(config, input.workflow);
   const opinion = input.secondOpinion ?? config.secondOpinion.enabled;
   if (opinion) required.push("second-opinion");
   const spec: TaskSpec = { id: input.id, workScope: input.workScope, version: 1, objective: input.goal, workflow: input.workflow,
     required, optional, allowPartial: config.workflow.allowPartial, risk: config.workflow.risk, policyDigest: input.policyDigest, snapshot: input.snapshot,
-    maxSteps: config.limits.dispatchedStepsPerJob, maxSemanticAttempts: config.limits.semanticAttemptsPerImplementationTask,
-    ...(config.features.semanticReplanning ? { maxSemanticReplans: config.limits.semanticReplansPerTask } : {}) };
+    maxSteps: config.limits.dispatchedStepsPerJob, maxSemanticAttempts: attempts,
+    ...(config.features.semanticReplanning ? { maxSemanticReplans: Math.min(MAX_FIXED_SEMANTIC_REPLANS, config.limits.semanticReplansPerTask) } : {}) };
   const base = (id: string, kind: PlanStep["kind"], role: string, dependencies: string[]): PlanStep => ({ id, kind, role, dependencies,
     allowedSkippedDependencies: [], optional: false, resources: [] });
   const steps: PlanStep[] = [];

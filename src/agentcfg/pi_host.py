@@ -1,6 +1,8 @@
 """监督者拥有宿主及已登记子执行；普通退出不会遗忘仍活动的工作。"""
 
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+import hashlib
 import json
 import os
 import re
@@ -11,6 +13,8 @@ import subprocess
 import sys
 import tempfile
 import uuid
+import array
+import socket
 
 from .activity import ExecutionStore, OWNER_KEYS, digest, protected
 from .activity_linux import LinuxProcesses
@@ -18,11 +22,10 @@ from .activity_macos import MacProcesses
 from .deployment import json_bytes
 from .paths import relative_path
 from .pi_control import read_frame
-from .pi_supervisor import SpawnCommand, SupervisorServer, SupervisorService, closed
+from .pi_supervisor import DelegateUnavailable, OrdinaryCapabilityUnavailable, SpawnCommand, SupervisorServer, SupervisorService, closed
 from .process import DependencyError, environment
-from .pi_worker_files import WorkerFiles, source_scope
-from .pi_worker_protocol import scoped_models, validate_context, validate_descriptor
 from .pi_output import OutputCapture
+from .schema import ConfigError
 from .secrets import CredentialError
 from .storage import Conflict, Tree, ensure_private
 from .workspace_leases import WorkspaceLeases
@@ -59,18 +62,63 @@ class HostSupervisor:
       "manager_activation_id": uuid.uuid4().hex, "owner_nonce": secrets.token_hex(32), "supervisor_process_identity": identity}
     self.store = ExecutionStore(self.root, owner, self.processes, workspaces=WorkspaceLeases(identity["boot_id"]), lease_fd=lease_fd)
     self.store.assert_mutable()
+    # 账户协调及累计预算不是业务项目；控制根由passwd账户身份决定，不能由profile配置遗漏。
+    anchor = str(self.store.workspaces.claims.registry.anchor)
+    protected_roots = list(config.get("protected_roots", []))
+    if anchor not in protected_roots: protected_roots.append(anchor)
+    config = {**config, "protected_roots": protected_roots}
+    self.config = config
+    # 先核对冻结选择，再导入可选执行器；纯工作区快照不依赖worker文件通道。
+    plugins = self.manifest().get("plugins")
+    if not isinstance(plugins, list) or any(not isinstance(item, str) or not item for item in plugins) or len(set(plugins)) != len(plugins):
+      raise ConfigError("pi-manifest-plugins")
+    worker_operation, snapshot_scope = None, None
+    if "task-keeper" in plugins:
+      from .pi_worker_files import WorkerFiles, source_scope
+      worker_operation = WorkerFiles(self.store, self.manifest, config["instance_root"], protected_roots=config.get("protected_roots", []))
+      snapshot_scope = lambda cwd: source_scope(config["instance_root"], cwd)
     self.service = SupervisorService(self.store, self.resolve_command, self.spawn, activate=self.activate,
       runtime_identity=self.runtime_root.name, slice_identity=config["slice_identity"],
-      worker_operation=WorkerFiles(self.store, self.manifest, config["instance_root"], protected_roots=config.get("protected_roots", [])),
+      worker_operation=worker_operation,
       worker_validate=lambda lease: self.manifest(), protected_roots=config.get("protected_roots", []),
-      snapshot_scope=lambda cwd: source_scope(config["instance_root"], cwd))
+      snapshot_scope=snapshot_scope)
     self.server = SupervisorServer(self.service)
-    from .pi_delegate import DelegateController
-    self.delegates = DelegateController(self)
-    self.service.delegate_handler = self.delegates.handle
+    if self.manifest().get("profile_id") == "pi-full" and "task-keeper" in plugins:
+      from .pi_auxiliary import check_binding_snapshot
+      self.service.check_binding_snapshot_handler = lambda args: check_binding_snapshot(self, args)
+    # 只按已冻结manifest选择构造；磁盘包存在不能激活未选能力。
+    self.delegates = None
+    if "model-delegate" in plugins:
+      from .pi_delegate import DelegateController
+      self.delegates = DelegateController(self)
+      self.service.delegate_handler = self.delegates.handle
     from .pi_operations import OrdinaryOperations
     self.operations = OrdinaryOperations(self)
+    manifest = self.manifest()
+    self.resource_observations = None
+    if manifest.get("profile_id") in ("pi-base", "pi-full"):
+      from .pi_resource_observations import ResourceObservations
+      self.resource_observations = ResourceObservations(self)
+      self.service.resource_observation_handler = self.resource_observations.publish
+      from .pi_admission_control import FileAdmissionControl
+      from .pi_operation_admission import OperationAdmissions
+      shared = OperationAdmissions(self.store.owner["manager_activation_id"],
+        now_ms=lambda: int(self.operations.now().timestamp() * 1000))
+      shell_factory = None
+      if "shell" in manifest.get("options", {}).get("external_tools", {}):
+        from .pi_admitted_shell import ShellOperationAdmissions
+        def shell_factory(operations, *, context_provider, admissions):
+          return ShellOperationAdmissions(operations, context_provider=context_provider, admissions=admissions,
+            binding_name="shell", backend_preflight=self._shell_backend_preflight)
+      mcp_factory = None
+      if "native_mcp" in manifest:
+        from .pi_admitted_mcp import McpOperationAdmissions
+        mcp_factory = McpOperationAdmissions
+      self.operations.admission_control = FileAdmissionControl(self.operations,
+        shared_admissions=shared, shell_bridge_factory=shell_factory, mcp_bridge_factory=mcp_factory)
     self.service.ordinary_handler = self.operations.handle
+    # 创建线程的生命线覆盖整个监督周期；不承载权限决定或业务队列。
+    self._spawn_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="pi-host-spawn")
 
   def manifest(self):
     with Tree(Path(self.config["instance_root"])) as tree:
@@ -82,14 +130,53 @@ class HostSupervisor:
       raise Conflict("ADMISSION_STALE")
     return value
 
+  def _shell_backend_preflight(self, public):
+    """仅绑定公开投影/所选helper/完整计划；不执行或授予Shell权限。"""
+    failed = False
+    try:
+      closed(public, ("resolution", "physical"))
+      if sys.platform != "linux": raise ValueError()
+      from .pi_pid_namespace import host_namespace_binary
+      from .pi_shell_mounts import compile_mount_plan
+      binary = host_namespace_binary(self)
+      if binary != self.runtime_root / "bin/pi-bwrap": raise ValueError()
+      with Tree(self.runtime_root) as tree:
+        helper = tree.read("bin/pi-bwrap", max_bytes=16 * 1024 * 1024)
+        if helper is None or helper[1] != 0o700: raise ValueError()
+        plan = compile_mount_plan(public)
+        # 原收据/平台验证再做一次；同路径的新helper不能沿用旧bytes身份。
+        if host_namespace_binary(self) != binary: raise ValueError()
+        current = tree.read("bin/pi-bwrap", max_bytes=16 * 1024 * 1024)
+        if current is None or current[:2] != helper[:2]: raise ValueError()
+      result = {"runtime_identity": self.runtime_root.name, "helper_identity": hashlib.sha256(helper[0]).hexdigest(),
+        "mount_plan": plan, "plan_digest": digest(plan)}
+    except Exception:
+      failed = True
+    if failed:
+      error = Conflict("SHELL_BACKEND_UNAVAILABLE")
+      try:
+        raise error
+      except Conflict:
+        error.__cause__ = None
+        error.__context__ = None
+        raise
+    return result
+
   def resolve_command(self, lease, program, payload):
     """固定运行包声明入口；不接受任意 argv、cwd 或环境覆盖。"""
+    if program in ("codex-login", "delegate-pi", "delegate-codex") and self.delegates is None:
+      raise DelegateUnavailable()
     if program == "file-operation":
       return self.operations.command(lease, payload)
     if program == "checkpoint":
+      if self.operations.checkpoints is None: raise OrdinaryCapabilityUnavailable()
       return self.operations.checkpoints.command(lease, payload)
     if program == "ordinary-command":
       return self.operations.commands.command(lease, payload)
+    if program == "ordinary-shell":
+      control = self.operations.admission_control
+      if control is None or control.shell_bridge is None: raise OrdinaryCapabilityUnavailable()
+      return control.shell_bridge.command(lease, payload)
     if program == "codex-login":
       from .pi_login import resolve_login
       return resolve_login(self, lease, payload)
@@ -97,8 +184,12 @@ class HostSupervisor:
       from .pi_delegate_spawn import resolve_delegate
       return resolve_delegate(self, lease, program, payload)
     if program in ("workspace", "check"):
+      if "task-keeper" not in self.operations.selected_plugins: raise OrdinaryCapabilityUnavailable()
       from .pi_auxiliary import resolve_auxiliary
       return resolve_auxiliary(self, lease, program, payload)
+    # 其余registry入口是受管worker协议；未选择时连注册表与协议模块也不读取。
+    if "task-keeper" not in self.operations.selected_plugins: raise OrdinaryCapabilityUnavailable()
+    from .pi_worker_protocol import scoped_models, validate_context, validate_descriptor
     with Tree(self.runtime_root) as tree:
       raw = tree.read("runtime/commands.json")
     if raw is None:
@@ -167,37 +258,68 @@ class HostSupervisor:
     return SpawnCommand((definition["engine"], str(entrypoint), "--input", str(self.root / input_name), "--runtime-root", str(self.runtime_root)), Path(descriptor["cwd"]), env)
 
   def spawn(self, command, lease):
+    return self._spawn_executor.submit(self._spawn, command, lease).result()
+
+  def _spawn(self, command, lease):
+    # 只由可信命令解析器选择，模型/RPC不能指定；外层只负责已登记的进程范围。
+    isolated_worker = command.process_scope in ("linux-pid-namespace", "linux-shell")
+    scoped_check = command.process_scope == "linux-pid-namespace" and lease.get("kind") == "check"
+    if isolated_worker and (sys.platform != "linux" or lease.get("kind") != "external" and not scoped_check
+        or self.manifest().get("profile_id") not in ("pi-base", "pi-full")
+        or scoped_check and self.manifest().get("profile_id") != "pi-full"):
+      raise Conflict("SHELL_PROCESS_SCOPE_UNAVAILABLE")
     capture = OutputCapture(command.capture_root) if command.capture_root else None
     streams = {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE, "stdin": subprocess.DEVNULL} if capture else {}
     if command.stdin_pipe: streams["stdin"] = subprocess.PIPE
     terminal = None
     environment = dict(command.environment)
     environment.pop("AGENTCFG_EXECUTION_TTY", None)
+    environment.pop("AGENTCFG_SUPERVISOR_DIRECTORY_FD", None)
+    control_candidate = command.process_scope != "linux-shell" and (lease.get("kind") == "host" or command.process_scope == "linux-pid-namespace"
+      or lease.get("execution_id") in getattr(getattr(self, "delegates", None), "modern_attempts", {}))
+    control_directory = control_candidate and self.manifest().get("profile_id") in ("pi-base", "pi-full")
     if command.terminal_size is not None:
       from .pi_terminal import TerminalChannels
       terminal = TerminalChannels(*command.terminal_size)
       streams = terminal.streams()
       environment["AGENTCFG_EXECUTION_TTY"] = "1"
+    if command.process_scope == "linux-shell":
+      child, identity, gate_write = command.launch.spawn(command, lease, environment, streams)
+      record = {"process": child, "gate": gate_write, "identity": identity, "capture": capture,
+        "terminal": None, "launch": command.launch}
+      command.launch.bind_child(record)
+      self.children[lease["lease_id"]] = record
+      try:
+        capture.attach(child)
+      except BaseException:
+        command.launch.close_gate()
+        raise
+      return identity
     if sys.platform == "linux" and lease.get("kind") == "codex":
       from .pi_pid_namespace import spawn_namespace
       child, identity, gate_write = spawn_namespace(self, command, environment, streams)
-    elif sys.platform == "linux" and lease.get("kind") == "host":
+    elif sys.platform == "linux" and (lease.get("kind") == "host" or isolated_worker):
       from .pi_pid_namespace import spawn_host_namespace
       try:
-        child, identity, gate_write = spawn_host_namespace(self, command, environment, streams)
+        child, identity, gate_write = spawn_host_namespace(self, command, environment, streams,
+          **({"control_directory": True} if control_directory else {}))
       except BaseException:
         if terminal: terminal.close()
         raise
     elif sys.platform == "linux":
       gate_read, gate_write = os.pipe()
+      control_fd = None
       try:
-        child = subprocess.Popen([sys.executable, "-I", str(self.repository / "scripts/pi-exec.py"), "--gate-fd", str(gate_read), "--", *command.argv],
-          cwd=command.cwd, env=environment, pass_fds=(gate_read,), start_new_session=True, **streams)
+        if control_directory: control_fd = self.server.duplicate_control_directory()
+        child = subprocess.Popen([sys.executable, "-I", str(self.repository / "scripts/pi-exec.py"), "--gate-fd", str(gate_read),
+          *(["--control-directory-fd", str(control_fd)] if control_fd is not None else []), "--", *command.argv],
+          cwd=command.cwd, env=environment, pass_fds=(gate_read,) + ((control_fd,) if control_fd is not None else ()), start_new_session=True, **streams)
       except BaseException:
         if terminal: terminal.close()
         os.close(gate_write)
         raise
       finally:
+        if control_fd is not None: os.close(control_fd)
         os.close(gate_read)
       try:
         identity = self.processes.identity(child.pid)
@@ -253,17 +375,28 @@ class HostSupervisor:
         stream = getattr(child, name, None)
         if stream is not None: stream.close()
       raise
-    self.children[lease["lease_id"]] = {"process": child, "gate": gate_write, "identity": identity, "capture": capture, "terminal": terminal}
+    self.children[lease["lease_id"]] = {"process": child, "gate": gate_write, "identity": identity, "capture": capture, "terminal": terminal,
+      "control_directory": control_directory and (lease.get("kind") == "host" or isolated_worker)}
     return identity
 
   def activate(self, lease):
     child = self.children.get(lease["lease_id"])
+    if child is not None and child.get("launch") is not None:
+      child["launch"].activate(lease)
+      return
     if child is None or child["gate"] is None:
       return
     gate = child["gate"]
     child["gate"] = None
     try:
-      os.write(gate, b"G")
+      if child.get("control_directory"):
+        directory = self.server.duplicate_control_directory()
+        try:
+          with socket.socket(fileno=os.dup(gate)) as channel:
+            if channel.sendmsg([b"G"], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", [directory]))]) != 1:
+              raise Conflict("CONTROL_DIRECTORY_HANDOFF_UNKNOWN")
+        finally: os.close(directory)
+      else: os.write(gate, b"G")
     finally:
       os.close(gate)
 
@@ -328,17 +461,30 @@ class HostSupervisor:
           self.service.mutex.release()
 
   def run(self):
-    self.server.open()
-    host = self.store.allocate(kind="host", execution_id=uuid.uuid4().hex, task_id=None, attempt_id=uuid.uuid4().hex,
-      lock_identity=self.config["lock_identity"], slice_identity=self.config["slice_identity"], policy_digest=self.config["policy_digest"],
-      candidate_digest=None, planned_workspaces=[])
-    self.host_lease_id = host["lease_id"]
-    host_env = dict(os.environ)
-    host_env.update(AGENTCFG_SUPERVISOR_ENDPOINT=str(self.server.endpoint), AGENTCFG_SUPERVISOR_CAPABILITY=self.service.issue_capability("manager", host["lease_id"]),
-      AGENTCFG_SUPERVISOR_CLIENT=str(self.repository / "scripts/pi-control.py"), AGENTCFG_PYTHON=sys.executable,
-      AGENTCFG_INSTANCE_ID=self.store.owner["instance_id"], AGENTCFG_EXECUTION_LEASE_ID=host["lease_id"])
-    command = SpawnCommand(tuple(self.config["argv"]), Path(self.config["cwd"]), host_env)
     try:
+      self.server.open()
+      host = self.store.allocate(kind="host", execution_id=uuid.uuid4().hex, task_id=None, attempt_id=uuid.uuid4().hex,
+        lock_identity=self.config["lock_identity"], slice_identity=self.config["slice_identity"], policy_digest=self.config["policy_digest"],
+        candidate_digest=None, planned_workspaces=[])
+      self.host_lease_id = host["lease_id"]
+      declared = self.manifest()
+      if (self.delegates is not None and declared.get("profile_id") == "pi-full"
+          and declared.get("plugin_capabilities", {}).get("model-delegate", {}).get("capability_id") == "unified-delegate"):
+        try:
+          # 原分配绑定来源；不打开进程闸门，来源消费仍独立要求 running/同代/活身份。
+          self.delegates.register_cli_source()
+        except Exception:
+          self.store.abort_allocation(host["lease_id"], self.store.owner)
+          raise
+      host_env = dict(os.environ)
+      host_env.update(AGENTCFG_SUPERVISOR_ENDPOINT=str(self.server.endpoint), AGENTCFG_SUPERVISOR_CAPABILITY=self.service.issue_capability("manager", host["lease_id"]),
+        AGENTCFG_SUPERVISOR_CLIENT=str(self.repository / "scripts/pi-control.py"), AGENTCFG_PYTHON=sys.executable,
+        AGENTCFG_INSTANCE_ID=self.store.owner["instance_id"], AGENTCFG_EXECUTION_LEASE_ID=host["lease_id"])
+      declared = self.manifest()
+      if (declared.get("profile_id") == "pi-full" and "task-keeper" in declared.get("plugins", [])
+          and declared.get("options", {}).get("task_keeper", {}).get("enabled") is True):
+        host_env["AGENTCFG_TASK_KEEPER_SOURCE_CAPABILITY"] = self.service.issue_capability("task-keeper-source", host["lease_id"])
+      command = SpawnCommand(tuple(self.config["argv"]), Path(self.config["cwd"]), host_env)
       host = self.store.start(host["lease_id"], self.store.owner, spawn=lambda current: self.spawn(command, current))
       self.activate(host)
       while True:
@@ -350,23 +496,37 @@ class HostSupervisor:
             break
       return self.host_exit if self.host_exit >= 0 else 128 - self.host_exit
     finally:
-      # 停止只针对本监督者已登记的执行；未确认回收的记录始终保留。
-      for child in self.children.values():
-        if child["gate"] is not None:
-          os.close(child["gate"])
-      self.server.close()
+      try:
+        with self.service.mutex:
+          self.service.closing = True
+        # 停止只针对本监督者已登记的执行；未确认回收的记录始终保留。
+        for child in self.children.values():
+          if child["gate"] is not None:
+            if child.get("launch") is not None: child["launch"].close_gate()
+            else: os.close(child["gate"])
+      finally:
+        try:
+          observer = getattr(self, "resource_observations", None)
+          if observer is not None: observer.close()
+        finally:
+          try: self.server.close()
+          finally: self._spawn_executor.shutdown(wait=True, cancel_futures=True)
 
   def run_delegate(self, ready_fd):
     """独立单 run：仅监督目标执行；不启动交互 Pi，也不创建第二管理者队列。"""
     from .pi_supervisor import Principal
-    self.server.open()
     run_id = None
     try:
+      self.server.open()
       try:
+        if self.delegates is None:
+          raise DelegateUnavailable()
         request = self.delegates.prepare(Principal("delegate"), self.config["delegate_request"])
         run_id = request["run_id"]
         result = self.delegates.start(Principal("delegate"), run_id)
         reply = {"ok": True, "result": result}
+      except DelegateUnavailable:
+        reply = {"ok": False, "error_code": "DELEGATE_CAPABILITY_UNAVAILABLE", "exit_code": 5}
       except Exception as error:
         from .pi_codex_admission import public_rejection
         reply = {"ok": False, "error_code": public_rejection(error) or "DELEGATE_START_FAILED", "exit_code": getattr(error, "exit_code", 6)}
@@ -385,9 +545,18 @@ class HostSupervisor:
             break
       return 0 if self.delegates.runs.status(run_id)["state"] == "completed" else 5
     finally:
-      if ready_fd is not None:
-        os.close(ready_fd)
-      self.server.close()
+      try:
+        with self.service.mutex:
+          self.service.closing = True
+        if ready_fd is not None:
+          os.close(ready_fd)
+      finally:
+        try:
+          observer = getattr(self, "resource_observations", None)
+          if observer is not None: observer.close()
+        finally:
+          try: self.server.close()
+          finally: self._spawn_executor.shutdown(wait=True, cancel_futures=True)
 
 
 def execute(workspace, spec, env, lease_fd, saved, *, lifecycle_fd):

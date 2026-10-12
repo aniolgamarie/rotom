@@ -1,10 +1,10 @@
 // 工作区与检查使用现有 AgentManager 槽位；没有第二条进程队列。
 import { createHash, randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
-import { privateBytes, privateFile } from "./launch.ts";
+import { privateBytes, privateFile } from "./private-files.ts";
 import { canonical, digest, reject } from "./managed-types.ts";
 
-export async function runAuxiliary({ runtime, pi, context, program, payload, cwd, taskId, signal, onDispatch, timeoutMs = 120000,
+async function runLegacyAuxiliary({ runtime, pi, context, program, payload, cwd, taskId, signal, onDispatch, timeoutMs = 120000,
     pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)), now = () => Date.now() }) {
   const entry = globalThis[Symbol.for("agentcfg.pi.managed.v1")];
   if (!entry?.manager || !["workspace", "check"].includes(program)) reject("CAPABILITY_MISSING", 5);
@@ -96,4 +96,162 @@ export async function runAuxiliary({ runtime, pi, context, program, payload, cwd
       manager.consumeControlled(id); manager.removeConsumedControlled(id);
     }
   }
+}
+
+import { verifyCommandOutput } from "./shell-operation-executor.ts";
+import { captureOperationInput } from "./private-operation-input.ts";
+import { isAbsolute, resolve, relative, sep } from "node:path";
+
+const auxiliaryId = value => typeof value === "string" && /^[A-Za-z0-9_-]{1,200}$/.test(value);
+const auxiliaryPath = value => typeof value === "string" && isAbsolute(value) && resolve(value) === value && !/[\u0000-\u001f\u007f]/.test(value);
+const auxiliaryFail = (code, exit = 4) => reject(code, exit);
+
+export async function runAuxiliary(options) {
+  const profile = options?.runtime?.manifest?.profile_id;
+  if (profile === "pi-base") auxiliaryFail("CAPABILITY_MISSING", 5);
+  if (profile !== "pi-full") return runLegacyAuxiliary(options);
+  return runModernAuxiliary(options);
+}
+
+async function runModernAuxiliary({ runtime, program, payload, cwd, taskId, signal, onDispatch, timeoutMs = 120000,
+  pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)), now = () => Date.now() }) {
+  const startedAt = now(), deadline = startedAt + timeoutMs;
+  const manifest = runtime?.manifest, installed = runtime?.installed, supervisor = runtime?.supervisor;
+  if (installed?.schema_version !== 2 || installed.profile_id !== "pi-full"
+      || !manifest?.plugins?.includes("task-keeper") || manifest.plugin_capabilities?.["task-keeper"]?.capability_id !== "task-workflow"
+      || manifest.options?.task_keeper?.enabled !== true
+      || installed.resources?.extensions?.filter(row => row.capability_id === "task-workflow").length !== 1
+      || typeof supervisor?.call !== "function" || !auxiliaryPath(supervisor.options?.endpoint)
+      || !supervisor.options.endpoint.endsWith("/activity/control/control.json")
+      || !["workspace", "check"].includes(program) || !auxiliaryPath(cwd) || !auxiliaryId(taskId)
+      || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 86400000
+      || signal !== undefined && !(signal instanceof AbortSignal)
+      || onDispatch !== undefined && typeof onDispatch !== "function") auxiliaryFail("CAPABILITY_MISSING", 5);
+  const fixed = captureOperationInput(payload).value;
+  const allowed = program === "workspace"
+    ? ["operation", "cwd", "stateRoot", "jobId", "baselineTree", "extraInputs", "timeoutMs"]
+    : ["check_id", "cwd", "task_id", "contract_digest"];
+  if (!fixed || Object.keys(fixed).some(key => !allowed.includes(key)) || fixed.cwd !== cwd
+      || program === "workspace" && (!["create", "snapshot"].includes(fixed.operation) || fixed.jobId !== taskId
+        || fixed.stateRoot !== join(runtime.instanceRoot, "pi-home/task-keeper"))
+      || program === "check" && (fixed.task_id !== taskId || typeof fixed.contract_digest !== "string" || !/^[a-f0-9]{64}$/.test(fixed.contract_digest) || !manifest.options.task_keeper.check_ids?.includes(fixed.check_id))
+      || typeof installed.lock_identity !== "string" || typeof installed.slice_identity !== "string") auxiliaryFail("AUXILIARY_INPUT_INVALID", 2);
+  const inside = (root, path) => { const tail = relative(root, path); return !isAbsolute(tail) && tail !== ".." && !tail.startsWith(".." + sep); };
+  const projectId = manifest.options.task_keeper.project_root;
+  const project = manifest.options.paths?.roots?.[projectId];
+  const candidate = join(runtime.instanceRoot, "pi-home/task-keeper/worktrees", taskId);
+  const binding = program === "check" ? manifest.options.checks?.[fixed.check_id] : null;
+  if (!project || project.purpose !== "project" || !auxiliaryPath(project.path)
+      || program === "workspace" && !inside(fixed.operation === "create" ? project.path : candidate, cwd)
+      || program === "check" && (!inside(candidate, cwd) || binding?.project_root !== projectId)) auxiliaryFail("AUXILIARY_INPUT_INVALID", 2);
+  const stateRoot = dirname(dirname(dirname(supervisor.options.endpoint)));
+  let lease, generation, identity, execution, markSent = false, startAttempted = false, stopping, stopSent = false, terminal = false;
+  const unknown = () => auxiliaryFail("TERMINATION_UNKNOWN");
+  const request = async (method, args, limit = 5000, cancelable = false) => {
+    let timer, abort;
+    try {
+      return await Promise.race([Promise.resolve().then(() => supervisor.call(method, args)),
+        new Promise((_, fail) => {
+          timer = setTimeout(() => fail(Error("AUXILIARY_REPLY_TIMEOUT")), Math.max(1, limit));
+          if (cancelable && signal) {
+            abort = () => fail(Error("AUXILIARY_CANCELED"));
+            signal.addEventListener("abort", abort, { once: true });
+            if (signal.aborted) abort();
+          }
+        })]);
+    } finally { clearTimeout(timer); if (abort) signal.removeEventListener("abort", abort); }
+  };
+  const observed = row => {
+    if (!row || row.lease_id !== lease || row.attempt_id !== execution || row.task_id !== taskId
+        || typeof row.spawn_committed !== "boolean"
+        || row.grant_generation !== generation && !(stopSent && row.grant_generation === generation + 1
+          && ["cancel_requested", "reclaimed"].includes(row.state))) unknown();
+    if (row.process_identity != null) {
+      if (identity === undefined) identity = structuredClone(row.process_identity);
+      else if (canonical(identity) !== canonical(row.process_identity)) unknown();
+    }
+    return row;
+  };
+  const proof = async () => {
+    const row = observed(await request("reconcile", { lease_id: lease }));
+    if (row.protected !== false) return null;
+    const evidence = row.termination_evidence;
+    if (!evidence?.verified || evidence.execution_lease_id !== lease || evidence.grant_generation !== row.grant_generation
+        || typeof evidence.allocation_journal_digest !== "string" || !/^[a-f0-9]{64}$/.test(evidence.allocation_journal_digest)
+        || canonical(evidence.external_work_ids) !== canonical(Object.keys(row.external_status))
+        || canonical(evidence.process_identities) !== canonical(row.process_identity ? [row.process_identity] : [])
+        || evidence.evidence_digest !== digest(Object.fromEntries(Object.entries(evidence).filter(([key]) => key !== "evidence_digest")))
+        || !(row.state === "reclaimed" && evidence.kind === "terminated"
+          || row.state === "failed" && row.spawn_committed === false && evidence.kind === "never-started")) unknown();
+    terminal = true; return row;
+  };
+  const stop = () => stopping ??= (async () => {
+    const row = observed(await request("inspect", { lease_id: lease }));
+    if (!row.protected && await proof()) return;
+    const allocating = row.state === "allocating" && row.spawn_committed === false;
+    stopSent = !allocating;
+    try { await request(allocating ? "abort_allocation" : "cancel", { lease_id: lease }); } catch { /* 丢ACK只对账，原撤销只发一次。 */ }
+    const end = now() + 5000;
+    for (let polls = 0; polls < 201 && now() < end; polls++) {
+      if (await proof()) return;
+      await pause(25);
+    }
+    unknown();
+  })();
+  const cancel = () => { if (lease) void stop().catch(() => {}); };
+  signal?.addEventListener("abort", cancel, { once: true });
+  try {
+    if (signal?.aborted || now() >= deadline) auxiliaryFail("AUXILIARY_CANCELED");
+    const planned = await request("workspace_identity", { path: cwd });
+    const snapshot = program === "workspace" && fixed.operation === "create" ? { snapshot_digest: null }
+      : await request("workspace_snapshot", { path: cwd });
+    if (signal?.aborted || now() >= deadline) auxiliaryFail("AUXILIARY_CANCELED");
+    if (onDispatch) await onDispatch();
+    markSent = true;
+    if (signal?.aborted || now() >= deadline) unknown();
+    execution = "aux-" + randomUUID();
+    const allocation = await request("allocate", { kind: program === "check" ? "check" : "external", execution_id: execution,
+      task_id: taskId, attempt_id: execution, lock_identity: installed.lock_identity, slice_identity: installed.slice_identity,
+      policy_digest: digest(manifest.permission_policy), candidate_digest: snapshot.snapshot_digest, planned_workspaces: [planned] });
+    if (!auxiliaryId(allocation?.lease_id) || allocation.allocation_id !== allocation.lease_id || allocation.state !== "allocating"
+        || !Number.isSafeInteger(allocation.grant_generation) || allocation.grant_generation < 1) unknown();
+    lease = allocation.lease_id; generation = allocation.grant_generation;
+    if (signal?.aborted) { await stop(); auxiliaryFail("AUXILIARY_CANCELED"); }
+    startAttempted = true;
+    try {
+      const reply = await request("start", { lease_id: lease, program, payload: fixed },
+        Math.min(30000, deadline - now()), true);
+      if (reply?.lease_id !== lease || reply.attempt_id !== execution || reply.state !== "running") unknown();
+    } catch {
+      if (signal?.aborted) { await stop(); auxiliaryFail("AUXILIARY_CANCELED"); }
+      observed(await request("inspect", { lease_id: lease }));
+    }
+    for (let polls = 0; polls < Math.ceil(timeoutMs / 25) + 1 && now() < deadline; polls++) {
+      if (signal?.aborted) { await stop(); auxiliaryFail("AUXILIARY_CANCELED"); }
+      const ended = await proof();
+      if (signal?.aborted) { await stop(); auxiliaryFail("AUXILIARY_CANCELED"); }
+      if (now() >= deadline) { await stop(); auxiliaryFail("AUXILIARY_TIMEOUT"); }
+      if (ended) {
+        const result = verifyCommandOutput(stateRoot, lease, ended);
+        let workspace_result = null;
+        if (program === "workspace" && result.exitCode === 0) {
+          const row = captureOperationInput(JSON.parse(privateFile(join(stateRoot, "activity/workspace-results", lease + ".json")))).value;
+          if (!row || !row.snapshot || typeof row.snapshot.id !== "string"
+              || fixed.operation === "create" && (!row.baseline || !auxiliaryPath(row.path) || !auxiliaryPath(row.cwd))) auxiliaryFail("EVIDENCE_IDENTITY");
+          workspace_result = row;
+        }
+        return { ...result, timedOut: false, cancelled: false, started: true, lease_id: lease,
+          process_identity: ended.process_identity, workspace_result };
+      }
+      await pause(25);
+    }
+    await stop(); auxiliaryFail("AUXILIARY_TIMEOUT");
+  } catch (error) {
+    if (lease && !terminal) {
+      try { await stop(); } catch { unknown(); }
+    }
+    if (markSent && !lease || startAttempted && !terminal) unknown();
+    if (["AUXILIARY_CANCELED", "AUXILIARY_TIMEOUT", "EVIDENCE_IDENTITY", "ORDINARY_OPERATION_EVIDENCE"].includes(error?.code)) throw error;
+    auxiliaryFail("AUXILIARY_CONTROL_UNAVAILABLE", 5);
+  } finally { signal?.removeEventListener("abort", cancel); }
 }

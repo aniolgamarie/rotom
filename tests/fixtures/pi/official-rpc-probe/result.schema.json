@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "probe_id": {
+      "const": "official-rpc-1.0.1"
+    },
+    "lock_sha256": {
+      "const": "f2c0af34b3c0d9195705509c26513de7d8aeb2fa4b6f3d395a2d58ecdd82c4ac"
+    },
+    "status": {
+      "enum": [
+        "observed",
+        "failed"
+      ]
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "enum": [
+              "timeout",
+              "cancelled",
+              "wrong-id",
+              "abort-late",
+              "confirmed"
+            ]
+          },
+          "outcome": {
+            "enum": [
+              "observed",
+              "failed",
+              "not-run"
+            ]
+          },
+          "execution": {
+            "type": "object",
+            "properties": {
+              "started": {
+                "type": "boolean"
+              },
+              "exit_code": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "timed_out": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "started",
+              "exit_code",
+              "timed_out"
+            ],
+            "additionalProperties": false
+          },
+          "observations": {
+            "anyOf": [
+              {
+                "type": "object",
+                "maxProperties": 0
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "body_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "body_marker": {
+                    "type": "boolean"
+                  },
+                  "has_ui": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "const": "rpc"
+                  },
+                  "tool_error": {
+                    "type": "boolean"
+                  },
+                  "signal_aborted": {
+                    "type": "boolean"
+                  },
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "prompt_accepted": {
+                    "type": "boolean"
+                  },
+                  "settled": {
+                    "type": "boolean"
+                  },
+                  "shutdown_seen": {
+                    "type": "boolean"
+                  },
+                  "abort_acknowledged": {
+                    "type": "boolean"
+                  },
+                  "late_confirm_after_settled": {
+                    "type": "boolean"
+                  },
+                  "credentials_empty": {
+                    "type": "boolean"
+                  },
+                  "active_tools_exact": {
+                    "type": "boolean"
+                  },
+                  "versions": {
+                    "const": {
+                      "pi": "1.0.1",
+                      "pi_ai": "1.0.2",
+                      "node": "24.14.0"
+                    }
+                  }
+                },
+                "required": [
+                  "body_count",
+                  "body_marker",
+                  "has_ui",
+                  "mode",
+                  "tool_error",
+                  "signal_aborted",
+                  "ready",
+                  "prompt_accepted",
+                  "settled",
+                  "shutdown_seen",
+                  "abort_acknowledged",
+                  "late_confirm_after_settled",
+                  "credentials_empty",
+                  "active_tools_exact",
+                  "versions"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "case_id",
+          "outcome",
+          "execution",
+          "observations"
+        ],
+        "additionalProperties": false
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "case_id": {
+                "const": "timeout"
+              }
+            },
+            "required": [
+              "case_id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "case_id": {
+                "const": "cancelled"
+              }
+            },
+            "required": [
+              "case_id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "case_id": {
+                "const": "wrong-id"
+              }
+            },
+            "required": [
+              "case_id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "case_id": {
+                "const": "abort-late"
+              }
+            },
+            "required": [
+              "case_id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "case_id": {
+                "const": "confirmed"
+              }
+            },
+            "required": [
+              "case_id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expected_versions": {
+      "const": {
+        "pi": "1.0.1",
+        "pi_ai": "1.0.2",
+        "node": "24.14.0"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "probe_id",
+    "expected_versions",
+    "lock_sha256",
+    "status",
+    "cases",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

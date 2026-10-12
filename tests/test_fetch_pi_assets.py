@@ -104,3 +104,83 @@ def test_fixed_url_rejects_credentials_and_non_https():
     fetch_pi_assets.validate_fixed_url("https://example.com/a.tgz?sig=secret")
   with pytest.raises(ConfigError):
     fetch_pi_assets.validate_fixed_url("http://example.com/a.tgz")
+
+
+def modern_repository(tmp_path):
+  root, legacy_content = repository(tmp_path, b"legacy same-name bytes")
+  legacy = json.loads((root / "agents/pi/dependencies.json").read_text())
+  legacy["sources"]["fixture-asset"]["vendor_path"] = "vendor/shared.tgz"
+  (root / "agents/pi/dependencies.json").write_text(json.dumps(legacy))
+  modern_content = b"modern selected Base bytes"
+  selected = {**legacy["sources"]["fixture-asset"], "url": "https://fixtures.invalid/modern-base.tgz",
+    "archive_digest": hashlib.sha256(modern_content).hexdigest(), "vendor_path": "vendor/shared.tgz"}
+  full = {**selected, "url": "https://fixtures.invalid/full-only.tgz", "vendor_path": "vendor/full-only.tgz",
+    "archive_digest": hashlib.sha256(b"unselected Full bytes").hexdigest()}
+  document = {"schema_version": 2, "profiles": {"pi-base": {"source_ids": ["fixture-asset", "synthetic-host"]},
+      "pi-full": {"source_ids": ["fixture-asset", "full-only", "synthetic-host"]}},
+    "sources": {"fixture-asset": selected, "full-only": full, "synthetic-host": {"kind": "npm"}}}
+  (root / "agents/pi/dependencies-modern.json").write_text(json.dumps(document))
+  return root, legacy_content, modern_content, document
+
+
+def snapshot(root):
+  return {str(path.relative_to(root)): (path.read_bytes() if path.is_file() else None) for path in root.rglob("*")}
+
+
+def test_base_reads_only_modern_inputs_and_publishes_only_selected_modern_assets(tmp_path, monkeypatch):
+  root, legacy_content, modern_content, document = modern_repository(tmp_path)
+  legacy_vendor = root / "locks/pi/vendor/shared.tgz"
+  legacy_vendor.parent.mkdir(parents=True); legacy_vendor.write_bytes(legacy_content)
+  legacy_before = snapshot(root / "locks/pi")
+  calls = []
+  def opener(request, timeout=0):
+    calls.append(request.full_url)
+    assert request.full_url == document["sources"]["fixture-asset"]["url"]
+    return FakeResponse(modern_content)
+  monkeypatch.setattr(fetch_pi_assets, "urlopen", opener)
+  assert fetch_pi_assets.main(["--repository", str(root), "--profile", "pi-base"]) == 0
+  modern_vendor = root / "locks/pi-modern/vendor/shared.tgz"
+  assert modern_vendor.read_bytes() == modern_content
+  assert modern_vendor.stat().st_mode & 0o777 == 0o600
+  assert snapshot(root / "locks/pi") == legacy_before
+  assert calls == [document["sources"]["fixture-asset"]["url"]]
+  assert {path.name for path in modern_vendor.parent.iterdir()} == {"shared.tgz"}
+  # 选中现代资产再次调用只校验它；不会因为Full尚未物化而额外下载。
+  assert fetch_pi_assets.main(["--repository", str(root), "--profile", "pi-base"]) == 0
+  assert calls == [document["sources"]["fixture-asset"]["url"]]
+  assert not (modern_vendor.parent / "full-only.tgz").exists()
+
+
+def test_existing_verified_modern_vendor_does_not_consume_legacy_same_name(tmp_path, monkeypatch):
+  root, legacy_content, modern_content, _ = modern_repository(tmp_path)
+  for family, content in [("pi", legacy_content), ("pi-modern", modern_content)]:
+    path = root / "locks" / family / "vendor/shared.tgz"
+    path.parent.mkdir(parents=True); path.write_bytes(content)
+  before = snapshot(root)
+  monkeypatch.setattr(fetch_pi_assets, "urlopen", lambda *_args, **_kwargs: pytest.fail("verified modern asset must not fetch"))
+  assert fetch_pi_assets.main(["--repository", str(root), "--profile", "pi-base"]) == 0
+  assert snapshot(root) == before
+
+
+@pytest.mark.parametrize("fault", ["missing-modern", "unknown-modern-profile", "unknown-legacy-profile", "wrong-version", "float-version", "bool-version", "string-version", "unknown-source"])
+def test_invalid_selected_asset_input_fails_before_vendor_creation_or_network(tmp_path, monkeypatch, fault):
+  root, _, _, document = modern_repository(tmp_path)
+  modern_path = root / "agents/pi/dependencies-modern.json"
+  profile = "pi-base"
+  if fault == "missing-modern": modern_path.unlink()
+  elif fault == "unknown-modern-profile": document["profiles"].pop("pi-base")
+  elif fault == "unknown-legacy-profile": profile = "pi-unknown"
+  elif fault == "wrong-version": document["schema_version"] = 1
+  elif fault == "float-version": document["schema_version"] = 2.0
+  elif fault == "bool-version": document["schema_version"] = True
+  elif fault == "string-version": document["schema_version"] = "2"
+  elif fault == "unknown-source": document["profiles"]["pi-base"]["source_ids"].append("unlisted-source")
+  if fault != "missing-modern": modern_path.write_text(json.dumps(document))
+  before = snapshot(root)
+  calls = []
+  monkeypatch.setattr(fetch_pi_assets, "urlopen", lambda *_args, **_kwargs: calls.append(True))
+  with pytest.raises(ConfigError) as error: fetch_pi_assets.main(["--repository", str(root), "--profile", profile])
+  assert error.value.exit_code == 2
+  assert calls == []
+  assert snapshot(root) == before
+  assert not (root / "locks").exists()

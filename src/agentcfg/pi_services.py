@@ -83,7 +83,7 @@ def prepare_report(commands, principal, args):
   files = [file_snapshot(path) for path in binding["files"]]
   if sum(Path(row["path"]).stat().st_size for row in files) > 16 * 1024 * 1024: raise Conflict("SERVICE_FILE_LIMIT")
   sockets = [socket_snapshot(path) for path in binding["socket_paths"]]
-  protected_paths = [configured_path(path).resolve(strict=True) for path in host.config.get("protected_roots", [])]
+  protected_paths = [configured_path(path).resolve(strict=False) for path in host.config.get("protected_roots", [])]
   projects = [configured_path(row["path"]).resolve(strict=True) for row in manifest["options"].get("paths", {}).get("roots", {}).values()]
   if any(Path(row["path"]).is_relative_to(root) for row in files + sockets for root in protected_paths + projects):
     raise Conflict("SERVICE_SCOPE_OVERLAP")

@@ -25,3 +25,25 @@ test("agentcfg generates usable three-role and real-check bindings without readi
   try { assert.deepEqual(readConfig("/not-an-authorized-legacy-path"), config); }
   finally { globalThis[key] = old; }
 });
+
+test("modern Full consumes the actual closed manifest role_bindings without a legacy roleManifest", () => {
+  const root = mkdtempSync(join(tmpdir(), "tk-modern-config-")); mkdirSync(join(root, "pi-home"));
+  writeFileSync(join(root, "pi-home/models.json"), JSON.stringify({ providers: { "agentcfg-fixture": { models: [{ id: "fake-model" }] } } }));
+  const binding = { managed: true, model: { provider: "agentcfg-fixture", model: "fake-model" },
+    tools: ["read"], read_roots: ["project"], write_roots: [] };
+  const runtime = { owner: { role: "manager" }, instanceRoot: root, installed: { schema_version: 2, profile_id: "pi-full" },
+    manifest: { profile_id: "pi-full", role_bindings: Object.fromEntries(["reader", "writer", "reviewer"].map(name => ["task-keeper-" + name, { ...binding }])),
+      options: { task_keeper: { enabled: true, check_ids: ["build"], second_view_enabled: false,
+        limits: { model_requests: 2, model_turns: 2, wall_seconds: 30 } },
+        network: { routes: { direct: { mode: "direct", provider_ids: ["fixture"] } } },
+        checks: { build: { executable: "/fixture/check", args: [], timeout_seconds: 5, foreground: true, project_root: "project",
+          kind: "build", parser: "exit-code", minimum_tests: 1, inputs: [] } } } } };
+  const config = parseConfig(fromAgentcfg(DEFAULT_CONFIG, runtime));
+  assert.equal(config.enabled, true);
+  assert.equal(config.roles.scout.route, "managed-scout");
+  assert.equal(config.roles.reviewer.route, "managed-reviewer");
+  runtime.manifest.role_bindings["task-keeper-reader"].managed = false;
+  assert.throws(() => fromAgentcfg(DEFAULT_CONFIG, runtime), /ROLE_BINDING_REQUIRED/);
+  runtime.manifest.role_bindings["task-keeper-reader"] = { ...binding, unknown: true };
+  assert.throws(() => fromAgentcfg(DEFAULT_CONFIG, runtime), /ROLE_BINDING_REQUIRED/);
+});

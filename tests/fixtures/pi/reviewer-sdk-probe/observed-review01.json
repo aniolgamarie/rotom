@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "probe_id": "reviewer-sdk-offline-v1",
+  "status": "observed",
+  "cases": [
+    {
+      "case_id": "allow",
+      "outcome": "observed",
+      "transport_outcome": "valid",
+      "decision": "allow",
+      "requests": 1,
+      "usage": {
+        "status": "reported",
+        "input_tokens": 5,
+        "output_tokens": 3,
+        "total_tokens": 8
+      },
+      "worker_started": true,
+      "worker_terminated": true
+    },
+    {
+      "case_id": "ask",
+      "outcome": "observed",
+      "transport_outcome": "valid",
+      "decision": "ask",
+      "requests": 1,
+      "usage": {
+        "status": "reported",
+        "input_tokens": 5,
+        "output_tokens": 3,
+        "total_tokens": 8
+      },
+      "worker_started": true,
+      "worker_terminated": true
+    },
+    {
+      "case_id": "deny",
+      "outcome": "observed",
+      "transport_outcome": "valid",
+      "decision": "deny",
+      "requests": 1,
+      "usage": {
+        "status": "reported",
+        "input_tokens": 5,
+        "output_tokens": 3,
+        "total_tokens": 8
+      },
+      "worker_started": true,
+      "worker_terminated": true
+    },
+    {
+      "case_id": "missing-usage",
+      "outcome": "observed",
+      "transport_outcome": "valid",
+      "decision": "allow",
+      "requests": 1,
+      "usage": {
+        "status": "unknown",
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      },
+      "worker_started": true,
+      "worker_terminated": true
+    },
+    {
+      "case_id": "wrong-model",
+      "outcome": "observed",
+      "transport_outcome": "transport-failure",
+      "decision": null,
+      "requests": 1,
+      "usage": {
+        "status": "unknown",
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      },
+      "worker_started": true,
+      "worker_terminated": true
+    },
+    {
+      "case_id": "canceled",
+      "outcome": "observed",
+      "transport_outcome": "canceled",
+      "decision": null,
+      "requests": 1,
+      "usage": {
+        "status": "unknown",
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      },
+      "worker_started": true,
+      "worker_terminated": true
+    },
+    {
+      "case_id": "response-limit",
+      "outcome": "observed",
+      "transport_outcome": "transport-failure",
+      "decision": null,
+      "requests": 1,
+      "usage": {
+        "status": "unknown",
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      },
+      "worker_started": true,
+      "worker_terminated": true
+    },
+    {
+      "case_id": "hard-deny",
+      "outcome": "observed",
+      "transport_outcome": "policy-blocked",
+      "decision": null,
+      "requests": 0,
+      "usage": {
+        "status": "not-sent",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+      },
+      "worker_started": false,
+      "worker_terminated": false
+    },
+    {
+      "case_id": "human-required",
+      "outcome": "observed",
+      "transport_outcome": "human-required",
+      "decision": null,
+      "requests": 0,
+      "usage": {
+        "status": "not-sent",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+      },
+      "worker_started": false,
+      "worker_terminated": false
+    }
+  ],
+  "product_gate": false
+}

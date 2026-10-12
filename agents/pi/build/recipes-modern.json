@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "sources": {
+    "pi-runtime-ui": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/runtime-ui",
+      "package": "@agentcfg/pi-runtime",
+      "version": "2.0.0",
+      "license_files": [
+        "NOTICE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git"
+      ]
+    },
+    "colorful-footer": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/colorful-footer",
+      "package": "starter-pi-colorful-footer",
+      "version": "0.1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests",
+        "test-results",
+        "coverage"
+      ]
+    },
+    "loop-guard": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/loop-guard",
+      "package": "starter-pi-loop-guard",
+      "version": "0.1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests",
+        "test-results",
+        "coverage"
+      ]
+    },
+    "pi-todo": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/todo-vendor",
+      "package": "@juicesharp/rpiv-todo",
+      "version": "2.9.0-agentcfg.1",
+      "license_files": [
+        "LICENSE",
+        "AGENTCFG-NOTICE.md"
+      ],
+      "exclude": []
+    },
+    "model-delegate-modern": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/model-delegate-modern",
+      "package": "@agentcfg/pi-model-delegate",
+      "version": "3.0.0",
+      "license_files": [
+        "NOTICE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests"
+      ]
+    },
+    "task-keeper-modern": {
+      "kind": "local",
+      "source_path": "agents/pi/packages/task-keeper-modern",
+      "package": "@agentcfg/pi-task-keeper",
+      "version": "3.0.0",
+      "license_files": [
+        "NOTICE"
+      ],
+      "exclude": [
+        "node_modules",
+        ".git",
+        "tests"
+      ]
+    }
+  }
+}

@@ -14,6 +14,7 @@ from .presentation import command_line
 from .process import DependencyError, checked, environment, launch_environment
 from .toolchain import ensure_compatible_toolchain
 from .storage import Conflict, Tree, ensure_private, instance_lock
+from .schema import ConfigError
 
 
 def runtime_identity(workspace, lock):
@@ -54,9 +55,20 @@ def decode(value, cwd, arguments):
 
 
 def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environment=None):
-  validate_arguments = getattr(workspace.adapter, "validate_arguments", None)
-  if validate_arguments is not None:
-    validate_arguments(arguments)
+  validate_arguments_for = getattr(workspace.adapter, "validate_arguments_for", None)
+  if validate_arguments_for is not None:
+    captured = validate_arguments_for(workspace.resolved.data, arguments)
+    if captured is not None:
+      if type(captured) is not tuple or any(type(arg) is not str for arg in captured):
+        try: raise ConfigError("runtime-arguments")
+        except ConfigError as error:
+          error.__cause__ = None; error.__context__ = None
+          raise
+      arguments = captured
+  else:
+    validate_arguments = getattr(workspace.adapter, "validate_arguments", None)
+    if validate_arguments is not None:
+      validate_arguments(arguments)
   operation_cwd = getattr(workspace.adapter, "operation_cwd", None)
   effective_cwd = operation_cwd(workspace, cwd, arguments) if operation_cwd is not None else cwd
   operation_guard = getattr(workspace.adapter, "operation_guard", None)
@@ -67,6 +79,9 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
   with (lifecycle(workspace) if lifecycle else nullcontext()) as lifecycle_fd, Tree(workspace.state_root, create=True) as state, instance_lock(state, shared=shared) as lease, Tree(workspace.instance) as target:
     if state.read("pending.json"):
       raise Conflict("存在待恢复部署，请先 apply/rollback 恢复后再启动")
+    if workspace.agent == "pi" and workspace.profile in ("pi-base", "pi-full"):
+      from .pi_replacement import assert_runnable
+      assert_runnable(workspace)
     current = read_state(state)["current"]
     if current is None or current["binding"] != workspace.binding:
       raise Conflict("未部署当前实例，请先 apply")

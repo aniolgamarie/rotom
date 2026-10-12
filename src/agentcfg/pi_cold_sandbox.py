@@ -13,12 +13,16 @@ from .schema import ConfigError
 from .storage import Tree, ensure_private
 
 
+# 冷安装支持与旧001验收scope分离；不把现代Base加入历史矩阵。
+COLD_PROFILES = {**PROFILES, "pi-base": "node"}
+
+
 def isolated_runner(base, profile, uv, run, *, system=None, programs=None, system_roots=None, trust_paths=None, architecture=None, developer_root=None):
   base = Path(base).resolve(strict=True)
   system = system or sys.platform
-  if profile not in PROFILES or system not in ("linux", "darwin"): raise ConfigError("pi-cold-sandbox-platform")
+  if profile not in COLD_PROFILES or system not in ("linux", "darwin"): raise ConfigError("pi-cold-sandbox-platform")
   architecture = architecture or platform.machine()
-  names = {"node", "npm", "git", "uv", *({"bun"} if PROFILES[profile] == "bun" else set())}
+  names = {"node", "npm", "git", "uv", *({"bun"} if COLD_PROFILES[profile] == "bun" else set())}
   if system == "darwin" and architecture == "x86_64": names.update(("zig", "make", "python3", "patch"))
   programs = programs if programs is not None else {name: uv if name == "uv" else shutil.which(name) for name in names}
   if set(programs) != names or not all(programs.values()): raise DependencyError("冷重建缺少完整工具链")

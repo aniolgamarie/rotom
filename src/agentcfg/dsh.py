@@ -48,7 +48,7 @@ class DshAdapter(Adapter):
   def __init__(self, repository: Path):
     self.repository = repository
 
-  def dependency_backend(self):
+  def dependency_backend(self, *, profile=None):
     from .backends import DshBackend
     return DshBackend()
 

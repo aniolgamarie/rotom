@@ -18,6 +18,7 @@ def test_supervisor_registers_before_exec_and_outlives_parent_host(tmp_path, mon
   processes.current[os.getpid()] = identity(os.getpid())
   processes.identity = lambda pid: processes.current[pid]
   registered = []
+  spawn_owners = []
   processes.register = lambda value: registered.append(value["pid"])
   # 停止请求不等于物理退出；第二次观察前仍保留活动与实例保护。
   processes.stop = lambda value, **kwargs: processes.signals.append(value)
@@ -38,6 +39,8 @@ def test_supervisor_registers_before_exec_and_outlives_parent_host(tmp_path, mon
       return self.returncode
   monkeypatch.setattr(pi_host.subprocess, "Popen", Child)
   def namespace_spawn(host, command, environment, streams):
+    import threading
+    spawn_owners.append(threading.current_thread())
     assert not streams
     read_fd, write_fd = os.pipe()
     try:
@@ -51,6 +54,16 @@ def test_supervisor_registers_before_exec_and_outlives_parent_host(tmp_path, mon
   config = {"state_root": str(tmp_path / "state"), "instance_root": str(tmp_path / "instance"),
     "repository": str(Path(__file__).resolve().parents[1]), "runtime_root": str(tmp_path / "runtime"), "instance_id": "fixture",
     "lock_identity": "a" * 64, "slice_identity": "b" * 64, "policy_digest": "c" * 64, "cwd": str(tmp_path), "engine": "node", "argv": ["synthetic-host"]}
+  # 主循环确实启动合成 worker，故显式选择 Task Keeper。
+  from agentcfg.activity import digest
+  from agentcfg.deployment import json_bytes
+  manifest = {"schema_version": 1, "plugins": ["task-keeper"], "options": {},
+    "permission_policy": {"schema_version": 1, "default": "deny", "rules": []}}
+  home = Path(config["instance_root"]) / "pi-home"
+  home.mkdir(parents=True, mode=0o700); home.parent.chmod(0o700)
+  file = home / "agentcfg-manifest.json"; file.write_bytes(json_bytes(manifest)); file.chmod(0o600)
+  config["policy_digest"] = digest(manifest["permission_policy"])
+  config["manifest_digest"] = digest(manifest)
   host = pi_host.HostSupervisor(config, lease_fd=None)
   class Endpoint:
     endpoint = tmp_path / "control.json"
@@ -66,7 +79,7 @@ def test_supervisor_registers_before_exec_and_outlives_parent_host(tmp_path, mon
         os.close(children[0].gate)
         token = children[0].environment["AGENTCFG_SUPERVISOR_CAPABILITY"]
         args = {"kind": "worker", "execution_id": "worker", "task_id": "task", "attempt_id": "attempt", "lock_identity": "a" * 64,
-          "slice_identity": "b" * 64, "policy_digest": "c" * 64, "candidate_digest": "d" * 64, "planned_workspaces": []}
+          "slice_identity": "b" * 64, "policy_digest": config["policy_digest"], "candidate_digest": "d" * 64, "planned_workspaces": []}
         allocated = host.service.reply(token, os.geteuid(), request("allocate", args))["result"]
         host.service.command_resolver = lambda *args: SpawnCommand(("synthetic-worker",), tmp_path, {})
         started = host.service.reply(token, os.geteuid(), request("start", {"lease_id": allocated["lease_id"], "program": "worker", "payload": {}}))
@@ -89,6 +102,7 @@ def test_supervisor_registers_before_exec_and_outlives_parent_host(tmp_path, mon
   host.server = endpoint
   assert host.run() == 0
   assert endpoint.polls == 2 and endpoint.closed is True
+  assert len(spawn_owners) == 1 and not spawn_owners[0].is_alive()
   assert registered == [201, 202]
   assert processes.signals and all(value["pid"] == 202 for value in processes.signals)
   host.store.assert_mutable()
@@ -109,7 +123,7 @@ def test_identity_failure_closes_exec_gate_without_releasing_unknown_lease(tmp_p
   monkeypatch.setattr(pi_host.sys, "platform", "linux")
   monkeypatch.setattr(pi_host.subprocess, "Popen", Child)
   with pytest.raises(Conflict):
-    host.spawn(SpawnCommand(("synthetic-worker",), tmp_path, {}), {"lease_id": "lease"})
+    host._spawn(SpawnCommand(("synthetic-worker",), tmp_path, {}), {"lease_id": "lease"})
   try:
     os.set_blocking(gates[0], False)
     assert os.read(gates[0], 1) == b""
@@ -147,6 +161,8 @@ def test_standalone_delegate_supervisor_never_starts_an_interactive_host(tmp_pat
   controller, base, args, starts = fixture(tmp_path)
   host = object.__new__(pi_host.HostSupervisor)
   host.__dict__.update(base.__dict__)
+  from concurrent.futures import ThreadPoolExecutor
+  host._spawn_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="pi-host-spawn")
   host.config["delegate_request"] = args
   host.children = {}; host.host_exit = None; host.host_lease_id = None
   host.delegates = controller; controller.host = host
@@ -274,10 +290,71 @@ def test_terminal_spawn_binds_private_streams_before_opening_gate(tmp_path, monk
   monkeypatch.setattr(pi_host.subprocess, "Popen", Child)
   command = SpawnCommand(("synthetic-editor",), tmp_path, {}, capture_root=tmp_path / "capture", stdin_pipe=True, terminal_size=(24, 80))
   try:
-    host.spawn(command, {"lease_id": "editor", "kind": "external"})
+    host._spawn(command, {"lease_id": "editor", "kind": "external"})
     assert events == [("terminal", (24, 80)), "spawn", "register", "attach-terminal", "attach-capture"]
     with pytest.raises(BlockingIOError): os.read(gates[0], 1)
     host.activate({"lease_id": "editor"})
     assert os.read(gates[0], 1) == b"G"
   finally:
     for fd in gates: os.close(fd)
+
+
+def test_short_request_threads_share_a_live_spawn_owner_and_errors_do_not_retire_it(tmp_path, monkeypatch):
+  import threading
+  from concurrent.futures import ThreadPoolExecutor
+  host = object.__new__(pi_host.HostSupervisor)
+  host.repository, host.children = tmp_path, {}
+  host.manifest = lambda: {"profile_id": "pi-base"}
+  host._spawn_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="pi-host-spawn")
+  owner_threads, errors = [], []
+  gates = []
+  host.service = SimpleNamespace(mutex=threading.RLock())
+  def namespace(current, selected, environment, streams, *, control_directory=False):
+    assert control_directory is True
+    owner_threads.append(threading.current_thread())
+    if selected.argv == ("fail",): raise Conflict("synthetic spawn rejected")
+    read, write = os.pipe(); gates.extend((read, write))
+    return SimpleNamespace(pid=202), identity(201), write
+  monkeypatch.setattr("agentcfg.pi_pid_namespace.spawn_host_namespace", namespace)
+  monkeypatch.setattr(pi_host.sys, "platform", "linux")
+  def request(number, value):
+    try:
+      # 模拟原service caller持RLock；ownerthread不重取该锁。
+      with host.service.mutex:
+        host.spawn(SpawnCommand((value,), tmp_path, {}), {"kind": "host", "lease_id": str(number)})
+    except Exception as error: errors.append(error)
+  try:
+    for number, value in enumerate(("ok", "fail", "ok")):
+      caller = threading.Thread(target=request, args=(number, value)); caller.start(); caller.join(2)
+      assert not caller.is_alive()
+    assert len(errors) == 1 and isinstance(errors[0], Conflict)
+    assert len(owner_threads) == 3 and all(thread is owner_threads[0] for thread in owner_threads)
+    assert owner_threads[0].is_alive()
+    assert set(host.children) == {"0", "2"}
+  finally:
+    host._spawn_executor.shutdown(wait=True, cancel_futures=True)
+    for fd in gates: os.close(fd)
+  assert not owner_threads[0].is_alive()
+
+
+@pytest.mark.parametrize("mode", ["run", "delegate"])
+def test_server_close_failure_still_retires_spawn_thread_without_store_release(mode, tmp_path):
+  import threading
+  from concurrent.futures import ThreadPoolExecutor
+  host = object.__new__(pi_host.HostSupervisor)
+  host._spawn_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="pi-host-spawn")
+  owner = host._spawn_executor.submit(threading.current_thread).result()
+  host.service = SimpleNamespace(mutex=threading.RLock(), closing=False)
+  host.children = {}
+  def opening(): raise ValueError("synthetic opening failed")
+  def closing(): raise Conflict("synthetic close failed")
+  host.server = SimpleNamespace(open=opening, close=closing)
+  read, write = os.pipe()
+  try:
+    with pytest.raises(Conflict, match="synthetic close failed"):
+      host.run() if mode == "run" else host.run_delegate(write)
+    assert host.service.closing and not owner.is_alive()
+    with pytest.raises(RuntimeError): host.spawn(None, None)
+  finally:
+    os.close(read)
+    if mode == "run": os.close(write)

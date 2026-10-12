@@ -7,8 +7,7 @@ from test_pi_operations import setup
 
 
 def fixture(tmp_path):
-  operations, host, cwd, principal = setup(tmp_path)
-  host.manifest()["plugins"] = ["pi-web"]
+  operations, host, cwd, principal = setup(tmp_path, plugins=["pi-web"])
   host.manifest()["options"]["web"] = {"media": {"max_file_bytes": 32 * 1024 * 1024}}
   return operations, host, cwd, principal
 

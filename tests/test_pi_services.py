@@ -92,3 +92,15 @@ def test_service_keeps_parent_file_denials_and_never_opens_other_instance_state(
   host.manifest()["options"]["paths"]["roots"]["scripts"] = {"path": str(tmp_path), "purpose": "read"}
   host.manifest()["permission_policy"]["rules"].append({"kind": "file", "effect": "deny", "root_ref": "scripts", "relative_path": script.name})
   with pytest.raises(Conflict): prepare_report(commands, principal, {**args, "operation_id": "denied"})
+
+
+def test_missing_future_account_anchor_keeps_denial_and_fixed_argv(tmp_path):
+  commands, host, principal, args, script = setup(tmp_path)
+  anchor = tmp_path / "future-account/.agentcfg-workspaces"
+  host.config["protected_roots"] = [str(anchor)]
+  ticket = prepare_report(commands, principal, args)
+  value = commands.records[ticket["operation_id"]]
+  assert str(anchor) in value["denied_paths"]
+  argv = linux_verifier_argv(value["check"], temporary=tmp_path / "scratch", system_roots=(), denied_paths=value["denied_paths"])
+  assert argv[-3:] == (str(script), "%9", "working")
+  assert not anchor.exists()

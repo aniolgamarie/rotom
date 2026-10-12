@@ -1,0 +1,19 @@
+# 现代Pi来源latch的受支持caller接线
+
+2026-10-09 root，primitive已完成34项默认FS正反及组合异常3项，修复稳定review；未提供SourceHold/handoff/初始化资格。静态caller分类已确认apply/rollback/sync/repair/activation改source，recover/stop/activity cancel不改Linux runtime source。本包在真实管理入口接锁顺序，不开启Full服务或初始化器。
+
+新增pi_lifecycle.source_guard(workspace, *, shared=False, create=True)，只用于pi-base/pi-full的已有受支持管理caller。source→原lifecycle→state顺序，yield原lifecycle fd（不能替换成source fd或新tuple）；原guard函数和活动lease/marker逻辑保持。source_latch原fd仍全私有、不继承、不转交source身份。新guard在create=True时只复用ensure_private(instance)满足原guard冷启动创建行为；不把primitive改为mkdir。在任何anchor创建前，对存在的.agentcfg-instance.json用原Tree+固定bytes/bounded read比较当前state_root/binding，错误/链接/不安全/不符拒绝，缺marker仅原create=True bootstrap可继续。进入原lifecycle guard后仍按原规则再校验/写不可变marker，预读不是权限资格或race全保护。
+
+PiAdapter.lifecycle_guard：现代profile返回source_guard(shared=False)，其余profile保持原guard；apply/rollback经该原hook受EX保护。新增PiAdapter.run_lifecycle_guard：现代返回source_guard(shared=True)，其余原guard，框架runtime.run已优先此hook，不改runtime.py；正常启动不把长期sourceSH当EX阻断理由，仍遵守原lifecycle/stateEX活动准入。PiBackend.sync：保留原identity/profile/candidate前置拒绝，v2现代profile之后用source_guard(EX)，legacy继续原guard，_sync内部及stage/repair/activation/body不变。source_helper字段闭合判断来自实际workspace/profile，不由options/model决定。
+
+recover/stop仍直接用原pi_lifecycle.guard(allow_active=True,create=False)，不套sourceEX，也不因现有holder阻塞必要stop。普通status/plan/doctor暂不新增SourceHold来源证据；原observational读保持原Tree检查。低层deployment.apply/rollback/_sync仍内部实现，不作为绕开caller锁的新公共入口；此包不能声称任意第三方直接调用全部受保护。
+
+source SH只持到当前foreground管理context，原lifecycle/state fd对子工作原持有规则保持；不声明sourceSH复制到supervisor/guardian或foreground后持续。源码守护、FullSourceView/initializer principal、完整外部actor、CrossPID/handoff仍另包。现sourceLock不授权写workspace/storage或替换provider，也不替代原pending/activity保护。
+
+唯一执行者code范围src/agentcfg/pi_lifecycle.py新增wrapper（原guard body尽量逐字保持）、pi.py仅两个guardhooks、pi_dependencies.py仅sync guard选择；tests新test_pi_source_lifecycle.py及已有候选前置/相关小回归若有实际影响。primitive模块不改；其他agent/runtime.py/SDK/vendor/manifest/账号/OMP/state/tasks/docs不写。证据source-latch-cli-integration-implementation-review01；先即时前像与有意义RED。
+
+默认fake/current synthetic Workspace、临时HOME/instance/state且当前pytest同进程真实flock，不fork/SDK/helper/host。测试实际PiAdapter hooks和真实PiBackend.sync路径（_sync fakebody不得冒充实际安装）：另一SH在场时EX拒绝且body0，run hook可SH共存但原instanceEX仍独占；sourceEX在场reader/mutator都拒绝；固定source→lifecycle→state trace/原yieldfd，coldbootstrap marker/anchor安全创建，foreign binding在anchor创建前拒绝，不符候选在guard/任何新文件前拒绝，legacy不导入/创建source锁；recover原guard在sourceSH持有时可做activity-only工作且原allow_active校验保持。已部署source/account/state/session哨兵字节/mode不变，无Full包/服务读取；normal metadata变动不能造成root identity false drift。固定默认pytest只新module及最少受影响已有test，不测试镜像实现。/data祖先真实0777安全拒绝时private /tmp新basetemp true-owner；日志在自有data目录，原conftest假进程断网保持。
+
+遇原firstbootstrap/marker/privateTree无法按顺序满足、scope扩大/语义/FD持有问题或两有效修复无解升级Root，不能自行重新设计原guard/stop恢复顺序。常规实现/验证后STOP稳定diff/pins/log/model report；最终独立review后root验收。正式8/100、AUTO OFF；非SourceHold资格。
+
+2026-10-09 root验收：实际hooks/sync默认19+activity1分轮通过，稳定独立review无已确认P1/P2，receipt 03601d7364b4de75f6269a942ac708b78e4a5b5bfcb72ac99c2303bff8b893f5。prepare_runtime允许SH下准备user-home/pi-home/sessions附属状态目录，非部署管理文件内容；cursor目录仅pi-cursor已选时准备，Base不选择它。正常已部署run先按原projection核部署管理文件。此界限明确保留，sourceSH不宣称whole-instance只读或长期/跨进程SourceHold。

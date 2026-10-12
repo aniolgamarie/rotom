@@ -306,7 +306,7 @@ class OmpAdapter(Adapter):
   def __init__(self, repository):
     self.repository = Path(repository)
 
-  def dependency_backend(self):
+  def dependency_backend(self, *, profile=None):
     from .omp_dependencies import OmpBackend
     return OmpBackend()
 

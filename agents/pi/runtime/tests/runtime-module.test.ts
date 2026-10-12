@@ -13,13 +13,24 @@ test("worker runtime modules resolve from the selected slice and cannot escape v
   write(join(inside, entry), "throw new Error('SDK must not execute during dependency resolution');");
   write(join(inside, "profile/node_modules/http-proxy-agent/package.json"), '{"name":"http-proxy-agent","type":"module","main":"index.js"}');
   write(join(inside, "profile/node_modules/http-proxy-agent/index.js"), 'export const fixture = "selected-profile";');
+  write(join(inside, "profile/node_modules/@earendil-works/pi-mcp/package.json"), JSON.stringify({ name: "@earendil-works/pi-mcp", type: "module", exports: { ".": { source: "./src/index.ts", types: "./dist/index.d.ts", import: "./dist/index.js" } } }));
+  write(join(inside, "profile/node_modules/@earendil-works/pi-mcp/dist/index.js"), 'export const fixture = "official-import-only";');
   write(join(outside, "package.json"), '{"name":"https-proxy-agent","type":"module","main":"index.js"}');
   write(join(outside, "index.js"), 'throw new Error("ambient dependency must not execute");');
   write(join(inside, "profile/node_modules/https-proxy-agent/package.json"), '{"name":"https-proxy-agent","type":"module","main":"../../../../ambient/index.js"}');
-  globalThis[key] = { runtimeRoot: inside, installed: { entrypoint: entry } };
+  globalThis[key] = { runtimeRoot: inside, installed: { schema_version: 2, entrypoint: entry } };
   try {
     assert.equal((await runtimeModule("http-proxy-agent")).fixture, "selected-profile");
+    assert.equal((await runtimeModule("@earendil-works/pi-mcp")).fixture, "official-import-only");
     await assert.rejects(runtimeModule("https-proxy-agent"), /BOUNDARY/);
     await assert.rejects(runtimeModule("unselected"), /UNDECLARED/);
+    const flags = [...process.execArgv];
+    try {
+      process.execArgv.splice(0, process.execArgv.length, ...flags.filter(value => value !== "--experimental-import-meta-resolve"));
+      await assert.rejects(runtimeModule("@earendil-works/pi-mcp"), /RESOLVER_UNAVAILABLE/);
+      const legacy = { runtimeRoot: inside, installed: { schema_version: 1, entrypoint: entry } };
+      assert.equal((await runtimeModule("http-proxy-agent", legacy)).fixture, "selected-profile");
+      await assert.rejects(runtimeModule("https-proxy-agent", legacy), /BOUNDARY/);
+    } finally { process.execArgv.splice(0, process.execArgv.length, ...flags); }
   } finally { globalThis[key] = previous; }
 });

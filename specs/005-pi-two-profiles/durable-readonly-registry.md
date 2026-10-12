@@ -1,0 +1,35 @@
+# Durable 只读工具 registry 的公开接缝
+
+状态：2026-10-06固定1.0.1包的18个选定SOURCE条目静态核对完成；root决定以下边界，尚未实现registry工厂或真实文件操作。T084、原生隔离与Full gate保持开放。取证报告归档在 `pi-durable-readonly-registry-evidence/`；一般API与公开Context signal证据复用既有归档，不重跑或重扫完整候选。
+
+后续原始输入接缝另核8份Durable SOURCE、21份发布依赖文件和4份既有证据，共33个选定pin；取证归档在 `pi-durable-readonly-execute-input-evidence/`。这是窄静态来源核对，没有运行SDK或验证器。
+
+## 构造和来源
+
+只通过根公开createRegistry、defineExtension和defineTool组合自有读取/搜索工具。空registry默认只注册generation/tool/compaction三类task，tools为空；独立CodingTools扩展含read/write/edit/bash，首批不安装。服务端固定唯一自有extension名、明确工具列表、schema、execute函数身份及输出限制，不向客户端暴露install/uninstall、wraps、handoff或Task/ToolControl能力。
+
+同一extension内部重复工具名会被拒绝，跨extension同名工具会由后者覆盖；公开define辅助函数本身不提供冻结或授权。受信服务factory必须独立核对registry完整声明与来源身份，禁止在途热替换。不以Object.freeze(Map)声称阻止增删，不以同名/version证明代码未变。旧registry缺失或不兼容时保留不可恢复状态，不能用同名新版续跑。
+
+## execute 与准入
+
+自有execute(args,api,Context)是每次业务读取/搜索的最终准入点。字段捕获、参数/schema、当前registry/source、任务范围、读取根、限额、原生signal及可信授权必须在这里验证；异步等待后和最终执行前再次验证。beforeTool、prepareArguments、模型提供的path/query/ID或SDK数字ID不能代替这一检查。
+
+公开api.taskId是原生tool task，conversationId是原生conversation，callId是模型tool-call标签。没有名为toolCaller的公开API。可以通过公开getTask(self)观察TaskRecord.owner及kind/version/input/conversation以核原父generation，但这些观察都不提供用户/账户/grant。服务控制面必须从原受理记录和当前授权独立关联，不从模型参数补齐；不给backend或客户端转发整个SDK api/registry对象。
+
+root确定首批采用原始调用、持久execute intent、最终args三者的完整规范值一致；不接受SDK自动转换扩大业务参数。固定pi-ai验证入口实际执行structuredClone、optional null处理、Value.Convert和Compile.Check，标准JSON schema没有旧Kind Symbol要求，但number/bool可能变为string、optional null可能删除，不能因为未提供prepareArguments就声称参数原样。未来工厂从public getTask读取pi.tool v1的原input `{assistant,callId}` 和execute checkpoint，再通过public api.commit的只读Tx.entry读取原AssistantEntry，匹配原工具名和call ID；回调不创建Doc/Task或其他业务写入，不能在SDK事务内嵌套另一次commit。原记录缺失、重复标签、未知形状、值转换或三者不一致均零业务IO。
+
+首批schema仅使用服务固定的普通标准JSON数据：read的rootRef/path，search的rootRef/path/query，明确required和additionalProperties:false，不加入修复器、任意codec/refine或动态schema。具体rootRef授权格式、路径/查询限制与结果上界在工厂实现设计中单列；schema只验证形状，不能授予根或调用权。原始AssistantEntry及intent复制、方法捕获、每次await后的当前检查都由服务自己的受信适配完成，不能将原SDK对象交给业务backend。
+
+execute收到的是SDK原invocation Context；固定scheduler的base不带父abort signal，所以Context.abortSignal来自该invocation原controller。工厂只捕获核验原生signal并检查取消，不把Context转发给业务backend，也不把任意嵌套Context或plain api对象当作宿主身份凭据。phase registry snapshot含原Tool/Extension/Task可变引用，服务仍需核当前来源与完整声明；设置的env必须是缺省或明确受信实现，own execute不能阻止SDK在调用execute之前执行env。
+
+所有业务IO必须经过已资格的受限读取/搜索backend，实际根、符号链接/别名、硬链接及TOCTOU保护仍复用共同权限/隔离契约。工具结果不带ToolControl或临时新增工具，不提供Shell或业务写操作；专用产物写入是服务自身的固定能力，业务发布另需显式操作。工具异常使用固定码，SDK会把部分错误文字放入模型上下文，不能泄露原异常或秘密路径。
+
+## 恢复和模型后续
+
+root决定首批工具显式replay="unsafe"，待具体读取重放、输入快照及当前授权资格完成后再单独开放safe。只读并不自动等于可重放。固定SDK的safe恢复会按当前同名tool执行，且跳过beforeTool及prepare/schema处理，因此任何未来safe工具仍必须在自己的execute中完成全部准入；恢复时也须核原registry来源，不能仅依赖SDK保存的name/safe字段。
+
+工具阻断、execute异常或isError结果仍可能让generation继续。工具事件及catch不是模型发送门；每次后续付费请求继续经过独立Models派发与attempt账本。SDK任务失败/空闲与物理工具/Provider终止分别判断，未证实的旧活动、预留和结果有效性不能清零。
+
+## 后续实现与验收
+
+先组合公开registry与自有execute准入，默认只用替身SDK/api/backend验证精确工具集、同名覆盖拒绝、当前来源/授权漂移、缺失父身份、safe恢复直接execute的防绕过、参数重捕获、等待期间取消及零IO；不导入SDK或读取真实业务/账号。随后再接共同真实受限backend并准备对应获准原生组合。静态18条来源和替身factory即使通过，也不构成文件保护、任务权威、SDK/恢复、输入计量或T084整体验收。

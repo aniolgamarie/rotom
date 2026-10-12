@@ -65,7 +65,7 @@ def physical_inside(path, root):
 
 class FilePolicy:
   def __init__(self, *, policy, roots, ceiling, grant, mode, verify, workspace, inherited_denials=(),
-      readonly_roots=(), denied_roots=(), secret_roots=(), private_roots=(), source_checkout=None):
+      readonly_roots=(), denied_roots=(), secret_roots=(), private_roots=(), source_checkout=None, approval_ceiling=None):
     validate("permission-policy", policy)
     if mode not in ("ordinary", "managed", "delegate-readonly", "delegate-write"):
       raise ConfigError("pi-execution-mode")
@@ -76,6 +76,9 @@ class FilePolicy:
         raise ConfigError("pi-role-ceiling")
     self.policy, self.roots, self.ceiling, self.grant = map(deepcopy, (policy, roots, ceiling, grant))
     self.mode, self.verify, self.workspace = mode, verify, workspace
+    if approval_ceiling is not None and (type(approval_ceiling) is not str or approval_ceiling not in ("human", "reviewer", "deterministic-policy")):
+      raise ConfigError("pi-policy-approval-classification")
+    self.approval_ceiling = approval_ceiling
     self.denials = list(deepcopy(inherited_denials))
     validate("permission-policy", {"schema_version": 1, "default": "deny", "rules": self.denials})
     if any(rule["effect"] != "deny" for rule in self.denials):
@@ -86,7 +89,8 @@ class FilePolicy:
     self.readonly, self.denied = set(readonly_roots), set(denied_roots)
     if (self.readonly | self.denied) - self.roots.keys() or any(rule["kind"] == "file" and rule["root_ref"] not in self.roots for rule in [*self.policy["rules"], *self.denials]):
       raise ConfigError("pi-permission-root-unbound")
-    self.secrets = tuple(Path(value).resolve(strict=True) for value in secret_roots)
+    # 未来控制目录也要先拒绝；不存在不等于可作为业务文件创建或在初始化后重新开放。
+    self.secrets = tuple(Path(value).resolve(strict=False) for value in secret_roots)
     self.private_roots = tuple(Path(value).resolve(strict=True) for value in private_roots)
     self.source = Path(source_checkout).resolve(strict=True) if source_checkout else None
     self.case_sensitive = {}
@@ -189,6 +193,33 @@ class FilePolicy:
     target = max(allowed, key=lambda item: len(item["root"].parts))
     if write and self.workspace(target["root_ref"], deepcopy(self.grant)) is not True:
       raise Conflict("WORKSPACE_BUSY")
+    # 分类不授权限：在原授权成功后聚合所有匹配allow，不遗漏ceiling外的更广限制。
+    # 枚举聚合潜在后代规则；无关根的更严格规则可能经物理别名进入，保守人工。
+    from .pi_policy_approval import aggregate_approval
+    if any(
+        not inside(value, Path(binding["path"])) and physical_inside(value, Path(binding["path"]))
+        for binding in self.roots.values()):
+      target["approval"] = "human"
+    else:
+      modes = [rule.get("approval", "human") for rule in self.policy["rules"]
+        if rule["effect"] == "allow" and applies(rule, matches)]
+      if operation in ("list", "search"):
+        subtree = False
+        for rule in self.policy["rules"]:
+          if (rule["kind"] != "file" or rule["effect"] != "allow"
+              or tool not in [ALIASES.get(name) for name in rule["tool_ids"]] or operation not in rule["operations"]):
+            continue
+          rule_path = Path(self.roots[rule["root_ref"]]["path"]) / rule["relative_path"]
+          if inside(rule_path, value) or rule["match"] == "subtree" and inside(value, rule_path):
+            modes.append(rule.get("approval", "human"))
+            subtree |= rule["match"] == "subtree" and inside(value, rule_path)
+          elif rule.get("approval", "human") != "deterministic-policy":
+            modes.append("human")
+        if not subtree: modes.append("human")
+      target["approval"] = aggregate_approval(list(dict.fromkeys(modes)))
+    # 仅消费过的可信许可提供上限；每个枚举子项和正文读取均复核，迟到升级直接失败。
+    if self.approval_ceiling is not None and aggregate_approval([self.approval_ceiling, target["approval"]]) != self.approval_ceiling:
+      raise Conflict("OPERATION_APPROVAL_REQUIRED")
     return target
 
 

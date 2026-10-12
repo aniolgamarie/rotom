@@ -9,14 +9,8 @@ import { AttemptJournal } from "../contracts/agentcfg.ts";
 import type { Store, Owner } from "../store/database.ts";
 import type { ChildObservation } from "./child-contract.ts";
 
-export interface DelegationResult {
-  descriptorId: string; nativeRunId: string | null; status: "ended" | "failed" | "unknown";
-  nativeStatus?: string | null; nativeExitCode?: number | null;
-  modelIdentity?: { requested: { provider: string; model: string }; runtimeObservationSource: "client_configuration";
-    responseModel: null; serverWeights: "unverified" };
-  terminationConfirmed: boolean; content: unknown; error: string | null; observations: ChildObservation[];
-  parentHelperDenials?: string[]; notSent?: boolean;
-}
+export type { DelegationResult } from "./delegate-contract.ts";
+import type { DelegationResult } from "./delegate-contract.ts";
 
 const runtimeKey = Symbol.for("agentcfg.pi.runtime.v1");
 const required = ["managed-process", "fresh-context", "guarded-tools", "request-metering", "durable-results", "physical-termination", "workspace-leases"];

@@ -1,0 +1,64 @@
+{
+  "after_seed_sha256": "d30083ff2d5c081ed799c06b66dbe899671f5847d9cab4d93a2876e536a11d61",
+  "before_seed_sha256": "c71c94ea66fc43eb8f978be2ff6094a94c58c0c528019c8d585f931d11b1b85d",
+  "capture_ended_at_utc": "2026-10-07T17:02:01.464294+00:00",
+  "capture_started_at_utc": "2026-10-07T17:01:58.151782+00:00",
+  "limits": [
+    "Package-scoped archive MIT bodies; no independent source-commit attestation.",
+    "Static constructor evidence does not qualify SDK or proxy behavior.",
+    "Ordinary lock-only development generation is not formal installed runtime qualification."
+  ],
+  "method": "official-npm-registry-integrity-pinned-tarball",
+  "profile": "pi-base",
+  "root_overrides": {
+    "@earendil-works/pi-ai@1.0.2": {
+      "http-proxy-agent@9.1.0": "9.0.0",
+      "https-proxy-agent@9.1.0": "9.0.0"
+    }
+  },
+  "schema_version": 1,
+  "sources": [
+    {
+      "archive_file_count": 7,
+      "archive_unpacked_bytes": 15863,
+      "license": {
+        "archive_path": "package/LICENSE",
+        "declared": "MIT",
+        "sha256": "71368fd0f5b4129191e9afcd1e1ef2dc89a9090d3e4d80bbab92dafd032b3bef"
+      },
+      "package": "http-proxy-agent",
+      "package_json": {
+        "archive_path": "package/package.json",
+        "sha256": "13e645dedb65fb37078a736eab293cea757c021e85320ffe0e3a6e66a8ef8d94"
+      },
+      "registry_metadata_sha256": "5a5618317dc520c04c93a3dd21a4dc71fb9b1b200aa2694d830340e46cc00ef2",
+      "registry_metadata_url": "https://registry.npmjs.org/http-proxy-agent/9.0.0",
+      "tarball_integrity": "sha512-FcF8VhXYLQcxWCnt/cCpT2apKsRDUGeVEeMqGu4HSTu29U8Yw0TLOjdYIlDsYk3IkUh+taX4IDWpPcCqKDhCjA==",
+      "tarball_sha1": "473fe9c2b8ffea87611f8c68dfb9872b835c91d1",
+      "tarball_sha256": "379d16c2084477ece2ac7e9558ebc99544981dc6fee6ad92a9c673948d01eebc",
+      "tarball_url": "https://registry.npmjs.org/http-proxy-agent/-/http-proxy-agent-9.0.0.tgz",
+      "version": "9.0.0"
+    },
+    {
+      "archive_file_count": 11,
+      "archive_unpacked_bytes": 25932,
+      "license": {
+        "archive_path": "package/LICENSE",
+        "declared": "MIT",
+        "sha256": "8d8c55319c7729d57be811c747452636688d54f19701ee0752b6b15ad3771d9a"
+      },
+      "package": "https-proxy-agent",
+      "package_json": {
+        "archive_path": "package/package.json",
+        "sha256": "8fff66b77baa7b30b2345cb1b61e9c1c2a38f91d4ce3fa37c5122c60721661ff"
+      },
+      "registry_metadata_sha256": "d4a2d86f1c25586dd27b0058f0ca3e0bd3fbdaab67b10c4b57a62a3501383540",
+      "registry_metadata_url": "https://registry.npmjs.org/https-proxy-agent/9.0.0",
+      "tarball_integrity": "sha512-/MVmHp58WkOypgFhCLk4fzpPcFQvTJ/e6LBI7irpIO2HfxUbpmYoHF+KzipzJpxxzJu7aJNWQ0xojJ/dzV2G5g==",
+      "tarball_sha1": "89256adf9dc20926fe43ea1d3ca0feb9e23cc4bd",
+      "tarball_sha256": "5bcc0e96d09b5551451a49aab2c2c1fcc4fe65d516b9e280afa27b3fe6892506",
+      "tarball_url": "https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-9.0.0.tgz",
+      "version": "9.0.0"
+    }
+  ]
+}

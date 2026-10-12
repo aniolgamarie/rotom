@@ -18,7 +18,24 @@ const runtimeExports = JSON.parse(readFileSync(resolve(runtimeRoot, "package.jso
 const vendorRoot = resolve(runtimeRoot, "../packages/subagents-vendor/src") + "/";
 const processesRoot = resolve(runtimeRoot, "../packages/processes-vendor") + "/";
 const tooling = createRequire(new URL("./tooling/package.json", import.meta.url));
+// 仅三个精确调用文件的公开peer是假导出；runtime能力helper仍解析真实源码。
+const providerURL = name => pathToFileURL(resolve(runtimeRoot, "../packages", name)).href;
+const footerPeer = "data:text/javascript," + encodeURIComponent("export const truncateToWidth = text => text;");
+const todoTextPeer = "data:text/javascript," + encodeURIComponent("export class Text { constructor(text) { this.text = text; } render() { return [this.text]; } }");
+const todoEnumPeer = "data:text/javascript," + encodeURIComponent("export const StringEnum = (values, options = {}) => ({ type: 'string', enum: values, ...options });");
+const providerPeers = new Map([
+  [providerURL("colorful-footer/index.ts"), new Map([["@earendil-works/pi-tui", footerPeer]])],
+  [providerURL("todo-vendor/view/format.ts"), new Map([["@earendil-works/pi-tui", todoTextPeer]])],
+  [providerURL("todo-vendor/tool/types.ts"), new Map([["@earendil-works/pi-ai", todoEnumPeer]])],
+]);
+const todoModules = new Set([
+  "index.ts", "config.ts", "todo.ts", "tool/types.ts", "tool/sanitize.ts", "tool/response-envelope.ts",
+  "view/format.ts", "state/store.ts", "state/replay.ts", "state/state.ts", "state/state-reducer.ts",
+  "state/task-graph.ts", "state/invariants.ts", "state/selectors.ts", "state/i18n-bridge.ts",
+].map(name => providerURL("todo-vendor/" + name)));
 registerHooks({ resolve(specifier, context, next) {
+  const providerPeer = providerPeers.get(context.parentURL)?.get(specifier);
+  if (providerPeer) return { url: providerPeer, shortCircuit: true };
   if (["@earendil-works/pi-coding-agent", "@earendil-works/pi-ai", "@earendil-works/pi-ai/compat", "@earendil-works/pi-tui"].includes(specifier)
       && context.parentURL?.includes("/packages/web-vendor/")) {
     return { url: new URL("./web-host-stub.mjs", import.meta.url).href, shortCircuit: true };
@@ -44,6 +61,10 @@ registerHooks({ resolve(specifier, context, next) {
   if (context.parentURL?.startsWith("file:") && specifier.startsWith(".") && specifier.endsWith(".js")) {
     const parent = fileURLToPath(context.parentURL);
     const target = resolve(dirname(parent), specifier.slice(0, -3) + ".ts");
+    const targetURL = pathToFileURL(target).href;
+    if (todoModules.has(context.parentURL) && todoModules.has(targetURL) && existsSync(target)) {
+      return { url: targetURL, shortCircuit: true };
+    }
     if (parent.startsWith(vendorRoot) && target.startsWith(vendorRoot) && existsSync(target)) {
       return { url: pathToFileURL(target).href, shortCircuit: true };
     }

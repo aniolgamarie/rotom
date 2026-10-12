@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "probe_id": "base-product-sdk-components",
+  "state": "prepared-only",
+  "versions": {
+    "node": "24.14.0",
+    "pi": "1.0.1",
+    "pi_ai": "1.0.2"
+  },
+  "cases": [
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "B08",
+    "B09",
+    "B10",
+    "B11",
+    "B12"
+  ],
+  "limits": {
+    "total_timeout_ms": 120000,
+    "case_timeout_ms": 8000,
+    "source_bytes": 33554432,
+    "source_files": 4096,
+    "fixture_bytes": 262144,
+    "result_bytes": 65536,
+    "sender_calls": 48,
+    "starts": 24,
+    "rpc_calls": 1024,
+    "operations_per_scene": 64
+  },
+  "source_inventory": [],
+  "candidate_inventory": null,
+  "links": [
+    {
+      "path": "node_modules/@agentcfg/pi-runtime",
+      "target": "../../agents/pi/packages/runtime-ui"
+    },
+    {
+      "path": "node_modules/@earendil-works",
+      "target": "/candidate/node_modules/@earendil-works"
+    }
+  ],
+  "packages": [
+    "todo-vendor",
+    "colorful-footer",
+    "loop-guard",
+    "runtime-ui"
+  ],
+  "base_runtime_seed": [
+    "agents/pi/runtime/file-operation-executor.ts",
+    "agents/pi/runtime/image-mime.ts",
+    "agents/pi/runtime/managed-types.ts",
+    "agents/pi/runtime/model-config-source.ts",
+    "agents/pi/runtime/official-file-admission.ts",
+    "agents/pi/runtime/official-file-resolution.ts",
+    "agents/pi/runtime/official-file-runtime.ts",
+    "agents/pi/runtime/official-launch.ts",
+    "agents/pi/runtime/official-model-runtime.ts",
+    "agents/pi/runtime/official-models.ts",
+    "agents/pi/runtime/official-resources.ts",
+    "agents/pi/runtime/official-session.ts",
+    "agents/pi/runtime/official-settings.ts",
+    "agents/pi/runtime/official-shell-tool.ts",
+    "agents/pi/runtime/ordinary-operations.ts",
+    "agents/pi/runtime/private-files.ts",
+    "agents/pi/runtime/private-operation-input.ts",
+    "agents/pi/runtime/regex-search.ts",
+    "agents/pi/runtime/regex-worker.ts",
+    "agents/pi/runtime/resource-selection.ts",
+    "agents/pi/runtime/shell-operation-executor.ts",
+    "agents/pi/runtime/strict-json.ts",
+    "agents/pi/runtime/supervisor-client.ts",
+    "agents/pi/runtime/tool-lookups.ts",
+    "agents/pi/runtime/tool-ownership.ts",
+    "agents/pi/runtime/official-mcp.ts",
+    "agents/pi/runtime/official-mcp-controller.ts",
+    "agents/pi/runtime/official-mcp-http.ts",
+    "agents/pi/runtime/official-mcp-stdio.ts",
+    "agents/pi/runtime/mcp-stdio.ts",
+    "agents/pi/runtime/supervised-stdio.ts",
+    "agents/pi/runtime/mcp-http.ts",
+    "agents/pi/runtime/runtime-module.ts",
+    "agents/pi/runtime/capability-policy.ts",
+    "agents/pi/runtime/official-model-scope.ts"
+  ],
+  "b12": {
+    "status": "public-manager-script-frozen",
+    "execute": true
+  }
+}

@@ -1,0 +1,4 @@
+schema_version = 1
+id = "pi-full"
+agent = "pi"
+# 显式 Full 普通基础候选；委派、Task Keeper、Durable 尚未接入，不构成完整 Full 交付。

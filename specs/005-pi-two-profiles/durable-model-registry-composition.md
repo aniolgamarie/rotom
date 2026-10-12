@@ -1,0 +1,45 @@
+# 单一只读 registry 与 Models 接线决定
+
+当前有界默认组件已验收：最终同四模块412项通过，root关键审查及稳定独立增量复审无开放P1/P2，归档`durable-model-registry-default-review02/`。原404绿后发现的最后snapshot来源P2保留；真实旧源同71项63通过、8失败，修后71包含在最终412中，不相加。未执行官方SDK/Harness、真实模型或业务backend，不签实际agent选择、owner、严格计量、T084/T086或Full资格。
+
+2026-10-06，公开组合9份来源及既有registry/bridge/Models组件说明可以在构造时完成同一extension的接线。此阶段只完成自有工厂与默认替身组合，不打开Harness或数据库，不签owner、agent选择、真实读取/模型/计量资格。
+
+## 自有接口与生命周期
+
+保留现有`createDurableReadonlyRegistry`六字段接口及无hooks行为。新增显式`createDurableReadonlyModelRegistry`，输入同六字段再加`modelDispatch`。后者是闭合受信对象，恰含原Models派发所需`models, ai, store, model, authorize, resultFacts, limits`；拒绝注入bridge或修改上游方法。它同步创建一个自有原`createDurableCallIdentityBridge()`，在同一个registry构造过程安装RootTask、只读两工具与原generation/compaction handlers，再用同一原桥创建已验收的Models dispatch。不导入或启动SDK；原SDK公开接口由受信调用方注入。
+
+返回冻结`{registry, models, check, close}`，仅供受信Harness工厂；不向业务客户端暴露bridge、extension安装或控制对象。models恰为原派发工厂的受限Models门面；原provider/model-attempts/bridge模块不修改。没有循环初始化：Models调用在整个工厂构造并验收后才可能获得入口，构造不发送、读业务文件或写账本。
+
+新增组合接口中的authorize/resultFacts callback以同一捕获原函数调用，this固定为原modelDispatch对象；箭头函数忽略this。store/models/hook/bridge分别保留各自原对象receiver。旧provider内部复制配置的callback接收者没有公开约定，本新增契约不改旧provider代码或旧无Models工厂。
+
+在模型派发使用的自有bridge门面中，take/check同步先核整个固定registry工厂，再以捕获的原方法和receiver进入同一私有原bridge；返回和传递原identity对象，不复制为授权。这是自有门面组合，不修改原桥或SDK方法。它使Models每次原alive检查同时核源/registry，不能只在第一次authorize调用时检查。原bridge的take/check/close、两个handler对象及方法身份均捕获并核漂移。原provider既有unknown、不重发、先sending回执后发送与迟到受限结算语义保留。
+
+整个工厂check在readonly.check的verifyCurrent/公开snapshot等同步回调之后，再做一次纯只读原输入、modelDispatch各引用及原Models/ai/store方法、桥/hook引用复核；该最终核对不再执行外来回调。否则新桥门面可能在原provider.configuration之后引入返回true却同步更改原配置的方法窗口，最后一次alive不能证明实际入口当前。同步回调当场改变模型方法/授权配置的具体反例必须零旧/新底层发送并完整封闭新工厂。
+
+第一轮稳定代码审查进一步发现同类P2：Models原来源虽在末尾复核，原readonly source结构/方法仍只在公开snapshot回调之前检查，回调可改变原Root/builtin/AssistantEntry定义或SDK/control/registry/snapshot方法后返回原对象。本新增有wiring分支必须在最后snapshot调用及Models origin检查之后，再做私有finalSourceCheck：核完整原六字段输入引用、SDK三个构造方法与AssistantEntry引用、control三方法、registry四方法、snapshot六方法，以及原builtin/root/AssistantEntry结构和closed标记。该检查只读捕获的数据描述符，不再调用外来方法，不增加返回接口；旧无hooks分支的原调用时序保持。真实旧源发送反例和修后同组检查单独留存，首轮404绿不能签最终验收。这仍只约束已捕获的公开来源，不能证明任意恶意SDK闭包内部状态或真实phase选择。
+
+模型授权callback不由工厂补造：调用原authorize并由原provider核完整准备记录，保持已验收的迟到结算边界。工厂核原modelDispatch闭合字段与捕获引用；provider继续核model/limits完整规范值及原Models方法。新发送链另核原store prepare/commitSending方法和receiver；若用了自有store门面，不能以门面方法未变掩盖底层原方法漂移。authorize、resultFacts或其他方法漂移不得通过复制的旧配置掩盖。check不是实际owner/读取授权或token计量证明。
+
+独立设计复审发现一个P2：仅桥take/check门面不足以复用原provider的迟到事实资格；关闭后call.done不执行alive，复制的旧modelDispatch配置会掩盖原collector/store替换。本次保留原失败设计报告并补以下专用接线，不修改provider：私有resultFacts与store门面共同使用factsOrigin检查。该检查在closed后仍可运行，核原顶层modelDispatch own引用、原modelDispatch闭合数据描述符、其中resultFacts/store原引用，以及原store recordResult/settle方法；不要求bridge仍活、registry仍允许新派发，不重新authorize。resultFacts await前后、recordResult await前后、settle await前后均核factsOrigin，再以原方法和receiver进入各阶段。源collector/store替换、getter/Proxy或这些方法漂移固定失败，已经落盘的部分真实事实不回滚、不冒称未发送。只在发送/发布链使用整个工厂check；事实链单独允许精确旧attempt受限结算，不复活关闭门面。超出此来源边界的预算/终止可信度仍由原store/resultFacts资格负责。
+
+close先永久标记整个工厂closed，封闭只读入口，再关闭私有bridge，最后关闭自有派发门面；在outer stream错误发布回调可能重入之前，新入口已全部拒绝。幂等close，不卸载/关闭共享SDK/数据库，不释放unknown预算或清理原任务。构造失败也关闭已创建的自有桥/门面，不把部分工厂交给调用方；不修改SDK以修复失败。
+
+整个工厂check任何失败都进入上述完整close，不能只封闭readonly部分而留下其他pending Models调用；pending只发布原固定unknown错误，不证明底层物理发送已停止。受限Models.getModel仅查询已固定路线metadata，不授权或发送；真实模型入口仍必须通过整个工厂/同桥准入。关闭后保留原getModel返回undefined的行为。
+
+## 公开安装形状与固定检查
+
+固定SDK公开API是`hook(TaskToken, handlers) -> HookRegistration`，不是TaskBinding。durable注入额外公开hook、GenerationTask、CompactionTask；两token必须分别===最初registry原builtin pi.generation/pi.compaction，name/version及完整原token结构由现有guard核。只调用恰两次hook，原receiver；原返回闭合`{task,handlers}`，task为原token name，handlers===对应私有原bridge对象。只冻结自有extension/数组容器，不冻结SDK token/snapshot或hook返回对象；记录返回对象/完整字段引用，后续漂移拒绝。
+
+构造期同一自有`rotom.durable.readonly` extension：tasks仅RootTask，tools仅两个原对象，hooks恰上述两原HookRegistration。没有额外extension/task/tools/wraps/sections或对builtin重注册；仍4task/2tool/1extension。原registry/snapshot和整个extension/注册引用闭合核对。旧无Models工厂仍不安装hooks，不能通过晚加hooks升级它；显式新工厂没有热加入口。
+
+## agent选择与权威限制
+
+公开SDK只运行conversation的agent.extensions选中的hooks。installed/fixed snapshot、四task或字符串registryIdentity不能证明conversation选中了本extension。可信服务控制面必须核原存储agent选择、同一phase snapshot、ownership链与永久完整受理/授权，且后续Harness工厂固定这些配置；本阶段没有该控制面，不签实际agent选择。默认测试显式演示选中hooks可登记、未选中则原Models take失败且零underlying发送；不将mock手动调用hook当真实SDK证明。
+
+handler普通throw可能被宿主报告后继续；原桥退役/无登记后原Models失败关闭才阻止派发。bridge ID只用于原任务查找，Root/读取根/预算必须独立核。retry/recovery/deferred无合格登记仍unsupported或unknown；此组合不放宽现有受限操作或自动Reviewer关闭政策。
+
+## 默认验收
+
+变更仅自有registry模块、新组合测试；复用原140 registry、82 bridge及119 Models受影响默认检查，分别记录或一次显式组合运行，不从旧日志求和。新mock组合要执行同一私有原桥的真实自有hook→Models facade路径，验证generation stream与compaction complete均遵守prepare/sending/原入口/持久结果次序，缺选中hook零发送。可用自有假store/流，不启动SDK/模型或实际数据库。
+
+必须核4task/2tool/两hooks/原receiver与原handler、原identity跨await；hook返回畸形/交换token/复制handler、输入/方法/registry/snapshot/hook/source漂移在各准入窗口零新发送，close及重入失败、已关闭工具拒绝、同bridge消费者不得受理其他登记。迟到链需真实反例覆盖collector、recordResult、settle各await期间原collector/store引用及record/settle方法替换；outer已关闭但来源未变时保留原attempt真实事实，漂移后不得由旧复制配置继续记账或发布成功，不退款/重发。原140无Models路径回归必须保留；固定guard/tmpHOME/XDG/断网/假子进程。写完稳定diff后root验收关键不变量，独立executor定点复审，所有未验证项继续保持开放。

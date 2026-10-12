@@ -1,0 +1,1 @@
+{"packages":["npm:probe-do-not-install@0.0.0"],"extensions":["./extensions/decoy.mjs"],"skills":["./skills/decoy"],"prompts":["./prompts/decoy.md"],"themes":["./themes/decoy.json"]}

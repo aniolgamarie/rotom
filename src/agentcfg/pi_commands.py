@@ -13,7 +13,7 @@ from .deployment import json_bytes
 from .paths import configured_path, relative_path
 from .pi_checks import compile_check, verify_check
 from .pi_guarded_files import root_identity
-from .pi_supervisor import SpawnCommand, closed
+from .pi_supervisor import OrdinaryCapabilityUnavailable, SpawnCommand, closed
 from .process import environment, DependencyError
 from .schema import ConfigError
 from .storage import Conflict, Tree, ensure_private
@@ -79,7 +79,8 @@ class OrdinaryCommands:
     if any(row["effect"] == "deny" for row in rules) or not any(row["effect"] == "allow" for row in rules):
       raise Conflict("PERMISSION_DENIED")
     # 命令按固定argv授权；文件deny额外投影到命名空间，不能通过shell重新开放。
-    denied += [Path(value).resolve(strict=True) for value in self.host.config.get("protected_roots", [])]
+    # 控制根尚未创建也保留拒绝路径；范围内的缺失deny由执行命名空间拒绝，不创建占位。
+    denied += [Path(value).resolve(strict=False) for value in self.host.config.get("protected_roots", [])]
     if inspection is None: denied += [Path(row["path"]) / ".git" for row in roots.values() if (Path(row["path"]) / ".git").exists() or (Path(row["path"]) / ".git").is_symlink()]
     for rule in manifest["permission_policy"]["rules"]:
       if rule["kind"] != "file" or rule["effect"] != "deny": continue
@@ -171,7 +172,9 @@ class OrdinaryCommands:
     if "service_files" in value:
       from .pi_services import verify_inputs
       verify_inputs(value)
-    if "web_file_id" in value: self.host.operations.web_files.verify(value["web_file_id"])
+    if "web_file_id" in value:
+      if self.host.operations.web_files is None: raise OrdinaryCapabilityUnavailable()
+      self.host.operations.web_files.verify(value["web_file_id"])
     verify_check(value["check"])
     for job in value.get("readseek_driver", {}).get("jobs", []): verify_check(job["check"])
     for check in value.get("readseek_auxiliary_checks", []): verify_check(check)
@@ -187,6 +190,16 @@ class OrdinaryCommands:
       if tree.read(definition["entrypoint"]) is None: raise DependencyError("普通命令监督入口缺失")
     home = self.host.root / "activity/ordinary-command-homes" / lease["lease_id"]; ensure_private(home)
     document = {"check": value["check"], "temporary": str(home), "lease_id": lease["lease_id"], "grant_generation": lease["grant_generation"], "denied_paths": value["denied_paths"]}
+    if sys.platform == "linux" and self.host.manifest().get("profile_id") in ("pi-base", "pi-full"):
+      # 现代绑定命令与服务消费同一已核验独立资产；不借系统旧bwrap作回退。
+      from .pi_pid_namespace import host_namespace_binary
+      import hashlib
+      helper = host_namespace_binary(self.host)
+      with Tree(self.host.runtime_root) as tree:
+        raw_helper = tree.read("bin/pi-bwrap", max_bytes=16 * 1024 * 1024)
+      if raw_helper is None or helper != self.host.runtime_root / "bin/pi-bwrap":
+        raise DependencyError("现代普通命令隔离helper未绑定")
+      document["namespace_helper"] = {"path": str(helper), "sha256": hashlib.sha256(raw_helper[0]).hexdigest()}
     if "readseek_driver" in value: document["readseek_driver"] = value["readseek_driver"]
     input_path = "activity/ordinary-command-inputs/" + lease["lease_id"] + ".json"
     with Tree(self.host.root) as tree: tree.write_immutable(input_path, json_bytes(document))

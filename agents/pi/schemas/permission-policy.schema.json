@@ -80,7 +80,15 @@
           },
           "command_ref": {
             "type": "string",
-            "pattern": "^(check|tool):[a-z][a-z0-9_-]{0,63}$"
+            "pattern": "^(check|tool|mcp):[a-z][a-z0-9_-]{0,63}$"
+          },
+          "approval": {
+            "type": "string",
+            "enum": [
+              "human",
+              "reviewer",
+              "deterministic-policy"
+            ]
           }
         },
         "required": [
@@ -166,6 +174,22 @@
                   "minItems": 1,
                   "uniqueItems": true
                 }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "effect": {
+                  "const": "deny"
+                }
+              }
+            },
+            "then": {
+              "not": {
+                "required": [
+                  "approval"
+                ]
               }
             }
           }

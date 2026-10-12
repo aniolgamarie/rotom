@@ -32,7 +32,8 @@ const env = {
 };
 let result;
 try {
-  const entry = ["--import", join(root, "tests/fixtures/pi/mock-guard.mjs"),
+  // 固定Node24公开ESM parentURL解析；不继承宿主loader、NODE_OPTIONS或其它CLI flags。
+  const entry = ["--experimental-import-meta-resolve", "--import", join(root, "tests/fixtures/pi/mock-guard.mjs"),
     join(root, "tests/fixtures/pi/mock-entry.mjs"), ...files];
   if (process.platform === "linux" && existsSync("/usr/bin/bwrap")) {
     // 新版 Node 权限模式禁止 fsync/symlink；由 OS 保持更窄的文件边界，再允许这些真实临时文件操作。

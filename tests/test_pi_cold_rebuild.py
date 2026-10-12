@@ -168,3 +168,10 @@ def test_cursor_cold_expectation_includes_readseek_tools():
   assert native_cases("pi-cursor") == ("host-resources", "migration-conflicts", "model-delegate-replacement", "budget-permissions",
     "termination-recovery", "readseek-tools")
   assert "readseek-tools" not in native_cases("pi-managed")
+
+
+def test_base_installation_does_not_run_or_claim_legacy_native_matrix(tmp_path):
+  from agentcfg.pi_cold_rebuild import verify_native_target
+  result = verify_native_target(tmp_path, tmp_path, "pi-base", {}, {},
+    lambda *_a, **_k: pytest.fail("modern Base must not start legacy validation host"))
+  assert result == {"native_execution": "not-run", "native_cases": [], "native_reason": "modern-product-validation-required"}

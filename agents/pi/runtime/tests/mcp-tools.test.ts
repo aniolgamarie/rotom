@@ -61,3 +61,30 @@ test("old adapter cleanup cannot unregister another runtime or adapter generatio
     await assert.rejects(next(), /STALE/);
   } finally { delete globalThis[slot]; }
 });
+
+test("direct lookup rejects an old runtime binding with the execution stale reason", async () => {
+  const runtime = fixture(), previous = globalThis[slot]; globalThis[slot] = runtime;
+  let calls = 0;
+  try {
+    const execute = registerMcpTool("docs_search", "docs", "search", async () => ++calls);
+    assert.equal(isBoundMcpTool(runtime, "docs_search"), true);
+    globalThis[slot] = fixture();
+    assert.throws(() => isBoundMcpTool(runtime, "docs_search"), error => error.message === "MCP_DIRECT_TOOL_STALE" && error.exitCode === 4);
+    assert.equal(isBoundMcpTool(runtime, "missing_tool"), false);
+    await assert.rejects(execute(), error => error.message === "MCP_DIRECT_TOOL_STALE" && error.exitCode === 4);
+    assert.equal(calls, 0);
+  } finally { if (previous === undefined) delete globalThis[slot]; else globalThis[slot] = previous; }
+});
+
+test("ordinary preflight propagates a stale MCP claim instead of admitting its service", async () => {
+  const runtime = fixture(), previous = globalThis[slot]; globalThis[slot] = runtime;
+  let calls = 0;
+  try {
+    registerMcpTool("docs_search", "docs", "search", async () => ++calls);
+    const operations = new OrdinaryOperations({}, runtime), event = { toolName: "docs_search" };
+    assert.deepEqual(await operations.preflight(event, {}, {}, "main"), { kind: "service", tool_name: "docs_search" });
+    globalThis[slot] = fixture();
+    await assert.rejects(operations.preflight(event, {}, {}, "main"), error => error.message === "MCP_DIRECT_TOOL_STALE" && error.exitCode === 4);
+    assert.equal(calls, 0);
+  } finally { if (previous === undefined) delete globalThis[slot]; else globalThis[slot] = previous; }
+});

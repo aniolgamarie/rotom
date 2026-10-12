@@ -2,6 +2,8 @@
 
 Pi 迁移 spec 已按 2026-09-24 用户确认的范围完成：四配方、实例隔离、配置部署、Task Keeper 和 model-delegate 软件集成，以及 Linux x86_64 四配方 mock/native 与每配方双路径冷重建。候选 `9d6a9270` 已冻结，当前软件范围 81 项验收全部通过。其他三平台实机及真实账号／服务验证已移至[独立后续清单](follow-ups/pi-platform-and-live-validation.md)，仍为未验证。具体证据见 [完成报告](acceptance/pi-spec-closure-20260924/README.md)、[实施任务](../specs/001-unify-pi-capabilities/tasks.md)和 [支持矩阵](acceptance/pi-support-matrix.md)。
 
+正在实施的新 Base/Full 方案使用独立现代锁，尚未完成产品验收；当前状态及能力边界见 [Base/Full 升级说明](pi-two-profiles.md)。本文四配方的历史通过结果不能作为新方案的交付证据。
+
 ## 配置分别放在哪里
 
 上述关闭结果绑定历史候选锁 `9d6a9270…`；当前锁和源码变化后的 native/cold 状态以 [支持矩阵的当前 checkout 说明](acceptance/pi-support-matrix.md#当前-checkout-与历史证据) 为准，不继承旧候选的通过结果。
@@ -60,6 +62,8 @@ Linux 四个配方都安装锁定的 bwrap 辅助程序，Pi 宿主在独立 PID
 完整解析后仍无 `main` 的普通配方可以进入 bootstrap 登录界面，但不能派发任务。仓库现有 Pi 配方未声明 `main` 时会继承公共 Kimi Code 默认；选择 `pi-cursor` 的插件不等于自动绑定 Cursor 主模型，需要本机明确绑定所选模型，角色覆盖优先。API key 使用 `secret:名称`，运行时转换成实例环境引用。OAuth 在目标实例的原生登录流程中建立；不自动读取系统 Cursor 账号、旧 Pi auth.json 或全局 CODEX_HOME。Codex 显式控制与登录流程见 [model-delegate 使用说明](../shared/skills/model-delegate/USAGE.md)。
 
 ## Task Keeper
+
+结构化 verifier JSON 结果最多 1 MiB，并拒绝重复键和非有限数值；超限或歧义结果记为 unknown，原 stdout 采集上限不变。TAP/pytest 计数解析保持原边界。
 
 [pi-managed.toml](../examples/pi-managed.toml) 展示完整的机器绑定结构：
 

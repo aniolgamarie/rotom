@@ -5,15 +5,19 @@ export function requireOrdinaryHelper(runtime, capability, serviceRunId = null) 
   if (!runtime || runtime.owner?.role !== "manager") reject("CAPABILITY_MISSING", 5);
   if (runtime.manifest.bootstrap) reject("UNBOUND_MODEL", 2);
   if (runtime.managedRequestScope?.getStore()) reject("UNMETERED_PARENT_HELPER", 5);
-  const manager = globalThis[Symbol.for("agentcfg.pi.managed.v1")]?.manager;
   if (serviceRunId !== null && !["pi-mcp", "pi-readseek", "pi-web"].includes(capability)) reject("HELPER_SERVICE_ID_INVALID", 4);
-  const active = typeof manager?.blocksOrdinaryHelpers === "function" ? manager.blocksOrdinaryHelpers(capability === "pi-web" ? serviceRunId : null)
-    : serviceRunId && typeof manager?.listAgents === "function"
-    ? manager.listAgents().some(row => row.id !== serviceRunId && ["running", "queued"].includes(row.status))
-    : manager?.hasRunning();
-  if (runtime.manifest.options.task_keeper?.enabled && active) reject("UNMETERED_PARENT_HELPER", 5);
+  if (runtime.manifest.options.task_keeper?.enabled) {
+    const manager = globalThis[Symbol.for("agentcfg.pi.managed.v1")]?.manager;
+    const active = typeof manager?.blocksOrdinaryHelpers === "function" ? manager.blocksOrdinaryHelpers(capability === "pi-web" ? serviceRunId : null)
+      : serviceRunId && typeof manager?.listAgents === "function"
+      ? manager.listAgents().some(row => row.id !== serviceRunId && ["running", "queued"].includes(row.status))
+      : manager?.hasRunning();
+    if (active) reject("UNMETERED_PARENT_HELPER", 5);
+  }
   const selected = new Set([...runtime.manifest.plugins, ...Object.keys(runtime.manifest.resource_ids?.extensions ?? {})]);
-  if (!selected.has(capability)) reject("CAPABILITY_NOT_SELECTED", 5);
+  const nativeMcp = capability === "pi-mcp" && ["pi-base", "pi-full"].includes(runtime.manifest.profile_id)
+    && runtime.manifest.native_mcp?.schema_version === 1;
+  if (!selected.has(capability) && !nativeMcp) reject("CAPABILITY_NOT_SELECTED", 5);
 }
 export function compactionOwner(manifest) {
   const owner = manifest.options.compaction?.owner ?? "native";

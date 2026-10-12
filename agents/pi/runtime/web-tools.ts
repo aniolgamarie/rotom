@@ -3,10 +3,12 @@ import { requireOrdinaryHelper } from "./capability-policy.ts";
 import { reject } from "./managed-types.ts";
 import { closeWebCurators, webCuratorSettings } from "./web-listener.ts";
 import { claimTool } from "./tool-ownership.ts";
+import { registerToolLookup } from "./tool-lookups.ts";
 const registries = new WeakMap();
 export function bindWebTools(pi) {
   const runtime = globalThis[Symbol.for("agentcfg.pi.runtime.v1")];
   if (!runtime || runtime.owner?.role !== "manager" || !runtime.manifest.plugins.includes("pi-web")) reject("WEB_NOT_SELECTED", 5);
+  registerToolLookup(runtime, "pi-web", isBoundWebTool);
   const owner = {}, claims = new Set();
   let closed = false;
   const current = (serviceId = null) => {

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "scenario_id": "daily-mvcc-boundary-v1",
+  "checks": ["S06", "S07"],
+  "profiles": ["pi-base", "pi-full"],
+  "platform": "linux-x86_64",
+  "editable": ["main.cpp", "editor-note.txt"],
+  "readonly_oracle": ["README.md", "scenario.json", "checker.py", "editor-task.sh", "main.cpp"],
+  "cpp": {"task": "Make snapshot visibility inclusive of commits and tombstones at the snapshot boundary without unrelated refactoring.", "minimum_checks": 16, "baseline": "failed", "fixed": "passed"},
+  "shell": {"task": "Use a finite printf/sort pipeline and redirect its output into the project build directory.", "lines": 3},
+  "editor": {"task": "Use headless Neovim without user config/plugins to change visibility: pending into visibility: checked.", "initial": "visibility: pending\nboundary: inclusive\n"},
+  "execution": "not-run",
+  "native": "not-run",
+  "live": "not-run"
+}

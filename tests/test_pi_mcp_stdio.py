@@ -6,10 +6,15 @@ from agentcfg.schema import ConfigError
 from test_pi_operations import setup
 
 
-def test_only_selected_stdio_service_can_register_persistent_capacity(tmp_path):
-  operations, host, cwd, principal = setup(tmp_path)
+@pytest.mark.parametrize("native", [False, True])
+def test_only_selected_stdio_service_can_register_persistent_capacity(tmp_path, native):
+  operations, host, cwd, principal = setup(tmp_path, plugins=[] if native else ["pi-mcp"])
   executable = tmp_path / "server"; executable.write_text("#!/bin/sh\nexit 0\n"); executable.chmod(0o700)
-  manifest = host.manifest(); manifest["plugins"] = ["pi-mcp"]
+  manifest = host.manifest(); manifest["plugins"] = [] if native else ["pi-mcp"]
+  if native:
+    manifest["profile_id"] = "pi-base"
+    manifest["native_mcp"] = {"schema_version": 1,
+      "bindings": {name: {"transport": "stdio", "command_ref": "fixture"} for name in ("docs", "other")}}
   manifest["options"]["external_tools"] = {"fixture": {"executable": str(executable), "version": "fixture", "project_root": "project",
     "read_roots": ["project"], "write_roots": [], "timeout_seconds": 300, "interactive": True}}
   manifest["options"]["mcp"] = {"servers": {"docs": {"transport": "stdio", "command_ref": "fixture"}, "other": {"transport": "stdio", "command_ref": "fixture"}}}

@@ -1,10 +1,11 @@
 // 注册记录属于具体运行时；跨插件不得接管同名入口。
 import { reject } from "./managed-types.ts";
 const registries = new WeakMap();
+export const readseekToolNames = new Set(["edit", "grep", "search", "refs", "rename", "def", "digest", "view", "write"].map(name => "readSeek_" + name));
 export const reservedToolNames = new Set(["read", "write", "edit", "rename", "find", "grep", "ls", "bash", "editor", "process",
   "Agent", "kernel_task", "model_delegate", "get_subagent_result", "steer_subagent", "mcp", "mcpScript",
   "smart_compact", "smart_recall", "smart_save_memory",
-  ...["edit", "grep", "search", "refs", "rename", "def", "digest", "view", "write"].map(name => "readSeek_" + name)]);
+  ...readseekToolNames]);
 export const webToolNames = new Set(["web_search", "source_check", "fetch_content", "get_search_content"]);
 export function claimTool(runtime, name, owner, prefix) {
   if (typeof name !== "string" || !name || name.length > 256 || /[\x00-\x20\x7f]/.test(name)

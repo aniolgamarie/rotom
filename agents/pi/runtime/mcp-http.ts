@@ -67,7 +67,7 @@ export async function mcpHttpFetch(runtime, name, { httpRequest = http.request, 
       let agent;
       if (proxyAgent) agent = await proxyAgent(route.proxy_url, protocol, options);
       else {
-        const module = await runtimeModule(protocol === "https:" ? "https-proxy-agent" : "http-proxy-agent");
+        const module = await runtimeModule(protocol === "https:" ? "https-proxy-agent" : "http-proxy-agent", runtime);
         const Agent = protocol === "https:" ? module.HttpsProxyAgent : module.HttpProxyAgent;
         agent = new Agent(route.proxy_url, options);
       }

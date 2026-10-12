@@ -132,3 +132,26 @@ def test_start_uses_profile_timeout_and_reports_execution_failure_as_nonzero(tmp
   code = module.main(["start", "--instance", str(instance), "--backend", "pi", "--mode", "review", "--provider", "fixture", "--model", "selected", "--cwd", str(tmp_path), "--prompt-file", str(prompt)])
   assert code == 5 and calls[0]["timeout_seconds"] == 20
   assert json.loads(capsys.readouterr().out)["state"] == "failed"
+
+
+def test_modern_cli_query_missing_budget_and_disabled_component_never_opens_control(tmp_path):
+  from agentcfg.model_delegate_modern_cli import execute, selected
+  from agentcfg.model_delegate_v3_execution import LogicalExecutions
+  from agentcfg.model_delegate import DelegationRuns
+  from test_model_delegate_v3_intents import ORIGIN, BINDING, submit
+  from test_model_delegate_v3_execution import BUDGET
+  from types import SimpleNamespace
+  instance = tmp_path / "instance"
+  binding = {"machine": "fixture", "local": str(tmp_path / "local.toml"), "profile": "pi-full"}
+  origin = {**ORIGIN, "instance_id": digest({"instance": str(instance), "binding": binding})}
+  with Tree(instance, create=True) as tree:
+    tree.write_state("pi-home/agentcfg-manifest.json", json_bytes({"profile_id": "pi-full", "plugins": [], "options": {}}))
+  ledger = LogicalExecutions(DelegationRuns(instance / "pi-home/model-delegate/runs"))
+  run = ledger.begin(origin, submit(), BINDING, BUDGET)
+  ledger.unknown(run["run_id"], run["action_key"], "DELEGATE_SEND_UNKNOWN")
+  before = {str(p): p.read_bytes() for p in instance.rglob("*.json")}
+  assert selected(instance, run["run_id"]) is True
+  result = execute(instance, {"binding": binding}, SimpleNamespace(action="status", run_id=run["run_id"]),
+    lambda *a: pytest.fail("query must not open control, register source, or send"))
+  assert result["status"] == "unknown"
+  assert before == {str(p): p.read_bytes() for p in instance.rglob("*.json")}

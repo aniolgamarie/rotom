@@ -2,8 +2,8 @@
 import { readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createHash } from "node:crypto";
-import { privateFile } from "./launch.ts";
-import { validateWorkerInput } from "./managed-worker.ts";
+import { privateFile } from "./private-files.ts";
+import { validateWorkerInput } from "./managed-worker-contract.ts";
 import { assertObservation } from "./managed-observation.ts";
 import { canonical, clone, closed, digest, reject, text } from "./managed-types.ts";
 

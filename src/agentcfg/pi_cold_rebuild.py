@@ -22,13 +22,13 @@ SOURCE_FILES = ("agentcfg", "pyproject.toml", "uv.lock")
 
 
 def prepare_cold_configuration(checkout, base, home, profile, run):
-  from .pi_scope import PROFILES
+  from .pi_cold_sandbox import COLD_PROFILES
   from .pi_validation_fixture import prepare_configuration
-  if profile not in PROFILES: raise ConfigError("pi-cold-profile")
-  programs = {name: shutil.which(name) for name in (PROFILES[profile], "git")}
+  if profile not in COLD_PROFILES: raise ConfigError("pi-cold-profile")
+  programs = {name: shutil.which(name) for name in (COLD_PROFILES[profile], "git")}
   if not all(programs.values()): raise DependencyError("冷重建需要显式解释器和 Git 前提")
   environment = checkout / ".venv"
-  bindings = {"engine": str(Path(programs[PROFILES[profile]]).resolve(strict=True)), "git": str(Path(programs["git"]).resolve(strict=True)),
+  bindings = {"engine": str(Path(programs[COLD_PROFILES[profile]]).resolve(strict=True)), "git": str(Path(programs["git"]).resolve(strict=True)),
     "python": str(Path(sys._base_executable).resolve(strict=True)), "python_runtime": str(Path(sys.base_prefix).resolve(strict=True)),
     "python_packages": sysconfig.get_path("purelib", vars={"base": str(environment), "platbase": str(environment)})}
   def git(argv, **kwargs):
@@ -94,6 +94,10 @@ def native_cases(profile):
 
 
 def verify_native_target(checkout, base, profile, installed, environment, run):
+  if profile == "pi-base":
+    # 旧001场景强依赖legacy委派/迁移；现代产品证据使用005入口另验。
+    # 冷安装校验可以完成，但未运行当前产品矩阵不能记native passed。
+    return {"native_execution": "not-run", "native_cases": [], "native_reason": "modern-product-validation-required"}
   from .pi_validation_native import scenarios
   records = []
   root = base / "native"; ensure_private(root)
@@ -133,7 +137,7 @@ def cold_rebuild(repository, profile, destination, *, allow_host=False, run=None
   if allow_host is not True: raise ConfigError("pi-cold-authorization-required")
   started = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
   repository = Path(repository).absolute(); destination = Path(destination).absolute()
-  lock = PiBackend().read_lock(repository)
+  lock = PiBackend(profile=profile).read_lock(repository)
   if profile not in lock.metadata["profile_slices"] or platform_id() not in lock.metadata["platforms"]:
     raise ConfigError("pi-cold-slice-platform")
   if destination.exists() or destination.is_symlink() or destination.is_relative_to(repository): raise Conflict("COLD_TARGET_EXISTS")
@@ -145,7 +149,7 @@ def cold_rebuild(repository, profile, destination, *, allow_host=False, run=None
   frozen_digest = None
   try:
     frozen_digest = copy_source(repository, frozen)
-    if PiBackend().read_lock(frozen).identity != lock.identity: raise Conflict("COLD_LOCK_CHANGED")
+    if PiBackend(profile=profile).read_lock(frozen).identity != lock.identity: raise Conflict("COLD_LOCK_CHANGED")
   except (ConfigError, Conflict, DependencyError, OSError):
     frozen_digest = None
   if (frozen_digest is not None and run is None and inspect is verify_installation and configure is prepare_cold_configuration
@@ -156,7 +160,7 @@ def cold_rebuild(repository, profile, destination, *, allow_host=False, run=None
     entry = ("import json,sys;from pathlib import Path;root=Path(sys.argv[1]);sys.path.insert(0,str(root/'src'));"
       "from agentcfg.pi_cold_rebuild import _run_targets,verify_installation,prepare_cold_configuration,verify_native_target,isolated_runner;"
       "from agentcfg.pi_dependencies import PiBackend;from agentcfg.storage import Tree;from agentcfg.deployment import json_bytes;import subprocess;"
-      "destination=Path(sys.argv[3]);value=_run_targets(root,sys.argv[5],PiBackend().read_lock(root),sys.argv[2],destination,subprocess.run,verify_installation,sys.argv[4],prepare_cold_configuration,verify_native_target,isolated_runner);"
+      "destination=Path(sys.argv[3]);value=_run_targets(root,sys.argv[5],PiBackend(profile=sys.argv[2]).read_lock(root),sys.argv[2],destination,subprocess.run,verify_installation,sys.argv[4],prepare_cold_configuration,verify_native_target,isolated_runner);"
       "tree=Tree(destination);tree.__enter__();tree.write_new('frozen-result.json',json_bytes(value));tree.__exit__(None,None,None)")
     completed = subprocess.run([sys.executable, "-B", "-I", "-c", entry, str(frozen), profile, str(destination), str(uv), frozen_digest],
       cwd=frozen, env=env, capture_output=True, timeout=28800)
@@ -197,7 +201,7 @@ def _run_targets(frozen, frozen_digest, lock, profile, destination, run, inspect
       if frozen_digest is None: raise Conflict("COLD_SOURCE_UNAVAILABLE")
       outcome["source_digest"] = copy_source(frozen, checkout)
       if outcome["source_digest"] != frozen_digest: raise Conflict("COLD_SOURCE_CHANGED")
-      copied = PiBackend().read_lock(checkout)
+      copied = PiBackend(profile=profile).read_lock(checkout)
       if copied.identity != lock.identity: raise Conflict("COLD_LOCK_CHANGED")
       target_run = isolate(base, profile, uv, run)
       local = configure(checkout, base, home, profile, target_run)

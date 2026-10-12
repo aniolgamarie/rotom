@@ -1,0 +1,39 @@
+{
+  "version": "0.154.0",
+  "source": "https://github.com/openai/codex",
+  "tag": "rust-v0.154.0",
+  "commit": "6b9826e3aa83b1a5947db50f4332cb9c65f1b340",
+  "archive_url": "https://codeload.github.com/openai/codex/tar.gz/6b9826e3aa83b1a5947db50f4332cb9c65f1b340",
+  "archive_sha256": "848c7ffac62e21b14edc2048d2e5b7c82b31c556afa4b0d305da0f7d5aa794f4",
+  "scope": "Unmodified public JSON parameter schemas and license/notice only; no executable source or CLI",
+  "files": {
+    "ThreadStartParams.json": {
+      "source_path": "codex-rs/app-server-protocol/schema/json/v2/ThreadStartParams.json",
+      "sha256": "792e2f32e37cece971bd616664ea2053741acbed4e9c92e9d1766427718f2ecd"
+    },
+    "ThreadResumeParams.json": {
+      "source_path": "codex-rs/app-server-protocol/schema/json/v2/ThreadResumeParams.json",
+      "sha256": "36b2854eb802559e17b0e5639385a1e39d5279326c50e2cdb836749b6dd7cb6f"
+    },
+    "TurnStartParams.json": {
+      "source_path": "codex-rs/app-server-protocol/schema/json/v2/TurnStartParams.json",
+      "sha256": "a3835e8c1e942e4b358e1a670939b89918b16c4d13105a579899892b7ade6dea"
+    },
+    "TurnSteerParams.json": {
+      "source_path": "codex-rs/app-server-protocol/schema/json/v2/TurnSteerParams.json",
+      "sha256": "4a52eb76e7a717bb388484ccd7538737fca0df35481fc30a21e259f1bfe96e37"
+    },
+    "TurnInterruptParams.json": {
+      "source_path": "codex-rs/app-server-protocol/schema/json/v2/TurnInterruptParams.json",
+      "sha256": "6dff382dae73d1dbc58406ed045605f647e7a49660e2540fbd2c6c24d60c5f2b"
+    },
+    "LICENSE": {
+      "source_path": "LICENSE",
+      "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc"
+    },
+    "NOTICE": {
+      "source_path": "NOTICE",
+      "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915"
+    }
+  }
+}

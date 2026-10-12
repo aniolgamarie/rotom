@@ -1,6 +1,7 @@
 """Pi 持久执行记录；结果完成不等于物理终止，未知活动始终阻止变更。"""
 
 from copy import deepcopy
+from collections import OrderedDict
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -15,11 +16,14 @@ import threading
 from .deployment import json_bytes
 from .paths import safe_id
 from .pi_catalog import validate
+from . import pi_catalog
 from .schema import ConfigError
 from .storage import Conflict, Tree, instance_lock
 
 
 OWNER_KEYS = ("instance_id", "supervisor_activation_id", "manager_activation_id", "owner_nonce", "supervisor_process_identity")
+READ_VALIDATION_CACHE_MAX_ENTRIES = 128
+READ_VALIDATION_CACHE_MAX_BYTES = 2 * 1024 * 1024
 
 
 def digest(value):
@@ -66,6 +70,9 @@ class ExecutionStore:
     self.now = now or (lambda: datetime.now(timezone.utc))
     self.lease_fd = lease_fd
     self.mutex = threading.RLock()
+    self._read_cache = OrderedDict()
+    self._read_cache_bytes = 0
+    self._read_cache_lock = threading.Lock()
 
   @contextmanager
   def _guard(self, tree):
@@ -113,6 +120,17 @@ class ExecutionStore:
       raw = tree.read(self._path(lease_id))
     if raw is None or raw[1] != 0o600:
       raise Conflict("Pi执行记录缺失或不安全")
+    # 每次仍读取最新schema内容；memo只复用相同bytes的纯校验结果。
+    try: validator = pi_catalog._validator("execution-lease")
+    except ConfigError: validator = None
+    owner_instance = self.owner["instance_id"]
+    with self._read_cache_lock:
+      cached = self._read_cache.get(lease_id)
+      if (validator is not None and cached is not None and cached["validator"] is validator
+          and cached["owner_instance"] == owner_instance and cached["raw"] == raw[0]
+          and cached["value"]["lease_id"] == lease_id):
+        self._read_cache.move_to_end(lease_id)
+        return deepcopy(cached["value"])
     try:
       value = json.loads(raw[0])
     except (ValueError, UnicodeError):
@@ -120,6 +138,24 @@ class ExecutionStore:
     self._validate(value)
     if value["lease_id"] != lease_id:
       raise Conflict("Pi执行记录路径身份冲突")
+    # 原_validate可能读到另一版schema；只缓存额外证明实际使用的同一个validator。
+    try:
+      validator = pi_catalog._validator("execution-lease")
+      cacheable = validator.is_valid(value) and value["instance_id"] == self.owner["instance_id"]
+    except Exception:
+      cacheable = False
+    with self._read_cache_lock:
+      previous = self._read_cache.pop(lease_id, None)
+      if previous is not None: self._read_cache_bytes -= len(previous["raw"])
+      if (cacheable and READ_VALIDATION_CACHE_MAX_ENTRIES > 0
+          and len(raw[0]) <= READ_VALIDATION_CACHE_MAX_BYTES):
+        while self._read_cache and (len(self._read_cache) >= READ_VALIDATION_CACHE_MAX_ENTRIES
+            or self._read_cache_bytes + len(raw[0]) > READ_VALIDATION_CACHE_MAX_BYTES):
+          _, previous = self._read_cache.popitem(last=False)
+          self._read_cache_bytes -= len(previous["raw"])
+        self._read_cache[lease_id] = {"raw": raw[0], "validator": validator,
+          "owner_instance": value["instance_id"], "value": deepcopy(value)}
+        self._read_cache_bytes += len(raw[0])
     return value
 
   def records(self):
@@ -276,6 +312,7 @@ class ExecutionStore:
     process = self.processes.observe(lease["process_identity"]) if lease["process_identity"] else "unknown"
     external = {key: self.external_status(lease, key) for key in lease["active_external_work_ids"]}
     return {"lease_id": lease_id, "state": lease["state"], "protected": protected(lease),
+      "spawn_committed": lease["spawn_committed"],
       "process_status": process, "external_status": external, "termination_evidence": deepcopy(lease["termination_evidence"]),
       "process_identity": deepcopy(lease["process_identity"]), "grant_generation": lease["grant_generation"],
       "task_id": lease["task_id"], "attempt_id": lease["attempt_id"]}

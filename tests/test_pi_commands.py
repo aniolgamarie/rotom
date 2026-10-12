@@ -45,6 +45,18 @@ def test_bound_readonly_command_keeps_literal_argv_and_readonly_namespace(tmp_pa
   assert command.capture_root == host.root / "activity/outputs" / lease["lease_id"]
 
 
+def test_missing_unmounted_control_anchor_does_not_disable_project_command(tmp_path):
+  commands, host, args, principal = fixture(tmp_path)
+  anchor = tmp_path / "os-account" / ".agentcfg-workspaces"
+  host.config["protected_roots"] = [str(anchor)]
+  assert not anchor.exists()
+  ticket = commands.prepare(principal, args)
+  value = commands.records[ticket["operation_id"]]
+  assert str(anchor) in value["denied_paths"]
+  assert ticket["write"] is False
+  assert not anchor.exists()
+
+
 def test_writable_command_conflicts_with_an_ordinary_file_writer_and_policy_change_revokes_it(tmp_path):
   commands, host, args, principal = fixture(tmp_path, writable=True)
   ticket = commands.prepare(principal, args)
@@ -92,3 +104,44 @@ def test_interactive_stdin_requires_current_binding_and_accepts_only_atomic_boun
       commands.write_stdin(principal, {"operation_id": ticket["operation_id"], "data": "must not send", "end": False})
   finally:
     stream.close(); os.close(read_fd)
+
+
+def test_bound_script_keeps_secret_and_policy_denials_in_the_namespace(tmp_path, sentinel_factory):
+  commands, host, args, principal = fixture(tmp_path, writable=True)
+  project = Path(args["cwd"])
+  secret = project / ".env"; secret.write_text("synthetic secret never readable")
+  policy = project / "permission.toml"; policy.write_text("synthetic policy never writable")
+  sentinels = [sentinel_factory(secret), sentinel_factory(policy)]
+  host.manifest()["permission_policy"]["rules"].extend([
+    {"id": "deny-" + name, "kind": "file", "effect": "deny", "tool_ids": ["read", "write", "edit"],
+      "operations": ["read", "write", "create"], "root_ref": "project", "relative_path": path.name, "match": "exact"}
+    for name, path in (("secret", secret), ("policy", policy))])
+  executable = tmp_path / "fixture-command"
+  # 不运行脚本；完整正文不能绕过投影到命名空间的文件deny。
+  executable.write_text("#!/bin/sh\ncat .env; printf changed > permission.toml\n")
+  ticket = commands.prepare(principal, args)
+  record = commands.records[ticket["operation_id"]]
+  assert {str(secret), str(policy)} <= set(record["denied_paths"])
+  argv = linux_verifier_argv(record["check"], temporary=tmp_path / "scratch", system_roots=(),
+    denied_paths=record["denied_paths"], denied_fds={str(secret): 31, str(policy): 32})
+  for path, descriptor in ((secret, "31"), (policy, "32")):
+    assert ("--ro-bind-data", descriptor, str(path)) in tuple(zip(argv, argv[1:], argv[2:]))
+  assert argv[-3:] == (str(executable), "--literal", "a b")
+  host.manifest()["permission_policy"]["rules"] = []
+  with pytest.raises(Conflict, match="ORDINARY_COMMAND_STALE"):
+    commands.command(host.store.read(ticket["lease_id"]), {"operation_id": ticket["operation_id"]})
+  for sentinel in sentinels: sentinel.assert_unchanged()
+
+
+def test_denied_symlink_script_target_fails_before_any_spawn_or_mask_placeholder(tmp_path):
+  commands, host, args, principal = fixture(tmp_path)
+  root = Path(args["cwd"])
+  outside = tmp_path / "outside-script-secret"; outside.write_text("outside sentinel")
+  alias = root / "alias-secret"; alias.symlink_to(outside)
+  host.manifest()["permission_policy"]["rules"].append({"id": "deny-alias", "kind": "file", "effect": "deny",
+    "tool_ids": ["read"], "operations": ["read"], "root_ref": "project", "relative_path": alias.name, "match": "exact"})
+  ticket = commands.prepare(principal, args)
+  record = commands.records[ticket["operation_id"]]
+  with pytest.raises(ConfigError, match="pi-check-denial-not-representable"):
+    linux_verifier_argv(record["check"], temporary=tmp_path / "scratch", system_roots=(), denied_paths=record["denied_paths"])
+  assert alias.is_symlink() and outside.read_text() == "outside sentinel"

@@ -74,7 +74,7 @@ def prepare_script(commands, principal, args):
     denied.append(base if rule["relative_path"] == "." else base / relative_path(rule["relative_path"]))
   if any(home.is_relative_to(path) or path.is_relative_to(home) or any(Path(row["path"]).is_relative_to(path) for row in files) for path in denied):
     raise Conflict("PERMISSION_DENIED")
-  denied += [configured_path(path).resolve(strict=True) for path in host.config.get("protected_roots", [])
+  denied += [configured_path(path).resolve(strict=False) for path in host.config.get("protected_roots", [])
     if not home.is_relative_to(configured_path(path))]
   check = compile_check({"executable": str(executable), "args": ["--no-addons", "--max-old-space-size=128", str(entry)],
     "project_root": "mcp-script", "timeout_seconds": timeout, "foreground": True},

@@ -1,6 +1,7 @@
 """私有监督 RPC 的权限与准入层；连接身份由外部通道认证，不接受正文自报角色。"""
 
 from dataclasses import dataclass, field
+from contextlib import nullcontext
 import hmac
 import json
 import os
@@ -16,7 +17,20 @@ from .deployment import json_bytes
 from .schema import ConfigError
 from .pi_catalog import read_schema
 from .paths import PathError
+from .process import DependencyError
 from .storage import Conflict, Tree
+
+
+class DelegateUnavailable(DependencyError):
+  """未选择的委派能力只有固定原因，不接受调用方错误文本。"""
+  def __init__(self):
+    super().__init__("DELEGATE_CAPABILITY_UNAVAILABLE")
+
+
+class OrdinaryCapabilityUnavailable(DependencyError):
+  """未选择的普通可选能力不导入提供者，只返回固定诊断。"""
+  def __init__(self):
+    super().__init__("ORDINARY_CAPABILITY_UNAVAILABLE")
 
 
 @dataclass(frozen=True)
@@ -34,8 +48,17 @@ class SpawnCommand:
   capture_root: Path | None = field(default=None, repr=False)
   stdin_pipe: bool = field(default=False, repr=False)
   terminal_size: tuple[int, int] | None = field(default=None, repr=False)
+  process_scope: str = field(default="default", repr=False)
+  launch: object | None = field(default=None, repr=False)
 
   def __post_init__(self):
+    if type(self.process_scope) is not str or self.process_scope not in ("default", "linux-pid-namespace", "linux-shell"):
+      raise ConfigError("pi-spawn-scope")
+    if self.launch is not None or self.process_scope == "linux-shell":
+      from .pi_shell_start import ShellStart
+      if (type(self.launch) is not ShellStart or self.process_scope != "linux-shell"
+          or self.stdin_pipe or self.terminal_size is not None or self.capture_root is None):
+        raise ConfigError("pi-spawn-scope")
     if type(self.stdin_pipe) is not bool:
       raise ConfigError("pi-spawn-stdin")
     if self.terminal_size is not None:
@@ -60,6 +83,8 @@ def closed(value, keys, optional=()):
 class SupervisorService:
   def __init__(self, store, command_resolver, spawn, *, active_children=2, activate=None, runtime_identity=None, slice_identity=None, worker_operation=None, worker_validate=None, protected_roots=(), snapshot_scope=None, delegate_handler=None, ordinary_handler=None):
     self.store, self.command_resolver, self.spawn = store, command_resolver, spawn
+    self.resource_observation_handler = None
+    self.check_binding_snapshot_handler = None
     self.ordinary_handler = ordinary_handler
     self.delegate_handler = delegate_handler
     self.worker_operation = worker_operation
@@ -90,7 +115,7 @@ class SupervisorService:
       and row["spawn_committed"] and row["lease_id"] not in self.service_leases]
 
   def issue_capability(self, role, lease_id=None):
-    if role not in ("manager", "delegate", "worker", "user") or (role in ("manager", "worker") and lease_id is None):
+    if role not in ("manager", "delegate", "worker", "user", "task-keeper-source") or (role in ("manager", "worker", "task-keeper-source") and lease_id is None):
       raise ConfigError("pi-control-principal")
     generation = self.store.read(lease_id)["grant_generation"] if lease_id else None
     token = secrets.token_hex(32)
@@ -103,7 +128,7 @@ class SupervisorService:
     key = digest(token)
     for expected, principal in self.capabilities.items():
       if hmac.compare_digest(key, expected):
-        if principal.role == "manager":
+        if principal.role in ("manager", "task-keeper-source"):
           lease = self.store.read(principal.lease_id)
           if (lease["state"] != "running" or lease["grant_generation"] != principal.grant_generation
               or self.store.processes.observe(lease["process_identity"]) != "alive"):
@@ -133,24 +158,38 @@ class SupervisorService:
       raise Conflict("监督者正在关闭，不再接受新执行")
     if not isinstance(args, dict):
       raise ConfigError("pi-control-protocol")
+    if method == "diagnostic_resource_observation":
+      if principal.role != "manager" or self.resource_observation_handler is None:
+        raise Conflict("RESOURCE_OBSERVATION_UNAVAILABLE")
+      return self.resource_observation_handler(principal, args)
+    if method == "check_binding_snapshot":
+      closed(args, ("check_id", "task_id", "cwd"))
+      if principal.role != "manager" or self.closing or self.check_binding_snapshot_handler is None:
+        raise Conflict("CHECK_BINDING_SNAPSHOT_UNAVAILABLE")
+      return self.check_binding_snapshot_handler(args)
     if isinstance(method, str) and method.startswith("ordinary_"):
       if self.ordinary_handler is None:
         raise Conflict("ORDINARY_IO_CAPABILITY_MISSING")
-      if self.closing and method in {"ordinary_prepare", "ordinary_command_prepare", "ordinary_checkpoint_prepare", "ordinary_git_status_prepare", "ordinary_git_review_prepare", "ordinary_editor_prepare", "ordinary_service_prepare", "ordinary_mcp_script_prepare", "ordinary_readseek_prepare", "ordinary_readseek_stage"}:
+      if self.closing and method in {"ordinary_reviewer_scope_open", "ordinary_reviewer_scope_allocate_intent", "ordinary_reviewer_scope_allocate_request", "ordinary_reviewer_scope_verify", "ordinary_admission_open", "ordinary_admission_prepare", "ordinary_admission_issue", "ordinary_admission_issue_deterministic", "ordinary_admission_consume", "ordinary_prepare", "ordinary_prepare_deferred", "ordinary_consume", "ordinary_command_prepare", "ordinary_checkpoint_prepare", "ordinary_git_status_prepare", "ordinary_git_review_prepare", "ordinary_editor_prepare", "ordinary_service_prepare", "ordinary_mcp_script_prepare", "ordinary_readseek_prepare", "ordinary_readseek_stage"}:
         raise Conflict("监督者正在关闭，不再接受新操作")
       return self.ordinary_handler(principal, method, args)
+    if principal.role == "task-keeper-source" and method not in {"handshake", "delegate_task_source_v3", "delegate_task_source_retire_v3"}:
+      raise Conflict("DELEGATE_SOURCE_REGISTRATION_DENIED")
     if isinstance(method, str) and method.startswith("delegate_"):
       if self.delegate_handler is None:
-        from .process import DependencyError
-        raise DependencyError("委托能力未进入实例监督者")
-      if self.closing and method in {"delegate_prepare", "delegate_start", "delegate_command_start"}:
+        raise DelegateUnavailable()
+      if self.closing and method in {"delegate_prepare", "delegate_start", "delegate_command_start", "delegate_source_open_v3", "delegate_task_source_v3"}:
         raise Conflict("监督者正在关闭，不再接受新委托")
+      if self.closing and method == "delegate_action_v3":
+        action = args.get("action")
+        if not isinstance(action, dict) or action.get("action") != "cancel":
+          raise Conflict("监督者正在关闭，不再接受新委托")
       return self.delegate_handler(principal, method, args)
     if method == "handshake":
       closed(args, ())
       result = {"schema_version": 1, "instance_id": self.store.owner["instance_id"], "supervisor_activation_id": self.store.owner["supervisor_activation_id"], "role": principal.role,
         "runtime_identity": self.runtime_identity, "slice_identity": self.slice_identity}
-      if principal.role in ("manager", "worker"):
+      if principal.role in ("manager", "worker", "task-keeper-source"):
         owned = self.store.read(principal.lease_id)
         result.update(lease_id=owned["lease_id"], process_identity=owned["process_identity"], protected_roots=list(self.protected_roots))
       if principal.role == "manager":
@@ -172,13 +211,14 @@ class SupervisorService:
         raise Conflict("此通道没有工作区准入权限")
       planned = self.store.workspaces.identify(args["path"])
       if method == "workspace_snapshot":
-        from .pi_worker_files import snapshot
+        from .pi_workspace_snapshot import snapshot
         return {"snapshot_digest": snapshot(args["path"], protected_roots=self.protected_roots, source_paths=self.snapshot_scope(args["path"]))}
       return planned
     if method == "worker_admission":
       closed(args, ("descriptor", "purpose"))
       if principal.role != "manager" or args["purpose"] not in ("admission", "result"):
         raise Conflict("此通道没有受管预检权限")
+      if self.worker_operation is None: raise OrdinaryCapabilityUnavailable()
       from .pi_worker_protocol import validate_descriptor
       from .pi_worker_files import snapshot, mutation_chain
       descriptor = args["descriptor"]
@@ -223,6 +263,7 @@ class SupervisorService:
         raise ConfigError("pi-control-allocation")
       if args["kind"] not in ("worker", "check", "codex", "external"):
         raise ConfigError("pi-control-kind")
+      if args["kind"] == "worker" and self.worker_operation is None: raise OrdinaryCapabilityUnavailable()
       # 预留意图可以排队；物理并发在 start 的同一服务锁内计数。
       lease = self.store.allocate(**args)
       return {"lease_id": lease["lease_id"], "allocation_id": lease["allocation_id"], "state": lease["state"],
@@ -232,20 +273,24 @@ class SupervisorService:
       lease = self._scope(principal, args["lease_id"])
       if any(lease[key] != self.store.owner[key] for key in OWNER_KEYS):
         raise Conflict("不能启动旧控制者的分配")
+      if lease["kind"] == "worker" and self.worker_operation is None: raise OrdinaryCapabilityUnavailable()
       active = self.execution_children()
       if lease["lease_id"] not in self.service_leases and not lease["spawn_committed"] and len(active) >= self.active_children:
         raise Conflict("实例执行容量已占用")
       command = self.command_resolver(lease, args["program"], args["payload"])
       if not isinstance(command, SpawnCommand):
         raise ConfigError("pi-spawn-contract")
-      binding = {"program": args["program"], "payload_digest": digest(args["payload"]), "argv_digest": digest(list(command.argv)), "cwd": str(command.cwd)}
-      # 环境可能含所选秘密，绝不进入启动绑定、摘要或异常。
-      with Tree(self.store.root) as tree:
-        tree.write_immutable("activity/commands/" + lease["lease_id"] + ".json", json_bytes(binding))
-      started = self.store.start(lease["lease_id"], self.store.owner, spawn=lambda current: self.spawn(command, current))
-      if started["state"] == "running":
-        self.activate(started)
-      return {"lease_id": started["lease_id"], "attempt_id": started["attempt_id"], "state": started["state"]}
+      scope = command.launch.prepare(command, lease) if command.launch is not None else nullcontext(command)
+      with scope as command:
+        binding = {"program": args["program"], "payload_digest": digest(args["payload"]), "argv_digest": digest(list(command.argv)), "cwd": str(command.cwd)}
+        if command.process_scope != "default": binding["process_scope"] = command.process_scope
+        # 父侧FD作用域跨越绑定、starting、Writer激活和G；任意失败都只清理资源，不释放Writer。
+        with Tree(self.store.root) as tree:
+          tree.write_immutable("activity/commands/" + lease["lease_id"] + ".json", json_bytes(binding))
+        started = self.store.start(lease["lease_id"], self.store.owner, spawn=lambda current: self.spawn(command, current))
+        if started["state"] == "running":
+          self.activate(started)
+        return {"lease_id": started["lease_id"], "attempt_id": started["attempt_id"], "state": started["state"]}
     if method == "abort_allocation":
       closed(args, ("lease_id",))
       lease = self.store.abort_allocation(args["lease_id"], self.store.owner)
@@ -262,6 +307,8 @@ class SupervisorService:
       lease = self._scope(principal, args["lease_id"], mutate=True)
       if principal.role != "worker" or lease["grant_generation"] != args["grant_generation"]:
         raise Conflict("此通道没有worker操作授权")
+      # delegate同样使用worker角色的通道；这里只拒绝实际worker执行种类。
+      if lease["kind"] == "worker" and self.worker_operation is None: raise OrdinaryCapabilityUnavailable()
       if lease["execution_id"].startswith("delegate-command-"):
         parents = [row for row in self.store.records() if row["execution_id"] == lease["parent_execution_id"]]
         if len(parents) != 1 or parents[0]["state"] != "running" or self.store.processes.observe(parents[0]["process_identity"]) != "alive":
@@ -292,11 +339,18 @@ class SupervisorService:
     try:
       result = self.handle(self.authenticate(token, peer_uid), message)
       return {"schema_version": 1, "ok": True, "result": result}
+    except DelegateUnavailable:
+      return {"schema_version": 1, "ok": False, "exit_code": 5, "error": "DELEGATE_CAPABILITY_UNAVAILABLE"}
+    except OrdinaryCapabilityUnavailable:
+      return {"schema_version": 1, "ok": False, "exit_code": 5, "error": "ORDINARY_CAPABILITY_UNAVAILABLE"}
     except Exception as error:
       # 不回显原始请求、参数、秘密或宿主错误。
-      from .pi_codex_admission import public_rejection
-      reason = public_rejection(error)
+      reason = None
+      if self.delegate_handler is not None:
+        from .pi_codex_admission import public_rejection
+        reason = public_rejection(error)
       if isinstance(error, Conflict) and str(error) == "ORDINARY_STDIN_BACKPRESSURE": reason = "ORDINARY_STDIN_BACKPRESSURE"
+      if isinstance(error, Conflict) and str(error) == "PERMISSION_DENIED": reason = "PERMISSION_DENIED"
       return {"schema_version": 1, "ok": False, "exit_code": 2 if isinstance(error, PathError) else getattr(error, "exit_code", 6), "error": reason or "PI_CONTROL_REJECTED"}
 
 
@@ -309,6 +363,8 @@ class SupervisorServer:
     self.endpoint = self.directory / "control.json"
     self.socket = None
     self.socket_identity = None
+    self._directory_fd = None
+    self._directory_identity = None
     self.stopping = threading.Event()
     self.threads = []
 
@@ -353,7 +409,26 @@ class SupervisorServer:
       self.socket_identity = {"device": info.st_dev, "inode": info.st_ino, "uid": info.st_uid}
       tree.write_state("control.json", json_bytes({"schema_version": 1, "owner": self.service.store.owner,
         "socket_name": "control.sock", "socket_identity": self.socket_identity, "user_capability": self.service.issue_capability("user")}))
+      self._directory_fd = os.dup(tree.fd)
+      opened = os.fstat(self._directory_fd)
+      self._directory_identity = (opened.st_dev, opened.st_ino, opened.st_uid, opened.st_mode)
     return self.endpoint
+
+  def duplicate_control_directory(self):
+    import stat
+    if self.stopping.is_set() or self.service.closing or self._directory_fd is None:
+      raise Conflict("CONTROL_DIRECTORY_UNAVAILABLE")
+    owned = None
+    try:
+      owned = os.dup(self._directory_fd)
+      info = os.fstat(owned)
+      if ((info.st_dev, info.st_ino, info.st_uid, info.st_mode) != self._directory_identity
+          or not stat.S_ISDIR(info.st_mode) or info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != 0o700):
+        raise ValueError()
+      return owned
+    except (OSError, ValueError):
+      if owned is not None: os.close(owned)
+      raise Conflict("CONTROL_DIRECTORY_UNAVAILABLE") from None
 
   def _connection(self, connection):
     from .pi_control import MAX_FRAME, peer_uid, read_frame
@@ -389,6 +464,13 @@ class SupervisorServer:
     thread.start()
 
   def close(self):
+    try: self._close_socket()
+    finally:
+      if self._directory_fd is not None:
+        descriptor, self._directory_fd = self._directory_fd, None
+        os.close(descriptor)
+
+  def _close_socket(self):
     self.stopping.set()
     if self.socket is not None:
       self.socket.close()

@@ -22,14 +22,15 @@ Use one writer only.
 
 For small bounded changes, execute directly.
 
-For substantial interface, behavior, format, or cross-module changes, use
-OpenSpec.
+For substantial interface, behavior, format, or cross-module changes, first
+identify the affected contracts and verification requirements.
 
-For complex implementation requiring multiple independent stages, use the
-selected managed profile with kernel_task and kernel-orchestrate. Require
-explicit role models, candidate worktree, trusted checks, and a fresh required
-review. If these capabilities are unavailable, report the missing prerequisites;
-do not invent a workflow or bypass the managed boundary.
+For complex implementation, split the work into bounded stages and follow the
+current project's explicitly configured process and permissions. Check the
+result independently against the contracts and final diff. Report unavailable
+checks, missing prerequisites, and unverified risks; do not invent capabilities,
+require installation of an external platform, or bypass the project's
+permission boundary.
 
 Do not combine correctness fixes with unrelated modernization.
 
@@ -40,3 +41,8 @@ Before completion:
 3. run sanitizers, stress tests, or benchmarks when relevant;
 4. inspect the final diff;
 5. report unverified risks once, then stop.
+
+For concrete evidence and failure-path checks, read the relative
+[database contracts reference](references/database-contracts.md). Apply it to
+the project's own transaction, persistence, and lifecycle contracts; it does not
+prescribe a universal engine protocol or enable an execution service.

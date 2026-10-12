@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "probe_id": "official-sdk-1.0.1",
+  "versions": {
+    "pi": "1.0.1",
+    "pi_ai": "1.0.2"
+  },
+  "provider": {
+    "id": "synthetic-sdk-probe",
+    "model": "synthetic-model",
+    "api": "synthetic-sdk-probe",
+    "base_url": "https://synthetic.invalid/unused",
+    "api_key": "synthetic-no-account"
+  },
+  "paths": {
+    "cwd": "/work/ancestor/project",
+    "agent_dir": "/work/agent",
+    "home": "/work/home",
+    "output": "/work/probe-result.json"
+  },
+  "resources": {
+    "extension": "approved-extension.mjs",
+    "skill": "approved/skills/probe-approved/SKILL.md",
+    "prompt": "approved/prompts/approved-prompt.md"
+  },
+  "files": {
+    "approved/prompts/approved-prompt.md": "59254d8c80a0fa994a12b34e75925d6b89ef9ca7c704a165562bbc3cee82b5a7",
+    "approved/skills/probe-approved/SKILL.md": "3890a8d0dc1a5ccec45c0ffc3492d0182aaf56373b3def979595b450efc23e52",
+    "approved-extension.mjs": "fde29a779b3e70e2ff80d619dc07ab63be618dd2efcf5c60c5ef1ff305512ca0",
+    "decoy/SKILL.md": "f0fb57c282bd3e30f17b01e348446c63bf222677268e0849e9d85076d23ba6f9",
+    "decoy/auth.json": "072eb1f0995f3d4aa85113812e94af0f8f0fc7979ec7ff241e86e632a9b91ff7",
+    "decoy/context.md": "ef5d87d2f10cff3bca79f353d9bc1446b5492454e0f82969fd1069f2160ad1f6",
+    "decoy/extension.mjs": "8d7b945a780dd984bbca68ef4a9f9f2c2eed40622b3fc51e4e7e6d33b1a65f0b",
+    "decoy/settings.json": "0f1dc86ce883bc6406a33c68c852d9b21261ce39cad37687bebd3132730627f4",
+    "decoy/theme.json": "b4a268708d10a052f20c401572c6ab7354f0e6dfcd0a3b1143af3a4389e5a0ee"
+  },
+  "placements": [
+    {
+      "source": "decoy/extension.mjs",
+      "target": "/work/agent/extensions/decoy.mjs"
+    },
+    {
+      "source": "decoy/SKILL.md",
+      "target": "/work/agent/skills/decoy/SKILL.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/agent/prompts/decoy.md"
+    },
+    {
+      "source": "decoy/theme.json",
+      "target": "/work/agent/themes/decoy.json"
+    },
+    {
+      "source": "decoy/settings.json",
+      "target": "/work/agent/settings.json"
+    },
+    {
+      "source": "decoy/extension.mjs",
+      "target": "/work/ancestor/.pi/extensions/decoy.mjs"
+    },
+    {
+      "source": "decoy/SKILL.md",
+      "target": "/work/ancestor/.pi/skills/decoy/SKILL.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/ancestor/.pi/prompts/decoy.md"
+    },
+    {
+      "source": "decoy/theme.json",
+      "target": "/work/ancestor/.pi/themes/decoy.json"
+    },
+    {
+      "source": "decoy/settings.json",
+      "target": "/work/ancestor/.pi/settings.json"
+    },
+    {
+      "source": "decoy/extension.mjs",
+      "target": "/work/ancestor/project/.pi/extensions/decoy.mjs"
+    },
+    {
+      "source": "decoy/SKILL.md",
+      "target": "/work/ancestor/project/.pi/skills/decoy/SKILL.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/ancestor/project/.pi/prompts/decoy.md"
+    },
+    {
+      "source": "decoy/theme.json",
+      "target": "/work/ancestor/project/.pi/themes/decoy.json"
+    },
+    {
+      "source": "decoy/settings.json",
+      "target": "/work/ancestor/project/.pi/settings.json"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/agent/AGENTS.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/agent/SYSTEM.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/agent/APPEND_SYSTEM.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/ancestor/AGENTS.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/ancestor/SYSTEM.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/ancestor/APPEND_SYSTEM.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/ancestor/project/AGENTS.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/ancestor/project/SYSTEM.md"
+    },
+    {
+      "source": "decoy/context.md",
+      "target": "/work/ancestor/project/APPEND_SYSTEM.md"
+    },
+    {
+      "source": "decoy/auth.json",
+      "target": "/work/agent/auth.json"
+    }
+  ]
+}

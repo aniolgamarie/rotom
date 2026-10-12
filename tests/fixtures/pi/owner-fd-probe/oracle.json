@@ -1,0 +1,233 @@
+{
+  "cases": {
+    "controller-exit": {
+      "controllerExitCode": 0,
+      "cuts": [
+        {
+          "controllerAlive": true,
+          "controllerExit": false,
+          "lock": "busy",
+          "name": "entry",
+          "nodeAlive": true,
+          "nodeExit": false
+        },
+        {
+          "controllerAlive": false,
+          "controllerExit": true,
+          "lock": "busy",
+          "name": "controller-exit-node-alive",
+          "nodeAlive": true,
+          "nodeExit": false
+        },
+        {
+          "controllerAlive": false,
+          "controllerExit": true,
+          "lock": "free",
+          "name": "last-exit",
+          "nodeAlive": false,
+          "nodeExit": true
+        }
+      ],
+      "entry": {
+        "accepted": true,
+        "cloexec": true,
+        "descendantExitCode": 0,
+        "descendantMatches": 0,
+        "descendantSpawns": 1
+      },
+      "nodeExitCode": null,
+      "nodeLaunches": 1
+    },
+    "controller-kill": {
+      "controllerExitCode": -9,
+      "cuts": [
+        {
+          "controllerAlive": true,
+          "controllerExit": false,
+          "lock": "busy",
+          "name": "entry",
+          "nodeAlive": true,
+          "nodeExit": false
+        },
+        {
+          "controllerAlive": false,
+          "controllerExit": true,
+          "lock": "busy",
+          "name": "controller-exit-node-alive",
+          "nodeAlive": true,
+          "nodeExit": false
+        },
+        {
+          "controllerAlive": false,
+          "controllerExit": true,
+          "lock": "free",
+          "name": "last-exit",
+          "nodeAlive": false,
+          "nodeExit": true
+        }
+      ],
+      "entry": {
+        "accepted": true,
+        "cloexec": true,
+        "descendantExitCode": 0,
+        "descendantMatches": 0,
+        "descendantSpawns": 1
+      },
+      "nodeExitCode": null,
+      "nodeLaunches": 1
+    },
+    "entry-and-node-exit": {
+      "controllerExitCode": 0,
+      "cuts": [
+        {
+          "controllerAlive": true,
+          "controllerExit": false,
+          "lock": "busy",
+          "name": "entry",
+          "nodeAlive": true,
+          "nodeExit": false
+        },
+        {
+          "controllerAlive": true,
+          "controllerExit": false,
+          "lock": "busy",
+          "name": "node-exit-controller-alive",
+          "nodeAlive": false,
+          "nodeExit": true
+        },
+        {
+          "controllerAlive": false,
+          "controllerExit": true,
+          "lock": "free",
+          "name": "last-exit",
+          "nodeAlive": false,
+          "nodeExit": true
+        }
+      ],
+      "entry": {
+        "accepted": true,
+        "cloexec": true,
+        "descendantExitCode": 0,
+        "descendantMatches": 0,
+        "descendantSpawns": 1
+      },
+      "nodeExitCode": 0,
+      "nodeLaunches": 1
+    },
+    "high-fd-rejected": {
+      "controllerExitCode": 0,
+      "cuts": [
+        {
+          "controllerAlive": true,
+          "controllerExit": false,
+          "lock": "busy",
+          "name": "entry",
+          "nodeAlive": true,
+          "nodeExit": false
+        },
+        {
+          "controllerAlive": true,
+          "controllerExit": false,
+          "lock": "busy",
+          "name": "node-exit-controller-alive",
+          "nodeAlive": false,
+          "nodeExit": true
+        },
+        {
+          "controllerAlive": false,
+          "controllerExit": true,
+          "lock": "free",
+          "name": "last-exit",
+          "nodeAlive": false,
+          "nodeExit": true
+        }
+      ],
+      "entry": {
+        "accepted": false,
+        "cloexec": null,
+        "descendantExitCode": null,
+        "descendantMatches": null,
+        "descendantSpawns": 0
+      },
+      "nodeExitCode": 0,
+      "nodeLaunches": 1
+    },
+    "node-kill": {
+      "controllerExitCode": 0,
+      "cuts": [
+        {
+          "controllerAlive": true,
+          "controllerExit": false,
+          "lock": "busy",
+          "name": "entry",
+          "nodeAlive": true,
+          "nodeExit": false
+        },
+        {
+          "controllerAlive": true,
+          "controllerExit": false,
+          "lock": "busy",
+          "name": "node-exit-controller-alive",
+          "nodeAlive": false,
+          "nodeExit": true
+        },
+        {
+          "controllerAlive": false,
+          "controllerExit": true,
+          "lock": "free",
+          "name": "last-exit",
+          "nodeAlive": false,
+          "nodeExit": true
+        }
+      ],
+      "entry": {
+        "accepted": true,
+        "cloexec": true,
+        "descendantExitCode": 0,
+        "descendantMatches": 0,
+        "descendantSpawns": 1
+      },
+      "nodeExitCode": -9,
+      "nodeLaunches": 1
+    },
+    "wrong-fd": {
+      "controllerExitCode": 0,
+      "cuts": [
+        {
+          "controllerAlive": true,
+          "controllerExit": false,
+          "lock": "busy",
+          "name": "entry",
+          "nodeAlive": true,
+          "nodeExit": false
+        },
+        {
+          "controllerAlive": true,
+          "controllerExit": false,
+          "lock": "busy",
+          "name": "node-exit-controller-alive",
+          "nodeAlive": false,
+          "nodeExit": true
+        },
+        {
+          "controllerAlive": false,
+          "controllerExit": true,
+          "lock": "free",
+          "name": "last-exit",
+          "nodeAlive": false,
+          "nodeExit": true
+        }
+      ],
+      "entry": {
+        "accepted": false,
+        "cloexec": null,
+        "descendantExitCode": null,
+        "descendantMatches": null,
+        "descendantSpawns": 0
+      },
+      "nodeExitCode": 0,
+      "nodeLaunches": 1
+    }
+  },
+  "schema": 1
+}

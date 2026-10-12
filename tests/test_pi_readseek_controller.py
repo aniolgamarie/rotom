@@ -16,7 +16,7 @@ from test_pi_operations import setup
 
 
 def prepared(tmp_path, result_text="computed"):
-  operations, host, cwd, principal = setup(tmp_path)
+  operations, host, cwd, principal = setup(tmp_path, plugins=["pi-readseek"])
   ticket = operations.prepare(principal, {"operation_id": "readseek", "role_id": "main", "cwd": cwd,
     "tool_name": "write", "input": {"path": "code.txt", "content": "updated"}})
   record = operations.record(ticket["operation_id"])

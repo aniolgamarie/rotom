@@ -114,7 +114,7 @@ def test_runtime_receipt_detects_same_length_tampering(tmp_path):
     target.write_bytes((root / "locks/pi" / name).read_bytes())
   package = runtime / "pi-fixture/node_modules/synthetic-host/package.json"
   package.parent.mkdir(parents=True)
-  package.write_text('{"name":"synthetic-host","version":"1.0.0"}')
+  package.write_text('{"name":"synthetic-host","version":"1.0.0","license":"MIT"}')
   for name in (piece["entrypoint"], "runtime/launch.mjs", "runtime/resource-loader.mjs", "runtime/profile.json"):
     path = runtime / name
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -127,6 +127,16 @@ def test_runtime_receipt_detects_same_length_tampering(tmp_path):
   assert status(runtime, runtime_identity) == "installed"
   (runtime / piece["entrypoint"]).write_text("altered-code")
   assert status(runtime, runtime_identity) == "damaged"
+
+
+def synthetic_runtime_sources(root, declarations):
+  """现代安装fixture只承载占位源文件；不复制真实执行或恢复逻辑。"""
+  for row in declarations:
+    path = root / row["source"]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{}\n" if path.suffix == ".json" else
+      "// synthetic runtime, never executed\n" if row["transform"] == "ts-module" else
+      "# synthetic runtime, never executed\n")
 
 
 def ready_sync_fixture(tmp_path):
@@ -162,8 +172,15 @@ def fake_installer(calls, *, omit=False, fail=False):
     if not omit:
       package = Path(cwd) / "node_modules/synthetic-host"
       package.mkdir(parents=True)
-      (package / "package.json").write_text('{"name":"synthetic-host","version":"1.0.0"}')
+      (package / "package.json").write_text('{"name":"synthetic-host","version":"1.0.0","license":"MIT"}')
+      (package / "LICENSE").write_bytes(b"synthetic original MIT body\n")
       (package / "index.js").write_text("synthetic host; never execute")
+      locked = json.loads((Path(cwd) / "package-lock.json").read_bytes())["packages"]
+      if "node_modules/synthetic-ai" in locked:
+        ai = Path(cwd) / "node_modules/synthetic-ai"; ai.mkdir()
+        (ai / "package.json").write_text('{"name":"synthetic-ai","version":"1.0.2","license":"MIT"}')
+        (ai / "LICENSE").write_bytes(b"synthetic original MIT body\n")
+        (ai / "index.js").write_text("synthetic AI; never execute")
       bin_dir = Path(cwd) / "node_modules/.bin"
       bin_dir.mkdir()
       (bin_dir / "synthetic-host").symlink_to("../synthetic-host/index.js")
@@ -296,7 +313,7 @@ def test_native_required_resource_missing_is_not_a_ready_receipt(tmp_path):
     target.write_bytes((root / "locks/pi" / name).read_bytes())
   package = runtime / "pi-fixture/node_modules/synthetic-host/package.json"
   package.parent.mkdir(parents=True)
-  package.write_text('{"name":"synthetic-host","version":"1.0.0"}')
+  package.write_text('{"name":"synthetic-host","version":"1.0.0","license":"MIT"}')
   for name in (piece["entrypoint"], "runtime/launch.mjs", "runtime/resource-loader.mjs", "runtime/profile.json"):
     target = runtime / name
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -318,3 +335,218 @@ def test_runtime_receipt_cannot_be_reused_on_a_different_platform(tmp_path, monk
   assert backend.status(workspace, result["identity"]) == "installed"
   monkeypatch.setattr(dependencies, "platform_id", lambda: "darwin-arm64")
   assert backend.status(workspace, result["identity"]) == "damaged"
+
+
+def _write_manifest(root, manifest, *, family=None):
+  from agentcfg.pi_lock_layout import dependency_layout
+  for piece in manifest["profile_slices"].values():
+    piece["identity"] = digest({key: value for key, value in piece.items() if key != "identity"})
+  manifest["identity"] = digest({key: value for key, value in manifest.items() if key != "identity"})
+  (root / dependency_layout(family=family).lock_directory / "manifest.json").write_bytes(payload(manifest))
+
+
+def two_profiles_repository(tmp_path):
+  from copy import deepcopy
+  workspace, manifest = ready_sync_fixture(tmp_path)
+  root = workspace.repository; lock_root = root / "locks/pi"
+  (lock_root / "pi-fixture").rename(lock_root / "pi-test-base")
+  base = manifest["profile_slices"].pop("pi-fixture")
+  for field in ("package_path", "lock_path", "entrypoint"): base[field] = base[field].replace("pi-fixture/", "pi-test-base/")
+  full = deepcopy(base)
+  for field in ("package_path", "lock_path", "entrypoint"): full[field] = full[field].replace("pi-test-base/", "pi-test-full/")
+  full["source_ids"] = ["full-feature"]; full["capability_ids"] = ["full-feature"]
+  archive = lock_root / "vendor/full.tgz"; archive.parent.mkdir(); archive.write_bytes(b"synthetic archive, never executed")
+  manifest["sources"]["full-feature"] = {"kind": "local", "package": "synthetic-host", "version": "1.0.0", "vendor_path": "vendor/full.tgz",
+    "archive_digest": digest(archive.read_bytes()), "source_path": "agents/pi/packages/full", "source_tree_digest": "a" * 64, "license_files": []}
+  (lock_root / "pi-test-full").mkdir()
+  package = payload({"name": "full-fixture", "version": "1.0.0", "private": True, "dependencies": {"synthetic-host": "file:../vendor/full.tgz"}})
+  resolution = json.loads((lock_root / base["lock_path"]).read_bytes())
+  resolution["packages"][""]["dependencies"] = {"synthetic-host": "file:../vendor/full.tgz"}
+  resolution["packages"]["node_modules/synthetic-host"]["resolved"] = "file:../vendor/full.tgz"
+  (lock_root / full["package_path"]).write_bytes(package); (lock_root / full["lock_path"]).write_bytes(payload(resolution))
+  full["package_json_digest"] = digest(package); full["package_lock_digest"] = digest(payload(resolution))
+  manifest["profile_slices"] = {"pi-test-base": base, "pi-test-full": full}
+  workspace.profile = "pi-test-base"
+  _write_manifest(root, manifest)
+  return workspace, manifest
+
+
+@pytest.mark.parametrize("missing", ["package", "lock", "vendor", "all"])
+def test_selected_base_reads_and_fake_syncs_without_full_profile_bodies(tmp_path, monkeypatch, missing):
+  import agentcfg.pi_dependencies as dependencies
+  workspace, manifest = two_profiles_repository(tmp_path)
+  full = manifest["profile_slices"]["pi-test-full"]
+  targets = {"package": full["package_path"], "lock": full["lock_path"], "vendor": "vendor/full.tgz"}
+  for name, path in targets.items():
+    if missing in (name, "all"): (workspace.repository / "locks/pi" / path).unlink()
+  calls = []; monkeypatch.setattr(dependencies, "checked", fake_installer(calls))
+  backend = PiBackend(profile="pi-test-base")
+  lock = backend.read_lock(workspace.repository)
+  assert set(lock.pairs) == {"pi-test-base"}
+  assert backend.sync(workspace, lock)["installed"] is True
+  assert len(calls) == 3
+  for other in (PiBackend(), PiBackend(profile="pi-test-full")):
+    with pytest.raises(ConfigError): other.read_lock(workspace.repository)
+
+
+@pytest.mark.parametrize("fault", ["missing", "tamper", "full-metadata", "full-slice-identity"])
+def test_selected_base_still_rejects_own_damage_and_all_global_metadata_damage(tmp_path, fault):
+  workspace, manifest = two_profiles_repository(tmp_path)
+  path = workspace.repository / "locks/pi" / manifest["profile_slices"]["pi-test-base"]["lock_path"]
+  if fault == "missing": path.unlink()
+  if fault == "tamper": path.write_text("{}")
+  if fault == "full-metadata":
+    manifest["sources"]["full-feature"]["version"] = "latest"; _write_manifest(workspace.repository, manifest)
+  if fault == "full-slice-identity":
+    manifest["profile_slices"]["pi-test-full"]["identity"] = "b" * 64
+    manifest["identity"] = digest({key: value for key, value in manifest.items() if key != "identity"})
+    (workspace.repository / "locks/pi/manifest.json").write_bytes(payload(manifest))
+  with pytest.raises(ConfigError): PiBackend(profile="pi-test-base").read_lock(workspace.repository)
+
+
+def test_base_only_verified_lock_cannot_query_or_write_full_runtime(tmp_path, monkeypatch):
+  import agentcfg.pi_dependencies as dependencies
+  workspace, _ = two_profiles_repository(tmp_path)
+  base = PiBackend(profile="pi-test-base"); lock = base.read_lock(workspace.repository)
+  workspace.profile = "pi-test-full"
+  calls = []; monkeypatch.setattr(dependencies, "checked", fake_installer(calls))
+  monkeypatch.setattr("agentcfg.pi_lifecycle.guard", lambda *_: pytest.fail("unverified profile must fail before acquiring write guard"))
+  for backend in (base, PiBackend(profile="pi-test-full"), PiBackend()):
+    with pytest.raises(ConfigError): backend.runtime_identity(workspace, lock)
+    with pytest.raises(ConfigError): backend.sync(workspace, lock)
+  assert calls == []
+
+
+def installed_graph_fixture(tmp_path, *, extra_records=None):
+  workspace, manifest = ready_sync_fixture(tmp_path)
+  piece = manifest["profile_slices"][workspace.profile]
+  resolution_path = workspace.repository / "locks/pi" / piece["lock_path"]
+  resolution = json.loads(resolution_path.read_bytes())
+  resolution["packages"].update(extra_records or {})
+  resolution_path.write_bytes(payload(resolution)); piece["package_lock_digest"] = digest(payload(resolution))
+  _write_manifest(workspace.repository, manifest)
+  runtime = tmp_path / "installed-graph"; runtime.mkdir(mode=0o700)
+  for field in ("package_path", "lock_path"):
+    path = runtime / piece[field]; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes((workspace.repository / "locks/pi" / piece[field]).read_bytes())
+  for name, record in resolution["packages"].items():
+    if not name or record.get("optional"): continue
+    path = runtime / Path(piece["package_path"]).parent / name; path.mkdir(parents=True, exist_ok=True)
+    package_name = record.get("name", name.rsplit("node_modules/", 1)[-1])
+    (path / "package.json").write_bytes(payload({"name": package_name, "version": record["version"]}))
+  for name in (piece["entrypoint"], "runtime/launch.mjs", "runtime/resource-loader.mjs", "runtime/profile.json"):
+    path = runtime / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_text("synthetic code, never executed")
+  from agentcfg.pi_vendor import install_launcher
+  install_launcher(Path(__file__).resolve().parents[1], runtime, piece, manifest)
+  return runtime, piece
+
+
+@pytest.mark.parametrize("extra", ["top", "nested", "deep", "scoped", "outside-slice"])
+def test_installed_graph_rejects_every_unlocked_package_without_deleting_it(tmp_path, extra):
+  from agentcfg.pi_runtime_packages import validate_installed
+  from agentcfg.storage import Conflict
+  runtime, piece = installed_graph_fixture(tmp_path)
+  prefix = Path(piece["package_path"]).parent
+  relative = {"top": prefix / "node_modules/full-only", "nested": prefix / "node_modules/synthetic-host/node_modules/full-only",
+    "deep": prefix / "node_modules/synthetic-host/dist/node_modules/full-only", "scoped": prefix / "node_modules/@full/worker",
+    "outside-slice": Path("runtime/node_modules/full-only")}[extra]
+  path = runtime / relative; path.mkdir(parents=True); sentinel = path / "package.json"; sentinel.write_text('{"name":"full-only","version":"1.0.0"}')
+  with pytest.raises(Conflict): validate_installed(runtime, piece)
+  assert sentinel.read_text() == '{"name":"full-only","version":"1.0.0"}'
+
+
+@pytest.mark.parametrize("fault", ["name", "version", "extra-file", "missing-manifest"])
+def test_installed_graph_rejects_package_identity_confusion_and_direct_module_files(tmp_path, fault):
+  from agentcfg.pi_runtime_packages import validate_installed
+  from agentcfg.storage import Conflict
+  runtime, piece = installed_graph_fixture(tmp_path)
+  package = runtime / Path(piece["package_path"]).parent / "node_modules/synthetic-host/package.json"
+  if fault == "name": package.write_text('{"name":"full-only","version":"1.0.0"}')
+  if fault == "version": package.write_text('{"name":"synthetic-host","version":"2.0.0"}')
+  if fault == "missing-manifest": package.unlink()
+  if fault == "extra-file": (package.parent.parent / "full-only.js").write_text("must not load")
+  with pytest.raises(Conflict): validate_installed(runtime, piece)
+
+
+def test_installed_graph_accepts_complete_scoped_nested_bundled_alias_and_missing_optional_packages(tmp_path):
+  from agentcfg.pi_runtime_packages import validate_installed
+  records = {"node_modules/@fixture/core": {"version": "1.0.0"},
+    "node_modules/synthetic-host/node_modules/bundled": {"version": "2.0.0", "inBundle": True},
+    "node_modules/synthetic-host/node_modules/alias": {"name": "actual-name", "version": "3.0.0"},
+    "node_modules/optional-platform": {"version": "1.0.0", "optional": True}}
+  runtime, piece = installed_graph_fixture(tmp_path, extra_records=records)
+  prefix = runtime / Path(piece["package_path"]).parent
+  (prefix / "node_modules/.bin").mkdir()
+  (prefix / "node_modules/.bin/synthetic-host").symlink_to("../synthetic-host/index.js")
+  (prefix / "node_modules/.package-lock.json").write_text("{}")
+  validate_installed(runtime, piece)
+
+
+def test_workspace_supplies_profile_through_generic_dependency_backend_hook(tmp_path):
+  from agentcfg.workspace import Workspace
+  calls = []
+  class AdapterFixture:
+    def dependency_backend(self, *, profile=None): calls.append(profile); return "synthetic-backend"
+  workspace = Workspace(tmp_path, tmp_path / "local.toml", SimpleNamespace(data={"profile": {"id": "pi-test-base"}}), AdapterFixture(), None, None)
+  assert workspace.backend == "synthetic-backend" and calls == ["pi-test-base"]
+
+
+def test_real_adapters_accept_generic_optional_profile_without_changing_dsh_omp_backends(tmp_path):
+  from agentcfg.dsh import DshAdapter
+  from agentcfg.omp import OmpAdapter
+  from agentcfg.pi import PiAdapter
+  from agentcfg.backends import DshBackend
+  from agentcfg.omp_dependencies import OmpBackend
+  assert isinstance(DshAdapter(tmp_path).dependency_backend(profile="dsh-fixture"), DshBackend)
+  assert isinstance(OmpAdapter(tmp_path).dependency_backend(profile="omp-fixture"), OmpBackend)
+  assert PiAdapter(tmp_path).dependency_backend(profile="pi-test-base").profile == "pi-test-base"
+
+
+@pytest.mark.parametrize("fault", ["missing", "tamper"])
+def test_selected_base_own_vendor_body_is_required_and_integrity_checked(tmp_path, fault):
+  workspace, manifest = two_profiles_repository(tmp_path)
+  lock_root = workspace.repository / "locks/pi"; piece = manifest["profile_slices"]["pi-test-base"]
+  archive = lock_root / "vendor/base.tgz"; archive.write_bytes(b"synthetic Base archive")
+  manifest["sources"]["host"] = {"kind": "local", "package": "synthetic-host", "version": "1.0.0", "vendor_path": "vendor/base.tgz",
+    "archive_digest": digest(archive.read_bytes()), "source_path": "agents/pi/packages/base", "source_tree_digest": "a" * 64, "license_files": []}
+  package = json.loads((lock_root / piece["package_path"]).read_bytes()); package["dependencies"]["synthetic-host"] = "file:../vendor/base.tgz"
+  resolution = json.loads((lock_root / piece["lock_path"]).read_bytes()); resolution["packages"][""]["dependencies"] = package["dependencies"]
+  resolution["packages"]["node_modules/synthetic-host"]["resolved"] = "file:../vendor/base.tgz"
+  (lock_root / piece["package_path"]).write_bytes(payload(package)); (lock_root / piece["lock_path"]).write_bytes(payload(resolution))
+  piece["package_json_digest"] = digest(payload(package)); piece["package_lock_digest"] = digest(payload(resolution))
+  _write_manifest(workspace.repository, manifest)
+  assert set(PiBackend(profile="pi-test-base").read_lock(workspace.repository).pairs) == {"pi-test-base"}
+  if fault == "missing": archive.unlink()
+  else: archive.write_bytes(b"tampered Base archive")
+  with pytest.raises(ConfigError): PiBackend(profile="pi-test-base").read_lock(workspace.repository)
+
+
+@pytest.mark.parametrize("fault", ["alias-name", "optional-manifest", "package-json"])
+def test_installed_graph_does_not_confuse_aliases_or_ignore_present_broken_optional_packages(tmp_path, fault):
+  from agentcfg.pi_runtime_packages import validate_installed
+  from agentcfg.storage import Conflict
+  records = {"node_modules/alias": {"name": "actual-name", "version": "1.0.0"}, "node_modules/optional": {"version": "1.0.0", "optional": True}}
+  runtime, piece = installed_graph_fixture(tmp_path, extra_records=records)
+  prefix = runtime / Path(piece["package_path"]).parent
+  if fault == "alias-name": (prefix / "node_modules/alias/package.json").write_text('{"name":"alias","version":"1.0.0"}')
+  if fault == "optional-manifest": (prefix / "node_modules/optional").mkdir()
+  if fault == "package-json": (prefix / "node_modules/alias/package.json").write_text("invalid JSON")
+  with pytest.raises(Conflict): validate_installed(runtime, piece)
+
+
+def test_default_global_lock_validation_keeps_checking_unreferenced_vendor_bodies(tmp_path):
+  from copy import deepcopy
+  workspace, manifest = two_profiles_repository(tmp_path)
+  source = deepcopy(manifest["sources"]["full-feature"]); source["vendor_path"] = "vendor/unused.tgz"
+  manifest["sources"]["unused-source"] = source; _write_manifest(workspace.repository, manifest)
+  assert set(PiBackend(profile="pi-test-base").read_lock(workspace.repository).pairs) == {"pi-test-base"}
+  with pytest.raises(ConfigError): PiBackend().read_lock(workspace.repository)
+
+
+def test_installed_graph_preserves_legal_bin_link_even_when_command_name_is_node_modules(tmp_path):
+  from agentcfg.pi_runtime_packages import validate_installed, inventory
+  runtime, piece = installed_graph_fixture(tmp_path)
+  prefix = runtime / Path(piece["package_path"]).parent
+  directory = prefix / "node_modules/.bin"; directory.mkdir()
+  (directory / "node_modules").symlink_to("../synthetic-host/index.js")
+  validate_installed(runtime, piece)
+  assert inventory(runtime)[(directory / "node_modules").relative_to(runtime).as_posix()]["kind"] == "link"

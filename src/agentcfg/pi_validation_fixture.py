@@ -51,7 +51,9 @@ def prepare_configuration(root, repository, profile, provider_url, programs, *, 
   endpoint = urlsplit(provider_url)
   if (endpoint.scheme != "http" or endpoint.hostname != "127.0.0.1" or endpoint.port is None or endpoint.path != "/v1"
       or endpoint.username or endpoint.password or endpoint.query or endpoint.fragment): raise ConfigError("pi-native-provider-loopback")
-  if profile not in PROFILES: raise ConfigError("pi-native-fixture-profile")
+  base = profile == "pi-base"
+  if profile not in PROFILES and not base: raise ConfigError("pi-native-fixture-profile")
+  if base and (second_view or readseek): raise ConfigError("pi-native-fixture-profile-options")
   if codex_mode is not None and (profile != "pi-codex" or codex_mode not in ("readonly", "write")): raise ConfigError("pi-native-codex-mode")
   if service is not None and (profile != "pi-default" or service not in ("mcp", "web", "terminal")): raise ConfigError("pi-native-service")
   if type(proxy) is not bool or proxy and (profile not in ("pi-default", "pi-managed") or service is not None): raise ConfigError("pi-native-proxy")
@@ -97,15 +99,15 @@ def prepare_configuration(root, repository, profile, provider_url, programs, *, 
   managed = profile == "pi-managed"
   roles = {"main": "native-main"}
   if managed: roles.update(task_keeper_reader="native-reader", task_keeper_writer="native-writer", task_keeper_reviewer="native-reviewer")
-  else: roles.update(scout="native-reader", reviewer="native-reviewer")
+  elif not base: roles.update(scout="native-reader", reviewer="native-reviewer")
   if second_view:
     if not managed: raise ConfigError("pi-native-second-view-profile")
     roles["second_view"] = "native-second-view"
-  options = {"permissions": {"policy_ref": "task-keeper-candidate"}, "network": {"routes": {"native-direct": {"mode": "direct", "provider_ids": ["native-fixture"]}}},
+  options = {"permissions": {"policy_ref": "project-default" if base else "task-keeper-candidate"}, "network": {"routes": {"native-direct": {"mode": "direct", "provider_ids": ["native-fixture"]}}},
     "paths": {"roots": {"project": {"path": str(project), "purpose": "project"},
       "fixture-tools": {"path": str(tools), "purpose": "read"},
       "python-packages": {"path": programs["python_packages"], "purpose": "read"}}},
-    "model_settings": {"native-" + role: {"reasoning": True} for role in MODELS}}
+    "model_settings": {"native-" + role: {"reasoning": True} for role in (("main",) if base else MODELS)}}
   if managed:
     options["task_keeper"] = {"enabled": True, "project_root": "project", "check_ids": ["native-build", "native-tests"],
       "second_view_enabled": second_view, "limits": {"model_requests": request_limit, "model_turns": request_limit, "wall_seconds": 900}}
@@ -115,13 +117,14 @@ def prepare_configuration(root, repository, profile, provider_url, programs, *, 
       "native-tests": {"executable": programs["python"], "args": ["-B", "-I", str(tools / "check.py"), programs["python_packages"]],
         "project_root": "project", "read_roots": ["python-packages", "fixture-tools"], "foreground": True, "timeout_seconds": 30,
         "kind": "tests", "parser": "pytest", "minimum_tests": 1, "inputs": ["test_native_fixture.py"]}}
-  else:
+  elif not base:
     options["model_delegate"] = {"pi": {"model_roles": ["scout", "reviewer"], "network_route": "native-direct"}}
   if readseek:
     # ReadSeek原生验收接线（场景级显式选择，同服务验收模式）：node配方用锁定node引擎作计算worker解释器；
     # Bun配方(cursor)也需要独立的node绑定，因为ReadSeek worker需要锁定Node版本。
     import shutil
-    toolchains = json.loads((repository / "locks/pi/manifest.json").read_text())["toolchains"]
+    from .pi_lock_layout import dependency_layout
+    toolchains = json.loads((repository / dependency_layout(profile=profile).lock_directory / "manifest.json").read_text())["toolchains"]
     rg = shutil.which("rg")
     if not rg: raise DependencyError("原生ReadSeek验收需要明确的rg前提")
     # ReadSeek worker必须使用独立的Node，不能退回Bun
@@ -151,11 +154,12 @@ def prepare_configuration(root, repository, profile, provider_url, programs, *, 
     # 只验证 Cursor 插件加载；未选 Cursor 模型，不调用该真实账号端点。
     options["cursor"] = {"endpoint": "https://agentn.us.api5.cursor.sh", "network_route": "cursor-direct"}
     options["network"]["routes"]["cursor-direct"] = {"mode": "direct", "provider_ids": ["cursor"]}
+  selected_models = {"main": MODELS["main"]} if base else MODELS
   document = {"schema_version": 1, "machine": {"id": "native-fixture", "default_profile": profile,
     "paths": {name: str(root / name) for name in ("instances_root", "state_root", "cache_root")}},
     "overrides": {"providers": {"native-fixture": {"protocol": "openai-compatible", "base_url": provider_url, "auth_kind": "api-key", "credential_ref": "secret:native-key"}},
-      "models": {"native-" + role: {"provider": "native-fixture", "remote_id": model, "input": ["text"], "context_window": 32768, "max_output_tokens": 4096} for role, model in MODELS.items()},
-      "profiles": {profile: {"providers": ["native-fixture", *(["cursor"] if profile == "pi-cursor" else [])], "models": ["native-" + role for role in MODELS], "roles": roles, "agent_options": options}}},
+      "models": {"native-" + role: {"provider": "native-fixture", "remote_id": model, "input": ["text"], "context_window": 32768, "max_output_tokens": 4096} for role, model in selected_models.items()},
+      "profiles": {profile: {"providers": ["native-fixture", *(["cursor"] if profile == "pi-cursor" else [])], "models": ["native-" + role for role in selected_models], "roles": roles, "agent_options": options}}},
     "secrets": {"native-key": "synthetic-native-key"}}
   local = root / "local.toml"
   if proxy:
@@ -193,7 +197,7 @@ def prepare_configuration(root, repository, profile, provider_url, programs, *, 
       *(["pi-cursor"] if profile == "pi-cursor" else []), "pi-readseek"]
   with Tree(root) as tree: tree.write_new(local.name, _toml(document))
   workspace = load_workspace(local, profile, repository=repository)
-  return {"workspace": workspace, "environment": environment, "project": project, "model_ids": tuple(MODELS.values()), "fixture_root": root}
+  return {"workspace": workspace, "environment": environment, "project": project, "model_ids": tuple(selected_models.values()), "fixture_root": root}
 
 
 def prepare_fixture(root, repository, runtime, provider_url, programs, *, run, second_view=False, request_limit=100, fixing=False, service=None, proxy=False, readseek=False):

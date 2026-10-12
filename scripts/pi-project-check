@@ -13,7 +13,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from agentcfg.pi_checks import check_environment, linux_verifier_argv, macos_verifier_policy
 from agentcfg.pi_control import request
-from agentcfg.storage import Tree, ensure_private
+from agentcfg.storage import Conflict, Tree, ensure_private
 
 
 def main():
@@ -23,11 +23,17 @@ def main():
   with Tree(args.input.parent) as tree:
     raw = tree.read(args.input.name)
   value = json.loads(raw[0])
-  if set(value) != {"check", "temporary", "lease_id", "grant_generation", "denied_paths"}:
+  required = {"check", "temporary", "lease_id", "grant_generation", "denied_paths"}
+  if set(value) not in (required, required | {"namespace_helper"}):
+    return 2
+  if "namespace_helper" in value and sys.platform != "linux":
     return 2
   check = value["check"]
+  directory = os.environ.get("AGENTCFG_SUPERVISOR_DIRECTORY_FD")
+  if directory not in (None, "3"): raise Conflict("CONTROL_DIRECTORY_UNAVAILABLE")
   proof = request(os.environ["AGENTCFG_SUPERVISOR_ENDPOINT"], os.environ["AGENTCFG_SUPERVISOR_CAPABILITY"],
-    {"schema_version": 1, "request_id": uuid.uuid4().hex, "method": "authorize", "args": {"lease_id": value["lease_id"], "grant_generation": value["grant_generation"]}})
+    {"schema_version": 1, "request_id": uuid.uuid4().hex, "method": "authorize", "args": {"lease_id": value["lease_id"], "grant_generation": value["grant_generation"]}},
+    **({"inherited_directory_fd": 3} if directory == "3" else {}))
   if not proof.get("ok") or not proof.get("result", {}).get("valid"):
     return 4
   temporary = Path(value["temporary"])
@@ -41,6 +47,16 @@ def main():
         os.set_inheritable(fd, True)
         denied_fds[str(path)] = fd
     argv = linux_verifier_argv(check, temporary=temporary, denied_paths=value["denied_paths"], denied_fds=denied_fds)
+    if "namespace_helper" in value:
+      helper = value["namespace_helper"]
+      if type(helper) is not dict or set(helper) != {"path", "sha256"}:
+        return 2
+      from agentcfg.pi_shell_execution import _helper
+      descriptor, _identity = _helper(helper["path"], helper["sha256"])
+      # 持有已核验FD执行原ELF；路径只作argv0标签，不能在校验后重开替换文件。
+      os.chdir(check["cwd"])
+      os.execve(descriptor, (helper["path"], *argv[1:]), check_environment(check, temporary))
+      return 6
   elif sys.platform == "darwin":
     terminal = os.ttyname(0) if check.get("terminal_size") is not None and os.isatty(0) else None
     profile = macos_verifier_policy(check, temporary=temporary, denied_paths=value["denied_paths"], terminal_device=terminal)

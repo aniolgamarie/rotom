@@ -1,0 +1,49 @@
+# Wheel 正式锁与原调用链接线
+
+2026-10-07 root 修订草案。输入为已冻结的 [四个数据 API](durable-wheel-source-contract.md)、已接受的档案数据／stage组件、四路过滤与原producer证据。本稿先定义正式锁的生成／读取包B1，物理安装包B2随后冻结并实现。source-data快照P2已修复并稳定默认验收248项，receipt `31d047be350eae7ea6139d86b601c481d852e2596da9faa1501e4523c3789ed7`；B1首核一处provider版本P2按下述来源kind分支修订，尚须增量设计核和root明确授权才实施。两包完成前不得以公共metadata、ref或PiLock签发Full来源、初始化或产品通过。
+
+## B1 写入范围与接口
+
+唯一writer可修改 `schemas/pi-lock.schema.json`、`src/agentcfg/pi_capabilities.py`、`src/agentcfg/pi_lock_resolution.py`、`src/agentcfg/pi_vendor.py`、`src/agentcfg/pi_dependencies.py`、`src/agentcfg/pi_modern_launcher.py`；新增 `tests/test_pi_wheel_lock_integration.py`。已有新source-data/core/stage模块及其测试、正式 dependencies-modern 声明、vendor、profile、源provider/catalog、runtime资源和许可registry本包不改。私有控制面／sourcehold／issuer不改。
+
+Schema只加四API契约中exact形状：source additionalProperties以 `oneOf:[完整旧source schema, 新wheel schema]` 区分，旧source节点内容不改；新branch直接内联，不能令原read_inputs的standalone source-schema validator丢失root `$defs`而坏掉旧asset。完整旧provider definition保持不动；新增现代provider variant只给主/支持source_version追加wheel canonical一至三段字符串域，bindings provider shape以旧/新variant的anyOf连接，v1再明确限定旧provider definition。现代较宽shape不能决定对应source的kind，须下述实际source映射校验；verified/candidate host版本始终原pattern。现代piece允许python_bundle字段；v1明确禁止kind=wheel与python_bundle，保留原runtime_files/ai_package/build_record限制；Base明确禁止ref，Full七source/ref/runtime语义仍交数据API。未知和跨kind字段失败。逆去新wrapper/variant/字段/限制后，旧schema JSON和值域精确恢复；不修改旧source.kind enum或一般provider/host版本域。
+
+source_identity只增加显式kind=wheel分支，lazy调用wheel_source_identity；generic旧npm/git/local/asset与Node专门branch保持原字节。新失败在原固定pi-provider-binding边界清cause/context，控制BaseException不吸收。URL/vendor合法但不入共享projection，全文identity/binding仍按原规则重算。
+
+validate_manifest_bindings增加可选keyword-only `sources=None`；旧无sources两args调用与非wheel主/支持版本仍用原三段规则。modern原vendor/dependencies调用点传其已有sources，_resolve_selection_data传metadata中的sources。仅对应原record确为合法wheel时，主/支持source_version才按已冻结wheel域接受，并须与原source.version字符串完全相等；复用wheel数据校验/identity，不按source_id名字猜kind、补零或改原版本。映射缺失/错kind/非法wheel不能放行短版本，wheel的null/版本漂移拒绝；宿主verified/candidate版本不经过新分支。原selected binding等式、capability/source-profile闭包和选择状态校验仍执行，传入sources只是公开数据，不是来源权限。
+
+read_inputs对modern wheel显式调用validate_wheel_source(locked=False)，legacy拒绝；不要求recipe/resources/license overlay或把档案成员license_files当repo旁包路径。现代profile允许可选python_bundle，原字段仍必需；调用validate_python_bundle_reference(...locked=False)核所有piece，原runtime_files与manifest bindings照常核。没有wheel/ref的原Base和Full合法输入仍工作。
+
+## 固定预构建档案来源
+
+本B1不联网取wheel、不运行pip/uv/npm pack或发行脚本。外部调用原显式lock构建之前，七原档案须已由独立固定来源步骤放在 `layout.lock_directory/vendor/wheels/<archive_digest>/<wheel_filename>`；这是预构建输入而非旧安装树或cache fallback。缺失/错size/hash拒绝，不能扫描目录选择替代版本或读取任意source_path。resolve_lock对wheel直接保留声明字段并加该exact vendor_path，用原Tree只读且max_bytes=2097152核size/hash，raw byte原样纳入原archive发布集合；不进入build_archive。独立发布来源、许可充分性和ABI仍单列。
+
+每Full有ref时，在任何npm或其它子进程前，生成器先lock_files得到既有copy行，Tree只读固定runtime源原bytes（cap8MiB），和原locked wheel records交validate_selected_python_bundle核ref/版本/hash/filename/完整许可成员配对。必要的七档案ZIP语义预检复用原公开plan_python_bundle_install，occupied_files仅为空的**数据预检**，不代表实际安装占用资格；原B2仍须独立收集实际stage完整集合。原声明中没有ref时，不进入所选正文读取/解析、不开wheel ZIP、不导入core；原全局recipe输入扫描例外按下段保留。小型ref原样进入Full slice identity和锁，不把WheelRows正文塞入manifest。
+
+Generator原selected npm map及resources只有 npm/local/git，asset与wheel都有自己的明确分支。npm direct dependency map、npm record reconstruction、资源循环不接收wheel。validate_lock_resolution的direct dependency声明与直接依赖逐record校验只计npm/local/git；npm file引用允许集也只计这三个kind的vendor路径，禁止wheel档案在root或传递dependency中用file引用。旧npm/local/git/asset合法和错误结果不改变，legacy不能用现代wheel。
+
+## 原读取器与Base路径
+
+read_lock保留原header→recipe→bindings、全局source grammar、profile引用/platform/destination/identity、selected runtime/pair/resolution/license/binding流程，不跳过旧校验。wheel全局只调用轻量source规则；所选vendor原bytes才读取，cap2MiB、size/hash必须相等。每piece调用小型reference校验；Base遇到另一个Full的合法公共wheel records时，不读其vendor字节、不进入所选正文读取/解析，也不导入core/ZIP/Durable。
+
+实际原recipe_digest遍历整个agents/pi/runtime，并由source_files对其中每个regular file读取原bytes；新增固定公共声明因此也在原输入/hash域。B1明确保留这项全局完整性扫描，Base冷路径允许该阶段读取声明原bytes，除此之外不再读或解析Full正文。这里细化旧source契约第64–66行的caller冷路径目标，不改变四个纯数据API自身的无IO/无core通用路径，也不豁免旧whole-lock/recipe/binding规则。固定声明是公共仓库配置定义；Base不因此安装、导入、探测Full wheel/service/cache，移除Full部署依赖仍是独立验收要求。原recipe输入变化仍令旧证据stale，不能把全局扫描与所选Full验证混称。
+
+selected Full with ref在原verify_sources成功后，Tree读取固定body bytes并调用selected API；所选七raw bytes交原planner做档案语义数据预检。body/raw maps仅局部值，不扩PiLock.pairs的原两bytes格式、不从缓存“已验证”布尔恢复资格。plain PiLock构造和metadata自洽仍是数据，不替代原runtime/instance/current/source所有权。
+
+validate_destinations新增wheel/ref namespace谓词，而asset旧target检查保持原样。含ref的piece不能有其它runtime_file在 `supervisor/python-bundle` 的casefold exact/祖先/后代冲突路径；任何asset target与该保留prefix相交均拒绝（包括已有asset指向supervisor祖先）。无ref旧域不变。固定bundle正文copy行仍按原runtime白名单检查，不放宽任意JSON路径或generated列表。
+
+在B2尚未完成之前，_sync开头只要所选piece含python_bundle就固定DependencyError拒绝，位于任何stage写入/子进程前；不会把仅保存wheel档案、却没有安装库的树seal为ready。这是两包之间的明确未支持状态，B2实现时整体替换为真实hook；不是最终交付、fallback或永久固定拒绝。无ref所有原profile路径照常工作。
+
+## B1 验收
+
+新增套件用自有合成七wheel／声明和临时repo／HOME、断网、fake subprocess；不执行第三方包/宿主、新native或真实模型。覆盖合法生成→读取的Full metadata/data路线、原合法无wheel Base/Full、legacy-v1隔离、SourceIdentity原结果、partial/ID/version/license/size/hash/ref/runtime漂移、unknown/crosskind、npm直接/传递file引用混入wheel、Base禁止的所选正文/vendor/core访问、固定资源read/refdigest、namespace冲突与无ref旧合法对照。Base另证原recipe扫描该公共声明原bytes与原digest相符，recipe之后无追加body读/解析、无wheelvendor/core/ZIP；保留该阶段读数，不声称零body IO，改变公共声明使recipe/旧证据stale。wheel主/支持绑定版本1/1.0/1.0.0均有合法原串对照；短版本的非wheel/无sources/v1、wheel null/漂移/非法record、宿主短版本明确失败。明确B1带ref _sync零子进程/写入拒绝，不计为Full可用。
+
+写入前保存旧六文件和相关测试原像。先新套件，然后一次受影响旧套件：test_pi_lock_header.py、test_pi_lock_families.py、test_pi_capability_manifest.py、test_pi_provider_bindings.py、test_pi_selection_data.py、test_pi_lock_resolution.py、test_pi_vendor.py、test_pi_dependencies.py、test_pi_runtime_files.py、test_pi_assets.py，以及新source-data套件。均在tests/，命令用原repositoryPython -B -m pytest -q并关闭cacheprovider；原selection独立旧函数基线不改，保留各suite实际skip与原因，不提前编造计数、越过original UID/HOME/network/processguards，失败只重跑受影响范围。不重跑不受影响stage204/core387/native材料。全量新suite通过后做稳定diff独立审查；同原输入旧结果不变，但新源码/声明实际进入原recipe_digest时仍按旧规则使证据stale，不能以“Base未选Full”豁免全局recipe变化。
+
+## B2 后续必须闭合
+
+B2再冻结原stage拥有者取得七正式vendor原bytes／body的具体接线、完整occupied物理命名空间collector、追加producer的实际readback及原runtime_files/完整seal校验。原inventory略过root ready/receipt markers、包含目录和内链，不能直接当planner全部occupied输入。新collector需要明确非目录内链占位与regular files的语义，不能漏marker、跟随link扩大写边界或用caller空list。
+
+实际hook在原install_platform_helpers之后、install-home已删除、seal之前；验证borrowed scratchFD/唯一prefix，交原stage组件，只原seal发布完整ready/receipt。expected文件必须从固定ref/body和bundle inventory严格推导、核原byte/mode/owner/链接/完整集合，再纳入supervisor扫描，不能加一个接受任意extra files的宽泛白名单。B2不得用ref、返回None、fake Workspace/PiLock、copy来源树或hash当私有Full来源／activation工厂。
+
+正式Full声明/provider、installed origin、真实受管CPython/ABI、许可、sourcehold和独立寿命仍须分别实现与验收。当前Linux必需、其它平台按需；formal7/100、AUTO OFF与Recovery3待本组三场明确授权不变。

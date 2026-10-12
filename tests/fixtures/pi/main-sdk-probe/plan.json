@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "probe_id": "main-sdk-scope-1.0.1",
+  "state": "requires-final-freeze",
+  "versions": {
+    "pi": "1.0.1",
+    "pi_ai": "1.0.2",
+    "node": "24.14.0"
+  },
+  "source_root": "/source",
+  "candidate_root": "/candidate",
+  "node_root": "/node",
+  "work_root": "/work",
+  "cases": [
+    "real-runtime-proxy",
+    "main-prompt",
+    "available-catalog",
+    "outside-model",
+    "changed-api",
+    "compact-reopen",
+    "cancel-auth",
+    "cancel-response"
+  ],
+  "provider": {
+    "id": "synthetic-main-probe",
+    "model": "selected",
+    "outside_model": "outside",
+    "api": "synthetic-main-probe",
+    "base_url": "https://synthetic.invalid/unused"
+  },
+  "sentinels": [
+    "OWN_FAILED_TASK_SENTINEL",
+    "OWN_UNFINISHED_TASK_SENTINEL"
+  ],
+  "source_pins": {},
+  "candidate_pins": {},
+  "limits": {
+    "case_timeout_ms": 5000,
+    "total_timeout_ms": 60000,
+    "max_result_bytes": 65536
+  },
+  "candidate_inventory": null
+}

@@ -53,7 +53,7 @@ class Workspace:
 
   @property
   def backend(self):
-    return self.adapter.dependency_backend()
+    return self.adapter.dependency_backend(profile=self.profile)
 
   @property
   def profile(self):

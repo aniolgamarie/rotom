@@ -1,0 +1,4 @@
+Repository-owned integration and generated copies of repository-owned Task Keeper core.
+Canonical sources and import-only transformations are listed in core-source-manifest.json.
+Legacy Task Keeper package metadata and entry remain separate recovery assets.
+This is a candidate integration, not a certified installed runtime.

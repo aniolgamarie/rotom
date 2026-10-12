@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "probe_id": "official-rpc-1.0.1",
+  "versions": {
+    "pi": "1.0.1",
+    "pi_ai": "1.0.2",
+    "node": "24.14.0"
+  },
+  "lock_sha256": "f2c0af34b3c0d9195705509c26513de7d8aeb2fa4b6f3d395a2d58ecdd82c4ac",
+  "provider": {
+    "id": "synthetic-rpc-probe",
+    "api": "synthetic-rpc-probe",
+    "model": "synthetic-model",
+    "base_url": "https://synthetic.invalid/unused",
+    "api_key": "synthetic-no-account"
+  },
+  "cases": [
+    "timeout",
+    "cancelled",
+    "wrong-id",
+    "abort-late",
+    "confirmed"
+  ],
+  "confirmation_timeout_ms": 1000,
+  "files": {
+    "worker.mjs": "a57ae7440da298a15d1f040704cb5b6bfecef63d40bc1b432f0e8d8be3067779",
+    "extension.mjs": "efd0c116d31f4d6b6ee12de84140049880db3107bc7c7b8772034afa0836539b"
+  }
+}

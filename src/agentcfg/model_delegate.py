@@ -21,6 +21,46 @@ IDENTITY_FIELDS = ("run_id", "attempt_id", "backend", "mode", "preset", "request
   "timeout_seconds", "continuation_of", "feedback_required")
 
 
+def capture_delegate_arguments(value):
+  """只捕获浅层原生参数；不授权、不访问路径、不改变缺省或幂等字节。"""
+  required = {"idempotency_key", "backend", "mode", "preset", "task", "cwd", "model", "timeout_seconds"}
+  optional = {"context_artifact", "feedback_required", "allow_workspace_write", "worktree_root", "continuation_of"}
+  def invalid(code="delegate-request"):
+    raise ConfigError(code) from None
+  if type(value) is not dict or len(value) > len(required | optional): invalid("pi-control-protocol")
+  if any(type(key) is not str for key in value): invalid("pi-control-protocol")
+  if not required <= value.keys() or value.keys() - required - optional: invalid("pi-control-protocol")
+  def text(item, *, characters=65536, byte_limit=65536, nul=False):
+    if type(item) is not str or not 1 <= len(item) <= characters or nul and "\0" in item: invalid()
+    try:
+      if len(item.encode("utf8")) > byte_limit: invalid()
+    except UnicodeError:
+      invalid()
+  def identity(item):
+    if type(item) is not str or not 1 <= len(item) <= 200 or not re.fullmatch(r"[a-zA-Z0-9_.:-]{1,200}", item): invalid()
+  text(value["idempotency_key"], characters=200, byte_limit=800, nul=True)
+  for field, allowed in (("backend", ("pi", "codex")), ("mode", ("review", "investigate", "implement")),
+      ("preset", ("general", "context", "challenge", "plan", "research", "review", "scout"))):
+    if type(value[field]) is not str or value[field] not in allowed: invalid()
+  text(value["task"])
+  if not value["task"].strip(): invalid()
+  text(value["cwd"], nul=True)
+  if not Path(value["cwd"]).is_absolute(): invalid()
+  model = value["model"]
+  if (type(model) is not dict or len(model) != 2 or any(type(key) is not str for key in model)
+      or set(model) != {"provider_id", "model_id"}): invalid()
+  identity(model["provider_id"])
+  text(model["model_id"], nul=True)
+  if type(value["timeout_seconds"]) is not int or not 1 <= value["timeout_seconds"] <= 2**53 - 1: invalid()
+  for field in ("feedback_required", "allow_workspace_write"):
+    if field in value and type(value[field]) is not bool: invalid()
+  for field in ("context_artifact", "continuation_of"):
+    if field in value and value[field] is not None: identity(value[field])
+  if "worktree_root" in value and value["worktree_root"] is not None: text(value["worktree_root"], nul=True)
+  # 所有值均已是不可变原生标量，唯一嵌套model单独复制；不执行deepcopy hook。
+  return {**value, "model": {**model}}
+
+
 def validate_record(kind, value, *, schemas=SCHEMAS):
   if kind not in {"request-v2", "receipt-v2", "context-v2", "feedback-v2", "event-v2"}:
     raise ConfigError("delegate-schema-version")
@@ -154,6 +194,16 @@ class DelegationRuns:
 
   def read(self, run_id):
     return self._transaction(lambda tree: self._read(tree, run_id))
+
+  def prepare_modern_intent(self, origin, action, binding):
+    """schema3 逻辑动作登记；不调度、授权或迁移旧 v2 执行。"""
+    from .model_delegate_v3_intents import prepare_modern_intent
+    return prepare_modern_intent(self, origin, action, binding)
+
+  def read_modern_intent(self, origin, request_id):
+    """按稳定来源查询登记事实；当前 caller 权限由外层控制面另验。"""
+    from .model_delegate_v3_intents import read_modern_intent
+    return read_modern_intent(self, origin, request_id)
 
   def status(self, run_id):
     row = self.read(run_id)

@@ -1,0 +1,33 @@
+# Full-only installed origin contract：来源路线候选
+
+2026-10-07，root根据限定安装producer证据和render的私有generation约束补充 current-startup-origin。未授权实现writer/reader/角色/schema/正式锁/launcher/IO；此处只决定解决来源材料缺失的路线，exact API/字段/读取顺序和权限主体须下一包冻结。原九消息codec和正在实施的纯回复窗口不改变。
+
+## 材料从何而来
+
+现有modern install持有完整PiLock.metadata，却仅复制selected npm pair/runtime rows，生成profile/commands/receipt(slice+inventory+binding)。validator实现代码不是完整catalog/provider/source数据。没有actual installed runtime验收，不能把这些静态producer事实当它已存在。
+
+选用固定Full-only生成文件 `runtime/durable-owner-origin.json`。原受管installer从该次已核正式lock生成完整非秘密lock metadata快照，绑定selected Full及当前runtime/lock；包括原完整source records、catalog/providers/selections、profile slice和已核build mapping。selected npm pair/完整sealed inventory仍在原固定路径另读，不靠seed一个digest省掉原内容核验。文件由原installer生成，600/单link，纳入完整seal inventory；不能来自用户overlay、extension callback、任意path或临时lookup的新lock。它只是来源数据，不是accepted=True/registered reference/初始化cap。
+
+完整内容schema、canonical规则及cap尚待冻结；后续producer须明确非秘密来源，不复制local/model auth/credential/env/startup role token或state raw。合法字符串可能伪装秘密，不能用简单regex的“未发现secret”替代固定公共source producer。URI含凭据的来源不得自动strip修复或进snapshot；未来私有source transport另有独立secret通道。candidate/missing qualification不能因为snapshot成功而生成有能力reference。
+
+Base不声明该文件、不引入Full resolver。generated allowlist由exact Full owner声明启用，不把它加到所有profiles的通用GENERATED或允许孤立同名文件。所需role/manifest/schema/source/compiler/helper完整闭包未完成时仍不形成正式Full/owner launch。缺原完整lock不能从slice/package-lock/profile还原或编造metadata。
+
+## 双actor与child的本地重核
+
+caller原Workspace/当前launch/lease先按原受管路径捕获；接收manager从原启动上下文独立readback，保持private activation/validator/reference。controller的runtime root只从它的固定sealed入口/role确认，不能从R path或offer hash选一个新runtime/provider。controller对parent原private引用不做跨进程对象lookup，也不把JSON/context/token格式当issuer。
+
+slot阶段只预留3/核自己的固定source并回报metadata；offer/offer-ack只捕获有限准备关联，尚无storage授权。fresh携带完整原reserved R，其initial_instance/initial_state_root只提供本次已绑定来源的locator：child在原3预留之后、任何storage mkdir/open前，read-only重核自己固定runtime的完整contract/receipt/inventory/角色及实际instance/state/current nonsecret关联；全部源、原issuer/channel/期限/取消不闭合即零storage/Node/DB。parent在此前消费grant并持久reserved必须已经有自己的完整current Full来源；child拒绝不允许parent重发fresh/换SID/回滚未知发布。
+
+shared `source_identity`应针对两actor可各自从真实源得到的非秘密FullSourceView；manager activation/原private oncegrant/原Popen/heldpidfd不塞成假JSON能力。shared view的exact字段及canonical和最后核待定，不能现在把原actor私有对象地址或一个“已验证”布尔放进去。实际parent/source/channel认证和原lease持有链仍是独立实现前提，本route没有补齐。
+
+## 禁止复用私有generation的摘要
+
+render.py声明private endpoint可能影响RenderCandidate.generation，且generation/preimage不用于公开诊断。实际deployment.current保存generation，但不能直接把它当 `source_identity`、R.initial_deployment_identity或公开manifest digest；也不能hash整个deployment/state bytes后叫非秘密来源身份。原private lineage只能在original actor私有上下文/来源方法核；跨进程的关联必须用具体物理文件/目录身份与明确白名单非秘密projection。目录内容可因本次授权创建而变化，不能用含mtime的全目录stat当恒定source并把合法自有写入误判stale。
+
+具体哪些current字段允许投影、哪个physical tuple核文件/哪个只核目录对象、原generation如何由本地原方法核、instance/runtime lease在前端关闭和controller持有期间如何保持、活动任务如何保留旧source/runtime而不reset SID/budget，仍须在current-source API/持有链包逐项冻结。原lease/当前文件或表面同UID字段都不能单独签发初始化权；不为省一次读取扩大威胁模型到任意同UID内存访问。
+
+## 后续验收
+
+后续只在exact schema/API/角色资格和唯一writer范围批准后实施。默认临时完整受管Full fixture检查生成/完整source-map对比、unknown字段/无secret值与摘要、Base零可选数据、伪造seed/current错instance/漂移/同名replacement零grant、source全过程与early offer-ack的准备边界、fresh前无storage。fixture和source-onlyserialization不是actual install/lease/principal/native资格。实际Full/Python/current过程组合另准备授权，不借已闭合fbfea8或FD6；Recovery3 d61799精确三场已执行验收并闭合，不外推此组合。
+
+formal7/100、所有产品gate和严格计量前AUTO OFF保持。现在待独立路线复核，不标source API实现/产品通过。

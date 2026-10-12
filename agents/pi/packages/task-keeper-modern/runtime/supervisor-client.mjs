@@ -1,0 +1,173 @@
+import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { isAbsolute } from "node:path";
+import { fstatSync } from "node:fs";
+import { canonical, closed, ProtocolError, reject, text } from "./managed-types.mjs";
+const maxFrame = 1024 * 1024;
+const codexAdmissionCodes = new Set([
+    "CODEX_SYSTEM_CONFIG_PRESENT",
+    "CODEX_SYSTEM_CONFIG_UNVERIFIED",
+    "CODEX_MANAGED_PREFERENCES_PRESENT",
+    "CODEX_MANAGED_PREFERENCES_UNVERIFIED",
+    "CODEX_ACCOUNT_CONFIG_UNVERIFIED",
+    "CODEX_ORGANIZATION_ACCOUNT_UNSUPPORTED",
+    "CODEX_CONFIG_PLATFORM_UNSUPPORTED",
+    "CODEX_LOGIN_CONFIG_UNVERIFIED"
+]);
+export function inheritedControlDirectory(env = process.env) {
+    const value = env.AGENTCFG_SUPERVISOR_DIRECTORY_FD;
+    delete env.AGENTCFG_SUPERVISOR_DIRECTORY_FD;
+    if (value === undefined) return {};
+    if (value !== "3") reject("PI_CONTROL_UNAVAILABLE", 4);
+    return {
+        directoryFd: 3
+    };
+}
+function invokeProcess({ python, client, endpoint, capability, request, timeout, directoryFd }) {
+    return new Promise((resolveDone, rejectDone)=>{
+        const child = spawn(python, [
+            "-I",
+            client
+        ], {
+            stdio: directoryFd === undefined ? [
+                "pipe",
+                "pipe",
+                "pipe"
+            ] : [
+                "pipe",
+                "pipe",
+                "pipe",
+                directoryFd
+            ],
+            env: {
+                HOME: process.env.HOME ?? "/",
+                PATH: process.env.PATH ?? "/usr/bin:/bin",
+                ...directoryFd === undefined ? {} : {
+                    AGENTCFG_SUPERVISOR_DIRECTORY_FD: "3"
+                },
+                AGENTCFG_SUPERVISOR_ENDPOINT: endpoint,
+                AGENTCFG_SUPERVISOR_CAPABILITY: capability
+            }
+        });
+        const chunks = [];
+        let bytes = 0, failed = false;
+        const fail = ()=>{
+            if (failed) return;
+            failed = true;
+            child.kill();
+            rejectDone(new ProtocolError("PI_CONTROL_UNAVAILABLE", 4));
+        };
+        const timer = setTimeout(fail, timeout);
+        child.stdout.on("data", (chunk)=>{
+            bytes += chunk.length;
+            if (bytes > maxFrame) fail();
+            else chunks.push(chunk);
+        });
+        child.stderr.on("data", ()=>{});
+        child.on("error", fail);
+        child.stdin.on("error", fail);
+        child.on("close", (code)=>{
+            clearTimeout(timer);
+            if (failed) return;
+            if (code !== 0) {
+                fail();
+                return;
+            }
+            resolveDone(Buffer.concat(chunks).toString("utf8"));
+        });
+        child.stdin.end(canonical(request) + "\n");
+    });
+}
+export class SupervisorClient {
+    #directoryFd;
+    #directoryIdentity;
+    constructor({ python, client, endpoint, capability, invoke = invokeProcess, timeout = 30000, directoryFd }){
+        if (![
+            python,
+            client,
+            endpoint
+        ].every((value)=>text(value) && isAbsolute(value)) || !text(capability) || !Number.isSafeInteger(timeout) || timeout < 1 || timeout > 30000) reject();
+        this.options = {
+            python,
+            client,
+            endpoint,
+            capability,
+            timeout
+        };
+        this.invoke = invoke;
+        this.#directoryFd = directoryFd;
+        if (directoryFd !== undefined) {
+            if (!Number.isSafeInteger(directoryFd) || directoryFd < 3 || typeof process.getuid !== "function") reject("PI_CONTROL_UNAVAILABLE", 4);
+            this.#directoryIdentity = this.#checkDirectory();
+        }
+    }
+    #checkDirectory() {
+        if (this.#directoryFd === undefined) return undefined;
+        try {
+            const info = fstatSync(this.#directoryFd);
+            if (!info.isDirectory() || info.uid !== process.getuid() || (info.mode & 0o7777) !== 0o700) throw Error();
+            const actual = [
+                info.dev,
+                info.ino,
+                info.uid,
+                info.mode
+            ];
+            if (actual.some((value)=>!Number.isSafeInteger(value) || value < 0)) throw Error();
+            if (this.#directoryIdentity && actual.some((value, index)=>value !== this.#directoryIdentity[index])) throw Error();
+            return actual;
+        } catch  {
+            reject("PI_CONTROL_UNAVAILABLE", 4);
+        }
+    }
+    async call(method, args) {
+        if (!text(method)) reject();
+        const request = {
+            schema_version: 1,
+            request_id: randomUUID(),
+            method,
+            args
+        };
+        if (Buffer.byteLength(canonical(request)) + 1 > maxFrame) reject("PI_CONTROL_FRAME_LIMIT", 2);
+        let response;
+        try {
+            this.#checkDirectory();
+            const raw = await this.invoke({
+                ...this.options,
+                request,
+                ...this.#directoryFd === undefined ? {} : {
+                    directoryFd: this.#directoryFd
+                }
+            });
+            this.#checkDirectory();
+            response = JSON.parse(raw);
+        } catch  {
+            throw new ProtocolError("PI_CONTROL_UNAVAILABLE", 4);
+        }
+        if (response?.ok === true) {
+            closed(response, [
+                "schema_version",
+                "ok",
+                "result"
+            ]);
+            if (response.schema_version !== 1) reject();
+            return response.result;
+        }
+        if (response?.ok === false) {
+            closed(response, [
+                "schema_version",
+                "ok",
+                "exit_code",
+                "error"
+            ]);
+            if (response.schema_version !== 1 || ![
+                2,
+                3,
+                4,
+                5,
+                6
+            ].includes(response.exit_code)) reject();
+            throw new ProtocolError(codexAdmissionCodes.has(response.error) || response.error === "ORDINARY_STDIN_BACKPRESSURE" || response.error === "PERMISSION_DENIED" ? response.error : "PI_CONTROL_REJECTED", response.exit_code);
+        }
+        reject("PI_CONTROL_UNAVAILABLE", 4);
+    }
+}

@@ -9,7 +9,7 @@ import { applyProjectPolicy } from "../src/config.ts";
 function fixture() {
   const config = configured();
   for (const id of ["build", "focused-tests", "lint", "optional-check"]) config.verificationBindings[id] = {
-    executable: "trusted-check", args: [], environment: {}, timeoutMs: 1000, kind: "tests", parser: "json", minimumTests: 1, inputs: [] };
+    executable: "trusted-check", args: [], environment: {}, timeoutMs: 1000, kind: id === "build" ? "build" : "tests", parser: "json", minimumTests: 1, inputs: [] };
   return { config, input: { id: "job", workScope: "scope", goal: "Preserve root acceptance", workflow: "fix" as const,
     policyDigest: "policy", snapshot: "tree", workspaceLock: "workspace-source" } };
 }
@@ -43,19 +43,24 @@ test("[U RTB-012] fixed local verification demands only compute and frozen works
   assert.ok(steps.some(step => step.kind === "review" && !step.optional));
 });
 
-test("[U T77] direct plans retain mandatory build tests and independent review even when configuration omits them", () => {
+test("[U T77] missing mandatory checks are rejected and complete direct plans retain fixed acceptance shape", () => {
   const { config, input } = fixture(); config.workflow.recipes = ["direct"];
+  // 直接对象修改绕过parseConfig；固定workflow必须保守拒绝缺失的build/tests。
   for (const required of [[], ["lint"]]) {
-    config.workflow.requiredChecks.fix = required; const before = structuredClone(config), { spec, steps } = fixedWorkflowPlan(config, input);
-    for (const id of ["build", "focused-tests", "independent-review", ...required]) {
-      assert.ok(spec.required.includes(id)); assert.equal(steps.find(step => step.id === id)!.optional, false);
-    }
-    assert.deepEqual(steps.find(step => step.id === "implement")!.dependencies, ["baseline:build"]);
-    assert.ok(steps.find(step => step.id === "independent-review")!.dependencies.includes("focused-tests"));
-    assert.deepEqual(steps.find(step => step.id === "independent-review")!.allowedSkippedDependencies, []);
-    assert.equal(spec.maxSteps, config.limits.dispatchedStepsPerJob); assert.equal(spec.maxSemanticAttempts, config.limits.semanticAttemptsPerImplementationTask);
-    assert.doesNotThrow(() => validatePlan(steps, spec.maxSteps)); assert.deepEqual(config, before);
+    config.workflow.requiredChecks.fix = required;
+    assert.throws(() => fixedWorkflowPlan(config, input), { code: "BUILD_AND_TEST_BINDINGS_REQUIRED" });
   }
+  config.workflow.requiredChecks.fix = ["build", "focused-tests", "lint"];
+  const before = structuredClone(config), { spec, steps } = fixedWorkflowPlan(config, input);
+  for (const id of ["build", "focused-tests", "independent-review", "lint"]) {
+    assert.ok(spec.required.includes(id)); assert.equal(steps.find(step => step.id === id)!.optional, false);
+  }
+  assert.equal(steps.filter(step => step.kind === "write").length, 1);
+  assert.deepEqual(steps.find(step => step.id === "implement")!.dependencies, ["baseline:build"]);
+  assert.ok(steps.find(step => step.id === "independent-review")!.dependencies.includes("focused-tests"));
+  assert.deepEqual(steps.find(step => step.id === "independent-review")!.allowedSkippedDependencies, []);
+  assert.equal(spec.maxSteps, config.limits.dispatchedStepsPerJob); assert.equal(spec.maxSemanticAttempts, config.limits.semanticAttemptsPerImplementationTask);
+  assert.doesNotThrow(() => validatePlan(steps, spec.maxSteps)); assert.deepEqual(config, before);
 });
 
 test("[U WFL-002] bounded inspect plans require one scout and one independent review without allocating a writer", () => {
@@ -72,5 +77,5 @@ test("[U] legacy recipe names cannot bypass an explicit disabled second-opinion 
   const {spec,steps}=fixedWorkflowPlan(config,input),review=steps.find(step=>step.id==="independent-review")!;
   assert.equal(steps.some(step=>step.id==="optional-critique"||step.id==="second-opinion"),false);assert.equal(review.optional,false);
   assert.deepEqual(review.allowedSkippedDependencies,["optional-check"]);assert.ok(spec.required.includes("build"));assert.ok(spec.required.includes("focused-tests"));assert.ok(spec.required.includes("independent-review"));
-  delete config.verificationBindings.build;assert.throws(()=>fixedWorkflowPlan(config,input),{code:"CHECK_BINDING_REQUIRED",message:"build"});
+  delete config.verificationBindings.build;assert.throws(()=>fixedWorkflowPlan(config,input),{code:"BUILD_AND_TEST_BINDINGS_REQUIRED"});
 });

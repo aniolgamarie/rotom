@@ -1,0 +1,4673 @@
+{
+  "schema_version": 2,
+  "scope_id": "005-pi-two-profiles",
+  "scope_revision": 1,
+  "scope_digest": "4126474f78f3671bed8239f56d99707f321d9d607bf82ff9b0135e65fcb82bcc",
+  "input_digest": "2abfa16e0926c5645e9c052673f66a394709351b334f329d9f20576c16830eb5",
+  "report_generated": true,
+  "candidate_frozen": false,
+  "release_approved": false,
+  "whole_process_isolation_decision": "undecided",
+  "profiles": {
+    "pi-base": false,
+    "pi-full": false
+  },
+  "gates": {
+    "base": false,
+    "full": false,
+    "isolation": false,
+    "whole-process-feasibility": false,
+    "maintenance": false,
+    "linux-x86_64": false,
+    "accounts": false,
+    "experience": false
+  },
+  "counts": {
+    "passed": 0,
+    "failed": 0,
+    "not-run": 108,
+    "needs-login": 0,
+    "unsupported": 0
+  },
+  "items": [
+    {
+      "check_id": "S01",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R01",
+        "R31",
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S01",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R01",
+        "R31",
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S02",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R03",
+        "R31",
+        "R32",
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S02",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R03",
+        "R31",
+        "R32",
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S03",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R02",
+        "R03",
+        "R08",
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S03",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R02",
+        "R03",
+        "R08",
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S04",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R04",
+        "R35"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "L",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S04",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R04",
+        "R35"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "L",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S05",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R04",
+        "R15",
+        "R34"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S05",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R04",
+        "R15",
+        "R34"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S06",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R05"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "P",
+        "L",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S06",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R05"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "P",
+        "L",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S07",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R05",
+        "R06"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "P",
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S07",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R05",
+        "R06"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "P",
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S08",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R11",
+        "R12",
+        "R15"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S08",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R11",
+        "R12",
+        "R15"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S09",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R06",
+        "R16"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S09",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R06",
+        "R16"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S10",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R07"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S10",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R07"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S11",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R07",
+        "R12"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S11",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R07",
+        "R12"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S12",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R09",
+        "R10",
+        "R17"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S12",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R09",
+        "R10",
+        "R17"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S13",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R04",
+        "R09"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S13",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R04",
+        "R09"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S14",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R08",
+        "R30",
+        "R34"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "S14",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R08",
+        "R30",
+        "R34"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "B01",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R02",
+        "R10"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "B02",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R02",
+        "R31"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "B03",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R02",
+        "R09",
+        "R10"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "B04",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R02",
+        "R11"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "B05",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R06",
+        "R07"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "B06",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R03",
+        "R33"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "P",
+        "L",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F01",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R20",
+        "R28"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F02",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R20",
+        "R21"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "P",
+        "L",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F03",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R21"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "P",
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F04",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R20",
+        "R21",
+        "R27"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F05",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R22",
+        "R29"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F06",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R20",
+        "R23",
+        "R24"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "L",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F07",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R24"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F08",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R20",
+        "R22",
+        "R29"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F09",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R23",
+        "R30"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "P",
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F10",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R26",
+        "R29",
+        "R30"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F11",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R25",
+        "R28"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F12",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R25",
+        "R27"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F13",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R26",
+        "R27"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F14",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R27",
+        "R28"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F15",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R26",
+        "R28",
+        "R32"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F16",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R28"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F17",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R33"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "P",
+        "L",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "F18",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R27",
+        "R31"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W01",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W01",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W02",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R35",
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W02",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R35",
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W03",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R35",
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W03",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R35",
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W04",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R27",
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W04",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R27",
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W05",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "not_selected",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W05",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "not_selected",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W06",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R35",
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W06",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R35",
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W07",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R35"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W07",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R35"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W08",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R35",
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "W08",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R35",
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P01",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R10"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P01",
+      "profile": "pi-full",
+      "subitem_id": "reviewer-disabled",
+      "requirements": [
+        "R10"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P01",
+      "profile": "pi-full",
+      "subitem_id": "reviewer-enabled",
+      "requirements": [
+        "R10"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P02",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R11"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P02",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R11"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P03",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R12",
+        "R15"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P03",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R12",
+        "R15"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P04",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R12",
+        "R13",
+        "R15"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P04",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R12",
+        "R13",
+        "R15"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P05",
+      "profile": "pi-base",
+      "subitem_id": "coverage",
+      "requirements": [
+        "R12",
+        "R14"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P05",
+      "profile": "pi-base",
+      "subitem_id": "feasibility",
+      "requirements": [
+        "R12",
+        "R14"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P05",
+      "profile": "pi-full",
+      "subitem_id": "coverage",
+      "requirements": [
+        "R12",
+        "R14"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P05",
+      "profile": "pi-full",
+      "subitem_id": "feasibility",
+      "requirements": [
+        "R12",
+        "R14"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P06",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R16"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P06",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R16"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P07",
+      "profile": "pi-base",
+      "subitem_id": "default",
+      "requirements": [
+        "R16"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P07",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R16"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P08",
+      "profile": "pi-full",
+      "subitem_id": "reviewer-enabled",
+      "requirements": [
+        "R17"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P09",
+      "profile": "pi-full",
+      "subitem_id": "reviewer-enabled",
+      "requirements": [
+        "R18"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "P10",
+      "profile": "pi-full",
+      "subitem_id": "reviewer-enabled",
+      "requirements": [
+        "R19"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "L",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M01",
+      "profile": "pi-base",
+      "subitem_id": "base-and-common",
+      "requirements": [
+        "R31",
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M01",
+      "profile": "pi-full",
+      "subitem_id": "full-and-common",
+      "requirements": [
+        "R31",
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O",
+        "P"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M02",
+      "profile": "pi-base",
+      "subitem_id": "base-and-common",
+      "requirements": [
+        "R32",
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M02",
+      "profile": "pi-full",
+      "subitem_id": "full-and-common",
+      "requirements": [
+        "R32",
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "O"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M03",
+      "profile": "pi-base",
+      "subitem_id": "pure-pi-base",
+      "requirements": [
+        "R33"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "P",
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M03",
+      "profile": "pi-full",
+      "subitem_id": "four-states",
+      "requirements": [
+        "R33"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "O",
+        "P",
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "O": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M04",
+      "profile": "pi-base",
+      "subitem_id": "base-and-common",
+      "requirements": [
+        "R34"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M04",
+      "profile": "pi-full",
+      "subitem_id": "full-and-common",
+      "requirements": [
+        "R34"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "L"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "L": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M05",
+      "profile": "pi-base",
+      "subitem_id": "base-and-common",
+      "requirements": [
+        "R35"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M05",
+      "profile": "pi-full",
+      "subitem_id": "full-and-common",
+      "requirements": [
+        "R35"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M06",
+      "profile": "pi-base",
+      "subitem_id": "base-and-common",
+      "requirements": [
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M06",
+      "profile": "pi-full",
+      "subitem_id": "full-and-common",
+      "requirements": [
+        "R36"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M07",
+      "profile": "pi-base",
+      "subitem_id": "base-and-common",
+      "requirements": [
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "M07",
+      "profile": "pi-full",
+      "subitem_id": "full-and-common",
+      "requirements": [
+        "R37"
+      ],
+      "invariant_checks": [],
+      "levels": [
+        "U",
+        "P",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "P": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "X01",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R16",
+        "R25",
+        "R27",
+        "R28"
+      ],
+      "invariant_checks": [
+        "F12",
+        "F14",
+        "P06"
+      ],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "X02",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R20",
+        "R22",
+        "R23",
+        "R24",
+        "R26",
+        "R27",
+        "R29"
+      ],
+      "invariant_checks": [
+        "F06",
+        "F08",
+        "F13"
+      ],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "X03",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R20",
+        "R23",
+        "R24"
+      ],
+      "invariant_checks": [
+        "F06",
+        "F07"
+      ],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "X04",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R24"
+      ],
+      "invariant_checks": [
+        "F07"
+      ],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "X05",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R25",
+        "R26",
+        "R28",
+        "R32"
+      ],
+      "invariant_checks": [
+        "F11",
+        "F15"
+      ],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "X06",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R26",
+        "R27",
+        "R28",
+        "R32",
+        "R37"
+      ],
+      "invariant_checks": [
+        "F13",
+        "F15",
+        "M02"
+      ],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "X07",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R20",
+        "R22",
+        "R26",
+        "R29",
+        "R30"
+      ],
+      "invariant_checks": [
+        "F05",
+        "F08",
+        "F10"
+      ],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    },
+    {
+      "check_id": "X08",
+      "profile": "pi-full",
+      "subitem_id": "default",
+      "requirements": [
+        "R04",
+        "R15",
+        "R17",
+        "R34"
+      ],
+      "invariant_checks": [
+        "S05",
+        "P08",
+        "M04"
+      ],
+      "levels": [
+        "U",
+        "V"
+      ],
+      "applicability": "required",
+      "identity": null,
+      "checker": null,
+      "platform": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "engine": "node"
+      },
+      "evidence_paths": [],
+      "result": "not-run",
+      "validity": "invalid",
+      "execution_state": "pending",
+      "level_results": {
+        "U": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        },
+        "V": {
+          "result": "not-run",
+          "validity": "invalid",
+          "execution_state": "pending",
+          "reason": "candidate-identity-unfrozen"
+        }
+      }
+    }
+  ],
+  "report_digest": "c883584551cdedf549803748151cf6dad2246afc85076ad23a594f4f5e0d0545"
+}
