@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-12",
+  "implementationCommit": "96659be48a20de01b1d5469b47a732fd63383025",
+  "officialOMP": {
+    "version": "18.8.6",
+    "commit": "f068751e2f1dbdbc195977776d47a26db8697495",
+    "binarySHA256": "877acdc48384b80fe4c083b1e610433d28922dd9fccde9ea430aaace8765b19b",
+    "modified": false
+  },
+  "scope": {
+    "temporaryHome": true,
+    "privateNetworkNamespace": true,
+    "privatePIDNamespace": true,
+    "syntheticProvidersAndCredentials": true,
+    "realUserDataReadByScripts": false,
+    "externalModelRequests": 0
+  },
+  "host": {
+    "status": "passed",
+    "syntheticOnly": true,
+    "hostExecuted": true,
+    "externalModelRequests": 0,
+    "privateNetworkNamespace": true,
+    "officialBinaryModified": false,
+    "scriptsReadRealUserData": false,
+    "exitCode": 0,
+    "toolResults": 10,
+    "nativeDenyResults": 1,
+    "allowedExecutions": 9,
+    "zshVerified": true,
+    "providerCounts": {
+      "main": 2,
+      "reviewer": 9,
+      "reviewerActive": 0,
+      "maxReviewerConcurrency": 2,
+      "unexpected": 0
+    }
+  },
+  "limitations": [
+    "headless fake provider; no real Cursor transport or reviewer service",
+    "does not prove other operating systems",
+    "native addon startup first failed because root filesystem space was insufficient; retry socket cleanup repaired in fixture only"
+  ],
+  "deployment": {
+    "status": "not-yet-applied"
+  }
+}

@@ -2,7 +2,7 @@
 
 日期：2026-10-11。方案见[全链修复方案](../follow-ups/omp-approval-lifecycle-and-environment-2026-10-11.md)。本轮保持官方 OMP v18.8.6 / `f068751e2f1dbdbc195977776d47a26db8697495`，不修改宿主源码、官方二进制或私有执行接口。网络代理延后，执行模型套件、主动权限主审和备用模型选择不变。
 
-状态：实现、离线验收与稳定差量复核已完成；真实宿主隔离验收等待单独授权，尚未合入 main 或部署本机。旧实例仍使用此前保存的运行包和环境契约，不能将源码修复当作本机已经生效。
+状态：实现、离线验收与稳定差量复核已完成。2026-10-12 用户明确授权后，官方宿主隔离验收通过，进入合入和部署步骤；本机部署结果在完成后追加。机器可读记录见[验收证据](omp-tool-stability-20261011-evidence.json)。
 
 ## 行为变化
 
@@ -35,7 +35,7 @@ kernel 默认关闭将 cat/find 等强制改用专用工具的 Bash interceptor�
 | 官方 SDK 接线 | 12 pass / 0 fail，75 assertions | 官方 wrapper/runner/adapter 的实际源码，25 个入口/闭包模块导入前核验固定 SHA；包括快照 cwd 与实时 cwd 分离；外围 IO/Settings/provider 使用明确替身 |
 | 严格类型检查 | exit 0，旧 SDK 文件 0 | TypeScript 7.0.2，解析 2,535 份官方 18.8.6 SDK 源文件；缓存第三方类型依赖不等于新宿主构建闭包验收 |
 | 环境和管理器回归 | 全量 1,205 passed；7 项失败所在的三个模块修正后 35 passed；7 项退休 skip | 全量范围为 OMP 与通用 runtime。失败为旧环境断言/fixture接线，修正后只重验受影响模块，未重跑全量；HOME/XDG、dotenv、混合契约拒绝、环境-only 回滚与账号/owner 哨兵通过 |
-| 官方 CLI 隔离 smoke | 已准备，未执行 | 9 条无害环境/Bash/zsh 场景与 1 条 native deny；临时 HOME、私有网络/PID namespace、本地假模型、虚构凭据 |
+| 官方 CLI 隔离 smoke | exit 0，9 条执行成功 / 1 条 deny，zsh 通过 | 临时 HOME、私有网络/PID namespace、本地假模型、虚构凭据；reviewer 9 次，主模型假服务 2 次，审查并发最高 2，外部请求 0 |
 | 真实 reviewer / Cursor | 本轮未调用 | 追加授权余量仍 2；假模型通过不代表远程服务可用或真实 Cursor 并发已验 |
 | 本机部署 | 本轮未执行 | 没有修改本机密钥、真实 rc、认证库、会话或当前部署 |
 
@@ -51,3 +51,9 @@ python -m pytest tests/test_omp_*.py tests/test_runtime.py --ignore=tests/test_o
 阶段失败与修复保留在忽略的 `.cache/worktrees/omp-tool-stability-20261011/.cache/`：初次 Python 预期仍指向旧 HOME；默认 TS 全量发现 fake native decision/reason 不一致，以及 raw 已验证 clone 场景的人工确认与未知执行绑定被混同。分别修正测试契约与生产区分后再验收，没有修改冻结历史场景以迎合实现。TypeScript JS launcher 曾因缓存原生子包解析失败而未启动，随后直接使用已校验的同版原生编译器；失败日志不计为通过。
 
 独立最终 review 发现并修复跨行脱敏隐藏副作用、人工越过无法绑定路线、会话返回重放、新旧契约混用、旧 HOME 误判来源和官方快照 cwd 的实时失效缺口。稳定差量复核后无遗留 P1/P2。审查使用 executor 角色，其工具声明配置为 `gpt-6.1-sol / medium`；类型材料定位使用 scout 角色，其工具声明配置为 `gpt-6-luna / high`。原子消费、取消和部署语义由主代理决策并验收。未验证宿主状态分别记录，不能用早期审查结果代替。
+
+## 2026-10-12 官方宿主验证
+
+官方二进制和本次生产插件实际启动；HOME、XDG app 配置/Unix socket、用户 bin、Git 全局配置、显式 Bash rc 函数、zsh rc 函数与非秘密变量均按合成预期工作。deny 哨兵没有产生文件。没有启动真实 Cursor、付费主模型或真实 reviewer，也没有读取真实用户账号、密钥或 rc 文件正文。
+
+首次 CLI 在模型前因根文件系统仅余约55 MB而不能解包内置组件。释放本轮重复二进制副本，并把已完成 pytest 的临时证据迁至本轮忽略缓存，保留文件、链接及 FIFO 负例，未删除用户数据。重试又发现隔离脚本关闭 Unix socket 后未 unlink，造成后续 worker 在 CLI 启动前停止；修复仅限测试脚本的已核验 socket 路径。中间尝试的日志与最终通过日志分别保留，不将旧 result 文件当作当次成功证据。最终运行使用原正常缓存位置，未使用 native 目录覆盖；官方宿主、生产源码和本机配置在此验证阶段均未修改。
