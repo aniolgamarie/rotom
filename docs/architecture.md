@@ -53,9 +53,11 @@ flowchart LR
 
 状态中的 owner 跨首次 rollback 保留，防止另一个机器文件接管尚有运行数据的实例。current 保存字段基线和非秘密启动契约，previous 只保留上一操作的必要受管前值，pending 只在事务/恢复期间存在。首次创建字段文件时记录必要的父容器存在信息，回滚可移除空的新文件，但不会删除未知空对象或新增 OAuth 字段。
 
-`DependencyBackend` 分发到 DSH npm、Pi 配方切片或 OMP standalone 后端。`sync` 消费既有完整锁，只执行声明的安装/构建与校验步骤，安装成功验证后才激活目录；配置 rollback 不降级软件或数据库。`runtime` 使用已部署 argv/引用、实时 secret 值与显式环境清单。普通宿主继承活动锁 fd；Pi 另通过监督者维护实例与工作区活动证据；OMP 同实例普通会话使用共享租约，配置修改使用独占租约。
+`DependencyBackend` 分发到 DSH 双锁/frozen pnpm、Pi 配方切片或 OMP standalone 后端。`sync` 消费既有完整锁，只执行声明的安装/构建与校验步骤，安装成功验证后才激活目录；配置 rollback 不降级软件或数据库。`runtime` 使用已部署 argv/引用、实时 secret 值与显式环境清单。普通宿主继承活动锁 fd；Pi 另通过监督者维护实例与工作区活动证据；OMP 同实例普通会话使用共享租约，配置修改使用独占租约。
 
 管理器是仓库应用，uv 使用 `package=false`；入口从已准备的 `.venv` 加载当前仓库 src，不额外解析未锁定的构建后端。不会通过 `uv run` 或无版本 npx 暗中安装。
+
+DSH RC2 候选通过公开 `profile-boot` 与 process-only launch snapshot 启动，保持业务 cwd 和 `.env` 不隐式导入；不修改 fs 或上游模块。用户偏好使用按 entry id 的 Cordis YAML 编码器，初始化字段与持续受管字段分开。旧部署状态守卫在既有实例锁内、恢复/写入之前拒绝自动迁移，不修改 Pi/OMP 锁或目录语义。详见 [DSH 指南](dsh.md)。
 
 ## OMP permission-control 历史补丁架构（已退休）
 
@@ -110,6 +112,6 @@ service/显式 async/PTY/ACP、实际 direnv/devenv、prefix、useUserShell、�
 
 ## 验证与支持声明
 
-Python 隔离测试、TypeScript mock、原生宿主验收和真实账号/服务验收是不同层级。历史 spec 关闭只覆盖其固定候选、平台和范围，源码或锁变化后不能沿用为新候选通过证明。当前支持边界分别见 [DSH 验收](acceptance.md)、[Pi 支持矩阵](acceptance/pi-support-matrix.md)、[OMP 支持状态](omp-support.md)、[termcfg 验收](termcfg-acceptance.md)。
+Python 隔离测试、TypeScript mock、原生宿主验收和真实账号/服务验收是不同层级。历史 spec 关闭只覆盖其固定候选、平台和范围，源码或锁变化后不能沿用为新候选通过证明。当前支持边界分别见 [当前 DSH 候选验收](acceptance/dsh-upgrade-20261012.md)、[Pi 支持矩阵](acceptance/pi-support-matrix.md)、[OMP 支持状态](omp-support.md)、[termcfg 验收](termcfg-acceptance.md)。
 
 CI 独立运行 Python 隔离测试和 Task Keeper 的显式 Node mock 清单。后者先以 `npm ci --ignore-scripts --prefix tests/fixtures/pi/tooling` 消费 fixture 锁，再执行 `node agents/pi/packages/task-keeper/scripts/test-mock.mjs`，由该入口建立临时 HOME 和网络/进程边界。类型检查所需的独立开发依赖锁仍待整理，见 [REVIEW-F02](follow-ups/taskkeeper-typecheck.md)；mock 通过不代表 `tsc` 已通过。

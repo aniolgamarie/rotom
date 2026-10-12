@@ -13,11 +13,10 @@ from .paths import PathError
 
 
 REQUIRED_FILES = (
-  "package.json", "package-lock.json",
+  "package.json", "package-lock.json", "pnpm-lock.yaml",
   "node_modules/@deepseek-ai/dsh/lib/bin.js",
-  "node_modules/@fission-ai/openspec/bin/openspec.js",
   "node_modules/@deepseek-harness-tui/dsh-tui/cordis.patch.yml",
-  "node_modules/dsh-plugin-oauth-subs/lib/index.js",
+  "node_modules/rotom-dsh-cursor-terminal/index.mjs",
   "node_modules/@deepseek-ai/dsh-subprocess-local/scripts/ensure-spawn-helper.mjs",
 )
 

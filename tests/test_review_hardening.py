@@ -255,9 +255,11 @@ def installer(monkeypatch, lock):
       return lock.metadata["node"]
     if argv == ["npm", "--version"]:
       return lock.metadata["npm"]
-    if argv[:2] == ["npm", "ci"]:
+    if argv[-1] == "--version" and argv[0] == "node":
+      return lock.metadata["pnpm"]
+    if "--frozen-lockfile" in argv:
       for name in runtime_packages.REQUIRED_FILES:
-        if name in ("package.json", "package-lock.json"):
+        if name in ("package.json", "package-lock.json", "pnpm-lock.yaml"):
           continue
         path = cwd / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -354,7 +356,8 @@ def test_lock_rejects_consistent_but_incompatible_metadata(tmp_path, field):
   path = repository / "locks/dsh/manifest.json"
   metadata = json.loads(path.read_text())
   metadata[field] = {"unavailable": "not-smoked"} if field in ("platforms", "upstream") else "incompatible"
-  metadata["identity"] = dep.lock_identity((repository / "locks/dsh/package.json").read_bytes(), (repository / "locks/dsh/package-lock.json").read_bytes(), metadata)
+  metadata["identity"] = dep.lock_identity((repository / "locks/dsh/package.json").read_bytes(),
+    (repository / "locks/dsh/package-lock.json").read_bytes(), metadata, (repository / "locks/dsh/pnpm-lock.yaml").read_bytes())
   path.write_text(json.dumps(metadata))
   with pytest.raises(ConfigError):
     dep.read_lock(repository)
@@ -400,6 +403,6 @@ def test_plan_private_locations_and_deployed_credentials(tmp_path, capsys):
   assert any("agentcfg-one" in (item["selector"] or "") for item in detail["targets"])
   assert "agentcfg-one" not in public and CANARY not in public + location.read_text()
   assert location.stat().st_mode & 0o777 == 0o600
-  references = ["secret:deepseek_key", "secret:glm_key", "secret:kimi_key", "secret:one"]
+  references = ["secret:deepseek_key", "secret:glm_coding_key", "secret:kimi_code_key", "secret:one"]
   assert detail["credentials"] == [
     {"id": credential_id(reference), "reference": reference} for reference in references]

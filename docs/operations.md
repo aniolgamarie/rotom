@@ -1,5 +1,7 @@
 # 日常维护
 
+DSH 0.2.0-rc.2 候选不能对旧实例原地 apply。下方首版修复步骤有其历史范围；本次先保留原部署，按 [DSH 指南](dsh.md) 在独立 HOME/XDG 验收，配置 rollback 不等于软件或会话降级。
+
 第一次使用先读 [新手使用教程](getting-started.md)。本文用于已经完成安装后的配置修改。
 
 ## 请 Agent 帮忙维护
@@ -22,7 +24,7 @@
 
 只有依赖变化才需要显式 lock/sync。配置生成不安装软件，依赖安装不启动 Agent。共享规则不能消除工具内置系统提示差异。
 
-当前锁的 sync 接受 Node 24.2.0 起的 24.x 和 npm 11.x，run 使用相同 Node 下限；lock 仍要求精确 Node 24.14.0 / npm 11.19.1。Node 24.1.0 无法执行所用入口，需先切换版本。版本选择与原生验证范围见 [准备工具链](getting-started.md)。
+当前 DSH 锁使用固定原包 pnpm 11.19.0 消费 frozen pnpm-lock.yaml，不修改 TUI bundled 元数据。sync 接受 Node 24.2.0 起的 24.x 和 npm 11.x，run 使用相同 Node 下限；lock 仍要求精确 Node 24.14.0 / npm 11.19.1。Node 24.1.0 无法执行所用入口，需先切换版本。版本选择与原生验证范围见 [准备工具链](getting-started.md)。
 
 ## 添加共享 rule
 
@@ -91,7 +93,7 @@ input = ["text"]
 
 当前 allowlist 捕获原生 `dsh-tui.terminalImages`、隔离 user-home 中 `.dsh-tui/theme.json` 的主题及 `model.json` 的模型选择，生成缓存中的 `capture.json` 覆盖提案。主题允许 `rotom-poimandres`、`auto`、`dark`、`dark-ansi`、`light`。模型必须唯一对应当前 profile 已声明且选中的逻辑模型；未知动态模型或未支持主题会明确报错，原有提案保留。
 
-提案经过 schema 和完整合并/适配/渲染校验。它是局部提案，不是完整机器文件，也不是可直接复制的 DSH YAML。审阅后将相关非秘密字段局部合并进本地 TOML，再 validate/plan/apply。不会捕获 auth、会话或动态 OAuth 模型目录，不自动修改 Git。原生保存的偏好只是待采纳的 UI 选择，部署配置及环境变量仍可能覆盖其运行效果。
+提案经过 schema 和完整合并/适配/渲染校验。它是局部提案，不是完整机器文件，也不是可直接复制的 DSH YAML。审阅后将相关非秘密字段局部合并进本地 TOML，再 validate/plan/apply。不会捕获 auth、会话或动态 OAuth 模型目录，不自动修改 Git。主题和界面偏好仅初始化，重复 apply 保留用户改动；持续受管的模型/内核/preset 字段仍进行三方比较。实际设置文件及字段所有权见 [DSH 设置](dsh.md#设置所有权与-ui)。
 
 ## 冲突和凭据定位
 

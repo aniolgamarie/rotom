@@ -10,7 +10,7 @@ from .deployment import json_bytes
 from .storage import Conflict, Tree, ensure_private
 
 
-PROFILE_PROJECTIONS = ("@deepseek-harness-tui/dsh-tui", "dsh-plugin-oauth-subs")
+PROFILE_PROJECTIONS = ("@deepseek-harness-tui/dsh-tui", "rotom-dsh-cursor-terminal")
 
 
 def project_runtime_modules(profile, runtime, record, expected):

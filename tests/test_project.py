@@ -18,6 +18,35 @@ def generated(tmp_path):
   return stage
 
 
+def test_dsh_openspec_init_fails_closed_and_preserves_project_data(tmp_path, monkeypatch, fake_subprocess, sentinel_factory):
+  from types import SimpleNamespace
+  from agentcfg.backends import DshBackend
+  from agentcfg.process import DependencyError
+  from agentcfg.project import initialize_openspec
+
+  target = tmp_path / "project"
+  target.mkdir()
+  (target / ".git").mkdir()
+  # 既有业务资料与技能不因撤下 DSH 能力而被清理。
+  for name in ("openspec/specs/feature/spec.md", ".specify/memory/constitution.md",
+      "specs/feature/spec.md", ".agents/skills/openspec-propose/SKILL.md",
+      ".agents/skills/custom/SKILL.md", ".agentcfg-openspec.json"):
+    path = target / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("existing project data\n")
+  before = sentinel_factory(target)
+  backend = DshBackend()
+  monkeypatch.setattr(backend, "status", lambda *_: "installed")
+  workspace = SimpleNamespace(backend=backend, cache=tmp_path / "cache")
+
+  with pytest.raises(DependencyError, match="未提供锁定 OpenSpec 集成"):
+    initialize_openspec(workspace, SimpleNamespace(identity="fixture-runtime"), target)
+
+  assert fake_subprocess.calls == []
+  assert not workspace.cache.exists()
+  before.assert_unchanged()
+
+
 def test_project_target_only_idempotent_and_conflicts(tmp_path):
   stage = generated(tmp_path)
   target = tmp_path / "项目 空格"

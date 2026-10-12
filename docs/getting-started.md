@@ -1,6 +1,6 @@
 # 第一次使用 agentcfg
 
-本教程从打开终端开始。`agentcfg` 负责准备软件和同步配置，实际与你对话、操作项目的是 DSH。当前只有 DSH 适配器；Codex 和 Cursor 订阅可以作为 DSH 的模型来源。
+本教程从打开终端开始。`agentcfg` 负责准备软件和同步配置，实际与你对话、操作项目的是 DSH。另有独立 Pi/OMP 适配器；本文说明 DSH。当前升级候选尚未通过真实账号和 AI 审批验收，旧实例不得原地套用，先看 [DSH 升级与隔离边界](dsh.md)。Codex 和 Cursor 订阅保留为 DSH 模型来源。
 
 下面用 `workstation` 作为这台机器的配置名称。你可以原样使用；如果改成 `macbook` 等名称，后续所有命令也要一起替换。`dsh-default` 是仓库提供的配方，可以先保留。
 
@@ -49,7 +49,7 @@ uv sync --locked
 ./agentcfg init-local --machine workstation
 ```
 
-初始化成功时会报告机器配置和共享密钥文件的位置，并生成所选 profile 需要的 URL/key 空占位。文件已存在时会检查并只补缺失字段，保留已填写值和注释；再次运行且无缺项时不重写文件。默认 `dsh-default` 已适合 Codex/Cursor 订阅入口，可以直接进入下一步。若要用其他配方，先运行 `./agentcfg profiles` 查看 ID，再在初始化时加 `--profile ID`；对已有机器，这只补齐该 profile 的字段，默认 profile 仍由 `machine.default_profile` 决定。填值位置和命令可用 `./agentcfg --machine workstation model status` 查看。
+初始化成功时会报告机器配置和共享密钥文件的位置，并生成所选 profile 需要的 URL/key 空占位。文件已存在时会检查并只补缺失字段，保留已填写值和注释；再次运行且无缺项时不重写文件。默认 `dsh-default` 保留 Codex/Cursor 登录入口；实际主模型沿用 Kimi Code，未填 key 时可在原生界面明确选择已有授权模型。若要用其他配方，先运行 `./agentcfg profiles` 查看 ID，再在初始化时加 `--profile ID`；对已有机器，这只补齐该 profile 的字段，默认 profile 仍由 `machine.default_profile` 决定。填值位置和命令可用 `./agentcfg --machine workstation model status` 查看。
 
 **只使用 Codex/Cursor 订阅时，文件可以保持如下内容。** `editor` 是可选项；新增时要放在 `[machine]` 内、`[secrets]` 前。
 
@@ -135,7 +135,7 @@ Codex/Cursor 订阅登录稍后在 DSH 内完成，无需在机器文件写入�
 /cursor-login
 ```
 
-打开它返回的登录 URL。完成授权后，在同一个 DSH 实例中用 `/model` 查看并选择 `oauth-cursor` 的模型。取消等待中的授权可输入 `/cursor-login cancel`。Cursor 是社区接入，详细说明见 [DSH 认证](dsh.md)。SSH 场景按登录入口实际提示操作，不需要另外启动一个 DSH Web 实例。
+打开它返回的登录 URL。完成授权后，在同一个 DSH 实例中用 `/model` 查看并选择 `cursor-subscription` 的账号模型。取消等待中的授权可输入 `/cursor-login cancel`。Cursor 是社区接入，详细说明见 [DSH 认证](dsh.md)。SSH 场景按登录入口实际提示操作，不需要另外启动一个 DSH Web 实例。
 
 登录入口和插件加载已做无账号验证；真实登录及模型调用还没有完成账号实测。如果模型不可见或请求失败，应按 [live 验收说明](live-acceptance.md) 检查，不能根据 `doctor` 成功推断订阅调用成功。
 
@@ -166,16 +166,9 @@ Codex/Cursor 订阅登录稍后在 DSH 内完成，无需在机器文件写入�
 
 如提示冲突，先保留现场，用 `plan` 和 `doctor` 查看受影响项；不要删除备份或整个 DSH home 来解决。首次部署前存在的非空同名文件不会被自动接管。
 
-## 6. 给一个项目启用 OpenSpec（可选）
+## 6. 项目自己的工作流
 
-只在你确实希望该项目使用 OpenSpec 时执行。Git 项目应传工作树根目录：
-
-```sh
-./agentcfg --machine workstation project init openspec --path "/你的项目绝对路径"
-./agentcfg --machine workstation run dsh --cwd "/你的项目绝对路径"
-```
-
-前提是 sync 已完成。命令会在这个项目生成 OpenSpec 配置和 `.agents/skills/openspec-*` 等文件；其他项目不受影响。相同内容重复初始化不重写，已被修改的同名产物会报冲突。详细说明见 [OpenSpec 项目操作](openspec.md)。
+DSH 继续读取项目 AGENTS.md 和 Skills，不自动安装 OpenSpec、Spec Kit 或其他 Spec 工具。已有 `openspec/`、`.specify/`、`specs/` 与用户技能保留。`project init openspec` 仅在明确选择可选 openspec 能力的 Pi 配方中可用，见 [Pi 项目操作](openspec.md)。
 
 ## 遇到问题先看这里
 

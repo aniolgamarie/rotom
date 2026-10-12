@@ -11,5 +11,5 @@ route = "openai-codex"
 owner = "codex-auth"
 
 [oauth.cursor]
-route = "oauth-cursor"
+route = "cursor-subscription"
 owner = "cursor-auth"

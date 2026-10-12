@@ -22,14 +22,14 @@ OMP管理器集成见[OMP指南](docs/omp.md)和[支持状态](docs/omp-support.
 
 **第一次使用请从 [新手使用教程](docs/getting-started.md) 开始。** 教程按实际操作顺序说明准备环境、创建本机文件、安装、部署、登录、日常启动和备份恢复，并解释命令输出。仅使用 Codex/Cursor 订阅时，可以先保留空的 `[secrets]`，不需要照抄下面的私有网关示例。
 
-已有首版安装的用户请先看 [升级与故障修复说明](docs/operations.md#审查修复后的升级)。本地文件现在会严格检查权限和链接；旧运行包没有文件收据时，退出 DSH 后执行一次 `sync` 重建即可，账号 home 保持不变。
+DSH 当前升级候选为 Core 0.2.0-rc.2（预发布）、未修改的 TUI 0.14.0 和 Cursor subscription 0.6.12。只在独立 HOME/XDG 验收；旧部署自动迁移受阻止，仍从原工作树使用。真实账号及 AI 审批尚未验收，见 [DSH 指南](docs/dsh.md)与[本轮记录](docs/acceptance/dsh-upgrade-20261012.md)。
 
 记住三个动作即可：`sync` 安装软件，`apply` 部署配置，`run` 启动 DSH。第一次需要依次执行；之后通常只需 `run`。命令中的 `workstation` 是本机配置名称，`dsh-default` 是配置配方名称；可先原样使用。
 
 ## 准备环境
 
 - 管理器：Python 3.11+、uv。运行一次 `uv sync --locked` 后，入口直接调用仓库 `.venv`，离线命令不安装依赖。
-- DSH 工具链：**Node 24.14.0、npm 11.19.1**。使用自己的版本管理器准备它们；`sync` 和 `run` 会检查所需版本。Node 24.1 虽满足部分上游宽泛声明，但无法执行该版本使用的 `import.meta.main` 入口，已在实际检查中排除。
+- DSH 工具链：**Node 24.14.0、npm 11.19.1**。使用自己的版本管理器准备它们；`sync` 和 `run` 会检查所需版本。Node 24.1 虽满足部分上游宽泛声明，但无法执行该版本使用的 `import.meta.main` 入口，已在实际检查中排除。 frozen 安装使用随锁提供、经 integrity 核验的 pnpm **11.19.0** 原包，不全局安装或修补 vendor。
 - 首版平台：Linux、macOS；原生 Windows 不支持。Linux 已进行隔离验证，macOS 验收状态见 [验收记录](docs/acceptance.md)。
 
 ## 从 clone 到运行
@@ -113,7 +113,7 @@ private_gateway_key = ""
 | `doctor --input` | 所有工具均报告诊断终端与离线交互就绪状态；OMP 另汇总结构化阻塞事件，不记录按键 |
 | `capture` | 捕获预览、支持的主题和已声明模型选择，生成合法本地提案，不导出认证数据 |
 | `rollback` | 恢复上一版受管配置；成功后消费该备份 |
-| `project init openspec --path PATH` | 使用锁定 CLI 仅初始化指定项目，预检查冲突 |
+| `project init openspec --path PATH` | 仅选择 `openspec` 能力的 Pi 配方：使用锁定 CLI 初始化指定项目，预检查冲突 |
 
 可选原生参数通过 `run dsh --cwd PATH -- <原生参数>` 传递，`--` 是分界，不会传给 DSH。退出码：0 成功，2 参数/配置/锁错误，3 必需的 MCP/服务密钥缺失，4 冲突/活动锁/恢复待处理，5 依赖或原生检查失败，6 IO/内部失败；模型 API key 缺失只提示，成功启动后保留原生进程退出结果。
 
@@ -128,7 +128,7 @@ private_gateway_key = ""
 ## 认证、项目集成与维护
 
 - [DSH 认证、参数与已核实限制](docs/dsh.md)：Codex 原生配套 `/auth login openai-codex`；Cursor 社区包增加 `/cursor-login`，账号由原生插件保管。
-- [OpenSpec 项目操作](docs/openspec.md)：采用上游 `agents` 集成，属于自定义 DSH 接入；初始化 Git 工作树根目录，不自动修改所有业务仓库。
+- [OpenSpec 项目操作](docs/openspec.md)：Pi 的可选 `openspec` 能力采用上游 `agents` 集成，显式初始化 Git 工作树根目录。DSH 不提供 OpenSpec，既有项目文件和技能保留。
 - [日常维护与新增共享资料](docs/operations.md)：包含规则、技能、provider/model 的例子。
 - `maintain-agent-config` 技能随默认 profile 分发，指导 Agent 编写合法本地 TOML、修改模板和校验生成结果；部署仍走管理器的备份/冲突流程。
 - [增加第二个工具](docs/adapters.md)：接口、所有权、原生编解码和验收边界。
@@ -142,4 +142,4 @@ private_gateway_key = ""
 
 默认测试使用临时 HOME/DSH_HOME/XDG、网络阻断及假进程，不运行第三方宿主。原生无账号 smoke 是独立显式步骤，真实模型调用另需用户授权和登录态。测试数量、实际运行环境、未运行平台及 live 状态以 [验收记录](docs/acceptance.md) 为准。
 
-DSH/TUI/插件/OpenSpec 的完整 npm 锁及 vendor 补丁在 `locks/dsh/`。TUI 的 bundled 清单修复保持运行代码不变；Cursor 的补丁关闭自动账号导入、后台更新和运行包 stamp，并提供终端登录入口。来源与修改记录见 [上游核实记录](docs/upstream-verification.md)。不安装 Superpowers；ModSearch、Memento、ModLens、MCPLens 不在默认安装清单中。
+DSH/TUI/插件的完整 npm 锁及 vendor 补丁在 `locks/dsh/`。历史 DSH OpenSpec 依赖正在移除；Pi 的可选 OpenSpec 能力由 `locks/pi/` 独立管理。TUI 的 bundled 清单修复保持运行代码不变；Cursor 的补丁关闭自动账号导入、后台更新和运行包 stamp，并提供终端登录入口。来源与修改记录见 [上游核实记录](docs/upstream-verification.md)。不安装 Superpowers；ModSearch、Memento、ModLens、MCPLens 不在默认安装清单中。

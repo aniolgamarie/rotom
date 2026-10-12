@@ -43,6 +43,21 @@ def state(instance):
     return dep.read_state(tree)
 
 
+def test_optional_state_guard_runs_under_lock_before_target_creation_or_recovery(tmp_path):
+  root, store = tmp_path / "instance", tmp_path / "state"
+  def reject(saved):
+    assert saved["current"] is None and saved["pending"] is None
+    with Tree(store) as tree, pytest.raises(Conflict):
+      with instance_lock(tree):
+        pytest.fail("部署 guard 必须处于已有实例锁内")
+    raise Conflict("fixture guard denied")
+  with pytest.raises(Conflict, match="fixture guard denied"):
+    dep.apply(root, store, candidate(), BINDING, LAUNCH, state_guard=reject)
+  assert not root.exists()
+  assert not (store / "deployment.json").exists()
+  assert not (store / "pending.json").exists()
+
+
 def test_apply_noop_rotates_only_previous_and_rollback(instance):
   assert apply(instance)["changes"] == 2
   root, store = instance

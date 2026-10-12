@@ -34,11 +34,13 @@ def test_real_recipe_preserves_full_tui_config_and_has_no_static_oauth_catalog(t
   w = load_workspace(local)
   candidate = w.candidate(read_lock(w.repository).identity)
   patch = native.load(next(a.content for a in candidate.artifacts if a.target.path.endswith("patch.yml")))
-  tui = next(row for row in patch if row.get("id") == "dsh-tui")
-  assert tui["config"]["provider"] == "agentcfg-kimi_code_openai"
-  assert tui["config"]["model"] == "kimi-for-coding"
-  assert tui["config"]["terminalImages"] is False
-  assert "workspace" in tui["config"] and "sessionId" in tui["config"]
+  assert all(row.get("id") != "dsh-tui" for row in patch)
+  fields = {a.target.selector: json.loads(a.content) for a in candidate.artifacts if a.target.serialization == "cordis-yaml"}
+  assert fields["/dsh-tui/config/provider"] == "agentcfg-kimi_code_openai"
+  assert fields["/dsh-tui/config/model"] == "kimi-for-coding"
+  assert fields["/dsh-tui/config/terminalImages"] is False
+  assert fields["/dsh-tui/config/backend"] == "dsh"
+  assert [mode["id"] for mode in fields["/dsh-tui/config/modes"]] == ["default", "plan"]
   assert sum(row.get("id") == "dsh-tui-auth" for row in patch) == 1
   assert set(w.resolved.data["models"]) == {
     "kimi_code_openai", "kimi_code_k3_openai", "kimi_code_k3_256k_openai", "kimi_code_highspeed_openai",

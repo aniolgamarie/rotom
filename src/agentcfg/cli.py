@@ -333,15 +333,15 @@ def build_parser() -> argparse.ArgumentParser:
     recover.add_argument("--stop", action="store_true")
     recover.add_argument("--expect-plan", metavar="DIGEST")
 
-    # project: OpenSpec 项目集成
+    # project: 所选配方的项目能力；DSH 不提供 Spec 安装。
     project = subparsers.add_parser(
         "project",
-        help="OpenSpec 项目集成",
+        help="项目集成（Pi 可选 OpenSpec）",
     )
     project_sub = project.add_subparsers(dest="project_command", required=True)
     project_init = project_sub.add_parser(
         "init",
-        help="初始化指定项目的 OpenSpec 集成",
+        help="初始化所选 Pi 配方的可选 OpenSpec 集成",
     )
     project_init.add_argument(
         "integration",
