@@ -1,5 +1,30 @@
 import { expect, test } from "bun:test";
 import { createApprovalAudit, reviewFailureSummary, safeAttempts, safeIdentity, toolCallIdDigest, sessionIdDigest } from "./approval-diagnostic";
+test("usage whitelist preserves counts in valid and failure audit records", () => {
+  for (const status of ["valid", "failure"]) {
+    let getterCalls = 0;
+    const usage = { inputTokens: 150, outputTokens: 0, cacheReadTokens: 40, cacheWriteTokens: 10, reasoningTokens: 5,
+      secret: "SECRET_CANARY_USAGE", get response() { getterCalls++; throw new Error("SECRET_CANARY_USAGE"); } };
+    const result = { status, primary: { status, called: true, usage } } as any;
+    const expected = { inputTokens: 150, outputTokens: 0, cacheReadTokens: 40, cacheWriteTokens: 10, reasoningTokens: 5 };
+    expect(safeAttempts(result)[0].usage).toEqual(expected);
+    const audit = createApprovalAudit(() => {}), call = audit.begin("call_usage", "permission_bash", "smart", 1);
+    call.review(result); audit.finish(call, "hook", "blocked");
+    expect(audit.state.last.attempts[0].usage).toEqual(expected);
+    expect(JSON.stringify(audit.state.last)).not.toContain("SECRET_CANARY_USAGE"); expect(getterCalls).toBe(0);
+  }
+});
+test("usage omits missing and invalid fields and never invokes getters", () => {
+  let getterCalls = 0;
+  const primary = (usage?: unknown) => ({ primary: { status: "failure", called: true, usage } }) as any;
+  for (const value of [undefined, null, {}, { inputTokens: -1, outputTokens: "5", cacheReadTokens: 0.5,
+    cacheWriteTokens: Infinity, reasoningTokens: Number.MAX_SAFE_INTEGER + 1 }, Object.create({ inputTokens: 12 }),
+    { get inputTokens() { getterCalls++; return 12; } }]) expect(safeAttempts(primary(value))[0]).not.toHaveProperty("usage");
+  const result = { primary: { status: "failure", get usage() { getterCalls++; return { inputTokens: 12 }; } } } as any;
+  expect(safeAttempts(result)[0]).not.toHaveProperty("usage");
+  expect(safeAttempts(primary({ inputTokens: NaN, outputTokens: 0 }))[0].usage).toEqual({ outputTokens: 0 });
+  expect(getterCalls).toBe(0);
+});
 
 test("audit is closed and removes every untrusted text field without hashes", () => {
   const canary = "SENSITIVE_CANARY_VALUE";

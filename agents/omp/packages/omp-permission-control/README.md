@@ -47,10 +47,18 @@ authorization 和 `LOW_RISK_AUTHORIZED`。明确 deny/prompt 和 manual 模式�
 具体保护目标未核清或原生上下文不能绑定时，模型 allow 也不能绕过限制。
 票据同时绑定真实用户指令和开始工作目录；新输入排队、授权变化、模式/会话/设置变化均使旧批准失效。
 已失效的请求不能继续查备用凭据或向备用模型发请求；未确定的 deny 不能因服务故障被人审覆盖。
-两种审查 API 共享 1024 token 输出预算，响应/决策正文仍有独立字节上限。只有服务明确返回
+两种审查 API 共享可配置输出预算：公共 `permission_control.review_max_output_tokens` 映射到
+原生 `reviewMaxOutputTokens`，只接受 256–8192 的整数，省略时兼容默认 1024；`omp-kernel`
+显式使用 2048。该值是生成上限，不是每次实际消耗；响应/决策正文仍有独立字节上限。只有服务明确返回
 `max_tokens`（Anthropic）或 `length`（OpenAI），且未形成完整有效的严格决策，才记录
 `REVIEW_OUTPUT_TRUNCATED` 并进入既有故障备用链；完整有效决定仍保留，缺少此标记不推测截断。
 OpenAI 兼容审查请求省略可选 `temperature`，使用 provider 的标准默认值；不按模型名称指定温度。
+
+送审的 `executionContext.configuredRules` 按 `deny` / `prompt` 分组携带完整模式；不发送
+不授予 smart 免审的 allow 规则或重复的逐行元数据。所有 deny/prompt 模式都保留，
+本地规则检查、原始索引审计和未知目标的后置门控不变；完整命令和用户历史选择不变。
+主审/备用每个 attempt 可记录白名单 `usage` 计数，截断或格式无效仍保留已取得的用量。
+缺少或非法计数保持未知，不补零；不存储原始响应或 provider 的未知扩展字段。
 
 ## 默认隔离边界
 

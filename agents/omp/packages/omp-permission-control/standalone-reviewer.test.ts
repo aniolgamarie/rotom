@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { transportCode, callerCancelled, type ReviewRuntime } from "./standalone-reviewer";
+import { transportCode, callerCancelled, resolveReviewMaxOutputTokens, type ReviewRuntime } from "./standalone-reviewer";
 const model = { provider: "fictional", id: "reviewer", api: "openai-completions", baseUrl: "https://unused.invalid/v1" };
 const valid = (decision = "allow") => JSON.stringify({ decision, risk: decision === "allow" ? "low" : "unknown",
   authorization: decision === "allow" ? "sufficient" : "unknown", reasonCode: decision === "allow" ? "LOW_RISK_AUTHORIZED" : "UNKNOWN_RISK" });
@@ -164,6 +164,67 @@ function reviewEnvelope(api: string, content: unknown, limited: boolean) {
     ? { content: [{ type: "text", text: content }], stop_reason: limited ? "max_tokens" : "end_turn" }
     : { choices: [{ message: { content }, finish_reason: limited ? "length" : "stop" }] };
 }
+test("output token configuration defaults and validates without coercion", () => {
+  expect(resolveReviewMaxOutputTokens()).toBe(1024);
+  for (const value of [256, 2048, 8192]) expect(resolveReviewMaxOutputTokens(value)).toBe(value);
+  for (const value of [null, true, "1024", 255, 8193, 256.5, NaN, Infinity, {}, Number.MAX_SAFE_INTEGER + 1])
+    expect(() => resolveReviewMaxOutputTokens(value)).toThrow("invalid review max output tokens");
+});
+for (const api of ["anthropic-messages", "openai-completions"]) {
+  const usage = api === "anthropic-messages"
+    ? { input_tokens: 100, output_tokens: 20, cache_read_input_tokens: 40, cache_creation_input_tokens: 10, secret: "SECRET_CANARY_USAGE" }
+    : { prompt_tokens: 150, completion_tokens: 20, prompt_tokens_details: { cached_tokens: 40, secret: "SECRET_CANARY_USAGE" },
+        completion_tokens_details: { reasoning_tokens: 5 }, secret: "SECRET_CANARY_USAGE" };
+  const expected = api === "anthropic-messages"
+    ? { inputTokens: 150, outputTokens: 20, cacheReadTokens: 40, cacheWriteTokens: 10 }
+    : { inputTokens: 150, outputTokens: 20, cacheReadTokens: 40, reasoningTokens: 5 };
+  for (const [content, limited, failureCode] of [[valid(), true, undefined], ["{broken", true, "REVIEW_OUTPUT_TRUNCATED"],
+    ['{"decision":"bogus"}', false, "REVIEW_SCHEMA_INVALID"]] as const) {
+    test(`${api} retains only normalized usage for ${failureCode ?? "complete decision"}`, async () => {
+      const r = runtime(async () => new Response(JSON.stringify({ ...reviewEnvelope(api, content, limited), usage })));
+      r.current = () => ({ ...model, api });
+      const result = await reviewCommand(input, r);
+      expect(result.primary.usage).toEqual(expected);
+      expect(result.primary).toMatchObject(failureCode ? { status: "failure", failureCode } : { status: "valid" });
+      expect(JSON.stringify(result)).not.toContain("SECRET_CANARY_USAGE");
+    });
+  }
+  test(`${api} retains usage from an invalid response shape`, async () => {
+    const r = runtime(async () => new Response(JSON.stringify({ usage })));
+    r.current = () => ({ ...model, api });
+    const result = await reviewCommand(input, r);
+    expect(result.primary).toMatchObject({ failureCode: "RESPONSE_SHAPE_INVALID", usage: expected });
+  });
+  test(`${api} configured budget is shared with its single fallback`, async () => {
+    const budgets: number[] = [];
+    const r = runtime(async (_url, init) => {
+      budgets.push(JSON.parse(init.body as string).max_tokens);
+      return new Response(JSON.stringify(reviewEnvelope(api, budgets.length === 1 ? "{broken" : valid(), budgets.length === 1)));
+    });
+    r.current = () => ({ ...model, api }); r.resolve = () => ({ ...model, id: "remote", api });
+    r.reviewMaxOutputTokens = 2048;
+    const result = await reviewCommand({ ...input, remoteFallback: { provider: "fictional", model: "remote" } }, r);
+    expect(result.source).toBe("remote"); expect(budgets).toEqual([2048, 2048]);
+  });
+  for (const usage of [undefined, {}, { input_tokens: -1, prompt_tokens: -1, output_tokens: "20", completion_tokens: "20" },
+    { input_tokens: Number.MAX_SAFE_INTEGER + 1, prompt_tokens: Number.MAX_SAFE_INTEGER + 1 }]) {
+    test(`${api} missing and invalid usage is omitted`, async () => {
+      const r = runtime(async () => new Response(JSON.stringify({ ...reviewEnvelope(api, valid(), false), usage })));
+      r.current = () => ({ ...model, api });
+      expect((await reviewCommand(input, r)).primary).not.toHaveProperty("usage");
+    });
+  }
+}
+for (const [usage, expected] of [
+  [{ input_tokens: 10 }, { inputTokens: 10 }],
+  [{ cache_read_input_tokens: 5 }, { cacheReadTokens: 5 }],
+  [{ input_tokens: 10, cache_read_input_tokens: -1, output_tokens: 0 }, { outputTokens: 0 }],
+  [{ input_tokens: Number.MAX_SAFE_INTEGER, cache_creation_input_tokens: 1 }, { cacheWriteTokens: 1 }],
+] as const) test("Anthropic sums only valid known input components without fabricating missing counts", async () => {
+  const r = runtime(async () => new Response(JSON.stringify({ ...reviewEnvelope("anthropic-messages", valid(), false), usage })));
+  r.current = () => ({ ...model, api: "anthropic-messages" });
+  expect((await reviewCommand(input, r)).primary.usage).toEqual(expected);
+});
 for (const api of ["anthropic-messages", "openai-completions"]) {
   test(`${api} sends shared 1024 output budget`, async () => {
     let body: any;

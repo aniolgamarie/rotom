@@ -24,6 +24,7 @@
 "reviewer_model" = "omp-zhipu_tf-glm-5.3-flash"
 "remote_fallback_model" = "omp-kimi_tf-kimi-for-coding"
 "fallback_model" = "local/lfm2.5-230m"
+"review_max_output_tokens" = 2048
 
 ["agent_options"."permission_control"."review_timeouts"]
 "primary_ms" = 30000

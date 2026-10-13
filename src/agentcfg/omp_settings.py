@@ -66,14 +66,17 @@ REVIEW_TIMEOUTS = closed({key: {"type": "integer", "minimum": 1000,
 NATIVE_REVIEW_TIMEOUTS = closed({native: REVIEW_TIMEOUTS["properties"][public]
   for public, native in (("primary_ms", "primaryMs"), ("remote_ms", "remoteMs"), ("total_ms", "totalMs"))},
   ("primaryMs", "remoteMs", "totalMs"))
+REVIEW_MAX_OUTPUT_TOKENS = {"type": "integer", "minimum": 256, "maximum": 8192}
 PERMISSION_CONTROL = closed({"default_mode": enum("smart", "manual"), "reviewer_model": IDENTITY_TEXT,
   "native_bash": BOOL, "review_timeouts": REVIEW_TIMEOUTS,
+  "review_max_output_tokens": REVIEW_MAX_OUTPUT_TOKENS,
   "remote_fallback_model": IDENTITY_TEXT,
   "fallback_model": {"type": "string", "const": "local/lfm2.5-230m"}}, ("default_mode",))
 RUNTIME_VARIANT = enum("official")
 NATIVE_PERMISSION_CONTROL = closed({
   "schemaVersion": {"type": "integer", "const": 2}, "defaultMode": enum("smart", "manual"),
   "nativeBash": BOOL, "reviewTimeouts": NATIVE_REVIEW_TIMEOUTS,
+  "reviewMaxOutputTokens": REVIEW_MAX_OUTPUT_TOKENS,
   "reviewer": {"oneOf": [{"type": "string", "const": "session"},
     closed({"provider": IDENTITY_TEXT, "model": IDENTITY_TEXT}, ("provider", "model"))]},
   "remoteFallback": closed({"provider": IDENTITY_TEXT, "model": IDENTITY_TEXT}, ("provider", "model")),
@@ -126,6 +129,11 @@ def resolve_permission_control(data):
       "totalMs": timeouts["total_ms"]}}
   if "native_bash" in config:
     result["nativeBash"] = config["native_bash"]
+  if "review_max_output_tokens" in config:
+    output_tokens = config["review_max_output_tokens"]
+    if type(output_tokens) is not int:
+      raise ConfigError("omp-permission-config")
+    result["reviewMaxOutputTokens"] = output_tokens
   requested = tuple(config[key] for key in ("reviewer_model", "remote_fallback_model")
     if key in config and not (key == "reviewer_model" and config[key] == "session"))
   identities = {}

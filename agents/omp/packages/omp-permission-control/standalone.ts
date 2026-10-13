@@ -2,12 +2,13 @@ import { createApprovalAudit, safeIdentity, safeAttempts, reviewFailureSummary, 
 import { lstat, readFile } from "node:fs/promises";
 import { isAbsolute, join, resolve } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
-import { checkConfiguredRules } from "./standalone-policy";
+import { checkConfiguredRules, reviewConfiguredRules } from "./standalone-policy";
 import { prepareReviewPacket, redactReviewText } from "./review-input";
 import { loadNativeBashRuntime, type NativeBashRuntime, type NativeSettingsSnapshot,
   type PlainBashParams, type NativeDiagnostics, SHELL_FAMILIES, CONTEXT_REASONS } from "./native-bash";
 import { parseStandaloneJson, reviewCommand, type ReviewAttempt, type ReviewRuntime, type ReviewTarget,
-  type ReviewerModel, type ReviewSequenceResult, type ReviewTimeouts, type ReviewTiming, resolveReviewTimeouts } from "./standalone-reviewer";
+  type ReviewerModel, type ReviewSequenceResult, type ReviewTimeouts, type ReviewTiming, type ReviewUsage,
+  resolveReviewTimeouts, resolveReviewMaxOutputTokens } from "./standalone-reviewer";
 import { ApprovalQueue, LifecycleFailure, lifecycleLimits, waitFor, type LifecycleLimits } from "./approval-lifecycle";
 
 type Mode = "smart" | "manual";
@@ -26,6 +27,7 @@ export interface StandaloneConfig {
   nativePatterns: Array<{ match: string; approval: Approval }>;
   nativeBash?: boolean;
   reviewTimeouts?: ReviewTimeouts;
+  reviewMaxOutputTokens?: number;
 }
 
 interface LayerState {
@@ -35,6 +37,7 @@ interface LayerState {
   failureCode?: string;
   httpStatus?: number;
   timing?: ReviewTiming;
+  usage?: ReviewUsage;
   health: "idle" | "ready" | "unavailable" | "unsupported" | "transport" | "invalid" | "cancelled" | "timeout";
 }
 
@@ -77,7 +80,7 @@ interface RequestStamp {
 
 const HEX64 = /^[0-9a-f]{64}$/u;
 const CONFIG_KEYS = new Set(["schemaVersion", "defaultMode", "reviewer", "remoteFallback", "fallback",
-  "pluginId", "pluginDigest", "policyVersion", "nativePatterns", "nativeBash", "reviewTimeouts"]);
+  "pluginId", "pluginDigest", "policyVersion", "nativePatterns", "nativeBash", "reviewTimeouts", "reviewMaxOutputTokens"]);
 const TARGET_KEYS = new Set(["provider", "model"]);
 const PLAIN_BASH_KEYS = new Set(["command", "cwd", "timeout"]);
 
@@ -112,6 +115,7 @@ export function validateStandaloneConfig(value: unknown): StandaloneConfig {
       throw new Error("invalid permission-control configuration");
   }
   resolveReviewTimeouts(value.reviewTimeouts, value.remoteFallback !== undefined);
+  resolveReviewMaxOutputTokens(value.reviewMaxOutputTokens);
   return value as unknown as StandaloneConfig;
 }
 
@@ -209,13 +213,14 @@ function configuredTarget(value: "session" | ReviewTarget | undefined): string {
 
 function attemptState(configured: string, attempt: ReviewAttempt | undefined): LayerState {
   if (!attempt) return { configured: safeIdentity(configured) ?? "unsafe-or-unavailable", calls: 0, health: configured === "disabled" ? "unavailable" : "idle" };
-  const timing = safeAttempts({ status: "failure", primary: attempt })[0]?.timing;
+  const safe = safeAttempts({ status: "failure", primary: attempt })[0];
+  const timing = safe?.timing, usage = safe?.usage;
   return { configured: safeIdentity(configured) ?? "unsafe-or-unavailable",
     actualModel: attempt.model ? safeIdentity(`${attempt.model.provider}/${attempt.model.id}`) : undefined,
     calls: attempt.called ? 1 : 0, health: attempt.status === "valid" ? "ready" : attempt.health,
     ...(attempt.status === "failure" ? { failureCode: attempt.failureCode,
       ...(attempt.httpStatus !== undefined ? { httpStatus: attempt.httpStatus } : {}) } : {}),
-    ...(timing ? { timing } : {}) };
+    ...(timing ? { timing } : {}), ...(usage ? { usage } : {}) };
 }
 
 function recordReview(state: State, config: StandaloneConfig, result: ReviewSequenceResult):
@@ -369,13 +374,13 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
       const needsHuman = state.mode === "manual" || configuredGate === "prompt" || nativePrompt;
       diagnostic?.gates(...(state.mode === "manual" ? ["MANUAL_MODE"] : []),
         ...(configuredGate === "prompt" ? ["CONFIGURED_PROMPT"] : []), ...(nativePrompt ? ["NATIVE_PROMPT"] : []));
+      const configuredRules = reviewConfiguredRules(config.nativePatterns);
       const prepared = prepareReviewPacket({ command: params.command, cwd, userMessages: messages,
         parameters: { cwd: params.cwd, timeout: params.timeout },
         executionContext: { entrypoint: toolName, baseCwd: ctx.cwd, ...(native?.reviewContext ?? {}),
           shellFamily: toolName === "permission_bash" ? "bash" : typeof native?.reviewContext.shellFamily === "string" ? native.reviewContext.shellFamily : "unknown",
           shellAnalysis: { status: rules.analysis },
-          ...(config.nativePatterns.length ? { configuredRules: config.nativePatterns.map((rule, id) => ({
-            id, match: rule.match, approval: rule.approval, uncertain: rules.uncertainRuleIds.includes(id) })) } : {}) } });
+          ...(configuredRules ? { configuredRules } : {}) } });
       if (prepared.status === "ready") diagnostic?.input(prepared.packet);
       else diagnostic?.gates(prepared.reasonCode);
       if (prepared.status === "invalid") return { approved: false, source: "none", reasonCode: "INPUT_INVALID", chain: [] };
@@ -403,6 +408,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
       const isCurrent = () => !signal.aborted && state.mode === reviewMode && state.generation === reviewGeneration &&
         ctx.cwd === reviewCwd && liveCwd(ctx) === reviewCwd && ctx.sessionManager.getSessionId() === reviewSession && authorizationSignature(ctx) === reviewAuthorization;
       const runtime = { ...reviewRuntime(ctx, dependencies.fetch ?? globalThis.fetch), isCurrent,
+        reviewMaxOutputTokens: resolveReviewMaxOutputTokens(config.reviewMaxOutputTokens),
         deadlines: resolveReviewTimeouts(config.reviewTimeouts, config.remoteFallback !== undefined) };
       let result: ReviewSequenceResult;
       if (prepared.status === "ready") {
@@ -499,6 +505,7 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
           ctx.ui.notify(JSON.stringify({ mode: state.mode, generation: state.generation,
             configuration: config ? "ready" : "unavailable",
             reviewTimeouts: config ? resolveReviewTimeouts(config.reviewTimeouts, config.remoteFallback !== undefined) : undefined,
+            reviewMaxOutputTokens: config ? resolveReviewMaxOutputTokens(config.reviewMaxOutputTokens) : undefined,
             entrypoints: { raw: "permission_bash", native: nativeRegistered ? "bash" : "disabled" },
             rawNativeCloneCoverage: "not-applicable-raw-shell",
             coverage: state.native.coverage, nativeDelegateAvailable: state.native.delegateAvailable,

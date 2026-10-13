@@ -895,6 +895,11 @@
                   ],
                   "additionalProperties": false
                 },
+                "review_max_output_tokens": {
+                  "type": "integer",
+                  "minimum": 256,
+                  "maximum": 8192
+                },
                 "remote_fallback_model": {
                   "type": "string",
                   "minLength": 1,
@@ -1035,6 +1040,11 @@
             "totalMs"
           ],
           "additionalProperties": false
+        },
+        "reviewMaxOutputTokens": {
+          "type": "integer",
+          "minimum": 256,
+          "maximum": 8192
         },
         "reviewer": {
           "oneOf": [

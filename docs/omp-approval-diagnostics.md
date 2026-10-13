@@ -36,6 +36,14 @@ flowchart TD
 - 审查前的门控原因，以及最终来源、结果和原因码。
 - 主审和远程备用的逐次结果：是否发起请求、模型身份、有效决策或固定失败码、合法 HTTP 状态与白名单传输错误码。
 - 可选 `timing`：`budgetMs`、开始时的 `remainingTotalMs`、`elapsedMs`、`lastStage`、各阶段耗时、`requestBytes` 及 `timeoutSource`。仅记录数字和固定枚举，不记录或哈希正文。
+- 可选 `usage`：`inputTokens`、`outputTokens`、`cacheReadTokens`、`cacheWriteTokens`、`reasoningTokens`。每个主审/备用 attempt 独立记录，截断与无效决定仍可有用量；服务未报告或计数非法时省略，不能按零消耗统计。
+
+`inputTokens` 表示总输入：OpenAI 使用 `prompt_tokens`（已包含缓存输入），Anthropic 将
+`input_tokens` 与已报告的缓存读取/创建输入相加。缓存字段是输入子集，reasoning 字段是
+已报告的输出子集，统计总量时不能重复相加。不同模型的价格及缓存折扣需独立计算；
+仅凭请求字节数不能计算实际 token 或费用。响应未成功解析的请求可能没有用量，
+不可因此认定未计费。`status` 的 primary/remote 展示各层最近一次的用量，累计消耗应
+对会话审计中的每个 attempt 求和，并单独计数缺少用量的请求。
 
 新增审计不保存命令、参数、工作目录、用户消息、提示词、请求头、URL、密钥、模型原始响应、异常消息或堆栈。宿主本身已有的普通会话条目不属于这一新增审计格式；处理历史会话仍须先脱敏。
 
@@ -63,6 +71,11 @@ flowchart TD
 `response-parse`、`decision-parse`；预算来源为 `primary-budget`、`remote-budget`、`total-budget`。
 阶段表示最后到达的处理位置，不能定位远程服务器内部瓶颈。只有序列化后的脱敏请求正文
 字节数进入统计，认证头不计入。旧审计条目没有 timing 也保持兼容。
+
+公共配置 `[agent_options.permission_control]` 可设置 `review_max_output_tokens = 2048`，
+允许范围 256–8192，省略时为 1024；当前 `omp-kernel` 显式为 2048。主审与备用共用
+此生成上限，`/permission-control status` 的 `reviewMaxOutputTokens` 展示生效值。
+该值改变会进入策略身份，严格决定正文仍限 4 KiB、响应仍限 64 KiB，不增加重试。
 
 人工确认标题会说明主审和备用是有效 ask、传输/格式故障还是某项预算耗尽，并显示已知的
 耗时与阶段。主审有效 ask/deny 不启动备用；用户取消与会话失效继续阻止执行，迟到 allow

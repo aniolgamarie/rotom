@@ -75,6 +75,14 @@ function dataField(value: unknown, key: string): any {
 function bounded(value: unknown, maximum: number): value is number {
   return Number.isSafeInteger(value) && (value as number) >= 0 && (value as number) <= maximum;
 }
+function safeUsage(value: unknown) {
+  const usage: Record<string, number> = {};
+  for (const key of ["inputTokens", "outputTokens", "cacheReadTokens", "cacheWriteTokens", "reasoningTokens"] as const) {
+    const count = dataField(value, key);
+    if (bounded(count, Number.MAX_SAFE_INTEGER)) usage[key] = count;
+  }
+  return Object.keys(usage).length ? usage : undefined;
+}
 function safeTiming(value: unknown) {
   const budgetMs = dataField(value, "budgetMs"), remainingTotalMs = dataField(value, "remainingTotalMs");
   const elapsedMs = dataField(value, "elapsedMs"), lastStage = dataField(value, "lastStage");
@@ -101,9 +109,10 @@ function safeAttempt(value: unknown, target: "primary" | "remote", flattened = f
   const decision = dataField(review, "decision"), risk = dataField(review, "risk");
   const authorization = dataField(review, "authorization"), reasonCode = dataField(review, "reasonCode");
   const transportCode = get("transportCode"), httpStatus = get("httpStatus"), timing = safeTiming(get("timing"));
+  const usage = safeUsage(get("usage"));
   const common = { target, called: get("called") === true,
     ...(provider ? { provider } : {}), ...(modelId ? { model: modelId } : {}),
-    ...(timing ? { timing } : {}) };
+    ...(timing ? { timing } : {}), ...(usage ? { usage } : {}) };
   if (get("status") === "valid") return { ...common, status: "valid" as const,
     ...(DECISIONS.includes(decision) ? { decision } : {}), ...(RISKS.includes(risk) ? { risk } : {}),
     ...(AUTHORIZATIONS.includes(authorization) ? { authorization } : {}),

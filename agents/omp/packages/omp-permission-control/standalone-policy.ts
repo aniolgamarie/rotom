@@ -2,6 +2,13 @@ import { hasUncertainPatternMatch, matchesNativePattern, matchesNativeRaw, parse
   privacyWords, visiblePrefixForDenial, type ParsedSimpleCommand } from "./standalone-shell-analysis";
 
 type Rule = { match: string; approval: "allow" | "prompt" | "deny" };
+// allow 不授予 smart 免审；送审仅携带完整限制模式，原始索引仍用于本地门控和审计。
+export function reviewConfiguredRules(rules: Rule[]): { deny?: string[]; prompt?: string[] } | undefined {
+  const deny = rules.filter(rule => rule.approval === "deny").map(rule => rule.match);
+  const prompt = rules.filter(rule => rule.approval === "prompt").map(rule => rule.match);
+  return deny.length || prompt.length ? { ...(deny.length ? { deny } : {}), ...(prompt.length ? { prompt } : {}) } : undefined;
+}
+
 function wrapperTarget(argv: string[]): number | undefined {
   const head = argv[0]?.split("/").at(-1);
   if (!["env", "sudo", "doas", "nohup", "command", "builtin", "timeout", "xargs"].includes(head ?? "")) return undefined;
