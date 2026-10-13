@@ -400,6 +400,6 @@ def test_plan_private_locations_and_deployed_credentials(tmp_path, capsys):
   assert any("agentcfg-one" in (item["selector"] or "") for item in detail["targets"])
   assert "agentcfg-one" not in public and CANARY not in public + location.read_text()
   assert location.stat().st_mode & 0o777 == 0o600
-  references = ["secret:deepseek_key", "secret:glm_key", "secret:kimi_key", "secret:one"]
+  references = ["secret:deepseek_key", "secret:glm_coding_key", "secret:kimi_code_key", "secret:one"]
   assert detail["credentials"] == [
     {"id": credential_id(reference), "reference": reference} for reference in references]
