@@ -121,7 +121,9 @@ def test_configured_fallbacks_are_model_specific_and_route_isolated():
   assert chains and not {"default", "smol", "slow", "plan", "task", "advisor", "vision", "tiny"}.intersection(chains)
   assert chains["cursor/composer-2.5:low"] == ["cursor/kimi-k2.7-code:low"]
   assert chains["cursor/composer-2.5:medium"] == ["cursor/kimi-k2.7-code:medium"]
-  assert chains["cursor/kimi-k3:max"] == []
+  assert chains["cursor/kimi-k3-max"] == []
+  assert "cursor/*" not in chains
+  assert not {"cursor/kimi-k3", "cursor/kimi-k3:high", "cursor/kimi-k3:max"}.intersection(chains)
   assert chains["kimi_code_anthropic/kimi-for-coding:max"] == ["glm_coding_anthropic/glm-5.3:high"]
   for key, values in chains.items():
     assert "deepseek" not in key
@@ -139,12 +141,17 @@ def test_cursor_k3_history_guard_keeps_explicit_empty_chains_in_native_render(tm
   config = data()
   validate_options(config)
   chains = config["profile"]["agent_options"]["runtime"]["retry"]["fallbackChains"]
-  blocked = {"cursor/kimi-k3", "cursor/kimi-k3:high", "cursor/kimi-k3:max",
+  blocked = {"cursor/kimi-k3-low", "cursor/kimi-k3-high", "cursor/kimi-k3-max",
     "cursor/glm-5.2:high", "cursor/glm-5.2:max", "cursor/grok-4.7:high"}
+  absent = {"cursor/kimi-k3", "cursor/kimi-k3:high", "cursor/kimi-k3:max"}
+  assert not absent.intersection(chains)
+  assert "cursor/*" not in chains
   assert {key: chains[key] for key in blocked} == {key: [] for key in blocked}
   assert all("cursor/kimi-k3" not in target for values in chains.values() for target in values)
   # 空链必须原样进入原生配置，删除键会重新落到上游角色或默认链。
   native = fields(config, tmp_path)["/retry"]["fallbackChains"]
+  assert not absent.intersection(native)
+  assert "cursor/*" not in native
   assert {key: native[key] for key in blocked} == {key: [] for key in blocked}
   assert native["cursor/composer-2.5:low"] == ["cursor/kimi-k2.7-code:low"]
   assert native["cursor/composer-2.5:medium"] == ["cursor/kimi-k2.7-code:medium"]

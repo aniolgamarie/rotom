@@ -59,7 +59,7 @@ rotom 按预设名称管理 `/modelPresets/<name>`，保留用户通过 `/modelp
 
 ## 备用链和权限审批
 
-OMP 原生预设只切角色，不切 `retry.fallbackChains`。本轮将执行备用链改成按具体入口、模型及档位匹配：basic 在官方 Kimi/GLM 间备用，tf 在 Kimi TF/GLM TF 间备用，cursor 仅保留 Composer 2.5 到 Kimi 2.7 Code 的两条备用链。涉及进入或离开 Kimi K3 的自动跨型号链显式设为空：K3 high/max、GLM 5.2 high/max 和 Grok 4.7 high；另有无档位 `cursor/kimi-k3 = []` 覆盖其他 K3 档位，防止再落到角色或默认链。Cursor K3 的历史校验拒绝其他模型生成的 assistant 历史，连 error/aborted assistant 也会触发；恢复 K3 应在新会话进行。这项配置修正阻止默认自动切换继续混入异型号历史，已受影响的历史不自动修复。详见[历史兼容边界](follow-ups/omp-cursor-history-2026-10-09.md)。移除了 kernel 原有的角色通用 TF 链和旧 GLM 默认依赖。相同模型与档位在不同角色中共享执行备用链；没有把 DeepSeek 按量模型放入订阅/TF/Cursor 的自动链。
+OMP 原生预设只切角色，不切 `retry.fallbackChains`。本轮将执行备用链改成按具体入口、模型及档位匹配：basic 在官方 Kimi/GLM 间备用，tf 在 Kimi TF/GLM TF 间备用，cursor 仅保留 Composer 2.5 到 Kimi 2.7 Code 的两条备用链。K3 使用实际目录成员的无档位空链 `cursor/kimi-k3-low/high/max = []`（三个独立键），GLM 5.2 high/max 和 Grok 4.7 high 的空链保持。preset 的 `cursor/kimi-k3:档位` 是逻辑 picker 名；官方 resolver 结合当前实际成员 metadata 选中成员空链，防止落到角色或默认链。逻辑名不是注册的 model ID，因此不再把它写为备用链键，避免启动 unknown model 告警；不使用 Cursor provider 通用空链。Cursor K3 的历史校验拒绝其他模型生成的 assistant 历史，连 error/aborted assistant 也会触发；恢复 K3 应在新会话进行。这项配置修正阻止默认自动切换继续混入异型号历史，已受影响的历史不自动修复。详见[历史兼容边界](follow-ups/omp-cursor-history-2026-10-09.md)。移除了 kernel 原有的角色通用 TF 链和旧 GLM 默认依赖。相同模型与档位在不同角色中共享执行备用链；没有把 DeepSeek 按量模型放入订阅/TF/Cursor 的自动链。
 
 两套 DeepSeek 由用户主动切换启用，不自动跨官方/TF 入口，也不自动接 Pro。未配置的模型故障由原生重试和错误处理负责，不能把“可选池中存在”当作自动备用授权。
 

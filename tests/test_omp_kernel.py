@@ -44,8 +44,10 @@ def test_kernel_deployment_preserves_reviewed_native_configuration(tmp_path):
         # 保留历史快照；深浅主题改为用户选择的官方 Catppuccin 系。
         expected = {"dark": "dark-catppuccin", "light": "light-catppuccin"}
       if key == "retry":
-        # 冻结历史快照；仅列明本次 K3 历史保护的六个备用链差量。
-        for selector in ("cursor/kimi-k3", "cursor/kimi-k3:high", "cursor/kimi-k3:max",
+        # 冻结历史快照；K3 空链按目录中的实际成员声明，preset 仍使用逻辑 picker 名。
+        for selector in ("cursor/kimi-k3", "cursor/kimi-k3:high", "cursor/kimi-k3:max"):
+          expected["fallbackChains"].pop(selector, None)
+        for selector in ("cursor/kimi-k3-low", "cursor/kimi-k3-high", "cursor/kimi-k3-max",
             "cursor/glm-5.2:high", "cursor/glm-5.2:max", "cursor/grok-4.7:high"):
           expected["fallbackChains"][selector] = []
       assert config[key] == expected, key
