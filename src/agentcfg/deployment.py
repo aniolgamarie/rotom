@@ -269,6 +269,12 @@ def plan(tree, state, candidate, binding, launch):
       # 首次接管按文件检查：即使要管理的字段不存在也不能接管非空文件。
       known_file = spec["selector"] and (any(i["path"] == spec["path"] and i["selector"] for i in previous.values())
         or owner is not None and spec["path"] in owner["shared_files"])
+      if known_file and current["present"] and spec["ownership"] == Ownership.INITIALIZE.value:
+        # 已拥有共享文件中的原生偏好只消费初始化机会，不认领其值为基线。
+        spec["baseline"] = ABSENT.copy()
+        spec.pop("desired", None)
+        result[key] = spec
+        continue
       if raw[0] and (not known_file or current["present"]):
         conflicts.append(key)
         continue

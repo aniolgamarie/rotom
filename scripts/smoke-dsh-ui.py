@@ -12,6 +12,7 @@ import pty
 import re
 import select
 import signal
+import shutil
 import socket
 import struct
 import subprocess
@@ -239,16 +240,53 @@ def session_resume_smoke(spec, env, project, instance, state, target, content, r
     resume_picker="NOT RUN", cursor_account="NOT RUN", compaction="NOT RUN", geometry=[[100, 24], [100, 24]])
 
 
+def agentcfg_cli_argv(repo, machine, command, project=None):
+  # --machine 接受配置名称，临时配置文件必须使用公开 --local 选择器。
+  argv = [str(repo / "agentcfg"), "--local", str(machine), "--profile", "dsh-default", command]
+  if project is not None:
+    argv.extend(["--cwd", str(project)])
+  return argv
+
+
+def project_sealed_runtime(workspace, runtime, identity):
+  """完整复制已封存包及其原收据；不生成或改写安装所有权标记。"""
+  from agentcfg.storage import ensure_private
+  destination = workspace.backend.root(workspace, identity)
+  ensure_private(destination.parent)
+  shutil.copytree(runtime, destination, symlinks=True)
+  if workspace.backend.status(workspace, identity) != "installed":
+    raise RuntimeError("RUNTIME_PROJECTION_INVALID")
+  return destination
+
+
+def prepare_agentcfg_cli(repo, workspace, machine, runtime, identity, project, env, result, evidence):
+  destination = project_sealed_runtime(workspace, runtime, identity)
+  result.update(runtime_source=str(runtime), runtime_root=str(destination), agentcfg_cli=True)
+  result["cli_preparation"] = []
+  for command in ("apply", "sync"):
+    argv = agentcfg_cli_argv(repo, machine, command)
+    completed = subprocess.run(argv, cwd=repo, env=env, capture_output=True, timeout=60)
+    (evidence / ("cli-" + command + ".log")).write_bytes(completed.stdout + completed.stderr)
+    result["cli_preparation"].append({"argv": argv, "exit": completed.returncode})
+    if completed.returncode != 0:
+      raise RuntimeError("CLI_PREPARATION_FAILED")
+  result["checks"]["sealed_runtime_installed_before_sync"] = "PASS"
+  return agentcfg_cli_argv(repo, machine, "run", project)
+
+
 def main():
   parser = argparse.ArgumentParser(description=__doc__)
   parser.add_argument("--allow-host", action="store_true")
   parser.add_argument("--runtime", required=True, type=Path)
   parser.add_argument("--evidence", required=True, type=Path)
+  parser.add_argument("--agentcfg-cli", action="store_true", help="通过真实 agentcfg apply/sync/run 验收已封存包，不联网安装")
   parser.add_argument("--maid-portrait", action="store_true", help="验证原生女仆立绘及伙伴皮肤优先级，仍使用假模型")
   parser.add_argument("--session-resume", action="store_true", help="验证原生模型偏好、公开 --resume 路由和短工具正文历史")
   args = parser.parse_args()
   if not args.allow_host:
     parser.error("需要 --allow-host；默认测试不启动第三方宿主")
+  if args.agentcfg_cli and (args.session_resume or args.maid_portrait):
+    parser.error("--agentcfg-cli 单独验收欢迎、输入、工具、取消与退出")
   if args.session_resume and args.maid_portrait:
     parser.error("--session-resume 与 --maid-portrait 分别验收")
   repo = Path(__file__).resolve().parents[1]
@@ -269,7 +307,9 @@ def main():
   cache = repo / ".cache/dsh-upgrade"
   cache.mkdir(mode=0o700, parents=True, exist_ok=True)
   result = {"kind": "native-pty-simulated-local-model", "stage": "prepare", "checks": {}, "lock_identity": lock.identity,
-    "recipe": lock.metadata["recipe"], "platform": sys.platform, "color_environment": "COLORTERM=truecolor",
+    "recipe": lock.metadata["recipe"], "platform": sys.platform, "agentcfg_cli": args.agentcfg_cli,
+    "lock_files": {name: hashlib.sha256(value).hexdigest() for name, value in (("package.json", lock.package),
+      ("package-lock.json", lock.resolution), ("pnpm-lock.yaml", lock.installer_resolution))}, "color_environment": "COLORTERM=truecolor",
     "ssh": "NOT RUN", "tmux": "NOT RUN", "real_accounts": "NOT RUN"}
   outer_path = os.environ.get("PATH", "")
   transcript, child, master, slave, server = bytearray(), None, None, None, None
@@ -308,7 +348,11 @@ def main():
         machine.write_text(raw)
       workspace = load_workspace(machine, repository=repo)
       candidate = workspace.candidate(lock.identity)
-      commands.apply_candidate(workspace, lock, candidate)
+      if args.agentcfg_cli:
+        result["stage"] = "cli.prepare"
+        launch_argv = prepare_agentcfg_cli(repo, workspace, machine, runtime, lock.identity, project, env, result, evidence)
+      else:
+        commands.apply_candidate(workspace, lock, candidate)
       with Tree(workspace.state_root) as tree, instance_lock(tree):
         if args.maid_portrait:
           with Tree(workspace.instance) as instance_tree:
@@ -319,9 +363,14 @@ def main():
             config["whaleGirl"] = True
             config.setdefault("companion", {})["skin"] = "whale"
             instance_tree.replace(name, encode_native(document, "cordis-yaml"), mode=previous[1], expected=previous[2])
-        workspace.adapter.prepare_runtime(workspace, runtime)
-      spec = workspace.adapter.launch_spec(workspace.resolved.data, cwd=project, runtime_root=runtime, instance_root=workspace.instance, lock_identity=lock.identity)
-      child_env = launch_environment(spec, workspace.resolved.data["machine"], workspace.secret_store)
+        if not args.agentcfg_cli:
+          workspace.adapter.prepare_runtime(workspace, runtime)
+      native_runtime = workspace.backend.root(workspace, lock.identity) if args.agentcfg_cli else runtime
+      spec = workspace.adapter.launch_spec(workspace.resolved.data, cwd=project, runtime_root=native_runtime, instance_root=workspace.instance, lock_identity=lock.identity)
+      child_env = env if args.agentcfg_cli else launch_environment(spec, workspace.resolved.data["machine"], workspace.secret_store)
+      if not args.agentcfg_cli:
+        launch_argv = list(spec.argv)
+      result.update(argv=launch_argv, native_argv=list(spec.argv), candidate_digest=candidate.generation)
       if args.session_resume:
         result.update(candidate_digest=candidate.generation, node=node)
         session_resume_smoke(spec, child_env, project, workspace.instance, state, target, content, result, transcript)
@@ -330,7 +379,8 @@ def main():
         before = termios.tcgetattr(slave)
         initial_columns, initial_rows = (160, 50) if args.maid_portrait else (100, 24)
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", initial_rows, initial_columns, 0, 0))
-        child = subprocess.Popen(spec.argv, cwd=project, env=child_env, stdin=slave, stdout=slave, stderr=slave)
+        child = subprocess.Popen(launch_argv, cwd=project, env=child_env, stdin=slave, stdout=slave, stderr=slave,
+          start_new_session=args.agentcfg_cli)
         def pump():
           if select.select([master], [], [], 0.1)[0]:
             try:
@@ -383,7 +433,7 @@ def main():
         wait(lambda: state["write_calls"] == 1)
         result["stage"] = "ui.resize"
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 18, 40, 0, 0))
-        os.kill(child.pid, signal.SIGWINCH)
+        (os.killpg if args.agentcfg_cli else os.kill)(child.pid, signal.SIGWINCH)
         resize_start = len(transcript)
         wait(lambda: state["completed"] and target.is_file() and target.read_text() == content)
         # Ink 在窄窗逐段重绘；ANSI 光标控制和换行会拆开可见标记。
@@ -421,18 +471,34 @@ def main():
           file_content_sha256=hashlib.sha256(target.read_bytes()).hexdigest(), http=dict(state), candidate_digest=candidate.generation, node=node)
         if before != after or child.returncode != 0 or state["write_calls"] != 1 or state["tool_results"] != 1:
           raise RuntimeError("EXIT_OR_TTY_RESTORE")
+        if args.agentcfg_cli:
+          with Tree(workspace.state_root) as tree, instance_lock(tree):
+            result["checks"]["cli_instance_lock_released"] = "PASS"
         result["checks"].update(ctrl_c_exit="PASS", termios_restored="PASS")
         result["overall"], result["stage"] = "PASS", "complete"
     except Exception as error:
       result.update(overall="FAIL", error="FIXTURE_REJECTED" if state.get("error") else str(error) if isinstance(error, RuntimeError)
-        and str(error) in {"NODE_VERSION", "STAGE_TIMEOUT", "EXIT_OR_TTY_RESTORE", "FIXTURE_REJECTED", "WELCOME_EMPTY_SUBMIT", "THEME_RENDER_MISMATCH", "SESSION_MARKER_INVALID", "PROBE_FILE_MISMATCH"} else "UI_SMOKE_FAILED", error_location=result["stage"], http=dict(state))
+        and str(error) in {"NODE_VERSION", "STAGE_TIMEOUT", "EXIT_OR_TTY_RESTORE", "FIXTURE_REJECTED", "WELCOME_EMPTY_SUBMIT", "THEME_RENDER_MISMATCH", "SESSION_MARKER_INVALID", "PROBE_FILE_MISMATCH", "CLI_PREPARATION_FAILED", "RUNTIME_PROJECTION_INVALID"} else "UI_SMOKE_FAILED", error_location=result["stage"], http=dict(state))
     finally:
       if child is not None and child.poll() is None:
-        child.terminate()
+        # 仅在自建 leader 尚未退出且组身份仍匹配时终止整个组，避免 PID 复用。
+        try:
+          if args.agentcfg_cli and os.getpgid(child.pid) == child.pid:
+            os.killpg(child.pid, signal.SIGTERM)
+          else:
+            child.terminate()
+        except ProcessLookupError:
+          pass
         try:
           child.wait(timeout=5)
         except subprocess.TimeoutExpired:
-          child.kill()
+          try:
+            if args.agentcfg_cli and child.poll() is None and os.getpgid(child.pid) == child.pid:
+              os.killpg(child.pid, signal.SIGKILL)
+            else:
+              child.kill()
+          except ProcessLookupError:
+            pass
           child.wait()
       if child is not None:
         result["observed_exit"] = child.returncode
@@ -442,8 +508,12 @@ def main():
       for fd in (master, slave):
         if fd is not None:
           os.close(fd)
-    source = {name: hashlib.sha256((repo / name).read_bytes()).hexdigest() for name in ("scripts/smoke-dsh-ui.py", "src/agentcfg/dsh.py",
-      "agents/dsh/templates/launch.mjs", "agents/dsh/packages/cursor-terminal/index.mjs", "agents/dsh/templates/theme-catppuccin.json")}
+    source_names = ["scripts/smoke-dsh-ui.py", "src/agentcfg/dsh.py", "agents/dsh/templates/launch.mjs",
+      "agents/dsh/packages/cursor-terminal/index.mjs", "agents/dsh/templates/theme-catppuccin.json"]
+    if args.agentcfg_cli:
+      source_names.extend(["agentcfg", "src/agentcfg/cli.py", "src/agentcfg/commands.py", "src/agentcfg/runtime.py",
+        "src/agentcfg/backends.py", "src/agentcfg/dependencies.py", "src/agentcfg/runtime_packages.py", "src/agentcfg/deployment.py"])
+    source = {name: hashlib.sha256((repo / name).read_bytes()).hexdigest() for name in source_names}
     result.update(source_files=source, source_hash=hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest())
     (evidence / "transcript.log").write_bytes(transcript)
     (evidence / "result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")

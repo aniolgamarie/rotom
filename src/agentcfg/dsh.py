@@ -133,8 +133,15 @@ class DshAdapter(Adapter):
     config["terminalImages"] = data["profile"]["agent_options"]["terminal_images"]
     for field, value in config.items():
       yield "/dsh-tui/config/" + field, value, Ownership.FIELDS
+    # 原生 /settings 偏好逐叶首次初始化，后续 apply 不覆盖用户修改。
     for field, value in {"whale": True, "whaleIdle": False, "minimal": False,
-        "sidePanel/open": False, "sidePanel/panels": "todo,jobs,agents,trajectory,info"}.items():
+        "sidePanel/open": False, "sidePanel/panels": "todo,jobs,agents,trajectory,info",
+        "statusBar/compact": True, "statusBar/model": True, "statusBar/thinking": True,
+        "statusBar/cwd": True, "statusBar/contextUsage": True, "statusBar/cache": True,
+        "statusBar/tokens": True, "statusBar/cost": True, "statusBar/tps": True,
+        "statusBar/gitBranch": True, "statusBar/sessionTitle": True, "statusBar/sessionId": False,
+        "statusBar/goal": True, "statusBar/mode": True, "statusBar/contextBar": True,
+        "statusBar/activity": False, "statusBar/trajectory": False, "statusBar/shortcutHint": False}.items():
       yield "/dsh-tui/config/" + field, value, Ownership.INITIALIZE
 
   def _field_artifacts(self, data):

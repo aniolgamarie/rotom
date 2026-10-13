@@ -7,6 +7,7 @@ import pytest
 
 from agentcfg import cli, commands, native
 from agentcfg.dependencies import read_lock
+from agentcfg.adapter import Ownership
 from agentcfg.workspace import load_workspace
 from agentcfg.storage import Conflict
 
@@ -43,6 +44,11 @@ def test_real_recipe_preserves_full_tui_config_and_has_no_static_oauth_catalog(t
   assert fields["/llm-pi-ai/config/providers/agentcfg-kimi_code_openai/baseURL"] == w.resolved.data["providers"]["kimi_code_openai"]["base_url"]
   assert fields["/dsh-tui/config/terminalImages"] is False
   assert fields["/dsh-tui/config/backend"] == "dsh"
+  status_bar = [a for a in candidate.artifacts if a.target.selector and a.target.selector.startswith("/dsh-tui/config/statusBar/")]
+  assert len(status_bar) == 18
+  assert all(a.target.ownership is Ownership.INITIALIZE for a in status_bar)
+  assert fields["/dsh-tui/config/statusBar/tokens"] is True
+  assert fields["/dsh-tui/config/statusBar/shortcutHint"] is False
   assert [mode["id"] for mode in fields["/dsh-tui/config/modes"]] == ["default", "plan"]
   assert sum(row.get("id") == "dsh-tui-auth" for row in patch) == 1
   assert set(w.resolved.data["models"]) == {

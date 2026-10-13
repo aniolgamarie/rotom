@@ -247,3 +247,55 @@ def test_instance_owner_survives_first_rollback_and_runtime_data(instance):
     dep.apply(*instance, candidate("B", field=True), {**BINDING, "machine": "other"}, launch)
   dep.apply(*instance, candidate("B", field=True), BINDING, launch)
   assert "oauth: retained" in path.read_text()
+
+
+def initialization_candidate(theme="A", preference=True, owner=Ownership.INITIALIZE):
+  base = candidate(theme, field=True, extra=False)
+  target = ManagedTarget("dsh-home/settings.yaml", owner, "yaml", "/ui/compact")
+  return RenderCandidate(str((theme, preference, owner.value)), base.artifacts + (Artifact(target, json.dumps(preference).encode()),))
+
+
+def test_existing_preference_in_owned_shared_file_consumes_initialization_without_baseline(instance):
+  apply(instance, field=True, extra=False)
+  path = instance[0] / "dsh-home/settings.yaml"
+  path.write_text("ui:\n  theme: A\n  compact: false\n  unknown: {keep: true}\n")
+  original = path.read_bytes(), path.stat()
+  proposal = initialization_candidate()
+  assert dep.apply(*instance, proposal, BINDING, LAUNCH)["changes"] == 0
+  assert (path.read_bytes(), path.stat()) == original
+  imported = next(item for item in state(instance)["current"]["items"].values() if item["selector"] == "/ui/compact")
+  assert imported["baseline"] == dep.ABSENT
+  assert "desired" not in imported
+  assert dep.apply(*instance, proposal, BINDING, LAUNCH)["changes"] == 0
+  # 来源改为相反值也不重启初始化；后续配置回滚只处理真实写入的 theme。
+  assert dep.apply(*instance, initialization_candidate("B", False), BINDING, LAUNCH)["changes"] == 1
+  with Tree(instance[1]) as tree:
+    changes = dep.read_state(tree)["previous"]["changes"]
+  assert [change["item"]["selector"] for change in changes] == ["/ui/theme"]
+  dep.rollback(*instance, BINDING)
+  assert dep.parse_native(path.read_bytes(), "yaml") == dep.parse_native(original[0], "yaml")
+
+
+@pytest.mark.parametrize("owner", [Ownership.INITIALIZE, Ownership.FIELDS])
+def test_unowned_nonempty_file_rejects_initialization_and_managed_fields(instance, owner, sentinel_factory):
+  root, store = instance
+  with Tree(root, create=True) as tree:
+    tree.write_state("dsh-home/settings.yaml", b"ui: {compact: false, unknown: keep}\n")
+  unchanged = sentinel_factory(root)
+  proposal = RenderCandidate("unowned", (Artifact(ManagedTarget("dsh-home/settings.yaml", owner, "yaml", "/ui/compact"), b"true"),))
+  with pytest.raises(Conflict):
+    dep.apply(root, store, proposal, BINDING, LAUNCH)
+  unchanged.assert_unchanged()
+  with Tree(store) as tree:
+    assert dep.read_state(tree)["current"] is None
+
+
+def test_owned_shared_file_existing_managed_field_still_conflicts(instance, sentinel_factory):
+  apply(instance, field=True, extra=False)
+  path = instance[0] / "dsh-home/settings.yaml"
+  path.write_text("ui: {theme: A, compact: false, unknown: keep}\n")
+  root_before, state_before = sentinel_factory(instance[0]), sentinel_factory(instance[1])
+  with pytest.raises(Conflict):
+    dep.apply(*instance, initialization_candidate(owner=Ownership.FIELDS), BINDING, LAUNCH)
+  root_before.assert_unchanged()
+  state_before.assert_unchanged()

@@ -377,3 +377,78 @@ def test_catppuccin_semantic_fills_keep_text_legible():
       ("diffAddedWord", "diffAddedDimmed"), ("diffRemovedWord", "diffRemovedDimmed")):
     light, dark = sorted((luminance(colors[foreground]), luminance(colors[background])), reverse=True)
     assert (light + 0.05) / (dark + 0.05) >= 4.5, (foreground, background)
+
+
+STATUS_BAR = {"compact": True, "model": True, "thinking": True, "cwd": True,
+  "contextUsage": True, "cache": True, "tokens": True, "cost": True, "tps": True,
+  "gitBranch": True, "sessionTitle": True, "sessionId": False, "goal": True, "mode": True,
+  "contextBar": True, "activity": False, "trajectory": False, "shortcutHint": False}
+
+
+def status_bar_candidate(value="A"):
+  data = {"profile": {"agent_options": {"terminal_images": False}}}
+  preferences = tuple(Artifact(ManagedTarget(PATCH, owner, "cordis-yaml", path), json.dumps(value).encode())
+    for path, value, owner in DshAdapter(ROOT)._tui_fields(data) if path.startswith("/dsh-tui/config/statusBar/"))
+  assert len(preferences) == 18
+  assert all(item.target.ownership is Ownership.INITIALIZE for item in preferences)
+  return RenderCandidate("status-bar-" + value, candidate(value, with_ui=False).artifacts + preferences)
+
+
+def test_status_bar_fresh_defaults_and_repeat_apply(tmp_path):
+  root, state = tmp_path / "instance", tmp_path / "state"
+  proposal = status_bar_candidate()
+  dep.apply(root, state, proposal, BINDING, LAUNCH)
+  with Tree(root) as tree:
+    config = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")["dsh-tui"]["config"]
+  assert config["statusBar"] == STATUS_BAR
+  assert dep.apply(root, state, proposal, BINDING, LAUNCH)["changes"] == 0
+
+
+def test_status_bar_user_changes_survive_config_update_and_rollback(tmp_path):
+  root, state = tmp_path / "instance", tmp_path / "state"
+  dep.apply(root, state, status_bar_candidate(), BINDING, LAUNCH)
+  opposite = {key: not value for key, value in STATUS_BAR.items()}
+  with Tree(root) as tree:
+    document = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")
+    document["dsh-tui"]["config"]["statusBar"] = {**opposite, "unknown": {"keep": True}}
+    document["dsh-tui"]["config"]["unknown"] = "keep"
+    tree.write_state(PATCH, dep.encode_native(document, "cordis-yaml"))
+  assert dep.apply(root, state, status_bar_candidate(), BINDING, LAUNCH)["changes"] == 0
+  assert dep.apply(root, state, status_bar_candidate("B"), BINDING, LAUNCH)["changes"] == 1
+  dep.rollback(root, state, BINDING)
+  with Tree(root) as tree:
+    document = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")
+  assert document["dsh-tui"]["config"]["statusBar"] == {**opposite, "unknown": {"keep": True}}
+  assert document["dsh-tui"]["config"]["unknown"] == "keep"
+  assert document["llm-pi-ai"]["config"]["providers"]["agentcfg-fixture"]["baseURL"] == "A"
+
+
+def test_status_bar_initial_rollback_consumes_only_initialized_leaves(tmp_path):
+  root, state = tmp_path / "instance", tmp_path / "state"
+  dep.apply(root, state, candidate(with_ui=False), BINDING, LAUNCH)
+  dep.apply(root, state, status_bar_candidate(), BINDING, LAUNCH)
+  with Tree(root) as tree:
+    document = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")
+    document["dsh-tui"]["config"]["statusBar"]["unknown"] = "keep"
+    tree.write_state(PATCH, dep.encode_native(document, "cordis-yaml"))
+  dep.rollback(root, state, BINDING)
+  with Tree(root) as tree:
+    document = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")
+  assert document["dsh-tui"]["config"]["statusBar"] == {"unknown": "keep"}
+
+
+def test_existing_status_bar_in_owned_shared_file_consumes_initialization_without_overwriting(tmp_path, sentinel_factory):
+  root, state = tmp_path / "instance", tmp_path / "state"
+  dep.apply(root, state, candidate(with_ui=False), BINDING, LAUNCH)
+  with Tree(root) as tree:
+    document = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")
+    document["dsh-tui"] = {"config": {"statusBar": {key: not value for key, value in STATUS_BAR.items()}, "unknown": "keep"}}
+    tree.write_state(PATCH, dep.encode_native(document, "cordis-yaml"))
+  original_root = sentinel_factory(root)
+  assert dep.apply(root, state, status_bar_candidate(), BINDING, LAUNCH)["changes"] == 0
+  assert dep.apply(root, state, status_bar_candidate(), BINDING, LAUNCH)["changes"] == 0
+  original_root.assert_unchanged()
+  with Tree(state) as tree:
+    items = dep.read_state(tree)["current"]["items"].values()
+  imported = [item for item in items if item["selector"].startswith("/dsh-tui/config/statusBar/")]
+  assert len(imported) == 18 and all(item["baseline"] == dep.ABSENT for item in imported)
