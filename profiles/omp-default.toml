@@ -24,7 +24,11 @@ project_roots = []
 
 [agent_options.resources]
 prompts = []
-themes = []
+themes = ["dark-catppuccin", "light-catppuccin"]
+
+[agent_options.ui]
+theme_dark = "dark-catppuccin"
+theme_light = "light-catppuccin"
 
 ["agent_options"."role_thinking"]
 "main" = "high"

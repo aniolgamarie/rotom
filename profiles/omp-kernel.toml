@@ -37,11 +37,12 @@
 
 ["agent_options"."resources"]
 "prompts" = []
-"themes" = ["kanagawa"]
+"themes" = ["dark-catppuccin", "light-catppuccin"]
 "agents" = ["reviewer", "scout", "security-reviewer", "sonic", "task"]
 
 ["agent_options"."ui"]
-"theme_dark" = "kanagawa"
+"theme_dark" = "dark-catppuccin"
+"theme_light" = "light-catppuccin"
 
 ["agent_options"."runtime"]
 "cycleOrder" = ["default", "smol", "slow"]

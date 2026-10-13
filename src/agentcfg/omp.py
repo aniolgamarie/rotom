@@ -284,6 +284,10 @@ def _validate_theme(content):
       return valid
     if not all(check(value) for value in variables.values()) or not all(check(value) for value in theme["colors"].values()):
       raise ValueError()
+    # 官方主题的终端配色同样只允许合法色值或已定义变量；ANSI 数量由闭合 schema 校验。
+    terminal = theme.get("terminal", {})
+    if not all(check(value) for key, value in terminal.items() if key != "ansi") or not all(check(value) for value in terminal.get("ansi", [])):
+      raise ValueError()
     return theme
   except Exception:
     raise ConfigError("omp-theme-invalid") from None

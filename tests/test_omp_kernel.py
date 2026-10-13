@@ -40,6 +40,9 @@ def test_kernel_deployment_preserves_reviewed_native_configuration(tmp_path):
       if key == "bashInterceptor":
         # 普通已审查的Bash读取不再被默认工具偏好拦截；显式启用仍由原生执行保留。
         expected["enabled"] = False
+      if key == "theme":
+        # 保留历史快照；深浅主题改为用户选择的官方 Catppuccin 系。
+        expected = {"dark": "dark-catppuccin", "light": "light-catppuccin"}
       if key == "retry":
         # 冻结历史快照；仅列明本次 K3 历史保护的六个备用链差量。
         for selector in ("cursor/kimi-k3", "cursor/kimi-k3:high", "cursor/kimi-k3:max",
@@ -63,6 +66,9 @@ def test_kernel_deployment_preserves_reviewed_native_configuration(tmp_path):
   assert workspace.adapter._extension_suffixes(workspace.resolved.data)[-1].endswith("standalone.ts")
   assert config["skills"]["enablePiUser"] is True
   assert config["skills"]["enablePiProject"] is False
+  for name in ("dark-catppuccin", "light-catppuccin"):
+    assert (identity.agent_dir / "themes" / (name + ".json")).read_bytes() == (
+      REPO / "agents/omp/resources/themes" / (name + ".json")).read_bytes()
   models = yaml.safe_load((identity.agent_dir / "models.yml").read_text())
   for provider, expected in REFERENCE["models"]["providers"].items():
     actual = deepcopy(models["providers"][provider])
