@@ -1,6 +1,7 @@
 """原生套件切换仅开放当前项目模型角色，保持其他发现来源默认拒绝。"""
 
 import hashlib
+import stat
 
 import pytest
 
@@ -73,11 +74,16 @@ def test_native_empty_role_file_can_restore_global_defaults(tmp_path, content):
   "modelRoles: {}\nextensions: []\n", "modelRoles: {}\nproviders: {}\n",
   "modelRoles: {}\npermissionControl: {}\n", "modelRoles: {}\ndefaultThinkingLevel: low\n",
 ])
-def test_invalid_project_settings_are_rejected_without_value_disclosure(tmp_path, content):
+def test_invalid_project_settings_are_quarantined_without_value_disclosure(tmp_path, content):
   path = config(tmp_path / "project", content)
-  with pytest.raises(Conflict) as error:
-    inspect(path.parent.parent)
-  assert "SECRET_CANARY" not in str(error.value)
+  report = inspect(path.parent.parent)
+  backup = path.with_name("config.yml.agentcfg-backup")
+  assert not path.exists()
+  assert backup.read_bytes() == content.encode()
+  assert stat.S_IMODE(backup.stat().st_mode) == 0o600
+  assert report == ({"category": "model-roles-quarantine", "path": str(backup),
+    "sha256": hashlib.sha256(content.encode()).hexdigest()},)
+  assert "SECRET_CANARY" not in str(report)
 
 
 @pytest.mark.parametrize("change", ["no-presets", "global-storage", "no-cursor"])
@@ -88,8 +94,12 @@ def test_feature_and_cursor_provider_must_be_explicitly_enabled(tmp_path, change
     value["profile"]["agent_options"].pop("model_presets")
   if change == "global-storage":
     value["profile"]["agent_options"]["runtime"]["modelRoleStorage"] = "global"
-  with pytest.raises(Conflict):
-    inspect(path.parent.parent, value)
+  if change == "no-cursor":
+    assert inspect(path.parent.parent, value)[0]["category"] == "model-roles-quarantine"
+    assert not path.exists()
+  else:
+    with pytest.raises(Conflict):
+      inspect(path.parent.parent, value)
 
 
 @pytest.mark.parametrize("relative", [".omp/settings.json", ".omp/config.yaml", ".omp/extensions/plugin.ts",
@@ -114,8 +124,8 @@ def test_safe_ancestor_role_file_is_validated_without_blocking_subdirectories(tm
   assert report[0]["path"] == str(project / ".omp/config.yml")
   assert report[0]["category"] == "model-roles"
   config(project, "modelRoles: {}\nextensions: []\n")
-  with pytest.raises(Conflict):
-    inspect(child)
+  assert inspect(child)[0]["category"] == "model-roles-quarantine"
+  assert not (project / ".omp/config.yml").exists()
 
 
 @pytest.mark.parametrize("kind", ["file-link", "directory-link", "hardlink", "fifo", "oversize"])
@@ -157,10 +167,11 @@ def test_pool_only_paid_model_cannot_become_a_project_default(tmp_path):
   value["profile"]["models"].append("pro")
   value["models"]["pro"] = {**value["models"]["model"], "remote_id": "deepseek-v4-pro"}
   path = config(tmp_path / "project", "modelRoles:\n  default: official/deepseek-v4-pro:high\n")
-  with pytest.raises(Conflict):
-    inspect(path.parent.parent, value)
+  assert inspect(path.parent.parent, value)[0]["category"] == "model-roles-quarantine"
+  assert not path.exists()
   # 私人配置主动将该模型声明为初始角色后，项目才能持久化同一赋值。
   value["profile"]["roles"]["main"] = "pro"
+  config(tmp_path / "project", "modelRoles:\n  default: official/deepseek-v4-pro:high\n")
   assert inspect(path.parent.parent, value)[0]["category"] == "model-roles"
 
 
@@ -170,11 +181,22 @@ def test_private_cursor_bootstrap_is_explicit_and_role_specific(tmp_path):
   path = config(tmp_path / "project", "modelRoles:\n  default: cursor/custom-model:high\n")
   assert inspect(path.parent.parent, value)[0]["category"] == "model-roles"
   path.write_text("modelRoles:\n  smol: cursor/custom-model:high\n")
-  with pytest.raises(Conflict):
-    inspect(path.parent.parent, value)
+  assert inspect(path.parent.parent, value)[0]["category"] == "model-roles-quarantine"
 
 
-def test_known_model_with_an_undeclared_role_effort_is_rejected(tmp_path):
+def test_known_model_with_an_undeclared_role_effort_is_quarantined(tmp_path):
   path = config(tmp_path / "project", "modelRoles:\n  default: official/model:max\n")
-  with pytest.raises(Conflict):
-    inspect(path.parent.parent)
+  assert inspect(path.parent.parent)[0]["category"] == "model-roles-quarantine"
+  assert not path.exists()
+
+
+def test_repeated_conflicts_keep_only_the_latest_backup(tmp_path):
+  project = tmp_path / "project"
+  path = config(project, "modelRoles:\n  default: missing/model\n")
+  inspect(project)
+  backup = path.with_name("config.yml.agentcfg-backup")
+  assert backup.read_text() == "modelRoles:\n  default: missing/model\n"
+  config(project, "modelRoles:\n  default: also/missing\n")
+  assert inspect(project)[0]["category"] == "model-roles-quarantine"
+  assert backup.read_text() == "modelRoles:\n  default: also/missing\n"
+  assert sorted(child.name for child in (project / ".omp").iterdir()) == ["config.yml.agentcfg-backup"]

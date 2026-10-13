@@ -8,6 +8,9 @@ from .omp_settings import NATIVE_ROLES
 from .storage import Conflict, Tree
 
 
+ROLE_BACKUP_NAME = "config.yml.agentcfg-backup"
+
+
 @dataclass(frozen=True)
 class ProjectRolePolicy:
   roles: dict[str, frozenset[str]]
@@ -81,3 +84,16 @@ def validate_project_role_file(path, policy):
     return content
   except Exception:
     raise Conflict("OMP项目角色配置不符合仅模型引用契约") from None
+
+
+def quarantine_project_role_file(path):
+  """契约冲突时保留最后一份0600备份并移除原文件；链接、硬链接与超限文件仍拒绝。"""
+  with Tree(path.parent, private=False) as tree:
+    current = tree.read(path.name, max_bytes=64 * 1024)
+    if current is None:
+      raise Conflict("OMP项目角色配置在隔离前发生变化")
+    content, _, expected = current
+    backup = tree.read(ROLE_BACKUP_NAME)
+    tree.replace(ROLE_BACKUP_NAME, content, expected=backup[2] if backup else None)
+    tree.replace(path.name, None, expected=expected)
+  return path.with_name(ROLE_BACKUP_NAME), content

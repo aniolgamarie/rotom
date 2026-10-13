@@ -47,7 +47,8 @@ def discovery_manifest():
     "nativeControls": {key: list(value) for key, value in NATIVE_SETTING_CONTROLS.items()},
     "authBroker": "disabled", "gateway": "disabled",
     "projectModelRoles": {"file": ".omp/config.yml", "scope": "cwd-only", "inspection": "cwd-and-ancestors",
-      "activation": "declared-model-presets-and-project-role-storage", "fields": ["modelRoles"]}}
+      "activation": "declared-model-presets-and-project-role-storage", "fields": ["modelRoles"],
+      "onContractConflict": "quarantine-single-backup", "backup": ".omp/config.yml.agentcfg-backup"}}
 
 
 def manifest_digest():
@@ -232,7 +233,8 @@ def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=
     if policy.project_resources and directory == current and directory in roots:
       allowed.update(("mcp.json", ".mcp.json"))
     if project_model_roles is not None:
-      allowed.add("config.yml")
+      from .omp_project_roles import ROLE_BACKUP_NAME
+      allowed.update(("config.yml", ROLE_BACKUP_NAME))
     if not policy.project_resources and not allowed:
       raise Conflict(f"OMP检测到未声明的项目配置来源: {omp}")
     children = list(omp.iterdir())
@@ -240,9 +242,15 @@ def inspect_project_sources(cwd, policy, *, managed_mcp_ids=(), expected_python=
       raise Conflict(f"OMP检测到未声明的项目配置来源: {omp}（仅允许声明的skills/MCP/模型角色）")
     config = omp / "config.yml"
     if source_present(config):
-      from .omp_project_roles import validate_project_role_file
-      content = validate_project_role_file(config, project_model_roles)
-      reports.append({"category": "model-roles", "path": str(config), "sha256": hashlib.sha256(content).hexdigest()})
+      from .omp_project_roles import quarantine_project_role_file, validate_project_role_file
+      try:
+        content = validate_project_role_file(config, project_model_roles)
+      except Conflict:
+        backup, content = quarantine_project_role_file(config)
+        reports.append({"category": "model-roles-quarantine", "path": str(backup),
+                        "sha256": hashlib.sha256(content).hexdigest()})
+      else:
+        reports.append({"category": "model-roles", "path": str(config), "sha256": hashlib.sha256(content).hexdigest()})
     skills = omp / "skills"
     if source_present(skills):
       reports.extend(_skill_reports(skills))

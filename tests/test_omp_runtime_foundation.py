@@ -85,8 +85,9 @@ def test_discovery_manifest_has_exact_disabled_count():
   assert manifest["ignoredProviderSources"]["reason"] == "all-loading-providers-disabled-before-discovery"
   assert manifest["projectModelRoles"] == {"file": ".omp/config.yml", "scope": "cwd-only",
     "inspection": "cwd-and-ancestors", "activation": "declared-model-presets-and-project-role-storage",
-    "fields": ["modelRoles"]}
-  assert manifest_digest() == "b3ec3eb0584c3b8c226a7b9d8410016af6fd7998d43c74da78e13815ec8a092c"
+    "fields": ["modelRoles"], "onContractConflict": "quarantine-single-backup",
+    "backup": ".omp/config.yml.agentcfg-backup"}
+  assert manifest_digest() == "e50ea843349617477adca5da95d54653c48f1124942495507c7fd3955af71c21"
 
 
 def test_source_policy_rejects_roots_when_project_resources_are_off(tmp_path):
