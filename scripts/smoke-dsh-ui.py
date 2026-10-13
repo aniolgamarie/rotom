@@ -51,6 +51,18 @@ def fixture_handler(state, gate, key, target, content):
           cancel_stream = bool(tools) and "CANCEL_TASK_MARKER" in user
           if not tools:
             state["auxiliary_requests"] += 1
+          elif state.get("session_resume") and "RESUME_TASK_UNIQUE_MARKER" in user:
+            calls = [call for item in messages if item.get("role") == "assistant" for call in item.get("tool_calls", [])
+              if call.get("id") == "ui-write-call"]
+            arguments = json.loads(calls[0]["function"]["arguments"]) if len(calls) == 1 else {}
+            state["resume_history"] = {"write_content": arguments.get("content") == content,
+              "write_path": arguments.get("file_path") == str(target), "tool_result": len(results) == 1,
+              "last_task": messages[-1].get("role") == "user" and "RESUME_TASK_UNIQUE_MARKER" in json.dumps(messages[-1].get("content", ""))}
+            state["resume_model"] = body.get("model")
+            if state["resume_model"] != "fixture-b" or not all(state["resume_history"].values()):
+              raise ValueError("RESUME_HISTORY_MISMATCH")
+            delta["content"] = "RESUME_DONE_MARKER"
+            state["resume_completed"] = True
           elif cancel_stream:
             state["cancel_started"] = True
             delta["content"] = "CANCEL_PENDING_MARKER"
@@ -60,6 +72,10 @@ def fixture_handler(state, gate, key, target, content):
             state["tool_results"] = 1
             delta["content"] = "已完成 UI_DONE_MARKER"
             state["completed"] = True
+            if state.get("session_resume"):
+              state["tool_result_model"] = body.get("model")
+              if state["tool_result_model"] != "fixture-b":
+                raise ValueError("MODEL_ROUTE_MISMATCH")
           else:
             state["task_requests"] += 1
             state["paste"] = {"chinese": "中文第一行" in user, "multiline": "第二行" in user and "\\n" in user, "marker": "TASK_MARKER" in user}
@@ -71,6 +87,10 @@ def fixture_handler(state, gate, key, target, content):
                 or any(schema.get("properties", {}).get(name, {}).get("type") != "string" for name in ("file_path", "content"))):
               raise ValueError("WRITE_SCHEMA_NOT_FOUND")
             state["write_calls"] = 1
+            if state.get("session_resume"):
+              state["new_model"] = body.get("model")
+              if state["new_model"] != "fixture-b":
+                raise ValueError("MODEL_ROUTE_MISMATCH")
             state["tool_name"] = tool["name"]
             delta = {"role": "assistant", "tool_calls": [{"index": 0, "id": "ui-write-call", "type": "function", "function": {
               "name": tool["name"], "arguments": json.dumps({"file_path": str(target), "content": content}, ensure_ascii=False)}}]}
@@ -102,6 +122,8 @@ def fixture_handler(state, gate, key, target, content):
             self.wfile.flush()
           self.wfile.write(b"data: [DONE]\n\n")
           self.close_connection = True
+          if state.get("session_resume") and tools and (results or "RESUME_TASK_UNIQUE_MARKER" in user):
+            state["resume_response_sent" if "RESUME_TASK_UNIQUE_MARKER" in user else "task_response_sent"] = True
         else:
           payload = json.dumps({**packet, "object": "chat.completion", "choices": [{"index": 0, "message": delta, "finish_reason": finish}],
             "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20}}, ensure_ascii=False).encode()
@@ -113,11 +135,108 @@ def fixture_handler(state, gate, key, target, content):
       except Exception as error:
         with gate:
           state["error"] = str(error) if isinstance(error, ValueError) and str(error) in {
-            "REQUEST_SIZE", "REQUEST_ROUTE", "REQUEST_LIMIT", "TOOL_RESULT_MISMATCH", "TASK_PASTE_MISMATCH", "WRITE_SCHEMA_NOT_FOUND", "CANCEL_NOT_OBSERVED"} else "FIXTURE_HTTP_FAILED"
+            "REQUEST_SIZE", "REQUEST_ROUTE", "REQUEST_LIMIT", "TOOL_RESULT_MISMATCH", "TASK_PASTE_MISMATCH", "WRITE_SCHEMA_NOT_FOUND", "CANCEL_NOT_OBSERVED",
+            "MODEL_ROUTE_MISMATCH", "RESUME_HISTORY_MISMATCH"} else "FIXTURE_HTTP_FAILED"
         self.send_response(400)
         self.send_header("Content-Length", "0")
         self.end_headers()
   return Handler
+
+
+def session_resume_smoke(spec, env, project, instance, state, target, content, result, transcript):
+  """真实公开 --resume 路径；偏好及会话标记只属于本任务临时 HOME。"""
+  prefs = instance / "user-home/.dsh-tui"
+  def preference(model):
+    path = prefs / "model.json"
+    path.write_text(json.dumps({"provider": "agentcfg-fixture", "model": model}))
+    path.chmod(0o600)
+  preference("fixture-b")
+  for phase in ("new", "resume"):
+    result["stage"] = "session." + phase + ".launch"
+    argv = list(spec.argv)
+    if phase == "resume":
+      session_id = (prefs / "resume.txt").read_text().strip()
+      if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", session_id):
+        raise RuntimeError("SESSION_MARKER_INVALID")
+      preference("fixture-a")
+      argv.extend(["--resume", session_id])
+      result["resume_argument"] = session_id
+    master, slave = pty.openpty()
+    before = termios.tcgetattr(slave)
+    fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 100, 0, 0))
+    child, start = None, len(transcript)
+    try:
+      child = subprocess.Popen(argv, cwd=project, env=env, stdin=slave, stdout=slave, stderr=slave)
+      def pump():
+        if select.select([master], [], [], 0.1)[0]:
+          try:
+            transcript.extend(os.read(master, 65536))
+          except OSError:
+            pass
+      def visible():
+        raw = transcript[start:].decode(errors="replace")
+        raw = re.sub(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)", "", raw)
+        return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", raw)
+      def wait(predicate, seconds=30):
+        deadline = time.monotonic() + seconds
+        while not predicate() and child.poll() is None and time.monotonic() < deadline:
+          pump()
+          if state.get("error"):
+            raise RuntimeError("FIXTURE_REJECTED")
+        if not predicate():
+          raise RuntimeError("STAGE_TIMEOUT")
+      result["stage"] = "session." + phase + ".ready"
+      wait(lambda: not termios.tcgetattr(slave)[3] & termios.ICANON and "fixture-b" in visible())
+      settle = time.monotonic() + 1
+      while time.monotonic() < settle:
+        pump()
+      result["stage"] = "session." + phase + ".request"
+      text = "中文第一行\n第二行 TASK_MARKER" if phase == "new" else "RESUME_TASK_UNIQUE_MARKER"
+      os.write(master, ("\x1b[200~" + text + "\x1b[201~").encode())
+      marker = "TASK_MARKER" if phase == "new" else "RESUME_TASK_UNIQUE_MARKER"
+      wait(lambda: marker in re.sub(r"\s+", "", visible()), 5)
+      os.write(master, b"\r")
+      wait(lambda: state.get("completed" if phase == "new" else "resume_completed") is True)
+      # Ink 的增量重绘会交错文字；本分支以实际 HTTP 响应 flush 和恢复后的主历史验证完成。
+      wait(lambda: state.get("task_response_sent" if phase == "new" else "resume_response_sent") is True)
+      if not target.is_file() or target.read_text() != content:
+        raise RuntimeError("PROBE_FILE_MISMATCH")
+      settle = time.monotonic() + 1
+      while time.monotonic() < settle:
+        pump()
+      result["stage"] = "session." + phase + ".exit"
+      os.write(master, b"\x03")
+      settle = time.monotonic() + 0.3
+      while time.monotonic() < settle:
+        pump()
+      if child.poll() is None:
+        os.write(master, b"\x03")
+      wait(lambda: child.poll() is not None, 10)
+      after = termios.tcgetattr(slave)
+      result.setdefault("session_processes", []).append({"phase": phase, "exit": child.returncode,
+        "termios_before": before[:4], "termios_after": after[:4], "complete_termios_match": before == after})
+      if child.returncode != 0 or before != after:
+        raise RuntimeError("EXIT_OR_TTY_RESTORE")
+    finally:
+      if child is not None and child.poll() is None:
+        child.terminate()
+        try:
+          child.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+          child.kill()
+          child.wait()
+      if child is not None:
+        result.setdefault("observed_session_exits", {})[phase] = child.returncode
+      os.close(master)
+      os.close(slave)
+  if state["write_calls"] != 1 or state["tool_results"] != 1:
+    raise RuntimeError("PROBE_FILE_MISMATCH")
+  result["checks"].update(new_session_native_preference="PASS", public_launch_resume_recorded_route="PASS",
+    resumed_main_write_history="PASS", native_write_tool_roundtrip="PASS", both_termios_restored="PASS")
+  result.update(overall="PASS", stage="complete", route_evidence={"core_fallback": "fixture-a", "initial_preference": "fixture-b",
+    "restart_preference": "fixture-a", "new_request": state["new_model"], "resumed_request": state["resume_model"]},
+    file_content_sha256=hashlib.sha256(target.read_bytes()).hexdigest(), http=dict(state),
+    resume_picker="NOT RUN", cursor_account="NOT RUN", compaction="NOT RUN", geometry=[[100, 24], [100, 24]])
 
 
 def main():
@@ -126,9 +245,12 @@ def main():
   parser.add_argument("--runtime", required=True, type=Path)
   parser.add_argument("--evidence", required=True, type=Path)
   parser.add_argument("--maid-portrait", action="store_true", help="验证原生女仆立绘及伙伴皮肤优先级，仍使用假模型")
+  parser.add_argument("--session-resume", action="store_true", help="验证原生模型偏好、公开 --resume 路由和短工具正文历史")
   args = parser.parse_args()
   if not args.allow_host:
     parser.error("需要 --allow-host；默认测试不启动第三方宿主")
+  if args.session_resume and args.maid_portrait:
+    parser.error("--session-resume 与 --maid-portrait 分别验收")
   repo = Path(__file__).resolve().parents[1]
   sys.path.insert(0, str(repo / "src"))
   from agentcfg import commands, dependencies, runtime_packages
@@ -162,6 +284,8 @@ def main():
     os.environ.update(env)
     target, content, key = project / "ui-tool-result.txt", "中文原生工具写入\nUI_TOOL_CONTENT_MARKER\n", "synthetic-" + uuid.uuid4().hex
     state = {"requests": 0, "auxiliary_requests": 0, "task_requests": 0, "write_calls": 0, "tool_results": 0, "completed": False}
+    if args.session_resume:
+      state["session_resume"] = True
     gate = threading.Lock()
     try:
       node = subprocess.run(["node", "--version"], env=env, capture_output=True, text=True, check=True).stdout.strip()
@@ -176,6 +300,12 @@ def main():
         '[overrides.profiles.dsh-default]\nproviders=["fixture"]\nmodels=["fixture"]\n[overrides.profiles.dsh-default.roles]\nmain="fixture"\n'
         f'[secrets]\nfixture={json.dumps(key)}\n')
       machine.chmod(0o600)
+      if args.session_resume:
+        raw = machine.read_text().replace('remote_id="fixture-not-real"', 'remote_id="fixture-a"')
+        raw += '\n[overrides.models.fixture_b]\nprovider="fixture"\nremote_id="fixture-b"\ninput=["text"]\n'
+        raw = raw.replace('models=["fixture"]', 'models=["fixture","fixture_b"]')
+        raw += '[overrides.profiles.dsh-default.agent_options]\nshow_welcome=false\n'
+        machine.write_text(raw)
       workspace = load_workspace(machine, repository=repo)
       candidate = workspace.candidate(lock.identity)
       commands.apply_candidate(workspace, lock, candidate)
@@ -192,106 +322,110 @@ def main():
         workspace.adapter.prepare_runtime(workspace, runtime)
       spec = workspace.adapter.launch_spec(workspace.resolved.data, cwd=project, runtime_root=runtime, instance_root=workspace.instance, lock_identity=lock.identity)
       child_env = launch_environment(spec, workspace.resolved.data["machine"], workspace.secret_store)
-      master, slave = pty.openpty()
-      before = termios.tcgetattr(slave)
-      initial_columns, initial_rows = (160, 50) if args.maid_portrait else (100, 24)
-      fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", initial_rows, initial_columns, 0, 0))
-      child = subprocess.Popen(spec.argv, cwd=project, env=child_env, stdin=slave, stdout=slave, stderr=slave)
-      def pump():
-        if select.select([master], [], [], 0.1)[0]:
-          try:
-            transcript.extend(os.read(master, 65536))
-          except OSError:
-            pass
-      def wait(predicate, seconds=30):
-        deadline = time.monotonic() + seconds
-        while not predicate() and child.poll() is None and time.monotonic() < deadline:
+      if args.session_resume:
+        result.update(candidate_digest=candidate.generation, node=node)
+        session_resume_smoke(spec, child_env, project, workspace.instance, state, target, content, result, transcript)
+      else:
+        master, slave = pty.openpty()
+        before = termios.tcgetattr(slave)
+        initial_columns, initial_rows = (160, 50) if args.maid_portrait else (100, 24)
+        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", initial_rows, initial_columns, 0, 0))
+        child = subprocess.Popen(spec.argv, cwd=project, env=child_env, stdin=slave, stdout=slave, stderr=slave)
+        def pump():
+          if select.select([master], [], [], 0.1)[0]:
+            try:
+              transcript.extend(os.read(master, 65536))
+            except OSError:
+              pass
+        def wait(predicate, seconds=30):
+          deadline = time.monotonic() + seconds
+          while not predicate() and child.poll() is None and time.monotonic() < deadline:
+            pump()
+            if state.get("error"):
+              raise RuntimeError("FIXTURE_REJECTED")
+          if not predicate():
+            raise RuntimeError("STAGE_TIMEOUT")
+        def rendered_text():
+          visible = re.sub(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)", "", transcript.decode(errors="replace"))
+          return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", visible)
+        result["stage"] = "ui.welcome"
+        wait(lambda: "Say something, or type / for commands" in rendered_text() and not termios.tcgetattr(slave)[3] & termios.ICANON)
+        # 原生 welcome 的输入框默认获焦点；空 Enter 只关闭启动页，不发送模型请求。
+        ready_deadline = time.monotonic() + 1
+        while time.monotonic() < ready_deadline:
           pump()
-          if state.get("error"):
-            raise RuntimeError("FIXTURE_REJECTED")
-        if not predicate():
-          raise RuntimeError("STAGE_TIMEOUT")
-      def rendered_text():
-        visible = re.sub(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)", "", transcript.decode(errors="replace"))
-        return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", visible)
-      result["stage"] = "ui.welcome"
-      wait(lambda: "Say something, or type / for commands" in rendered_text() and not termios.tcgetattr(slave)[3] & termios.ICANON)
-      # 原生 welcome 的输入框默认获焦点；空 Enter 只关闭启动页，不发送模型请求。
-      ready_deadline = time.monotonic() + 1
-      while time.monotonic() < ready_deadline:
-        pump()
-      result["checks"]["native_welcome_rendered"] = "PASS"
-      if args.maid_portrait:
-        # 上游女仆字符画静态精灵的两种独有 RGB；鲸鱼及当前主题没有这些像素色。
-        def maid_pixels_present(output):
-          return all(any((f"\x1b[{prefix};2;{color}m").encode() in output for prefix in (38, 48))
-            for color in ("247;192;126", "248;181;153"))
-        wait(lambda: maid_pixels_present(transcript), 5)
-        result["checks"]["native_maid_character_art"] = "PASS"
-        result["native_ui_preferences"] = {"whaleGirl": True, "companion.skin": "whale"}
-      chat_frame_start = len(transcript)
-      os.write(master, b"\r")
-      result["stage"] = "ui.ready"
-      ready_deadline = time.monotonic() + 1
-      while time.monotonic() < ready_deadline:
-        pump()
-      if child.poll() is not None or state["requests"]:
-        raise RuntimeError("WELCOME_EMPTY_SUBMIT")
-      if args.maid_portrait:
-        wait(lambda: maid_pixels_present(transcript[chat_frame_start:]), 5)
-        result["checks"]["native_maid_chat_header"] = "PASS"
-      result["checks"]["welcome_empty_enter_no_model_call"] = "PASS"
-      result["checks"]["native_ui_ready"] = "PASS"
-      result["stage"] = "ui.paste-tool"
-      os.write(master, "\x1b[200~中文第一行\n第二行 TASK_MARKER\x1b[201~".encode())
-      wait(lambda: b"TASK_MARKER" in transcript, 5)
-      os.write(master, b"\r")
-      wait(lambda: state["write_calls"] == 1)
-      result["stage"] = "ui.resize"
-      fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 18, 40, 0, 0))
-      os.kill(child.pid, signal.SIGWINCH)
-      resize_start = len(transcript)
-      wait(lambda: state["completed"] and target.is_file() and target.read_text() == content)
-      # Ink 在窄窗逐段重绘；ANSI 光标控制和换行会拆开可见标记。
-      def rendered_marker(marker="UI_DONE_MARKER"):
-        return marker in re.sub(r"\s+", "", rendered_text()) and len(transcript) > resize_start
-      wait(rendered_marker)
-      # 只检查公开 Theme 字段在真实渲染中的色值，不调用宿主私有 resolver。
-      palette = json.loads((repo / "agents/dsh/templates/theme-catppuccin.json").read_bytes())["colors"]
-      def ansi_color(value):
-        return ("\x1b[38;2;" + ";".join(str(int(value[index:index + 2], 16)) for index in (1, 3, 5)) + "m").encode()
-      if not all(ansi_color(palette[key]) in transcript for key in ("text", "promptBorder", "success")):
-        raise RuntimeError("THEME_RENDER_MISMATCH")
-      result["checks"]["native_catppuccin_truecolor"] = "PASS"
-      result["checks"].update(chinese_multiline_paste="PASS", narrow_resize="PASS", native_write_tool_roundtrip="PASS")
-      result["stage"] = "ui.cancel-stream"
-      os.write(master, b"CANCEL_TASK_MARKER\r")
-      wait(lambda: state.get("cancel_started") is True)
-      wait(lambda: state.get("cancel_chunk_sent") is True, 5)
-      os.write(master, b"\x03")
-      wait(lambda: state.get("cancel_disconnected") is True, 10)
-      assert child.poll() is None and state["write_calls"] == 1 and state["tool_results"] == 1
-      result["checks"]["ctrl_c_active_request_cancel"] = "PASS"
-      idle_deadline = time.monotonic() + 1
-      while time.monotonic() < idle_deadline:
-        pump()
-      result["stage"] = "ui.ctrl-c"
-      os.write(master, b"\x03")
-      time.sleep(0.3)
-      if child.poll() is None:
+        result["checks"]["native_welcome_rendered"] = "PASS"
+        if args.maid_portrait:
+          # 上游女仆字符画静态精灵的两种独有 RGB；鲸鱼及当前主题没有这些像素色。
+          def maid_pixels_present(output):
+            return all(any((f"\x1b[{prefix};2;{color}m").encode() in output for prefix in (38, 48))
+              for color in ("247;192;126", "248;181;153"))
+          wait(lambda: maid_pixels_present(transcript), 5)
+          result["checks"]["native_maid_character_art"] = "PASS"
+          result["native_ui_preferences"] = {"whaleGirl": True, "companion.skin": "whale"}
+        chat_frame_start = len(transcript)
+        os.write(master, b"\r")
+        result["stage"] = "ui.ready"
+        ready_deadline = time.monotonic() + 1
+        while time.monotonic() < ready_deadline:
+          pump()
+        if child.poll() is not None or state["requests"]:
+          raise RuntimeError("WELCOME_EMPTY_SUBMIT")
+        if args.maid_portrait:
+          wait(lambda: maid_pixels_present(transcript[chat_frame_start:]), 5)
+          result["checks"]["native_maid_chat_header"] = "PASS"
+        result["checks"]["welcome_empty_enter_no_model_call"] = "PASS"
+        result["checks"]["native_ui_ready"] = "PASS"
+        result["stage"] = "ui.paste-tool"
+        os.write(master, "\x1b[200~中文第一行\n第二行 TASK_MARKER\x1b[201~".encode())
+        wait(lambda: b"TASK_MARKER" in transcript, 5)
+        os.write(master, b"\r")
+        wait(lambda: state["write_calls"] == 1)
+        result["stage"] = "ui.resize"
+        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 18, 40, 0, 0))
+        os.kill(child.pid, signal.SIGWINCH)
+        resize_start = len(transcript)
+        wait(lambda: state["completed"] and target.is_file() and target.read_text() == content)
+        # Ink 在窄窗逐段重绘；ANSI 光标控制和换行会拆开可见标记。
+        def rendered_marker(marker="UI_DONE_MARKER"):
+          return marker in re.sub(r"\s+", "", rendered_text()) and len(transcript) > resize_start
+        wait(rendered_marker)
+        # 只检查公开 Theme 字段在真实渲染中的色值，不调用宿主私有 resolver。
+        palette = json.loads((repo / "agents/dsh/templates/theme-catppuccin.json").read_bytes())["colors"]
+        def ansi_color(value):
+          return ("\x1b[38;2;" + ";".join(str(int(value[index:index + 2], 16)) for index in (1, 3, 5)) + "m").encode()
+        if not all(ansi_color(palette[key]) in transcript for key in ("text", "promptBorder", "success")):
+          raise RuntimeError("THEME_RENDER_MISMATCH")
+        result["checks"]["native_catppuccin_truecolor"] = "PASS"
+        result["checks"].update(chinese_multiline_paste="PASS", narrow_resize="PASS", native_write_tool_roundtrip="PASS")
+        result["stage"] = "ui.cancel-stream"
+        os.write(master, b"CANCEL_TASK_MARKER\r")
+        wait(lambda: state.get("cancel_started") is True)
+        wait(lambda: state.get("cancel_chunk_sent") is True, 5)
         os.write(master, b"\x03")
-      wait(lambda: child.poll() is not None, 10)
-      after = termios.tcgetattr(slave)
-      result.update(exit=child.returncode, termios_before=before[:4], termios_after=after[:4],
-        complete_termios_match=before == after, geometry=[[initial_columns, initial_rows], [40, 18]],
-        file_content_sha256=hashlib.sha256(target.read_bytes()).hexdigest(), http=dict(state), candidate_digest=candidate.generation, node=node)
-      if before != after or child.returncode != 0 or state["write_calls"] != 1 or state["tool_results"] != 1:
-        raise RuntimeError("EXIT_OR_TTY_RESTORE")
-      result["checks"].update(ctrl_c_exit="PASS", termios_restored="PASS")
-      result["overall"], result["stage"] = "PASS", "complete"
+        wait(lambda: state.get("cancel_disconnected") is True, 10)
+        assert child.poll() is None and state["write_calls"] == 1 and state["tool_results"] == 1
+        result["checks"]["ctrl_c_active_request_cancel"] = "PASS"
+        idle_deadline = time.monotonic() + 1
+        while time.monotonic() < idle_deadline:
+          pump()
+        result["stage"] = "ui.ctrl-c"
+        os.write(master, b"\x03")
+        time.sleep(0.3)
+        if child.poll() is None:
+          os.write(master, b"\x03")
+        wait(lambda: child.poll() is not None, 10)
+        after = termios.tcgetattr(slave)
+        result.update(exit=child.returncode, termios_before=before[:4], termios_after=after[:4],
+          complete_termios_match=before == after, geometry=[[initial_columns, initial_rows], [40, 18]],
+          file_content_sha256=hashlib.sha256(target.read_bytes()).hexdigest(), http=dict(state), candidate_digest=candidate.generation, node=node)
+        if before != after or child.returncode != 0 or state["write_calls"] != 1 or state["tool_results"] != 1:
+          raise RuntimeError("EXIT_OR_TTY_RESTORE")
+        result["checks"].update(ctrl_c_exit="PASS", termios_restored="PASS")
+        result["overall"], result["stage"] = "PASS", "complete"
     except Exception as error:
       result.update(overall="FAIL", error="FIXTURE_REJECTED" if state.get("error") else str(error) if isinstance(error, RuntimeError)
-        and str(error) in {"NODE_VERSION", "STAGE_TIMEOUT", "EXIT_OR_TTY_RESTORE", "FIXTURE_REJECTED", "WELCOME_EMPTY_SUBMIT", "THEME_RENDER_MISMATCH"} else "UI_SMOKE_FAILED", error_location=result["stage"], http=dict(state))
+        and str(error) in {"NODE_VERSION", "STAGE_TIMEOUT", "EXIT_OR_TTY_RESTORE", "FIXTURE_REJECTED", "WELCOME_EMPTY_SUBMIT", "THEME_RENDER_MISMATCH", "SESSION_MARKER_INVALID", "PROBE_FILE_MISMATCH"} else "UI_SMOKE_FAILED", error_location=result["stage"], http=dict(state))
     finally:
       if child is not None and child.poll() is None:
         child.terminate()

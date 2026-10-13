@@ -1,6 +1,6 @@
 # DSH 配方与升级候选
 
-本分支维护一套 `dsh-default`。2026-10-12 的候选升级尚未完成整套验收：核心/TUI、离线配置和原生人工审批在隔离实例验证；Cursor 已有用户手测文本及工作区文件工具成功反馈，实际 Provider 路由与恢复续接、Codex/国内 API 与 AI reviewer 仍未完整验收。账号测试由用户在独立候选中执行，代理没有调用真实账号。既有部署不切换，旧状态自动升级受阻止。完整结果见 [升级验收记录](acceptance/dsh-upgrade-20261012.md)。
+本分支维护一套 `dsh-default`。2026-10-12 的候选升级尚未完成整套验收：核心/TUI、离线配置和原生人工审批在隔离实例验证；Cursor 已有用户手测文本及工作区文件工具成功反馈，用户还发现恢复后模型回到默认。该配置问题已修复并通过真实宿主+假模型回归，真实 Cursor 修复后续接仍未重测。Codex/国内 API 真实账号测试按用户要求跳过，记为 NOT RUN；AI reviewer 仍未交付。代理没有调用真实账号。既有部署不切换，旧状态自动升级受阻止。完整结果见 [升级验收记录](acceptance/dsh-upgrade-20261012.md)。
 
 ## 版本、原包与锁
 
@@ -69,7 +69,7 @@ DSH 内核、standard preset、workspace-write + ask 为默认。默认显示原
 
 实际 RC2 `/settings` 写入 `dsh-home/profiles/agentcfg/cordis.patch.yml`。`~/.dsh-tui/settings.json` 不是该版本的活动设置文件；其 npm 包 `lib/settings.json` 是字段目录。本配方保留用户已有文件，不构造不存在的双向同步。
 
-- API providers 及 TUI 的模型/内核/preset/modes 等明确字段使用按行 id 的 `cordis-yaml` 三方比较。未知行、未知字段和未执行的标量 JS 保留；重复 id/重复键、非法结构和受管字段父节点被改成 JS 都失败。
+- API providers、Core `agent-default-model` 的默认路由及 TUI 的内核/preset/modes 等明确字段使用按行 id 的 `cordis-yaml` 三方比较。TUI 不再固定 provider/model，避免覆盖恢复会话的记录。未知行、未知字段和未执行的标量 JS 保留；重复 id/重复键、非法结构和受管字段父节点被改成 JS 都失败。
 - whale/idle/minimal、侧栏开关和面板列表只首次初始化。默认 whale=true、minimal=false 显示品牌横幅，whaleIdle=false 避免空闲动画；开发 preset 仍为 standard。收起侧栏，按需打开 todo/jobs/agents/trajectory/info。重复 apply 不恢复用户改变的这些偏好。
 - 主题偏好、home/onboarding 标记也只初始化，默认 `rotom-catppuccin`，同时保留可选择的 Poimandres 资产。主题 capture 是初始化默认提案，不保证双向同步。首次已有非空且未接管的偏好文件会报告冲突，不会覆盖未知字段。已初始化实例不会因 apply 自动改主题；本次手测候选的主题和横幅按用户明确要求，在活动锁释放后逐字段修改。
 - `.dsh-tui` 始终位于实例 `user-home`，HOME/DSH_HOME 身份固定。全局 AGENTS.md、完整两项框架技能、独占 overlay、主题资产和薄启动器按文件管理；账号、会话和日志由原生服务拥有。
@@ -109,7 +109,7 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 | 主要信息 | 模型/推理档位/目录/上下文/cache/tokens/tps，分支、标题、模式、费用及 goal 按数据出现 | 左 vim/model/context_pct/token_rate/time_spent；右 session_name/path/git/mode/token_total/cache_hit | 按宽度显示 provider/model、thinking、上下文、速度、分支、时长、费用、cache 等 |
 | 图标 | 普通 Unicode，未提供 Nerd 图标主题 | symbolPreset=nerd | footer 提供 Nerd glyph 检测/配置及普通 Unicode 回退 |
 | 辅助视图 | 侧栏收起，todo/jobs/agents/trajectory/info | 原生任务/Agent 能力，未使用 DSH 同一套侧栏 | pi-todo/subagents；不把其他 profile 的 Task Keeper 算进 default |
-| 偏好所有权 | UI 偏好/主题初始化，日后 apply 保留；后端/preset/主模型持续管理 | 状态栏等字段三方合并，漂移保留或冲突 | 原生 settings 字段三方合并，footer 读取受管 manifest 的 ui.footer |
+| 偏好所有权 | UI 偏好/主题初始化，日后 apply 保留；后端/preset/Core 默认路由持续管理，原生模型偏好和会话路由保留 | 状态栏等字段三方合并，漂移保留或冲突 | 原生 settings 字段三方合并，footer 读取受管 manifest 的 ui.footer |
 
 ### 推荐状态栏（已应用）与按需审批设计（未启用）
 
@@ -175,7 +175,9 @@ allowUnmarkedAudit: false
 
 当前不能安全启用的门槛依次为：完整 peer/runtime 兼容；上述独立 reviewer 的上下文/工具边界与身份绑定；真实 approval 链在人工处理器之前接管且 never/硬 deny 不被覆盖；取消/关闭后的迟到 allow 无效；失败预算和无人工通道不放行；持久审计能关联动作、session/request/call、判决理由、模式和失败。现 RC 下 Perry 默认审计是内存，allowUnmarkedAudit 强行写入不是恢复方案，不能以配置掩盖持久审计缺口。只有这些验收通过，才为已验证低风险工具增加明确 AI overrides，并讨论默认启用或会话 `/auto-review on`；当前只有人工入口可用。不能可靠进入审批链的 MCP/PTC/直接Node等通道，不宣称已审查。
 
-`/model` 切换当前会话的模型，不改 Rotom 的全局 main 角色。新会话沿用配方明确指定的 provider/model；恢复已有会话用 `/resume` 打开原生列表并按 Enter，路由从该会话记录恢复。主题、欢迎页和认证面板均使用上游公开入口，Rotom 不维护另一套菜单或会话管理界面。
+`/model` 切换当前会话的模型，并由上游保存实例 HOME 内 `.dsh-tui/model.json` 的新会话偏好，不改 Rotom 的全局 main 角色。新会话先用该原生偏好，没有完整偏好时使用 Core `agent-default-model` 的受管 main 默认路由；这是用户选择的持久化，不自动切换其他付费来源。恢复已有会话用 `/resume` 打开原生列表并按 Enter，恢复目标最后一次请求记录的路由。旧配方同时固定 TUI provider/model 会优先覆盖恢复路由，现已改为 Core fallback；apply 只删除所有权记录完整且未漂移的旧字段，有漂移则冲突，原生偏好/账号/会话不迁移或重写。配置 rollback 可恢复旧 pin，也会恢复其覆盖行为，不是软件或会话降级。真实宿主回归覆盖公开启动 `--resume`，实际 `/resume` 选择器及修复后的 Cursor 账号续接仍未重测。主题、欢迎页和认证面板均使用上游公开入口，Rotom 不维护另一套菜单或会话管理界面。
+
+修复不改写历史请求路由：如果此前恢复后已经用默认模型继续发过消息，目标会话最后记录的模型可能就是该默认模型，需要通过 `/model` 重新选择 Cursor 再继续正常任务。仅切换模型但尚未发出请求的选择没有新的 request/header，恢复不能保证保留这次未使用的选择；原生新会话偏好仍保留。无请求记录的空会话同样没有可恢复的请求路由。
 
 ## 重试与权限
 

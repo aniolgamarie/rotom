@@ -26,6 +26,69 @@ def candidate(value="A", *, with_ui=True):
   return RenderCandidate(str((value, with_ui)), tuple(artifacts))
 
 
+def route_candidates():
+  data = {"providers": {"fixture": {"auth_kind": "api-key", "base_url": "https://fixture.invalid/v1", "protocol": "openai-compatible"}},
+    "models": {"stable-model": {"provider": "fixture", "remote_id": "fixture-remote", "input": ["text"]}},
+    "profile": {"roles": {"main": "stable-model"}, "agent_options": {"theme": "rotom-catppuccin", "terminal_images": False}},
+    "adapter_documents": {"bindings": {"protocols": {"openai-compatible": "openai-completions"}}}}
+  artifacts = tuple(DshAdapter(ROOT)._field_artifacts(data))
+  old = tuple(Artifact(ManagedTarget(PATCH, Ownership.FIELDS, "cordis-yaml",
+    artifact.target.selector.replace("/agent-default-model/", "/dsh-tui/")), artifact.content)
+    if artifact.target.selector.startswith("/agent-default-model/") else artifact for artifact in artifacts)
+  return RenderCandidate("old-tui-pin", old), RenderCandidate("core-fallback", artifacts)
+
+
+def test_default_route_migration_preserves_native_data_and_rolls_back(tmp_path):
+  root, state = tmp_path / "instance", tmp_path / "state"
+  old, new = route_candidates()
+  dep.apply(root, state, old, BINDING, LAUNCH)
+  preserved = {"dsh-home/settings.yaml": b"unknown-native-setting: keep\n",
+    "dsh-home/accounts.json": b"synthetic account retained\n",
+    "dsh-home/sessions/session.json": b"synthetic session retained\n",
+    "user-home/.dsh-tui/model.json": b'{"provider":"fixture-native","model":"native-choice","unknown":true}'}
+  with Tree(root) as tree:
+    document = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")
+    document["dsh-tui"]["config"].update(whale=False, unknown={"keep": True})
+    tree.write_state(PATCH, dep.encode_native(document, "cordis-yaml"))
+    for path, content in preserved.items():
+      tree.write_state(path, content)
+  dep.apply(root, state, new, BINDING, LAUNCH)
+  with Tree(root) as tree:
+    document = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")
+    assert document["agent-default-model"]["config"] == {"provider": "agentcfg-fixture", "model": "fixture-remote"}
+    assert "provider" not in document["dsh-tui"]["config"] and "model" not in document["dsh-tui"]["config"]
+    assert document["dsh-tui"]["config"]["unknown"] == {"keep": True}
+    assert document["dsh-tui"]["config"]["whale"] is False
+    assert document["llm-pi-ai"]["config"]["providers"]["agentcfg-fixture"]["baseURL"] == "https://fixture.invalid/v1"
+  assert dep.apply(root, state, new, BINDING, LAUNCH)["changes"] == 0
+  dep.rollback(root, state, BINDING)
+  with Tree(root) as tree:
+    document = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")
+    assert "agent-default-model" not in document
+    assert document["dsh-tui"]["config"]["provider"] == "agentcfg-fixture"
+    assert document["dsh-tui"]["config"]["model"] == "fixture-remote"
+    assert document["dsh-tui"]["config"]["unknown"] == {"keep": True}
+    assert document["dsh-tui"]["config"]["whale"] is False
+    for path, content in preserved.items():
+      assert tree.read(path)[0] == content
+
+
+@pytest.mark.parametrize("field", ["provider", "model"])
+def test_default_route_migration_conflicts_with_native_pin_drift(tmp_path, field):
+  root, state = tmp_path / "instance", tmp_path / "state"
+  old, new = route_candidates()
+  dep.apply(root, state, old, BINDING, LAUNCH)
+  with Tree(root) as tree:
+    document = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")
+    document["dsh-tui"]["config"][field] = "native-choice"
+    raw = dep.encode_native(document, "cordis-yaml")
+    tree.write_state(PATCH, raw)
+  with pytest.raises(Conflict):
+    dep.apply(root, state, new, BINDING, LAUNCH)
+  with Tree(root) as tree:
+    assert tree.read(PATCH)[0] == raw
+
+
 def test_cordis_roundtrip_preserves_unknown_rows_fields_and_inert_js(tmp_path, sentinel_factory):
   sentinel = sentinel_factory(tmp_path)
   raw = b"""- id: custom

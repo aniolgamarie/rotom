@@ -36,8 +36,11 @@ def test_real_recipe_preserves_full_tui_config_and_has_no_static_oauth_catalog(t
   patch = native.load(next(a.content for a in candidate.artifacts if a.target.path.endswith("patch.yml")))
   assert all(row.get("id") != "dsh-tui" for row in patch)
   fields = {a.target.selector: json.loads(a.content) for a in candidate.artifacts if a.target.serialization == "cordis-yaml"}
-  assert fields["/dsh-tui/config/provider"] == "agentcfg-kimi_code_openai"
-  assert fields["/dsh-tui/config/model"] == "kimi-for-coding"
+  assert fields["/agent-default-model/config/provider"] == "agentcfg-kimi_code_openai"
+  assert fields["/agent-default-model/config/model"] == "kimi-for-coding"
+  assert "/dsh-tui/config/provider" not in fields and "/dsh-tui/config/model" not in fields
+  assert w.resolved.data["profile"]["roles"]["main"] == "kimi_code_openai"
+  assert fields["/llm-pi-ai/config/providers/agentcfg-kimi_code_openai/baseURL"] == w.resolved.data["providers"]["kimi_code_openai"]["base_url"]
   assert fields["/dsh-tui/config/terminalImages"] is False
   assert fields["/dsh-tui/config/backend"] == "dsh"
   assert [mode["id"] for mode in fields["/dsh-tui/config/modes"]] == ["default", "plan"]

@@ -130,13 +130,7 @@ class DshAdapter(Adapter):
   def _tui_fields(self, data):
     base = native.load((self.repository / "agents/dsh/templates/tui.yaml").read_bytes())
     config = base[0]["config"]
-    main = data["profile"]["roles"].get("main")
-    provider = data["models"][main]["provider"] if main else next(iter(data["providers"]), None)
     config["terminalImages"] = data["profile"]["agent_options"]["terminal_images"]
-    if provider:
-      config["provider"] = self.route(data, provider)
-    if main:
-      config["model"] = data["models"][main]["remote_id"]
     for field, value in config.items():
       yield "/dsh-tui/config/" + field, value, Ownership.FIELDS
     for field, value in {"whale": True, "whaleIdle": False, "minimal": False,
@@ -145,6 +139,13 @@ class DshAdapter(Adapter):
 
   def _field_artifacts(self, data):
     path = self.shared_files[0]
+    # 默认路由交由 Core fallback；TUI 原生偏好和会话恢复可选择自己的模型。
+    main = data["profile"]["roles"].get("main")
+    if main:
+      model = data["models"][main]
+      for field, value in (("provider", self.route(data, model["provider"])), ("model", model["remote_id"])):
+        yield Artifact(ManagedTarget(path, Ownership.FIELDS, "cordis-yaml", "/agent-default-model/config/" + field),
+          json.dumps(value, ensure_ascii=False).encode())
     for selector, value in self._api_fields(data):
       yield Artifact(ManagedTarget(path, Ownership.FIELDS, "cordis-yaml", selector),
         json.dumps(value, ensure_ascii=False).encode())
