@@ -1,0 +1,43 @@
+{
+  "kind": "redacted-native-experiment-evidence",
+  "platform": {
+    "system": "Linux",
+    "release": "5.10.134-17.2.al8.x86_64",
+    "machine": "x86_64"
+  },
+  "versions": {
+    "core": "0.2.0-rc.2",
+    "tui": "0.14.0",
+    "perry": "0.12.17"
+  },
+  "pnpm_lock_sha256": "fbdec0f3e116e0ba9e709e06cae4c53b3ec1bbc5ba6f442a475b63c244479418",
+  "c_source_hash": "1c808f9ea1684ef860d2f5f6f38e97cfab4ac4d3f2476dafc22091f5bddac696",
+  "c_driver_exit": 0,
+  "c_overall": "FAIL",
+  "c_failures": {
+    "off-late": 1,
+    "unload-late": 1
+  },
+  "off_new_turn": {
+    "before": "Auto-review is OFF for this session.",
+    "after": "Auto-review is ON for this session."
+  },
+  "native_audit_pairs_after_restart": 20,
+  "perry_verdicts_after_restart": 0,
+  "b_status": "PASS",
+  "b_driver_sha256": "977af6cda1c79ffdaa08205a24964dbddcecb09ee7020e3c22cf19a796c79496",
+  "b_source_files": {
+    "scripts/experience-dsh-auto-review.py": "3e7515019b60c4637d7277cc16d47fd4c4dc2ef7d60d652f4848ad2e2e0fab67",
+    "scripts/experience-dsh-auto-review.mjs": "31e53879d1eda3b52c98ea5c28bc607c30db7071c2944563c13adf5c9bbeeb94",
+    "tests/fixtures/dsh-auto-review-probe/package.json": "8d38de96cf4533c6df2b07d312cabf46e274c5914f58171c1dbd341f15f437e3",
+    "tests/fixtures/dsh-auto-review-probe/index.mjs": "2f5ed64ac2041c613cfa5bae40aa0260016610d5b491ed9ba1ab175353d4a790",
+    "tests/fixtures/dsh-auto-review-probe/cordis.patch.yml": "d22c4bda99fd04c45fd896c4dc3032df0d86cba9573c336cf5736d5664f2e39c"
+  },
+  "b_candidate_digest": "80e7eb0a63fa9d80d03d6ee5bb37896bbcceab47e77b563bc82e03a42eb5e613",
+  "b_http_calls": 4,
+  "b_probe_count": 1,
+  "b_delegation_denied": true,
+  "real_model_calls": 0,
+  "release_gate": "FAIL",
+  "main_lock_changed": false
+}

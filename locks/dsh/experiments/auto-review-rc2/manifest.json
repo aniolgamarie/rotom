@@ -1,0 +1,18 @@
+{
+  "kind": "diagnostic-only-not-a-user-profile",
+  "status": "NOT RELEASED",
+  "core": "0.2.0-rc.2",
+  "tui": "0.14.0",
+  "perry": "0.12.17",
+  "cordis": "4.0.5-alpha.1",
+  "schemastery": "3.18.5-alpha.1",
+  "node": "v24.14.0",
+  "pnpm": "11.19.0",
+  "pnpm_integrity": "sha512-eIHz7VkNRyxKlV4riLISF5ERYGbcyIy8o4SeybYPG7qm0syyIfqR2k4cZb7yvL43k2Wup6xTnHv4be3DobItzg==",
+  "strict_peer_gate": "FAIL retained, default pnpm diagnostic install only",
+  "snapshot": {
+    "package.json": "1465713f973d06351c7c32eba57b921f4d0190a2ef319c2a2576ce6152111a20",
+    "pnpm-lock.yaml": "fbdec0f3e116e0ba9e709e06cae4c53b3ec1bbc5ba6f442a475b63c244479418"
+  },
+  "primary_lock_unchanged": true
+}

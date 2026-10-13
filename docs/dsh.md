@@ -1,6 +1,6 @@
 # DSH 配方与升级候选
 
-本分支维护一套 `dsh-default`。2026-10-12 的候选升级尚未完成整套验收：核心/TUI、离线配置和原生人工审批在隔离实例验证；Cursor 已有用户手测文本及工作区文件工具成功反馈，用户还发现恢复后模型回到默认。该配置问题已修复并通过真实宿主+假模型回归，真实 Cursor 修复后续接仍未重测。Codex/国内 API 真实账号测试按用户要求跳过，记为 NOT RUN；AI reviewer 仍未交付。代理没有调用真实账号。既有部署不切换，旧状态自动升级受阻止。完整结果见 [升级验收记录](acceptance/dsh-upgrade-20261012.md)。
+本分支维护一套 `dsh-default`。2026-10-12 的候选升级尚未完成整套验收：核心/TUI、离线配置和原生人工审批在隔离实例验证；Cursor 已有用户手测文本及工作区文件工具成功反馈，用户还发现恢复后模型回到默认。该配置问题已修复并通过真实宿主+假模型回归，真实 Cursor 修复后续接仍未重测。Codex/国内 API 真实账号测试按用户要求跳过，记为 NOT RUN；通用 AI reviewer 仍未交付；现在有只审批纯内存 probe 的独立实验入口。代理没有调用真实账号。既有部署不切换，旧状态自动升级受阻止。完整结果见 [升级验收记录](acceptance/dsh-upgrade-20261012.md)。
 
 ## 版本、原包与锁
 
@@ -175,7 +175,7 @@ allowUnmarkedAudit: false
 
 当前不能安全启用的门槛依次为：完整 peer/runtime 兼容；上述独立 reviewer 的上下文/工具边界与身份绑定；真实 approval 链在人工处理器之前接管且 never/硬 deny 不被覆盖；取消/关闭后的迟到 allow 无效；失败预算和无人工通道不放行；持久审计能关联动作、session/request/call、判决理由、模式和失败。现 RC 下 Perry 默认审计是内存，allowUnmarkedAudit 强行写入不是恢复方案，不能以配置掩盖持久审计缺口。只有这些验收通过，才为已验证低风险工具增加明确 AI overrides，并讨论默认启用或会话 `/auto-review on`；当前只有人工入口可用。不能可靠进入审批链的 MCP/PTC/直接Node等通道，不宣称已审查。
 
-2026-10-13 再核对官方发布与 npm：Perry 最新仍为0.12.17。DSH0.2.1-alpha.2 的原始 Session 包已提供实验性公开 appendPluginRecord（顶层ignorable、plugin命名空间），这与旧append第三参数不同；不能笼统说所有Core都没有安全记录原语。但Perry0.12.17尚未采用它，其版本守卫在所有0.2预发布线仍停用完整裁决写入，公开answer返回审批结果而非完整verdict，未提供决策前的verdict审计writer/hook。单纯换新Core或补装包不等于交付持久审计。原生read-only也不隔离可读HOME，子代理启动配置没有独立readable-roots。新组合仅重新核验了元数据/源码，未安装或运行完整组合；现有候选继续人工模式，不要求用户补账号回合解决这些门槛。
+2026-10-13 初次只读核验（历史状态，后续 RC2 实验见下）：Perry 最新仍为0.12.17。DSH0.2.1-alpha.2 的原始 Session 包已提供实验性公开 appendPluginRecord（顶层ignorable、plugin命名空间），这与旧append第三参数不同；不能笼统说所有Core都没有安全记录原语。但Perry0.12.17尚未采用它，其版本守卫在所有0.2预发布线仍停用完整裁决写入，公开answer返回审批结果而非完整verdict，未提供决策前的verdict审计writer/hook。单纯换新Core或补装包不等于交付持久审计。原生read-only也不隔离可读HOME，子代理启动配置没有独立readable-roots。该阶段只核验元数据/源码。后续 RC2/Perry 已安装并运行限定实验；日常候选继续人工模式，真实生命周期和审计失败不能靠账号授权解决。
 
 `/model` 切换当前会话的模型，并由上游保存实例 HOME 内 `.dsh-tui/model.json` 的新会话偏好，不改 Rotom 的全局 main 角色。新会话先用该原生偏好，没有完整偏好时使用 Core `agent-default-model` 的受管 main 默认路由；这是用户选择的持久化，不自动切换其他付费来源。恢复已有会话用 `/resume` 打开原生列表并按 Enter，恢复目标最后一次请求记录的路由。旧配方同时固定 TUI provider/model 会优先覆盖恢复路由，现已改为 Core fallback；apply 只删除所有权记录完整且未漂移的旧字段，有漂移则冲突，原生偏好/账号/会话不迁移或重写。配置 rollback 可恢复旧 pin，也会恢复其覆盖行为，不是软件或会话降级。真实宿主回归覆盖公开启动 `--resume`，实际 `/resume` 选择器及修复后的 Cursor 账号续接仍未重测。主题、欢迎页和认证面板均使用上游公开入口，Rotom 不维护另一套菜单或会话管理界面。
 
@@ -185,9 +185,9 @@ allowUnmarkedAudit: false
 
 Cursor 的内部 POST retry 为 0，Provider-owned recovery 也为 0，总尝试一次；不重发无法确认服务端是否已处理的请求。静态 API 默认 normal/0，显式上限为 2；拒绝 always。Codex OAuth 使用上游唯一 `dsh-llm-retry` 的有限默认 5 次重试，最多 6 次尝试，取消和 backoff 由原生实现处理；TUI 没有公开 OAuth retry 字段，不伪造覆盖。真实请求故障/Retry-After 的账号侧证据未完成；不靠重做已成功工具恢复模型流。
 
-目前 AI 审批未交付，没有可用的自动模式开关。使用 `/permission` 查看本会话有效模式，`/permission workspace-write` 回到原生 workspace-write + ask。`never` 会拒绝需要审批的请求，并非总是允许；批准只针对当前请求，不形成 bash/python/make 等通用白名单。
+目前日常候选的通用 AI 审批未交付；限定实验有独立入口，见下。使用 `/permission` 查看本会话有效模式，`/permission workspace-write` 回到原生 workspace-write + ask。`never` 会拒绝需要审批的请求，并非总是允许；批准只针对当前请求，不形成 bash/python/make 等通用白名单。
 
-有限版本核验未找到满足 RC2/Cordis 4.0.4/Schemastery 3.18.4 全部 peer 的 auto-review：0.12.10 的 DSH peer 排除 RC2，0.12.11 起要求 alpha Cordis/Schemastery。PerryLink auto-review `0.12.17` 的候选源码依赖 alpha Cordis/Schemastery；reviewer start 没有独立 cwd/read-roots 设置，只读工具名单不限制读取目录，默认审计在预发布宿主降级内存。没有组合、真实 reviewer、目录边界与持久审计证据，不能启用或称“自动审批安全可用”。没有启用官方实验性 Full-access Auto review、YOLO 或新的审批框架，也没有加入第二个规则层。
+有限版本核验未找到满足 RC2/Cordis 4.0.4/Schemastery 3.18.4 全部 peer 的 auto-review：0.12.10 的 DSH peer 排除 RC2，0.12.11 起要求 alpha Cordis/Schemastery。PerryLink auto-review `0.12.17` 的候选源码依赖 alpha Cordis/Schemastery；reviewer start 没有独立 cwd/read-roots 设置，只读工具名单不限制读取目录，默认审计在预发布宿主降级内存。该阶段尚无组合和真实 reviewer 证据；后续 RC2 原生实验已补充基本运行证据，但生命周期、完整目录边界与持久审计门槛仍未通过，不能称通用自动审批安全可用。没有启用官方实验性 Full-access Auto review、YOLO 或新的审批框架，也没有加入第二个规则层。
 
 | 通道 | 实际边界 |
 | --- | --- |
@@ -220,3 +220,20 @@ DSH 不安装 OpenSpec，不自动部署 Spec 工作流/技能，也不使用 Sp
 Cursor 原生认证面板的独立入口为 `scripts/smoke-dsh-auth-panel.py --allow-host --runtime ... --evidence ...`，使用真实 TUI/QuestionBridge、假 Coordinator 和明确标记的假长链接，验证面板交互，不访问真实认证。`scripts/check-dsh-cursor-panel.mjs /absolute/runtime` 另测并发、重新显示、错误隔离、注销失败和文件漂移。复制动作的完整参数可验证，真实 SSH 剪贴板和浏览器仍需客户端手测。
 
 默认 pytest 仍隔离 HOME/DSH/XDG、阻断网络和真实子进程。native 脚本使用虚构状态、真实原包和任务临时哨兵，不是账号模型验收；其确定性答复者也不冒称 Perry reviewer 或真人点击。凭据授权、真实账号、完整 AI 审批与会话降级仍是单独阻塞项。
+
+
+### RC2 + Perry 的限定实验入口（已部署，未正式发布）
+
+PerryLink/dsh-auto-review 0.12.17 已在Core0.2.0-rc.2上真实运行。新版公共Cordis/Schemastery为预发布，正常pnpm安装成功但完整peer声明检查仍FAIL；关闭/卸载的迟到allow、开关跨turn恢复默认和持久审计均有实际失败，不能启用通用文件/Shell自动审批。详见[验收记录](acceptance/dsh-upgrade-20261012.md#2026-10-13-rc2perry-实际运行与限定体验部署)。
+
+```bash
+/home/private-user/rotom-dsh-candidate-20261012/dsh-auto-review
+```
+
+在TUI中用 `/model` 选择已授权模型，然后发送一次：“请只调用一次 rotom_review_probe，不调用文件或 Shell 工具。”这是进程内计数器，不写文件、执行Shell、访问网络或读取环境。成功工具结果应有count=1，以及原生当轮AI计数1/1。Reviewer继承主会话路由；返回的parentProvider/parentModel只说明父路由，不能单独证明真实reviewer模型来源。Root仅用假模型验收，真实模型由用户本人少量测试。
+
+AI策略只覆盖这个probe；其他进入approval/request的请求走人工，原生workspace内允许操作仍按原权限执行。实验禁止模型的subagent/subagent_fork委派，Perry内部独立reviewer仍保留；当前普通DSH入口的子代理配置不受影响。状态可用Perry原生 `/auto-review status`，其内存统计可能在turn结束时清零。`/auto-review off`只影响后续请求且不可靠跨turn保留，完整关闭实验请Ctrl+C退出TUI。
+
+实验目录为候选目录下auto-review-experience，默认工作区固定其中workspace；HOME/DSH/XDG与旧实例分开，保留Catppuccin和原生欢迎页，重复prepare不恢复用户UI偏好。共享API key引用原candidate machine配置来源；填写仍用原agentcfg model key kimi-code/glm-code入口并隐藏输入。Cursor/Codex原生登录状态不复制，新HOME若要使用Cursor需 `/cursor-login`，完整链接由实验目录的cursor-login-url在本人终端查看。
+
+回到原人工候选运行 `/home/private-user/rotom-dsh-candidate-20261012/dsh`。实验不切换正式配方/主锁、不迁移旧会话，不宣称可以软件或会话降级。
