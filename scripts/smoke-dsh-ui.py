@@ -125,6 +125,7 @@ def main():
   parser.add_argument("--allow-host", action="store_true")
   parser.add_argument("--runtime", required=True, type=Path)
   parser.add_argument("--evidence", required=True, type=Path)
+  parser.add_argument("--maid-portrait", action="store_true", help="验证原生女仆立绘及伙伴皮肤优先级，仍使用假模型")
   args = parser.parse_args()
   if not args.allow_host:
     parser.error("需要 --allow-host；默认测试不启动第三方宿主")
@@ -132,6 +133,7 @@ def main():
   sys.path.insert(0, str(repo / "src"))
   from agentcfg import commands, dependencies, runtime_packages
   from agentcfg.process import launch_environment
+  from agentcfg.deployment import parse_native, encode_native
   from agentcfg.storage import Tree, ensure_private, instance_lock
   from agentcfg.workspace import load_workspace
   lock, runtime = dependencies.read_lock(repo), args.runtime.absolute()
@@ -178,12 +180,22 @@ def main():
       candidate = workspace.candidate(lock.identity)
       commands.apply_candidate(workspace, lock, candidate)
       with Tree(workspace.state_root) as tree, instance_lock(tree):
+        if args.maid_portrait:
+          with Tree(workspace.instance) as instance_tree:
+            name = "dsh-home/profiles/agentcfg/cordis.patch.yml"
+            previous = instance_tree.read(name)
+            document = parse_native(previous[0], "cordis-yaml")
+            config = document["dsh-tui"]["config"]
+            config["whaleGirl"] = True
+            config.setdefault("companion", {})["skin"] = "whale"
+            instance_tree.replace(name, encode_native(document, "cordis-yaml"), mode=previous[1], expected=previous[2])
         workspace.adapter.prepare_runtime(workspace, runtime)
       spec = workspace.adapter.launch_spec(workspace.resolved.data, cwd=project, runtime_root=runtime, instance_root=workspace.instance, lock_identity=lock.identity)
       child_env = launch_environment(spec, workspace.resolved.data["machine"], workspace.secret_store)
       master, slave = pty.openpty()
       before = termios.tcgetattr(slave)
-      fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 100, 0, 0))
+      initial_columns, initial_rows = (160, 50) if args.maid_portrait else (100, 24)
+      fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", initial_rows, initial_columns, 0, 0))
       child = subprocess.Popen(spec.argv, cwd=project, env=child_env, stdin=slave, stdout=slave, stderr=slave)
       def pump():
         if select.select([master], [], [], 0.1)[0]:
@@ -209,6 +221,15 @@ def main():
       while time.monotonic() < ready_deadline:
         pump()
       result["checks"]["native_welcome_rendered"] = "PASS"
+      if args.maid_portrait:
+        # 上游女仆字符画静态精灵的两种独有 RGB；鲸鱼及当前主题没有这些像素色。
+        def maid_pixels_present(output):
+          return all(any((f"\x1b[{prefix};2;{color}m").encode() in output for prefix in (38, 48))
+            for color in ("247;192;126", "248;181;153"))
+        wait(lambda: maid_pixels_present(transcript), 5)
+        result["checks"]["native_maid_character_art"] = "PASS"
+        result["native_ui_preferences"] = {"whaleGirl": True, "companion.skin": "whale"}
+      chat_frame_start = len(transcript)
       os.write(master, b"\r")
       result["stage"] = "ui.ready"
       ready_deadline = time.monotonic() + 1
@@ -216,6 +237,9 @@ def main():
         pump()
       if child.poll() is not None or state["requests"]:
         raise RuntimeError("WELCOME_EMPTY_SUBMIT")
+      if args.maid_portrait:
+        wait(lambda: maid_pixels_present(transcript[chat_frame_start:]), 5)
+        result["checks"]["native_maid_chat_header"] = "PASS"
       result["checks"]["welcome_empty_enter_no_model_call"] = "PASS"
       result["checks"]["native_ui_ready"] = "PASS"
       result["stage"] = "ui.paste-tool"
@@ -259,7 +283,7 @@ def main():
       wait(lambda: child.poll() is not None, 10)
       after = termios.tcgetattr(slave)
       result.update(exit=child.returncode, termios_before=before[:4], termios_after=after[:4],
-        complete_termios_match=before == after, geometry=[[100, 24], [40, 18]],
+        complete_termios_match=before == after, geometry=[[initial_columns, initial_rows], [40, 18]],
         file_content_sha256=hashlib.sha256(target.read_bytes()).hexdigest(), http=dict(state), candidate_digest=candidate.generation, node=node)
       if before != after or child.returncode != 0 or state["write_calls"] != 1 or state["tool_results"] != 1:
         raise RuntimeError("EXIT_OR_TTY_RESTORE")

@@ -78,7 +78,7 @@ DSH 内核、standard preset、workspace-write + ask 为默认。默认显示原
 
 常用状态入口是 `/status`、`/tokens`、`/settings`、`/panel`、`/preset` 与 `/permission`。实际快捷键以该版本 `/help` 为准；tmux 的 Ctrl+B 会吃掉默认侧栏键，可在原生设置中重绑。终端图片预览默认关闭，模型自身图片输入能力保留。中文/多行粘贴、窄窗和退出的实际验收范围以记录为准；未运行 SSH/tmux 客户端交互不能据 PTY 推断通过。
 
-原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及九款固定样式。立绘是原生用户偏好，不是 Rotom 强制默认，保存在同一用户 Cordis patch 中，apply 保留。终端支持 Kitty/Sixel 时可以显示原图，否则使用字符画回退；矮窗口会由原生布局收起立绘，扩大终端后再查看。当前手测实例已按用户要求开启女仆娘立绘，主题保持 Catppuccin。
+原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及内置固定字面，以实际选择器为准。立绘是原生用户偏好，不是 Rotom 强制默认，保存在同一用户 Cordis patch 中，apply 保留。0.14.0 的伙伴皮肤会优先接管头部：默认 `companion.skin=deepy` 会盖过立绘开关。显示作者的头部女仆立绘需 `whaleGirl=true` 配合 `companion.skin=whale`；选择 `companion.skin=whaleGirl` 则是另一套动态吉祥物素材。终端支持 Kitty/Sixel 时可以显示原图，否则使用女仆字符画回退；图像协议缺失本身不会回退成鲸鱼。矮窗口会由原生布局收起立绘，扩大终端后再查看。当前手测实例已完成此组合配置及真实欢迎页/会话头部字符画验证，主题保持 Catppuccin。
 
 原生主题切换使用 `/theme` 实时预览，或 `/theme dark`、`/theme rotom-catppuccin`。作者的主题文档介绍 Gentle Mist Blue 色系，深色终端对应 `dark`，没有明确指定“最好看”的主题；Catppuccin 是 Rotom 通过公开 JSON 主题格式配置的色板，不是 0.14.0 内置主题。
 
@@ -89,6 +89,25 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 公共默认模型来源与私人密钥文件是两层配置：DSH 继承 `shared/defaults/models.toml` 的模型入口及 main 角色；同一个 `secret:` 引用可供多个 Agent 共用，但它们必须引用同一私人 `secrets_file`。本次候选显式使用 `/home/private-user/rotom-dsh-candidate-20261012/secrets.toml`，没有自动连接原机器密钥文件。截至本次脱敏 `model status`，main 为 Kimi Code 的 `kimi-for-coding`，Kimi/GLM/DeepSeek key 均未填写。要复用现有共享密钥，应由用户指定该文件的绝对路径后连接引用，不能扫描真实 HOME 或自动复制凭据。
 
 正式普通部署省略 `secrets_file` 时沿用 `XDG_CONFIG_HOME/agentcfg/secrets.toml`，没有设置 XDG_CONFIG_HOME 时为 `~/.config/agentcfg/secrets.toml`；共享文件在管理器解析配置时读取，再通过已选引用注入实例环境，不因子进程 HOME 隔离而改变来源。DSH 和 OMP 标准 Kimi/GLM Provider 分别走 OpenAI/Anthropic 协议，但共用 `kimi_code_key` / `glm_coding_key`。OMP 的 TokensFlow `kimi_tf` 等扩展 Provider 使用独立引用，不能因为同叫 Kimi 就自动改用其 key。共享读取、跨 profile/协议、写入分组与不泄漏渲染的现有离线测试已复核通过。
+
+### 日常 UI、状态栏与图标
+
+当前候选没有单独覆写 statusBar，采用 0.14.0 的 compact 默认：开启 model、thinking、cwd、contextUsage、cache、cost、goal、contextBar；关闭 tokens、tps、gitBranch、sessionTitle、sessionId、mode、activity、trajectory、shortcutHint。开启代表允许展示，缺少数据仍会隐藏。`thinking` 字段用于推理档位；消息内的 Thinking 计时是另一个运行阶段显示。
+
+截图里的 `glm-5.2-high` 是当前模型标签；来源可在模型 hover 详情或 `/model` 查询。`6.0k/200k 3.0%` 是上下文占用/窗口，`cache 0.0%` 是最后一份 usage 的缓存读取占输入比例，不是 Cursor 余额。compact 栏里的 `workspace` 是当前目录 basename；它不证明 workspace-write 或 ask 已生效，实际模式用 `/permission` 查询。原生费用项仅在后端报告费用或支持官方 DeepSeek 估价时出现；当前 Cursor 不报告费用时不补一个 0。tokens 的详情可显示已完成轮次的重试数，但它默认关闭。
+
+可配置类别包括主题/极简界面、欢迎图形与大字、伙伴皮肤、侧栏及面板、状态栏字段与紧凑布局、工具卡/滚动展示、图片预览、按键等。通过 `/settings` 修改原生用户偏好，`/theme` 选主题，`/panel` 打开面板。TUI 的大字字体不是系统字体选择器。0.14.0 没有 Nerd Font 图标主题开关；可在客户端采用 Nerd Font 绘制普通 Unicode，但不会自动变成 OMP 的 Nerd 图标集。SSH 字体由本地终端决定。
+
+以下对照以候选 DSH 和仓库公共 OMP/Pi 配方为准，未检查 OMP/Pi 的用户运行态：
+
+| 项目 | DSH 候选 | OMP kernel 公共配方 | Pi default 公共配方 |
+| --- | --- | --- | --- |
+| 外观 | Catppuccin Mocha、原生欢迎页/女仆、idle 关闭 | 原工作树深浅 Catppuccin | Everforest Dark、quiet startup |
+| 状态栏配置 | 原生逐项开关、compact，布局由 TUI 决定 | custom 左右段及顺序、powerline-thin 分隔 | colorful-footer 的颜色/图标/分隔/最大行数及宽度分档 |
+| 主要信息 | 模型/推理档位/目录/上下文/cache，费用及 goal 按数据出现 | 左 vim/model/context_pct/token_rate/time_spent；右 session_name/path/git/mode/token_total/cache_hit | 按宽度显示 provider/model、thinking、上下文、速度、分支、时长、费用、cache 等 |
+| 图标 | 普通 Unicode，未提供 Nerd 图标主题 | symbolPreset=nerd | footer 提供 Nerd glyph 检测/配置及普通 Unicode 回退 |
+| 辅助视图 | 侧栏收起，todo/jobs/agents/trajectory/info | 原生任务/Agent 能力，未使用 DSH 同一套侧栏 | pi-todo/subagents；不把其他 profile 的 Task Keeper 算进 default |
+| 偏好所有权 | UI 偏好/主题初始化，日后 apply 保留；后端/preset/主模型持续管理 | 状态栏等字段三方合并，漂移保留或冲突 | 原生 settings 字段三方合并，footer 读取受管 manifest 的 ui.footer |
 
 `/model` 切换当前会话的模型，不改 Rotom 的全局 main 角色。新会话沿用配方明确指定的 provider/model；恢复已有会话用 `/resume` 打开原生列表并按 Enter，路由从该会话记录恢复。主题、欢迎页和认证面板均使用上游公开入口，Rotom 不维护另一套菜单或会话管理界面。
 
