@@ -211,3 +211,5 @@ AI策略只覆盖这个probe；其他进入approval/request的请求走人工，
 现有体验入口的管理器代码固定到本机固定提交 `f8d558e` 的 detached worktree，避免正式状态栏新增初始化字段令其严格候选摘要失配。启动前逐文件核对已投影 probe 的内容；漂移拒绝。原实例、账号、会话和实验锁保持原位置。该入口只运行原体验，不对旧实验执行新配方的 prepare；新验证目录使用当前源码。检查源码/所有权已通过，但固定入口没有由代理再调用真实模型。
 
 2026-10-13 最终复核 [Perry main 的 runtime](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/runtime.ts) 和 [audit](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/audit.ts)：RC2 的在途批准、跨轮次关闭和完整审计缺口仍在。公开 wrapper 可拒绝部分迟到结果，不能撤回已委派决定或中止私有 reviewer；回放公开开关命令会重复注入 notice，不能作为无竞态恢复契约。正式通用自动审批继续 BLOCKED，未合入 main 或正式发布。
+
+用户已同意将这些缺口转为后续上游升级事项，见 [DSH-F01 跟踪及复测门槛](acceptance/dsh-upgrade-20261012.md#dsh-f01-后续上游升级跟踪)。当前交付范围是普通候选的人工审批与独立 probe 限定体验；通用自动审批仍未交付，原 FAIL 证据保留。后续在维护窗口核验固定发布包及公开 API，再使用隔离目录复测；不自动追踪 latest、安装更新或调用账号。上游若补齐公开接口，可评估必要薄适配，不维护 fork 或第二套审批系统。
