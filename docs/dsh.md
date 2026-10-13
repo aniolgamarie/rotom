@@ -171,9 +171,11 @@ contextBudget:
 allowUnmarkedAudit: false
 ```
 
-`reviewerTools: []` 在现版本非法，默认 read/glob/grep 又不能限制读目录，因此候选设计只暴露一个非文件/非Shell的上下文工具：返回本次动作、必要且有来源标记的用户授权和项目快照，不接收模型提供的审批/会话查询 ID，不读取真实 HOME/凭据/任意代码目录。turns=0 关闭自动复制主会话 transcript；没有可靠上下文工具时上游会警告 blind review，必须继续人工，不能将该值单独当作可用 reviewer 配置。公开 ToolRunContext 提供可信 exec.agent/callId/signal，但现有 subagent/start 只有父子关联，Perry 没有直接公开 approval/request 到 reviewer child 的关联。实现薄适配前必须证明绑定、并发、取消和生命周期无歧义；不能按同父会话或模型自报 ID 猜测。spawn 避免 fork 的已完成历史继承，仍需验证并剔除不必要的新注入内容。
+`reviewerTools: []` 在现版本非法，默认 read/glob/grep 又不能限制读目录，因此候选设计只暴露一个非文件/非Shell的上下文工具：返回本次动作、必要且有来源标记的用户授权和项目快照，不接收模型提供的审批/会话查询 ID，不读取真实 HOME/凭据/任意代码目录。turns=0 关闭自动复制主会话 transcript；没有可靠上下文工具时上游会警告 blind review，必须继续人工，不能将该值单独当作可用 reviewer 配置。Perry 内部 runReview 已关联本次 request 的取消/超时/child，并在 agent/pre-step 过滤新注入上下文，不能称完全没有请求关联或上下文防火墙。公开 ToolRunContext 提供可信 exec.agent/callId/signal，但外部上下文工具仍缺直接公开的 approval/request 到 reviewer child 查询接缝；实现该条件设计前必须证明绑定、并发、取消和生命周期无歧义，不能按同父会话或模型自报 ID 猜测。spawn 避免 fork 的已完成历史继承，工具只读仍不提供独立可读目录范围。
 
 当前不能安全启用的门槛依次为：完整 peer/runtime 兼容；上述独立 reviewer 的上下文/工具边界与身份绑定；真实 approval 链在人工处理器之前接管且 never/硬 deny 不被覆盖；取消/关闭后的迟到 allow 无效；失败预算和无人工通道不放行；持久审计能关联动作、session/request/call、判决理由、模式和失败。现 RC 下 Perry 默认审计是内存，allowUnmarkedAudit 强行写入不是恢复方案，不能以配置掩盖持久审计缺口。只有这些验收通过，才为已验证低风险工具增加明确 AI overrides，并讨论默认启用或会话 `/auto-review on`；当前只有人工入口可用。不能可靠进入审批链的 MCP/PTC/直接Node等通道，不宣称已审查。
+
+2026-10-13 再核对官方发布与 npm：Perry 最新仍为0.12.17。DSH0.2.1-alpha.2 的原始 Session 包已提供实验性公开 appendPluginRecord（顶层ignorable、plugin命名空间），这与旧append第三参数不同；不能笼统说所有Core都没有安全记录原语。但Perry0.12.17尚未采用它，其版本守卫在所有0.2预发布线仍停用完整裁决写入，公开answer返回审批结果而非完整verdict，未提供决策前的verdict审计writer/hook。单纯换新Core或补装包不等于交付持久审计。原生read-only也不隔离可读HOME，子代理启动配置没有独立readable-roots。新组合仅重新核验了元数据/源码，未安装或运行完整组合；现有候选继续人工模式，不要求用户补账号回合解决这些门槛。
 
 `/model` 切换当前会话的模型，并由上游保存实例 HOME 内 `.dsh-tui/model.json` 的新会话偏好，不改 Rotom 的全局 main 角色。新会话先用该原生偏好，没有完整偏好时使用 Core `agent-default-model` 的受管 main 默认路由；这是用户选择的持久化，不自动切换其他付费来源。恢复已有会话用 `/resume` 打开原生列表并按 Enter，恢复目标最后一次请求记录的路由。旧配方同时固定 TUI provider/model 会优先覆盖恢复路由，现已改为 Core fallback；apply 只删除所有权记录完整且未漂移的旧字段，有漂移则冲突，原生偏好/账号/会话不迁移或重写。配置 rollback 可恢复旧 pin，也会恢复其覆盖行为，不是软件或会话降级。真实宿主回归覆盖公开启动 `--resume`，实际 `/resume` 选择器及修复后的 Cursor 账号续接仍未重测。主题、欢迎页和认证面板均使用上游公开入口，Rotom 不维护另一套菜单或会话管理界面。
 
