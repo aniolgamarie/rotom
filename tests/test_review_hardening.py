@@ -255,9 +255,11 @@ def installer(monkeypatch, lock):
       return lock.metadata["node"]
     if argv == ["npm", "--version"]:
       return lock.metadata["npm"]
-    if argv[:2] == ["npm", "ci"]:
+    if argv[-1] == "--version" and argv[0] == "node":
+      return lock.metadata["pnpm"]
+    if "--frozen-lockfile" in argv:
       for name in runtime_packages.REQUIRED_FILES:
-        if name in ("package.json", "package-lock.json"):
+        if name in ("package.json", "package-lock.json", "pnpm-lock.yaml"):
           continue
         path = cwd / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -354,7 +356,8 @@ def test_lock_rejects_consistent_but_incompatible_metadata(tmp_path, field):
   path = repository / "locks/dsh/manifest.json"
   metadata = json.loads(path.read_text())
   metadata[field] = {"unavailable": "not-smoked"} if field in ("platforms", "upstream") else "incompatible"
-  metadata["identity"] = dep.lock_identity((repository / "locks/dsh/package.json").read_bytes(), (repository / "locks/dsh/package-lock.json").read_bytes(), metadata)
+  metadata["identity"] = dep.lock_identity((repository / "locks/dsh/package.json").read_bytes(),
+    (repository / "locks/dsh/package-lock.json").read_bytes(), metadata, (repository / "locks/dsh/pnpm-lock.yaml").read_bytes())
   path.write_text(json.dumps(metadata))
   with pytest.raises(ConfigError):
     dep.read_lock(repository)

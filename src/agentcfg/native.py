@@ -92,3 +92,84 @@ def replace_config(rows, row_id, changes):
   row["config"].update(deepcopy(changes))
   _walk(row)
   return row
+
+
+class CordisLoader(yaml.SafeLoader):
+  """原生用户层只解析数据；未知标量 JS 原样保存，从不执行。"""
+
+
+def _cordis_mapping(loader, node):
+  result = {}
+  for key_node, value_node in node.value:
+    key = loader.construct_object(key_node, deep=True)
+    if not isinstance(key, str) or not key or key in result:
+      raise Conflict("Cordis 字段名无效或重复")
+    result[key] = loader.construct_object(value_node, deep=True)
+  return result
+
+
+def _cordis_js(loader, node):
+  if not isinstance(node, yaml.ScalarNode):
+    raise Conflict("Cordis JS 必须为未执行的标量")
+  return JS(loader.construct_scalar(node))
+
+
+CordisLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _cordis_mapping)
+CordisLoader.add_constructor("tag:yaml.org,2002:js", _cordis_js)
+
+
+class CordisDocument(dict):
+  """按 id 暴露字段，另外保留非字段行和原生顺序。"""
+
+  def __init__(self):
+    super().__init__()
+    self.rows = []
+
+
+def load_cordis(data):
+  rows = yaml.load(data, Loader=CordisLoader)
+  if rows is None:
+    rows = []
+  if not isinstance(rows, list):
+    raise Conflict("Cordis patch 必须为行列表")
+  document = CordisDocument()
+  for row in rows:
+    if not isinstance(row, dict):
+      raise Conflict("Cordis patch 行必须为对象")
+    if "id" in row:
+      identity = row["id"]
+      if not isinstance(identity, str) or not identity or identity in document or "insert" in row:
+        raise Conflict("Cordis patch id 无效或重复")
+      document[identity] = {key: value for key, value in row.items() if key != "id"}
+      document.rows.append(identity)
+    elif set(row) == {"insert"} and isinstance(row["insert"], list) and all(isinstance(item, dict) for item in row["insert"]):
+      document.rows.append(row)
+    else:
+      raise Conflict("Cordis patch 行没有合法 id 或 insert")
+  return document
+
+
+def dump_cordis(document):
+  rows = []
+  emitted = set()
+  for row in getattr(document, "rows", []):
+    if isinstance(row, str):
+      if row not in document:
+        continue
+      rows.append(_cordis_row(row, document[row]))
+      emitted.add(row)
+    else:
+      rows.append(row)
+  for identity, row in document.items():
+    if identity not in emitted:
+      rows.append(_cordis_row(identity, row))
+  content = yaml.dump(rows, Dumper=NativeDumper, allow_unicode=True, sort_keys=False).encode()
+  # 编码后的行也通过同一结构准入，拒绝伪造或损坏的映射。
+  load_cordis(content)
+  return content
+
+
+def _cordis_row(identity, row):
+  if not isinstance(identity, str) or not identity or not isinstance(row, dict) or row.get("id", identity) != identity:
+    raise Conflict("Cordis 字段映射 id 无效")
+  return {"id": identity, **row}

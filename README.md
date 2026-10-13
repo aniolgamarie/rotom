@@ -22,14 +22,14 @@ Use [`omp-kernel`](docs/omp-kernel.md) to reproduce the reviewed kernel configur
 
 **First-time users: start with the [Getting Started Guide](docs/getting-started.md).** It walks through environment setup, local file creation, installation, deployment, login, daily startup, and backup/restore in actual operation order, and explains command output. When using only Codex/Cursor subscriptions, you can leave `[secrets]` empty — no need to copy the private-gateway example below.
 
-Existing first-release users: see [Upgrade & Repair Notes](docs/operations.md#审查修复后的升级). Local files now enforce strict permission and link checks; old deployment packages without a file receipt can be rebuilt by running `sync` after exiting DSH — account home directories are preserved.
+DSH upgrade candidate: Core 0.2.0-rc.2 (prerelease), unmodified TUI 0.14.0 and Cursor subscription 0.6.12. Use a separate HOME/XDG instance; old deployments are blocked from automatic migration and remain available from their original checkout. Live accounts and AI approval are pending. See [DSH guide](docs/dsh.md) and [current acceptance](docs/acceptance/dsh-upgrade-20261012.md).
 
 Three commands cover the basics: `sync` installs software, `apply` deploys configuration, `run` starts DSH. Run them in order the first time; afterwards `run` is usually all you need. In the examples below, `workstation` is the local machine config name and `dsh-default` is the recipe name — both can be used as-is.
 
 ## Prerequisites
 
 - **Manager:** Python 3.11+, uv. Run `uv sync --locked` once; the entry point then uses the repo `.venv` directly — offline commands install nothing.
-- **DSH toolchain:** The lock was generated and smoke-tested with **Node 24.14.0, npm 11.19.1**. `sync` accepts Node **24.x from 24.2.0** and npm **11.x**; `run` checks the same Node requirement. Node 24.1 cannot execute the `import.meta.main` entry used here. Generating a lock still requires the exact locked versions. Prepare Node/npm with your own version manager; agentcfg does not install them. Other accepted versions have not been smoke-tested.
+- **DSH toolchain:** The lock was generated and smoke-tested with **Node 24.14.0, npm 11.19.1**. `sync` accepts Node **24.x from 24.2.0** and npm **11.x**; `run` checks the same Node requirement. Node 24.1 cannot execute the `import.meta.main` entry used here. Generating a lock still requires the exact locked versions. Prepare Node/npm with your own version manager; agentcfg does not install them. Other accepted versions have not been smoke-tested. Frozen installs use pinned pnpm **11.19.0**, provided as a verified local archive; no global install or vendor patch.
 - **First-release platforms:** Linux, macOS. Native Windows is not supported. Linux has been isolation-verified; macOS acceptance status is tracked in [Acceptance Records](docs/acceptance.md).
 
 ## From Clone to Running
@@ -111,7 +111,7 @@ Files are 0600, private directories 0700. Objects merge recursively; arrays are 
 | `doctor --input` | All agents: caller terminal and offline interaction readiness; OMP also reports structured event-loop stalls, without recording keystrokes |
 | `capture` | Captures previews, supported themes, and declared model selections; generates a legal local proposal; does not export auth data |
 | `rollback` | Restores the previous managed configuration; consumes that backup on success |
-| `project init openspec --path PATH` | Initializes a specific project with the locked CLI; pre-checks conflicts |
+| `project init openspec --path PATH` | Pi profiles with `openspec` selected: initializes a specific project with the locked CLI; pre-checks conflicts |
 
 Optional native parameters are passed via `run dsh --cwd PATH -- <native-args>` — `--` is the separator and is not forwarded to DSH. Exit codes: 0 success, 2 argument/config/lock error, 3 required MCP/service credential missing, 4 conflict/active lock/recovery pending, 5 dependency or native check failure, 6 IO/internal failure. Missing model API keys produce a warning; after a successful launch the native process exit code is preserved.
 
@@ -126,7 +126,7 @@ A running managed instance blocks apply/sync/rollback; the manager does not kill
 ## Authentication, Project Integration & Maintenance
 
 - [DSH Authentication, Parameters & Verified Limits](docs/dsh.md): Codex native companion `/auth login openai-codex`; Cursor community package adds `/cursor-login` — accounts are held by native plugins.
-- [OpenSpec Project Operations](docs/openspec.md): Uses the upstream `agents` integration as a custom DSH integration; initializes the Git worktree root, does not auto-modify all business repos.
+- [OpenSpec Project Operations](docs/openspec.md): Pi's optional `openspec` capability uses the upstream `agents` integration at an explicit Git worktree root. DSH does not provide OpenSpec; existing project files and skills are retained.
 - [Daily Maintenance & Adding Shared Content](docs/operations.md): Includes examples for rules, skills, provider/model additions.
 - The `maintain-agent-config` skill ships with the default profile, guiding Agents to write legal local TOML, modify templates, and validate generated results; deployment still goes through the manager's backup/conflict flow.
 - [Adding a Second Tool](docs/adapters.md): Interface, ownership, native encoding, and acceptance boundaries.
@@ -140,4 +140,4 @@ A running managed instance blocks apply/sync/rollback; the manager does not kill
 
 Default tests use a temporary HOME/DSH_HOME/XDG, network blocking, and fake processes; no third-party hosts are run. The native no-account smoke is a separate explicit step; real model calls require separate user authorization and login state. Test counts, actual run environments, untested platforms, and live status are recorded in [Acceptance Records](docs/acceptance.md).
 
-Full npm locks and vendor patches for DSH/TUI/plugins/OpenSpec live in `locks/dsh/`. TUI bundled-manifest fixes keep runtime code unchanged; Cursor patches disable automatic account import, background updates, and package stamping, and provide a terminal login entry. Sources and modification records are in [Upstream Verification Records](docs/upstream-verification.md). Superpowers is not installed; ModSearch, Memento, ModLens, and MCPLens are not in the default install list.
+Full npm locks and vendor patches for DSH/TUI/plugins live in `locks/dsh/`. Historical DSH OpenSpec dependencies are being removed; Pi's optional OpenSpec capability is managed independently in `locks/pi/`. TUI bundled-manifest fixes keep runtime code unchanged; Cursor patches disable automatic account import, background updates, and package stamping, and provide a terminal login entry. Sources and modification records are in [Upstream Verification Records](docs/upstream-verification.md). Superpowers is not installed; ModSearch, Memento, ModLens, and MCPLens are not in the default install list.

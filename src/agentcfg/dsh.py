@@ -22,12 +22,12 @@ BOOL = {"type": "boolean"}
 VERSION = {"type": "integer", "const": 1}
 SHA = {"type": "string", "minLength": 40, "maxLength": 40, "pattern": "^[a-f0-9]{40}$"}
 PROVIDER_OPTIONS = closed({"reasoning": {"type": "string", "enum": ["off", "minimal", "low", "medium", "high", "xhigh", "max"]}, "transport": {"type": "string", "enum": ["sse", "websocket", "websocket-cached", "auto"]},
-  "retryPolicy": closed({"mode": {"type": "string", "enum": ["normal", "always"]}, "maxRetries": {"type": "integer", "minimum": 0}}, ("mode",)),
+  "retryPolicy": closed({"mode": {"type": "string", "enum": ["normal"]}, "maxRetries": {"type": "integer", "minimum": 0, "maximum": 2}}, ("mode",)),
   "timeoutMs": {"type": "integer", "minimum": 1}})
 OPTIONS = closed({"preset": {"type": "string", "enum": ["standard"]},
-                  "theme": {"type": "string", "enum": ["rotom-poimandres", "auto", "dark", "dark-ansi", "light"]},
+                  "theme": {"type": "string", "enum": ["rotom-catppuccin", "rotom-poimandres", "auto", "dark", "dark-ansi", "light", "claude-dark", "claude-paper", "codex-lavender", "codex-paper"]},
+                  "show_welcome": BOOL,
                   "terminal_images": BOOL,
-                  "cursor_port": {"type": "integer", "minimum": 1024, "maximum": 65535},
                   "provider_options": {"type": "object", "additionalProperties": PROVIDER_OPTIONS}},
                  ("preset", "theme", "terminal_images"))
 
@@ -42,8 +42,8 @@ def escaped(value):
 
 class DshAdapter(Adapter):
   declaration = AdapterDeclaration("dsh", 1, "dsh-1")
-  # 首次空实例部署声明原生会创建此共享文件；不接管任何既有字段。
-  shared_files = ("dsh-home/settings.yaml",)
+  # RC2 原生设置写入 profile 用户层；旧 settings.yaml 不再作为 API 配置来源。
+  shared_files = ("dsh-home/profiles/agentcfg/cordis.patch.yml",)
 
   def __init__(self, repository: Path):
     self.repository = repository
@@ -74,7 +74,7 @@ class DshAdapter(Adapter):
     routes = []
     for key, provider in data["providers"].items():
       if provider["auth_kind"] == "oauth":
-        expected = {"codex": ("openai-codex", "codex-auth"), "cursor": ("oauth-cursor", "cursor-auth")}
+        expected = {"codex": ("openai-codex", "codex-auth"), "cursor": ("cursor-subscription", "cursor-auth")}
         if key not in expected or (bindings["oauth"].get(key, {}).get("route"), bindings["oauth"].get(key, {}).get("owner")) != expected[key]:
           raise ConfigError("oauth-native-route-mismatch")
         if key not in bindings["oauth"] or bindings["oauth"][key]["owner"] not in data["plugins"]:
@@ -96,10 +96,6 @@ class DshAdapter(Adapter):
         raise ConfigError("model-input")
     if set(selected["agent_options"].get("provider_options", {})) - set(data["providers"]):
       raise ConfigError("provider-options-reference")
-    for options in selected["agent_options"].get("provider_options", {}).values():
-      retry = options.get("retryPolicy", {})
-      if retry.get("mode") == "always" and "maxRetries" in retry:
-        raise ConfigError("retry-always-has-no-limit")
     if any(data["providers"][key]["auth_kind"] == "oauth" and options
            for key, options in selected["agent_options"].get("provider_options", {}).items()):
       raise ConfigError("oauth-provider-options-not-supported")
@@ -127,17 +123,58 @@ class DshAdapter(Adapter):
       if models:
         fields["models"] = models
       fields.update(data["profile"]["agent_options"].get("provider_options", {}).get(key, {}))
+      fields["retryPolicy"] = {"mode": "normal", "maxRetries": 0, **fields.get("retryPolicy", {})}
       for field, value in fields.items():
-        yield "/llm-pi-ai/providers/" + escaped(route) + "/" + field, value
+        yield "/llm-pi-ai/config/providers/" + escaped(route) + "/" + field, value
+
+  def _tui_fields(self, data):
+    base = native.load((self.repository / "agents/dsh/templates/tui.yaml").read_bytes())
+    config = base[0]["config"]
+    config["terminalImages"] = data["profile"]["agent_options"]["terminal_images"]
+    for field, value in config.items():
+      yield "/dsh-tui/config/" + field, value, Ownership.FIELDS
+    # 原生 /settings 偏好逐叶首次初始化，后续 apply 不覆盖用户修改。
+    for field, value in {"whale": True, "whaleIdle": False, "minimal": False,
+        "sidePanel/open": False, "sidePanel/panels": "todo,jobs,agents,trajectory,info",
+        "statusBar/compact": True, "statusBar/model": True, "statusBar/thinking": True,
+        "statusBar/cwd": True, "statusBar/contextUsage": True, "statusBar/cache": True,
+        "statusBar/tokens": True, "statusBar/cost": True, "statusBar/tps": True,
+        "statusBar/gitBranch": True, "statusBar/sessionTitle": True, "statusBar/sessionId": False,
+        "statusBar/goal": True, "statusBar/mode": True, "statusBar/contextBar": True,
+        "statusBar/activity": False, "statusBar/trajectory": False, "statusBar/shortcutHint": False}.items():
+      yield "/dsh-tui/config/" + field, value, Ownership.INITIALIZE
+
+  def _field_artifacts(self, data):
+    path = self.shared_files[0]
+    # 默认路由交由 Core fallback；TUI 原生偏好和会话恢复可选择自己的模型。
+    main = data["profile"]["roles"].get("main")
+    if main:
+      model = data["models"][main]
+      for field, value in (("provider", self.route(data, model["provider"])), ("model", model["remote_id"])):
+        yield Artifact(ManagedTarget(path, Ownership.FIELDS, "cordis-yaml", "/agent-default-model/config/" + field),
+          json.dumps(value, ensure_ascii=False).encode())
+    for selector, value in self._api_fields(data):
+      yield Artifact(ManagedTarget(path, Ownership.FIELDS, "cordis-yaml", selector),
+        json.dumps(value, ensure_ascii=False).encode())
+    for selector, value, ownership in self._tui_fields(data):
+      yield Artifact(ManagedTarget(path, ownership, "cordis-yaml", selector),
+        json.dumps(value, ensure_ascii=False).encode())
+    for selector, value in (("/completed", True), ("/version", 1)):
+      yield Artifact(ManagedTarget("user-home/.dsh-tui/onboarding.json", Ownership.INITIALIZE, "json", selector),
+        json.dumps(value).encode())
+    yield Artifact(ManagedTarget("user-home/.dsh-tui/home.json", Ownership.INITIALIZE, "json", "/seen"), b"true")
+    yield Artifact(ManagedTarget("user-home/.dsh-tui/theme.json", Ownership.INITIALIZE, "json", "/theme"),
+      json.dumps(data["profile"]["agent_options"]["theme"]).encode())
 
   def managed_targets(self, data):
     return (
       ManagedTarget("dsh-home/AGENTS.md", Ownership.FILE, "bytes"),
       ManagedTarget("dsh-home/agentcfg.patch.yml", Ownership.FILE, "bytes"),
       ManagedTarget("dsh-home/skills", Ownership.FILE, "skill-directory"),
-      ManagedTarget("env-guard.mjs", Ownership.FILE, "bytes"),
+      ManagedTarget("launch.mjs", Ownership.FILE, "bytes"),
       ManagedTarget("user-home/.dsh-tui/themes/rotom-poimandres.json", Ownership.FILE, "json"),
-      *(ManagedTarget("dsh-home/settings.yaml", Ownership.FIELDS, "yaml", path) for path, _ in self._api_fields(data)),
+      ManagedTarget("user-home/.dsh-tui/themes/rotom-catppuccin.json", Ownership.FILE, "json"),
+      *(artifact.target for artifact in self._field_artifacts(data)),
     )
 
   def render(self, data):
@@ -145,17 +182,13 @@ class DshAdapter(Adapter):
     targets = self.managed_targets(data)
     rules = tuple(data["rules"][key] for key in data["profile"]["rules"])
     result = [Artifact(targets[0], render_rules(self.repository, rules, {}))]
-    base = native.load((self.repository / "agents/dsh/templates/tui.yaml").read_bytes())
-    main = data["profile"]["roles"].get("main")
-    provider = data["models"][main]["provider"] if main else next(iter(data["providers"]), None)
-    config = {"terminalImages": data["profile"]["agent_options"]["terminal_images"]}
-    if provider:
-      config["provider"] = self.route(data, provider)
-    if main:
-      config["model"] = data["models"][main]["remote_id"]
     codex_enabled = data["providers"].get("codex", {}).get("auth_kind") == "oauth" and "codex-auth" in data["plugins"]
-    patch = [native.replace_config(base, "dsh-tui", config), {"id": "llm-deepseek", "disabled": True},
-             {"id": "dsh-tui-auth", "disabled": not codex_enabled, "config": {"providers": ["openai-codex"]}}]
+    # 该可选插件动态改写 Session 的事件表；候选只使用 TUI 原生状态显示。
+    patch = [{"id": "working-activity", "disabled": True}, {"id": "llm-deepseek", "disabled": True},
+             {"id": "dsh-tui-webserver", "disabled": True}, {"id": "deepseek-account", "disabled": True},
+             {"id": "llm-deepseek-account", "disabled": True},
+             {"id": "dsh-tui-auth", "disabled": not codex_enabled, "name": "@deepseek-harness-tui/dsh-tui/oauth",
+              "config": {"providers": ["openai-codex"]}}]
     inserts = []
     for key, server in data["mcp"].items():
       conf = {"serverName": key}
@@ -168,18 +201,17 @@ class DshAdapter(Adapter):
           conf["headers"] = {"Authorization": native.JS("process.env." + env_name("MCP", key))}
       inserts.append({"id": "agentcfg-mcp-" + key, "name": "@deepseek-ai/dsh-mcp-client", "config": conf})
     if "cursor-auth" in data["plugins"] and data["providers"].get("cursor", {}).get("auth_kind") == "oauth":
-      private_data = Path(data["machine"]["paths"]["instances_root"]) / "dsh" / data["profile"]["id"] / "dsh-home/oauth-subs"
-      inserts.append({"id": "agentcfg-cursor-auth", "name": "dsh-plugin-oauth-subs",
-                      "config": {"provider": "oauth", "port": data["profile"]["agent_options"].get("cursor_port", 8318), "dataDir": str(private_data)}})
+      inserts.append({"id": "agentcfg-cursor-auth", "name": "rotom-dsh-cursor-terminal"})
     if inserts:
       patch.append({"insert": inserts})
     result.append(Artifact(targets[1], native.dump(patch)))
-    result.append(Artifact(ManagedTarget("env-guard.mjs", Ownership.FILE, "bytes"),
-      (self.repository / "agents/dsh/templates/env-guard.mjs").read_bytes()))
+    result.append(Artifact(ManagedTarget("launch.mjs", Ownership.FILE, "bytes"),
+      (self.repository / "agents/dsh/templates/launch.mjs").read_bytes()))
     result.append(Artifact(ManagedTarget("user-home/.dsh-tui/themes/rotom-poimandres.json", Ownership.FILE, "json"),
       (self.repository / "agents/dsh/templates/theme.json").read_bytes()))
-    result.extend(Artifact(ManagedTarget("dsh-home/settings.yaml", Ownership.FIELDS, "yaml", path),
-                           json.dumps(value, ensure_ascii=False).encode()) for path, value in self._api_fields(data))
+    result.append(Artifact(ManagedTarget("user-home/.dsh-tui/themes/rotom-catppuccin.json", Ownership.FILE, "json"),
+      (self.repository / "agents/dsh/templates/theme-catppuccin.json").read_bytes()))
+    result.extend(self._field_artifacts(data))
     return tuple(result)
 
   def dependency_plan(self, data):
@@ -188,8 +220,8 @@ class DshAdapter(Adapter):
   def launch_spec(self, data, *, cwd, runtime_root, instance_root, lock_identity):
     environment = [EnvironmentBinding("DSH_HOME", str(instance_root / "dsh-home")),
       EnvironmentBinding("HOME", str(instance_root / "user-home")),
+      EnvironmentBinding("DSH_TUI_NO_LAUNCHPAD", "0" if data["profile"]["agent_options"].get("show_welcome", True) else "1"),
       EnvironmentBinding("DSH_TUI_PRESET", data["profile"]["agent_options"]["preset"]),
-      EnvironmentBinding("DSH_TUI_THEME", data["profile"]["agent_options"]["theme"]),
       EnvironmentBinding("DSH_PERMISSION_MODE", "workspace-write"),
       EnvironmentBinding("DSH_TELEMETRY_DISABLED", "1")]
     if not data["profile"]["agent_options"]["terminal_images"]:
@@ -200,27 +232,39 @@ class DshAdapter(Adapter):
     for key, server in data["mcp"].items():
       if "credential_ref" in server:
         environment.append(EnvironmentBinding(env_name("MCP", key), SecretRef(server["credential_ref"])))
-    return LaunchSpec(("node", "--import", str(instance_root / "env-guard.mjs"),
-                       str(runtime_root / "node_modules/@deepseek-ai/dsh/lib/bin.js"),
-                       "--profile", "agentcfg", "--patch", str(instance_root / "dsh-home/agentcfg.patch.yml")),
+    return LaunchSpec(("node", str(instance_root / "launch.mjs"), str(runtime_root),
+                       str(instance_root / "dsh-home/agentcfg.patch.yml")),
                       cwd, lock_identity, tuple(environment))
 
   def launch_preflight(self, lock):
     return [{"argv": ["node", "--version"], "version": lock.metadata["node"]}]
 
+  def validate_deployment_state(self, saved):
+    from .storage import Conflict
+    legacy = {"env-guard.mjs", "dsh-home/settings.yaml"}
+    def items(current):
+      return current.get("items", {}).values() if isinstance(current, dict) else ()
+    pending = saved.get("pending") or {}
+    candidates = [*items(saved.get("current")), *items(pending.get("after_state", {}).get("current"))]
+    for owner in (saved.get("owner"), pending.get("after_state", {}).get("owner")):
+      candidates.extend({"path": path} for path in (owner or {}).get("shared_files", []))
+    candidates.extend(change.get("item", {}) for change in pending.get("changes", []))
+    if any(item.get("path") in legacy for item in candidates):
+      raise Conflict("旧 DSH 部署尚未通过迁移验收；保留旧部署并在当前 worktree 使用独立实例验收，回原 worktree 恢复待处理事务")
+
   def prepare_runtime(self, workspace, root):
     from .profile_runtime import prepare
     from .storage import ensure_private
-    for relative in ("user-home", "dsh-home", "dsh-home/oauth-subs"):
+    for relative in ("user-home", "dsh-home"):
       ensure_private(workspace.instance / relative)
     prepare(workspace, root)
 
   def capture_projection(self, tree):
     from .deployment import parse_native
     projection = {}
-    raw = tree.read("dsh-home/settings.yaml")
+    raw = tree.read(self.shared_files[0])
     if raw:
-      section = parse_native(raw[0], "yaml").get("dsh-tui", {})
+      section = parse_native(raw[0], "cordis-yaml").get("dsh-tui", {}).get("config", {})
       if isinstance(section, dict) and type(section.get("terminalImages")) is bool:
         projection["terminal_images"] = section["terminalImages"]
     for name, keys in (("theme", ("theme",)), ("model", ("provider", "model"))):

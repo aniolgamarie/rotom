@@ -12,6 +12,7 @@ import yaml
 from .adapter import Ownership
 from .config import _credential_name
 from .storage import Conflict, Tree, instance_lock
+from .native import load_cordis, dump_cordis
 from .native_projection import (reference_guard, reverse_change, transition_guard,
                                 validate_change, validate_projection, validate_saved_state)
 
@@ -124,7 +125,8 @@ def encode_native(value, codec):
 
 
 NATIVE_CODECS = {"json": (json.loads, json_bytes),
-                 "yaml": (yaml.safe_load, lambda value: yaml.safe_dump(value, allow_unicode=True, sort_keys=True).encode())}
+                 "yaml": (yaml.safe_load, lambda value: yaml.safe_dump(value, allow_unicode=True, sort_keys=True).encode()),
+                 "cordis-yaml": (load_cordis, dump_cordis)}
 
 
 def register_codec(name, decode, encode):
@@ -267,6 +269,12 @@ def plan(tree, state, candidate, binding, launch):
       # 首次接管按文件检查：即使要管理的字段不存在也不能接管非空文件。
       known_file = spec["selector"] and (any(i["path"] == spec["path"] and i["selector"] for i in previous.values())
         or owner is not None and spec["path"] in owner["shared_files"])
+      if known_file and current["present"] and spec["ownership"] == Ownership.INITIALIZE.value:
+        # 已拥有共享文件中的原生偏好只消费初始化机会，不认领其值为基线。
+        spec["baseline"] = ABSENT.copy()
+        spec.pop("desired", None)
+        result[key] = spec
+        continue
       if raw[0] and (not known_file or current["present"]):
         conflicts.append(key)
         continue
@@ -370,8 +378,24 @@ def transact(target, state, old_state, after_state, changes):
   recover(target, state)
 
 
-def apply(instance: Path, state_root: Path, candidate, binding, launch, *, expected_plan=None):
+def guard_saved_state(state, state_guard):
+  """可选适配器准入先于恢复；不改默认恢复与回滚协议。"""
+  if state_guard is None:
+    return
+  saved = read_state(state)
+  pending = state.read("pending.json")
+  try:
+    journal = json.loads(pending[0]) if pending else None
+    if journal is not None and not isinstance(journal, dict):
+      raise ValueError()
+  except (ValueError, TypeError):
+    raise Conflict("恢复记录损坏，停止修改") from None
+  state_guard({**saved, "pending": journal})
+
+
+def apply(instance: Path, state_root: Path, candidate, binding, launch, *, expected_plan=None, state_guard=None):
   with Tree(state_root, create=True) as state, instance_lock(state):
+    guard_saved_state(state, state_guard)
     with Tree(instance, create=True) as target:
       recover(target, state)
       old = read_state(state)

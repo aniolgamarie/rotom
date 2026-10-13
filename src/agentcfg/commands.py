@@ -105,6 +105,7 @@ def cmd_render(args):
 
 def current_plan(w, lock, candidate):
   with Tree(w.state_root) as state, Tree(w.instance) as target:
+    deployment.guard_saved_state(state, getattr(w.adapter, "validate_deployment_state", None))
     if state.read("pending.json"):
       raise Conflict("存在待恢复部署；请先执行 apply 或 rollback")
     return deployment.plan(target, deployment.read_state(state), candidate, w.binding, runtime.record(w, lock))
@@ -164,7 +165,7 @@ def apply_candidate(w, lock, candidate, *, expected_plan=None):
   guard = getattr(w.adapter, "apply_lifecycle_guard", None) or getattr(w.adapter, "lifecycle_guard", None)
   with guard(w) if guard else nullcontext():
     return deployment.apply(w.instance, w.state_root, candidate, w.binding, runtime.record(w, lock),
-      expected_plan=expected_plan)
+      expected_plan=expected_plan, state_guard=getattr(w.adapter, "validate_deployment_state", None))
 
 
 def sync_backend(w, lock, progress):

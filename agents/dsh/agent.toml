@@ -1,7 +1,7 @@
 schema_version = 1
 adapter_version = "dsh-1"
-upstream_commit = "183f08e9c6dde7e36cd2318eaee70b0da08fb35e"
-tui_commit = "78081cebde1ee1b47a561ef57c04f128c5623476"
+upstream_commit = "639ed015397290b3745d163aafe02ffee4aa3f84"
+tui_commit = "c2eee95218d1decfce138f7d31ef7099cc391d00"
 
 [defaults]
 providers = ["codex", "cursor"]
@@ -13,5 +13,6 @@ mcp = []
 
 [defaults.agent_options]
 preset = "standard"
-theme = "rotom-poimandres"
+theme = "rotom-catppuccin"
+show_welcome = true
 terminal_images = false

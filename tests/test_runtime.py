@@ -87,13 +87,14 @@ def test_run_rejects_incompatible_node_before_launch(tmp_path, fake_subprocess, 
   assert "docs/getting-started.md" in str(caught.value)
 
 
-def test_native_environment_guard_is_a_managed_asset(tmp_path):
+def test_public_profile_launcher_is_a_managed_asset(tmp_path):
   path = tmp_path / "local.toml"
   local_file(path)
   w = load_workspace(path)
   lock = read_lock(w.repository)
   candidate = w.candidate(lock.identity)
-  assert any(a.target.path == "env-guard.mjs" for a in candidate.artifacts)
+  assert any(a.target.path == "launch.mjs" for a in candidate.artifacts)
   contract = runtime.record(w, lock)
-  assert "--import" in contract["argv"]
-  assert contract["shared_files"] == ["dsh-home/settings.yaml"]
+  assert "--import" not in contract["argv"]
+  assert contract["argv"][:2] == ["node", str(w.instance / "launch.mjs")]
+  assert contract["shared_files"] == ["dsh-home/profiles/agentcfg/cordis.patch.yml"]

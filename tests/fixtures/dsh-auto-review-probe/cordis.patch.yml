@@ -1,0 +1,36 @@
+# 全量覆盖 Perry 默认配置；实验 AI 权限只有无副作用内存 probe。
+- id: auto-review
+  config:
+    enableByDefault: true
+    toolsPolicy:
+      default: human
+      overrides:
+        rotom_review_probe: ai
+    reviewerProvider: spawn
+    reviewerTools: [rotom_review_fact]
+    reviewerTimeoutMs: 30000
+    reasonMaxChars: 256
+    maxReviewsPerTurn: 1
+    maxFailuresPerTurn: 1
+    verdictCacheTtlMs: 0
+    contextBudget:
+      turns: 0
+      maxChars: 2000
+    riskPolicy:
+      maxAutoAllow: low
+      onHighRisk: delegate
+    fallbackPolicy: delegate
+    allowUnmarkedAudit: false
+    reviewerPolicyText: |
+      This isolated experiment explicitly authorizes the low-risk rotom_review_probe
+      in-memory counter with empty arguments. It has no file, network, shell, or
+      environment access. You may allow ONLY this memory increment at low risk.
+      Other non-probe requests that enter approval/request must delegate to the
+      native human route. Native workspace allow rules remain the host's policy;
+      this experiment does not claim every operation receives approval.
+      The parent model route is not proof of the reviewer's actual model provenance.
+      /auto-review off is memory-only and may not cancel an in-flight approval;
+      persistent reviewer audit is unavailable. This is not safe general auto-approval.
+- insert:
+    - id: rotom-auto-review-probe
+      name: rotom-dsh-auto-review-probe

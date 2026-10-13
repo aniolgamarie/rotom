@@ -7,6 +7,7 @@ import pytest
 
 from agentcfg import cli, commands, native
 from agentcfg.dependencies import read_lock
+from agentcfg.adapter import Ownership
 from agentcfg.workspace import load_workspace
 from agentcfg.storage import Conflict
 
@@ -34,11 +35,21 @@ def test_real_recipe_preserves_full_tui_config_and_has_no_static_oauth_catalog(t
   w = load_workspace(local)
   candidate = w.candidate(read_lock(w.repository).identity)
   patch = native.load(next(a.content for a in candidate.artifacts if a.target.path.endswith("patch.yml")))
-  tui = next(row for row in patch if row.get("id") == "dsh-tui")
-  assert tui["config"]["provider"] == "agentcfg-kimi_code_openai"
-  assert tui["config"]["model"] == "kimi-for-coding"
-  assert tui["config"]["terminalImages"] is False
-  assert "workspace" in tui["config"] and "sessionId" in tui["config"]
+  assert all(row.get("id") != "dsh-tui" for row in patch)
+  fields = {a.target.selector: json.loads(a.content) for a in candidate.artifacts if a.target.serialization == "cordis-yaml"}
+  assert fields["/agent-default-model/config/provider"] == "agentcfg-kimi_code_openai"
+  assert fields["/agent-default-model/config/model"] == "kimi-for-coding"
+  assert "/dsh-tui/config/provider" not in fields and "/dsh-tui/config/model" not in fields
+  assert w.resolved.data["profile"]["roles"]["main"] == "kimi_code_openai"
+  assert fields["/llm-pi-ai/config/providers/agentcfg-kimi_code_openai/baseURL"] == w.resolved.data["providers"]["kimi_code_openai"]["base_url"]
+  assert fields["/dsh-tui/config/terminalImages"] is False
+  assert fields["/dsh-tui/config/backend"] == "dsh"
+  status_bar = [a for a in candidate.artifacts if a.target.selector and a.target.selector.startswith("/dsh-tui/config/statusBar/")]
+  assert len(status_bar) == 18
+  assert all(a.target.ownership is Ownership.INITIALIZE for a in status_bar)
+  assert fields["/dsh-tui/config/statusBar/tokens"] is True
+  assert fields["/dsh-tui/config/statusBar/shortcutHint"] is False
+  assert [mode["id"] for mode in fields["/dsh-tui/config/modes"]] == ["default", "plan"]
   assert sum(row.get("id") == "dsh-tui-auth" for row in patch) == 1
   assert set(w.resolved.data["models"]) == {
     "kimi_code_openai", "kimi_code_k3_openai", "kimi_code_k3_256k_openai", "kimi_code_highspeed_openai",

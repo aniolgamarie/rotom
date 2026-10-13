@@ -52,6 +52,3 @@ class DshBackend:
 
   def toolchain(self, lock):
     return {key: lock.metadata[key] for key in ("node", "npm")}
-
-  def openspec_argv(self, workspace, lock):
-    return ["node", str(self.root(workspace, lock.identity) / "node_modules/@fission-ai/openspec/bin/openspec.js")]
