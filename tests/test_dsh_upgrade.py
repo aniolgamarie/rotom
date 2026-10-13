@@ -253,8 +253,6 @@ def test_welcome_default_and_visual_preferences_use_public_configuration():
   fields = {path: (value, owner) for path, value, owner in adapter._tui_fields(data)}
   targets = {target.path for target in adapter.managed_targets(data)}
   assert {"user-home/.dsh-tui/themes/rotom-catppuccin.json", "user-home/.dsh-tui/themes/rotom-poimandres.json"} <= targets
-  palette = json.loads((ROOT / "agents/dsh/templates/theme-catppuccin.json").read_bytes())["colors"]
-  assert palette["accent"] == "#fab387" and palette["text"] == "#cdd6f4" and palette["background"] == "#1e1e2e"
   assert fields["/dsh-tui/config/whale"] == (True, Ownership.INITIALIZE)
   assert fields["/dsh-tui/config/whaleIdle"] == (False, Ownership.INITIALIZE)
   assert fields["/dsh-tui/config/minimal"] == (False, Ownership.INITIALIZE)
@@ -274,3 +272,45 @@ def test_unknown_custom_theme_is_rejected():
   from agentcfg.schema import ConfigError
   with pytest.raises(ConfigError, match="capture-theme-not-supported"):
     DshAdapter(ROOT).capture({"theme": {"theme": "foreign-custom"}})
+
+
+def test_catppuccin_covers_selected_tui_theme_contract_and_official_mocha():
+  colors = json.loads((ROOT / "agents/dsh/templates/theme-catppuccin.json").read_bytes())["colors"]
+  # TUI 0.14.0 的现行 Theme 字段；防止静默继承雾蓝或写入不生效的别名。
+  fields = set("""autoAccept bashBorder accent toolNameMutate toolNameExec accentShimmer activity activityShimmer
+    permission permissionShimmer planMode ide promptBorder promptBorderShimmer text inverseText inactive inactiveShimmer
+    subtle suggestion remember background success error warning merged warningShimmer diffAdded diffRemoved
+    diffAddedDimmed diffRemovedDimmed diffAddedWord diffRemovedWord toolCardBackground toolCardBackgroundDim
+    toolDotExec toolDotRead toolDotWrite toolDotWeb toolDotTask syntaxKeyword syntaxString syntaxComment syntaxNumber
+    syntaxFunction syntaxType syntaxVariable syntaxOperator syntaxPunctuation syntaxConstant professionalBlue chromeYellow
+    contextBarSystem contextBarPrompt contextBarAssistant contextBarThinking contextBarTools ignition ignitionDim cursor
+    mascotBody inputBackground userMessageBackground userMessageBackgroundHover messageActionsBackground selectionBg
+    bashMessageBackgroundColor memoryBackgroundColor rate_limit_fill rate_limit_empty fastMode fastModeShimmer userPromptLabel
+    subagentBullet subagentDescription subagentModel subagentElapsed subagentToolName subagentStatusRunning
+    subagentStatusCompleted subagentStatusFailed""".split())
+  assert set(colors) == fields and colors["cursor"] == ""
+  # 官方 Mocha 26 色；Diff 行衬底另按 Neovim 算法由原色推导。
+  mocha = set("""#f5e0dc #f2cdcd #f5c2e7 #cba6f7 #f38ba8 #eba0ac #fab387 #f9e2af #a6e3a1 #94e2d5
+    #89dceb #74c7ec #89b4fa #b4befe #cdd6f4 #bac2de #a6adc8 #9399b2 #7f849c #6c7086 #585b70
+    #45475a #313244 #1e1e2e #181825 #11111b""".split())
+  backgrounds = {"diffAdded", "diffRemoved", "diffAddedDimmed", "diffRemovedDimmed"}
+  assert all(value in mocha for key, value in colors.items() if key not in backgrounds | {"cursor"})
+  def blend(foreground, alpha):
+    return "#" + "".join(f"{int(int(foreground[index:index + 2], 16) * alpha + int(colors['inputBackground'][index:index + 2], 16) * (1 - alpha) + 0.5):02x}"
+      for index in (1, 3, 5))
+  for tone in ("Added", "Removed"):
+    assert colors["diff" + tone] == blend(colors["diff" + tone + "Word"], 0.18)
+    assert colors["diff" + tone + "Dimmed"] == blend(colors["diff" + tone + "Word"], 0.09)
+
+
+def test_catppuccin_semantic_fills_keep_text_legible():
+  colors = json.loads((ROOT / "agents/dsh/templates/theme-catppuccin.json").read_bytes())["colors"]
+  def luminance(hex_color):
+    channels = [int(hex_color[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+    linear = [value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4 for value in channels]
+    return sum(value * weight for value, weight in zip(linear, (0.2126, 0.7152, 0.0722)))
+  for foreground, background in (("text", "inputBackground"), ("text", "toolCardBackground"), ("text", "selectionBg"),
+      ("inverseText", "background"), ("inverseText", "accent"), ("text", "diffAdded"), ("text", "diffRemoved"),
+      ("diffAddedWord", "diffAddedDimmed"), ("diffRemovedWord", "diffRemovedDimmed")):
+    light, dark = sorted((luminance(colors[foreground]), luminance(colors[background])), reverse=True)
+    assert (light + 0.05) / (dark + 0.05) >= 4.5, (foreground, background)

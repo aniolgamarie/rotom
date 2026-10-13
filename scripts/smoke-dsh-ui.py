@@ -145,12 +145,13 @@ def main():
   cache = repo / ".cache/dsh-upgrade"
   cache.mkdir(mode=0o700, parents=True, exist_ok=True)
   result = {"kind": "native-pty-simulated-local-model", "stage": "prepare", "checks": {}, "lock_identity": lock.identity,
-    "recipe": lock.metadata["recipe"], "platform": sys.platform, "ssh": "NOT RUN", "tmux": "NOT RUN", "real_accounts": "NOT RUN"}
+    "recipe": lock.metadata["recipe"], "platform": sys.platform, "color_environment": "COLORTERM=truecolor",
+    "ssh": "NOT RUN", "tmux": "NOT RUN", "real_accounts": "NOT RUN"}
   outer_path = os.environ.get("PATH", "")
   transcript, child, master, slave, server = bytearray(), None, None, None, None
   with tempfile.TemporaryDirectory(prefix="rotom-dsh-ui-", dir="/dev/shm") as private, tempfile.TemporaryDirectory(prefix="ui-workspace-", dir=cache) as work:
     root, project = Path(private), Path(work)
-    env = {"PATH": outer_path, "TERM": "xterm-256color", "LANG": "C.UTF-8"}
+    env = {"PATH": outer_path, "TERM": "xterm-256color", "COLORTERM": "truecolor", "LANG": "C.UTF-8"}
     for name, suffix in {"HOME": "home", "DSH_HOME": "dsh", "XDG_CONFIG_HOME": "config", "XDG_DATA_HOME": "data",
         "XDG_STATE_HOME": "state", "XDG_CACHE_HOME": "cache", "TMPDIR": "tmp"}.items():
       env[name] = str(root / suffix)
@@ -231,6 +232,13 @@ def main():
       def rendered_marker(marker="UI_DONE_MARKER"):
         return marker in re.sub(r"\s+", "", rendered_text()) and len(transcript) > resize_start
       wait(rendered_marker)
+      # 只检查公开 Theme 字段在真实渲染中的色值，不调用宿主私有 resolver。
+      palette = json.loads((repo / "agents/dsh/templates/theme-catppuccin.json").read_bytes())["colors"]
+      def ansi_color(value):
+        return ("\x1b[38;2;" + ";".join(str(int(value[index:index + 2], 16)) for index in (1, 3, 5)) + "m").encode()
+      if not all(ansi_color(palette[key]) in transcript for key in ("text", "promptBorder", "success")):
+        raise RuntimeError("THEME_RENDER_MISMATCH")
+      result["checks"]["native_catppuccin_truecolor"] = "PASS"
       result["checks"].update(chinese_multiline_paste="PASS", narrow_resize="PASS", native_write_tool_roundtrip="PASS")
       result["stage"] = "ui.cancel-stream"
       os.write(master, b"CANCEL_TASK_MARKER\r")
@@ -259,7 +267,7 @@ def main():
       result["overall"], result["stage"] = "PASS", "complete"
     except Exception as error:
       result.update(overall="FAIL", error="FIXTURE_REJECTED" if state.get("error") else str(error) if isinstance(error, RuntimeError)
-        and str(error) in {"NODE_VERSION", "STAGE_TIMEOUT", "EXIT_OR_TTY_RESTORE", "FIXTURE_REJECTED", "WELCOME_EMPTY_SUBMIT"} else "UI_SMOKE_FAILED", error_location=result["stage"], http=dict(state))
+        and str(error) in {"NODE_VERSION", "STAGE_TIMEOUT", "EXIT_OR_TTY_RESTORE", "FIXTURE_REJECTED", "WELCOME_EMPTY_SUBMIT", "THEME_RENDER_MISMATCH"} else "UI_SMOKE_FAILED", error_location=result["stage"], http=dict(state))
     finally:
       if child is not None and child.poll() is None:
         child.terminate()
@@ -277,7 +285,7 @@ def main():
         if fd is not None:
           os.close(fd)
     source = {name: hashlib.sha256((repo / name).read_bytes()).hexdigest() for name in ("scripts/smoke-dsh-ui.py", "src/agentcfg/dsh.py",
-      "agents/dsh/templates/launch.mjs", "agents/dsh/packages/cursor-terminal/index.mjs")}
+      "agents/dsh/templates/launch.mjs", "agents/dsh/packages/cursor-terminal/index.mjs", "agents/dsh/templates/theme-catppuccin.json")}
     result.update(source_files=source, source_hash=hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest())
     (evidence / "transcript.log").write_bytes(transcript)
     (evidence / "result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
