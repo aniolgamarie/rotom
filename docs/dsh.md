@@ -1,6 +1,6 @@
 # DSH 配方与升级候选
 
-本分支维护一套 `dsh-default`。2026-10-12 的候选升级尚未完成整套验收：核心/TUI、离线配置和原生人工审批在隔离实例验证；Cursor/Codex/国内 API 真实账号以及 AI reviewer 没有测试实例授权。既有部署不切换，旧状态自动升级受阻止。完整结果见 [升级验收记录](acceptance/dsh-upgrade-20261012.md)。
+本分支维护一套 `dsh-default`。2026-10-12 的候选升级尚未完成整套验收：核心/TUI、离线配置和原生人工审批在隔离实例验证；Cursor 已有用户手测文本成功反馈，完整账号链路、Codex/国内 API 与 AI reviewer 仍未验收。账号测试由用户在独立候选中执行，代理没有调用真实账号。既有部署不切换，旧状态自动升级受阻止。完整结果见 [升级验收记录](acceptance/dsh-upgrade-20261012.md)。
 
 ## 版本、原包与锁
 
@@ -92,9 +92,9 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 
 ### 日常 UI、状态栏与图标
 
-当前候选没有单独覆写 statusBar，采用 0.14.0 的 compact 默认：开启 model、thinking、cwd、contextUsage、cache、cost、goal、contextBar；关闭 tokens、tps、gitBranch、sessionTitle、sessionId、mode、activity、trajectory、shortcutHint。开启代表允许展示，缺少数据仍会隐藏。`thinking` 字段用于推理档位；消息内的 Thinking 计时是另一个运行阶段显示。
+当前候选已按用户确认的方案配置原生 statusBar：保留 compact，开启 model、thinking、cwd、contextUsage、cache、tokens、cost、tps、gitBranch、sessionTitle、goal、mode、contextBar；关闭 sessionId、activity、trajectory、shortcutHint。相对 0.14.0 默认新增 tokens、tps、gitBranch、sessionTitle、mode 五项。开启代表允许展示，缺少数据仍会隐藏。`thinking` 字段用于推理档位；消息内的 Thinking 计时是另一个运行阶段显示。
 
-截图里的 `glm-5.2-high` 是当前模型标签；来源可在模型 hover 详情或 `/model` 查询。`6.0k/200k 3.0%` 是上下文占用/窗口，`cache 0.0%` 是最后一份 usage 的缓存读取占输入比例，不是 Cursor 余额。compact 栏里的 `workspace` 是当前目录 basename；它不证明 workspace-write 或 ask 已生效，实际模式用 `/permission` 查询。原生费用项仅在后端报告费用或支持官方 DeepSeek 估价时出现；当前 Cursor 不报告费用时不补一个 0。tokens 的详情可显示已完成轮次的重试数，但它默认关闭。
+截图里的 `glm-5.2-high` 是当前模型标签；来源可在模型 hover 详情或 `/model` 查询。`6.0k/200k 3.0%` 是上下文占用/窗口，`cache 0.0%` 是最后一份 usage 的缓存读取占输入比例，不是 Cursor 余额。compact 栏里的 `workspace` 是当前目录 basename；它不证明 workspace-write 或 ask 已生效，实际模式用 `/permission` 查询。原生费用项仅在后端报告费用或支持官方 DeepSeek 估价时出现；当前 Cursor 不报告费用时不补一个 0。tokens 已开启，其详情可显示已完成轮次的重试数。
 
 可配置类别包括主题/极简界面、欢迎图形与大字、伙伴皮肤、侧栏及面板、状态栏字段与紧凑布局、工具卡/滚动展示、图片预览、按键等。通过 `/settings` 修改原生用户偏好，`/theme` 选主题，`/panel` 打开面板。TUI 的大字字体不是系统字体选择器。0.14.0 没有 Nerd Font 图标主题开关；可在客户端采用 Nerd Font 绘制普通 Unicode，但不会自动变成 OMP 的 Nerd 图标集。SSH 字体由本地终端决定。
 
@@ -104,14 +104,14 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 | --- | --- | --- | --- |
 | 外观 | Catppuccin Mocha、原生欢迎页/女仆、idle 关闭 | 原工作树深浅 Catppuccin | Everforest Dark、quiet startup |
 | 状态栏配置 | 原生逐项开关、compact，布局由 TUI 决定 | custom 左右段及顺序、powerline-thin 分隔 | colorful-footer 的颜色/图标/分隔/最大行数及宽度分档 |
-| 主要信息 | 模型/推理档位/目录/上下文/cache，费用及 goal 按数据出现 | 左 vim/model/context_pct/token_rate/time_spent；右 session_name/path/git/mode/token_total/cache_hit | 按宽度显示 provider/model、thinking、上下文、速度、分支、时长、费用、cache 等 |
+| 主要信息 | 模型/推理档位/目录/上下文/cache/tokens/tps，分支、标题、模式、费用及 goal 按数据出现 | 左 vim/model/context_pct/token_rate/time_spent；右 session_name/path/git/mode/token_total/cache_hit | 按宽度显示 provider/model、thinking、上下文、速度、分支、时长、费用、cache 等 |
 | 图标 | 普通 Unicode，未提供 Nerd 图标主题 | symbolPreset=nerd | footer 提供 Nerd glyph 检测/配置及普通 Unicode 回退 |
 | 辅助视图 | 侧栏收起，todo/jobs/agents/trajectory/info | 原生任务/Agent 能力，未使用 DSH 同一套侧栏 | pi-todo/subagents；不把其他 profile 的 Task Keeper 算进 default |
 | 偏好所有权 | UI 偏好/主题初始化，日后 apply 保留；后端/preset/主模型持续管理 | 状态栏等字段三方合并，漂移保留或冲突 | 原生 settings 字段三方合并，footer 读取受管 manifest 的 ui.footer |
 
-### 推荐状态栏与按需审批设计（尚未应用）
+### 推荐状态栏（已应用）与按需审批设计（未启用）
 
-用户要求先说明后配置。推荐保留 compact，增加 tokens/tps/gitBranch/sessionTitle/mode，其他保持下列原生值；这是原生 `statusBar` 对象，不是新增 agent_options schema。实际通过 `/settings` 写入用户偏好时保留混合配置的其他字段。
+2026-10-13 按用户确认，已在候选实例活动锁内原子写入下列原生 `statusBar` 偏好，保留其他 UI、未知字段、模型、账号与会话。重复 apply 为 changes=0，写入后逐字段回读一致。这不是新增 agent_options schema 或所有新实例的强制默认；日后通过 `/settings` 修改仍属于原生用户偏好，apply 保留。
 
 ```yaml
 statusBar:
