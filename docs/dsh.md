@@ -109,6 +109,70 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 | 辅助视图 | 侧栏收起，todo/jobs/agents/trajectory/info | 原生任务/Agent 能力，未使用 DSH 同一套侧栏 | pi-todo/subagents；不把其他 profile 的 Task Keeper 算进 default |
 | 偏好所有权 | UI 偏好/主题初始化，日后 apply 保留；后端/preset/主模型持续管理 | 状态栏等字段三方合并，漂移保留或冲突 | 原生 settings 字段三方合并，footer 读取受管 manifest 的 ui.footer |
 
+### 推荐状态栏与按需审批设计（尚未应用）
+
+用户要求先说明后配置。推荐保留 compact，增加 tokens/tps/gitBranch/sessionTitle/mode，其他保持下列原生值；这是原生 `statusBar` 对象，不是新增 agent_options schema。实际通过 `/settings` 写入用户偏好时保留混合配置的其他字段。
+
+```yaml
+statusBar:
+  compact: true
+  model: true
+  thinking: true
+  cwd: true
+  contextUsage: true
+  cache: true
+  tokens: true
+  cost: true
+  tps: true
+  gitBranch: true
+  sessionTitle: true
+  sessionId: false
+  goal: true
+  mode: true
+  contextBar: true
+  activity: false
+  trajectory: false
+  shortcutHint: false
+```
+
+model 是当前模型；thinking 是推理档位而不是耗时；cwd 是目录；contextUsage 是窗口占用，tokens 是累计输入/输出；cache 是缓存比例；tps 是输出速度。cost/goal/Git/标题等只有对应数据才出现。mode 展示符合条件的非默认模式，不能靠这一开关保证 workspace-write+ask 常驻显示；没有独立 auto-review 状态栏字段。权限仍用 `/permission`，未来插件状态复用其原生 `/auto-review status`。Provider、最近轮次重试及速度统计通过原生详情查询；活动行/轨迹默认关闭，减少重复信息。
+
+审批目标维持 workspace-write+ask：普通沙箱内允许操作直接执行，只有实际 approval/request 才进入规则和 reviewer。硬拒绝先于模型；生产/外部写入、破坏性删除、权限变化、动态脚本、未知工具和不明目标转人工或拒绝，不按整个 Shell 名称建立 allow 白名单。模型只能给本请求一次允许，不产生后续通用授权。
+
+以下字段是按 [Perry 0.12.17 源码](https://github.com/PerryLink/dsh-auto-review/tree/2b931b8375f9ee9ebe20e80ef336c69804e1aac0) 核对的条件设计。此配置不进入当前插件清单，`rotom_review_context` 工具尚未实现/注册；enableByDefault=false、空 AI overrides 是隔离验收阶段的关闭状态，不算自动审批交付。
+
+```yaml
+enableByDefault: false
+reviewerProvider: spawn
+# reviewerModel 是字符串；未设置时继承当前选定路由。
+# 只有验证该路由能返回所需结构化判决后才可复用，不自动换付费来源。
+reviewerTools:
+  - rotom_review_context
+reviewerTimeoutMs: 30000
+maxReviewsPerTurn: 3
+maxFailuresPerTurn: 2
+fallbackPolicy: delegate
+toolsPolicy:
+  default: human
+  overrides: {}
+riskPolicy:
+  maxAutoAllow: low
+  onHighRisk: delegate
+circuitBreaker:
+  consecutiveDenies: 2
+  windowDenies: 3
+  windowSize: 5
+  action: delegate
+contextBudget:
+  turns: 0
+  maxChars: 1200
+allowUnmarkedAudit: false
+```
+
+`reviewerTools: []` 在现版本非法，默认 read/glob/grep 又不能限制读目录，因此候选设计只暴露一个非文件/非Shell的上下文工具：返回本次动作、必要且有来源标记的用户授权和项目快照，不接收模型提供的审批/会话查询 ID，不读取真实 HOME/凭据/任意代码目录。turns=0 关闭自动复制主会话 transcript；没有可靠上下文工具时上游会警告 blind review，必须继续人工，不能将该值单独当作可用 reviewer 配置。公开 ToolRunContext 提供可信 exec.agent/callId/signal，但现有 subagent/start 只有父子关联，Perry 没有直接公开 approval/request 到 reviewer child 的关联。实现薄适配前必须证明绑定、并发、取消和生命周期无歧义；不能按同父会话或模型自报 ID 猜测。spawn 避免 fork 的已完成历史继承，仍需验证并剔除不必要的新注入内容。
+
+当前不能安全启用的门槛依次为：完整 peer/runtime 兼容；上述独立 reviewer 的上下文/工具边界与身份绑定；真实 approval 链在人工处理器之前接管且 never/硬 deny 不被覆盖；取消/关闭后的迟到 allow 无效；失败预算和无人工通道不放行；持久审计能关联动作、session/request/call、判决理由、模式和失败。现 RC 下 Perry 默认审计是内存，allowUnmarkedAudit 强行写入不是恢复方案，不能以配置掩盖持久审计缺口。只有这些验收通过，才为已验证低风险工具增加明确 AI overrides，并讨论默认启用或会话 `/auto-review on`；当前只有人工入口可用。不能可靠进入审批链的 MCP/PTC/直接Node等通道，不宣称已审查。
+
 `/model` 切换当前会话的模型，不改 Rotom 的全局 main 角色。新会话沿用配方明确指定的 provider/model；恢复已有会话用 `/resume` 打开原生列表并按 Enter，路由从该会话记录恢复。主题、欢迎页和认证面板均使用上游公开入口，Rotom 不维护另一套菜单或会话管理界面。
 
 ## 重试与权限
