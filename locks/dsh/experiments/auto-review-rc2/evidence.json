@@ -39,5 +39,22 @@
   "b_delegation_denied": true,
   "real_model_calls": 0,
   "release_gate": "FAIL",
-  "main_lock_changed": false
+  "main_lock_changed": false,
+  "user_reported_kimi_live": {
+    "status": "USER REPORTED PASS: basic verdict/probe roundtrip",
+    "code_snapshot": "e1d9687",
+    "logical_rounds": 1,
+    "count": 1,
+    "ai_verdicts_this_turn": "1/1",
+    "reviewer_failures_this_turn": "0/1",
+    "parentProvider": "agentcfg-kimi_code_openai",
+    "parentModel": "kimi-for-coding",
+    "reviewer_route": "inferred from unchanged inherit config; not independently logged",
+    "manual_button_participation": "not separately reported",
+    "underlying_requests": "UNKNOWN",
+    "token_or_cost": "UNKNOWN",
+    "agent_added_live_calls": 0,
+    "full_provider_acceptance": "NOT RUN",
+    "release_gate": "FAIL unchanged"
+  }
 }

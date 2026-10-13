@@ -230,7 +230,7 @@ PerryLink/dsh-auto-review 0.12.17 已在Core0.2.0-rc.2上真实运行。新版�
 /home/private-user/rotom-dsh-candidate-20261012/dsh-auto-review
 ```
 
-在TUI中用 `/model` 选择已授权模型，然后发送一次：“请只调用一次 rotom_review_probe，不调用文件或 Shell 工具。”这是进程内计数器，不写文件、执行Shell、访问网络或读取环境。成功工具结果应有count=1，以及原生当轮AI计数1/1。Reviewer继承主会话路由；返回的parentProvider/parentModel只说明父路由，不能单独证明真实reviewer模型来源。Root仅用假模型验收，真实模型由用户本人少量测试。
+在TUI中用 `/model` 选择已授权模型，然后发送一次：“请只调用一次 rotom_review_probe，不调用文件或 Shell 工具。”这是进程内计数器，不写文件、执行Shell、访问网络或读取环境。成功工具结果应有count=1，以及原生当轮AI计数1/1。Reviewer继承主会话路由；返回的parentProvider/parentModel只说明父路由，不能单独证明真实reviewer模型来源。Root仅用假模型验收；用户随后反馈Kimi Code一轮真实probe得到count=1、AI判决1/1、失败0/1，基础判决链已获得用户手测证据。该反馈不扩大到通用审批或完整来源验收。
 
 AI策略只覆盖这个probe；其他进入approval/request的请求走人工，原生workspace内允许操作仍按原权限执行。实验禁止模型的subagent/subagent_fork委派，Perry内部独立reviewer仍保留；当前普通DSH入口的子代理配置不受影响。状态可用Perry原生 `/auto-review status`，其内存统计可能在turn结束时清零。`/auto-review off`只影响后续请求且不可靠跨turn保留，完整关闭实验请Ctrl+C退出TUI。
 
