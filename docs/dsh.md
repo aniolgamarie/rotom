@@ -1,10 +1,10 @@
-# DSH 配方与升级候选
+# DSH 配方与本机部署
 
-本分支维护一套 `dsh-default`。2026-10-12 的候选升级尚未完成整套验收：核心/TUI、离线配置和原生人工审批在隔离实例验证；Cursor 已有用户手测文本及工作区文件工具成功反馈，用户还发现恢复后模型回到默认。该配置问题已修复并通过真实宿主+假模型回归，真实 Cursor 修复后续接仍未重测。Codex/国内 API 真实账号测试按用户要求跳过，记为 NOT RUN；通用 AI reviewer 仍未交付；现在有只审批纯内存 probe 的独立实验入口。代理没有调用真实账号。既有部署不切换，旧状态自动升级受阻止。完整结果见 [升级验收记录](acceptance/dsh-upgrade-20261012.md)。
+维护一套 `dsh-default`。2026-10-13 已按用户授权合入 main，并将已验收候选确立为本机日常部署，保持原实例/HOME、账号、会话与密钥来源。日常使用原生人工审批；通用 AI reviewer 已延期至上游修复后验收，独立实验仅审批纯内存 probe。Cursor 有用户文本及文件工具成功反馈，模型恢复修复已通过真实宿主+假模型回归，完整账号链仍未全部验证；Codex/国内 API 完整账号测试按用户要求跳过。代理没有调用真实账号。没有自动接管旧版部署或将会话交给旧版本。完整结果见 [升级验收记录](acceptance/dsh-upgrade-20261012.md)。
 
 ## 版本、原包与锁
 
-| 组件 | 当前候选 | 来源与边界 |
+| 组件 | 当前日常配方 | 来源与边界 |
 | --- | --- | --- |
 | DSH Core | `0.2.0-rc.2` | `639ed015397290b3745d163aafe02ffee4aa3f84`；预发布版 |
 | TUI | `0.14.0` | `c2eee95218d1decfce138f7d31ef7099cc391d00`；未改动 npm 原包 |
@@ -22,7 +22,20 @@
 
 ## 使用与登录
 
-先准备仓库 `.venv`，从明确的私人机器文件启动：
+本机个人 PATH 已注册以下命令，管理器使用 main 源码；实例仍位于 `/home/private-user/rotom-dsh-candidate-20261012`，保留目录名以维持身份和原生数据路径：
+
+```bash
+cd /path/to/project
+dsh                         # 默认使用当前目录；--cwd 也可显式指定
+dsh-config doctor           # 离线检查当前日常实例
+dsh-config plan
+dsh-config model status
+dsh-config model key kimi-code  # 隐藏输入，写原有密钥来源
+dsh-auto-review             # 仅 probe 的独立实验，不是通用自动审批
+dsh-cursor-login-url        # 用户本人在终端取完整登录链接；代理不执行
+```
+
+本机 `dsh-config` 固定同一 machine/profile 与隔离 HOME/XDG；没有改动其他 Agent 的配置或密钥文件。日常启动默认模型仍遵循现有配置、原生偏好和会话恢复优先级。以下是其他机器从明确私人配置部署的通用命令：
 
 ```bash
 ./agentcfg --machine workstation --profile dsh-default sync
@@ -208,8 +221,8 @@ AI策略只覆盖这个probe；其他进入approval/request的请求走人工，
 
 回到原人工候选运行 `/home/private-user/rotom-dsh-candidate-20261012/dsh`。实验不切换正式配方/主锁、不迁移旧会话，不宣称可以软件或会话降级。
 
-现有体验入口的管理器代码固定到本机固定提交 `f8d558e` 的 detached worktree，避免正式状态栏新增初始化字段令其严格候选摘要失配。启动前逐文件核对已投影 probe 的内容；漂移拒绝。原实例、账号、会话和实验锁保持原位置。该入口只运行原体验，不对旧实验执行新配方的 prepare；新验证目录使用当前源码。检查源码/所有权已通过，但固定入口没有由代理再调用真实模型。
+现有体验入口固定到 `support/auto-review-source-f8d558e` 的公开 Git 源码快照，运行包位于 `support/auto-review-runtime-rc2`，均在上述持久实例根内。原 detached/开发 worktree 已回收；启动前比较 probe 与 main 同源文件，漂移拒绝。路径迁移持操作/实例锁并记录 `support/relocation-recovery.json`，输入和模块拓扑一致、runtime identity未变；profile/source投影按所有权记录迁移，账号和会话不复制。固定原配方重复prepare通过，新配方不能直接认领原体验。真实宿主+模拟模型复测通过，代理未追加真实模型调用。
 
-2026-10-13 最终复核 [Perry main 的 runtime](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/runtime.ts) 和 [audit](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/audit.ts)：RC2 的在途批准、跨轮次关闭和完整审计缺口仍在。公开 wrapper 可拒绝部分迟到结果，不能撤回已委派决定或中止私有 reviewer；回放公开开关命令会重复注入 notice，不能作为无竞态恢复契约。正式通用自动审批继续 BLOCKED，未合入 main 或正式发布。
+2026-10-13 最终复核 [Perry main 的 runtime](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/runtime.ts) 和 [audit](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/audit.ts)：RC2 的在途批准、跨轮次关闭和完整审计缺口仍在。公开 wrapper 可拒绝部分迟到结果，不能撤回已委派决定或中止私有 reviewer；回放公开开关命令会重复注入 notice，不能作为无竞态恢复契约。通用自动审批继续 BLOCKED，未作为日常功能启用；人工审批升级已合入 main。
 
 用户已同意将这些缺口转为后续上游升级事项，见 [DSH-F01 跟踪及复测门槛](acceptance/dsh-upgrade-20261012.md#dsh-f01-后续上游升级跟踪)。当前交付范围是普通候选的人工审批与独立 probe 限定体验；通用自动审批仍未交付，原 FAIL 证据保留。后续在维护窗口核验固定发布包及公开 API，再使用隔离目录复测；不自动追踪 latest、安装更新或调用账号。上游若补齐公开接口，可评估必要薄适配，不维护 fork 或第二套审批系统。
