@@ -113,7 +113,7 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 
 ### 推荐状态栏（已应用）与按需审批设计（未启用）
 
-2026-10-13 按用户确认，已在候选实例活动锁内原子写入下列原生 `statusBar` 偏好，保留其他 UI、未知字段、模型、账号与会话。重复 apply 为 changes=0，写入后逐字段回读一致。这不是新增 agent_options schema 或所有新实例的强制默认；日后通过 `/settings` 修改仍属于原生用户偏好，apply 保留。
+2026-10-13 按用户确认，下面的 18 项 `statusBar` 偏好已进入 `dsh-default` 正式来源，逐字段仅首次初始化。日后通过 `/settings` 修改仍属于原生用户偏好，apply 保留；未知字段也保留。升级时已受管共享文件中的既存偏好只消费初始化机会，不采纳用户值为受管基线，也不重写文件。首次接管非空未拥有文件仍失败。当前候选的重复 apply 为 changes=0，账号与会话不变。
 
 ```yaml
 statusBar:
@@ -141,39 +141,9 @@ model 是当前模型；thinking 是推理档位而不是耗时；cwd 是目录�
 
 审批目标维持 workspace-write+ask：普通沙箱内允许操作直接执行，只有实际 approval/request 才进入规则和 reviewer。硬拒绝先于模型；生产/外部写入、破坏性删除、权限变化、动态脚本、未知工具和不明目标转人工或拒绝，不按整个 Shell 名称建立 allow 白名单。模型只能给本请求一次允许，不产生后续通用授权。
 
-以下字段是按 [Perry 0.12.17 源码](https://github.com/PerryLink/dsh-auto-review/tree/2b931b8375f9ee9ebe20e80ef336c69804e1aac0) 核对的条件设计。此配置不进入当前插件清单，`rotom_review_context` 工具尚未实现/注册；enableByDefault=false、空 AI overrides 是隔离验收阶段的关闭状态，不算自动审批交付。
+正式候选没有启用通用自动审批，也不提供未注册的 reviewer 工具配置示例。现有可运行的限定配置位于 `tests/fixtures/dsh-auto-review-probe/cordis.patch.yml`，仅用于下方独立实验；其中常量上下文工具不读取文件、环境或账号。Perry 默认 read/glob/grep 不能限制读目录，空 reviewerTools 又不符合 schema，不能据此宣称 reviewer 已隔离。
 
-```yaml
-enableByDefault: false
-reviewerProvider: spawn
-# reviewerModel 是字符串；未设置时继承当前选定路由。
-# 只有验证该路由能返回所需结构化判决后才可复用，不自动换付费来源。
-reviewerTools:
-  - rotom_review_context
-reviewerTimeoutMs: 30000
-maxReviewsPerTurn: 3
-maxFailuresPerTurn: 2
-fallbackPolicy: delegate
-toolsPolicy:
-  default: human
-  overrides: {}
-riskPolicy:
-  maxAutoAllow: low
-  onHighRisk: delegate
-circuitBreaker:
-  consecutiveDenies: 2
-  windowDenies: 3
-  windowSize: 5
-  action: delegate
-contextBudget:
-  turns: 0
-  maxChars: 1200
-allowUnmarkedAudit: false
-```
-
-`reviewerTools: []` 在现版本非法，默认 read/glob/grep 又不能限制读目录，因此候选设计只暴露一个非文件/非Shell的上下文工具：返回本次动作、必要且有来源标记的用户授权和项目快照，不接收模型提供的审批/会话查询 ID，不读取真实 HOME/凭据/任意代码目录。turns=0 关闭自动复制主会话 transcript；没有可靠上下文工具时上游会警告 blind review，必须继续人工，不能将该值单独当作可用 reviewer 配置。Perry 内部 runReview 已关联本次 request 的取消/超时/child，并在 agent/pre-step 过滤新注入上下文，不能称完全没有请求关联或上下文防火墙。公开 ToolRunContext 提供可信 exec.agent/callId/signal，但外部上下文工具仍缺直接公开的 approval/request 到 reviewer child 查询接缝；实现该条件设计前必须证明绑定、并发、取消和生命周期无歧义，不能按同父会话或模型自报 ID 猜测。spawn 避免 fork 的已完成历史继承，工具只读仍不提供独立可读目录范围。
-
-当前不能安全启用的门槛依次为：完整 peer/runtime 兼容；上述独立 reviewer 的上下文/工具边界与身份绑定；真实 approval 链在人工处理器之前接管且 never/硬 deny 不被覆盖；取消/关闭后的迟到 allow 无效；失败预算和无人工通道不放行；持久审计能关联动作、session/request/call、判决理由、模式和失败。现 RC 下 Perry 默认审计是内存，allowUnmarkedAudit 强行写入不是恢复方案，不能以配置掩盖持久审计缺口。只有这些验收通过，才为已验证低风险工具增加明确 AI overrides，并讨论默认启用或会话 `/auto-review on`；当前只有人工入口可用。不能可靠进入审批链的 MCP/PTC/直接Node等通道，不宣称已审查。
+当前通用自动审批的门槛依次为：完整 peer/runtime 兼容；独立 reviewer 的上下文/工具边界与身份绑定；真实 approval 链在人工处理器之前接管且 never/硬 deny 不被覆盖；取消/关闭后的迟到 allow 无效；失败预算和无人工通道不放行；持久审计能关联动作、session/request/call、判决理由、模式和失败。现 RC 下 Perry 默认审计是内存，allowUnmarkedAudit 强行写入不是恢复方案。正式候选保持人工；下方独立实验仅支持无副作用 probe。不能可靠进入审批链的 MCP/PTC/直接Node等通道，不宣称已审查。
 
 2026-10-13 初次只读核验（历史状态，后续 RC2 实验见下）：Perry 最新仍为0.12.17。DSH0.2.1-alpha.2 的原始 Session 包已提供实验性公开 appendPluginRecord（顶层ignorable、plugin命名空间），这与旧append第三参数不同；不能笼统说所有Core都没有安全记录原语。但Perry0.12.17尚未采用它，其版本守卫在所有0.2预发布线仍停用完整裁决写入，公开answer返回审批结果而非完整verdict，未提供决策前的verdict审计writer/hook。单纯换新Core或补装包不等于交付持久审计。原生read-only也不隔离可读HOME，子代理启动配置没有独立readable-roots。该阶段只核验元数据/源码。后续 RC2/Perry 已安装并运行限定实验；日常候选继续人工模式，真实生命周期和审计失败不能靠账号授权解决。
 
@@ -215,7 +185,7 @@ DSH 不安装 OpenSpec，不自动部署 Spec 工作流/技能，也不使用 Sp
   --evidence /absolute/path/to/new-evidence-directory
 ```
 
-中文多行/窄窗/原生文件工具/退出的独立入口为 `scripts/smoke-dsh-ui.py --allow-host --runtime ... --evidence ...`（仅本地假模型）。两个新 HOME 的重建入口为 `scripts/smoke-dsh-rebuild.py --allow-install --cache /absolute/task-cache --evidence ...`；记录显式共享下载缓存，不称 cold build。两个脚本均用本任务私人 `/dev/shm` HOME，当前仅在 Linux 运行。
+中文多行/窄窗/原生文件工具/退出的独立入口为 `scripts/smoke-dsh-ui.py --allow-host --runtime ... --evidence ...`（仅本地假模型）。加 `--agentcfg-cli` 可验收真实 `agentcfg --local <临时配置> --profile dsh-default apply/sync/run`；完整复制已有 sealed runtime 及原收据，sync 必须保持无变化，run 不联网安装。两个新 HOME 的重建入口为 `scripts/smoke-dsh-rebuild.py --allow-install --cache /absolute/task-cache --evidence ...`，缓存根必须满足私人路径祖先保护；记录显式共享下载缓存，不称两次 cold build。两个脚本均用本任务私人 `/dev/shm` HOME，当前仅在 Linux 运行。
 
 Cursor 原生认证面板的独立入口为 `scripts/smoke-dsh-auth-panel.py --allow-host --runtime ... --evidence ...`，使用真实 TUI/QuestionBridge、假 Coordinator 和明确标记的假长链接，验证面板交互，不访问真实认证。`scripts/check-dsh-cursor-panel.mjs /absolute/runtime` 另测并发、重新显示、错误隔离、注销失败和文件漂移。复制动作的完整参数可验证，真实 SSH 剪贴板和浏览器仍需客户端手测。
 
@@ -237,3 +207,7 @@ AI策略只覆盖这个probe；其他进入approval/request的请求走人工，
 实验目录为候选目录下auto-review-experience，默认工作区固定其中workspace；HOME/DSH/XDG与旧实例分开，保留Catppuccin和原生欢迎页，重复prepare不恢复用户UI偏好。共享API key引用原candidate machine配置来源；填写仍用原agentcfg model key kimi-code/glm-code入口并隐藏输入。Cursor/Codex原生登录状态不复制，新HOME若要使用Cursor需 `/cursor-login`，完整链接由实验目录的cursor-login-url在本人终端查看。
 
 回到原人工候选运行 `/home/private-user/rotom-dsh-candidate-20261012/dsh`。实验不切换正式配方/主锁、不迁移旧会话，不宣称可以软件或会话降级。
+
+现有体验入口的管理器代码固定到本机固定提交 `f8d558e` 的 detached worktree，避免正式状态栏新增初始化字段令其严格候选摘要失配。启动前逐文件核对已投影 probe 的内容；漂移拒绝。原实例、账号、会话和实验锁保持原位置。该入口只运行原体验，不对旧实验执行新配方的 prepare；新验证目录使用当前源码。检查源码/所有权已通过，但固定入口没有由代理再调用真实模型。
+
+2026-10-13 最终复核 [Perry main 的 runtime](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/runtime.ts) 和 [audit](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/audit.ts)：RC2 的在途批准、跨轮次关闭和完整审计缺口仍在。公开 wrapper 可拒绝部分迟到结果，不能撤回已委派决定或中止私有 reviewer；回放公开开关命令会重复注入 notice，不能作为无竞态恢复契约。正式通用自动审批继续 BLOCKED，未合入 main 或正式发布。
