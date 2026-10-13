@@ -78,6 +78,12 @@ DSH 内核、standard preset、workspace-write + ask 为默认。默认显示原
 
 常用状态入口是 `/status`、`/tokens`、`/settings`、`/panel`、`/preset` 与 `/permission`。实际快捷键以该版本 `/help` 为准；tmux 的 Ctrl+B 会吃掉默认侧栏键，可在原生设置中重绑。终端图片预览默认关闭，模型自身图片输入能力保留。中文/多行粘贴、窄窗和退出的实际验收范围以记录为准；未运行 SSH/tmux 客户端交互不能据 PTY 推断通过。
 
+原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及九款固定样式。立绘是原生用户偏好，不是 Rotom 强制默认，保存在同一用户 Cordis patch 中，apply 保留。终端支持 Kitty/Sixel 时可以显示原图，否则使用字符画回退；矮窗口会由原生布局收起立绘，扩大终端后再查看。当前手测实例已按用户要求开启女仆娘立绘，主题保持 Catppuccin。
+
+原生主题切换使用 `/theme` 实时预览，或 `/theme dark`、`/theme rotom-catppuccin`。作者的主题文档介绍 Gentle Mist Blue 色系，深色终端对应 `dark`，没有明确指定“最好看”的主题；Catppuccin 是 Rotom 通过公开 JSON 主题格式配置的色板，不是 0.14.0 内置主题。
+
+公共默认模型来源与私人密钥文件是两层配置：DSH 继承 `shared/defaults/models.toml` 的模型入口及 main 角色；同一个 `secret:` 引用可供多个 Agent 共用，但它们必须引用同一私人 `secrets_file`。本次候选显式使用 `/home/private-user/rotom-dsh-candidate-20261012/secrets.toml`，没有自动连接原机器密钥文件。截至本次脱敏 `model status`，main 为 Kimi Code 的 `kimi-for-coding`，Kimi/GLM/DeepSeek key 均未填写。要复用现有共享密钥，应由用户指定该文件的绝对路径后连接引用，不能扫描真实 HOME 或自动复制凭据。
+
 `/model` 切换当前会话的模型，不改 Rotom 的全局 main 角色。新会话沿用配方明确指定的 provider/model；恢复已有会话用 `/resume` 打开原生列表并按 Enter，路由从该会话记录恢复。主题、欢迎页和认证面板均使用上游公开入口，Rotom 不维护另一套菜单或会话管理界面。
 
 ## 重试与权限
