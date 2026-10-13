@@ -76,11 +76,13 @@ DSH 内核、standard preset、workspace-write + ask 为默认。默认显示原
 - 薄启动器使用公开 `@deepseek-ai/dsh/profile-boot` 与 launch environment snapshot；不调用 dotenv 发现，不改 Node fs 或上游。业务 cwd 不变，cwd/.env 与 DSH_HOME/.env 不被隐式导入。
 - 原生 packageManager 通过公开启动参数指向拒绝更新的受管入口；普通 TUI 自更新不受支持。独立 CLI/手工修改不能当作受管操作，doctor/run 会检查受管运行包漂移。
 
-常用状态入口是 `/status`、`/tokens`、`/settings`、`/panel`、`/preset` 与 `/permission`。实际快捷键以该版本 `/help` 为准；tmux 的 Ctrl+B 会吃掉默认侧栏键，可在原生设置中重绑。终端图片预览默认关闭，模型自身图片输入能力保留。中文/多行粘贴、窄窗和退出的实际验收范围以记录为准；未运行 SSH/tmux 客户端交互不能据 PTY 推断通过。
+常用状态入口是 `/status`、`/tokens`、`/settings`、`/panel`、`/preset` 与 `/permission`。实际快捷键以该版本 `/help` 为准；tmux 的 Ctrl+B 会吃掉默认侧栏键，可在原生设置中重绑。本配方的 `terminalImages` 默认关闭（TUI 原生默认开启），它控制主渲染器的图像协议探测，同时影响图片预览和头部立绘原图；模型自身图片输入能力保留。在 `/settings` 的「终端图片预览」调整后，用 `/restart` 生效。中文/多行粘贴、窄窗和退出的实际验收范围以记录为准；未运行 SSH/tmux 客户端交互不能据 PTY 推断通过。
 
-原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及内置固定字面，以实际选择器为准。立绘是原生用户偏好，不是 Rotom 强制默认，保存在同一用户 Cordis patch 中，apply 保留。0.14.0 的伙伴皮肤会优先接管头部：默认 `companion.skin=deepy` 会盖过立绘开关。显示作者的头部女仆立绘需 `whaleGirl=true` 配合 `companion.skin=whale`；选择 `companion.skin=whaleGirl` 则是另一套动态吉祥物素材。终端支持 Kitty/Sixel 时可以显示原图，否则使用女仆字符画回退；图像协议缺失本身不会回退成鲸鱼。矮窗口会由原生布局收起立绘，扩大终端后再查看。当前手测实例已完成此组合配置及真实欢迎页/会话头部字符画验证，主题保持 Catppuccin。
+原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及内置固定字面，以实际选择器为准。立绘是原生用户偏好，不是 Rotom 强制默认，保存在同一用户 Cordis patch 中，apply 保留。0.14.0 的伙伴皮肤会优先接管头部：默认 `companion.skin=deepy` 会盖过立绘开关。显示作者的头部女仆立绘需 `whaleGirl=true` 配合 `companion.skin=whale`；选择 `companion.skin=whaleGirl` 则是另一套动态吉祥物素材。原图还需开启 `terminalImages`、重启后成功探测到 Kitty/Sixel，并成功解码资产。0.14.0 在 tmux/screen 中直接禁用图像探测，即使外层终端支持图像协议也使用字符画。回退是作者自带的 30×30 真彩色精灵，用半块字符显示为30列×15行；复制为纯文本会丢失颜色，只剩轮廓。图像协议缺失本身不会回退成鲸鱼。矮窗口会由原生布局收起立绘，扩大终端后再查看。当前手测实例已完成此组合配置及真实欢迎页/会话头部字符画验证，主题保持 Catppuccin；原图协议未验收。
 
 原生主题切换使用 `/theme` 实时预览，或 `/theme dark`、`/theme rotom-catppuccin`。作者的主题文档介绍 Gentle Mist Blue 色系，深色终端对应 `dark`，没有明确指定“最好看”的主题；Catppuccin 是 Rotom 通过公开 JSON 主题格式配置的色板，不是 0.14.0 内置主题。
+
+0.14.0 的立绘仅支持内置素材选择：`whaleGirl` 是头部女仆开关，`companion.skin` 可选 deepy/whale/whaleGirl；静态头图与伙伴动画是不同素材。没有公开配置可导入任意图片或自定义皮肤目录。内部皮肤注册函数未通过包 exports 开放，不能当作已交付的扩展 API；不替换安装包 assets。[Ghostty 支持 Kitty 图像协议](https://ghostty.org/docs/features)，但该 TUI 的 tmux 分支仍直接禁用探测。查看原图可先退出当前候选 TUI，在不进入 tmux 的 Ghostty 标签页运行同一入口，开启「终端图片预览」并 `/restart`；仅增加 tmux passthrough 设置不会改变上游的禁用分支。
 
 Catppuccin 色表来自官方 [Neovim Mocha](https://github.com/catppuccin/nvim/blob/edefef779ab08ce1a4a404713e3012b0d202bd35/lua/catppuccin/palettes/mocha.lua)，本配方覆写 TUI 0.14.0 全部 81 个 Theme 字段，保留空 cursor 的原生反显语义。强调色 peach、边框 blue/lavender、关键字 mauve、函数 blue、字符串 green、数值 peach、运算符 sky、标点 overlay2，与本仓库 OMP Catppuccin 对齐。注释 overlay0、变量 text 沿用 OMP 的选择；它们不等同于 Neovim `syntax.lua` 的传统 Comment/Identifier 映射，也不是唯一的官方映射。
 
