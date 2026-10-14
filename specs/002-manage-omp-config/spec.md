@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # Feature Specification: OMP 配置统一纳管与原生 Profile 兼容
 
 **Feature Branch**: 未创建；规格目录与分支独立，本次在 `main` 编写
@@ -197,7 +199,7 @@
 
 不纳入：已有非受管 profile 的原地纳管、认证与历史会话迁移、重建 OMP profile 系统、跨 profile 合并账号/会话、浏览器 Cookie 抓取、独立订阅采集服务、全量移植 Pi 扩展体系、修复无关 DSH/Pi 缺陷、默认启动真实宿主或进行真实账号查询。
 
-另外转出当前 spec：[OMP-F01–F05](../../docs/follow-ups/omp-platform-and-live-validation.md)，包括 Linux arm64、macOS 两架构实机、真实登录、真实 usage、指定模型调用。当前机器无对应环境，保留未验证；不撤销已实现的平台选择、账号隔离、登录或 usage 能力。
+另外转出当前 spec：[OMP-F01–F05](../../docs/known-issues.md)，包括 Linux arm64、macOS 两架构实机、真实登录、真实 usage、指定模型调用。当前机器无对应环境，保留未验证；不撤销已实现的平台选择、账号隔离、登录或 usage 能力。
 
 ### Source Evidence and Follow-up Mapping
 
@@ -205,7 +207,7 @@
 
 | 来源 | 规格阶段结论 | 关联需求 |
 |---|---|---|
-| [遗留事项总表](../../docs/follow-ups/README.md) 与 [AGENTCFG-F01](../../docs/follow-ups/agentcfg-usage-command.md) | 唯一明确的 OMP 直接延期项为用量薄封装；保留获批方案，纳入本次交付 | FR-018–024、027 |
+| [遗留事项总表](../../docs/known-issues.md) 与 [AGENTCFG-F01](../../docs/known-issues.md) | 唯一明确的 OMP 直接延期项为用量薄封装；保留获批方案，纳入本次交付 | FR-018–024、027 |
 | 本地既有 secrets 同文件缺陷记录（`docs/defect-secrets-in-same-file.md`，不随本次提交） | 对新 OMP 路径施加不扩散秘密的边界；不宣称本次修复整个既有存储问题 | FR-013–014 |
 | [现有 Pi 说明](../../docs/pi.md)、[迁移说明](../../docs/pi-migration.md)、[适配约定](../../docs/adapters.md) | 复用公共管理契约；不能把 Pi 适配结论直接用作 OMP 证据 | FR-001–017、026 |
 | [OMP 配置发现文档](https://github.com/can1357/oh-my-pi/blob/main/docs/config-usage.md) | 2026-09-24 查阅：命名 profile 有原生隔离；默认快捷键有继承，项目/外部来源另有作用域。须分别验收 | FR-005–010 |

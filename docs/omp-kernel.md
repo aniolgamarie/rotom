@@ -1,6 +1,6 @@
 # The omp-kernel recipe
 
-`omp-kernel` is the daily-use OMP recipe. It extends `omp-default`, whose public pool contains eight official model bindings: four Kimi Code, two GLM Coding Plan, and two DeepSeek. The initial public main model is Kimi Code. This guide covers private machine configuration, deployment, and managed launch. Linux glibc x64 evidence does not establish WSL validation; see [testing](testing.md) and the [support matrix](acceptance-matrix.md).
+`omp-kernel` is the daily-use OMP recipe. It extends `omp-default`, whose public pool contains eight official model bindings: four Kimi Code, two GLM Coding Plan, and two DeepSeek. The initial public main model is Kimi Code. This guide covers private machine configuration, deployment, and managed launch. Linux glibc x64 evidence does not establish WSL validation; see [testing](testing.md) and the [support matrix](omp-support.md).
 
 ## Included configuration
 

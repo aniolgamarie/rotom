@@ -1,104 +1,48 @@
 # Roadmap
 
-本文件记录项目级后续方向。条目进入 Roadmap 不代表已排期、已实施或已有验收；恢复工作时
-应重新核对当前源码、依赖与支持矩阵，再细化实施任务。
+This roadmap records intended work, not release commitments. Recheck source, locks, upstream APIs, and support evidence before implementation. Concrete defects and unverified capabilities are tracked in [known issues](known-issues.md).
 
-## RM-001：第三方插件与依赖按需管理
+## Release preparation
 
-- 记录日期：2026-10-09。
-- 状态：延期，未来实施；本轮只记录规划。
-- 工作量判断：中等偏大，涉及来源治理、历史适配迁移、依赖解析和部署验证。
-- 关联：[上游源码偏离与迁移盘点](follow-ups/upstream-agent-source-migration.md)。
+| Priority | Work | Exit condition |
+| --- | --- | --- |
+| Required for a Pi deployment claim | PI-LOCK: rebuild the stale Pi lock through the official repository workflow | Complete source/lock closure and current native/cold evidence; no digest-only refresh |
+| Required for privacy-sensitive publication | Review the [history remediation plan](history-cleanup.md) | Approved disposition of historical machine identifiers and author metadata; current-tree cleanup alone is insufficient |
+| Required before tagging | Freeze a candidate and record validation | Relevant tests, lock checks, documentation links, source/license inventory, explicit unresolved limitations |
+| Ongoing | Upstream DSH/Perry fixes | Repeat the real approval-chain and sandbox tests before changing accepted limitations |
 
-### 目标架构
+## RM-001: Declared sources and on-demand dependencies
 
-采用类似 Neovim 插件管理器的来源声明与锁定方式：
+**Status: deferred design and migration; not delivered.**
 
-- 第三方 Git 插件记录仓库地址、固定 commit、兼容范围、许可证与可验证的内容身份。
-  tag/version 可用于展示，实际解析结果须固定，不能启动时追踪浮动分支。
-- npm 包记录准确版本、解析地址与 integrity；官方运行资产记录固定 URL 与摘要。
-- Git 仓库保存公共配置、来源声明、依赖锁、自有插件、适配代码与必要测试。
-  第三方完整源码、生成归档和演示媒体放在本机缓存，按所选 profile 获取。
-- 安装集合由宿主、选定插件、资源和必要的传递依赖组成，不默认安装整个插件目录。
-- 自有能力通过公开配置、扩展 API、官方 CLI 或本仓库适配实现。不得通过补丁修改
-  agent 上游源码，也不得把有改动的第三方包标成原版来源。
+Move toward immutable source declarations and profile-scoped materialization, retaining public configuration, locks, repository-owned adapters, and tests in Git. Third-party Git sources should record fixed commits, compatibility, licenses, and content identity; npm sources should record exact versions, resolved URLs, and integrity. Downloaded source and generated archives should live in verified caches where reproducibility permits.
 
-### 当前问题与证据
+The current repository retains both third-party source and generated archives. Historical measurements showed that the current snapshot, rather than history alone, accounts for much of clone size. This is not solved by deleting archives while runtime/build paths still require them. Some Pi packages contain historical integration changes and cannot be replaced by an upstream URL without behavior analysis.
 
-当前实现为了冻结完整来源和离线重建，将多份 vendor 源码及其生成 `.tgz` 同时纳入 Git。
-这种布局扩大了 clone 体积，且部分 Pi 包是历史适配版本，维护成本不限于文件大小。
+Implementation stages:
 
-| 2026-10-09 的测量 | 结果 | 解释范围 |
-|---|---:|---|
-| main 完整克隆 pack | 49.65 MiB | 本机使用正常 Git 传输、只克隆 main；远端打包可略有差异 |
-| main 浅克隆 pack，depth 1 | 49.50 MiB | 大部分体积位于当前快照，浅克隆收益很小 |
-| 当前锁定的 22 个 `.tgz` | 23.07 MiB | Pi 20 个，DSH 2 个 |
-| vendor 的两段演示视频 | 12.98 MiB | 同时进入对应归档，存在重复存储 |
-| Pi 20 个归档的离线重建 | 20/20 双摘要一致 | 仅当前平台验证；未运行网络、安装脚本或 agent 宿主 |
-| 当前快照不含这 20 份 Pi 归档的虚拟打包 | 28.98 MiB | 隔离索引实验，不是已经完成的仓库瘦身或完整克隆结果 |
+1. Classify every source as repository-owned, unmodified upstream, derived plugin, or historical host deviation; map actual imports and profile use.
+2. Separate structural lock validation from downloading/materializing assets; use immutable verified caches and staged publication.
+3. Compute the selected profile's transitive closure, avoiding static imports that silently require unselected plugins.
+4. Replace historical adaptations with unmodified upstream packages and public extensions where possible; record unsupported behavior otherwise.
+5. Verify cold acquisition, warm offline deployment, cancellation, failure recovery, upgrades, and protection of old installations before removing vendor inputs.
+6. Consider a separately authorized history rewrite only after the new source workflow is reproducible.
 
-Pi 四个 profile 各锁定 19 个本地/Git 归档，而显式插件数量分别为 6、7、6、3。
-这说明需要重新核对安装集合与运行时导入关系；不能直接把未列入插件列表的所有包删掉。
+No floating latest versions at launch, unreviewed lifecycle scripts, force/legacy peer bypasses, or patched hosts. Preserve required notices and licenses. Measure clone size and selected-profile download cost after migration rather than inferring improvements from deleted file counts.
 
-初步来源盘点为 6 个 rotom/starter 来源的本地插件、1 个携带上游资源的 OpenSpec 包装器、
-13 个第三方衍生或适配包。最终分类还须确认维护归属与改动性质；`kind: local` 不等于
-自有源码，`kind: git` 或存在上游 URL 也不等于完整运行包保持了上游原样。
+## RM-002: Lease descriptor lifecycle
 
-Subagents、Web、Permissions、MCP 等包含历史 agentcfg 接线或行为适配，不能仅改成
-上游地址就假定功能等价。已有通知、SOURCE 清单和 patch 应作为迁移证据保存。
+**Status: open design; no lifecycle redesign in this release preparation.**
 
-### 分阶段路线
+A background descendant may inherit an instance/state/runtime lease and retain it after the visible host exits. Design the lifetime boundary so unrelated descendants cannot indefinitely prevent deployment while active hosts, recovery, and concurrent access stay protected. Simply deleting lock files or dropping all leases is unacceptable.
 
-1. **来源与能力盘点。** 逐包列明原始来源、固定版本、现有本地改动、启用 profile 和
-   实际依赖；区分自有插件、未修改上游、派生包及历史宿主偏离。
-2. **来源锁与缓存层。** 将结构性锁校验和实际下载/物化分离。按固定身份复用缓存，
-   临时获取、校验后原子发布；摘要不符即失败，不悄悄更新锁。
-3. **按 profile 解析部署集合。** 计算传递依赖，生成相应安装输入；处理自有运行层的
-   可选包导入，确保未选中的插件不因静态导入而成为隐性强制依赖。
-4. **迁移历史适配。** 优先原版第三方包加自有扩展或包装器。公开 API 无法承接的能力
-   明确记录限制、评估替代或等待上游接口，不继续扩大源码 fork。
-5. **切换来源与验证。** 在独立 worktree 中实施，逐 profile 验证冷缓存获取、暖缓存
-   离线部署、版本更新、取消、失败恢复与旧部署保护，再移出第三方 vendor/归档。
-6. **最后整理 Git 历史。** 新获取流程稳定后，单独备份并审核精确外置路径的历史过滤。
-   仅删除最新版文件不会缩小完整 clone；历史改写及远端更新需独立明确授权。
+Validation must cover foreground commands, native exit, manager failure, daemon descendants, concurrent deployment, and PID reuse. An implementation must use public process and host interfaces; it must not patch an agent.
 
-纯粹把 Pi `.tgz` 改为从保留源码重建到缓存，已经验证存在过渡方案，但它只减少归档
-副本，仍把完整第三方源码留在 Git，不是本条目的最终目标。DSH 两个归档目前没有
-同等的仓库内重建配方；迁移前须补齐原始来源和获取身份。
+## Other planned work
 
-### 验收与恢复边界
+- Establish a matching independent TypeScript development lock for Task Keeper and real SDK typechecking.
+- Evaluate explicit per-route proxy controls without conflating model, reviewer, ordinary tool, and download traffic.
+- Extend native and account validation to additional platforms only when suitable authorized environments exist.
+- Maintain English documentation and clearly scoped translations. Prefer durable guides and issue registers over public operational transcripts.
 
-- 用户只选择 OMP 时，不获取 Pi/DSH 专用插件；Pi profile 只物化声明及必要的依赖集合。
-- 原版第三方来源须可核验；自有适配和原版包分开，保留许可证和来源记录。
-- 暖缓存允许离线使用；缓存缺失有明确诊断，只在显式同步步骤获取依赖。
-- 默认不执行未审查的安装脚本；未知字段、版本或摘要不匹配失败关闭。
-- 默认测试使用临时 HOME/缓存、假下载和假执行，不访问真实账号、密钥或会话。
-  真实宿主、账号、模型与其他平台分别验收，不能借用旧版本的通过证据。
-- 归档字节受 Python/zlib 与执行位等影响；当前平台的重建成功不能当作跨平台保证。
-- 切换须保护正在运行的部署、配置所有权、账号和会话；保留旧运行包及恢复入口。
-- 完成后重新测量完整 clone、选定 profile 的首次部署下载量和暖缓存部署行为。
-
-### 恢复工作的前提
-
-当前 CLI UX 与 Pi toolkit worktree 仍在活跃修改；本 Roadmap 不改动它们。未来涉及
-相同后端文件时，应先协调实现范围和合并顺序，避免覆盖正在进行的工作。
-
-不得提前删除测试语料、审计资料、vendor 媒体或锁定归档来取得表面瘦身。先证明来源
-获取和能力迁移可用，再移出对应内容。历史备份、迁移映射与本机日志继续存于仓库外
-或忽略目录，不纳入 Git 同步；远端推送按用户要求提供命令，由用户执行。
-
-## RM-002：启动租约与后台后代的文件描述符继承
-
-- 记录日期：2026-10-12。
-- 状态：待单独设计和验证；本次仅记录，不改变现有租约或宿主。
-- 关联：[审查预算修复与部署记录](acceptance/omp-review-deadlines-20261012.md)。
-
-本机部署时发现，OMP 已退出，但一个父进程为 1 的 Java 后台进程仍持有物理实例锁。
-用户授权后正常终止该进程，锁释放。管理器通过 `pass_fds` 将物理实例、管理状态和运行包
-三层租约交给官方宿主；工具启动的后台后代也可能继承可继承描述符，在宿主退出后继续
-阻止部署。关闭自动后台化无法覆盖命令主动创建的后台进程。
-
-后续应设计明确的启动和租约生命周期，阻止无关后台后代继承租约，同时保留活动宿主、
-异常退出、配置所有权与恢复保护。不得直接删除锁、取消三层租约或修改 agent 上游来规避。
-验收须覆盖前台命令、正常退出、管理器异常退出、后台/daemon 后代、并发部署及 PID 重用；
-使用临时实例和合成子进程，真实宿主验证独立授权。公开接口是否足以承接仍需单独评估。
+Parallel feature branches and staged work must be reviewed separately. Roadmap entries do not authorize merging unfinished Pi/CLI changes, rewriting history, publishing releases, or modifying deployed instances.

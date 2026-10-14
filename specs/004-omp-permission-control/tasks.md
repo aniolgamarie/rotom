@@ -1,8 +1,10 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # Tasks: OMP 权限管控
 
 当前任务已扩展到独立插件迁移（T088 起）及原生 Bash 智能审批（T095 起）；T001—T087 的闭合仅代表历史补丁方案。当前需求与边界见[独立插件修订](standalone-plugin.md)。
 
-当前进度（2026-10-04）：T088—T109 已闭合。Phase 15 在新 worktree 扩展常见 Shell 环境，355 项 Bun、208 项 Python（7 项历史材料 skip）、固定 SDK 与 36/36 官方宿主通过，稳定 diff 审查无阻断。本轮付费调用0；用户后续确认退出并明确授权后，已完成备份和正常 sync/plan/apply，doctor offline-ready、待变更0，zsh 完整启动准入通过；未启动日常宿主。真实 Cursor 新版 zsh、其它平台、高级参数与本地 tiny 保留限制，不计为新增通过。证据见 [Shell 验收](../../docs/acceptance/omp-shell-approval-20261004.md)。此前 Phase 14 的真实 Cursor 与本机交付保留 [历史身份](../../docs/acceptance/omp-cursor-native-approval-20261004.md)，其预算6/6未改写。
+当前进度（2026-10-04）：T088—T109 已闭合。Phase 15 在新 worktree 扩展常见 Shell 环境，355 项 Bun、208 项 Python（7 项历史材料 skip）、固定 SDK 与 36/36 官方宿主通过，稳定 diff 审查无阻断。本轮付费调用0；用户后续确认退出并明确授权后，已完成备份和正常 sync/plan/apply，doctor offline-ready、待变更0，zsh 完整启动准入通过；未启动日常宿主。真实 Cursor 新版 zsh、其它平台、高级参数与本地 tiny 保留限制，不计为新增通过。证据见 [Shell 验收](../../docs/acceptance/omp-shell-approval-20261004.md)。此前 Phase 14 的真实 Cursor 与本机交付保留 [历史身份](../../docs/testing.md)，其预算6/6未改写。
 
 
 历史进度（2026-09-30）：T001—T087共87项已闭合；Phase 11是当时交付。Phase 11 新资产已完成正式离线构建、锁/receipt核验和266项材料化及相关OMP回归（96.59s，无跳过）；core 291 pass / 1085 assertions，宿主检查见本轮记录。Linux glibc x64临时HOME真实standalone通过主审503一次→远程Anthropic完整审批一次→pwd成功结果一次，primary1/remote1/tiny0/human0，permit pending→consumed；new/resume、missing-plugin pre-spawn exit5及rollback通过。固定服务main2/primary-failure1/remote-review1，外部模型0，服务已停止。 真实Cursor目录、GLM备用质量、tiny推理及其它平台未验证；历史付费账本不变。
@@ -489,12 +491,12 @@ T067-T069 ──> final real build and official/patched lock verification T070 �
 
 ## 最终真实宿主复验记录（2026-09-29）
 
-T039/T070/T071重开问题现已修复并重新闭合，T072勾选依据为[真实宿主报告](../../docs/acceptance/omp-permission-control-host-smoke.md)的最终产物、审计及回滚证据；不是仅凭进程退出0。自动许可的审查响应是固定fixture，真实主模型3次已用尽，T073仍独立未执行。最终受影响回归103 passed/92.46s、bridge31/253，冻结样本240条未变。requirements checklist16/16为既有文档检查，未改其标记。
+T039/T070/T071重开问题现已修复并重新闭合，T072勾选依据为[真实宿主报告](../../docs/testing.md)的最终产物、审计及回滚证据；不是仅凭进程退出0。自动许可的审查响应是固定fixture，真实主模型3次已用尽，T073仍独立未执行。最终受影响回归103 passed/92.46s、bridge31/253，冻结样本240条未变。requirements checklist16/16为既有文档检查，未改其标记。
 
 
 ## T073 授权执行记录（2026-09-30，进行中）
 
-用户授权固定kimi_tf/kimi-for-coding最多新增92次真实审查请求；240条冻结集经无网络预检有92个模型候选。只审查不执行，禁止重试/fallback/tiny，日常配置不改。T073保持未勾，完成依据为[模型评测报告](../../docs/acceptance/omp-permission-control-model-evaluation.md)实际出站账本及逐effect语义结果，不凭预检计数宣布成功。
+用户授权固定kimi_tf/kimi-for-coding最多新增92次真实审查请求；240条冻结集经无网络预检有92个模型候选。只审查不执行，禁止重试/fallback/tiny，日常配置不改。T073保持未勾，完成依据为[模型评测报告](../../docs/testing.md)实际出站账本及逐effect语义结果，不凭预检计数宣布成功。
 
 ## T073 实测暴露的兼容性修复（2026-09-30）
 
@@ -665,10 +667,10 @@ Phase 14 隔离验收闭合（2026-10-04）：T096—T101（含 T099）完成。
 T103 交付记录（2026-10-04）：普通锁离线刷新并 read_lock 复核；官方身份未变，当前 plugin tree 与普通锁见生产验收 JSON。README/quickstart/支持与验收记录已更新，缓存/凭据/原始终端日志不提交。T103 范围为仓库交付与本地功能提交，后续合入及日常部署拆为 T104；T102/T104 均未执行，仍不计通过。所有历史补丁锁、receipt 与请求账本保持原身份。
 
 
-Phase 14 最终稳定代码验收（2026-10-04）：最后复核新增两个确定性排队取消回归，先 40 pass/2 fail，两个获得 gate 后的提前返回补 release 后通过；启动文件清单回归先 9 pass/1 fail，补 `.bash_login` 与粘性/deny 优先验证后通过。这是保守上下文范围，未声称官方实际执行该文件。最终定向 44 pass/155 assertions，包级 335 pass/1240 assertions，pristine SDK strict 无诊断；最终插件官方宿主 24/24 pass、真实 TUI Approve 通过；刷新普通锁后的 kernel/dependencies 31 pass/26.62s。外部模型 0，本机部署未变，历史 102/102 账本不变。最终身份、首次失败、已知限制与实际委派模型见 [本轮验收](../../docs/acceptance/omp-native-bash-approval-20261004.md)。
+Phase 14 最终稳定代码验收（2026-10-04）：最后复核新增两个确定性排队取消回归，先 40 pass/2 fail，两个获得 gate 后的提前返回补 release 后通过；启动文件清单回归先 9 pass/1 fail，补 `.bash_login` 与粘性/deny 优先验证后通过。这是保守上下文范围，未声称官方实际执行该文件。最终定向 44 pass/155 assertions，包级 335 pass/1240 assertions，pristine SDK strict 无诊断；最终插件官方宿主 24/24 pass、真实 TUI Approve 通过；刷新普通锁后的 kernel/dependencies 31 pass/26.62s。外部模型 0，本机部署未变，历史 102/102 账本不变。最终身份、首次失败、已知限制与实际委派模型见 [本轮验收](../../docs/testing.md)。
 
 
-T102 真实验收（2026-10-04）：新增授权6次已用6次（Cursor3/GLM3），原102/102账本未动。先有thinking+text envelope兼容失败→人工Deny、零委托；生产诊断确认唯一text为有效allow。最小协议修复保留严格JSON/禁止/终止链。复验读取复合命令真实自动批准，nativeDelegate=1、human=0、coverage=ready；原生pwd deny复验 remote/human/delegate=0。原账号/日常配置未改，固定官方身份不变；新代码48定向/339包级、SDK0、25隔离宿主、31最终锁回归通过。证据与边界见 [真实Cursor验收](../../docs/acceptance/omp-cursor-native-approval-20261004.md)。
+T102 真实验收（2026-10-04）：新增授权6次已用6次（Cursor3/GLM3），原102/102账本未动。先有thinking+text envelope兼容失败→人工Deny、零委托；生产诊断确认唯一text为有效allow。最小协议修复保留严格JSON/禁止/终止链。复验读取复合命令真实自动批准，nativeDelegate=1、human=0、coverage=ready；原生pwd deny复验 remote/human/delegate=0。原账号/日常配置未改，固定官方身份不变；新代码48定向/339包级、SDK0、25隔离宿主、31最终锁回归通过。证据与边界见 [真实Cursor验收](../../docs/testing.md)。
 
 T104 日常交付完成（2026-10-04）：main 快进至 `14f34a9`。首次备份被活动锁阻止，未修改；用户明确要求终止后核验对应官方宿主并 SIGTERM 正常退出。双独占锁内完整 0600 备份169成员，按已确认意图仅恢复 Cursor default 与 GLM smol（退出后 smol 为 Cursor low），其它原生语义保持。正常 sync/plan/apply 更新2项、漂移0、冲突0；doctor offline-ready/installed、运行包匹配、待变更0、无恢复。完整 run 准入从用户压测项目目录通过 callback 验证，未启动日常宿主，新增请求0。13项账号DB/WAL/SHM、会话、本机TOML、owner字节/权限不变，官方binary SHA未变；测试HOME、账号副本、原响应已清理，6/6安全账本保留。完成=T095—T104；进行中=无；失败待决策=无；环境不足未验证=表列能力与平台，无本轮阻塞。细节见真实验收JSON.dailyDeployment，私人缓存与本机文件不提交。
 
@@ -705,7 +707,7 @@ T104 日常交付完成（2026-10-04）：main 快进至 `14f34a9`。首次备�
 
 完成＝T110—T114；进行中＝无；失败待决策＝无本轮阻塞，3 个生产注释错误和 14 条语法缺口留待下一轮变更；环境不足未验证＝远程 CI、实际 macOS/Windows、智能审批质量与真实宿主行为，不计作通过。
 
-最终私有候选 16,103 条/31,742 次出现，当前解析接受 8,640、拒绝 7,463、异常0，接受率53.65%不是准确率。53 Python、90 显式 Babel Bun、89 pass/1 skip 默认 Bun、64 现有 standalone/native 回归通过；固定集的3个注释正确预期仍失败，明确报告 semanticConformancePassed=false。详见[语料与验收记录](../../docs/follow-ups/omp-command-history-corpus.md)及[数值证据](../../docs/acceptance/omp-command-history-20261005.json)。历史任务与宿主/模型验收身份不改写；本轮宿主启动、历史命令执行和模型请求均0。
+最终私有候选 16,103 条/31,742 次出现，当前解析接受 8,640、拒绝 7,463、异常0，接受率53.65%不是准确率。53 Python、90 显式 Babel Bun、89 pass/1 skip 默认 Bun、64 现有 standalone/native 回归通过；固定集的3个注释正确预期仍失败，明确报告 semanticConformancePassed=false。详见[语料与验收记录](../../docs/follow-ups/omp-command-history-corpus.md)及[数值证据](../../docs/testing.md)。历史任务与宿主/模型验收身份不改写；本轮宿主启动、历史命令执行和模型请求均0。
 
 ## Phase 17：二次脱敏与词法场景精简
 
@@ -719,7 +721,7 @@ T104 日常交付完成（2026-10-04）：main 快进至 `14f34a9`。首次备�
 
 完成＝T115—T119；进行中＝无；失败待决策＝无本轮阻塞，既有3个注释错误与14个语法缺口仍留待生产行为变更；环境不足未验证＝误扩大的全库测试受临时目录所有权准入限制、远程CI、实际其它OS、审批质量和宿主执行，不计作通过。
 
-最终16,178条候选/31,914次出现，归并11,504个场景，合并4,674条；5,230,069 → 1,796,841字节（减少65.64%）。独立二次扫描已识别残留0；166 Python、92 显式Babel Bun、91 pass/1 skip 默认Bun；全量和精简解析异常均0。原79条固定oracle保留，semanticConformancePassed=false维持真实语义缺陷报告。详见[精简记录](../../docs/follow-ups/omp-command-history-corpus.md)和[新数值证据](../../docs/acceptance/omp-history-scenarios-20261006.json)。
+最终16,178条候选/31,914次出现，归并11,504个场景，合并4,674条；5,230,069 → 1,796,841字节（减少65.64%）。独立二次扫描已识别残留0；166 Python、92 显式Babel Bun、91 pass/1 skip 默认Bun；全量和精简解析异常均0。原79条固定oracle保留，semanticConformancePassed=false维持真实语义缺陷报告。详见[精简记录](../../docs/follow-ups/omp-command-history-corpus.md)和[新数值证据](../../docs/testing.md)。
 
 ## Phase 18：全场景预期、公开语料与独立插件词法修复
 
@@ -735,4 +737,4 @@ T104 日常交付完成（2026-10-04）：main 快进至 `14f34a9`。首次备�
 
 完成＝T120—T125；进行中＝无；失败待决策＝无；环境不足未验证＝远程CI、真实其它OS、真实宿主Shell/模型质量和本机部署不计作通过。
 原私有11,504例9,461正确解析/2,043拒绝，差异/异常0；公开11,473例代表全部11,504场景，9,442正确解析/2,031拒绝，12例凭据信号另行人工，native fake机制差异0。
-183 Python、166显式Babel Bun、165pass/1skip默认Bun、104pass/7历史skip相关mock回归及固定pristineSDK严格tsgo通过。详见[当前语料验收](../../docs/follow-ups/omp-command-history-corpus.md)与[机器可读证据](../../docs/acceptance/omp-shell-scenarios-20261006.json)。
+183 Python、166显式Babel Bun、165pass/1skip默认Bun、104pass/7历史skip相关mock回归及固定pristineSDK严格tsgo通过。详见[当前语料验收](../../docs/follow-ups/omp-command-history-corpus.md)与[机器可读证据](../../docs/testing.md)。

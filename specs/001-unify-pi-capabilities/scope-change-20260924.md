@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # 验收范围修订：完成当前 Pi 软件迁移 spec
 
 ## 用户决定与动机
@@ -23,13 +25,13 @@
 | T110 | Task Keeper direct/proxy 真实模型工作流与第二视角 | 转出，不记测试完成 |
 | T111 | Codex/Cursor/MCP/web/代理/终端真实账号与服务验收 | 转出，不改记未选 |
 
-后续入口为 [独立后续清单](../../docs/follow-ups/pi-platform-and-live-validation.md)，不新建或自动启动另一个 spec。
+后续入口为 [独立后续清单](../../docs/known-issues.md)，不新建或自动启动另一个 spec。
 原矩阵的 273 项其他平台条目和 10 项 Linux live 条目保留在旧 scope，事实状态仍为 not-run；未来真实服务的选择意图保留。
 
 ## 范围与批准身份
 
 旧 scope `001-unify-pi-capabilities` revision 2 及 364 项历史报告完整保留，其 `release_approved=false` 不变。
-本次为明确规格变更后的新基线，使用 `001-unify-pi-capabilities-linux-software` revision 1；两者关系、精确转出条目和摘要保存在 [scope-amendment.json](../../docs/acceptance/pi-spec-closure-20260924/scope-amendment.json)。
+本次为明确规格变更后的新基线，使用 `001-unify-pi-capabilities-linux-software` revision 1；两者关系、精确转出条目和摘要保存在 [scope-amendment.json](../../docs/testing.md)。
 
 生产 `validate_revision()` 继续拒绝普通证据登记过程中缩减必需范围。不修改该校验、不伪装成普通 revision 更新；新基线必须随本规格修订共同审阅，之后只在自身范围内按原规则演进。
 新基线由原生产 `report-only` / `check-release` 验收，全部 81 项匹配 passed 才能关闭 T112。
@@ -45,4 +47,4 @@
 符合宪章 V：执行过的结果才记通过；跨平台和无账号结果不互相替代。符合原则 I：支持声明仍限定于实际原生证据覆盖。
 范围调整由用户明确要求，不是汇总器因失败自动删项。候选锁、运行实现、DSH 锁和历史证据均不修改，无宪章例外。
 
-详细验收结果见 [关闭报告](../../docs/acceptance/pi-spec-closure-20260924/README.md)。
+详细验收结果见 [关闭报告](../../docs/testing.md)。

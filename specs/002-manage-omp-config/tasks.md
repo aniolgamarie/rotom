@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # Tasks: OMP 配置统一纳管与原生 Profile 兼容
 
 **Input**: `specs/002-manage-omp-config/` 的 [spec.md](spec.md)、[plan.md](plan.md)、[research.md](research.md)、[data-model.md](data-model.md)、[contracts/CLI](contracts/cli-and-configuration.md)、[原生能力](contracts/native-capabilities.md)、[运行依赖](contracts/runtime-and-dependencies.md)、[quickstart.md](quickstart.md)、[验证矩阵](validation-matrix.md)。
@@ -8,7 +10,7 @@
 
 **Organization**: Phase 1/2 是共享前置，Phase 3–7 按 US1–US5 及 P1/P2 排序，Phase 8 为共同收尾；不以MVP削减已承诺八类能力。
 
-**当前范围**：62 项任务全部完成；T062–T065 与 T061 的 Linux arm64 部分已按用户决定转入[OMP-F01–F05](../../docs/follow-ups/omp-platform-and-live-validation.md)，不再作为本 spec 的未完成任务，未验证事实保留。
+**当前范围**：62 项任务全部完成；T062–T065 与 T061 的 Linux arm64 部分已按用户决定转入[OMP-F01–F05](../../docs/known-issues.md)，不再作为本 spec 的未完成任务，未验证事实保留。
 
 ## Format 与执行约定
 
@@ -141,7 +143,7 @@
 | T064 | OMP-F04 | 真实 usage 遗留 |
 | T065 | OMP-F05 | 指定模型调用遗留 |
 
-原描述见[范围修订](scope-change-20260924.md)，执行前提、通过条件与恢复入口见[独立遗留清单](../../docs/follow-ups/omp-platform-and-live-validation.md)。
+原描述见[范围修订](scope-change-20260924.md)，执行前提、通过条件与恢复入口见[独立遗留清单](../../docs/known-issues.md)。
 
 ## Dependencies & Execution Order
 

@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # OMP 提交前审查
 
 日期：2026-09-24。授权：用户要求审查通过后提交本次 OMP 变更。管理器基线为 `e208e2df50c7f21095d2ec7eb081dfc4df4f7156`；固定 OMP v18.3.0 / `62bc57be1b03ef0802a33cf7f5f530e534527531`。
@@ -26,4 +28,4 @@ Linux x86_64 / glibc 2.32，Python 3.11.11；执行 `.venv/bin/python -m pytest 
 
 README 的原生支持状态已与 Linux x64 证据和独立遗留保持一致。上游 THIRD-PARTY-NOTICES 按锁定原始字节保留；`.gitattributes` 仅对该文件豁免空白检查并禁止文本转换，其他源码和文档继续执行空白检查。
 
-提交使用显式文件清单；原有 `.codex/`、`.pi/`、两篇非本次缺陷文档保持在工作区，遗留索引只暂存本次 OMP 条目。当前 spec 仍为 62/62；[OMP-F01–F05](../../../docs/follow-ups/omp-platform-and-live-validation.md) 均保留环境不足未验证状态，不阻塞本 spec。
+提交使用显式文件清单；原有 `.codex/`、`.pi/`、两篇非本次缺陷文档保持在工作区，遗留索引只暂存本次 OMP 条目。当前 spec 仍为 62/62；[OMP-F01–F05](../../../docs/known-issues.md) 均保留环境不足未验证状态，不阻塞本 spec。

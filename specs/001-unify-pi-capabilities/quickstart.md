@@ -1,7 +1,9 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # Pi 迁移验证指南
 
 本指南说明使用流程和验证入口。当前 spec 的软件迁移、Linux x86_64 四配方 mock/native 与双路径冷重建已验收完成；其他三平台和真实账号／服务验证已转出，未来另行处理。
-当前范围与通过证据见[关闭报告](../../docs/acceptance/pi-spec-closure-20260924/README.md)，未验证项见[后续清单](../../docs/follow-ups/pi-platform-and-live-validation.md)。下方账号及平台操作说明不表示对应场景已经通过。
+当前范围与通过证据见[关闭报告](../../docs/testing.md)，未验证项见[后续清单](../../docs/known-issues.md)。下方账号及平台操作说明不表示对应场景已经通过。
 
 ## 1. 前提与验证层级
 
@@ -191,7 +193,7 @@ cold-rebuild 使用两个独立 HOME/仓库路径、未安装的目标实例，�
 
 ### 随时汇总，单独检查交付
 
-2026-09-24 范围修订后，本 spec 的最终 scope 为 `docs/acceptance/pi-spec-closure-20260924/scope.json`，evidence-root 为 `docs/acceptance/pi-cold-9d6a9270`；关闭结果见 [验收报告](../../docs/acceptance/pi-spec-closure-20260924/README.md)。
+2026-09-24 范围修订后，本 spec 的最终 scope 为 `docs/acceptance/pi-spec-closure-20260924/scope.json`，evidence-root 为 `docs/acceptance/pi-cold-9d6a9270`；关闭结果见 [验收报告](../../docs/testing.md)。
 下方原始 scope 的示例保留用于历史完整范围及后续平台/live 验证，该范围报告仍不批准；不能把它与当前 spec 软件范围的批准混为一谈。后面的 live 操作说明是未来使用入口，不是当前 spec 待完成任务。
 
 固定scope已准备后，即使尚无平台/账号证据也能出报告：

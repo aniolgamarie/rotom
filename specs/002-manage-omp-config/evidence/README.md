@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # OMP 实施与验收证据
 
 证据按实际执行操作分别记录；任务、测试文件或配方存在不代表验证通过。没有执行记录的项目一律为未执行。不得在证据中记录凭据、认证数据库内容、会话正文或含秘密的输出。
@@ -30,6 +32,6 @@
 
 ## 当前边界
 
-用户在明确范围询问后回复“下一步”，已授权并完成 Linux x64 无账号 smoke，见[记录](linux-smoke.md)与[结构化观察](linux-smoke-observations.json)。用户随后明确将真实登录、账号 usage、模型调用及 macOS/arm64 实机验证移出当前 spec，见[范围修订](../scope-change-20260924.md)与[OMP-F01–F05](../../../docs/follow-ups/omp-platform-and-live-validation.md)。它们保持未验证，原 T062–T065 不再作为本 spec 待办；不把范围转出记录成执行通过。
+用户在明确范围询问后回复“下一步”，已授权并完成 Linux x64 无账号 smoke，见[记录](linux-smoke.md)与[结构化观察](linux-smoke-observations.json)。用户随后明确将真实登录、账号 usage、模型调用及 macOS/arm64 实机验证移出当前 spec，见[范围修订](../scope-change-20260924.md)与[OMP-F01–F05](../../../docs/known-issues.md)。它们保持未验证，原 T062–T065 不再作为本 spec 待办；不把范围转出记录成执行通过。
 
 最新审查修复、正式锁及最终回归见[提交前审查](precommit-review.md)。

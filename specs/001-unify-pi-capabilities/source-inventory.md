@@ -10,7 +10,7 @@
 
 ## 1. 来源与证据边界
 
-- starter：`/data/1/private-user/dev_tool/starter`，HEAD 为
+- starter：`/path/to/starter`，HEAD 为
   `c60599df39e6350123f7fb9378cfe63dc5ed814f`。
   调查涉及的 `pi`、`templates/pi`、Pi/sync 实现及 `skill/codex-delegate` 路径没有工作区改动记录。
 - 当前机器：`~/.pi/agent`。只读取配置结构、所选包与资源路径、公开包清单和非秘密开关；

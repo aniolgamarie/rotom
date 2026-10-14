@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # Implementation Plan: OMP 权限管控
 
 **Branch**: `feat/omp-native-bash-approval`（Phase 14，基线 `7558475`） | **Date**: 2026-10-03 | **Spec**: [spec.md](spec.md)
@@ -191,7 +193,7 @@ Phase 11 新资产已完成正式离线构建、锁/receipt核验和266项材料
 
 ## Phase 14：原生 Bash 审批（当前实施）
 
-本轮基于主分支公开修改全部提交后的 `7558475`，仅在独立 worktree 开发；不部署未验收产物，不改日常账号或上游源码。规格为 FR-040—FR-056，详细设计与固定 v18.4.5 可行性证据见 [原生 Bash 改造计划](../../docs/follow-ups/omp-cursor-native-approval-plan-2026-10-03.md)。
+本轮基于主分支公开修改全部提交后的 `7558475`，仅在独立 worktree 开发；不部署未验收产物，不改日常账号或上游源码。规格为 FR-040—FR-056，详细设计与固定 v18.4.5 可行性证据见 [原生 Bash 改造计划](../../docs/known-issues.md)。
 
 1. 修正旧同名包装禁令，补齐可开关配置、一次性票据、scoped Settings、原生下限与覆盖状态的合同及任务追踪。
 2. 同一扩展闭包内捕获 tool_call，审批后通过 invokeTool 委托原生；raw 入口共用安全状态，保留不同执行能力边界。只支持 command/cwd/timeout，未知参数失败。

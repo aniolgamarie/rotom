@@ -1,10 +1,12 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # Feature Specification: Pi 能力梳理、统一与跨机器迁移
 
 **Feature Branch**: `main`（当前分支；未配置创建分支的扩展钩子）
 
 **Created**: 2026-09-16
 
-**Status**: Completed（2026-09-24 按用户修订范围验收通过；[关闭报告](../../docs/acceptance/pi-spec-closure-20260924/README.md)）
+**Status**: Completed（2026-09-24 按用户修订范围验收通过；[关闭报告](../../docs/testing.md)）
 
 **Input**: User description: "整理pi的当前配置和starter里的pi配置相关的同步功能，梳理清楚功能处理好各功能的统一性和完整性连通性之后，迁移到agentcfg体系里，最终基于agentcfg体系在任意机器上构建完整的能力。要考虑pi功能的完整性，比如task keeper应该适配新subagent版本进行改造，有一些codex subagent是否还需要保留，agentcfg的架构体系是否适合等等问题。"
 
@@ -286,7 +288,7 @@ FR-033的原生结果验证使用冻结授权、当前请求/候选/运行时、
 ## Assumptions
 
 - 本特性面向仓库维护者和在多台机器上使用个人 Pi 环境的用户；“任意机器”指符合公开前提及已验证支持矩阵的机器。本 spec 验收 Linux x86_64，其他 Linux/macOS 目标保留实现并转至后续验证；不包含原生 Windows 或所有未知工具链的无条件兼容承诺。
-- 当前 Pi 默认指本机 `~/.pi/agent` 及其显式资源引用；starter 来源固定为用户提供的 `/data/1/private-user/dev_tool/starter`。这些是调查入口，不是迁移后运行依赖。其他机器数据未提供，不视为已调查。
+- 当前 Pi 默认指本机 `~/.pi/agent` 及其显式资源引用；starter 来源固定为用户提供的 `/path/to/starter`。这些是调查入口，不是迁移后运行依赖。其他机器数据未提供，不视为已调查。
 - 当前新版子代理调查基线为 `@tintinweb/pi-subagents@0.19.0`，旧 Task Keeper 依赖为 `pi-subagents@0.63.0`。这些是已观察到的来源身份，不代表最终选版或最新版本承诺；规划必须选择并验证能满足必需能力的明确组合。
 - 默认以现用的新子代理家族为迁移方向，不继续并载旧管理者；若当前固定版本无法满足必需契约，规划必须给出升级、适配或替代方案与影响，不能将旧试用的限制自动当作最终豁免。
 - “完整”按逐项确定的能力基线衡量，不要求无条件保留每个旧文件或启用所有上游功能。普通只读委托和受管长任务属于必需用途；Codex backend 作为可选能力；model-delegate 完整替换和七角色模板化属于必需交付。

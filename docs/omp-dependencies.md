@@ -70,4 +70,4 @@ Run `plan` with the same machine/profile selectors, resolve drift/conflicts, and
 
 ## Platform boundary
 
-Official assets target Linux glibc x64/arm64 and macOS x64/arm64. musl, Windows, and unknown architectures return 5. Asset availability and isolated platform-selection tests do not prove native execution. WSL and each nonlocal architecture require independent evidence; see the [support matrix](acceptance-matrix.md) and [testing](testing.md).
+Official assets target Linux glibc x64/arm64 and macOS x64/arm64. musl, Windows, and unknown architectures return 5. Asset availability and isolated platform-selection tests do not prove native execution. WSL and each nonlocal architecture require independent evidence; see the [support matrix](omp-support.md) and [testing](testing.md).

@@ -1,6 +1,8 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # 实施工作记录（不是最终验收证据）
 
-2026-09-24 当前状态：软件实现和 Linux x86_64 四配方 mock/native、双路径冷重建已完成，T112 已按用户修订范围验收通过，当前 spec 已正常完成。原 T107—T111 已转至独立后续清单，不阻塞本 spec；当前107/107项有效任务完成。最新结论见 [关闭报告](../../docs/acceptance/pi-spec-closure-20260924/README.md) 与 [范围修订](scope-change-20260924.md)。
+2026-09-24 当前状态：软件实现和 Linux x86_64 四配方 mock/native、双路径冷重建已完成，T112 已按用户修订范围验收通过，当前 spec 已正常完成。原 T107—T111 已转至独立后续清单，不阻塞本 spec；当前107/107项有效任务完成。最新结论见 [关闭报告](../../docs/testing.md) 与 [范围修订](scope-change-20260924.md)。
 
 下文全部是按时间积累的历史记录，早期“未实现”“待接线”“97/112”等描述不代表当前状态。
 
@@ -743,7 +745,7 @@
 
 ### 2026-09-21：转交本机Pi继续
 
-用户要求将剩余工作整理为文档和prompt，交给本机Pi完成。本轮仅编写交接材料，不再启动依赖安装、mock/native/live或锁解析。交接见 [操作文档](../../docs/handoffs/pi-migration-2026-09-21.md) 与 [接手prompt](../../docs/handoffs/pi-migration-prompt.md)。
+用户要求将剩余工作整理为文档和prompt，交给本机Pi完成。本轮仅编写交接材料，不再启动依赖安装、mock/native/live或锁解析。交接见 [操作文档](../../docs/testing.md) 与 [接手prompt](../../docs/testing.md)。
 
 核对确认任务仍为104/112、锁仍为484f07e9；冷重建索引79个证据文件摘要匹配。旧/tmp重跑脚本、固定工具链目录及沙箱挂载别名已不存在，交接提供了直接使用仓库生产入口的方法，并要求重新核验工具链。文档20个链接、5段shell与2段嵌入Python均完成存在性/语法检查；未执行其中的验证命令。原Codex自动审核超时不作为本机Pi重复征求既有测试授权的项目条件，Pi仍须遵守自身执行权限及既定测试边界。
 

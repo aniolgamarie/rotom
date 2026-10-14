@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # 历史 Quickstart：宿主补丁方案（已停止扩展）
 
 本文件只保存宪章第 VI 项生效前的命令与交付身份，不是当前操作指南。不得据此继续构建发布补丁宿主。当前入口见[独立插件指南](quickstart.md)。
@@ -93,7 +95,7 @@ set -euo pipefail
 
 artifact_sha=0fe58d4af126d162979efe3188b0a11d3f35b4a52f01049d7c4ac8871b63fa86
 source_artifact=/tmp/rotom-omp-permission-artifacts-remote-20260930/sha256/0fe58d4af126d162979efe3188b0a11d3f35b4a52f01049d7c4ac8871b63fa86
-artifact_dir=/home/private-user/.cache/agentcfg/omp/omp-kernel/artifacts/sha256
+artifact_dir=/home/user/.cache/agentcfg/omp/omp-kernel/artifacts/sha256
 target_artifact="$artifact_dir/$artifact_sha"
 
 test -f "$source_artifact"
@@ -119,10 +121,10 @@ else
   trap - EXIT
 fi
 
-./agentcfg --local /home/private-user/.config/agentcfg/machines/workstation.toml --profile omp-kernel sync
-./agentcfg --local /home/private-user/.config/agentcfg/machines/workstation.toml --profile omp-kernel plan
-./agentcfg --local /home/private-user/.config/agentcfg/machines/workstation.toml --profile omp-kernel apply
-./agentcfg --local /home/private-user/.config/agentcfg/machines/workstation.toml --profile omp-kernel run
+./agentcfg --local /home/user/.config/agentcfg/machines/workstation.toml --profile omp-kernel sync
+./agentcfg --local /home/user/.config/agentcfg/machines/workstation.toml --profile omp-kernel plan
+./agentcfg --local /home/user/.config/agentcfg/machines/workstation.toml --profile omp-kernel apply
+./agentcfg --local /home/user/.config/agentcfg/machines/workstation.toml --profile omp-kernel run
 ```
 
 上列完整命令用于复现或恢复。本轮实际 `plan` 退出 0，报告 3 项变更、冲突 0、漂移 0；`apply` 退出 0 并部署同一 3 项变更。随后 `doctor --format json` 退出 0，状态为 `offline-ready`，`changes_pending=0`，当前依赖与已部署依赖均为 `installed`，`deployed_runtime_matches_current=true`，`live=false`，`recovery_pending=false`。cache 与 sync 也已完成；未启动新的 OMP，未新增模型请求。
@@ -156,4 +158,4 @@ T073/T080 的独立模型调用已完成。冻结 240 条中 safe 99/100 免问�
 | 失败待决策 | 违反关键不变量、同一故障经有效修复仍失败，交主代理裁决；不放宽保护凑通过 |
 | 环境不足未验证 | 实际发现缺Bun/资产/账号/平台等；列缺项和受影响组，其它组可继续 |
 
-尚未尝试的宿主或模型步骤单独记“尚未执行”，不能假定环境不足，也不能标通过。限定范围 T072 与 T080 Linux x64 隔离宿主、材料化回归和冻结样本评测已完成；真实 tiny 推理、其它平台及冻结集外质量仍未验证，独立 scout 全量语义审计已完成。当前实施与实际验收状态见 [验收记录](../../docs/acceptance/omp-permission-control.md)、[宿主 smoke 报告](../../docs/acceptance/omp-permission-control-host-smoke.md)、[模型评测报告](../../docs/acceptance/omp-permission-control-model-evaluation.md)及[机器可读结果](../../docs/acceptance/omp-permission-control-model-results.json)，本指南中的步骤不能代替执行证据。
+尚未尝试的宿主或模型步骤单独记“尚未执行”，不能假定环境不足，也不能标通过。限定范围 T072 与 T080 Linux x64 隔离宿主、材料化回归和冻结样本评测已完成；真实 tiny 推理、其它平台及冻结集外质量仍未验证，独立 scout 全量语义审计已完成。当前实施与实际验收状态见 [验收记录](../../docs/acceptance/omp-permission-control.md)、[宿主 smoke 报告](../../docs/testing.md)、[模型评测报告](../../docs/testing.md)及[机器可读结果](../../docs/testing.md)，本指南中的步骤不能代替执行证据。

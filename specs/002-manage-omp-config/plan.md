@@ -1,10 +1,12 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # Implementation Plan: OMP 配置纳入统一管理
 
 **Feature context**: `002-manage-omp-config` | **实际 Git branch**: `main` | **Date**: 2026-09-24 | **Spec**: [spec.md](spec.md)
 
 **Input**: `specs/002-manage-omp-config/spec.md`，含两项已确认澄清：仅新建独立环境并允许重新登录；首版八类配置全部交付。
 
-> 2026-09-24 范围修订：当前实施及验收已完成，当前真实验收仅本机 Linux x64 无账号 smoke；Linux arm64/macOS、真实登录/usage/模型调用见[独立遗留](../../docs/follow-ups/omp-platform-and-live-validation.md)，不再作为本 spec 完成前提。历史设计阶段描述不代表当前实施状态。
+> 2026-09-24 范围修订：当前实施及验收已完成，当前真实验收仅本机 Linux x64 无账号 smoke；Linux arm64/macOS、真实登录/usage/模型调用见[独立遗留](../../docs/known-issues.md)，不再作为本 spec 完成前提。历史设计阶段描述不代表当前实施状态。
 
 ## Summary
 

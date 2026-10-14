@@ -1,8 +1,10 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # OMP 实施记录
 
 日期：2026-09-24。Feature：`002-manage-omp-config`；实际 Git 分支：`main`。
 
-当前 spec **已完成，62/62 项**（T001–T061、T066）。按用户[范围修订](scope-change-20260924.md)，原 T062–T065 和 T061 的 Linux arm64 部分转入[OMP-F01–F05](../../docs/follow-ups/omp-platform-and-live-validation.md)，不计当前待办。软件隔离验收及 Linux x64 九行原生 smoke 通过；其他平台或账号验证仍未执行，未计为通过。
+当前 spec **已完成，62/62 项**（T001–T061、T066）。按用户[范围修订](scope-change-20260924.md)，原 T062–T065 和 T061 的 Linux arm64 部分转入[OMP-F01–F05](../../docs/known-issues.md)，不计当前待办。软件隔离验收及 Linux x64 九行原生 smoke 通过；其他平台或账号验证仍未执行，未计为通过。
 
 ## 已完成
 

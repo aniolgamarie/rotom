@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 ---
 description: "Pi能力统一、Task Keeper新版适配与model-delegate完整替换的实施任务"
 ---
@@ -14,7 +16,7 @@ description: "Pi能力统一、Task Keeper新版适配与model-delegate完整替
 
 ## 当前验收范围（2026-09-24 用户最终决定）
 
-本 spec 正常验收并完成，不再处于暂停状态。T107—T111 已转出本 spec，未来工作见 [独立后续清单](../../docs/follow-ups/pi-platform-and-live-validation.md)。当前有效任务为 T001—T106 和修订后的 T112，共 107 项，107/107 已完成。生产 check-release 返回 0，见 [关闭报告](../../docs/acceptance/pi-spec-closure-20260924/README.md)。
+本 spec 正常验收并完成，不再处于暂停状态。T107—T111 已转出本 spec，未来工作见 [独立后续清单](../../docs/known-issues.md)。当前有效任务为 T001—T106 和修订后的 T112，共 107 项，107/107 已完成。生产 check-release 返回 0，见 [关闭报告](../../docs/testing.md)。
 
 验收基线为 Linux x86_64 四配方 mock/native 及双路径冷重建，精确保留原矩阵中符合平台和层级条件的全部 81 项。原四平台/live 364 项报告及未验证事实保留；转出不算执行通过。完整依据见 [范围修订](scope-change-20260924.md)。
 
@@ -292,11 +294,11 @@ MCP原型不进入默认Codex运行链。任务数量与勾选保持实际完成
 - [X] T104 在明确在线锁解析步骤生成全部真实vendor、四配方各自完整package.json/package-lock.json及根manifest，记录实际归档/构建/平台摘要；无占位hash、mutable ref或旧执行器，DSH锁保持原版本与语义；路径：`locks/pi/manifest.json`、`locks/pi/pi-default/package.json`、`locks/pi/pi-default/package-lock.json`、`locks/pi/pi-managed/package.json`、`locks/pi/pi-managed/package-lock.json`、`locks/pi/pi-codex/package.json`、`locks/pi/pi-codex/package-lock.json`、`locks/pi/pi-cursor/package.json`、`locks/pi/pi-cursor/package-lock.json`。（覆盖：FR-007, FR-009, FR-038, FR-046, V03, V24）（依赖：T103）
 - [X] T105 运行完整默认pytest和verify-pi --tier mock --case all，涵盖所有故事、旧组件缺席、DSH回归和工具/profile隔离；证据记录实际命令/环境/结果，不把mock当原生通过；路径：`tests/test_pi_dsh_compatibility.py`、`docs/acceptance/pi-default-tests.md`。（覆盖：FR-017, FR-018, FR-038, FR-040, FR-043, FR-044, FR-045, FR-046, V01, V02, V03, V04, V05, V06, V07, V08, V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V21, V22, V23, V24）（依赖：T104）
 - [X] T106 [P] 仅在独立native授权后于Linux x86_64执行四配方原生发现、Task Keeper十类场景、model-delegate完整替换与两路径冷构建，使用虚构服务；真实安装/进程监督证据写入平台记录，未授权不得执行或勾选；路径：`docs/acceptance/pi-linux-x86_64.json`。（覆盖：FR-023, FR-024, FR-025, FR-026, FR-027, FR-028, FR-029, FR-030, FR-031, FR-039, FR-040, FR-041, FR-043, FR-044, FR-045, FR-046, V03, V05, V09, V10, V11, V12, V13, V14, V15, V16, V17, V20, V22, V23, V24）（依赖：T105）〔2026-09-22重新打开：当前源码已不匹配 32da4799 锁（recipe_digest 不匹配：当前 1be31f1c... vs 锁中 123979a7...），需要冻结新候选。只有 pi-default 有有效证据（20 passed），其他三个 profile（cursor/codex/managed）的冷重建报告属于旧候选 4c043f8f（source_digest 不匹配）。需要重新运行冷重建取得属于新候选的证据。当前 mock 测试通过（1825 passed, 325 node tests passed），但 native 证据不完整〕〔2026-09-23 接手更正：候选已推进为 ed34c4e7（recipe 4374fea4，接手时与源码匹配；原始 mock 报告实测 1836 passed+3 skipped+7 subtests、325 Node，见 pi-execution-inventory-20260923.md）。ed34c4e7 归档仅 pi-default 一目标通过、第二目标 target-preparation-failed，整档 failed。本轮为 Cursor ReadSeek 预期集/沙箱绑定等缺口修改源码，需正式 resolve_lock 冻结新候选后重跑四配方×双目标〕〔2026-09-23 完成：最终候选 9d6a9270（recipe 85fc15c3）在 Linux x86_64 独立卷上取得四配方×双全新 HOME/checkout 的完整冷安装与原生通过（含 Task Keeper 11 场景、model-delegate 全替换、两路径 ReadSeek 九工具真实调用、Codex receipt 三场景、synthetic 服务），138 条 EvidenceRecord 与 scope r2、report-only/check-release 快照归档于 `docs/acceptance/pi-cold-9d6a9270/`；正式 mock 1861 passed+7 subtests、325/325 Node、0 skipped。live 项归 T110/T111，其他平台归 T107—T109〕
-- **T107：已转出本 spec，未执行**。见 [PI-F01 后续工作](../../docs/follow-ups/pi-platform-and-live-validation.md)。原验收要求保留在该清单和历史 scope；不计本 spec 未完成项。
-- **T108：已转出本 spec，未执行**。见 [PI-F02 后续工作](../../docs/follow-ups/pi-platform-and-live-validation.md)。原验收要求保留在该清单和历史 scope；不计本 spec 未完成项。
-- **T109：已转出本 spec，未执行**。见 [PI-F03 后续工作](../../docs/follow-ups/pi-platform-and-live-validation.md)。原验收要求保留在该清单和历史 scope；不计本 spec 未完成项。
-- **T110：已转出本 spec，未执行**。见 [PI-F04 后续工作](../../docs/follow-ups/pi-platform-and-live-validation.md)。原验收要求保留在该清单和历史 scope；不计本 spec 未完成项。
-- **T111：已转出本 spec，未执行**。见 [PI-F05 后续工作](../../docs/follow-ups/pi-platform-and-live-validation.md)。原验收要求保留在该清单和历史 scope；不计本 spec 未完成项。
+- **T107：已转出本 spec，未执行**。见 [PI-F01 后续工作](../../docs/known-issues.md)。原验收要求保留在该清单和历史 scope；不计本 spec 未完成项。
+- **T108：已转出本 spec，未执行**。见 [PI-F02 后续工作](../../docs/known-issues.md)。原验收要求保留在该清单和历史 scope；不计本 spec 未完成项。
+- **T109：已转出本 spec，未执行**。见 [PI-F03 后续工作](../../docs/known-issues.md)。原验收要求保留在该清单和历史 scope；不计本 spec 未完成项。
+- **T110：已转出本 spec，未执行**。见 [PI-F04 后续工作](../../docs/known-issues.md)。原验收要求保留在该清单和历史 scope；不计本 spec 未完成项。
+- **T111：已转出本 spec，未执行**。见 [PI-F05 后续工作](../../docs/known-issues.md)。原验收要求保留在该清单和历史 scope；不计本 spec 未完成项。
 - [X] T112 按 2026-09-24 用户修订后的 Linux x86_64 软件验收基线执行 report-only/check-release；原样复用匹配的 81 项 mock/native 证据，核对候选锁/recipe、归档摘要、quickstart 和转出记录；全部匹配通过后关闭本 spec。原完整范围报告保持不批准，不声明 live 或其他平台已通过；路径：`docs/acceptance/pi-spec-closure-20260924/`、`specs/001-unify-pi-capabilities/scope-change-20260924.md`、`docs/acceptance/pi-support-matrix.md`。（覆盖：FR-037—FR-042、FR-045—FR-046、V18—V21、V24；当前平台/层级适用部分）（依赖：T102—T106）
 
 **Checkpoint**: 46条FR/12项SC/24组验证按修订平台/层级有对应记录；81项当前软件范围全部通过才关闭本 spec。转出的平台/live在独立后续清单保留not-run，不勾为测试通过。
@@ -573,7 +575,7 @@ SC-001—SC-012沿[验证矩阵](validation-matrix.md)映射到V01—V24；其�
 
 当前有效任务总计 **107项**，其中 **25项[P]**；107项均已完成，以上方任务勾选和验收记录为准。
 
-历史基线为112项、28项[P]，原Phase 9共11项。2026-09-24用户明确将T107—T111共5项转出本spec，其中3项带[P]；它们未记为执行通过，后续工作见[独立清单](../../docs/follow-ups/pi-platform-and-live-validation.md)。
+历史基线为112项、28项[P]，原Phase 9共11项。2026-09-24用户明确将T107—T111共5项转出本spec，其中3项带[P]；它们未记为执行通过，后续工作见[独立清单](../../docs/known-issues.md)。
 
 - 生成任务不表示代码、锁、平台或账号验收已完成。
 - U1/U2/U3/I1及I2/U4修订已落实到契约、任务及V09/V13/V14/V18/V20/V21/V22场景；实施与验证状态以任务勾选及 acceptance 记录为准。

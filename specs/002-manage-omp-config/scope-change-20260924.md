@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # OMP 验收范围修订 — 2026-09-24
 
 用户明确要求：“macOS 验收、真实登录、真实 usage 和指定模型调用；Linux arm64 也仍未验证……这些也记录为遗留，不在本 spec 的范围，本机器目前没有这样的环境。”
@@ -14,7 +16,7 @@
 | OMP-F04 | T064 | 原生/受管真实账号 usage | 未验证，待账号环境及独立授权 |
 | OMP-F05 | T065 | 指定 provider/model 真实调用 | 未验证，待服务环境及独立授权 |
 
-详见[独立遗留清单](../../docs/follow-ups/omp-platform-and-live-validation.md)。转出不是执行成功、平台不支持或取消未来验证意图；它们不再阻塞当前 spec，不计入当前未完成任务，也不计入测试通过数量。当前无需提供测试机、账号或调用预算；后续是否建立新 spec、何时执行另行安排。
+详见[独立遗留清单](../../docs/known-issues.md)。转出不是执行成功、平台不支持或取消未来验证意图；它们不再阻塞当前 spec，不计入当前未完成任务，也不计入测试通过数量。当前无需提供测试机、账号或调用预算；后续是否建立新 spec、何时执行另行安排。
 
 ## 当前完成判定
 

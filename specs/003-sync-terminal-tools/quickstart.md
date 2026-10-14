@@ -1,6 +1,8 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # termcfg 验证指南
 
-本指南记录实施后的隔离验收路径；实际命令与结果另见 [验收记录](../../docs/termcfg-acceptance.md)。先在仓库内准备 `.venv`，所有默认验证使用临时 HOME/XDG、假进程和阻断网络。目标和状态语义见 [数据模型](data-model.md)及[命令契约](contracts/cli.md)。
+本指南记录实施后的隔离验收路径；实际命令与结果另见 [验收记录](../../docs/testing.md)。先在仓库内准备 `.venv`，所有默认验证使用临时 HOME/XDG、假进程和阻断网络。目标和状态语义见 [数据模型](data-model.md)及[命令契约](contracts/cli.md)。
 
 ## 1. 隔离环境和三命令预览
 
@@ -54,7 +56,7 @@ export XDG_CACHE_HOME="$test_root/xdg-cache"
 
 ## 4. 故障、耗时与秘密边界
 
-下表是隔离验收矩阵。现有 `tests/test_termcfg_*.py` 使用临时 HOME、虚构数据与网络阻断；每项的实际覆盖和仍缺的证据以[验收记录](../../docs/termcfg-acceptance.md)为准。
+下表是隔离验收矩阵。现有 `tests/test_termcfg_*.py` 使用临时 HOME、虚构数据与网络阻断；每项的实际覆盖和仍缺的证据以[验收记录](../../docs/testing.md)为准。
 
 | 注入条件 | 期望证据 |
 | --- | --- |

@@ -1,143 +1,68 @@
-# rotom / agentcfg
+# Rotom
 
-**Project principle: do not modify any agent's upstream source.** Integrations use official configuration, public extension APIs and official CLIs. Historical deviations and migration status are recorded in the [architecture](docs/architecture.md#基本原则上游宿主保持原样) and [migration inventory](docs/follow-ups/upstream-agent-source-migration.md).
+**Reproducible configuration and isolated instances for coding agents.**
 
-**English** | [中文](README.zh-CN.md)
+[Getting started](docs/getting-started.md) · [Documentation](docs/README.md) · [Roadmap](docs/roadmap.md) · [Known issues](docs/known-issues.md) · [简体中文](README.zh-CN.md)
 
-Future plans, including on-demand third-party plugin management and repository size reduction, are recorded in the [Roadmap](docs/roadmap.md).
+Rotom keeps shared model definitions, rules, complete skill packages, native configuration templates, and dependency locks in Git. Machine overrides, credentials, native logins, and sessions stay private. `agentcfg` validates, previews, installs, deploys, and launches DSH, Pi, and OMP through their own adapters. `termcfg` separately manages selected zsh, tmux, and mihomo components.
 
-Personal Agent configuration management repository: shared rules, complete skill packs, tool templates, and dependency locks live in Git; per-machine overrides and API keys stay outside. A single entry point generates, validates, deploys, and launches isolated instances; each instance keeps only the previous round of managed-configuration backup.
+Integrations use official configuration, public extension APIs, and official CLIs. Rotom does not modify agent host source or official binaries. Historical deviations remain documented as migration work; they are not permission to build new patched hosts.
 
-The first release implements **DSH + ccch1mneyyy/dsh-TUI**. The Pi migration spec is complete within its agreed scope: software integration and Linux x86_64 mock/native validation, including cold rebuilds of all four profiles in two fresh HOME/checkout paths each. The accepted candidate is `9d6a9270`; other platforms and real-account/service validation remain unverified and are tracked as [separate follow-up work](docs/follow-ups/pi-platform-and-live-validation.md). Pi delegates to the official Codex CLI through model-delegate; the migration retires codex-delegate. See the [Pi guide](docs/pi.md), [support matrix](docs/acceptance/pi-support-matrix.md), and [spec completion report](docs/acceptance/pi-spec-closure-20260924/README.md) for configuration and verification status.
+## Current status
 
-The getting-started steps below cover DSH. Their Codex/Cursor subscription references describe authentication/provider access within DSH. Pi uses separate profiles and instance logins.
+This repository is preparing its first public release. The manager package version is `0.1.0`; no release tag is implied by that value. See [versions and release scope](docs/releases.md) and the [changelog](CHANGELOG.md).
 
-The Pi closure report applies to the historical lock candidate `9d6a9270…`. Changes to the lock or source require matching native/cold evidence; historical completion does not establish native validation of the current checkout. See the [current support boundary](docs/acceptance/pi-support-matrix.md#当前-checkout-与历史证据).
+| Integration | Locked host | Status and boundary |
+| --- | --- | --- |
+| DSH | Core `0.2.0-rc.2`, TUI `0.15.0` | One `dsh-default` recipe; Cursor Provider and Perry auto-review `0.12.17`. Core is a prerelease. Auto-review has accepted, unresolved upstream limitations. |
+| OMP | `18.8.6` | Unmodified official runtime with an independent Rotom permission plugin. Platform and operation coverage is recorded separately. |
+| Pi | `0.84.4` | Implemented adapter; the checked-in lock is stale against current source. New deployment is blocked pending a proper lock rebuild and matching validation. Historical acceptance does not validate this checkout. |
+| termcfg | Component-specific locks | Explicit configuration, download, and service operations; independent of agent profiles. |
 
-OMP integration is tracked separately in the [OMP guide](docs/omp.md) and [support status](docs/omp-support.md). It uses fixed OMP v18.4.5 standalone packages, a separate HOME and native profile for each recipe, and fresh logins. `omp-default` is a bootstrap recipe; the nine-row fictional validation recipe is installed only in a temporary validation checkout. The Linux x64 no-account native smoke has passed. Other platform and real-account checks are tracked as [separate follow-ups](docs/follow-ups/omp-platform-and-live-validation.md), outside the completed OMP spec.
+Read [known issues](docs/known-issues.md) before selecting an integration. Python tests, native smoke, and authenticated model calls provide different evidence; [testing and support](docs/testing.md) explains the distinction.
 
-Terminal and proxy configuration is managed separately by [`./termcfg`](docs/termcfg.md). It previews and backs up selected zsh, tmux, and mihomo public files before copying them; core and plugin downloads and mihomo service actions are explicit commands. See the guide for private configuration, recovery, and isolated verification status.
+## Quick start
 
-Use [`omp-kernel`](docs/omp-kernel.md) to reproduce the reviewed kernel configuration, including models, approval policies, theme, native agents, and complete skills. The guide includes WSL setup; `omp-default` inherits the shared selectable pool of Kimi Code, GLM Coding Plan, and DeepSeek API models. The initial main model is Kimi Code; pool membership does not assign a workload or create a model suite. The shared pool has eight model IDs; the OMP kernel profile adds eleven TF bindings, including DeepSeek TF. Core model specifications share [public templates](shared/model-templates.toml), while provider routes, credentials, protocol compatibility, and billing remain independent. See the [model catalog](docs/model-catalog.md) and [OMP model presets](docs/omp-model-presets.md). Use `model status` for credential guidance and `model key kimi-code|glm-code|deepseek` for hidden input; see [local configuration](docs/local-config.md).
-
-**First-time users: start with the [Getting Started Guide](docs/getting-started.md).** It walks through environment setup, local file creation, installation, deployment, login, daily startup, and backup/restore in actual operation order, and explains command output. When using only Codex/Cursor subscriptions, you can leave `[secrets]` empty — no need to copy the private-gateway example below.
-
-DSH uses one managed dsh-default recipe: Core 0.2.0-rc.2 (prerelease), unmodified TUI 0.15.0, Cursor subscription 0.6.12, and Perry auto-review 0.12.17. Native UI preferences and manual effort persist in the isolated instance HOME. Auto-review is enabled with documented upstream limitations; live account evidence is tracked separately. See [DSH guide](docs/dsh.md) and [current acceptance](docs/acceptance/dsh-upgrade-20261012.md).
-
-Three commands cover the basics: `sync` installs software, `apply` deploys configuration, `run` starts DSH. Run them in order the first time; afterwards `run` is usually all you need. In the examples below, `workstation` is the local machine config name and `dsh-default` is the recipe name — both can be used as-is.
-
-## Prerequisites
-
-- **Manager:** Python 3.11+, uv. Run `uv sync --locked` once; the entry point then uses the repo `.venv` directly — offline commands install nothing.
-- **DSH toolchain:** The lock was generated and smoke-tested with **Node 24.14.0, npm 11.19.1**. `sync` accepts Node **24.x from 24.2.0** and npm **11.x**; `run` checks the same Node requirement. Node 24.1 cannot execute the `import.meta.main` entry used here. Generating a lock still requires the exact locked versions. Prepare Node/npm with your own version manager; agentcfg does not install them. Other accepted versions have not been smoke-tested. Frozen installs use pinned pnpm **11.19.0**, provided as a verified local archive; no global install or vendor patch.
-- **First-release platforms:** Linux, macOS. Native Windows is not supported. Linux has been isolation-verified; macOS acceptance status is tracked in [Acceptance Records](docs/acceptance.md).
-
-## From Clone to Running
+Requirements: Python 3.11+, [uv](https://docs.astral.sh/uv/), and the selected agent's locked toolchain. DSH was tested with Node `24.14.0` and npm `11.19.1`; accepted compatibility ranges and installation requirements are in the [DSH guide](docs/dsh.md).
 
 ```sh
-git clone <your-repo-url> rotom
+git clone <repository-url> rotom
 cd rotom
 uv sync --locked
 ./agentcfg profiles
-./agentcfg init-local
-
-./agentcfg setup
-./agentcfg run --cwd /path/to/worktree
+./agentcfg init-local --machine workstation --profile dsh-default
+./agentcfg --machine workstation model status
+./agentcfg --machine workstation setup
+./agentcfg --machine workstation run --cwd /path/to/workspace
 ```
 
-Public defaults add a selectable pool of Kimi Code and GLM Coding Plan subscription models plus DeepSeek pay-as-you-go models. When a profile has no explicit main model, it selects Kimi Code `kimi-for-coding`. Explicit TF or OAuth profile roles retain precedence. There are no fabricated OAuth endpoints or model IDs. Obsolete Kimi platform and legacy GLM provider/model entries have been removed; stored secrets are preserved and never silently reused. `setup` previews, syncs locked dependencies (possibly using the network), and deploys. Stage progress and failure locations appear on stderr. `model presets` distinguishes subscription and pay-as-you-go pool members; add `--verbose` for endpoints and sources. `model key kimi-code|glm-code|deepseek` fills each independent credential. `model status` shows missing URL/key fields, role bindings, and the files to edit; add `--verbose` for the full model catalog and individual filling commands. Missing credentials do not block host startup; the corresponding model remains unavailable. Log in through the native TUI for OAuth models. Use `model enable` for another explicit protocol route or `model add` for a private API-key model.
+`init-local` creates private machine and shared credential files and adds missing placeholders without overwriting existing values. Use `model key kimi-code`, `model key glm-code`, or `model key deepseek` for hidden key entry. OAuth accounts are logged in through the selected native instance. Missing model credentials do not prevent startup; that route remains unavailable. Rotom never imports another application's login automatically.
 
-Public selectors precede subcommands: `--machine NAME` or `--local PATH` (mutually exclusive), `--profile ID` optional. Default machine is `default`; default profile comes from the local file, falling back to `dsh-default`. `init-local --machine NAME --profile ID` creates or checks the private machine and shared credential files, adding only missing URL/key placeholders while preserving values and comments. An explicit profile does not change an existing machine's default profile. Repeating the command without missing fields does not rewrite either file.
+`setup` previews, consumes the existing dependency lock, and deploys. For separate reviewable steps, use `validate`, `plan`, `sync`, and `apply`. Daily `run` launches the deployed contract without implicitly installing or applying changes. Public selectors such as `--machine` and `--profile` precede the command.
 
-Structured commands such as `validate`, `plan`, and `doctor` now show readable summaries in a terminal and retain the original single-line JSON when piped or redirected. Select a format after the subcommand: `./agentcfg plan --format json` or `./agentcfg doctor --format human`. Progress and errors remain on stderr. `setup`, `init-local`, and `model` keep their text output; `profiles` keeps TSV when piped. `run` and `usage` pass through native output.
+## What Rotom manages
 
-## Local File
+- Shared model and provider references, with independent credentials, protocols, routes, and billing.
+- Deterministic native configuration and complete declared rules, skills, agents, and resources.
+- Locked runtime packages, integrity checks, staged installation, and drift diagnostics.
+- Stable instance HOME directories, active leases, field ownership, conflict detection, and interrupted-write recovery.
+- One previous generation of managed configuration. Configuration rollback does not downgrade software or migrate session databases.
 
-Below is **framework TOML, not native DSH config**. Addresses and models are fictional examples; when using a private API, replace them with values your service actually supports, and fill in keys by hand.
+Files that mix native and managed settings use field-level ownership. Initialization-only UI preferences respect later native edits; unknown native fields are preserved. Unknown fields in Rotom input fail validation.
 
-```toml
-schema_version = 1
-[machine]
-id = "workstation"
-default_profile = "dsh-default"
-editor = "nvim"
+## Documentation
 
-[overrides.providers.private_gateway]
-protocol = "openai-compatible"
-base_url = "https://gateway.example.invalid/v1"
-auth_kind = "api-key"
-credential_ref = "secret:private_gateway_key"
+| Goal | Start here |
+| --- | --- |
+| Install and launch | [Getting started](docs/getting-started.md) |
+| Configure shared keys and models | [Local configuration](docs/local-config.md), [model catalog](docs/model-catalog.md) |
+| Use a specific integration | [DSH](docs/dsh.md), [OMP](docs/omp.md), [Pi](docs/pi.md), [termcfg](docs/termcfg.md) |
+| Diagnose, update, or recover | [Operations](docs/operations.md), [known issues](docs/known-issues.md) |
+| Understand the design | [Architecture](docs/architecture.md), [approval boundaries](docs/design/approvals.md) |
+| Contribute or report a security issue | [Contributing](CONTRIBUTING.md), [security policy](SECURITY.md) |
 
-[overrides.models.private_main]
-provider = "private_gateway"
-remote_id = "fictional-private-chat"
-input = ["text"]
+English is the authoritative documentation language. The Chinese landing page is a supplementary translation. Project specifications and historical governance material may retain their original language and scope; they do not override current implementation and support statements.
 
-[overrides.profiles.dsh-default]
-providers = ["private_gateway"]
-models = ["private_main"]
-mcp = []
+## License
 
-[overrides.profiles.dsh-default.roles]
-main = "private_main"
-
-[secrets]
-private_gateway_key = ""
-```
-
-Files are 0600, private directories 0700. Objects merge recursively; arrays are replaced wholesale; empty arrays and `false` are valid. Unknown fields, invalid references, and authentication ownership conflicts fail. For more fields, machine paths, environment variables, and multi-profile usage see [Local Config Reference](docs/local-config.md); `examples/` contains explicitly fictional format examples that must not be treated as callable services.
-
-## Commands & Side Effects
-
-| Command | Behavior |
-|---|---|
-| `profiles` | Lists registered profile IDs and their agents without loading local configuration |
-| `init-local [--machine NAME] [--profile ID]` | Creates or checks private configuration and adds missing URL/key placeholders for the selected profile without replacing existing values |
-| `setup` | Initial deployment or update of existing configuration: redacted preview, locked dependency sync, and deployment; stops on conflicts, drift, or pending recovery |
-| `validate` | Offline schema, reference, adapter, and full-lock validation |
-| `render` | Offline generation; writes only to private cache — field intent is not a full native settings file |
-| `plan` | Offline redacted diff with location IDs; private cache stores concrete field positions, not targets |
-| `lock --agent dsh` | Explicit online resolution of the full dependency lock; review lock & vendor diffs on upgrade |
-| `sync` | Consumes the existing lock; stages installs or repairs damaged packages — does not update the lock, start, or log in |
-| `apply` | Offline re-plan, backup, and deploy — does not install dependencies |
-| `run [dsh] --cwd PATH` | Launches the current deployment; the agent can be inferred from the profile; no implicit sync/apply |
-| `usage <native-args>` | Passes through to PATH's `omp usage` without loading local configuration; a preceding explicit OMP `--profile` selects the managed instance ([details](docs/omp-usage.md)) |
-| `doctor` / `doctor --live` | Default: offline diagnostics; `--live` adds declared-service reachability checks — never auto-logs-in or calls models |
-| `model add` | Interactively adds a private API-key provider, model, and role binding; atomically writes the private machine file after confirmation |
-| `model presets` | Summarizes official models; `--verbose` shows endpoints, pricing, and sources |
-| `model status` | Shows missing URL/key fields, roles, and edit locations; `--verbose` adds the full catalog and filling commands |
-| `model url PROVIDER` | Reads a service URL without echo and saves it to the private machine file; public providers can use `base_url_ref = "local:NAME"` |
-| `model enable kimi-code\|glm-code\|deepseek` | Adds another shared protocol route after securely entering its key; preserves current role bindings |
-| `doctor --input` | All agents: caller terminal and offline interaction readiness; OMP also reports structured event-loop stalls, without recording keystrokes |
-| `capture` | Captures previews, supported themes, and declared model selections; generates a legal local proposal; does not export auth data |
-| `rollback` | Restores the previous managed configuration; consumes that backup on success |
-| `project init openspec --path PATH` | Pi profiles with `openspec` selected: initializes a specific project with the locked CLI; pre-checks conflicts |
-
-Optional native parameters are passed via `run dsh --cwd PATH -- <native-args>` — `--` is the separator and is not forwarded to DSH. Exit codes: 0 success, 2 argument/config/lock error, 3 required MCP/service credential missing, 4 conflict/active lock/recovery pending, 5 dependency or native check failure, 6 IO/internal failure. Missing model API keys produce a warning; after a successful launch the native process exit code is preserved.
-
-## Backup & Runtime State
-
-Default instance path: `~/.local/share/agentcfg/instances/dsh/<profile>/`; its `dsh-home` and isolated `user-home` remain fixed. State/backup live in XDG state, artifacts in XDG cache. The manager does not take over `~/.dsh`, Pi, or other tool account directories by default.
-
-After a successful apply A→B, A is kept; after a subsequent successful apply C, only B is kept. No-change or failed operations do not rotate backups. Multi-file writes use a temporary recovery record; single files are atomically replaced; restore re-checks conflicts. Backups contain only managed files/fields — not OAuth, sessions, mixed settings, or local key files. Software downgrade and database migration are not covered by config rollback.
-
-A running managed instance blocks apply/sync/rollback; the manager does not kill user processes. External processes started or modified outside the manager are not fully constrained by the active lock, but pre-write re-checks still run. A read-only trusted repository may reside under a shared mount ancestor, but private deployment directories continue to require secure ancestors, ownership, and permissions.
-
-## Authentication, Project Integration & Maintenance
-
-- [DSH Authentication, Parameters & Verified Limits](docs/dsh.md): Codex native companion `/auth login openai-codex`; Cursor community package adds `/cursor-login` — accounts are held by native plugins.
-- [OpenSpec Project Operations](docs/openspec.md): Pi's optional `openspec` capability uses the upstream `agents` integration at an explicit Git worktree root. DSH does not provide OpenSpec; existing project files and skills are retained.
-- [Daily Maintenance & Adding Shared Content](docs/operations.md): Includes examples for rules, skills, provider/model additions.
-- The `maintain-agent-config` skill ships with the default profile, guiding Agents to write legal local TOML, modify templates, and validate generated results; deployment still goes through the manager's backup/conflict flow.
-- [Adding a Second Tool](docs/adapters.md): Interface, ownership, native encoding, and acceptance boundaries.
-- [OMP Configuration](docs/omp.md), [Profiles](docs/omp-profiles.md), [Dependencies](docs/omp-dependencies.md), and [Usage](docs/omp-usage.md): fixed standalone runtime, isolated native profiles, resource mapping, and transparent usage queries.
-
-## Testing
-
-```sh
-.venv/bin/python -m pytest -q
-```
-
-Default tests use a temporary HOME/DSH_HOME/XDG, network blocking, and fake processes; no third-party hosts are run. The native no-account smoke is a separate explicit step; real model calls require separate user authorization and login state. Test counts, actual run environments, untested platforms, and live status are recorded in [Acceptance Records](docs/acceptance.md).
-
-DSH uses the complete frozen pnpm lock in `locks/dsh/` and unchanged upstream Core/TUI/Cursor packages. The current recipe enables Perry auto-review by default; known lifecycle, persistent-audit, and reviewer-boundary limits are recorded in the [DSH acceptance record](docs/acceptance/dsh-upgrade-20261012.md#2026-10-14-正式配方默认启用-perry-auto-review). DSH does not provide OpenSpec; existing project files and skills are retained. Pi's optional OpenSpec capability is managed independently in `locks/pi/`. Old TUI/Cursor patch archives remain as historical recovery material and are not consumed by the current recipe; see [Vendor Scope](locks/dsh/vendor/README.md) and [Upstream Verification Records](docs/upstream-verification.md). Superpowers is not installed; ModSearch, Memento, ModLens, and MCPLens are not in the default install list.
+Rotom is distributed under the [MIT license](LICENSE). Bundled third-party material retains its own licenses, notices, and source records. Those records are intentionally preserved.

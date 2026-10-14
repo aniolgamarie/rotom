@@ -2,7 +2,7 @@
 
 Smart approval should provide an explainable result for every invocation: an authorized ordinary command reaches model review, explicit prohibitions block execution, and decisions requiring user judgment retain confirmation. Zero prompts alone proves neither correctness nor safety. Integration uses official OMP and public extension APIs with the repository-owned plugin.
 
-Product acceptance remains under review. The frozen model-first routing baseline reached review for 87.85% of valid commands across three paths and failed that acceptance criterion. See [known issues](known-issues.md), [testing](testing.md), and [approval design](design/approvals.md) for the current evidence and remaining work.
+The historical routing baseline reached review for 87.85% of valid commands and failed that criterion. The subsequent model-first implementation reached 100% of the 11,472 valid frozen synthetic commands on each of three paths; the remaining empty record was rejected. Injected reviewer ask decisions and denied fake UI responses kept actual command execution at zero. This proves routing under those fixtures, not real-service judgment quality or a universal zero-prompt guarantee. See [known issues](known-issues.md), [testing](testing.md), and [approval design](design/approvals.md) for the current evidence and remaining work.
 
 ## Inspect a completed invocation
 

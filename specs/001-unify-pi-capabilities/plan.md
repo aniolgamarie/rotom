@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # Implementation Plan: Pi 能力统一与跨机器迁移
 
 **Branch**: `main`（实际 Git 分支；Spec Kit 返回的特性标识为 `001-unify-pi-capabilities`） | **Date**: 2026-09-16 | **Spec**: [spec.md](spec.md)
@@ -18,7 +20,7 @@ Codex 七个协调角色合并为用途模板，迁移后彻底退出 codex-dele
 
 2026-09-16 的规划阶段完成了 Phase 0 研究和 Phase 1 设计，当时未执行安装或账号调用。
 当前 spec 已按上述修订范围完成；实际完成项、候选身份和运行证据见 [tasks.md](tasks.md)、
-[实施记录](implementation-progress.md)及[关闭报告](../../docs/acceptance/pi-spec-closure-20260924/README.md)。本计划的历史设计检查不代表其他平台或账号验收通过。
+[实施记录](implementation-progress.md)及[关闭报告](../../docs/testing.md)。本计划的历史设计检查不代表其他平台或账号验收通过。
 
 ## Technical Context
 
@@ -186,7 +188,7 @@ Task Keeper预分配attempt与明确owner。以上均纳入后续契约回归。
    将Pi工具桥、七角色用途、所有调用方及锁/技能发现切到新入口，完成旧组件完全缺席验收。
 7. 闭合普通资源、权限/通知/压缩控制及可选Codex/Cursor服务配方。
 8. 生成验收scope与支持矩阵，冻结锁并执行默认回归和Linux x86_64四配方原生/双路径冷构建；
-   最终以当前软件scope全部81项匹配通过完成T112。其他三平台及live已移至[独立后续清单](../../docs/follow-ups/pi-platform-and-live-validation.md)，不阻塞本spec完成。
+   最终以当前软件scope全部81项匹配通过完成T112。其他三平台及live已移至[独立后续清单](../../docs/known-issues.md)，不阻塞本spec完成。
 
 原计划曾要求四平台和已选live共同闭合；该完成门槛已被用户明确修订。未来live执行仍需对应native证据与独立授权，未验证状态不因转出而改变。
 

@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # OMP 规格任务记录
 
 ## 已完成
@@ -88,4 +90,4 @@
 - 用户明确将 Linux arm64/macOS 实机、真实登录、真实 usage、指定模型调用转为遗留，本机没有对应环境，不在 spec 002 范围。
 - 当前 62/62 项完成（T001–T061、T066），原 T062–T065 与 T061 未覆盖架构转入 OMP-F01–F05，均保留未验证，不伪造通过。
 - spec、plan、tasks、contracts、验证矩阵、实施记录和支持文档同步；历史研究/阶段测试记录仍保留原结论与时间。
-- 详见[范围修订](scope-change-20260924.md)和[遗留清单](../../docs/follow-ups/omp-platform-and-live-validation.md)。本次只修改文档，未执行宿主、账号操作或重跑产品测试。
+- 详见[范围修订](scope-change-20260924.md)和[遗留清单](../../docs/known-issues.md)。本次只修改文档，未执行宿主、账号操作或重跑产品测试。

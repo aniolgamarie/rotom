@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # OMP 验证覆盖矩阵
 
 本矩阵定义实施后的最低验收覆盖，不记录本轮设计文档编写为功能通过。场景均须按
@@ -6,7 +8,7 @@
 
 ## 当前验收边界
 
-2026-09-24 用户确认当前机器无对应平台/账号环境；[范围修订](scope-change-20260924.md)将 Linux arm64/macOS 实机、真实登录、真实 usage、指定模型调用移至[OMP-F01–F05](../../docs/follow-ups/omp-platform-and-live-validation.md)。本矩阵保留这些行用于追踪未验证事实，不作为当前 spec 的完成门禁。当前要求为隔离验收、文档与本机 Linux x64 无账号九行 smoke，均已完成。
+2026-09-24 用户确认当前机器无对应平台/账号环境；[范围修订](scope-change-20260924.md)将 Linux arm64/macOS 实机、真实登录、真实 usage、指定模型调用移至[OMP-F01–F05](../../docs/known-issues.md)。本矩阵保留这些行用于追踪未验证事实，不作为当前 spec 的完成门禁。当前要求为隔离验收、文档与本机 Linux x64 无账号九行 smoke，均已完成。
 
 ## 场景目录
 
@@ -145,7 +147,7 @@ SC-001 的原生生效以本机 Linux x64 九行观察判定；其他平台和�
 | FR-018–024；SC-005 | V12/V13/V14/V19/V20 | `test_omp_usage_native.py`、`test_omp_usage_managed.py`、`test_omp_usage_results.py`；[US4](evidence/us4.md)、[官方来源](evidence/usage-sources.md) | 通过 |
 | FR-025 | V05/V10/V12/V16/V20 | `test_omp_runtime_foundation.py` 及 usage/依赖/生命周期测试；[基础](evidence/foundation.md)、[回归](evidence/regression.md) | 通过 |
 | FR-026；SC-002 跨工具部分 | V18 | 全仓既有 DSH/Pi 回归、`test_omp_migration_flow.py` 多环境哨兵；[回归](evidence/regression.md) | 通过 |
-| FR-027–028；SC-006 | V19 与全部场景分层 | [支持状态](../../docs/omp-support.md)、[AGENTCFG-F01](../../docs/follow-ups/agentcfg-usage-command.md)、[实施记录](implementation-progress.md)、[回归](evidence/regression.md) | 通过 |
+| FR-027–028；SC-006 | V19 与全部场景分层 | [支持状态](../../docs/omp-support.md)、[AGENTCFG-F01](../../docs/known-issues.md)、[实施记录](implementation-progress.md)、[回归](evidence/regression.md) | 通过 |
 
 SC-001 的九行隔离样例与生命周期已通过；[Linux x64 九行原生观察](evidence/linux-smoke.md)现已通过，按修订范围 SC-001 的原生验收已满足；仅该平台计入原生覆盖，其他平台移至独立遗留且仍未验证。SC-002/SC-004 的零哨兵变化与零复制结论来自合成环境；真实登录旧环境保持情况未验证。SC-005 的逐字节结果对照来自明确标记的合成原生输出，真实账号额度或 provider 成功率不在通过范围。SC-006 只关闭 AGENTCFG-F01 软件范围，未把未执行平台/账号计为通过。
 

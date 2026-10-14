@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # 独立插件修订：官方 OMP 与公开扩展接口
 
 2026-09-30，维护者要求移除宿主补丁并把权限管控改为独立本地插件，同时确立所有 agent 上游源码不修改的项目原则。本修订是当前实现与验收依据；此前 spec/plan 中的 bridge、patched standalone、read-proof、installed-only host tiny 和一次性宿主许可要求属于历史架构，不能继续作为当前交付要求。
@@ -73,7 +75,7 @@
 - FR-055：status 将配置就绪与覆盖就绪分开，显示实际入口、原生委托和 scoped Settings 可用性、各审查层调用数与健康。explain 使用固定原因码区分原生下限、主审传输不支持、备用决定、故障、票据失效和执行范围不支持，不显示原始命令、环境或模型自由文本。
 - FR-056：默认验收使用临时 HOME、假模型/执行器和网络阻断；固定官方 SDK 类型检查不得伪造声明。官方宿主 fixture 与真实 Cursor OAuth 分别登记；既有 102/102 模型预算已用尽，新收费请求必须有新授权。真实 Cursor、高级能力和其它平台未运行时不得计作通过。
 
-实施分包与固定版本可行性证据见[原生 Bash 改造计划](../../docs/follow-ups/omp-cursor-native-approval-plan-2026-10-03.md)。T088—T094 为旧独立入口及日常迁移历史，不改写为本次包装已验收。
+实施分包与固定版本可行性证据见[原生 Bash 改造计划](../../docs/known-issues.md)。T088—T094 为旧独立入口及日常迁移历史，不改写为本次包装已验收。
 
 
 2026-10-04 参数保留补充：官方校验会对封闭工具 schema 的未知键错误进行 coercion，删除后才发出 tool_call。工具参数 schema 因此保留未知字段，由插件在 hook 和 execute 两边精确拒绝；配置/sidecar schema 仍封闭。OpenAI 的 model-facing schema 可由宿主转换为 strict 形式，但本地输入边界不可依赖 wire schema 或 TypeScript strict 检查替代。首轮 async 被删除问题已作为真实宿主回归记录，不删除失败证据。

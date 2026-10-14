@@ -47,10 +47,10 @@ fallback_model = "local/lfm2.5-230m"
 日常本机仍需在退出活动 OMP 后，用同一 local/profile 检查并启用：
 
 ```sh
-./agentcfg --local /home/private-user/.config/agentcfg/machines/workstation.toml --profile omp-kernel sync
-./agentcfg --local /home/private-user/.config/agentcfg/machines/workstation.toml --profile omp-kernel plan
-./agentcfg --local /home/private-user/.config/agentcfg/machines/workstation.toml --profile omp-kernel apply
-./agentcfg --local /home/private-user/.config/agentcfg/machines/workstation.toml --profile omp-kernel run
+./agentcfg --local /home/user/.config/agentcfg/machines/workstation.toml --profile omp-kernel sync
+./agentcfg --local /home/user/.config/agentcfg/machines/workstation.toml --profile omp-kernel plan
+./agentcfg --local /home/user/.config/agentcfg/machines/workstation.toml --profile omp-kernel apply
+./agentcfg --local /home/user/.config/agentcfg/machines/workstation.toml --profile omp-kernel run
 ```
 
 这是启用步骤，不是本轮已经执行日常部署的证明。管理器不得自动终止活动实例；旧账号、会话、凭据和恢复边界必须保留。

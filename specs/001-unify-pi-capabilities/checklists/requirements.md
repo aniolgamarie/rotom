@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # Specification Quality Checklist: Pi 能力梳理、统一与跨机器迁移
 
 **Purpose**: 验证规格完整性与质量，确认可以进入实现规划。  
@@ -34,7 +36,7 @@
 
 ## Notes
 
-- 2026-09-24 用户明确缩小当前 spec 验收范围：软件实现要求保留，Linux x86_64 四配方 mock/native 与双路径冷重建为当前完成门槛，其他平台和 live 转出。规格、计划、任务、验证矩阵及证据契约已同步；新 scope 的 81 项全部匹配通过，见 [关闭报告](../../../docs/acceptance/pi-spec-closure-20260924/README.md)。历史 364 项报告仍保留 283 项 not-run，不扩大支持声明。
+- 2026-09-24 用户明确缩小当前 spec 验收范围：软件实现要求保留，Linux x86_64 四配方 mock/native 与双路径冷重建为当前完成门槛，其他平台和 live 转出。规格、计划、任务、验证矩阵及证据契约已同步；新 scope 的 81 项全部匹配通过，见 [关闭报告](../../../docs/testing.md)。历史 364 项报告仍保留 283 项 not-run，不扩大支持声明。
 
 - 2026-09-16 初始规格审查及用户确认替换目标后复审：16/16项需求质量通过；随后跨文档分析发现U1/U2/U3/I1设计缺口，本次授权修订及自动复核继续修正I2/U4，已给出明确契约与任务覆盖，无遗留需求澄清标记。
 - 规格中的 Pi、Task Keeper、Codex 与 agentcfg 是用户要求管理的产品和能力名称，

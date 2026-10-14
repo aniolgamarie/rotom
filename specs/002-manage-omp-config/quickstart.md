@@ -1,3 +1,5 @@
+> Publication note: links to retired machine reports now point to maintained summaries. They do not reproduce raw evidence or renew historical acceptance.
+
 # OMP 纳管验证指南
 
 本文是分层验证运行手册；当前完成范围见[实施记录](implementation-progress.md)。
@@ -10,7 +12,7 @@
 [数据模型](data-model.md)及[研究结论](research.md)为准。需求到场景的完整映射见
 [验证矩阵](validation-matrix.md)。
 
-当前 spec 的收口范围为隔离验证与已通过的 Linux x64 无账号 smoke；下文保留其他平台、登录、真实 usage、模型调用步骤作为[独立遗留恢复手册](../../docs/follow-ups/omp-platform-and-live-validation.md)，这些步骤不再属于当前待办，也无需现在准备环境或账号。详见[范围修订](scope-change-20260924.md)。
+当前 spec 的收口范围为隔离验证与已通过的 Linux x64 无账号 smoke；下文保留其他平台、登录、真实 usage、模型调用步骤作为[独立遗留恢复手册](../../docs/known-issues.md)，这些步骤不再属于当前待办，也无需现在准备环境或账号。详见[范围修订](scope-change-20260924.md)。
 
 ## 1. 验证层级和授权边界
 
