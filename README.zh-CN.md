@@ -142,4 +142,4 @@ private_gateway_key = ""
 
 默认测试使用临时 HOME/DSH_HOME/XDG、网络阻断及假进程，不运行第三方宿主。原生无账号 smoke 是独立显式步骤，真实模型调用另需用户授权和登录态。测试数量、实际运行环境、未运行平台及 live 状态以 [验收记录](docs/acceptance.md) 为准。
 
-DSH/TUI/插件的完整 npm 锁及 vendor 补丁在 `locks/dsh/`。历史 DSH OpenSpec 依赖正在移除；Pi 的可选 OpenSpec 能力由 `locks/pi/` 独立管理。TUI 的 bundled 清单修复保持运行代码不变；Cursor 的补丁关闭自动账号导入、后台更新和运行包 stamp，并提供终端登录入口。来源与修改记录见 [上游核实记录](docs/upstream-verification.md)。不安装 Superpowers；ModSearch、Memento、ModLens、MCPLens 不在默认安装清单中。
+DSH 使用 `locks/dsh/` 中完整固定的 pnpm 锁和未经修改的上游 Core/TUI/Cursor 包。当前配方默认启用 Perry auto-review；已知生命周期、持久审计和 reviewer 边界限制见 [DSH 验收记录](docs/acceptance/dsh-upgrade-20261012.md#2026-10-14-正式配方默认启用-perry-auto-review)。DSH 不提供 OpenSpec；现有项目文件和技能保留。Pi 的可选 OpenSpec 能力由 `locks/pi/` 独立管理。旧 TUI/Cursor 补丁归档作为历史恢复材料保留，不参与当前配方；范围与来源见 [vendor 说明](locks/dsh/vendor/README.md)及[上游核实记录](docs/upstream-verification.md)。不安装 Superpowers；ModSearch、Memento、ModLens、MCPLens 不在默认安装清单中。
