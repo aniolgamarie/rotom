@@ -1,4 +1,4 @@
-"""显式双锁解析与固定 pnpm frozen 安装；运行目录按完整锁身份区分。"""
+"""显式完整 pnpm 锁与 frozen 安装；兼容读取历史双锁，运行目录按锁身份区分。"""
 
 from dataclasses import dataclass, field
 import base64
@@ -44,18 +44,24 @@ def recipe_digest(repository, adapter_id="dsh"):
       raise DependencyError("锁配方缺少声明的原始归档")
     h.update(relative.encode())
     h.update(path.read_bytes())
-    if relative == "vendor/rotom-dsh-cursor-terminal-0.1.1.tgz":
+    local_packages = {
+      "vendor/rotom-dsh-cursor-terminal-0.1.1.tgz": ("cursor-terminal", ("package.json", "index.mjs")),
+      "vendor/rotom-dsh-review-context-0.1.0.tgz": ("review-context", ("package.json", "index.mjs", "cordis.patch.yml")),
+    }
+    if relative in local_packages:
+      directory, files = local_packages[relative]
+      source = repository / f"{agent_root}/packages" / directory
       try:
         with tarfile.open(path, "r:gz") as archive:
-          for name in ("package.json", "index.mjs"):
+          for name in files:
             member = archive.getmember("package/" + name)
             if not member.isfile():
               raise ValueError("invalid local package member")
             body = archive.extractfile(member)
-            if body is None or body.read() != (repository / f"{agent_root}/packages/cursor-terminal" / name).read_bytes():
+            if body is None or body.read() != (source / name).read_bytes():
               raise ValueError("local source was not packed")
       except (OSError, ValueError, KeyError, tarfile.TarError):
-        raise DependencyError("本地 Cursor 终端源码与固定 vendor 归档不一致；先重新打包再生成锁") from None
+        raise DependencyError("本地包源码与固定 vendor 归档不一致；先重新打包再生成锁") from None
   for relative in (f"{agent_root}/packages/cursor-terminal/package.json", f"{agent_root}/packages/cursor-terminal/index.mjs",
       f"{agent_root}/templates/check-runtime.mjs"):
     h.update(relative.encode())
@@ -89,6 +95,8 @@ class Lock:
 
 def lock_identity(package, resolution, metadata, installer_resolution=b""):
   tools = {key: metadata[key] for key in ("node", "npm", "pnpm", "pnpm_integrity", "adapter_version")}
+  if metadata.get("resolution_kind"):
+    tools["resolution_kind"] = metadata["resolution_kind"]
   return hashlib.sha256(package + resolution + installer_resolution + json_bytes(tools)).hexdigest()
 
 
@@ -167,6 +175,19 @@ def validate_plugin_versions(repository, tree, adapter_id="dsh"):
       raise DependencyError("插件声明与完整锁不一致；同时更新配方、vendor 和依赖输入")
 
 
+def validate_installer_plugin_versions(repository, resolution, adapter_id="dsh"):
+  packages = yaml.safe_load(resolution)["packages"]
+  plugins = tomllib.loads((repository / f"agents/{adapter_id}/plugins.toml").read_text())["plugins"]
+  for plugin in plugins.values():
+    if not plugin["enabled"]:
+      continue
+    prefix = plugin["package"] + "@"
+    versions = {item.get("version", name[len(prefix):].split("(", 1)[0])
+      for name, item in packages.items() if name.startswith(prefix)}
+    if versions != {plugin["version"]}:
+      raise DependencyError("插件声明与完整 pnpm 锁不一致")
+
+
 def read_lock(repository, adapter_id="dsh", expected_adapter_version=None):
   root = repository / f"locks/{adapter_id}"
   try:
@@ -176,25 +197,33 @@ def read_lock(repository, adapter_id="dsh", expected_adapter_version=None):
     if not Draft202012Validator(schema).is_valid(metadata):
       raise ValueError()
     policy = lock_policy(repository, adapter_id, expected_adapter_version)
-    if (type(metadata.get("version")) is not int or metadata["version"] != 1
+    if (type(metadata.get("version")) is not int or metadata["version"] not in (1, 2)
         or any(metadata.get(key) != policy[key] for key in ("adapter_version", "node", "npm", "pnpm", "pnpm_integrity", "npm_integrity", "upstream"))
         or not isinstance(metadata.get("platforms"), dict)
         or sys.platform not in policy["supported_platforms"]
         or sys.platform not in metadata["platforms"]):
       raise ValueError()
     package = (root / "package.json").read_bytes()
-    resolution = (root / "package-lock.json").read_bytes()
+    pnpm_only = metadata["version"] == 2
+    if pnpm_only and (root / "package-lock.json").exists():
+      raise ValueError("unexpected npm resolution")
+    resolution = b"" if pnpm_only else (root / "package-lock.json").read_bytes()
     installer_resolution = (root / "pnpm-lock.yaml").read_bytes()
     validate_installer_resolution(package, installer_resolution)
     digest = lock_identity(package, resolution, metadata, installer_resolution)
-    tree = json.loads(resolution)
-    validate_plugin_versions(repository, tree, adapter_id)
+    if pnpm_only:
+      validate_installer_plugin_versions(repository, installer_resolution, adapter_id)
+      tree = None
+    else:
+      tree = json.loads(resolution)
+      validate_plugin_versions(repository, tree, adapter_id)
     if (metadata["identity"] != digest or metadata["recipe"] != recipe_digest(repository, adapter_id)
-        or json.loads(package) != json.loads((repository / f"agents/{adapter_id}/dependencies.json").read_bytes())
-        or tree["lockfileVersion"] != 3
+        or json.loads(package) != json.loads((repository / f"agents/{adapter_id}/dependencies.json").read_bytes())):
+      raise ValueError()
+    if tree is not None and (tree["lockfileVersion"] != 3
         or tree["packages"][""]["dependencies"] != json.loads(package)["dependencies"]):
       raise ValueError()
-    for name, item in tree["packages"].items():
+    for name, item in (tree["packages"].items() if tree else ()):
       if "superpowers" in name.lower() or "openspec" in name.lower():
         raise ValueError()
       if name and not item.get("link") and not item.get("inBundle"):
@@ -253,16 +282,16 @@ def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_ve
     npm_version = checked([npm, "--version"], cwd=root, env=env)
     ensure_exact_toolchain("Node", policy["node"], node_version)
     ensure_exact_toolchain("npm", policy["npm"], npm_version)
-    checked([npm, "install", "--package-lock-only", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=root, env=env)
-    resolution = (root / "package-lock.json").read_bytes()
-    validate_plugin_versions(repository, json.loads(resolution), adapter_id)
+    # TUI/Perry 的 npm peer 声明冲突不靠强制解析掩盖；实际安装器只消费完整 pnpm 锁。
+    resolution = b""
     pnpm = prepare_pnpm(repository, root, policy, adapter_id)
     check_pnpm_version(pnpm, policy["pnpm"], cwd=root, env=env)
     checked([*pnpm, "install", "--lockfile-only", "--ignore-scripts", "--node-linker=hoisted", "--package-import-method=copy",
       "--store-dir", str(root / "store")], cwd=root, env=env)
     installer_resolution = (root / "pnpm-lock.yaml").read_bytes()
     validate_installer_resolution(package, installer_resolution)
-    manifest = {"version": 1, "identity": hashlib.sha256(package + resolution).hexdigest(),
+    validate_installer_plugin_versions(repository, installer_resolution, adapter_id)
+    manifest = {"version": 2, "resolution_kind": "pnpm", "identity": hashlib.sha256(package + resolution).hexdigest(),
       "recipe": recipe_digest(repository, adapter_id), "node": node_version, "npm": npm_version,
       "pnpm": policy["pnpm"], "pnpm_integrity": policy["pnpm_integrity"],
       "adapter_version": policy["adapter_version"],
@@ -272,11 +301,13 @@ def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_ve
     # 仓库锁是公开产物；先校验所有结果，再单文件原子替换，manifest 最后提交。
     out = repository / f"locks/{adapter_id}"
     out.mkdir(parents=True, exist_ok=True)
-    for name, data in (("package.json", package), ("package-lock.json", resolution),
+    for name, data in (("package.json", package),
         ("pnpm-lock.yaml", installer_resolution), ("manifest.json", json_bytes(manifest))):
       temporary = out / ("." + name + ".tmp")
       temporary.write_bytes(data)
       os.replace(temporary, out / name)
+    # 多文件替换不是事务；中断后的 stale 锁必须拒绝，恢复时重复显式 lock。
+    (out / "package-lock.json").unlink(missing_ok=True)
     return read_lock(repository, adapter_id, expected_adapter_version)
 
 
@@ -316,7 +347,8 @@ def sync(workspace, lock, adapter_id="dsh", *, progress=None):
       ensure_compatible_toolchain("npm", lock.metadata["npm"],
                                   checked(["npm", "--version"], cwd=stage, env=env))
       (stage / "package.json").write_bytes(lock.package)
-      (stage / "package-lock.json").write_bytes(lock.resolution)
+      if lock.resolution:
+        (stage / "package-lock.json").write_bytes(lock.resolution)
       (stage / "pnpm-lock.yaml").write_bytes(lock.installer_resolution)
       copy_vendors(workspace.repository, stage, lock.package, adapter_id)
       pnpm = prepare_pnpm(workspace.repository, stage, lock.metadata, adapter_id)
@@ -324,7 +356,8 @@ def sync(workspace, lock, adapter_id="dsh", *, progress=None):
       announce("安装锁定依赖")
       checked([*pnpm, "install", "--frozen-lockfile", "--ignore-scripts", "--node-linker=hoisted", "--package-import-method=copy",
         "--store-dir", str(workspace.cache / "pnpm")], cwd=stage, env=env)
-      if ((stage / "package-lock.json").read_bytes() != lock.resolution
+      npm_path = stage / "package-lock.json"
+      if ((npm_path.read_bytes() if npm_path.exists() else b"") != lock.resolution
           or (stage / "pnpm-lock.yaml").read_bytes() != lock.installer_resolution):
         raise DependencyError("安装过程修改了锁，拒绝激活")
       announce("校验安装结果")

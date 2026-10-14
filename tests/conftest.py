@@ -235,7 +235,7 @@ def prepared_runtime():
     for name in REQUIRED_FILES:
       target = root / name
       target.parent.mkdir(parents=True, exist_ok=True)
-      target.write_bytes(lock.package if name == "package.json" else lock.resolution if name == "package-lock.json" else b"synthetic installed artifact\n")
+      target.write_bytes(lock.package if name == "package.json" else lock.installer_resolution if name == "pnpm-lock.yaml" else b"synthetic installed artifact\n")
     seal(root, lock.identity)
     return root
   return prepare

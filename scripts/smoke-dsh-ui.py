@@ -297,7 +297,7 @@ def main():
   from agentcfg.storage import Tree, ensure_private, instance_lock
   from agentcfg.workspace import load_workspace
   lock, runtime = dependencies.read_lock(repo), args.runtime.absolute()
-  if (runtime_packages.status(runtime, lock.identity) != "installed" or any((runtime / name).read_bytes() != value
+  if (runtime_packages.status(runtime, lock.identity) != "installed" or any(((runtime / name).read_bytes() if (runtime / name).exists() else b"") != value
       for name, value in (("package.json", lock.package), ("package-lock.json", lock.resolution), ("pnpm-lock.yaml", lock.installer_resolution)))):
     parser.error("运行包收据与当前完整锁不匹配")
   evidence = args.evidence.absolute()
@@ -309,7 +309,7 @@ def main():
   result = {"kind": "native-pty-simulated-local-model", "stage": "prepare", "checks": {}, "lock_identity": lock.identity,
     "recipe": lock.metadata["recipe"], "platform": sys.platform, "agentcfg_cli": args.agentcfg_cli,
     "lock_files": {name: hashlib.sha256(value).hexdigest() for name, value in (("package.json", lock.package),
-      ("package-lock.json", lock.resolution), ("pnpm-lock.yaml", lock.installer_resolution))}, "color_environment": "COLORTERM=truecolor",
+      ("package-lock.json", lock.resolution), ("pnpm-lock.yaml", lock.installer_resolution)) if value}, "color_environment": "COLORTERM=truecolor",
     "ssh": "NOT RUN", "tmux": "NOT RUN", "real_accounts": "NOT RUN"}
   outer_path = os.environ.get("PATH", "")
   transcript, child, master, slave, server = bytearray(), None, None, None, None

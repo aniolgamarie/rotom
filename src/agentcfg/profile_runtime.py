@@ -10,7 +10,11 @@ from .deployment import json_bytes
 from .storage import Conflict, Tree, ensure_private
 
 
-PROFILE_PROJECTIONS = ("@deepseek-harness-tui/dsh-tui", "rotom-dsh-cursor-terminal")
+PROFILE_PROJECTIONS = ("@deepseek-harness-tui/dsh-tui", "rotom-dsh-cursor-terminal",
+  "dsh-auto-review", "rotom-dsh-review-context")
+LEGACY_BUNDLES = ["@deepseek-ai/dsh-base", "@deepseek-harness-tui/dsh-tui"]
+PROFILE_BUNDLES = ["@deepseek-ai/dsh-base", "rotom-dsh-review-context", "dsh-auto-review",
+  "@deepseek-harness-tui/dsh-tui"]
 
 
 def project_runtime_modules(profile, runtime, record, expected):
@@ -48,7 +52,7 @@ def prepare(workspace, runtime):
   profile = workspace.instance / "dsh-home/profiles/agentcfg"
   ensure_private(profile)
   manifest = {"name": "agentcfg-managed-profile", "version": "1.0.0", "private": True,
-    "dsh": {"profile": {"bundles": ["@deepseek-ai/dsh-base", "@deepseek-harness-tui/dsh-tui"]}}}
+    "dsh": {"profile": {"bundles": PROFILE_BUNDLES}}}
   with Tree(profile) as tree:
     owner = tree.read(".agentcfg-package-owner.json")
     package = tree.read("package.json")
@@ -60,7 +64,9 @@ def prepare(workspace, runtime):
     if record["binding"] != workspace.binding:
       raise Conflict("原生 profile 属于另一份机器配置")
     expected_package = json_bytes(manifest)
-    if package is not None and package[0] != expected_package:
+    legacy_package = json_bytes({**manifest, "dsh": {"profile": {"bundles": LEGACY_BUNDLES}}})
+    # 只迁移本仓库以前拥有的固定清单；用户新增的 bundle 或字段仍冲突。
+    if package is not None and package[0] not in (expected_package, legacy_package):
       raise Conflict("包拥有的 profile 配置已被修改")
     projections = {name: str(runtime / "node_modules" / Path(name)) for name in PROFILE_PROJECTIONS}
     with tree.parent("node_modules") as (fd, name):
@@ -82,7 +88,7 @@ def prepare(workspace, runtime):
       if old is not None:
         pending.update({"runtime": old, "pending_runtime": old})
       tree.write_state(".agentcfg-package-owner.json", json_bytes(pending))
-      if package is None:
+      if package is None or package[0] == legacy_package:
         tree.write_state("package.json", expected_package)
       if not isolated:
         if old is not None:

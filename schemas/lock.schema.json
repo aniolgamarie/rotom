@@ -4,7 +4,8 @@
   "required": ["version", "identity", "recipe", "node", "npm", "pnpm", "adapter_version", "platforms", "upstream", "npm_integrity", "pnpm_integrity"],
   "additionalProperties": false,
   "properties": {
-    "version": {"type": "integer", "const": 1},
+    "version": {"type": "integer", "enum": [1, 2]},
+    "resolution_kind": {"type": "string", "const": "pnpm"},
     "identity": {"$ref": "#/$defs/sha256"},
     "recipe": {"$ref": "#/$defs/sha256"},
     "node": {"type": "string", "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"},
@@ -31,6 +32,7 @@
       }
     }
   },
+  "allOf": [{"if": {"properties": {"version": {"const": 2}}}, "then": {"required": ["resolution_kind"]}, "else": {"not": {"required": ["resolution_kind"]}}}],
   "$defs": {
     "sha1": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
     "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}

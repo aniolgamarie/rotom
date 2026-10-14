@@ -29,7 +29,7 @@ def test_failed_sync_keeps_old_runtime_and_repository_lock(tmp_path, monkeypatch
   previous = w.instance / "runtimes/previous"
   ensure_private(previous)
   (previous / "keep").write_text("working runtime")
-  before = (REPO / "locks/dsh/package-lock.json").read_bytes()
+  before = (REPO / "locks/dsh/pnpm-lock.yaml").read_bytes()
   def fake(argv, *, cwd, env):
     assert "API_KEY" not in env
     if argv == ["node", "--version"]:
@@ -57,7 +57,7 @@ def test_failed_sync_keeps_old_runtime_and_repository_lock(tmp_path, monkeypatch
   assert (previous / "keep").read_text() == "working runtime"
   assert not dep.runtime_root(w, lock).exists()
   assert not list((w.instance / "runtimes").glob(".stage-*"))
-  assert (REPO / "locks/dsh/package-lock.json").read_bytes() == before
+  assert (REPO / "locks/dsh/pnpm-lock.yaml").read_bytes() == before
 
 
 @pytest.mark.parametrize(("tool", "actual"), [("node", "v25.0.0"), ("npm", "12.0.0"), ("node", "v24.1.0")])
@@ -102,7 +102,7 @@ def test_toolchain_rejects_and_hides_malformed_output(tool, actual, locked):
 def test_resolve_lock_requires_exact_toolchain_before_install(tmp_path, monkeypatch, tool, actual):
   lock = dep.read_lock(REPO)
   before = {name: (REPO / "locks/dsh" / name).read_bytes()
-            for name in ("package.json", "package-lock.json", "manifest.json")}
+            for name in ("package.json", "pnpm-lock.yaml", "manifest.json")}
 
   def fake(argv, *, cwd, env):
     if argv == ["node", "--version"]:
@@ -161,6 +161,44 @@ def test_frozen_installer_lock_and_tool_version_change_identity():
   changed = {**lock.metadata, "pnpm": "11.19.1"}
   assert dep.lock_identity(lock.package, lock.resolution, changed, lock.installer_resolution) != lock.identity
   assert dep.Lock("fixture", {}, b"{}", b"{}").installer_resolution == b""
+
+
+def test_pnpm_only_lock_rejects_unexpected_npm_lock_and_plugin_drift(tmp_path):
+  repository = lock_repository(tmp_path)
+  lock = dep.read_lock(repository)
+  assert lock.metadata["version"] == 2 and lock.metadata["resolution_kind"] == "pnpm"
+  assert lock.resolution == b""
+  unexpected = repository / "locks/dsh/package-lock.json"
+  unexpected.write_text('{}')
+  with pytest.raises(ConfigError):
+    dep.read_lock(repository)
+  unexpected.unlink()
+  document = yaml.safe_load(lock.installer_resolution)
+  document["packages"].pop("dsh-auto-review@0.12.17")
+  with pytest.raises(DependencyError):
+    dep.validate_installer_plugin_versions(repository, yaml.safe_dump(document).encode())
+
+
+def test_legacy_runtime_receipt_remains_readable(tmp_path):
+  from agentcfg import runtime_packages
+  from agentcfg.deployment import json_bytes
+  from agentcfg.storage import Tree
+  root = tmp_path / "legacy-runtime"
+  ensure_private(root)
+  for name in runtime_packages.LEGACY_REQUIRED_FILES:
+    path = root / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b'synthetic legacy entry')
+  (root / "package.json").write_bytes(b'{"dependencies":{"fixture":"1.0.0"}}')
+  (root / "package-lock.json").write_bytes(b'{"packages":{"":{"dependencies":{"fixture":"1.0.0"}}}}')
+  files = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in runtime_packages.LEGACY_REQUIRED_FILES}
+  with Tree(root) as tree:
+    tree.write_state(".agentcfg-ready", b"legacy\n")
+    tree.write_state(".agentcfg-receipt.json", json_bytes({"version": 2, "identity": "legacy", "files": files,
+      "topology": runtime_packages.topology_digest(root)}))
+  assert runtime_packages.status(root, "legacy") == "installed"
+  (root / "node_modules/rotom-dsh-cursor-terminal/index.mjs").write_bytes(b"drift")
+  assert runtime_packages.status(root, "legacy") == "damaged"
 
 
 @pytest.mark.parametrize("change", ["installer-lock", "unknown-metadata", "source"])
@@ -241,7 +279,7 @@ def test_read_lock_rejects_missing_pnpm_integrity_even_with_recomputed_identity(
   data = yaml.safe_dump(installer).encode()
   (root / "pnpm-lock.yaml").write_bytes(data)
   metadata = json.loads((root / "manifest.json").read_bytes())
-  metadata["identity"] = dep.lock_identity((root / "package.json").read_bytes(), (root / "package-lock.json").read_bytes(), metadata, data)
+  metadata["identity"] = dep.lock_identity((root / "package.json").read_bytes(), b"", metadata, data)
   (root / "manifest.json").write_text(json.dumps(metadata))
   with pytest.raises(ConfigError):
     dep.read_lock(repository)

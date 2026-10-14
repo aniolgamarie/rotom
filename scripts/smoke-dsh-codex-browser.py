@@ -35,7 +35,7 @@ def main():
   from agentcfg.storage import Tree, ensure_private, instance_lock
   from agentcfg.workspace import load_workspace
   lock, runtime = dependencies.read_lock(repo), args.runtime.absolute()
-  if (runtime_packages.status(runtime, lock.identity) != "installed" or any((runtime / name).read_bytes() != body
+  if (runtime_packages.status(runtime, lock.identity) != "installed" or any(((runtime / name).read_bytes() if (runtime / name).exists() else b"") != body
       for name, body in (("package.json", lock.package), ("package-lock.json", lock.resolution), ("pnpm-lock.yaml", lock.installer_resolution)))):
     parser.error("运行包收据与当前完整锁不匹配")
   evidence = args.evidence.absolute(); evidence.mkdir(mode=0o700, parents=True, exist_ok=True)

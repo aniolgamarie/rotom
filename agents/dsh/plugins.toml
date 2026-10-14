@@ -24,3 +24,20 @@ bundled = false
 enabled = true
 requires = ["tui"]
 conflicts = []
+
+[plugins.auto-review]
+package = "dsh-auto-review"
+version = "0.12.17"
+commit = "2b931b8375f9ee9ebe20e80ef336c69804e1aac0"
+bundled = false
+enabled = true
+requires = ["tui", "review-context"]
+conflicts = []
+
+[plugins.review-context]
+package = "rotom-dsh-review-context"
+version = "0.1.0"
+bundled = true
+enabled = true
+requires = ["tui"]
+conflicts = []

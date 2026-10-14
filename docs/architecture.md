@@ -55,7 +55,7 @@ flowchart LR
 
 仅初始化字段遇到已拥有共享文件中的既存用户值时，消费初始化机会而不写值，基线记为 absent；不把原生偏好采纳为受管基线。配置回滚只处理真正写入过的字段。普通受管字段或非空未拥有文件仍执行原来的接管/冲突检查。DSH 状态栏采用此语义；Pi 的整文件 keybindings 初始化及独立 termcfg 事务不走这个分支。
 
-`DependencyBackend` 分发到 DSH 双锁/frozen pnpm、Pi 配方切片或 OMP standalone 后端。`sync` 消费既有完整锁，只执行声明的安装/构建与校验步骤，安装成功验证后才激活目录；配置 rollback 不降级软件或数据库。`runtime` 使用已部署 argv/引用、实时 secret 值与显式环境清单。普通宿主继承活动锁 fd；Pi 另通过监督者维护实例与工作区活动证据；OMP 同实例普通会话使用共享租约，配置修改使用独占租约。
+`DependencyBackend` 分发到 DSH 完整 pnpm 锁（v1 历史双锁可读）/frozen pnpm、Pi 配方切片或 OMP standalone 后端。`sync` 消费既有完整锁，只执行声明的安装/构建与校验步骤，安装成功验证后才激活目录；配置 rollback 不降级软件或数据库。`runtime` 使用已部署 argv/引用、实时 secret 值与显式环境清单。普通宿主继承活动锁 fd；Pi 另通过监督者维护实例与工作区活动证据；OMP 同实例普通会话使用共享租约，配置修改使用独占租约。
 
 管理器是仓库应用，uv 使用 `package=false`；入口从已准备的 `.venv` 加载当前仓库 src，不额外解析未锁定的构建后端。不会通过 `uv run` 或无版本 npx 暗中安装。
 

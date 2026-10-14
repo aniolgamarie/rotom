@@ -76,7 +76,7 @@ def main():
   package = args.runtime.absolute()
   if (runtime_packages.status(package, lock.identity) != "installed"
       or (package / "package.json").read_bytes() != lock.package
-      or (package / "package-lock.json").read_bytes() != lock.resolution
+      or ((package / "package-lock.json").read_bytes() if (package / "package-lock.json").exists() else b"") != lock.resolution
       or (package / "pnpm-lock.yaml").read_bytes() != lock.installer_resolution):
     parser.error("runtime 的收据与当前完整 npm/pnpm 锁不匹配")
   evidence = args.evidence.absolute()

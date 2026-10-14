@@ -8,11 +8,12 @@ providers = ["codex", "cursor"]
 models = []
 rules = ["chinese", "terminal", "cpp-local-search"]
 skills = ["repo-navigation", "maintain-agent-config"]
-plugins = ["tui", "codex-auth", "cursor-auth"]
+plugins = ["tui", "codex-auth", "cursor-auth", "auto-review", "review-context"]
 mcp = []
 
 [defaults.agent_options]
 preset = "standard"
 theme = "rotom-catppuccin"
 show_welcome = true
+auto_review = true
 terminal_images = false

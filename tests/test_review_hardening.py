@@ -171,6 +171,39 @@ def test_profile_fallback_writes_cannot_mutate_runtime(tmp_path):
   assert not (root / "node_modules/react-reconciler").exists()
 
 
+@pytest.mark.parametrize("interrupted", [False, True])
+def test_profile_owned_bundle_migration_preserves_native_files(tmp_path, monkeypatch, interrupted):
+  w = load_workspace(local(tmp_path))
+  root = w.instance / "runtimes/fixture"
+  profile = profile_runtime.prepare(w, root)
+  manifest = json.loads((profile / "package.json").read_bytes())
+  manifest["dsh"]["profile"]["bundles"] = profile_runtime.LEGACY_BUNDLES
+  (profile / "package.json").write_bytes(json_bytes(manifest))
+  sentinel = profile / "synthetic-native-session.json"
+  sentinel.write_text("synthetic native data")
+  original = Tree.write_state
+  def fail_package(self, name, data):
+    if name == "package.json":
+      raise OSError("synthetic migration interruption")
+    return original(self, name, data)
+  if interrupted:
+    with monkeypatch.context() as patch:
+      patch.setattr(Tree, "write_state", fail_package)
+      with pytest.raises(OSError):
+        profile_runtime.prepare(w, root)
+  profile_runtime.prepare(w, root)
+  upgraded = json.loads((profile / "package.json").read_bytes())
+  assert upgraded["dsh"]["profile"]["bundles"] == profile_runtime.PROFILE_BUNDLES
+  assert upgraded["dsh"]["profile"]["bundles"].index("dsh-auto-review") < upgraded["dsh"]["profile"]["bundles"].index("@deepseek-harness-tui/dsh-tui")
+  assert sentinel.read_text() == "synthetic native data"
+  upgraded["dsh"]["profile"]["bundles"].append("user-owned-bundle")
+  changed = json_bytes(upgraded)
+  (profile / "package.json").write_bytes(changed)
+  with pytest.raises(Conflict):
+    profile_runtime.prepare(w, root)
+  assert (profile / "package.json").read_bytes() == changed
+
+
 def test_runtime_receipt_rechecks_topology_each_time(tmp_path, prepared_runtime, monkeypatch):
   w = load_workspace(local(tmp_path))
   lock = dep.read_lock(REPO)
@@ -357,7 +390,7 @@ def test_lock_rejects_consistent_but_incompatible_metadata(tmp_path, field):
   metadata = json.loads(path.read_text())
   metadata[field] = {"unavailable": "not-smoked"} if field in ("platforms", "upstream") else "incompatible"
   metadata["identity"] = dep.lock_identity((repository / "locks/dsh/package.json").read_bytes(),
-    (repository / "locks/dsh/package-lock.json").read_bytes(), metadata, (repository / "locks/dsh/pnpm-lock.yaml").read_bytes())
+    b"", metadata, (repository / "locks/dsh/pnpm-lock.yaml").read_bytes())
   path.write_text(json.dumps(metadata))
   with pytest.raises(ConfigError):
     dep.read_lock(repository)

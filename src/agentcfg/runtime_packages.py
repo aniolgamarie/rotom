@@ -12,12 +12,17 @@ from .storage import Conflict, Tree
 from .paths import PathError
 
 
-REQUIRED_FILES = (
+LEGACY_REQUIRED_FILES = (
   "package.json", "package-lock.json", "pnpm-lock.yaml",
   "node_modules/@deepseek-ai/dsh/lib/bin.js",
   "node_modules/@deepseek-harness-tui/dsh-tui/cordis.patch.yml",
   "node_modules/rotom-dsh-cursor-terminal/index.mjs",
   "node_modules/@deepseek-ai/dsh-subprocess-local/scripts/ensure-spawn-helper.mjs",
+)
+REQUIRED_FILES = tuple(name for name in LEGACY_REQUIRED_FILES if name != "package-lock.json") + (
+  "node_modules/dsh-auto-review/lib/index.js",
+  "node_modules/rotom-dsh-review-context/index.mjs",
+  "node_modules/rotom-dsh-review-context/cordis.patch.yml",
 )
 
 
@@ -70,17 +75,25 @@ def status(root, identity):
         return "damaged"
       data = json.loads(receipt[0])
       # 每次校验正文：文件系统可能让同长度修改保留全部时间戳，不能只信元数据缓存。
-      if (data["version"] != 2 or data["identity"] != identity
-          or set(data["files"]) != set(REQUIRED_FILES)
+      required = LEGACY_REQUIRED_FILES if data["version"] == 2 else REQUIRED_FILES
+      if (data["version"] not in (2, 3) or data["identity"] != identity
+          or set(data["files"]) != set(required)
           or data["topology"] != topology_digest(root)):
         return "damaged"
-      for name in REQUIRED_FILES:
+      for name in required:
         raw = tree.read(name)
         if raw is None or data["files"][name] != hashlib.sha256(raw[0]).hexdigest():
           return "damaged"
-      package, resolution = json.loads(tree.read("package.json")[0]), json.loads(tree.read("package-lock.json")[0])
-      if resolution["packages"][""]["dependencies"] != package["dependencies"]:
-        return "damaged"
+      package = tree.read("package.json")[0]
+      if data["version"] == 2:
+        resolution = json.loads(tree.read("package-lock.json")[0])
+        if resolution["packages"][""]["dependencies"] != json.loads(package)["dependencies"]:
+          return "damaged"
+      else:
+        from .dependencies import validate_installer_resolution
+        if tree.read("package-lock.json") is not None:
+          return "damaged"
+        validate_installer_resolution(package, tree.read("pnpm-lock.yaml")[0])
     return "installed"
   except (OSError, PathError, Conflict, ValueError, KeyError, TypeError):
     return "damaged"
@@ -94,7 +107,7 @@ def seal(root, identity):
       if raw is None:
         raise Conflict("运行包缺少必需文件，拒绝激活")
       inventory[name] = hashlib.sha256(raw[0]).hexdigest()
-    receipt = {"version": 2, "identity": identity, "files": inventory,
+    receipt = {"version": 3, "identity": identity, "files": inventory,
                "topology": topology_digest(root)}
     tree.write_state(".agentcfg-receipt.json", json_bytes(receipt))
     tree.write_state(".agentcfg-ready", (identity + "\n").encode())

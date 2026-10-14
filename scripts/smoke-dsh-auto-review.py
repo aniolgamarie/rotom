@@ -34,6 +34,7 @@ def main():
   parser = argparse.ArgumentParser(description=__doc__)
   parser.add_argument("--allow-host", action="store_true")
   parser.add_argument("--runtime", required=True, type=Path)
+  parser.add_argument("--formal-runtime", action="store_true", help="使用当前正式锁收据；不改变已接受的生命周期失败结论")
   parser.add_argument("--core-version", choices=("0.2.0-rc.2", "0.2.1-alpha.2"), default="0.2.0-rc.2")
   parser.add_argument("--evidence", required=True, type=Path)
   args = parser.parse_args()
@@ -41,12 +42,20 @@ def main():
     parser.error("需要 --allow-host；默认测试不启动第三方宿主")
   repo = Path(__file__).resolve().parents[1]
   sys.path.insert(0, str(repo / "src"))
-  from agentcfg import commands, dependencies, profile_runtime
+  from agentcfg import commands, dependencies, profile_runtime, runtime_packages
   from agentcfg.storage import Tree, ensure_private, instance_lock
   from agentcfg.workspace import load_workspace
   package = args.runtime.absolute()
   lock_hash = hashlib.sha256((package / "pnpm-lock.yaml").read_bytes()).hexdigest()
-  if args.core_version == "0.2.0-rc.2":
+  source_lock = dependencies.read_lock(repo)
+  if args.formal_runtime:
+    if (args.core_version != "0.2.0-rc.2" or runtime_packages.status(package, source_lock.identity) != "installed"
+        or (package / "package.json").read_bytes() != source_lock.package
+        or (package / "pnpm-lock.yaml").read_bytes() != source_lock.installer_resolution):
+      parser.error("正式 runtime 收据与当前完整锁不匹配")
+    # 上游源声明的 prerelease peer 警告仍保留；不把正式安装伪报成源声明通过。
+    peer_gate = "FAIL"
+  elif args.core_version == "0.2.0-rc.2":
     install = json.loads((package / "result.json").read_bytes())
     if (install.get("diagnostic-frozen-install_exit") != 0 or not install.get("lock_unchanged")
         or install["sha256"]["pnpm-lock.yaml"] != lock_hash or install.get("actual-module-graph_exit") != 0):
@@ -83,6 +92,9 @@ def main():
     version = subprocess.run(["node", "--version"], env=env, capture_output=True, text=True, check=True).stdout.strip()
     if version != "v24.14.0":
       parser.error("需要 Node24.14.0")
+    if args.formal_runtime:
+      subprocess.run(["node", str(repo / "agents/dsh/templates/check-runtime.mjs"), str(package)],
+        cwd=project, env=env, capture_output=True, check=True)
     machine = root / "machine.toml"
     machine.write_text('schema_version=1\n[machine]\nid="native-auto-review"\n'
       '[overrides.providers.fixture]\nprotocol="openai-compatible"\nbase_url="http://127.0.0.1:9/v1"\nauth_kind="api-key"\ncredential_ref="secret:fixture"\n'
@@ -90,9 +102,8 @@ def main():
       '[overrides.profiles.dsh-default]\nproviders=["fixture"]\nmodels=["fixture"]\n'
       '[overrides.profiles.dsh-default.roles]\nmain="fixture"\n[secrets]\nfixture="synthetic-never-used"\n')
     machine.chmod(0o600)
-    source_lock = dependencies.read_lock(repo)
     workspace = load_workspace(machine, repository=repo)
-    identity = hashlib.sha256((package / "package.json").read_bytes() + (package / "pnpm-lock.yaml").read_bytes()).hexdigest()
+    identity = source_lock.identity if args.formal_runtime else hashlib.sha256((package / "package.json").read_bytes() + (package / "pnpm-lock.yaml").read_bytes()).hexdigest()
     candidate = workspace.candidate(identity)
     commands.apply_candidate(workspace, source_lock, candidate)
     with Tree(workspace.state_root) as tree, instance_lock(tree):
@@ -126,10 +137,12 @@ def main():
       "scripts/smoke-dsh-auto-review.py", "scripts/smoke-dsh-auto-review.mjs", "src/agentcfg/dsh.py", "src/agentcfg/profile_runtime.py")}
     result.update(kind="native-core-perry-simulated-sdk-model", source_files=sources,
       source_hash=hashlib.sha256(json.dumps(sources, sort_keys=True).encode()).hexdigest(), node=version,
-      stage_runtime_identity=identity, pnpm_lock_sha256=lock_hash, candidate_digest=candidate.generation,
+      stage_runtime_identity=identity, formal_runtime=args.formal_runtime,
+      actual_lock_identity=source_lock.identity, actual_lock_recipe=source_lock.metadata["recipe"],
+      pnpm_lock_sha256=lock_hash, candidate_digest=candidate.generation,
       platform=sys.platform, platform_detail=dict(system=platform.system(), release=platform.release(), machine=platform.machine()),
       core_version=args.core_version, dependency_peer_gate=peer_gate, real_accounts="NOT RUN", real_http_model="NOT RUN", full_tui_cursor="NOT RUN",
-      invocation=["scripts/smoke-dsh-auto-review.py", "--allow-host", "--core-version", args.core_version, "--runtime", str(package), "--evidence", str(evidence)])
+      invocation=["scripts/smoke-dsh-auto-review.py", "--allow-host", "--core-version", args.core_version, "--runtime", str(package), "--evidence", str(evidence)] + (["--formal-runtime"] if args.formal_runtime else []))
     if process["timed_out"] or process["exit"] != 0 or not result["nonce_verified"]:
       result.update(functional="FAIL", release_gate="FAIL", driver_error="NATIVE_INCOMPLETE_OR_TIMEOUT")
     result["release_gate"] = result.get("release_gate", "BLOCKED")
