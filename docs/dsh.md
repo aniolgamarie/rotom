@@ -1,8 +1,8 @@
 # DSH 配方与本机部署
 
-维护一套 `dsh-default`。2026-10-13 已按用户授权合入 main，并将已验收候选确立为本机日常部署，保持原实例/HOME、账号、会话与密钥来源。日常使用原生人工审批；通用 AI reviewer 已延期至上游修复后验收，独立实验仅审批纯内存 probe。Cursor 有用户文本及文件工具成功反馈，模型恢复修复已通过真实宿主+假模型回归，完整账号链仍未全部验证；Codex/国内 API 完整账号测试按用户要求跳过。代理没有调用真实账号。没有自动接管旧版部署或将会话交给旧版本。完整结果见 [升级验收记录](acceptance/dsh-upgrade-20261012.md)。
+维护一套 `dsh-default`。本机日常部署由 main 的 agentcfg 管理，绑定长期 `workstation` 配置和标准实例路径，复用其原共享密钥来源。日常使用原生 workspace-write + ask 和人工审批。通用 auto-review 仍未通过关闭、卸载、跨轮次状态和持久审计门槛，未作为正式功能启用；整套升级目标尚未全部验收。完整结果见 [升级验收记录](acceptance/dsh-upgrade-20261012.md)。
 
-本机部署收尾尚未完成：日常入口已经由 main 的 agentcfg 管理，但仍绑定 `rotom-dsh-candidate-20261012/machine.toml`、候选实例根与候选私人密钥文件，没有归并到长期机器配置和 workstation 的共享密钥来源。代码合入、日常可运行与整套目标正式交付是不同完成项。候选根现在包含真实使用数据，不能按临时目录删除；本机配置/所有权迁移和退役入口清理必须保留账号、会话及恢复边界。通用 auto-review 仍未发布，不能用改目录名或移除实验提示代替验收。
+2026-10-14 按用户明确授权清除两套候选测试账号、会话、实验运行包和快照，移除独立 `dsh-auto-review` 启动入口。正式实例使用全新原生 HOME，Cursor 需重新登录；原候选 API key 文件仅移动至私人备份，未读取或复制内容。更早的 workstation DSH 含历史补丁及未知账号资料，整体保留到私人恢复目录，未将旧会话导入新版本。Cursor 先前的用户文本/文件工具反馈保留其历史范围；本轮真实模型调用 0，Codex/国内 API 完整账号测试仍按用户要求跳过。DSH Core 仍为预发布 RC，正式部署不表示上游稳定版或自动审批验收通过。
 
 ## 版本、原包与锁
 
@@ -24,7 +24,7 @@
 
 ## 使用与登录
 
-本机个人 PATH 已注册以下命令，管理器使用 main 源码；实例仍位于 `/home/private-user/rotom-dsh-candidate-20261012`，保留目录名以维持身份和原生数据路径：
+本机个人 PATH 的三个入口指向 `~/.local/share/agentcfg/launchers/`，管理器使用 main 源码及 `~/.config/agentcfg/machines/workstation.toml`，显式选择 `dsh-default`，不改变机器默认的 `omp-kernel`。实例为 `~/.local/share/agentcfg/instances/dsh/dsh-default`，状态为 `~/.local/state/agentcfg/dsh/dsh-default`：
 
 ```bash
 cd /path/to/project
@@ -32,12 +32,11 @@ dsh                         # 默认使用当前目录；--cwd 也可显式指�
 dsh-config doctor           # 离线检查当前日常实例
 dsh-config plan
 dsh-config model status
-dsh-config model key kimi-code  # 隐藏输入，写原有密钥来源
-dsh-auto-review             # 仅 probe 的独立实验，不是通用自动审批
+dsh-config model key kimi_tf    # 按需隐藏输入；更新与 OMP 共用的 TF key
 dsh-cursor-login-url        # 用户本人在终端取完整登录链接；代理不执行
 ```
 
-本机 `dsh-config` 固定同一 machine/profile 与隔离 HOME/XDG；没有改动其他 Agent 的配置或密钥文件。日常启动默认模型仍遵循现有配置、原生偏好和会话恢复优先级。以下是其他机器从明确私人配置部署的通用命令：
+`dsh-config` 是薄 Shell 入口，固定正式 local/profile、使用现有 Node 24 工具链，再 exec 仓库 `agentcfg`；`dsh` 继续 exec 其 `run`。HOME/DSH_HOME/XDG 隔离由适配器负责，没有第二套管理器或日常/审批 profile。机器配置只补充 `overrides.profiles.dsh-default` 的 TF 选择，其他 Agent 配置及密钥文件不变。以下命令与个人入口管理同一正式实例：
 
 ```bash
 ./agentcfg --machine workstation --profile dsh-default sync
@@ -46,7 +45,7 @@ dsh-cursor-login-url        # 用户本人在终端取完整登录链接；代�
 ./agentcfg --machine workstation --profile dsh-default doctor
 ```
 
-本次不要将上述 apply 用于旧部署。升级门禁会拒绝旧受管 `settings.yaml` / env-guard 记录、旧 owner 和旧 pending。应在独立 HOME/XDG/实例根中用同一配方验收；旧部署继续从原工作树运行。
+本机已在保持原状态锁 inode 的条件下将历史实例及旧状态项移入恢复目录，再通过同一 plan/transact 契约建立新部署。没有清除 legacy 门禁：其他机器仍有旧受管 `settings.yaml` / env-guard、旧 owner 或 pending 时，直接 apply 会拒绝。应先在独立 HOME/XDG/实例根验收，不能清 owner 后强行认领旧数据。
 
 新实例保留当前公共国内 API 模型入口及私人机器覆盖，默认主模型沿用实际 `kimi_code_openai` 配置。`model status` 查看缺项，`model key` 只修改选定私人密钥来源。缺少一个订阅登录不会阻止其他配置好的 API 路由启动；无 key 的路由保持不可用，不自动改用其他付费来源。关闭代理的国内 API 检查只修改测试子进程环境，网络可达仍是必要条件。
 
@@ -54,7 +53,7 @@ TF 目录在 `agents/dsh/content.toml` 中提供 11 个 `dsh-…` 模型绑定�
 
 TF 需要机器自己的 `tf_openai_url` 和 `tf_anthropic_url`，因此通过 `overrides.profiles.dsh-default` 选择，见 [私人配置示例](../examples/dsh-tf.local.toml)，没有强迫缺少网关地址的其他机器启用。默认主模型保持原值。模型名称、输入能力和客户端预算复用公共模板；DSH 的 reasoning/compat 使用公开字段，OMP 的 native 字段不会透传。网关实际模型可用性、额度和工具往返仍需用户验证；原生宿主与本机模拟服务通过不代表 TF 账号测试通过。
 
-本机 2026-10-14 已为日常和限定体验两个实例部署该目录及已有 TF 地址。密钥文件没有读取或复制，两个实例仍引用原候选 `secrets.toml`；仅复用 `secret:omp_*_tf_key` 的名称，不等于已接入 workstation 的共享文件。将 `secrets_file` 改到 `~/.config/agentcfg/secrets.toml` 的动作被自动审批拒绝：全量切换可能使只填在候选文件中的 API key 不可用，需要用户明确批准该文件指针迁移。原文件保留，凭据可用性标为 NOT INSPECTED。
+正式 workstation 已选择这 11 项 TF 绑定及三项 provider，保留已有 TF 地址和 main 角色。原 machine 未设置 `secrets_file`，仍使用其默认共享文件；这里已复用同一来源，不再引用候选 key 文件。密钥内容、账号额度和实际网关模型可用性均 NOT INSPECTED。原候选 key 文件仅按 inode 移至 `~/.config/agentcfg/retired-credentials/dsh-candidate-20261012.toml`（0600），不作为运行来源。需要 TF 时在 `/model` 选择对应 `agentcfg-kimi_tf`、`agentcfg-zhipu_tf` 或 `agentcfg-deepseek_tf`；未自动把原 main 切换到 TF。
 
 Codex/ChatGPT 订阅在 DSH TUI 内使用：
 
@@ -95,7 +94,7 @@ DSH 内核、standard preset、workspace-write + ask 为默认。默认显示原
 实际 RC2 `/settings` 写入 `dsh-home/profiles/agentcfg/cordis.patch.yml`。`~/.dsh-tui/settings.json` 不是该版本的活动设置文件；其 npm 包 `lib/settings.json` 是字段目录。本配方保留用户已有文件，不构造不存在的双向同步。
 
 - API providers、Core `agent-default-model` 的默认路由及 TUI 的内核/preset/modes 等明确字段使用按行 id 的 `cordis-yaml` 三方比较。TUI 不再固定 provider/model，避免覆盖恢复会话的记录。未知行、未知字段和未执行的标量 JS 保留；重复 id/重复键、非法结构和受管字段父节点被改成 JS 都失败。
-- whale/idle/minimal、侧栏开关和面板列表只首次初始化。默认 whale=true、minimal=false 显示品牌横幅，whaleIdle=false 避免空闲动画；开发 preset 仍为 standard。收起侧栏，按需打开 todo/jobs/agents/trajectory/info。重复 apply 不恢复用户改变的这些偏好。
+- whale/idle/minimal、侧栏开关和面板列表只首次初始化。默认 whale=true、whaleGirl=false、companion.skin=whale，显示鲸鱼；minimal=false 显示品牌横幅，whaleIdle=false 避免空闲动画。鲸鱼选择已进入正式配置来源，重建不依赖手改生成文件；开发 preset 仍为 standard。收起侧栏，按需打开 todo/jobs/agents/trajectory/info。重复 apply 不恢复用户改变的这些偏好。
 - `brand=deepseek` 也只初始化，用于保持鲸鱼品牌并避免切到 Claude/Codex 内核时自动更换用户保存的主题。TUI 0.14 的 `brand=auto` 可以覆盖 `theme.json` 的持久选择；本会话 `/theme` 手选或显式环境主题才锁住主题。用户仍可在 `/settings` 改 brand，也可在 `/theme` 改主题，不用环境变量强制覆盖偏好。
 - 主题偏好、home/onboarding 标记也只初始化，默认 `rotom-catppuccin`，同时保留可选择的 Poimandres 资产。主题 capture 是初始化默认提案，不保证双向同步。首次已有非空且未接管的偏好文件会报告冲突，不会覆盖未知字段。已初始化实例不会因 apply 自动改主题；本次手测候选的主题和横幅按用户明确要求，在活动锁释放后逐字段修改。
 - `.dsh-tui` 始终位于实例 `user-home`，HOME/DSH_HOME 身份固定。全局 AGENTS.md、完整两项框架技能、独占 overlay、主题资产和薄启动器按文件管理；账号、会话和日志由原生服务拥有。
@@ -104,23 +103,23 @@ DSH 内核、standard preset、workspace-write + ask 为默认。默认显示原
 
 常用状态入口是 `/status`、`/tokens`、`/settings`、`/panel`、`/preset` 与 `/permission`。实际快捷键以该版本 `/help` 为准；tmux 的 Ctrl+B 会吃掉默认侧栏键，可在原生设置中重绑。本配方的 `terminalImages` 默认关闭（TUI 原生默认开启），它控制主渲染器的图像协议探测，同时影响图片预览和头部立绘原图；模型自身图片输入能力保留。在 `/settings` 的「终端图片预览」调整后，用 `/restart` 生效。中文/多行粘贴、窄窗和退出的实际验收范围以记录为准；未运行 SSH/tmux 客户端交互不能据 PTY 推断通过。
 
-原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及内置固定字面，以实际选择器为准。立绘是原生用户偏好，不是 Rotom 强制默认，保存在同一用户 Cordis patch 中，apply 保留。0.14.0 的伙伴皮肤会优先接管头部：默认 `companion.skin=deepy` 会盖过立绘开关。显示作者的头部女仆立绘需 `whaleGirl=true` 配合 `companion.skin=whale`；选择 `companion.skin=whaleGirl` 则是另一套动态吉祥物素材。原图还需开启 `terminalImages`、重启后成功探测到 Kitty/Sixel，并成功解码资产。0.14.0 在 tmux/screen 中直接禁用图像探测，即使外层终端支持图像协议也使用字符画。回退是作者自带的 30×30 真彩色精灵，用半块字符显示为30列×15行；复制为纯文本会丢失颜色，只剩轮廓。图像协议缺失本身不会回退成鲸鱼。矮窗口会由原生布局收起立绘，扩大终端后再查看。女仆组合曾完成真实欢迎页/会话头部字符画验证，原图协议未验收；当前手测实例按用户的 Ghostty+tmux 使用偏好切回像素鲸鱼（whaleGirl=false、whale=true、companion.skin=whale），主题与推荐状态栏保留。
+原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及内置固定字面，以实际选择器为准。立绘是原生用户偏好，不是 Rotom 强制默认，保存在同一用户 Cordis patch 中，apply 保留。0.14.0 的伙伴皮肤会优先接管头部：默认 `companion.skin=deepy` 会盖过立绘开关。显示作者的头部女仆立绘需 `whaleGirl=true` 配合 `companion.skin=whale`；选择 `companion.skin=whaleGirl` 则是另一套动态吉祥物素材。原图还需开启 `terminalImages`、重启后成功探测到 Kitty/Sixel，并成功解码资产。0.14.0 在 tmux/screen 中直接禁用图像探测，即使外层终端支持图像协议也使用字符画。回退是作者自带的 30×30 真彩色精灵，用半块字符显示为30列×15行；复制为纯文本会丢失颜色，只剩轮廓。图像协议缺失本身不会回退成鲸鱼。矮窗口会由原生布局收起立绘，扩大终端后再查看。女仆组合曾完成真实欢迎页/会话头部字符画验证，原图协议未验收；正式默认延续用户的 Ghostty+tmux 使用偏好，选择像素鲸鱼（whaleGirl=false、whale=true、companion.skin=whale），主题与推荐状态栏保留。
 
 原生主题切换使用 `/theme` 实时预览，或 `/theme dark`、`/theme rotom-catppuccin`。作者的主题文档介绍 Gentle Mist Blue 色系，深色终端对应 `dark`，没有明确指定“最好看”的主题；Catppuccin 是 Rotom 通过公开 JSON 主题格式配置的色板，不是 0.14.0 内置主题。
 
-0.14.0 的立绘仅支持内置素材选择：`whaleGirl` 是头部女仆开关，`companion.skin` 可选 deepy/whale/whaleGirl；静态头图与伙伴动画是不同素材。没有公开配置可导入任意图片或自定义皮肤目录。内部皮肤注册函数未通过包 exports 开放，不能当作已交付的扩展 API；不替换安装包 assets。[Ghostty 支持 Kitty 图像协议](https://ghostty.org/docs/features)，但该 TUI 的 tmux 分支仍直接禁用探测。查看原图可先退出当前候选 TUI，在不进入 tmux 的 Ghostty 标签页运行同一入口，开启「终端图片预览」并 `/restart`；仅增加 tmux passthrough 设置不会改变上游的禁用分支。
+0.14.0 的立绘仅支持内置素材选择：`whaleGirl` 是头部女仆开关，`companion.skin` 可选 deepy/whale/whaleGirl；静态头图与伙伴动画是不同素材。没有公开配置可导入任意图片或自定义皮肤目录。内部皮肤注册函数未通过包 exports 开放，不能当作已交付的扩展 API；不替换安装包 assets。[Ghostty 支持 Kitty 图像协议](https://ghostty.org/docs/features)，但该 TUI 的 tmux 分支仍直接禁用探测。查看原图可先退出当前 TUI，在不进入 tmux 的 Ghostty 标签页运行同一入口，开启「终端图片预览」并 `/restart`；仅增加 tmux passthrough 设置不会改变上游的禁用分支。
 
 Catppuccin 色表来自官方 [Neovim Mocha](https://github.com/catppuccin/nvim/blob/edefef779ab08ce1a4a404713e3012b0d202bd35/lua/catppuccin/palettes/mocha.lua)，本配方覆写 TUI 0.14.0 全部 81 个 Theme 字段，保留空 cursor 的原生反显语义。强调色 peach、边框 blue/lavender、关键字 mauve、函数 blue、字符串 green、数值 peach、运算符 sky、标点 overlay2，与本仓库 OMP Catppuccin 对齐。注释 overlay0、变量 text 沿用 OMP 的选择；它们不等同于 Neovim `syntax.lua` 的传统 Comment/Identifier 映射，也不是唯一的官方映射。
 
 TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 base 保持对比；它不是终端整体背景。`inputBackground` 为 Mocha base，主题不修改系统终端背景/壁纸。Diff 行背景按官方 [Neovim DiffAdd/DiffDelete](https://github.com/catppuccin/nvim/blob/edefef779ab08ce1a4a404713e3012b0d202bd35/lua/catppuccin/groups/syntax.lua) 的 green/red 与 base 18% 混色，得到 `#364143` / `#443244`；dimmed 用 9% 是本适配的选择，变更字色保持纯 green/red。不能把 OMP 的 diff 文字色直接移作 TUI 的行背景。女仆原图和上游固定的品牌渐变保留作者配色，不能称所有像素都由主题覆写。
 
-公共默认模型来源与私人密钥文件是两层配置：DSH 继承 `shared/defaults/models.toml` 的模型入口及 main 角色；同一个 `secret:` 引用可供多个 Agent 共用，但它们必须引用同一私人 `secrets_file`。本次候选显式使用 `/home/private-user/rotom-dsh-candidate-20261012/secrets.toml`，没有自动连接原机器密钥文件。截至本次脱敏 `model status`，main 为 Kimi Code 的 `kimi-for-coding`，Kimi/GLM/DeepSeek key 均未填写。要复用现有共享密钥，应由用户指定该文件的绝对路径后连接引用，不能扫描真实 HOME 或自动复制凭据。
+公共默认模型来源与私人密钥文件是两层配置：DSH 继承 `shared/defaults/models.toml` 的模型入口及 main 角色；同一个 `secret:` 引用供多个 Agent 共用时，需使用同一私人来源。正式 workstation 保留原共享来源，main 仍为 Kimi Code 的 `kimi-for-coding`。本轮空 `SecretStore` 验证产生的“key 未填写”提示仅描述测试上下文，不能解释为用户共享文件缺 key；代理没有读取该文件。用户自行运行 `dsh-config model status` 可查看缺项。
 
 正式普通部署省略 `secrets_file` 时沿用 `XDG_CONFIG_HOME/agentcfg/secrets.toml`，没有设置 XDG_CONFIG_HOME 时为 `~/.config/agentcfg/secrets.toml`；共享文件在管理器解析配置时读取，再通过已选引用注入实例环境，不因子进程 HOME 隔离而改变来源。DSH 和 OMP 标准 Kimi/GLM Provider 分别走 OpenAI/Anthropic 协议，但共用 `kimi_code_key` / `glm_coding_key`。OMP 的 TokensFlow `kimi_tf` 等扩展 Provider 使用独立引用，不能因为同叫 Kimi 就自动改用其 key。共享读取、跨 profile/协议、写入分组与不泄漏渲染的现有离线测试已复核通过。
 
 ### 日常 UI、状态栏与图标
 
-当前候选已按用户确认的方案配置原生 statusBar：保留 compact，开启 model、thinking、cwd、contextUsage、cache、tokens、cost、tps、gitBranch、sessionTitle、goal、mode、contextBar；关闭 sessionId、activity、trajectory、shortcutHint。相对 0.14.0 默认新增 tokens、tps、gitBranch、sessionTitle、mode 五项。开启代表允许展示，缺少数据仍会隐藏。`thinking` 字段用于推理档位；消息内的 Thinking 计时是另一个运行阶段显示。
+正式实例已按用户确认的方案配置原生 statusBar：保留 compact，开启 model、thinking、cwd、contextUsage、cache、tokens、cost、tps、gitBranch、sessionTitle、goal、mode、contextBar；关闭 sessionId、activity、trajectory、shortcutHint。相对 0.14.0 默认新增 tokens、tps、gitBranch、sessionTitle、mode 五项。开启代表允许展示，缺少数据仍会隐藏。`thinking` 字段用于推理档位；消息内的 Thinking 计时是另一个运行阶段显示。
 
 截图里的 `glm-5.2-high` 是当前模型标签；来源可在模型 hover 详情或 `/model` 查询。`6.0k/200k 3.0%` 是上下文占用/窗口，`cache 0.0%` 是最后一份 usage 的缓存读取占输入比例，不是 Cursor 余额。compact 栏里的 `workspace` 是当前目录 basename；它不证明 workspace-write 或 ask 已生效，实际模式用 `/permission` 查询。原生费用项仅在后端报告费用或支持官方 DeepSeek 估价时出现；当前 Cursor 不报告费用时不补一个 0。tokens 已开启，其详情可显示已完成轮次的重试数。
 
@@ -139,7 +138,7 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 
 ### 推荐状态栏（已应用）与按需审批设计（未启用）
 
-2026-10-13 按用户确认，下面的 18 项 `statusBar` 偏好已进入 `dsh-default` 正式来源，逐字段仅首次初始化。日后通过 `/settings` 修改仍属于原生用户偏好，apply 保留；未知字段也保留。升级时已受管共享文件中的既存偏好只消费初始化机会，不采纳用户值为受管基线，也不重写文件。首次接管非空未拥有文件仍失败。当前候选的重复 apply 为 changes=0，账号与会话不变。
+2026-10-13 按用户确认，下面的 18 项 `statusBar` 偏好已进入 `dsh-default` 正式来源，逐字段仅首次初始化。日后通过 `/settings` 修改仍属于原生用户偏好，apply 保留；未知字段也保留。升级时已受管共享文件中的既存偏好只消费初始化机会，不采纳用户值为受管基线，也不重写文件。首次接管非空未拥有文件仍失败。正式实例的重复 apply 为 changes=0；原生账号与会话不属于受管配置。
 
 ```yaml
 statusBar:
@@ -167,9 +166,9 @@ model 是当前模型；thinking 是推理档位而不是耗时；cwd 是目录�
 
 审批目标维持 workspace-write+ask：普通沙箱内允许操作直接执行，只有实际 approval/request 才进入规则和 reviewer。硬拒绝先于模型；生产/外部写入、破坏性删除、权限变化、动态脚本、未知工具和不明目标转人工或拒绝，不按整个 Shell 名称建立 allow 白名单。模型只能给本请求一次允许，不产生后续通用授权。
 
-正式候选没有启用通用自动审批，也不提供未注册的 reviewer 工具配置示例。现有可运行的限定配置位于 `tests/fixtures/dsh-auto-review-probe/cordis.patch.yml`，仅用于下方独立实验；其中常量上下文工具不读取文件、环境或账号。Perry 默认 read/glob/grep 不能限制读目录，空 reviewerTools 又不符合 schema，不能据此宣称 reviewer 已隔离。
+正式实例没有启用通用自动审批，也不提供未注册的 reviewer 工具配置示例。限定测试配置保留在 `tests/fixtures/dsh-auto-review-probe/cordis.patch.yml`，仅作可复现验收材料，不再有常驻个人实验实例；其中常量上下文工具不读取文件、环境或账号。Perry 默认 read/glob/grep 不能限制读目录，空 reviewerTools 又不符合 schema，不能据此宣称 reviewer 已隔离。
 
-当前通用自动审批的门槛依次为：完整 peer/runtime 兼容；独立 reviewer 的上下文/工具边界与身份绑定；真实 approval 链在人工处理器之前接管且 never/硬 deny 不被覆盖；取消/关闭后的迟到 allow 无效；失败预算和无人工通道不放行；持久审计能关联动作、session/request/call、判决理由、模式和失败。现 RC 下 Perry 默认审计是内存，allowUnmarkedAudit 强行写入不是恢复方案。正式候选保持人工；下方独立实验仅支持无副作用 probe。不能可靠进入审批链的 MCP/PTC/直接Node等通道，不宣称已审查。
+当前通用自动审批的门槛依次为：完整 peer/runtime 兼容；独立 reviewer 的上下文/工具边界与身份绑定；真实 approval 链在人工处理器之前接管且 never/硬 deny 不被覆盖；取消/关闭后的迟到 allow 无效；失败预算和无人工通道不放行；持久审计能关联动作、session/request/call、判决理由、模式和失败。现 RC 下 Perry 默认审计是内存，allowUnmarkedAudit 强行写入不是恢复方案。正式实例保持人工；已退役的独立实验只验证过无副作用 probe。不能可靠进入审批链的 MCP/PTC/直接Node等通道，不宣称已审查。
 
 2026-10-13 初次只读核验（历史状态，后续 RC2 实验见下）：Perry 最新仍为0.12.17。DSH0.2.1-alpha.2 的原始 Session 包已提供实验性公开 appendPluginRecord（顶层ignorable、plugin命名空间），这与旧append第三参数不同；不能笼统说所有Core都没有安全记录原语。但Perry0.12.17尚未采用它，其版本守卫在所有0.2预发布线仍停用完整裁决写入，公开answer返回审批结果而非完整verdict，未提供决策前的verdict审计writer/hook。单纯换新Core或补装包不等于交付持久审计。原生read-only也不隔离可读HOME，子代理启动配置没有独立readable-roots。该阶段只核验元数据/源码。后续 RC2/Perry 已安装并运行限定实验；日常候选继续人工模式，真实生命周期和审计失败不能靠账号授权解决。
 
@@ -181,7 +180,7 @@ model 是当前模型；thinking 是推理档位而不是耗时；cwd 是目录�
 
 Cursor 的内部 POST retry 为 0，Provider-owned recovery 也为 0，总尝试一次；不重发无法确认服务端是否已处理的请求。静态 API 默认 normal/0，显式上限为 2；拒绝 always。Codex OAuth 使用上游唯一 `dsh-llm-retry` 的有限默认 5 次重试，最多 6 次尝试，取消和 backoff 由原生实现处理；TUI 没有公开 OAuth retry 字段，不伪造覆盖。真实请求故障/Retry-After 的账号侧证据未完成；不靠重做已成功工具恢复模型流。
 
-目前日常候选的通用 AI 审批未交付；限定实验有独立入口，见下。使用 `/permission` 查看本会话有效模式，`/permission workspace-write` 回到原生 workspace-write + ask。`never` 会拒绝需要审批的请求，并非总是允许；批准只针对当前请求，不形成 bash/python/make 等通用白名单。
+目前正式实例的通用 AI 审批未交付，没有第二个实验日常入口。使用 `/permission` 查看本会话有效模式，`/permission workspace-write` 回到原生 workspace-write + ask。`never` 会拒绝需要审批的请求，并非总是允许；批准只针对当前请求，不形成 bash/python/make 等通用白名单。
 
 有限版本核验未找到满足 RC2/Cordis 4.0.4/Schemastery 3.18.4 全部 peer 的 auto-review：0.12.10 的 DSH peer 排除 RC2，0.12.11 起要求 alpha Cordis/Schemastery。PerryLink auto-review `0.12.17` 的候选源码依赖 alpha Cordis/Schemastery；reviewer start 没有独立 cwd/read-roots 设置，只读工具名单不限制读取目录，默认审计在预发布宿主降级内存。该阶段尚无组合和真实 reviewer 证据；后续 RC2 原生实验已补充基本运行证据，但生命周期、完整目录边界与持久审计门槛仍未通过，不能称通用自动审批安全可用。没有启用官方实验性 Full-access Auto review、YOLO 或新的审批框架，也没有加入第二个规则层。
 
@@ -201,7 +200,7 @@ workspace-write 管的是文件写入，并非通用凭据、网络、环境变�
 
 DSH 不安装 OpenSpec，不自动部署 Spec 工作流/技能，也不使用 Spec Kit 替代。`project init openspec` 因 Pi 的独立可选能力保留，DSH 调用失败闭合。Rotom 和业务项目的 `openspec/`、`.specify/`、`specs/`、AGENTS.md 与用户技能原样保留；有漂移的受管产物不被覆盖或删除。
 
-`rollback` 只还原受管配置。锁/软件再部署、原生会话格式和账号数据是不同恢复边界；没有将新版本写过的会话交给旧版本测试。当前恢复方式是保留原工作树/旧运行包和旧 HOME，在新隔离目录验收候选；不要自动降级或跨 HOME 复制真实会话。
+`rollback` 只还原受管配置。锁/软件再部署、原生会话格式和账号数据是不同恢复边界；没有将新版本写过的会话交给旧版本测试。正式部署记录为 `~/.local/state/agentcfg/migrations/dsh-formal-20261014/promotion.json`（0600），历史实例和状态项保留在 `~/.local/share/agentcfg/recovery/dsh-legacy-20261014/{instance,state}`。该目录没有日常启动入口，包含未知旧原生数据及历史包，不能宣称旧补丁宿主可继续正式使用。迁移前失败的合成恢复验证及一次复制保护失败恢复通过；正式就绪后不自动逆向搬迁数据。用户授权删除的候选账号/会话无法通过配置 rollback 恢复。不要自动降级或跨 HOME 复制真实会话。
 
 显式原生验收入口：
 
@@ -218,24 +217,12 @@ Cursor 原生认证面板的独立入口为 `scripts/smoke-dsh-auth-panel.py --a
 默认 pytest 仍隔离 HOME/DSH/XDG、阻断网络和真实子进程。native 脚本使用虚构状态、真实原包和任务临时哨兵，不是账号模型验收；其确定性答复者也不冒称 Perry reviewer 或真人点击。凭据授权、真实账号、完整 AI 审批与会话降级仍是单独阻塞项。
 
 
-### RC2 + Perry 的限定实验入口（已部署，未正式发布）
+### Perry auto-review 的发布门槛与退役实验
 
-PerryLink/dsh-auto-review 0.12.17 已在Core0.2.0-rc.2上真实运行。新版公共Cordis/Schemastery为预发布，正常pnpm安装成功但完整peer声明检查仍FAIL；关闭/卸载的迟到allow、开关跨turn恢复默认和持久审计均有实际失败，不能启用通用文件/Shell自动审批。详见[验收记录](acceptance/dsh-upgrade-20261012.md#2026-10-13-rc2perry-实际运行与限定体验部署)。
+PerryLink/dsh-auto-review 是上游发布插件，当前核验的最新 release 仍为 [0.12.17](https://github.com/PerryLink/dsh-auto-review/releases/tag/v0.12.17)，对应 `2b931b8375f9ee9ebe20e80ef336c69804e1aac0`。它能在 RC2 真实加载和审批 probe，不能把安装成功解释为通用审批验收通过。原限定实例和快捷入口已退役，不再向用户提供第二个日常环境；公开完整实验锁、fixture、smoke 与历史验收证据保留在仓库。
 
-```bash
-/home/private-user/rotom-dsh-candidate-20261012/dsh-auto-review
-```
+2026-10-14 最终代码重新运行原生审批链及 OS 沙箱：off-late、unload-late 均实际执行 1 次、预期 0；OFF 在下一 turn 恢复 ON；原生 asked/decided 重启后可读 20 对，Perry 完整 verdict 为 0。模型为确定性模拟，工具只操作临时哨兵或内存计数器；没有刷真实限流或消费账号。沙箱 full enforcement、硬拒绝、never、取消及失败预算通过其子集，整体 release gate 仍 FAIL。
 
-在TUI中用 `/model` 选择已授权模型，然后发送一次：“请只调用一次 rotom_review_probe，不调用文件或 Shell 工具。”这是进程内计数器，不写文件、执行Shell、访问网络或读取环境。成功工具结果应有count=1，以及原生当轮AI计数1/1。Reviewer继承主会话路由；返回的parentProvider/parentModel只说明父路由，不能单独证明真实reviewer模型来源。Root仅用假模型验收；用户随后反馈Kimi Code一轮真实probe得到count=1、AI判决1/1、失败0/1，基础判决链已获得用户手测证据。该反馈不扩大到通用审批或完整来源验收。
+失败与该发布包的 [runtime](https://github.com/PerryLink/dsh-auto-review/blob/2b931b8375f9ee9ebe20e80ef336c69804e1aac0/src/runtime.ts) 和 [audit](https://github.com/PerryLink/dsh-auto-review/blob/2b931b8375f9ee9ebe20e80ef336c69804e1aac0/src/audit.ts) 路径一致。公开 wrapper 能收紧部分结果，不能提供可靠的在途撤销、跨轮次持久开关、完整裁决审计及通用 reviewer 读取根边界。没有复制私有实现、修改上游或另造审批框架。
 
-AI策略只覆盖这个probe；其他进入approval/request的请求走人工，原生workspace内允许操作仍按原权限执行。实验禁止模型的subagent/subagent_fork委派，Perry内部独立reviewer仍保留；当前普通DSH入口的子代理配置不受影响。状态可用Perry原生 `/auto-review status`，其内存统计可能在turn结束时清零。`/auto-review off`只影响后续请求且不可靠跨turn保留，完整关闭实验请Ctrl+C退出TUI。
-
-实验目录为候选目录下auto-review-experience，默认工作区固定其中workspace；HOME/DSH/XDG与旧实例分开，保留Catppuccin和原生欢迎页，重复prepare不恢复用户UI偏好。共享API key引用原candidate machine配置来源；填写仍用原agentcfg model key kimi-code/glm-code入口并隐藏输入。Cursor/Codex原生登录状态不复制，新HOME若要使用Cursor需 `/cursor-login`，完整链接由实验目录的cursor-login-url在本人终端查看。
-
-回到原人工候选运行 `/home/private-user/rotom-dsh-candidate-20261012/dsh`。实验不切换正式配方/主锁、不迁移旧会话，不宣称可以软件或会话降级。
-
-体验入口使用 `support/auto-review-source-bec1e9e` 的公开 Git 源码快照，运行包位于 `support/auto-review-runtime-rc2`，均在上述持久实例根内。初次迁移使用 `f8d558e`；2026-10-14 的 UI/TF 修正更新到同一 main 配方，恢复记录为 `support/config-refresh-20261014.json`。原快照保留作恢复资料，未创建长期 profile。启动前比较 probe 与 main 同源文件，漂移拒绝。路径迁移持操作/实例锁并记录 `support/relocation-recovery.json`；配方更新也校验已有 owner/文件哈希再写入。账号和会话不复制，runtime identity保持不变。新配方不能不经校验直接认领原体验；真实宿主+模拟模型证据不包含真实账号调用。
-
-2026-10-13 最终复核 [Perry main 的 runtime](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/runtime.ts) 和 [audit](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/audit.ts)：RC2 的在途批准、跨轮次关闭和完整审计缺口仍在。公开 wrapper 可拒绝部分迟到结果，不能撤回已委派决定或中止私有 reviewer；回放公开开关命令会重复注入 notice，不能作为无竞态恢复契约。通用自动审批继续 BLOCKED，未作为日常功能启用；人工审批升级已合入 main。
-
-用户已同意将这些缺口转为后续上游升级事项，见 [DSH-F01 跟踪及复测门槛](acceptance/dsh-upgrade-20261012.md#dsh-f01-后续上游升级跟踪)。当前交付范围是普通候选的人工审批与独立 probe 限定体验；通用自动审批仍未交付，原 FAIL 证据保留。后续在维护窗口核验固定发布包及公开 API，再使用隔离目录复测；不自动追踪 latest、安装更新或调用账号。上游若补齐公开接口，可评估必要薄适配，不维护 fork 或第二套审批系统。
+用户要求正式版本包含 auto-review，该目标仍未交付，不能通过删掉“实验”字样满足。后续恢复入口及门槛见 [DSH-F01](acceptance/dsh-upgrade-20261012.md#dsh-f01-后续上游升级跟踪)；在固定发布包/公开接口满足条件后，用同一 `dsh-default` 在隔离目录重新验收，再进入正式锁与部署。当前没有后台升级、定时巡检或自动账号测试，也没有可以推荐为正式功能的 `/auto-review on/off` 切换命令。
