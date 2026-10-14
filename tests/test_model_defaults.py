@@ -289,8 +289,11 @@ def test_glm_mandatory_reasoning_controls_render_as_public_sdk_metadata(tmp_path
   registry = catalog().registry
   for model in registry["models"].values():
     if model["remote_id"] in ("glm-5.3", "glm-5.3-flash"):
-      assert model["native"]["omp"]["thinking"] == {
-        "minLevel": "low", "maxLevel": "max", "mode": "effort", "requiresEffort": True}
+      if "omp" in model["native"]:
+        assert model["native"]["omp"]["thinking"] == {
+          "minLevel": "low", "maxLevel": "max", "mode": "effort", "requiresEffort": True}
+      if "dsh" in model["native"]:
+        assert model["native"]["dsh"]["compat"]["forceAdaptiveThinking"] is True
 
 
 def test_deepseek_tf_reuses_url_but_requires_its_independent_key(tmp_path):

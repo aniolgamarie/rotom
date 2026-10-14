@@ -5,6 +5,7 @@ credential_field = "apiKeyEnv"
 [protocols]
 openai-compatible = "openai-completions"
 openai-responses = "openai-responses"
+anthropic-messages = "anthropic-messages"
 
 [oauth.codex]
 route = "openai-codex"

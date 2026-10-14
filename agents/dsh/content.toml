@@ -1,0 +1,59 @@
+schema_version = 1
+# TF 的地址和 credential_ref 复用已有 provider；模型规格复用公共模板。
+# 独立 DSH 绑定只使用 llm-pi-ai 的公开字段，不复制 OMP 的私有兼容选项。
+
+[models."dsh-kimi_tf-kimi-for-coding"]
+template = "kimi_code"
+provider = "kimi_tf"
+native.dsh.compat = {supportsDeveloperRole = false, supportsReasoningEffort = true, maxTokensField = "max_tokens", thinkingFormat = "zai"}
+
+[models."dsh-kimi_tf-k3"]
+template = "kimi_k3"
+provider = "kimi_tf"
+native.dsh.compat = {supportsDeveloperRole = false, supportsReasoningEffort = true, maxTokensField = "max_tokens", thinkingFormat = "openai"}
+
+[models."dsh-kimi_tf-k3-256k"]
+template = "kimi_k3_256k"
+provider = "kimi_tf"
+native.dsh.compat = {supportsDeveloperRole = false, supportsReasoningEffort = true, maxTokensField = "max_tokens", thinkingFormat = "openai"}
+
+[models."dsh-kimi_tf-kimi-for-coding-highspeed"]
+template = "kimi_code_highspeed"
+provider = "kimi_tf"
+# high 对应已声明的 Thinking ON，不宣称有更多 effort 档位。
+native.dsh.reasoningEfforts = {high = "high"}
+native.dsh.compat = {supportsDeveloperRole = false, supportsReasoningEffort = false, maxTokensField = "max_tokens", thinkingFormat = "zai"}
+
+[models."dsh-zhipu_tf-glm-5.3"]
+template = "glm_53"
+provider = "zhipu_tf"
+native.dsh.compat = {forceAdaptiveThinking = true}
+
+[models."dsh-zhipu_tf-glm-5.3-flash"]
+template = "glm_53_flash"
+provider = "zhipu_tf"
+native.dsh.compat = {forceAdaptiveThinking = true}
+
+[models."dsh-zhipu_tf-glm-5.2"]
+template = "glm_52"
+provider = "zhipu_tf"
+
+[models."dsh-zhipu_tf-glm-5.1"]
+template = "glm_51"
+provider = "zhipu_tf"
+
+[models."dsh-zhipu_tf-glm-5-turbo"]
+template = "glm_5_turbo"
+provider = "zhipu_tf"
+
+[models."dsh-deepseek_tf-deepseek-flash"]
+template = "deepseek_flash"
+provider = "deepseek_tf"
+native.dsh.reasoningEfforts = {low = "low", high = "high", max = "high"}
+native.dsh.compat = {supportsDeveloperRole = false, supportsReasoningEffort = true, maxTokensField = "max_tokens", requiresReasoningContentOnAssistantMessages = true, thinkingFormat = "deepseek"}
+
+[models."dsh-deepseek_tf-deepseek-v4-pro"]
+template = "deepseek_pro"
+provider = "deepseek_tf"
+native.dsh.reasoningEfforts = {low = "low", high = "high", max = "high"}
+native.dsh.compat = {supportsDeveloperRole = false, supportsReasoningEffort = true, maxTokensField = "max_tokens", requiresReasoningContentOnAssistantMessages = true, thinkingFormat = "deepseek"}

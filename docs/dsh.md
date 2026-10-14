@@ -48,6 +48,10 @@ dsh-cursor-login-url        # 用户本人在终端取完整登录链接；代�
 
 新实例保留当前公共国内 API 模型入口及私人机器覆盖，默认主模型沿用实际 `kimi_code_openai` 配置。`model status` 查看缺项，`model key` 只修改选定私人密钥来源。缺少一个订阅登录不会阻止其他配置好的 API 路由启动；无 key 的路由保持不可用，不自动改用其他付费来源。关闭代理的国内 API 检查只修改测试子进程环境，网络可达仍是必要条件。
 
+TF 目录在 `agents/dsh/content.toml` 中提供 11 个 `dsh-…` 模型绑定，覆盖与 `omp-kernel` 相同的四个 Kimi、五个 GLM 和两个 DeepSeek 型号。provider 复用已有 `kimi_tf`、`zhipu_tf`、`deepseek_tf` 定义，凭据引用仍分别为 `secret:omp_kimi_tf_key`、`secret:omp_zhipu_tf_key`、`secret:omp_deepseek_tf_key`，不复制密钥。Kimi/DeepSeek 使用 OpenAI Completions，GLM 使用原生 Anthropic Messages；当前锁定的 `llm-pi-ai` 已支持这三个协议，没有添加运行依赖。
+
+TF 需要机器自己的 `tf_openai_url` 和 `tf_anthropic_url`，因此通过 `overrides.profiles.dsh-default` 选择，见 [私人配置示例](../examples/dsh-tf.local.toml)，没有强迫缺少网关地址的其他机器启用。默认主模型保持原值。模型名称、输入能力和客户端预算复用公共模板；DSH 的 reasoning/compat 使用公开字段，OMP 的 native 字段不会透传。网关实际模型可用性、额度和工具往返仍需用户验证；原生宿主与本机模拟服务通过不代表 TF 账号测试通过。
+
 Codex/ChatGPT 订阅在 DSH TUI 内使用：
 
 ```text
@@ -55,6 +59,8 @@ Codex/ChatGPT 订阅在 DSH TUI 内使用：
 /auth login openai-codex
 /model
 ```
+
+这里的 provider ID 是 `openai-codex`；`openai` 没有被本配方挂载。`/provider` 是交互式 provider 管理向导，选择 OAuth 后复用 `/auth` 的同一认证服务，并非第二套账号。SSH 下优先在原生登录方法提问中选择 `Device code login (headless)`；它不依赖远端 localhost 回调。浏览器模式则在原生面板粘贴授权码或完整回跳地址，回调/等待由上游流程负责，不添加自造超时或复制 OAuth 实现。
 
 真实账号未验收。账户保存在隔离实例的原生认证目录，不读取全局 Codex HOME。这与 `/kernel` 的外部 Codex 内核不同：后者是上游入口，DSH Provider/审批插件不自动作用于它，本次没有维护第二套 Codex 配置。
 
@@ -84,6 +90,7 @@ DSH 内核、standard preset、workspace-write + ask 为默认。默认显示原
 
 - API providers、Core `agent-default-model` 的默认路由及 TUI 的内核/preset/modes 等明确字段使用按行 id 的 `cordis-yaml` 三方比较。TUI 不再固定 provider/model，避免覆盖恢复会话的记录。未知行、未知字段和未执行的标量 JS 保留；重复 id/重复键、非法结构和受管字段父节点被改成 JS 都失败。
 - whale/idle/minimal、侧栏开关和面板列表只首次初始化。默认 whale=true、minimal=false 显示品牌横幅，whaleIdle=false 避免空闲动画；开发 preset 仍为 standard。收起侧栏，按需打开 todo/jobs/agents/trajectory/info。重复 apply 不恢复用户改变的这些偏好。
+- `brand=deepseek` 也只初始化，用于保持鲸鱼品牌并避免切到 Claude/Codex 内核时自动更换用户保存的主题。TUI 0.14 的 `brand=auto` 可以覆盖 `theme.json` 的持久选择；本会话 `/theme` 手选或显式环境主题才锁住主题。用户仍可在 `/settings` 改 brand，也可在 `/theme` 改主题，不用环境变量强制覆盖偏好。
 - 主题偏好、home/onboarding 标记也只初始化，默认 `rotom-catppuccin`，同时保留可选择的 Poimandres 资产。主题 capture 是初始化默认提案，不保证双向同步。首次已有非空且未接管的偏好文件会报告冲突，不会覆盖未知字段。已初始化实例不会因 apply 自动改主题；本次手测候选的主题和横幅按用户明确要求，在活动锁释放后逐字段修改。
 - `.dsh-tui` 始终位于实例 `user-home`，HOME/DSH_HOME 身份固定。全局 AGENTS.md、完整两项框架技能、独占 overlay、主题资产和薄启动器按文件管理；账号、会话和日志由原生服务拥有。
 - 薄启动器使用公开 `@deepseek-ai/dsh/profile-boot` 与 launch environment snapshot；不调用 dotenv 发现，不改 Node fs 或上游。业务 cwd 不变，cwd/.env 与 DSH_HOME/.env 不被隐式导入。

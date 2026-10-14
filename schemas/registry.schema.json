@@ -186,6 +186,21 @@
     "native_model": {
       "type": "object", "additionalProperties": false,
       "properties": {
+        "dsh": {"type": "object", "additionalProperties": false, "properties": {
+          "reasoningEfforts": {"type": "object", "additionalProperties": false, "minProperties": 1, "properties": {
+            "low": {"type": "string", "enum": ["low", "high", "max"]},
+            "high": {"type": "string", "enum": ["low", "high", "max"]},
+            "max": {"type": "string", "enum": ["low", "high", "max"]}
+          }},
+          "compat": {"type": "object", "additionalProperties": false, "properties": {
+            "supportsDeveloperRole": {"type": "boolean"},
+            "supportsReasoningEffort": {"type": "boolean"},
+            "maxTokensField": {"type": "string", "enum": ["max_tokens"]},
+            "requiresReasoningContentOnAssistantMessages": {"type": "boolean"},
+            "thinkingFormat": {"type": "string", "enum": ["deepseek", "zai", "openai"]},
+            "forceAdaptiveThinking": {"type": "boolean"}
+          }}
+        }},
         "pi": {"type": "object", "additionalProperties": false, "properties": {
           "disabled_thinking_levels": {"type": "array", "items": {"type": "string", "enum": ["off"]}, "uniqueItems": true},
           "thinkingLevelMap": {"type": "object", "additionalProperties": false, "properties": {

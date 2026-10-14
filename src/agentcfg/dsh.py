@@ -116,10 +116,19 @@ class DshAdapter(Adapter):
       route = self.route(data, key)
       fields = {"apiKeyEnv": env_name("KEY", key), "baseURL": provider["base_url"],
                 "api": data["adapter_documents"]["bindings"]["protocols"][provider["protocol"]]}
-      models = [{"id": model["remote_id"], "input": model["input"],
-                 **({"contextWindow": model["context_window"]} if "context_window" in model else {}),
-                 **({"maxTokens": model["max_output_tokens"]} if "max_output_tokens" in model else {})} for model in data["models"].values()
-                if model["provider"] == key]
+      models = []
+      for model in data["models"].values():
+        if model["provider"] != key:
+          continue
+        entry = {"id": model["remote_id"], "input": model["input"]}
+        for source, target in (("name", "name"), ("context_window", "contextWindow"), ("max_output_tokens", "maxTokens")):
+          if source in model:
+            entry[target] = model[source]
+        # 只投影 DSH 公开模型字段，其他 Agent 的 native 配置不跨宿主透传。
+        entry.update(deepcopy(model.get("native", {}).get("dsh", {})))
+        if "reasoningEfforts" not in entry and model.get("reasoning_efforts"):
+          entry["reasoningEfforts"] = {level: level for level in model["reasoning_efforts"]}
+        models.append(entry)
       if models:
         fields["models"] = models
       fields.update(data["profile"]["agent_options"].get("provider_options", {}).get(key, {}))
@@ -134,7 +143,7 @@ class DshAdapter(Adapter):
     for field, value in config.items():
       yield "/dsh-tui/config/" + field, value, Ownership.FIELDS
     # 原生 /settings 偏好逐叶首次初始化，后续 apply 不覆盖用户修改。
-    for field, value in {"whale": True, "whaleIdle": False, "minimal": False,
+    for field, value in {"brand": "deepseek", "whale": True, "whaleIdle": False, "minimal": False,
         "sidePanel/open": False, "sidePanel/panels": "todo,jobs,agents,trajectory,info",
         "statusBar/compact": True, "statusBar/model": True, "statusBar/thinking": True,
         "statusBar/cwd": True, "statusBar/contextUsage": True, "statusBar/cache": True,
@@ -313,7 +322,7 @@ class DshAdapter(Adapter):
                         "tui_commit": SHA, "defaults": defaults},
                        ("schema_version", "adapter_version", "upstream_commit", "tui_commit", "defaults")),
       "bindings": closed({"schema_version": VERSION, "settings_namespace": {"type": "string", "const": "llm-pi-ai"}, "credential_field": {"type": "string", "const": "apiKeyEnv"},
-                           "protocols": {"type": "object", "additionalProperties": {"type": "string", "enum": ["openai-completions", "openai-responses"]}},
+                           "protocols": {"type": "object", "additionalProperties": {"type": "string", "enum": ["openai-completions", "openai-responses", "anthropic-messages"]}},
                            "oauth": {"type": "object", "additionalProperties": closed({"route": STRING, "owner": STRING}, ("route", "owner"))}},
                           ("schema_version", "settings_namespace", "credential_field", "protocols", "oauth")),
       "plugins": closed({"schema_version": VERSION, "plugins": {"type": "object", "additionalProperties": plugin}}, ("schema_version", "plugins")),

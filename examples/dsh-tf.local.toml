@@ -1,0 +1,17 @@
+# 与已有 workstation 共用 TF 的 URL 名称和 secret 引用；按自己的机器填写 URL。
+# 此例不含 key，secrets_file 仅引用私人共享文件。没有新增 DSH 用户 profile。
+schema_version = 1
+secrets_file = "~/.config/agentcfg/secrets.toml"
+
+[machine]
+id = "dsh-tf-example"
+default_profile = "dsh-default"
+
+[local_values]
+tf_openai_url = ""
+tf_anthropic_url = ""
+
+[overrides.profiles.dsh-default]
+providers = ["kimi_tf", "zhipu_tf", "deepseek_tf"]
+models = ["dsh-kimi_tf-kimi-for-coding", "dsh-kimi_tf-k3", "dsh-kimi_tf-k3-256k", "dsh-kimi_tf-kimi-for-coding-highspeed", "dsh-zhipu_tf-glm-5.3", "dsh-zhipu_tf-glm-5.3-flash", "dsh-zhipu_tf-glm-5.2", "dsh-zhipu_tf-glm-5.1", "dsh-zhipu_tf-glm-5-turbo", "dsh-deepseek_tf-deepseek-flash", "dsh-deepseek_tf-deepseek-v4-pro"]
+# 不覆盖 main 角色；需要时通过 /model 选择 TF，保留当前默认模型。
