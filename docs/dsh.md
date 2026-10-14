@@ -80,6 +80,10 @@ Codex/ChatGPT 订阅在 DSH TUI 内使用：
 
 这里的 provider ID 是 `openai-codex`；`openai` 没有被本配方挂载。`/provider` 是交互式 provider 管理向导，选择 OAuth 后复用 `/auth` 的同一认证服务，并非第二套账号。SSH 下优先在原生登录方法提问中选择 `Device code login (headless)`；它不依赖远端 localhost 回调。浏览器模式则在原生面板粘贴授权码或完整回跳地址，回调/等待由上游流程负责，不添加自造超时或复制 OAuth 实现。
 
+设备码登录的账号侧前提是先在ChatGPT安全设置或工作区管理员权限中启用device code login，见[OpenAI官方认证文档](https://learn.chatgpt.com/docs/auth#preferred-device-code-authentication-beta)。它不能修复网络连接错误。当前pi-ai0.87.1先显示登录方式提问，用户选择设备码后才申请并轮询；申请或轮询的fetch异常会结束本次登录。失败后重新执行`/auth login openai-codex`会开始新的流程；有设备码面板时先选`Cancel sign-in`，卡住时退出TUI并用`dsh-proxy`重启，再打开登录方式窗口。此操作不需要删除认证目录或配置回滚。
+
+2026-10-14原生TUI+本地TLS假OAuth测试已验证发码失败、同会话重开、轮询失败、再次重开及取消停止轮询；初次和失败后选择页各等待5秒，回答前OAuth请求0。它不能证明真实登录已经修复：同10808代理下匿名Node fetch访问认证站点曾报ECONNRESET，而curl/Node https收到403、Node fetch访问example.com收到200，外部具体原因未确认。用户另反馈“选择窗口出现前直接fetch failed”，与受控设备码故障阶段不同，仍待重启后的真实UI观察；不从匿名HEAD推定实际发码请求同因。证据和明确未完成项见[认证故障验收](acceptance/dsh-upgrade-20261012.md#2026-10-14-codex设备码故障与键盘查看复核)。
+
 2026-10-14 真实 `/auth login openai-codex` 浏览器模式在全新无账号 HOME 中能显示登录方法/授权码面板，空闲五秒后取消，退出和 termios 恢复通过。URL 只在内存验证，未写账号凭据；这不能证明已完成真实账号登录，也没有复现用户原会话“迅速退出”的症状。模拟 device-code 面板通过，不替代实际联网设备码发行/登录证据。真实浏览器入口另有一次原生 npm 版本 GET，单列为背景请求，无 OAuth 远端/真实模型调用或依赖安装。
 
 真实账号未验收。账户保存在隔离实例的原生认证目录，不读取全局 Codex HOME。这与 `/kernel` 的外部 Codex 内核不同：后者是上游入口，DSH Provider/审批插件不自动作用于它，本次没有维护第二套 Codex 配置。
@@ -138,6 +142,8 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 
 截图里的 `glm-5.2-high` 是当前模型标签；来源可在模型 hover 详情或 `/model` 查询。`6.0k/200k 3.0%` 是上下文占用/窗口，`cache 0.0%` 是最后一份 usage 的缓存读取占输入比例，不是 Cursor 余额。compact 栏里的 `workspace` 是当前目录 basename；它不证明 workspace-write 或 ask 已生效，实际模式用 `/permission` 查询。原生费用项仅在后端报告费用或支持官方 DeepSeek 估价时出现；当前 Cursor 不报告费用时不补一个 0。tokens 已开启，其详情可显示已完成轮次的重试数。
 
+无鼠标查看当前供应商：输入裸`/model`并按Enter打开选择器，看`✓`标记的当前provider/model；`❯`仅是键盘焦点。有最近模型时行前显示provider，分组视图中当前provider组也有选中标记；看完按Esc退出。带`provider/model`参数的`/model`会切换路由。0.14.0的statusBar schema没有provider字段，公开贡献协议也没有状态栏片段接口；不添加无效字段或改写模型ID。`/status`只报模型，不报provider。
+
 可配置类别包括主题/极简界面、欢迎图形与大字、伙伴皮肤、侧栏及面板、状态栏字段与紧凑布局、工具卡/滚动展示、图片预览、按键等。通过 `/settings` 修改原生用户偏好，`/theme` 选主题，`/panel` 打开面板。TUI 的大字字体不是系统字体选择器。0.14.0 没有 Nerd Font 图标主题开关；可在客户端采用 Nerd Font 绘制普通 Unicode，但不会自动变成 OMP 的 Nerd 图标集。SSH 字体由本地终端决定。
 
 以下对照以候选 DSH 和仓库公共 OMP/Pi 配方为准，未检查 OMP/Pi 的用户运行态：
@@ -150,6 +156,12 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 | 图标 | 普通 Unicode，未提供 Nerd 图标主题 | symbolPreset=nerd | footer 提供 Nerd glyph 检测/配置及普通 Unicode 回退 |
 | 辅助视图 | 侧栏收起，todo/jobs/agents/trajectory/info | 原生任务/Agent 能力，未使用 DSH 同一套侧栏 | pi-todo/subagents；不把其他 profile 的 Task Keeper 算进 default |
 | 偏好所有权 | UI 偏好/主题初始化，日后 apply 保留；后端/preset/Core 默认路由持续管理，原生模型偏好和会话路由保留 | 状态栏等字段三方合并，漂移保留或冲突 | 原生 settings 字段三方合并，footer 读取受管 manifest 的 ui.footer |
+
+### tmux中的输出历史
+
+全屏TUI使用alternate screen并自己管理transcript视口，tmux复制模式看到的是终端画面缓冲，不等同于会话历史。退出tmux复制模式回到DSH后，PgUp/PgDn按一页滚动输出，End回到底部；默认Ctrl+E展开或折叠隐藏的旧消息，只作用于当前已加载内容。`/vim`控制输入框草稿编辑，不提供transcript的j/k滚动。
+
+默认Ctrl+T打开轨迹视图，方向键移动、PgUp/PgDn翻页、g/G到首尾、Enter展开详情、q退出；它用于检视轨迹，不保证定位主聊天视口。需要用Vim键逐行搜索或复制长输出时，输入`/export`，TUI在当前工作目录写出`dsh-tui-export-<时间戳>.md`并提示路径，再用less或编辑器打开。导出的是当前会话投影，不宣称包含未载入的全部历史。Minimal UI和全屏草稿编辑器均不是终端滚屏模式开关；本轮不改tmux/termcfg、不自造复制UI。
 
 ### 推荐状态栏（已应用）与按需审批设计（未启用）
 
