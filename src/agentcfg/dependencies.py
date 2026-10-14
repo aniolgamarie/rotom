@@ -125,6 +125,8 @@ def validate_installer_resolution(package, resolution):
     if (not isinstance(item, dict) or item.get("specifier") != version
         or not isinstance(item.get("version"), str) or not item["version"]):
       raise ValueError("inconsistent frozen dependency")
+  if any(not isinstance(name, str) for name in document["packages"]):
+    raise ValueError("invalid frozen installer package name")
   if any("openspec" in name.lower() or "superpowers" in name.lower() for name in document["packages"]):
     raise ValueError("retired dependency in installer lock")
   local = {value[5:] for value in dependencies.values() if value.startswith("file:")}

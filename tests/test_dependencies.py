@@ -309,6 +309,22 @@ def test_malformed_installer_structure_is_value_error_and_read_lock_config_error
     dep.read_lock(repository)
 
 
+@pytest.mark.parametrize("invalid", [123, None])
+def test_installer_package_keys_are_strings_and_read_lock_config_error(tmp_path, invalid):
+  repository = lock_repository(tmp_path)
+  root = repository / "locks/dsh"
+  package_bytes = (root / "package.json").read_bytes()
+  installer = yaml.safe_load((root / "pnpm-lock.yaml").read_bytes())
+  name = next(iter(installer["packages"]))
+  installer["packages"][invalid] = installer["packages"].pop(name)
+  installer_bytes = yaml.safe_dump(installer).encode()
+  with pytest.raises(ValueError, match="invalid frozen installer package name"):
+    dep.validate_installer_resolution(package_bytes, installer_bytes)
+  (root / "pnpm-lock.yaml").write_bytes(installer_bytes)
+  with pytest.raises(ConfigError, match="lock-missing-or-stale"):
+    dep.read_lock(repository)
+
+
 def test_read_lock_rejects_missing_pnpm_integrity_even_with_recomputed_identity(tmp_path):
   repository = lock_repository(tmp_path)
   root = repository / "locks/dsh"
