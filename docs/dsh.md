@@ -144,17 +144,21 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 
 截图里的 `glm-5.2-high` 是当前模型标签；来源可在模型 hover 详情或 `/model` 查询。`6.0k/200k 3.0%` 是上下文占用/窗口，`cache 0.0%` 是最后一份 usage 的缓存读取占输入比例，不是 Cursor 余额。compact 栏里的 `workspace` 是当前目录 basename；它不证明 workspace-write 或 ask 已生效，实际模式用 `/permission` 查询。原生费用项仅在后端报告费用或支持官方 DeepSeek 估价时出现；当前 Cursor 不报告费用时不补一个 0。tokens 已开启，其详情可显示已完成轮次的重试数。
 
-推理档位还要求当前会话有明确的effort值；未指定时即使`statusBar.thinking=true`也留空，不能由此判断推理已关闭。`/effort status`将当前档位或`—`写入会话的本地输出，便于回看；`/effort`打开当前路由支持的档位选择，`/effort medium`可直接设置有效档位。原生设置立即作用于当前路由，并保存到隔离HOME的`.dsh-tui/effort.json`作为本实例后续会话默认偏好；它不是仅当前模型的独立偏好，其他路由会按支持档位回退，不应向所有provider硬写medium。若status已有档位但底栏仍缺失，在`/settings`检查状态栏的Thinking开关；apply保留用户现有UI偏好。`/thinking`只控制推理文本展示，不调整effort。锁定pi-ai目录的`openai-codex/gpt-6-sol`标注支持推理，TUI提供low/medium/high/xhigh/max，但这不是远端所有档位均已实测的证据。
+推理档位还要求当前会话有明确的effort值；未指定时即使`statusBar.thinking=true`也留空，不能由此判断推理已关闭。`/effort status`将当前档位或`—`写入会话的本地输出，便于回看；`/effort`在当前路由支持多个档位时打开选择器，左右键即时设置，Enter或Esc关闭而不回滚；`/effort medium`可直接设置有效档位。原生设置立即作用于当前路由，并保存到隔离HOME的`.dsh-tui/effort.json`，正式workstation对应`~/.local/share/agentcfg/instances/dsh/dsh-default/user-home/.dsh-tui/effort.json`。它属于本实例的共享原生偏好，不是每模型独立记录；其他路由会按支持档位回退，不应向所有provider硬写medium。若status已有档位但底栏仍缺失，在`/settings`检查状态栏的Thinking开关；apply保留用户现有UI偏好。`/thinking`只控制推理文本展示，不调整effort。锁定pi-ai目录的`openai-codex/gpt-6-sol`标注支持推理，TUI提供low/medium/high/xhigh/max，但这不是远端所有档位均已实测的证据。
+
+按2026-10-14用户决定，Rotom不新增固定effort默认值，采用手动`/effort`。当原生`/settings`的effortDefault为auto、且没有固定effort时，保存的偏好可跨启动及模型重绑定复用；更高优先级的effortDefault或effort会覆盖该偏好，不支持的模型则回退或保持原生默认。受管apply不写入、重置或删除原生effort.json；取消的默认配置试验没有部署到本机。
+
+`—`不是缺少API参数的证明：DSH请求先取当前reasoningEffort，再取provider profile的reasoning；两者都未指定时，锁定pi-ai对`openai-codex/gpt-6-sol`按模型的off映射构造`reasoning.effort=none`。因此希望明确使用推理档位时应在DSH聊天框设置有效档位，再用`/effort status`确认，而非依赖空读数。`Current reasoning effort …`和Usage两行在此版本对应status分支；不能将其当作选择器已经打开的证据。上述斜杠命令不是Shell命令。
 
 无鼠标查看当前供应商：输入裸`/model`并按Enter打开选择器，看`✓`标记的当前provider/model；`❯`仅是键盘焦点。有最近模型时行前显示provider，分组视图中当前provider组也有选中标记；看完按Esc退出。带`provider/model`参数的`/model`会切换路由。0.14.0的statusBar schema没有provider字段，公开贡献协议也没有状态栏片段接口；不添加无效字段或改写模型ID。`/status`只报模型，不报provider。
 
 可配置类别包括主题/极简界面、欢迎图形与大字、伙伴皮肤、侧栏及面板、状态栏字段与紧凑布局、工具卡/滚动展示、图片预览、按键等。通过 `/settings` 修改原生用户偏好，`/theme` 选主题，`/panel` 打开面板。TUI 的大字字体不是系统字体选择器。0.14.0 没有 Nerd Font 图标主题开关；可在客户端采用 Nerd Font 绘制普通 Unicode，但不会自动变成 OMP 的 Nerd 图标集。SSH 字体由本地终端决定。
 
-以下对照以候选 DSH 和仓库公共 OMP/Pi 配方为准，未检查 OMP/Pi 的用户运行态：
+以下对照以正式 DSH 和仓库公共 OMP/Pi 配方为准，未检查 OMP/Pi 的用户运行态：
 
-| 项目 | DSH 候选 | OMP kernel 公共配方 | Pi default 公共配方 |
+| 项目 | DSH 正式配方 | OMP kernel 公共配方 | Pi default 公共配方 |
 | --- | --- | --- | --- |
-| 外观 | Catppuccin Mocha、原生欢迎页/女仆、idle 关闭 | 原工作树深浅 Catppuccin | Everforest Dark、quiet startup |
+| 外观 | Catppuccin Mocha、原生欢迎页/鲸鱼、idle 关闭 | 原工作树深浅 Catppuccin | Everforest Dark、quiet startup |
 | 状态栏配置 | 原生逐项开关、compact，布局由 TUI 决定 | custom 左右段及顺序、powerline-thin 分隔 | colorful-footer 的颜色/图标/分隔/最大行数及宽度分档 |
 | 主要信息 | 模型/推理档位/目录/上下文/cache/tokens/tps，分支、标题、模式、费用及 goal 按数据出现 | 左 vim/model/context_pct/token_rate/time_spent；右 session_name/path/git/mode/token_total/cache_hit | 按宽度显示 provider/model、thinking、上下文、速度、分支、时长、费用、cache 等 |
 | 图标 | 普通 Unicode，未提供 Nerd 图标主题 | symbolPreset=nerd | footer 提供 Nerd glyph 检测/配置及普通 Unicode 回退 |
@@ -165,9 +169,11 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 
 全屏TUI使用alternate screen并自己管理transcript视口，tmux复制模式看到的是终端画面缓冲，不等同于会话历史。退出tmux复制模式回到DSH后，PgUp/PgDn按一页滚动输出，End回到底部；默认Ctrl+E展开或折叠隐藏的旧消息，只作用于当前已加载内容。`/vim`控制输入框草稿编辑，不提供transcript的j/k滚动。
 
+缺少这些按键时，可用Ctrl+O展开转录浏览，按`/`输入关键词、Enter定位，再用`n`/`N`循环查看下一/上一命中。搜索框内Esc关闭搜索并回到此前位置，之后Ctrl+O退出转录浏览；搜索框打开时不能直接用Ctrl+O退出。此路径支持按关键词浏览，不能代替逐页滚动。0.14.0的公开shortcuts列表没有主转录区翻页/到底部动作，`/settings`不能重绑这些硬编码键。截至2026-10-14未找到可直接接入此版本的Vim转录浏览插件；公开快捷键扩展也未提供主视口滚动句柄，不能靠安装一个自造插件保证j/k滚动。见[锁定版本交互手册](https://github.com/ccch1mneyyy/dsh-TUI/blob/v0.14.0/docs/interaction.en.md#L229-L257)。
+
 默认Ctrl+T打开轨迹视图，方向键移动、PgUp/PgDn翻页、g/G到首尾、Enter展开详情、q退出；它用于检视轨迹，不保证定位主聊天视口。需要用Vim键逐行搜索或复制长输出时，输入`/export`，TUI在当前工作目录写出`dsh-tui-export-<时间戳>.md`并提示路径，再用less或编辑器打开。导出的是当前会话投影，不宣称包含未载入的全部历史。Minimal UI和全屏草稿编辑器均不是终端滚屏模式开关；本轮不改tmux/termcfg、不自造复制UI。
 
-### 推荐状态栏（已应用）与按需审批设计（未启用）
+### 推荐状态栏与正式审批配置
 
 2026-10-13 按用户确认，下面的 18 项 `statusBar` 偏好已进入 `dsh-default` 正式来源，逐字段仅首次初始化。日后通过 `/settings` 修改仍属于原生用户偏好，apply 保留；未知字段也保留。升级时已受管共享文件中的既存偏好只消费初始化机会，不采纳用户值为受管基线，也不重写文件。首次接管非空未拥有文件仍失败。正式实例的重复 apply 为 changes=0；原生账号与会话不属于受管配置。
 
