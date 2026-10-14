@@ -272,6 +272,43 @@ def test_installer_resolution_requires_exact_declared_specs():
     dep.validate_installer_resolution(json.dumps(package).encode(), lock.installer_resolution)
 
 
+@pytest.mark.parametrize("location", [
+  "package", "package-dependencies", "package-entry", "installer", "importers",
+  "root-importer", "importer-dependencies", "importer-entry",
+])
+@pytest.mark.parametrize("invalid", [None, [], "broken"])
+def test_malformed_installer_structure_is_value_error_and_read_lock_config_error(tmp_path, location, invalid):
+  repository = lock_repository(tmp_path)
+  root = repository / "locks/dsh"
+  package = json.loads((root / "package.json").read_bytes())
+  installer = yaml.safe_load((root / "pnpm-lock.yaml").read_bytes())
+  name = next(iter(package["dependencies"]))
+  if location == "package":
+    package = invalid
+  elif location == "package-dependencies":
+    package["dependencies"] = invalid
+  elif location == "package-entry":
+    package["dependencies"][name] = invalid
+  elif location == "installer":
+    installer = invalid
+  elif location == "importers":
+    installer["importers"] = invalid
+  elif location == "root-importer":
+    installer["importers"]["."] = invalid
+  elif location == "importer-dependencies":
+    installer["importers"]["."]["dependencies"] = invalid
+  else:
+    installer["importers"]["."]["dependencies"][name] = invalid
+  package_bytes = json.dumps(package).encode()
+  installer_bytes = yaml.safe_dump(installer).encode()
+  with pytest.raises(ValueError):
+    dep.validate_installer_resolution(package_bytes, installer_bytes)
+  (root / "package.json").write_bytes(package_bytes)
+  (root / "pnpm-lock.yaml").write_bytes(installer_bytes)
+  with pytest.raises(ConfigError, match="lock-missing-or-stale"):
+    dep.read_lock(repository)
+
+
 def test_read_lock_rejects_missing_pnpm_integrity_even_with_recomputed_identity(tmp_path):
   repository = lock_repository(tmp_path)
   root = repository / "locks/dsh"

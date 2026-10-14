@@ -104,16 +104,26 @@ def lock_identity(package, resolution, metadata, installer_resolution=b""):
 
 def validate_installer_resolution(package, resolution):
   document = yaml.safe_load(resolution)
-  dependencies = json.loads(package)["dependencies"]
-  if (not isinstance(document, dict) or document.get("lockfileVersion") != "9.0"
-      or set(document.get("importers", {})) != {"."}
-      or set(document["importers"]["."].get("dependencies", {})) != set(dependencies)
+  package_document = json.loads(package)
+  if not isinstance(package_document, dict) or not isinstance(package_document.get("dependencies"), dict):
+    raise ValueError("invalid frozen package dependencies")
+  dependencies = package_document["dependencies"]
+  if any(not isinstance(name, str) or not isinstance(version, str) for name, version in dependencies.items()):
+    raise ValueError("invalid frozen package dependency")
+  if not isinstance(document, dict) or document.get("lockfileVersion") != "9.0":
+    raise ValueError("invalid frozen installer lock")
+  importers = document.get("importers")
+  if not isinstance(importers, dict) or set(importers) != {"."} or not isinstance(importers["."], dict):
+    raise ValueError("invalid frozen installer importers")
+  installed = importers["."].get("dependencies")
+  if (not isinstance(installed, dict) or set(installed) != set(dependencies)
       or not isinstance(document.get("packages"), dict) or not document["packages"]
       or not isinstance(document.get("snapshots"), dict) or not document["snapshots"]):
     raise ValueError("invalid frozen installer lock")
   for name, version in dependencies.items():
-    item = document["importers"]["."]["dependencies"][name]
-    if item.get("specifier") != version or not isinstance(item.get("version"), str) or not item["version"]:
+    item = installed[name]
+    if (not isinstance(item, dict) or item.get("specifier") != version
+        or not isinstance(item.get("version"), str) or not item["version"]):
       raise ValueError("inconsistent frozen dependency")
   if any("openspec" in name.lower() or "superpowers" in name.lower() for name in document["packages"]):
     raise ValueError("retired dependency in installer lock")

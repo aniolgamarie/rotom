@@ -77,6 +77,8 @@ def validate_project_role_file(path, policy):
     if not isinstance(roles, dict) or set(roles) - set(NATIVE_ROLES):
       raise ValueError()
     for role, selector in roles.items():
+      if selector is None:
+        continue
       if not isinstance(selector, str) or any(char in selector for char in "$%*?[]"):
         raise ValueError()
       if selector not in policy.roles[role]:

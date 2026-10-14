@@ -61,7 +61,18 @@ def test_native_empty_role_file_can_restore_global_defaults(tmp_path, content):
   assert inspect(path.parent.parent)[0]["category"] == "model-roles"
 
 
+def test_native_null_role_can_restore_global_default_alongside_authorized_roles(tmp_path):
+  path = config(tmp_path / "project", "modelRoles:\n  default: null\n  smol: cursor/composer-2.5:low\n")
+  before = path.read_bytes(), path.stat().st_mtime_ns
+  assert inspect(path.parent.parent) == ({"category": "model-roles", "path": str(path),
+    "sha256": hashlib.sha256(before[0]).hexdigest()},)
+  assert (path.read_bytes(), path.stat().st_mtime_ns) == before
+  assert not path.with_name("config.yml.agentcfg-backup").exists()
+
+
 @pytest.mark.parametrize("content", [
+  "modelRoles:\n  unknown: null\n",
+  "modelRoles:\n  default: null\nextensions: []\n",
   "modelRoles: []\n", "modelRoles:\n  unknown: official/model\n",
   "modelRoles:\n  default: missing/model\n", "modelRoles:\n  default: official/model:turbo\n",
   "modelRoles:\n  default: local/lfm2.5-230m\n", "modelRoles:\n  tiny: official/model\n",

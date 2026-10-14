@@ -1,4 +1,5 @@
 import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -113,7 +114,7 @@ def test_default_profile_loads_and_renders_protected_settings_and_models(tmp_pat
   workspace = load_workspace(local)
   candidate = workspace.candidate("a" * 64)
   assert workspace.agent == "omp"
-  assert len(candidate.artifacts) == 32
+  assert len(candidate.artifacts) == 36
   assert all(artifact.target.path.startswith("user-home/.omp/profiles/rotom-") for artifact in candidate.artifacts)
   selectors = {artifact.target.selector for artifact in candidate.artifacts}
   assert {
@@ -121,6 +122,15 @@ def test_default_profile_loads_and_renders_protected_settings_and_models(tmp_pat
     "/disabledProviders", "/startup/checkUpdate", "/marketplace/autoUpdate", "/autolearn/enabled",
   } <= selectors
   assert "/modelRoles/default" in selectors
+  assert {artifact.target.selector: json.loads(artifact.content) for artifact in candidate.artifacts
+    if artifact.target.selector in {"/theme/dark", "/theme/light"}} == {
+      "/theme/dark": "dark-catppuccin", "/theme/light": "light-catppuccin"}
+  themes = {Path(artifact.target.path).name: artifact for artifact in candidate.artifacts
+    if "/themes/" in artifact.target.path}
+  assert set(themes) == {"dark-catppuccin.json", "light-catppuccin.json"}
+  for name, artifact in themes.items():
+    assert artifact.target.ownership == Ownership.FILE
+    assert artifact.content == (workspace.repository / "agents/omp/resources/themes" / name).read_bytes()
   assert workspace.resolved.data["profile"]["roles"]["main"] == "kimi_code_anthropic"
 
 
