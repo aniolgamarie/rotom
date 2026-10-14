@@ -82,11 +82,13 @@ Codex/ChatGPT 订阅在 DSH TUI 内使用：
 
 设备码登录的账号侧前提是先在ChatGPT安全设置或工作区管理员权限中启用device code login，见[OpenAI官方认证文档](https://learn.chatgpt.com/docs/auth#preferred-device-code-authentication-beta)。它不能修复网络连接错误。当前pi-ai0.87.1先显示登录方式提问，用户选择设备码后才申请并轮询；申请或轮询的fetch异常会结束本次登录。失败后重新执行`/auth login openai-codex`会开始新的流程；有设备码面板时先选`Cancel sign-in`，卡住时退出TUI并用`dsh-proxy`重启，再打开登录方式窗口。此操作不需要删除认证目录或配置回滚。
 
-2026-10-14原生TUI+本地TLS假OAuth测试已验证发码失败、同会话重开、轮询失败、再次重开及取消停止轮询；初次和失败后选择页各等待5秒，回答前OAuth请求0。同10808代理下匿名Node fetch访问认证站点曾报ECONNRESET，而curl/Node https收到403、Node fetch访问example.com收到200，外部具体原因未确认，不从匿名HEAD推定实际发码请求同因。用户曾反馈“选择窗口出现前直接fetch failed”；退出失败TUI并用dsh-proxy重启后，用户确认登录方式窗口恢复，设备码显示并保持等待。这个实际恢复无需重部署或删除认证目录，不能证明故障根因已修复；浏览器授权完成及凭据保存仍待确认。证据和明确未完成项见[认证故障验收](acceptance/dsh-upgrade-20261012.md#2026-10-14-codex设备码故障与键盘查看复核)。
+`/auth`的登录成功和状态结果是默认约4秒的原生通知，不写入聊天记录，也没有通知历史入口。错过提示时重新执行`/auth status`读取当前状态；需要保持显示，可输入`/provider`，依次进入Add、OAuth，在供应商列表中用方向键查看登录/到期描述，按Esc退出，不触发新登录或注销。0.14.0没有公开的全局通知时长设置。`/provider`成功登录另写当前会话的本地摘要，但不保证跨进程保留。
+
+2026-10-14原生TUI+本地TLS假OAuth测试已验证发码失败、同会话重开、轮询失败、再次重开及取消停止轮询；初次和失败后选择页各等待5秒，回答前OAuth请求0。同10808代理下匿名Node fetch访问认证站点曾报ECONNRESET，而curl/Node https收到403、Node fetch访问example.com收到200，外部具体原因未确认，不从匿名HEAD推定实际发码请求同因。用户曾反馈“选择窗口出现前直接fetch failed”；退出失败TUI并用dsh-proxy重启后，用户确认登录方式窗口恢复，设备码显示并保持等待，浏览器授权后`/auth status`报告`openai-codex signed in`及到期时间。这个实际恢复无需重部署或删除认证目录；认证成功是用户实际反馈，原失败根因未确认，真实模型调用和重启后的凭据恢复仍未测试。完成提示消失时可重新执行`/auth status`查看当前登录状态。证据和明确未完成项见[认证故障验收](acceptance/dsh-upgrade-20261012.md#2026-10-14-codex设备码故障与键盘查看复核)。
 
 2026-10-14 真实 `/auth login openai-codex` 浏览器模式在全新无账号 HOME 中能显示登录方法/授权码面板，空闲五秒后取消，退出和 termios 恢复通过。URL 只在内存验证，未写账号凭据；这不能证明已完成真实账号登录，也没有复现用户原会话“迅速退出”的症状。模拟 device-code 面板通过，不替代实际联网设备码发行/登录证据。真实浏览器入口另有一次原生 npm 版本 GET，单列为背景请求，无 OAuth 远端/真实模型调用或依赖安装。
 
-真实账号未验收。账户保存在隔离实例的原生认证目录，不读取全局 Codex HOME。这与 `/kernel` 的外部 Codex 内核不同：后者是上游入口，DSH Provider/审批插件不自动作用于它，本次没有维护第二套 Codex 配置。
+Codex设备码登录已由用户实际反馈确认，真实模型路由/工具请求、重启后恢复和刷新未验收。账户保存在隔离实例的原生认证目录，不读取全局 Codex HOME。这与 `/kernel` 的外部 Codex 内核不同：后者是上游入口，DSH Provider/审批插件不自动作用于它，本次没有维护第二套 Codex 配置。
 
 Cursor 的终端入口：
 
@@ -141,6 +143,8 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 正式实例已按用户确认的方案配置原生 statusBar：保留 compact，开启 model、thinking、cwd、contextUsage、cache、tokens、cost、tps、gitBranch、sessionTitle、goal、mode、contextBar；关闭 sessionId、activity、trajectory、shortcutHint。相对 0.14.0 默认新增 tokens、tps、gitBranch、sessionTitle、mode 五项。开启代表允许展示，缺少数据仍会隐藏。`thinking` 字段用于推理档位；消息内的 Thinking 计时是另一个运行阶段显示。
 
 截图里的 `glm-5.2-high` 是当前模型标签；来源可在模型 hover 详情或 `/model` 查询。`6.0k/200k 3.0%` 是上下文占用/窗口，`cache 0.0%` 是最后一份 usage 的缓存读取占输入比例，不是 Cursor 余额。compact 栏里的 `workspace` 是当前目录 basename；它不证明 workspace-write 或 ask 已生效，实际模式用 `/permission` 查询。原生费用项仅在后端报告费用或支持官方 DeepSeek 估价时出现；当前 Cursor 不报告费用时不补一个 0。tokens 已开启，其详情可显示已完成轮次的重试数。
+
+推理档位还要求当前会话有明确的effort值；未指定时即使`statusBar.thinking=true`也留空，不能由此判断推理已关闭。`/effort status`将当前档位或`—`写入会话的本地输出，便于回看；`/effort`打开当前路由支持的档位选择，`/effort medium`可直接设置有效档位。原生设置立即作用于当前路由，并保存到隔离HOME的`.dsh-tui/effort.json`作为本实例后续会话默认偏好；它不是仅当前模型的独立偏好，其他路由会按支持档位回退，不应向所有provider硬写medium。若status已有档位但底栏仍缺失，在`/settings`检查状态栏的Thinking开关；apply保留用户现有UI偏好。`/thinking`只控制推理文本展示，不调整effort。锁定pi-ai目录的`openai-codex/gpt-6-sol`标注支持推理，TUI提供low/medium/high/xhigh/max，但这不是远端所有档位均已实测的证据。
 
 无鼠标查看当前供应商：输入裸`/model`并按Enter打开选择器，看`✓`标记的当前provider/model；`❯`仅是键盘焦点。有最近模型时行前显示provider，分组视图中当前provider组也有选中标记；看完按Esc退出。带`provider/model`参数的`/model`会切换路由。0.14.0的statusBar schema没有provider字段，公开贡献协议也没有状态栏片段接口；不添加无效字段或改写模型ID。`/status`只报模型，不报provider。
 
