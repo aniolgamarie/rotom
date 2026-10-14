@@ -126,11 +126,11 @@ TUI 0.15 的 `/settings` 活动文件为隔离 HOME 内的 `.dsh-tui/settings.js
 
 常用状态入口是 `/status`、`/tokens`、`/settings`、`/panel`、`/preset` 与 `/permission`。实际快捷键以该版本 `/help` 为准；tmux 的 Ctrl+B 会吃掉默认侧栏键，可在原生设置中重绑。本配方的 `terminalImages` 默认关闭（TUI 原生默认开启），它控制主渲染器的图像协议探测，同时影响图片预览和头部立绘原图；模型自身图片输入能力保留。在 `/settings` 的「终端图片预览」调整后，用 `/restart` 生效。中文/多行粘贴、窄窗和退出的实际验收范围以记录为准；未运行 SSH/tmux 客户端交互不能据 PTY 推断通过。
 
-原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及内置固定字面，以实际选择器为准。立绘是原生用户偏好，不是 Rotom 强制默认，0.15 保存在原生 settings.json 中，apply 保留；以下立绘素材限制在 0.14 已核对。0.14.0 的伙伴皮肤会优先接管头部：默认 `companion.skin=deepy` 会盖过立绘开关。显示作者的头部女仆立绘需 `whaleGirl=true` 配合 `companion.skin=whale`；选择 `companion.skin=whaleGirl` 则是另一套动态吉祥物素材。原图还需开启 `terminalImages`、重启后成功探测到 Kitty/Sixel，并成功解码资产。0.14.0 在 tmux/screen 中直接禁用图像探测，即使外层终端支持图像协议也使用字符画。回退是作者自带的 30×30 真彩色精灵，用半块字符显示为30列×15行；复制为纯文本会丢失颜色，只剩轮廓。图像协议缺失本身不会回退成鲸鱼。矮窗口会由原生布局收起立绘，扩大终端后再查看。女仆组合曾完成真实欢迎页/会话头部字符画验证，原图协议未验收；正式默认延续用户的 Ghostty+tmux 使用偏好，选择像素鲸鱼（whaleGirl=false、whale=true、companion.skin=whale），主题与推荐状态栏保留。
+原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及内置固定字面，以实际选择器为准。立绘是原生用户偏好，不是 Rotom 强制默认，0.15 保存在原生 settings.json 中，apply 保留。0.14.0 与 0.15.0 的伙伴皮肤都会优先接管头部：默认 `companion.skin=deepy` 会盖过立绘开关。显示作者的头部女仆立绘需 `whaleGirl=true` 配合 `companion.skin=whale`；选择 `companion.skin=whaleGirl` 则是另一套动态吉祥物素材。原图还需开启 `terminalImages`、重启后成功探测到 Kitty/Sixel，并成功解码资产。两版在 tmux/screen 中均直接禁用图像探测，即使外层终端支持图像协议也使用字符画。回退是作者自带的 30×30 真彩色精灵，用半块字符显示为30列×15行；复制为纯文本会丢失颜色，只剩轮廓。图像协议缺失本身不会回退成鲸鱼。矮窗口会由原生布局收起立绘，扩大终端后再查看。女仆组合曾完成真实欢迎页/会话头部字符画验证，原图协议未验收；正式默认延续用户的 Ghostty+tmux 使用偏好，选择像素鲸鱼（whaleGirl=false、whale=true、companion.skin=whale），主题与推荐状态栏保留。
 
 原生主题切换使用 `/theme` 实时预览，或 `/theme dark`、`/theme rotom-catppuccin`。作者的主题文档介绍 Gentle Mist Blue 色系，深色终端对应 `dark`，没有明确指定“最好看”的主题；Catppuccin 是 Rotom 通过公开 JSON 主题格式配置的色板，不是 0.15.0 内置主题。新版也提供 pink-night/pink-day/pink-ansi；本配方沿用用户已选择的 Catppuccin。
 
-0.14.0 的立绘仅支持内置素材选择：`whaleGirl` 是头部女仆开关，`companion.skin` 可选 deepy/whale/whaleGirl；静态头图与伙伴动画是不同素材。没有公开配置可导入任意图片或自定义皮肤目录。内部皮肤注册函数未通过包 exports 开放，不能当作已交付的扩展 API；不替换安装包 assets。[Ghostty 支持 Kitty 图像协议](https://ghostty.org/docs/features)，但该 TUI 的 tmux 分支仍直接禁用探测。查看原图可先退出当前 TUI，在不进入 tmux 的 Ghostty 标签页运行同一入口，开启「终端图片预览」并 `/restart`；仅增加 tmux passthrough 设置不会改变上游的禁用分支。
+0.14.0 与 0.15.0 的立绘均仅支持内置素材选择：`whaleGirl` 是头部女仆开关，`companion.skin` 可选 deepy/whale/whaleGirl；静态头图与伙伴动画是不同素材。逐项 SHA-256 对照确认两版的三套品牌立绘 normal/happy PNG、女仆字符精灵及皮肤实现相同。0.15 改善成功探测后 Kitty 原图的 HiDPI 尺寸适配，没有新增自定义素材入口；内部皮肤注册函数未通过包 exports 开放，不能当作已交付的扩展 API，不替换安装包 assets。[Ghostty 支持 Kitty 图像协议](https://ghostty.org/docs/features)，但该 TUI 的 tmux 分支早于协议覆盖参数直接退出探测。查看原图可先退出当前 TUI，在不进入 tmux 的 Ghostty 标签页运行同一入口，开启「终端图片预览」并 `/restart`；仅增加 tmux passthrough 或指定图像协议不会改变上游的禁用分支。真实 Ghostty/tmux 图片效果仍未验收。
 
 Catppuccin 色表来自官方 [Neovim Mocha](https://github.com/catppuccin/nvim/blob/edefef779ab08ce1a4a404713e3012b0d202bd35/lua/catppuccin/palettes/mocha.lua)，本配方覆写 TUI 0.15.0 全部 81 个 Theme 字段；字段集与 0.14 相同。空 cursor 保留绘制 caret/图片标记焦点的反显，普通 TTY 光标则使用终端自身设置。强调色 peach、边框 blue/lavender、关键字 mauve、函数 blue、字符串 green、数值 peach、运算符 sky、标点 overlay2，与本仓库 OMP Catppuccin 对齐。注释 overlay0、变量 text 沿用 OMP 的选择；它们不等同于 Neovim `syntax.lua` 的传统 Comment/Identifier 映射，也不是唯一的官方映射。
 
@@ -144,9 +144,9 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 
 | 调整 | 原因与所有权 |
 | --- | --- |
-| `upstreamRetry=false` | 关闭新版为未声明渠道自动添加的最多 5 次重试；沿用既有明确的 provider retryPolicy，避免叠加，持续受管。 |
+| `upstreamRetry=false` | 关闭新版给未声明 retryPolicy 的实际使用渠道补充最多 5 次重试；上游本来就跳过已有策略。公共 API 配方默认 maxRetries=0，可显式覆盖为 1 或 2；该开关不关闭所有 Provider 客户端内部重试，持续受管。 |
 | `plugin-package-inventory-deepseek.config.enabled=false`、`session-log-deepseek.config.enabled=false` | 不向 DeepSeek 官方协议的 baseURL 额外发送插件清单和增量会话日志；本地原生会话存储保持工作。 |
-| `taskNotifications=unfocused`、`notificationMethod=auto` | 只首次初始化，后台完成提示由终端能力决定；用户可在 `/settings` 关闭。没有修改 tmux focus-events/passthrough，不能保证通知在当前客户端显示。 |
+| `taskNotifications=unfocused`、`notificationMethod=auto` | 只首次初始化，实时主任务成功结束且终端失焦时按终端能力提示；取消、失败及历史回放不通知。用户可在 `/settings` 关闭。没有修改 tmux focus-events/passthrough，不能保证通知在当前客户端显示。 |
 | UI 偏好迁入原生 settings.json | 使用上游首导，旧 profile 只提供默认；重复 apply 保留原生用户值和未知 values。 |
 | 保留 Catppuccin、鲸鱼、收起侧栏、现有状态栏、standard | 新版 Theme 仍为 81 字段；无需换主题或削减工具。 |
 | 保留手动 `/effort`、workspace-write + ask、Perry ON | 不为所有模型强制统一推理档位，不因权限记忆扩大默认权限；已接受的 Perry 上游缺口继续追踪。 |
@@ -157,7 +157,7 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 
 ### 日常 UI、状态栏与图标
 
-正式实例已按用户确认的方案配置原生 statusBar：保留 compact，开启 model、thinking、cwd、contextUsage、cache、tokens、cost、tps、gitBranch、sessionTitle、goal、mode、contextBar；关闭 sessionId、activity、trajectory、shortcutHint。相对 0.14.0 默认新增 tokens、tps、gitBranch、sessionTitle、mode 五项。开启代表允许展示，缺少数据仍会隐藏。`thinking` 字段用于推理档位；消息内的 Thinking 计时是另一个运行阶段显示。
+正式实例已按用户确认的方案配置原生 statusBar：保留 compact，开启 model、thinking、cwd、contextUsage、cache、tokens、cost、tps、gitBranch、sessionTitle、goal、mode、contextBar；关闭 sessionId、activity、trajectory、shortcutHint。相对 0.14.0 默认新增 tokens、tps、gitBranch、sessionTitle、mode 五项；0.14 与 0.15 发布包的18个状态栏设置项相同，本次升级没有新增开关。开启代表允许展示，缺少数据仍会隐藏。`thinking` 字段用于推理档位；消息内的 Thinking 计时是另一个运行阶段显示。
 
 截图里的 `glm-5.2-high` 是当前模型标签；来源可在模型 hover 详情或 `/model` 查询。`6.0k/200k 3.0%` 是上下文占用/窗口，`cache 0.0%` 是最后一份 usage 的缓存读取占输入比例，不是 Cursor 余额。compact 栏里的 `workspace` 是当前目录 basename；它不证明 workspace-write 或 ask 已生效，实际模式用 `/permission` 查询。原生费用项仅在后端报告费用或支持官方 DeepSeek 估价时出现；当前 Cursor 不报告费用时不补一个 0。tokens 已开启，其详情可显示已完成轮次的重试数。
 
