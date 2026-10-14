@@ -1,10 +1,10 @@
-# Pi 交互式代码审查与编辑器
+# Pi interactive review and editor
 
-`pi-slopchop` 保留差异、上次提交、完整文件视图、子模块视图、快捷标注和反馈提示。当前派生版本是 `0.10.1-agentcfg.1`，完整来源与 MIT 许可证进入四个配方的源码闭包。最终运行锁和原生 UI 验收仍待完成。
+`pi-slopchop` preserves diff, last-commit, whole-file, submodule, annotation-shortcut, and feedback views. The derived version is `0.10.1-agentcfg.1`; its complete source and MIT license are in the four-profile source closure. This does not establish current-lock or native UI acceptance; see [testing](testing.md).
 
-## 显式绑定
+## Explicit bindings
 
-在目标 profile 的 `plugins` 数组中选择 `pi-slopchop`、`pi-subagents` 和 `pi-permissions`，同时保留原有需要的插件。下面片段写入私人 `local.toml`；替换项目、Git、编辑器的真实路径与版本。
+Select `pi-slopchop`, `pi-subagents`, and `pi-permissions` in the target profile's `plugins`, retaining other required entries. Supply actual paths/versions in private configuration:
 
 ```toml
 [overrides.profiles.pi-default.agent_options.paths.roots.project]
@@ -35,11 +35,11 @@ interactive = true
 timeout_seconds = 1800
 ```
 
-Git 绑定必须无自定义参数、只读且非交互。专用接口生成固定审查参数；Git 名称列表按 NUL 分隔，保留含换行、空格和 Unicode 的文件名。禁用 hooks、外部 diff/textconv、fsmonitor、全局配置及自动对象下载。
+Git must be read-only, noninteractive, with no custom arguments. The dedicated interface generates fixed review arguments. NUL-delimited inventories preserve spaces, newlines, and Unicode. Hooks, external diff/textconv, fsmonitor, global configuration, and automatic object downloads are disabled.
 
-编辑器绑定可省略；选择编辑操作时会明确报告未绑定。参数支持一个独立的 `{path}` 和可选 `{line}` / `+{line}`，文件参数前必须有 `--`。不读取环境中的 EDITOR，不拼接 shell 命令。示例的 `--clean` 属于 Neovim 参数；选择其他编辑器时需要声明相应的隔离参数。
+The editor is optional; edit reports a missing binding if omitted. Arguments support one standalone `{path}` plus optional `{line}`/`+{line}`, with `--` before the file. There is no EDITOR discovery or shell string construction. `--clean` is Neovim-specific; other editors need their own isolation arguments.
 
-在所选 Permission Policy 的来源中同时声明命令授权，例如：
+Grant commands in the selected Permission Policy source:
 
 ```json
 [
@@ -48,18 +48,18 @@ Git 绑定必须无自定义参数、只读且非交互。专用接口生成固�
 ]
 ```
 
-审查正文仍需文件读取规则。已有文件拒绝规则和角色上限继续生效；不能编辑生成的 manifest 来扩大授权。
+Review bodies still require file-read permission. File denies and role caps remain effective. Never expand permissions by editing the generated manifest.
 
-## 工作区和终端行为
+## Workspace and terminal behavior
 
-审查查询与编辑器统一取得跨实例工作区租约。有活动候选、其他 writer 或未知终止状态时，操作拒绝。嵌套仓库同时保护父子工作区；只读子模块访问必须核验其 Git 元数据确实位于声明父仓库的 modules 目录内。
+Review queries and editors use cross-instance worktree leases. Active candidates, other writers, and unknown termination block operations. Nested repositories protect both parent/child workspaces. Read-only submodule access verifies metadata inside the declared parent repository's modules directory.
 
-编辑器的写入范围是 `write_roots` 声明的范围，打开某一个文件不会把编辑器限制成只能修改该文件。应按预期设置授权根；不允许写入 `.git`、受保护状态或已拒绝路径。编辑器网络关闭，使用私人 HOME；用户全局编辑器配置不自动加载。
+Editor write scope is the complete declared `write_roots`, not just the opened file. Set roots accordingly. `.git`, protected state, and denied paths remain unwritable. Networking is disabled and HOME is private; global editor configuration is not loaded automatically.
 
-交互式编辑器取得监督者创建的私人 PTY，输入、屏幕输出和窗口大小经过控制接口传递。执行许可下达后才取得控制终端。输出丢失、输入无法确认或终止未知时不能报告成功。取消请求后仍须等待物理终止证明才释放工作区保护。
+The supervisor creates a private PTY and forwards input, screen output, and resize through its control interface. The controlling terminal is assigned only after execution authorization. Missing output, unconfirmed input, or unknown termination prevents success. Cancellation must be followed by physical termination proof before workspace protection is released.
 
-快捷键和标注配置来自 `agent_options.slopchop.shortcuts`，不读取旧 `~/.pi` 或项目内 `slopchop.json`。格式和快捷键冲突会明确失败。
+Shortcut/annotation settings come from `agent_options.slopchop.shortcuts`, not old `~/.pi` or project `slopchop.json`. Invalid formats and key conflicts fail explicitly.
 
-## 已有验证和局限
+## Evidence boundary
 
-已完成完整插件 TypeScript 类型检查、确定性归档检查，以及隔离的 Git/文件/编辑器准入、PTY 转发与执行闸门测试。没有启动真实 Pi、Git 沙箱或编辑器；macOS 终端规则仅验证了生成内容。真实键盘、终端刷新、子模块组合与各平台进程终止行为仍需原生验收。
+Plugin type checks, deterministic archives, and isolated Git/file/editor admission, PTY forwarding, and execution-gate tests cover implementation contracts. They do not establish current real keyboard/refresh behavior, submodule combinations, macOS terminal behavior, or platform termination. Pi 0.84.4's stale lock and historical native/cold evidence remain separate; see [Pi diagnostics](pi-diagnostics.md) and [known issues](known-issues.md).

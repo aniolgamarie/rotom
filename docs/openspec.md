@@ -1,18 +1,18 @@
-# 使用 Pi 为指定项目集成 OpenSpec
+# Optional OpenSpec integration for Pi projects
 
-Pi 的可选 `openspec` 能力使用锁定的 OpenSpec 1.11.0 CLI 与 12 个完整技能，与维护 rotom 仓库时使用的全局开发 CLI 分开。先在所选 Pi 配方的 `plugins` 中明确选择 `openspec`；本机数组覆盖须保留仍需启用的其他插件，配置方式见 [Pi 操作说明](pi.md)。DSH 不再提供 OpenSpec 初始化能力，DSH 依赖与自动注入已移除；新版证据和未完成门槛见 [DSH 升级验收](acceptance/dsh-upgrade-20261012.md)。
+Pi's optional `openspec` capability uses locked OpenSpec 1.11.0 and twelve complete skills, separate from any global development CLI used to maintain rotom. Select `openspec` explicitly in the Pi profile's `plugins`, retaining other needed plugins when replacing the array. See [Pi usage](pi.md). DSH provides no OpenSpec initialization capability or automatic injection; removing it does not authorize project cleanup.
 
 ```sh
 ./agentcfg --local /private/pi-local.toml --profile pi-default sync
 ./agentcfg --local /private/pi-local.toml --profile pi-default project init openspec --path /path/to/worktree
 ```
 
-命令在私人暂存目录用上游 `init --tools agents --profile core --no-animation` 生成，再检查指定项目的同名文件、清单和写前变化。不会扫描/初始化其他项目，apply/sync 不自动执行项目初始化。重复执行且内容一致时没有非必要写入；用户修改的同名产物会报冲突。
+Initialization runs upstream `init --tools agents --profile core --no-animation` in a private staging directory, then checks same-named target files, the manifest, and pre-write changes in the selected project. It does not scan other projects. Apply/sync do not initialize projects automatically. Repeating with identical content avoids unnecessary writes; modified same-named files conflict.
 
-本实现采用上游支持的 `agents` 集成，生成 `.agents/skills/openspec-*`。上游 marker 的位置是 `.agents/skills/.openspec-target`；Pi 将管理器的 `.agentcfg-openspec.json` 摘要清单存放在所选工作树的受保护 Git 元数据 `agentcfg-project/` 中，不含账号或本地密钥。Pi 项目资源发现须按所选配方和权限策略显式配置，生成文件本身不代表已加载。
+The supported upstream `agents` integration generates `.agents/skills/openspec-*` and `.agents/skills/.openspec-target`. Pi stores the manager's `.agentcfg-openspec.json` digest manifest under protected Git metadata `agentcfg-project/`, without account data or local keys. Generated skills are not proof of loading: project discovery and permission policy still require explicit selection.
 
-**必须在可核验的 Git 工作树根初始化**，包括 `.git` 为文件的 worktree。指向已有仓库的子目录会在写入前失败。Pi 的工作区写入保护要求真实 Git 工作树；管理器不自动替业务项目 git init。
+Initialize at a verifiable Git worktree root, including linked worktrees with a `.git` file. A subdirectory of an existing repository fails before writes. The manager does not run git init for projects.
 
-生成与目标写入不是整个目录的原子事务；失败时已有产物保留用于检查。升级不自动删除旧版项目文件。撤下 DSH 能力也不会清理业务项目的 `openspec/`、`.specify/`、`specs/` 或 `.agents/skills/`。依赖锁失效、能力未选择或 CLI 未安装时明确失败，不借用用户全局 OpenSpec，不临时下载无版本包。
+Generation and target writes are not an atomic directory-wide transaction. On failure, existing outputs remain for inspection. Upgrades do not automatically delete old project files. In particular, project-owned `openspec/`, `.specify/`, `specs/`, and `.agents/skills/` must never be removed merely because their directory names resemble integration output.
 
-初始化命令由 Pi 后端核验能力选择、运行包和 OpenSpec 1.11.0 入口，并直接调用该锁定 CLI。DSH 后端未提供此能力时拒绝执行。首次加载和重复初始化的证据须对应所选 Pi 配方与当前锁，不能只以“OpenSpec 已安装”或历史 DSH 验收代替项目集成验收。
+Stale locks, unselected capabilities, and missing CLI entries fail explicitly without global OpenSpec fallback or unversioned downloads. The Pi backend checks selection, runtime, and the locked 1.11.0 entry before invoking it. DSH rejects this capability. Initial-load/repeat-init evidence must match the selected Pi profile and current lock; historical DSH evidence or installation alone is insufficient. See [testing](testing.md) and [known issues](known-issues.md).

@@ -1,75 +1,51 @@
-# 官方 Codex CLI 的受限配置准入
+# Restricted admission for the official Codex CLI
 
-agentcfg 固定使用官方 Codex 0.154.0，由 model-delegate 管理原生工具、沙箱和物理生命周期。按用户选择，配置来源无法核验时拒绝运行，保留兼容性缺口。
+agentcfg pins official Codex 0.154.0. model-delegate manages its native tools, sandbox, and physical lifecycle. When configuration sources cannot be verified, execution is refused; this deliberately leaves compatibility gaps.
 
-Linux 运行包同时锁定官方同版本 bwrap，安装到 `bin/codex-resources/bwrap`，并保留原许可证。
-四个平台也锁定官方 primary 清单中的 `codex-code-mode-host` 和 `codex-responses-api-proxy`；它们是 CLI 内部依赖，不是新增的外部委托入口。
-只安装 Codex 单程序归档不构成完整沙箱依赖；旧系统 bwrap 可能缺少 CLI 要求的选项。
-官方 CLI 会核验随包 bwrap 的编译期摘要，agentcfg 的安装器也核验发行归档摘要和本机架构。
-参见[官方 bwrap 加载与摘要核验实现](https://raw.githubusercontent.com/openai/codex/rust-v0.154.0/codex-rs/linux-sandbox/src/bundled_bwrap.rs)。
+Linux packages include the matching official bwrap at `bin/codex-resources/bwrap` with its license. All four platform packages also include the primary release's `codex-code-mode-host` and `codex-responses-api-proxy`, which are internal CLI dependencies rather than additional delegation entry points. Installing only the Codex executable archive is insufficient. Older system bwrap versions may lack required options. The CLI verifies the bundled bwrap's compiled digest; agentcfg also verifies release digests and architecture. See the pinned [upstream implementation](https://raw.githubusercontent.com/openai/codex/rust-v0.154.0/codex-rs/linux-sandbox/src/bundled_bwrap.rs).
 
-## 可准入条件
+## Admission conditions
 
-- `/etc/codex` 不存在或为空，且目录身份／权限可核验。任何内容都会拒绝，包括空配置文件、规则、技能和损坏链接。
-- macOS 的 `com.openai.codex` 域中不存在 `config_toml_base64` 和 `requirements_toml_base64`。查询与官方 CLI 使用同一个 CoreFoundation API；仅检查磁盘 plist 不足以准入。
-- 所选实例的 `codex-home/auth.json` 为 0600、当前用户所有、普通单链接文件。明确 API key 模式，或可识别的个人 OAuth `free/go/plus/pro/prolite`，可以继续；账号认证仍由官方 CLI 完成。
-- 组织账号、未知 plan、混合身份、Agent Identity、PAT、Bedrock 等当前无法完整核验的组合拒绝，不自动更换账号。
-- 机器管理配置和账号归属／类型在运行期间保持稳定。父监督者和 worker 启动前各检查一次；这不是同进程原子配置保证，也不涵盖管理员并发修改或账号刷新后改变类型。
+- `/etc/codex` is absent or empty with verifiable identity/permissions. Any content, including an empty configuration file, rule, skill, or broken link, is rejected.
+- macOS `com.openai.codex` preferences contain neither `config_toml_base64` nor `requirements_toml_base64`. The check uses the same CoreFoundation API as the CLI; inspecting plist files alone is insufficient.
+- The selected instance's `codex-home/auth.json` is current-user-owned, mode 0600, and an ordinary single-link file. Explicit API-key mode or recognizable personal OAuth plans `free/go/plus/pro/prolite` can proceed; authentication itself remains the official CLI's responsibility.
+- Organization accounts, unknown plans, mixed identities, Agent Identity, PAT, Bedrock, and other unverifiable combinations are rejected without switching accounts.
+- Machine management configuration and account ownership/type remain stable during execution. Parent and worker recheck before start. This is not an atomic same-process configuration guarantee and does not cover concurrent administrator changes or account-type changes after refresh.
 
-每次 start/resume 都重新检查。准入策略 `official-cli-restricted-v1` 纳入执行身份；旧策略不能用于新的运行。
+Every start/resume rechecks admission. Policy `official-cli-restricted-v1` participates in execution identity; an older policy cannot authorize a new run.
 
-## 显式 API 服务地址
+## Explicit service endpoints and search
 
-七种用途模板不增加授权，包括 `research`。Codex 的 `native_execution.web_search` 默认 `disabled`，
-只有机器配置明确选择 `cached` 或 `live` 才开放对应官方搜索能力；该选项纳入冻结执行策略。
-`tool_network = "none"` 继续禁止本地工具联网，官方服务端搜索通过已选择的模型服务路线执行。
+The seven purpose presets, including `research`, add no authorization. `native_execution.web_search` defaults to `disabled`; only explicit `cached` or `live` enables the corresponding official search capability. It is part of frozen execution policy. `tool_network="none"` continues to deny local-tool networking; official server-side search uses the selected model-service route.
 
-默认使用官方 CLI 的 OpenAI 服务地址。API key 模式可以在本机覆盖中显式设置
-`agent_options.model_delegate.codex.api_base_url`，用于兼容的 Responses 服务；不读取 `OPENAI_BASE_URL` 或原生用户配置作为回退。
-地址须为不带用户名、密码、查询参数或片段的 HTTPS URL；隔离测试可使用数字回环地址的 HTTP URL。
-地址进入冻结的执行策略和摘要，改动后不能复用旧准入身份。
+The default is the official OpenAI endpoint. API-key mode may explicitly set `agent_options.model_delegate.codex.api_base_url` in private machine configuration for a compatible Responses service. It never falls back to `OPENAI_BASE_URL` or native user configuration. Use HTTPS without userinfo, query, or fragment; isolated tests may use HTTP with a numeric loopback address. The address is frozen into execution policy/identity; changing it prevents reuse of old admission.
 
-自定义地址只接受明确 API key 账号，父监督者和 worker 都检查一次；个人 OAuth 与未知账号类型在启动官方 CLI 前拒绝，
-避免把个人登录令牌发送给自定义服务。API key 仍保存在该实例的原生 `codex-home/auth.json`，不能写进服务 URL。
+Custom endpoints require an explicit API-key account, checked by both parent and worker. Personal OAuth/unknown accounts are rejected before CLI start so personal tokens cannot reach a custom service. Keep keys in native instance `codex-home/auth.json`, never in the URL.
 
-原生验收使用合成 API key 和网络隔离内的回环 Responses 服务，并通过正式 model-delegate CLI 启动官方 Codex。
-`codex-native-readonly` 检查原生读取和写入拒绝；`codex-native-write` 在独立 Git worktree 中验证显式写授权、收据和原项目保持。
-这些场景的实现或离线回归不代表它们已在最终候选上执行通过。
+## Refusal codes
 
-## 拒绝原因
-
-| 原因码 | 含义与处理 |
+| Code | Meaning and response |
 | --- | --- |
-| `CODEX_SYSTEM_CONFIG_PRESENT` | 系统 Codex 目录存在内容。保留管理员配置，选择符合上述条件的运行环境；不自动删文件。 |
-| `CODEX_SYSTEM_CONFIG_UNVERIFIED` | 系统目录身份、权限或访问失败；先由机器管理员确认。 |
-| `CODEX_MANAGED_PREFERENCES_PRESENT` | macOS 受管偏好存在，当前环境不支持这条委托路线。 |
-| `CODEX_MANAGED_PREFERENCES_UNVERIFIED` | CoreFoundation 查询失败或不可用，不能当作“没有配置”。 |
-| `CODEX_ORGANIZATION_ACCOUNT_UNSUPPORTED` | 当前所选组织账号不在受限支持范围；保留已选验收项及兼容性缺口。 |
-| `CODEX_ACCOUNT_CONFIG_UNVERIFIED` | 实例认证文件不安全、格式未知或账号类型无法判定。使用该实例的明确登录流程建立受支持账号；不要把令牌粘贴到通用配置或日志。 |
-| `CODEX_LOGIN_CONFIG_UNVERIFIED` | 登录命令无法忽略实例现有 config.toml；使用干净实例，不由程序删除该配置。 |
-| `CODEX_CUSTOM_ENDPOINT_REQUIRES_API_KEY` | 自定义 API 地址要求明确 API key 账号；个人 OAuth 保留官方地址。 |
-| `CODEX_CONFIG_PLATFORM_UNSUPPORTED` | 当前操作系统没有对应准入实现。 |
+| `CODEX_SYSTEM_CONFIG_PRESENT` | System directory has content; retain administrator configuration and use a compatible environment |
+| `CODEX_SYSTEM_CONFIG_UNVERIFIED` | Directory access/identity/permissions cannot be verified; administrator review is required |
+| `CODEX_MANAGED_PREFERENCES_PRESENT` | macOS managed preferences make this route unsupported |
+| `CODEX_MANAGED_PREFERENCES_UNVERIFIED` | CoreFoundation query failed/unavailable; absence cannot be assumed |
+| `CODEX_ORGANIZATION_ACCOUNT_UNSUPPORTED` | Organization account is outside restricted support |
+| `CODEX_ACCOUNT_CONFIG_UNVERIFIED` | Unsafe/unknown authentication format or account type; use the instance's explicit login flow |
+| `CODEX_LOGIN_CONFIG_UNVERIFIED` | Login cannot ignore existing instance config.toml; use a clean instance without automatic deletion |
+| `CODEX_CUSTOM_ENDPOINT_REQUIRES_API_KEY` | Keep personal OAuth on the official endpoint or explicitly choose API-key authentication |
+| `CODEX_CONFIG_PLATFORM_UNSUPPORTED` | No admission implementation for this OS |
 
-这些准入失败返回退出码 5；缺少认证文件仍属于凭据缺失（3）。拒绝发生在目标 CLI 启动前，不会调用模型或把结果记录为通过。
+Admission failures return 5; missing authentication still returns 3. Refusal occurs before model execution. Diagnostics expose only fixed reason codes, not configuration bodies, tokens, emails, or account IDs. `doctor` reports `configuration_admission` conditions as `not-inspected` without reading authentication files.
 
-`doctor` 展示 `configuration_admission` 支持条件和 `not-inspected` 状态，继续保持不读取认证文件。启动检查只输出上表固定原因码；不会输出配置正文、令牌、邮箱或账号 ID。
+## Process termination boundary
 
-## 验收界限
+On Linux, the entire delegation runs in a separate PID namespace created by bundled bwrap. A first-party PID 1 waits for a supervisor start byte. The supervisor verifies and records initializer/wrapper identities before releasing execution; closed input does not release it. Native Codex policy still enforces frozen model file permissions.
 
-目前只有隔离测试通过。官方 CLI 原生行为、macOS 偏好 API、沙箱、退出和真实服务仍待验证。所有选择的 Codex 验收保留；受限环境中的拒绝不能代替模型执行通过。
+Stop uses pidfd against the verified PID 1. When it exits, the kernel terminates all namespace processes, including separate process groups and reparented descendants; see [Linux PID namespaces](https://man7.org/linux/man-pages/man7/pid_namespaces.7.html). Missing kernel support, handshake, or identity verification refuses execution without falling back to a weaker process-group model.
 
-设计依据和未采用方案见 [配置准入决定](../specs/001-unify-pi-capabilities/codex-config-admission.md)。
+Version 3 normal-exit records verify both initializer and bwrap wrapper. A proven terminated namespace cannot revive; later unrelated PID reuse does not revoke that proof. Old v1/v2 and escaped/unknown records retain protection and are not cleared by upgrading. macOS uses its separate libproc/helper route and requires independent native evidence. This adds neither an MCP bridge nor another task queue.
 
+## Evidence boundary
 
-## Linux 委托进程范围
-
-官方 CLI 的整次委托使用固定发行物自带的 bwrap 创建独立 PID 命名空间。第一方 PID 1 入口先等待监督者的启动字节，
-监督者验证并记录初始化进程和包装进程的身份后才允许执行；输入关闭不放行。模型文件权限仍由冻结的 Codex 原生策略约束。
-
-停止时通过 pidfd 操作已确认的 PID 1。Linux 内核在该初始化进程退出时终止命名空间中的所有进程，
-因此独立进程组、重新托管的孙进程也处于同一停止范围。依据见 [Linux PID namespace 文档](https://man7.org/linux/man-pages/man7/pid_namespaces.7.html)。
-运行包需要支持这些能力的 Linux 内核；握手或身份无法确认时拒绝执行，不退回较弱的进程组模式。
-
-v3 记录的正常退出同时核验初始化进程和 bwrap 包装进程。已确认终止的命名空间不能复活；后续无关 PID 复用不撤销原终止证明。
-旧 v1/v2 或 escaped/unknown 记录保持原保护，不会因为安装新版执行器而自动清除。
-此变化不增加 MCP 工具桥或另一个任务队列。macOS 仍使用独立的 libproc/helper 路径，并保持未验证。
+Native readonly/write cases use synthetic API keys and an isolated loopback Responses service through the real model-delegate entry. Readonly checks native reads and write refusal; write uses an independent Git worktree to check explicit authorization, receipts, and original-project preservation. Implementing these cases or passing offline regressions does not establish execution on the final candidate. Current Pi 0.84.4 has a pre-existing stale lock; historical native/cold evidence belongs to candidate `9d6a9270…`. See [Pi diagnostics](pi-diagnostics.md), [testing](testing.md), and [known issues](known-issues.md).

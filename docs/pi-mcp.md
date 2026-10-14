@@ -1,20 +1,20 @@
-# MCP 接入状态与配置
+# Pi MCP configuration and boundaries
 
-MCP 适配源码已登记四个配方，临时副本的真实依赖解析和安装检查通过；最终发布锁尚未冻结。以下能力已有代码和隔离验证，真实插件加载、OAuth、浏览器 UI 与服务调用仍待验收。
+MCP support is declared for the four Pi profiles. Source integration, isolated tests, and historical temporary installation are separate from native loading, OAuth, browser UI, and live-service acceptance. The current Pi 0.84.4 lock is pre-existing stale; see [testing](testing.md) and [known issues](known-issues.md).
 
-## 服务来源
+## Service selection
 
-只加载 registry 中被 profile 选中的 MCP 服务，并在 `agent_options.mcp.servers` 为每个服务提供匹配绑定。不扫描全局 HOME、项目 MCP 配置或环境中的服务列表。
+Only registry services selected by the profile are loaded. Each needs a matching `agent_options.mcp.servers` binding. Global HOME, project MCP files, and environment service lists are not scanned.
 
-- stdio：`command_ref` 指向明确的交互式 `external_tools`。registry 的 command/args 必须逐字匹配绑定；进程进入已有 manager、监督者和已声明的文件范围。
-- HTTP/SSE：声明 `network_route` 和 `authentication="none"`、`"bearer"` 或 `"oauth"`；路线 `service_ids` 包含 `mcp:服务名`。Bearer／OAuth client secret 来自该服务的 SecretRef。
-- HTTP 传输固定源站与路线，不跟随跳转；代理失败不会直连。关闭时取消未完成请求体和活动请求。
+- stdio: `command_ref` selects an explicit interactive `external_tools` binding. Registry command/args must match exactly. Processes use the existing manager/supervisor and declared file scope.
+- HTTP/SSE: declare `network_route` and `authentication="none"`, `"bearer"`, or `"oauth"`. The route's `service_ids` must include `mcp:SERVICE`. Bearer/client secrets use that service's SecretRef.
+- HTTP fixes the origin/route and does not follow redirects or fall back to direct access after proxy failure. Shutdown cancels active requests and unfinished bodies.
 
-示例见 [pi-services.toml](../examples/pi-services.toml)。Bearer 成功不等同于 OAuth 验收。
+See [service examples](../examples/pi-services.toml). Bearer success does not establish OAuth support.
 
-## OAuth 与直接工具
+## OAuth and direct tools
 
-OAuth 服务将原服务绑定替换为如下内容；源站和 URI 都替换为所选服务的真实声明。公共 OAuth 客户端应移除 registry 中的 credential_ref；需要 client secret 时，须同时填写 client_id，并让 credential_ref 指向客户端秘密，不能沿用 Bearer token。
+Replace a service binding with an explicit OAuth declaration. Use real declared origins/URIs. Public clients omit registry `credential_ref`; confidential clients provide `client_id` and a reference to the client secret, not a reused bearer token.
 
 ```toml
 [overrides.profiles.pi-default.agent_options.mcp.servers.documentation]
@@ -34,15 +34,15 @@ enabled = true
 tools = ["search"]
 ```
 
-本地回调只绑定声明的 loopback 端口；HTTPS 远端回调使用完整回调 URL 手工完成。`client_credentials` 模式必须指定 client_id 和服务 SecretRef，不能带 redirect_uri。发现、换码、刷新和授权 URL 必须属于明确授权的源站；代理失败不改路线。客户端秘密按原值使用，`!`、环境变量样式的内容也不会变成命令或再次展开。
+Local callbacks bind only the declared loopback port. HTTPS remote callbacks use the full callback URL for manual completion. `client_credentials` requires client_id and the service SecretRef and disallows redirect_uri. Discovery, exchange, refresh, and authorization URLs must belong to authorized origins. Secrets are literal values: `!` and environment-like text never execute or expand.
 
-凭据和缓存按当前实例及认证绑定隔离。更改客户端身份后不借旧账号；不导入、删除旧明文文件，也不回退系统 Keychain/keyring。
+Credentials/cache are isolated by instance and authentication binding. Changed client identity cannot reuse the old account. Old plaintext files are neither imported nor deleted; system Keychain/keyring is not a fallback.
 
-直接工具默认关闭；省略 `tools` 表示启用该服务发现的全部直接工具，提供列表则仅选择原始工具名。按服务分组的 `mcp__服务名` 入口与直接工具都使用真实登记记录准入，不能靠伪造前缀取得权限。只有 main 角色可以调用；撤销登记后旧函数失效。
+Direct tools default off. Omitting `tools` selects all discovered direct tools for that service; a list selects original names. Grouped `mcp__SERVICE` and direct tools both require real registered entries; a forged name prefix grants no permission. Only the main role can call them. Revocation invalidates old functions.
 
-## 模型辅助请求（sampling）
+## Sampling
 
-默认关闭。需要时添加：
+Sampling defaults off:
 
 ```toml
 [overrides.profiles.pi-default.agent_options.mcp.sampling]
@@ -52,19 +52,17 @@ max_tokens = 1024
 auto_approve = false
 ```
 
-`model` 是当前实例明确选中的原生 provider/model；省略时使用当前主模型，仍须位于受约束模型集合内。远端模型 hints 不会触发切换或账号扫描。调用经同一个 ModelRuntime，重试为零；超出 token 上限的请求拒绝。
+The model must be an explicitly selected native provider/model in this instance. Omission uses the current main model within the same constrained set. Remote hints never trigger model switching or account discovery. Calls use the same ModelRuntime with zero retries; requests beyond the token cap fail.
 
-默认在请求发送前和结果交回服务前分别确认。只有明确配置 `auto_approve=true` 才能省略确认。受管调用拒绝；有活动 Task Keeper 相关工作时仍服从普通 helper 边界。
+Default confirmation occurs before sending a request and before returning its result to the service. Only explicit `auto_approve=true` removes these confirmations. Managed calls are rejected; active Task Keeper work still imposes ordinary helper boundaries.
 
-## 服务请求用户输入（elicitation）
+## Elicitation
 
-`agent_options.mcp.elicitation=true` 才启用。表单保留原有确认和提交步骤；URL 只接受 HTTP(S) 且不能带用户名密码或控制字符，用户选择显示链接后才输出 OSC 8 终端链接。用户在浏览器中打开链接，插件不自行启动浏览器进程。
+Enable `agent_options.mcp.elicitation=true` explicitly. Forms retain confirmation/submission steps. URL elicitation permits only HTTP(S), without userinfo or control characters. An OSC 8 link appears only after the user chooses to show it; the user opens a browser, and the plugin does not launch one. URL mock checks do not establish form-validator or real-terminal behavior. This is distinct from MCP Apps.
 
-URL 分支已有隔离测试；表单 schema validator 和真实终端交互仍需完整插件／原生验证。此能力不等同于 MCP Apps 的本地 UI 服务。
+## Multi-tool scripting
 
-## 脚本调用多个 MCP 工具
-
-默认关闭。启用时明确绑定锁定版本的 Node 解释器：
+Scripting defaults off and requires an explicit locked-version Node binding:
 
 ```toml
 [overrides.profiles.pi-default.agent_options.mcp.scripting]
@@ -78,21 +76,17 @@ version = "v24.14.0"
 args = []
 ```
 
-所选 Permission Policy 来源还须包含命令授权：
+The selected Permission Policy must also grant the command:
 
 ```json
 {"id":"mcp-script-node","kind":"command","effect":"allow","command_ref":"tool:mcp-script-node","tool_ids":["bash"],"operations":["execute"]}
 ```
 
-`mcpScript` 只向 main 角色开放。监督者固定脚本入口与解释器身份，脚本从 stdin 接收，使用每次运行的私人目录和无网络沙箱；业务工作树、账号环境与父监督凭据不传入脚本进程。JavaScript VM 负责计算上下文，实际文件和网络访问范围由进程沙箱限制。
+`mcpScript` is main-only. The supervisor fixes the entry/interpreter identity. Scripts arrive on stdin and run in per-execution private directories with no network, project worktree, account environment, or parent supervisor credentials. The JavaScript VM supplies computation context; the process sandbox enforces actual file/network boundaries.
 
-脚本的 `tools.call/search/describe` 交回父侧分派，仍只能访问已选 MCP 能力。超时或取消会停止监督进程并等待物理终止；关闭时也等待已派发请求结束。未证明终止时保持保护，不能当作成功。
+`tools.call/search/describe` dispatch back to the parent and remain limited to selected MCP capabilities. Timeout/cancellation stops the supervised process and waits for physical termination. Shutdown also waits for dispatched requests. Unproven termination retains protection and is not success.
 
-源码类型检查、固定脚本语法检查、假进程／假通道测试已通过。真实 Node 解释器、操作系统沙箱、服务调用和平台终止尚未执行。
-
-## MCP Apps 页面服务
-
-需要页面时明确选择：
+## MCP Apps
 
 ```toml
 [overrides.profiles.pi-default.agent_options.mcp.apps]
@@ -105,15 +99,16 @@ allowed_browser_origins = []
 permissions = []
 ```
 
-两个端口仅绑定 `127.0.0.1`；0 表示由操作系统分配，固定端口不能相同。它们共用现有 manager 的一条活动记录，父 Pi 进程由 supervisor 监督。关闭时终止连接并等待已发出的请求结束；未知关闭不会被当作释放成功。
+Both ports bind only `127.0.0.1`; zero requests an OS-selected port, and fixed ports must differ. They share one existing-manager activity record; the supervisor tracks the parent Pi process. Shutdown closes connections and waits for outstanding requests. Unknown closure does not count as release.
 
-页面使用标准浏览器，通过终端链接交给用户打开。远程使用时须转发两个 loopback 端口。浏览器的外部请求使用用户浏览器网络，不继承 agentcfg 的服务代理；页面声明的外部源站必须在 allowed_browser_origins 中，摄像头、麦克风、位置或剪贴板权限也须显式选择。App 请求启动新的 agent turn 还须在 Pi 界面确认。
+Users open the terminal link in a standard browser. Remote use needs both loopback ports forwarded. External browser traffic uses the user's browser network, not agentcfg service proxies. External origins must be in `allowed_browser_origins`; camera, microphone, location, and clipboard permissions require explicit selection. App requests for a new agent turn also require Pi UI confirmation.
 
-## 验证界限
+## Capacity and stdio networking
 
-已有静态类型、隔离回归和临时安装证据；最终锁、四平台原生行为、浏览器交互和真实服务验收仍待完成。所有已选 MCP 实网验收保留，当前没有 MCP live passed 记录。
+Finite execution tasks and long-lived stdio services use the same manager/supervisor with separate caps: at most 2 execution tasks, at most 16 services, and at most 16 total resource records. File scopes, worktree leases, and termination proofs remain effective. A service with a writable project root holds that write lease throughout its lifetime and cannot coexist with another writer in the same workspace. Only matched MCP stdio admission assigns the service category; a model cannot relabel a task to bypass limits.
 
+stdio uses a no-external-network file sandbox and minimal environment without machine proxies, login environment, or system configuration. Services requiring remote network/authentication should use explicit HTTP/SSE bindings. Selecting an arbitrary network-dependent local program as stdio does not grant networking.
 
-长期 stdio 服务与有限执行任务使用同一 manager/supervisor，分别限制容量：执行任务最多 2 个，服务进程最多 16 个，manager 的资源记录总数也最多 16 个。服务仍受原有文件范围、工作区租约和物理终止核验约束；声明可写业务根的长期服务会持续占有相应写租约，不能与同工作区其他写入者并用。服务分类只由匹配的 MCP stdio 准入登记，模型不能把普通任务声明成服务绕过上限。
+## Validation
 
-stdio 命令当前使用无外网的文件沙箱和最小环境，不继承机器上的代理变量、登录环境或系统配置。需要远端网络与认证的服务使用显式 HTTP/SSE 绑定。把需要联网的任意本地 MCP 程序直接配置为 stdio，不会因此获得隐式网络能力；应在验收中明确报告该传输前提。
+Type checks, isolated regressions, and temporary installs establish only their stated layers. Current-lock freezing, native behavior on each platform, browser interaction, and live MCP/OAuth services require matching evidence. No MCP live pass is implied; see [Pi diagnostics](pi-diagnostics.md) and [roadmap](roadmap.md).

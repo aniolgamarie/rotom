@@ -1,50 +1,72 @@
-# 终端程序管理器设计草案
+# Terminal configuration manager design
 
-> 历史调查与初步方案。正式范围以 [termcfg 功能规格](../specs/003-sync-terminal-tools/spec.md) 为准：代理组件现包含 mihomo core、非秘密配置和显式服务管理；`~/.zshenv` 按确认后整文件备份与覆盖处理。下文与规格冲突时须在 `$speckit-plan` 阶段更新设计。
+`./termcfg` manages public terminal configuration, fixed runtime packages, and its own mihomo user process independently of `./agentcfg`. Its implemented components are `zsh`, `tmux`, and `mihomo`. It does not read agent profiles, models, or API keys and is never invoked implicitly by agentcfg setup/run. This document describes the implemented design; see the [user guide](termcfg.md) for operation and the [feature specification](../specs/003-sync-terminal-tools/spec.md) for requirements.
 
-## 目标与命令边界
+## Command and side-effect boundaries
 
-新增仓库入口 `./termcfg`，管理非 AI 终端程序的**安装来源和用户配置**。首批组件为 `zsh`、`tmux`、`mihomo-mgr`，由用户显式选择；运行中的 shell、tmux server、mihomo core 仍由其原生命令控制。`termcfg` 不读取 `agentcfg` 的模型、profile 或 API key，也不在 `agentcfg setup/run` 中隐式执行。
+| Command | Responsibility |
+| --- | --- |
+| `components` | List available components |
+| `init-local` | Save explicit machine/component selection; `--edit` changes an existing selection |
+| `plan` | Offline read-only target preview and deterministic plan ID |
+| `status`, `doctor` | Report file, environment, package, recovery, and service facts separately |
+| `lock --component … --version …` | Explicit networked maintenance of a repository dependency lock |
+| `sync --component …` | Consume a lock to prepare fixed plugins or mihomo core |
+| `apply` | Back up and copy selected public files after review |
+| `rollback --component …` | Restore the previous successful public-configuration state |
+| `recover` | Reconcile an interrupted file transaction |
+| `service status\|start\|stop\|reload\|restart` | Inspect or explicitly operate the manager-owned mihomo process |
 
-```text
-./termcfg components
-./termcfg init-local [--machine NAME]
-./termcfg [--machine NAME] plan [--component zsh|tmux|mihomo-mgr]
-./termcfg [--machine NAME] apply [--component zsh|tmux|mihomo-mgr]
-./termcfg [--machine NAME] status
-./termcfg [--machine NAME] doctor
-./termcfg [--machine NAME] rollback [--component zsh|tmux|mihomo-mgr]
-```
+`plan/status/doctor` accept repeated `--component` selectors and diagnostic `--home`. `apply` accepts repeated component selectors, `--plan-id`, repeated `--adopt-target`, and `--confirm-zshenv`. Rollback has its own `--plan-only` preview and `--plan-id`. Global `--machine` and `--json` are also accepted on subcommands. There is no `mihomo-mgr` component name or invented `plan --adopt` interface.
 
-选择机器与目标 HOME 应在独立的私人 TOML 中声明。默认目标为当前用户 HOME；测试显式指定临时 HOME。`plan/status/doctor` 只读，`apply` 写入受管文件，`rollback` 只撤销本管理器最近一次成功部署。组件可以分别部署；没有必要要求每台机器都安装 mihomo 或 zsh。
+The private machine TOML at `${XDG_CONFIG_HOME:-~/.config}/termcfg/machines/NAME.toml` has exactly four fields: `machine_id`, `target_home`, `private_state_root`, and `components`. It is an owned ordinary single-link 0600 file in private 0700 management directories. Target/state paths must be canonical and current-user-owned; private state cannot be the target HOME or lie inside the repository. Unknown fields fail validation. The [example](../examples/termcfg-machine.toml) uses fictional paths.
 
-## starter 来源盘点
+Interactive initialization preselects locally available zsh/tmux, with mihomo unselected. Noninteractive initialization requires explicit repeated `--component` or `--none`. Component selection does not install or reload programs.
 
-| 组件 | starter 来源 | 当前部署/运行行为 | 新管理器的边界 |
-| --- | --- | --- | --- |
-| zsh | `shell_config/zshrc.zsh`、`install.sh` | 链接 `~/.zshrc`，修改 `~/.zshenv`；加载时可能下载 zinit/插件 | 管理 `.zshrc` 和一个有精确 marker 的 `.zshenv` 片段；插件安装须显式同步 |
-| tmux | `shell_config/tmux.conf`、`scripts/fzf-window.sh` | 链接配置与脚本；加载时可能下载 TPM/插件，continuum 自动保存/恢复会话 | 管理配置与脚本；插件安装须显式同步，现有会话不自动重载 |
-| mihomo-mgr | `skill/mihomo-mgr/scripts/mihomo-mgr.py`、`LICENSE` | shell 中 `mm` 函数指向 starter；脚本管理订阅、凭据、核心进程、日志、统计与路由 | 管理 CLI 程序、`mm` 入口和静态补全；保留用户运行状态原位 |
+## Public source projection
 
-`starter/shell_config/install.sh` 不能直接作为 `apply`：它对已有文件自动创建时间戳备份、直接覆盖 `_mm`，对 `.zshenv` 只有局部修改且没有统一恢复记录。更重要的是，zsh/tmux 的网络下载发生在**加载配置时**，不受安装器进度、依赖锁和失败诊断控制。迁入时把需要的源码和许可证固定到本仓库，配置不再依赖 `/root/gitLocal/starter` 的位置；保留来源版本记录。
+[terminals/catalog.json](../terminals/catalog.json) records each source, target ID/component, digest, and target mode. [Source provenance](../terminals/SOURCES.md) retains origin and license information. Files are copied rather than linked to the checkout.
 
-## 配置与所有权
+| Component | Managed targets | Separate runtime preparation |
+| --- | --- | --- |
+| zsh | `.zshrc`, whole `.zshenv` | Locked zinit/selected plugins |
+| tmux | `.tmux.conf`, `.config/tmux/scripts/fzf-window.sh` | Locked TPM/selected plugins |
+| mihomo | `.config/termcfg/mihomo/base.yaml`, `.local/bin/mihomo-mgr` | Locked official mihomo core |
 
-- 公共清单记录组件版本、源摘要、目标清单、可选依赖和平台条件。机器 TOML 只记录所选组件、目标 HOME、可执行程序路径及明确的功能开关；不记录订阅 URL、controller secret 或代理账号。
-- 默认遇到已有非本管理器文件、旧 starter symlink 或未知 marker 时报告冲突。`plan --adopt` 仅预览明确接管；`apply --adopt` 在逐项目标核对并建立私有备份后接管，不能把旧安装脚本的 `.bak.*` 当作所有权证明。
-- `~/.zshenv` 只管理一个新 marker 区间；marker 外的机器变量和权限保持原样。旧 starter marker 必须以独立迁移步骤处理。路径为 symlink、marker 重复或内容漂移时停止，不做模糊文本替换。
-- mihomo 的 `~/.config/mihomo-mgr/`、mihomo `config.yaml`、订阅缓存、路由草稿/发布状态、日志、PID、SQLite 统计与凭据属于运行数据。`apply/rollback` 不删除、不备份到通用配置状态，也不自动运行 `start/stop/sub-pull/routing apply`。
-- 保存每个受管目标的类型、来源摘要、应用前状态、应用后摘要和所属组件。`rollback` 只在应用后目标仍匹配时恢复上一版；用户修改后报告冲突。临时文件、恢复日志和备份留在私人 state；不在 HOME 下散落时间戳备份。
+Configuration loading must not perform implicit Git/plugin downloads. Runtime preparation belongs to explicit sync and consumes `locks/termcfg/mihomo.json` or `locks/termcfg/plugins.json`. It stages and verifies private packages; configuration apply does not install dependencies. Existing shells/tmux servers keep running without automatic reload or session restoration.
 
-现有 `agentcfg` 的配置产物限定为实例相对路径、0600/0700 的非秘密字节，不能直接拿来部署 HOME 下的 `.zshrc`/`.tmux.conf`、普通脚本和 symlink。可复用安全路径检查、原子写、冲突与恢复思路；终端目标的投影、权限及 symlink 处理需要独立实现，不能放宽 Agent 部署契约。
+The shipped legacy-named mihomo-mgr program does not provide an alternative owner for process/API/subscription management; those old entry points are disabled. The CLI component remains `mihomo`, with explicit termcfg service operations.
 
-## 可诊断性与实施顺序
+## Ownership, adoption, and file transactions
 
-`plan` 逐项目标显示 `add/update/adopt/conflict/unchanged` 和备份/回滚范围；`apply` 显示验证、备份、写入、复核四个阶段，失败指出组件、目标和下一条命令。`doctor` 区分“已安装”“配置可解析”“插件已准备”“运行服务可用”，不会把未执行的联网或 mihomo 模型外服务检查报成通过。基础配置缺少 zsh、tmux、fzf 或 mihomo core 时按组件给出具体降级结果。
+Preview lists source identity, destination, action, reason, and backup scope. Actions include `create`, `replace`, `adopt-required`, `unchanged`, `blocked`, and `conflict`. Its plan identity binds machine/HOME/components, state, dependency locks, source digests, and target identities. Apply rechecks these facts before writing.
 
-1. **源码冻结与拆分**：复制经过审查的 starter 源码和许可证，移除加载配置时的自动 Git 下载与 starter 路径依赖；锁定或显式管理 zinit/TPM 等可选插件来源。
-2. **只读规划**：实现 `components/init-local/plan/status/doctor`，覆盖旧 symlink、已有普通文件、marker 冲突、不同 HOME、macOS/Linux 与无依赖场景。
-3. **受管部署**：加入逐组件 `apply/rollback`、私有备份、崩溃恢复和漂移拒绝；测试仅用临时 HOME、网络阻断和假进程。
-4. **显式原生验证**：在用户允许的隔离环境中验证 zsh/tmux 加载和 mihomo-mgr CLI；真实 mihomo core、订阅网络和当前 HOME 迁移分别审阅。
+Existing unmanaged files require explicit adoption even when their contents already match the public source. Only classified old source links can be adopted; other links, unsafe paths, special/multilink files, or ownership conflicts stop the operation. Old timestamp backups and markers do not establish ownership. Source/target content suspected to contain credentials, subscriptions, or unclassified private data is rejected before ordinary digest/backup handling. Move private values to an explicit private file before retrying.
 
-验收前不修改实际 `~/.zshrc`、`~/.tmux.conf`、`~/.zshenv`、tmux 会话或 mihomo 运行状态。
+Interactive apply previews all selected targets and asks for combined adoption confirmation. A custom nonsecret `.zshenv` needs an additional explicit confirmation because the whole file is replaced, including content outside any old marker. Noninteractive apply binds adoption and `.zshenv` confirmation to the current plan ID. Silence or a stale plan is not consent.
+
+Every existing configuration target across all selected components is backed up and verified before the first target is overwritten. Ordinary files preserve contents/necessary metadata; adopted legacy links preserve the link itself. Each write uses atomic replacement, with a private persistent journal for the multi-file sequence. This does not claim an atomic transaction across an entire directory or running processes.
+
+State records target type, ownership/component, source identity, and before/after identity without logging bodies or secrets. Drift after deployment blocks updates and rollback. No-op apply neither rewrites targets nor rotates the single previous backup. A successful changed apply retains only the preceding configuration state.
+
+Rollback rechecks current identities, restores the previous configuration, and removes originally absent targets only while still owned and unchanged. Core/plugin version changes are outside configuration rollback. Interrupted apply/rollback leaves an observable journal; `status` identifies pending recovery and explicit `recover` rechecks identities before restoration. External changes retain the conflict rather than being overwritten.
+
+Terminal HOME targets have different modes/projection rules from agentcfg's isolated agent artifacts. The implementation reuses safety concepts without weakening the agent deployment contract.
+
+## Mihomo private state and service ownership
+
+The public base contains local ports and nonsecret defaults. Only explicit service start/reload/restart reads `<private_state_root>/mihomo/private.yaml`, validates it, and structurally combines it into private 0600 `effective.yaml` within a 0700 runtime directory. Accepted private keys are `proxies`, `proxy-providers`, `proxy-groups`, `rule-providers`, `rules`, `dns`, and `secret`. A nonempty controller secret and at least one of proxies/proxy-providers are required. Private subscriptions/credentials never enter public source or generic configuration backups. Status/stop do not read subscription bodies.
+
+Old mihomo-mgr configuration is not implicitly imported. Users review and migrate needed private values separately. Apply/rollback leave subscriptions, runtime caches, logs, and unrelated old state intact.
+
+Service leases bind UID, PID, process-start identity, executable, core digest, and public-configuration identity. Operations require the manager's own matching lease. External processes, reused PIDs, unknown identities, and occupied controller ports are refused rather than adopted. Start failure attempts to stop only the newly created matching child and preserves diagnostic state if completion cannot be established.
+
+Syncing core sets `pending_core_effect`; applying public proxy configuration sets `pending_config_effect`. Neither signals a running process. Explicit service operations check process and controller health and clear only the effects supported by evidence. A healthy process alone does not establish loaded configuration; `/configs` observations must match public settings before marking configuration effective. Insufficient evidence remains `unverified`.
+
+## Diagnostics and validation
+
+Progress goes to stderr and the final summary to stdout. JSON mode emits one final object, excluding private YAML, URLs, credentials, file bodies, and raw child stderr. Waits show stages/heartbeats; failures include fixed reasons and next commands. Doctor separates required blockers, optional degradation, and unverified runtime facts. Default doctor can return 0 with reported problems; `--strict` makes required blockers nonzero.
+
+Exit codes are 0 success, 2 arguments/configuration/lock format, 3 missing private service configuration/credentials, 4 ownership/drift/concurrency/stale-plan/recovery conflicts, 5 environment/dependency/service-health failure, and 6 filesystem/internal failure or controlled interruption.
+
+Default tests use temporary HOME/XDG, blocked network, and fake packages/processes/controller APIs. Native shell/tmux loading, real mihomo, subscriptions, and real HOME migration require separate explicit authorization. Source implementation, isolated results, and actual platform/service acceptance remain distinct; see [testing](testing.md) and [known issues](known-issues.md).
