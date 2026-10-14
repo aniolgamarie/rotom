@@ -31,9 +31,9 @@ cd rotom
 uv sync --locked
 ./agentcfg profiles
 ./agentcfg init-local --machine workstation --profile dsh-default
-./agentcfg --machine workstation model status
-./agentcfg --machine workstation setup
-./agentcfg --machine workstation run --cwd /path/to/workspace
+./agentcfg --machine workstation --profile dsh-default model status
+./agentcfg --machine workstation --profile dsh-default setup
+./agentcfg --machine workstation --profile dsh-default run --cwd /path/to/workspace
 ```
 
 `init-local` creates private machine and shared credential files and adds missing placeholders without overwriting existing values. Use `model key kimi-code`, `model key glm-code`, or `model key deepseek` for hidden key entry. OAuth accounts are logged in through the selected native instance. Missing model credentials do not prevent startup; that route remains unavailable. Rotom never imports another application's login automatically.

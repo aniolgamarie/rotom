@@ -37,9 +37,11 @@ History rewriting is destructive and needs separate explicit approval, coordinat
 6. Present the exact ref changes, backup location, identity decision, tests, and force-update plan for approval. No remote update is included in this preparation.
 7. After an approved remote rewrite, coordinate fresh clones or carefully migrated work. Old branch merges can reintroduce removed history. Review releases, CI artifacts, cached views, pull-request refs, forks, and mirrors separately.
 
+Literal text replacement does not automatically sanitize content inside compressed archives. Inventory affected blobs separately and choose exact removal paths or a properly rebuilt declared artifact, preserving required licenses and source/lock closure. Do not assume a clean text scan covers binary history.
+
 A history rewrite changes commit IDs and may invalidate signatures and existing evidence references. It cannot erase copies held by others. Public repository ownership, package/source URLs, license notices, and prior public associations can still identify the project; machine-path cleanup is not anonymity.
 
-GitHub describes credential rotation, clone coordination, cached/PR references, and rewriting side effects in its [sensitive-data removal guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository). Use the [git-filter-repo documentation](https://github.com/newren/git-filter-repo) for exact supported options. Both should be rechecked at execution time.
+GitHub describes credential rotation, clone coordination, cached/PR references, and rewriting side effects in its [sensitive-data removal guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository). Use the [git-filter-repo documentation](https://github.com/newren/git-filter-repo/blob/main/Documentation/git-filter-repo.txt) for exact supported options. Both should be rechecked at execution time.
 
 ## Preventing recurrence
 

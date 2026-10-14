@@ -6,7 +6,7 @@ Notable user-visible changes are recorded here. Unreleased entries describe repo
 
 ### Fixed
 
-- Malformed frozen pnpm importer and dependency structures now produce a configuration error instead of an uncaught attribute error.
+- Malformed frozen pnpm importer, dependency, and package-name structures now produce a configuration error instead of an uncaught attribute error.
 - OMP project model-role values may use native `null` clearing without quarantining an otherwise valid role file. Unknown roles and unauthorized nonempty selectors remain rejected.
 - The OMP foundation test now checks the 36-artifact contract, including both Catppuccin resources and theme selectors.
 

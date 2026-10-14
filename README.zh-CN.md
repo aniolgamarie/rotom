@@ -21,9 +21,9 @@ Rotom 使用 `agentcfg` 管理 DSH、Pi 和 OMP 的配置、完整依赖、部�
 uv sync --locked
 ./agentcfg profiles
 ./agentcfg init-local --machine workstation --profile dsh-default
-./agentcfg --machine workstation model status
-./agentcfg --machine workstation setup
-./agentcfg --machine workstation run --cwd /path/to/workspace
+./agentcfg --machine workstation --profile dsh-default model status
+./agentcfg --machine workstation --profile dsh-default setup
+./agentcfg --machine workstation --profile dsh-default run --cwd /path/to/workspace
 ```
 
 `init-local` 由工具创建私人文件与缺失占位符，保留已有值。共享密钥使用 `model key kimi-code|glm-code|deepseek` 隐藏输入；OAuth 在对应原生实例内登录。缺少模型密钥不阻止宿主启动。
