@@ -47,6 +47,19 @@ dsh-cursor-login-url        # 用户本人在终端取完整登录链接；代�
 ./agentcfg --machine workstation --profile dsh-default doctor
 ```
 
+本机另外提供个人辅助入口 `dsh-proxy`，固定为本次启动设置 `HTTP_PROXY=http://127.0.0.1:10808`、`HTTPS_PROXY=http://127.0.0.1:10808`、`NO_PROXY=localhost,127.0.0.1,::1` 和 `NODE_USE_ENV_PROXY=1`，再 exec 原来的 `dsh` 并透传参数：
+
+```bash
+cd /path/to/project
+dsh-proxy
+# 或显式指定工作目录
+dsh-proxy --cwd /path/to/project
+```
+
+正式 workstation 的 `[machine.environment].inherit` 已加入这四个变量并完成 apply；配置源只记录变量名，代理地址由辅助脚本设置。普通 `dsh` 不主动设置代理；若调用环境已设置这些变量，则会按白名单继承。`dsh-proxy` 不新建 profile/HOME，不切换模型或权限，不修改系统代理。脚本位于 `~/.local/share/agentcfg/launchers/dsh-proxy`，PATH链接为 `~/.local/bin/dsh-proxy`；同原个人启动器一样，是本机辅助文件，并非新的上游命令。
+
+10808需要支持HTTP或mixed代理，`127.0.0.1`指运行DSH的机器。Node24.14.0的原生HTTP(S)/fetch支持环境代理，但Cursor0.6.12的AgentRun主模型流直接使用HTTP/2，没有公开代理接口；不能将此入口宣称为Cursor流量全部经过10808。该限制与无账号检查见[代理入口验收](acceptance/dsh-upgrade-20261012.md#2026-10-14-本机代理快捷入口)。
+
 本机已在保持原状态锁 inode 的条件下将历史实例及旧状态项移入恢复目录，再通过同一 plan/transact 契约建立新部署。没有清除 legacy 门禁：其他机器仍有旧受管 `settings.yaml` / env-guard、旧 owner 或 pending 时，直接 apply 会拒绝。应先在独立 HOME/XDG/实例根验收，不能清 owner 后强行认领旧数据。
 
 新实例保留当前公共国内 API 模型入口及私人机器覆盖，默认主模型沿用实际 `kimi_code_openai` 配置。`model status` 查看缺项，`model key` 只修改选定私人密钥来源。缺少一个订阅登录不会阻止其他配置好的 API 路由启动；无 key 的路由保持不可用，不自动改用其他付费来源。关闭代理的国内 API 检查只修改测试子进程环境，网络可达仍是必要条件。
