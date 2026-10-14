@@ -52,6 +52,8 @@ TF 目录在 `agents/dsh/content.toml` 中提供 11 个 `dsh-…` 模型绑定�
 
 TF 需要机器自己的 `tf_openai_url` 和 `tf_anthropic_url`，因此通过 `overrides.profiles.dsh-default` 选择，见 [私人配置示例](../examples/dsh-tf.local.toml)，没有强迫缺少网关地址的其他机器启用。默认主模型保持原值。模型名称、输入能力和客户端预算复用公共模板；DSH 的 reasoning/compat 使用公开字段，OMP 的 native 字段不会透传。网关实际模型可用性、额度和工具往返仍需用户验证；原生宿主与本机模拟服务通过不代表 TF 账号测试通过。
 
+本机 2026-10-14 已为日常和限定体验两个实例部署该目录及已有 TF 地址。密钥文件没有读取或复制，两个实例仍引用原候选 `secrets.toml`；仅复用 `secret:omp_*_tf_key` 的名称，不等于已接入 workstation 的共享文件。将 `secrets_file` 改到 `~/.config/agentcfg/secrets.toml` 的动作被自动审批拒绝：全量切换可能使只填在候选文件中的 API key 不可用，需要用户明确批准该文件指针迁移。原文件保留，凭据可用性标为 NOT INSPECTED。
+
 Codex/ChatGPT 订阅在 DSH TUI 内使用：
 
 ```text
@@ -61,6 +63,8 @@ Codex/ChatGPT 订阅在 DSH TUI 内使用：
 ```
 
 这里的 provider ID 是 `openai-codex`；`openai` 没有被本配方挂载。`/provider` 是交互式 provider 管理向导，选择 OAuth 后复用 `/auth` 的同一认证服务，并非第二套账号。SSH 下优先在原生登录方法提问中选择 `Device code login (headless)`；它不依赖远端 localhost 回调。浏览器模式则在原生面板粘贴授权码或完整回跳地址，回调/等待由上游流程负责，不添加自造超时或复制 OAuth 实现。
+
+2026-10-14 真实 `/auth login openai-codex` 浏览器模式在全新无账号 HOME 中能显示登录方法/授权码面板，空闲五秒后取消，退出和 termios 恢复通过。URL 只在内存验证，未写账号凭据；这不能证明已完成真实账号登录，也没有复现用户原会话“迅速退出”的症状。模拟 device-code 面板通过，不替代实际联网设备码发行/登录证据。真实浏览器入口另有一次原生 npm 版本 GET，单列为背景请求，无 OAuth 远端/真实模型调用或依赖安装。
 
 真实账号未验收。账户保存在隔离实例的原生认证目录，不读取全局 Codex HOME。这与 `/kernel` 的外部 Codex 内核不同：后者是上游入口，DSH Provider/审批插件不自动作用于它，本次没有维护第二套 Codex 配置。
 
@@ -228,7 +232,7 @@ AI策略只覆盖这个probe；其他进入approval/request的请求走人工，
 
 回到原人工候选运行 `/home/private-user/rotom-dsh-candidate-20261012/dsh`。实验不切换正式配方/主锁、不迁移旧会话，不宣称可以软件或会话降级。
 
-现有体验入口固定到 `support/auto-review-source-f8d558e` 的公开 Git 源码快照，运行包位于 `support/auto-review-runtime-rc2`，均在上述持久实例根内。原 detached/开发 worktree 已回收；启动前比较 probe 与 main 同源文件，漂移拒绝。路径迁移持操作/实例锁并记录 `support/relocation-recovery.json`，输入和模块拓扑一致、runtime identity未变；profile/source投影按所有权记录迁移，账号和会话不复制。固定原配方重复prepare通过，新配方不能直接认领原体验。真实宿主+模拟模型复测通过，代理未追加真实模型调用。
+体验入口使用 `support/auto-review-source-bec1e9e` 的公开 Git 源码快照，运行包位于 `support/auto-review-runtime-rc2`，均在上述持久实例根内。初次迁移使用 `f8d558e`；2026-10-14 的 UI/TF 修正更新到同一 main 配方，恢复记录为 `support/config-refresh-20261014.json`。原快照保留作恢复资料，未创建长期 profile。启动前比较 probe 与 main 同源文件，漂移拒绝。路径迁移持操作/实例锁并记录 `support/relocation-recovery.json`；配方更新也校验已有 owner/文件哈希再写入。账号和会话不复制，runtime identity保持不变。新配方不能不经校验直接认领原体验；真实宿主+模拟模型证据不包含真实账号调用。
 
 2026-10-13 最终复核 [Perry main 的 runtime](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/runtime.ts) 和 [audit](https://github.com/PerryLink/dsh-auto-review/blob/a1ed031d8dd8bd1e3dd58a8e49a42f71d089f020/src/audit.ts)：RC2 的在途批准、跨轮次关闭和完整审计缺口仍在。公开 wrapper 可拒绝部分迟到结果，不能撤回已委派决定或中止私有 reviewer；回放公开开关命令会重复注入 notice，不能作为无竞态恢复契约。通用自动审批继续 BLOCKED，未作为日常功能启用；人工审批升级已合入 main。
 
