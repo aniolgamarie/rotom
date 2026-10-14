@@ -1,76 +1,78 @@
-# 使用 agentcfg 管理 OMP
+# Manage OMP with agentcfg
 
-OMP 管理器集成已实现，当前固定版本为 OMP v18.4.5、提交 `79808c3bf8f8cd9826decc63e3e18b13035f64f8`，本次升级证据见[升级记录](acceptance/omp-upgrade-18.4.5.md)。本文描述受管使用方式；隔离验收、Linux x64 smoke 与其他未验证平台/账号项见[实施记录](../specs/002-manage-omp-config/implementation-progress.md)，原生支持声明以[验证证据](omp-support.md)为准。
+The OMP adapter uses the **unmodified official OMP 18.8.6** runtime and repository-owned plugins, including the permission plugin. Integration uses public configuration and extension APIs. Historical host patches are not a supported deployment path. See [release status](releases.md), [known issues](known-issues.md), and [testing](testing.md) for current evidence and unverified platforms or account routes.
 
-## 配方和原生 profile
+## Recipes and native profiles
 
-rotom 配方定义选用的公共模型、角色、规则、技能和 OMP 资源；OMP 原生 profile 保存该配方独立的配置、登录及会话。每个配方使用新建的原生命名 profile，名字由配方 ID 的 UTF-8 SHA256 前 24 位确定，并始终核对完整 ID 和完整哈希。
+A rotom recipe selects shared models, roles, rules, skills, and OMP resources. Each recipe receives a separate native OMP profile for configuration, login, and sessions. Its name is derived from the first 24 hexadecimal characters of the recipe ID's UTF-8 SHA256; the full ID and hash are also checked.
 
-每个实例还有独立 HOME，因为 OMP 的部分设施位于原生 profile 之外。原生配置放在 `<instance>/user-home/.omp/profiles/<native-name>/agent`。管理器设置 HOME/XDG，不接受使用者指定原生 profile 名、旧 agentDir 或任意设置路径；不复制现有登录或会话。
+Each instance has a separate HOME because some OMP facilities live outside native profiles. Native configuration is under `<instance>/user-home/.omp/profiles/<native-name>/agent`. The manager sets HOME/XDG; it does not accept arbitrary profile names, old agent directories, or settings paths, and does not copy existing login or sessions.
 
-修改同一个实例的命令和受管启动共用物理实例锁；多个运行会话使用共享租约，配置修改使用独占租约。更换管理状态目录不能接管已有实例。切换配方会切换账号和会话范围，原配方的数据保留原位。
+Managed startup and modifications share the physical instance lock. Concurrent sessions use shared leases; configuration changes require an exclusive lease. Moving the state directory does not authorize takeover. Switching recipes changes the account/session scope and leaves the old scope intact.
 
-## 配置来源
+## Configuration sources
 
-| 内容 | 来源 |
-|---|---|
-| 公共 provider/model、MCP | `shared/` registry，精确 ID 与引用 |
-| 规则与完整技能 | `shared/`，技能包含脚本、资源及执行位 |
-| OMP 默认与 prompt/theme catalog | `agents/omp/` |
-| 扩展及本地 MCP 包 | `agents/omp/packages/`，完整内容进入依赖锁 |
-| 能力组合 | `profiles/omp-*.toml` |
-| 本机路径与非秘密覆盖 | 私人机器文件的 `overrides` |
-| API key 或完整 Authorization header | 私人 SecretStore，通过 `secret:名称` 引用 |
-| 原生登录与运行状态 | 新建实例 HOME，排除于配置备份和 capture |
+| Content | Source |
+| --- | --- |
+| Shared providers, models, MCP | `shared/` registry, using exact IDs and references |
+| Rules and complete skills | `shared/`, including skill resources, scripts, and executable intent |
+| OMP defaults, prompts, themes | `agents/omp/` |
+| Extensions and local MCP packages | `agents/omp/packages/`, with content identities in the dependency lock |
+| Capability selection | `profiles/omp-*.toml` |
+| Machine paths and nonsecret overrides | Private machine TOML |
+| API keys or complete Authorization headers | Private SecretStore, referenced through `secret:<name>` |
+| Native login and runtime state | Isolated instance HOME; excluded from capture and configuration backups |
 
-对象逐层合并，数组整体替换；`false` 与空数组保留。未知字段、未声明引用、模糊模型 ID 和包含凭据的 URL 均拒绝。公共模型 `main` 角色映射到 OMP `default`；还可声明 `smol`、`slow`、`vision`、`plan`、`advisor`。静态自定义模型必须提供准确容量，不补造价格。
+Objects merge recursively. Most arrays replace; provider/model selections append with deduplication as described in [local configuration](local-config.md). Explicit false and empty arrays retain their meaning. Unknown fields, undeclared references, ambiguous model IDs, and credential-bearing URLs fail validation. The shared `main` role maps to native `default`; supported role combinations are documented in [model presets](omp-model-presets.md). Static custom models require verified capacities; do not invent prices.
 
-## 操作顺序
+## Setup and daily startup
 
-日常使用从正式 [`omp-kernel`](omp-kernel.md) 配方开始；`omp-default` 作为继承三个官方默认模型的基础配方。全局选择参数位于子命令之前。先准备仓库 `.venv` 与权限为 0600 的私人机器文件，再使用统一入口：
-
-```sh
-./agentcfg --local /private/local.toml --profile omp-kernel setup
-./agentcfg --local /private/local.toml --profile omp-kernel run --cwd /absolute/project
-```
-
-`setup` 先离线预览，有冲突或漂移时停止；随后 `sync` 消费已审阅锁，取得并验证运行包（可能联网），再重新检查并部署。需要逐项审阅时可分别执行 `validate`、`plan`、`sync`、`apply`、`doctor`；`render` 是可选的缓存生成步骤。维护依赖时才显式执行 `./agentcfg lock --agent omp`。`run` 不隐式安装或部署，也不回退到 PATH 的全局 OMP。
-
-`omp-kernel` 的自定义 API provider 使用私人 key，不需要原生账号登录。`omp-default` 也继承三个官方默认模型；需要 OpenAI Codex 原生登录时使用同一受管身份：
+`omp-kernel` is the daily recipe; `omp-default` provides the base configuration and the three official API service providers. Prepare the repository `.venv` and a private 0600 machine file first:
 
 ```sh
-./agentcfg --local /private/local.toml --profile omp-default run omp -- login openai-codex
+./agentcfg init-local --machine workstation --profile omp-kernel
+./agentcfg --machine workstation --profile omp-kernel model status
+./agentcfg --machine workstation --profile omp-kernel setup
+./agentcfg --machine workstation --profile omp-kernel run --cwd /path/to/workspace
 ```
 
-首版登录映射为 `openai-codex`；登录不要求补齐无关 MCP/API key。真实登录与模型使用是用户显式操作，不属于默认测试。
+Fill required private gateway URLs and keys before setup. `setup` previews offline and stops on conflicts or drift, then syncs the reviewed lock, verifies again, and deploys. For separate review, use validate, plan, sync, apply, and doctor. `render` only prepares cached output. `./agentcfg lock --agent omp` is a deliberate maintenance operation. `run` neither installs/deploys implicitly nor falls back to an OMP on PATH.
 
-## 来源检查和运行参数
+Custom API providers use private keys without native account login. For an explicitly selected native Codex account, login uses the same managed identity:
 
-默认关闭外部发现、项目技能/MCP 与自动更新；对无法用原生设置完全关闭的来源，管理器检查 cwd 及其祖先、隔离 HOME、active/default profile、dotenv 和 direct helper 路径。普通仓库的 `.agents/.agent/.claude/.codex/.gemini` 与顶层 `AGENTS.md/CLAUDE.md/GEMINI.md` 属于已禁用 provider 的来源，允许存在且不读取正文；真正由原生 OMP 消费的 `.omp`、dotenv、SYSTEM/TITLE/APPEND_SYSTEM 等来源仍严格检查。发现未声明来源时报告路径和类别，不读取认证明细或显示秘密。
+```sh
+./agentcfg --machine workstation --profile omp-default run omp -- login openai-codex
+```
 
-项目资源须显式设置 `agent_options.discovery.project_resources=true`，并在私人 local 声明非空绝对 `project_roots`。首版仅允许范围内经过校验的只读项目技能和 MCP；不因此接纳项目规则、prompt、扩展或任意 settings。policy/根列表变化需要重新部署，内容变化在每次启动前重新校验。
+Login does not require unrelated service keys. Real login and model calls are explicit user operations outside default tests.
 
-原生参数放在 `run omp --` 之后。受管入口拒绝身份/配置目录覆盖、额外扩展、secret/broker 控制、安装升级子命令和其他 cwd 来源；模型参数只能选已声明的精确模型。普通会话增加 `--no-title`，信息命令和登录使用实例 HOME 作为 cwd。
+## Source discovery and native arguments
 
-固定版本的会话恢复可能在启动内部重新选择 cwd，因此首版拒绝 `--continue/-c`、`--resume/-r`、`--session`、`--fork`、跨工具会话导入和 `--add-dir`。已保存会话仍保留。原生 `--` 后的普通提示文本按文本传递，不因包含参数字样被拒绝。
+External discovery, project skills/MCP, and automatic updates are disabled by default. Where native settings cannot completely disable a source, startup checks the cwd and ancestors, isolated HOME, active/default profiles, dotenv, and direct-helper paths. Other providers' `.agents/.agent/.claude/.codex/.gemini` directories and top-level AGENTS.md/CLAUDE.md/GEMINI.md may exist without their contents being read. Native OMP sources such as `.omp`, dotenv, SYSTEM, TITLE, and APPEND_SYSTEM remain checked. Undeclared sources produce a path/category error without exposing authentication details.
 
-来源检查不提供操作系统沙箱，也不限制宿主会话内使用者主动执行的任意代码。
+Project resources require `agent_options.discovery.project_resources=true` and nonempty absolute `project_roots` in private configuration. This allows validated read-only project skills and MCP within those roots; it does not admit project rules, prompts, extensions, arbitrary settings, or permissions. Redeploy policy/root changes; source contents are checked on every startup.
 
-## 漂移、回滚与退出码
+Pass native arguments after `run omp --`. The managed entry rejects identity/configuration overrides, extra extensions, secret/broker controls, install/update commands, and additional cwd sources. Model arguments must select an exact declared model. Ordinary sessions add `--no-title`; information and login commands use the instance HOME as cwd.
 
-`plan` 使用当前值、上次部署基线和新意图比较；已有未受管原生字段保留。没有变化的 apply 不重写目标或轮换备份。双方修改同一受管字段时先报告冲突，不覆盖。`capture` 仅对 theme、已声明快捷键和可唯一反查的 modelRoles 生成私人非秘密提案。
+Session recovery can internally change cwd, so managed startup rejects `--continue/-c`, `--resume/-r`, `--session`, `--fork`, cross-tool session imports, and `--add-dir`. Saved sessions remain intact. Prompt text after native `--` remains text even if it contains flag names.
 
-`rollback` 恢复上一轮配置并消费备份，不降级软件或迁移认证数据库。pending 由后续显式 apply/rollback 恢复；run 和 usage 遇 pending 返回 4。
+Source checks are not an operating-system sandbox. The repository permission plugin's scope and limitations are separate from model selection; switching a model preset does not change its permission sidecar. See [known issues](known-issues.md).
 
-| 退出码 | 管理器启动前含义 |
-|---|---|
-| 0 | 成功，可有漂移或待登录提示 |
-| 2 | 参数、配置或锁错误 |
-| 3 | 实际启动需要的秘密缺失 |
-| 4 | 所有权、活动实例、恢复待处理或来源冲突 |
-| 5 | 缺少运行包、不支持平台或依赖验证失败 |
-| 6 | 文件系统或内部操作失败 |
+## Drift, rollback, and diagnostics
 
-子进程已启动后保留原生输出流与退出码。九行完整虚构验收配方及分层验证步骤见 [quickstart](../specs/002-manage-omp-config/quickstart.md)；假测试包不作为真实宿主证据。
+Plan compares the current value, previous deployment baseline, and desired intent, preserving unmanaged native fields. A no-change apply does not rewrite targets or rotate backups. Conflicting edits to the same managed field stop deployment. Capture only proposes nonsecret theme, declared shortcut, and uniquely mapped model-role changes in private storage.
 
-专题说明：[omp-kernel与WSL](omp-kernel.md)、[profile与来源](omp-profiles.md)、[旧配置迁入](omp-migration.md)、[usage](omp-usage.md)、[依赖维护](omp-dependencies.md)、[支持与证据](omp-support.md)。
+Rollback restores one prior configuration and consumes that backup. It does not downgrade OMP or migrate authentication databases. Pending recovery is handled by explicit apply/rollback; run and usage return 4 while pending.
+
+| Code | Manager meaning before native startup |
+| --- | --- |
+| 0 | Success, possibly with drift or login notices |
+| 2 | Arguments, configuration, or lock invalid |
+| 3 | Required runtime secret missing |
+| 4 | Ownership, active instance, pending recovery, or source conflict |
+| 5 | Missing runtime, unsupported platform, or dependency verification failure |
+| 6 | Filesystem or internal operation failure |
+
+After startup, native streams and exit codes pass through. See [operations](operations.md) for recovery, [local configuration](local-config.md) for secrets and gateway URLs, and [model presets](omp-model-presets.md) for role storage and fallback boundaries. Test fixtures are not evidence that a real host or account works.
+
+Additional guides cover [kernel and WSL](omp-kernel.md), [profile/source boundaries](omp-profiles.md), [dependency maintenance](omp-dependencies.md), [usage](omp-usage.md), and [approval diagnostics](omp-approval-diagnostics.md).

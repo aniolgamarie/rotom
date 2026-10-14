@@ -1,47 +1,55 @@
-# 本地机器配置
+# Local machine configuration
 
-这是 **agentcfg 框架 TOML**，不是 DSH 原生配置。默认文件在 `$XDG_CONFIG_HOME/agentcfg/machines/<机器>.toml`，XDG 未设置时使用 `~/.config`。先运行 `./agentcfg profiles` 查看可选配方，再用 `./agentcfg init-local [--machine NAME] [--profile ID]` 初始化或补齐占位；不写机器名时选择 `default`。后续命令用前置 `--machine NAME` 或 `--local /绝对路径/local.toml`，两者互斥；缺省选择机器 `default`。
-
-`init-local` 根据所选 profile 及其继承的全局可选池生成实际需要的字段：机器文件中增加缺失的 `[local_values]` URL 空值，共享密钥文件中增加缺失的 key 空值。以 `omp-kernel` 为例，会准备两个 TF URL 字段、两个 Coding Plan key、一个 DeepSeek key 和三个 TF key（共六个独立 key）。已有文件也会校验并补齐，保留已填写值、其他配置、注释和已有密钥分组；没有缺项时不重写文件。重复引用只生成一个占位，旧机器文件中已有的密钥声明不迁移或复制。
+Machine files use **agentcfg framework TOML**, not native agent configuration. They default to `$XDG_CONFIG_HOME/agentcfg/machines/<name>.toml`, falling back to `$HOME/.config/agentcfg/machines/<name>.toml`. List recipes with `./agentcfg profiles`, then initialize or add missing placeholders:
 
 ```sh
-# 新机器初始化和已有机器补齐使用同一命令
 ./agentcfg init-local --machine workstation --profile omp-kernel
 ./agentcfg --machine workstation --profile omp-kernel model status
 ```
 
-省略 `--profile` 时，已有机器使用其 `default_profile`，新机器回落到 `dsh-default`。显式指定 profile 会为它补齐字段，不改变已有机器的默认 profile。初始化只准备字段，不填写真实地址或 key、不联网、不部署；未知字段、无效格式、机器 ID 不匹配或不安全权限会报错，不按模板覆盖修复。修改现有文件使用快照检查；关联写入失败时尝试回滚本次共享文件修改，并拒绝覆盖并发更新。
+Subsequent commands use global `--machine NAME` or `--local /path/to/private/local.toml` before the subcommand. They are mutually exclusive; omitting both selects machine `default`. Existing machine defaults apply when profile is omitted; a new machine defaults to `dsh-default`. Explicit init-local profile selection adds fields without changing an existing default recipe.
 
-机器文件权限 0600、私人目录 0700。新建机器文件不含密钥；API key 默认写入 `$XDG_CONFIG_HOME/agentcfg/secrets.toml`（XDG 未设置时为 `~/.config/agentcfg/secrets.toml`），所有工具、机器选择和 profile 共用。管理器不导入其他工具的认证，也不联网验证 key。
+## Initialization and private files
 
-公共默认可选池由 [`shared/defaults/models.toml`](../shared/defaults/models.toml) 加入所有 DSH、Pi、OMP profile，包含 Kimi Code、GLM Coding Plan 订阅与 DeepSeek 按量 API。DSH/Pi 使用 OpenAI 兼容协议，OMP 使用 Anthropic 兼容协议。同一服务的两种协议分别共用 `kimi_code_key`、`glm_coding_key`、`deepseek_key`。未指定主模型时仍默认 Kimi Code `kimi-for-coding`；当前每种工具共有八个官方型号可选：Kimi Code 四个 ID、GLM Coding Plan 两个 ID、DeepSeek 两个 ID，详见[模型目录](model-catalog.md)。模型进入池子不等于被分配为执行角色或加入自动备用链；OMP 模型套装属于角色组合，配置和切换见[模型套件](omp-model-presets.md)。profile 和本地 overrides 的显式角色优先，TF/Cursor 已有角色不会因此改为公共主模型。Pi 所需而未绑定的资源角色继承当前主模型。profile 的 provider/model 列表与默认集合去重追加，不必复制默认项；普通 rules、skills、plugins、MCP 数组仍按原有覆盖规则处理。
+Init-local derives placeholders from the selected recipe and inherited public model pool. Missing URL values go into `[local_values]` in the machine file; missing keys go into the shared secret file. For omp-kernel this includes two TF URLs and six independent keys: two Coding Plan keys, one official DeepSeek key, and three TF keys. Repeated references create one placeholder.
 
-订阅和按量服务使用独立 provider、模型 ID 与凭据引用。Kimi Code 地址为 `https://api.kimi.com/coding/v1`（OpenAI）和 `https://api.kimi.com/coding/`（Anthropic）；GLM Coding Plan 地址为 `https://open.bigmodel.cn/api/coding/paas/v4`（OpenAI）和 `https://open.bigmodel.cn/api/anthropic`（Anthropic）。依据为 [Kimi Code 官方模型说明](https://www.kimi.com/code/docs/en/kimi-code/models.html)和 [GLM Coding Plan 官方接入说明](https://docs.bigmodel.cn/cn/coding-plan/tool/others)。配置使用套餐控制台取得的匹配凭据；地址和本地非空 key 不能证明实际账号权益或服务连通性。
+Existing values, comments, other settings, and secret groups are preserved; no missing fields means no rewrite. Existing inline secret declarations are not copied or migrated. Initialization does not fill actual credentials, contact services, or deploy. Unknown fields, malformed input, mismatched machine IDs, and unsafe permissions fail instead of being reset from a template. Writes check snapshots; a failed associated write attempts to undo that shared-secret update without overwriting concurrent changes.
 
-过时的 Kimi 开放平台和旧 GLM API provider/model 定义及 `model enable kimi|glm` 入口已删除。订阅入口继续使用明确的 `kimi-code`、`glm-code`。已有秘密文件中的 `kimi_key`、`glm_key` 仍可读取，不自动删除或复用；若机器覆盖仍引用已删除的 provider/model，校验会明确拒绝，须按实际服务修改引用，不能静默替换为订阅凭据。
+Files must be owned by the current user, regular, single-link, mode 0600; private directories use 0700. Reads also reject symlinks, hardlinks, ownership/permission violations, and read races. These protections are checked on every read, not just initialization. The manager does not import another tool's authentication or verify API keys online.
+
+## Model pool and service credentials
+
+[`shared/defaults/models.toml`](../shared/defaults/models.toml) adds Kimi Code, GLM Coding Plan, and metered DeepSeek to DSH/Pi/OMP. Each tool's default selection contains eight official model IDs. DSH/Pi use OpenAI-compatible routes; OMP uses Anthropic-compatible routes. Each service's two protocols share its matching `kimi_code_key`, `glm_coding_key`, or `deepseek_key` reference.
+
+Unless explicitly overridden, main remains Kimi Code `kimi-for-coding`. Pool membership does not assign a role or authorize an automatic paid fallback. Existing explicit TF/Cursor roles take precedence. Unbound Pi resource roles inherit main. Provider/model selections append with deduplication across layers; rules, skills, plugins, and MCP arrays still replace. See the [model catalog](model-catalog.md) and [OMP presets](omp-model-presets.md).
+
+Kimi Code addresses are `https://api.kimi.com/coding/v1` (OpenAI) and `https://api.kimi.com/coding/` (Anthropic); GLM Coding Plan addresses are `https://open.bigmodel.cn/api/coding/paas/v4` and `https://open.bigmodel.cn/api/anthropic`. See the [Kimi model guide](https://www.kimi.com/code/docs/en/kimi-code/models.html) and [BigModel Coding Plan guide](https://docs.bigmodel.cn/cn/coding-plan/tool/others). Use matching plan-console credentials. A nonempty local key and configured address do not establish entitlement or connectivity.
+
+The old general Kimi/GLM provider/model entries and `model enable kimi|glm` are removed. Use `kimi-code` and `glm-code`. Existing `kimi_key`/`glm_key` secrets remain readable and are neither deleted nor reused automatically. Overrides referencing removed entities fail explicitly; update them according to the actual service.
 
 ```sh
-./agentcfg --machine workstation --profile omp-kernel model status
 ./agentcfg --machine workstation model key kimi-code
 ./agentcfg --machine workstation model key glm-code
-# 需要使用按量 DeepSeek 时填写；这不会切换当前主模型。
 ./agentcfg --machine workstation model key deepseek
+./agentcfg --machine workstation --profile omp-kernel model status --verbose
 ```
 
-`model status` 默认显示缺项摘要、provider 来源与状态、角色绑定，以及文件路径、TOML 分组、密钥名与 provider 对应关系，便于直接编辑。加 `--verbose` 展开完整模型目录和保留当前机器/profile 的逐项填写命令。状态页不显示私人 URL 或 key 实际值，也不验证部署同步或账号连通性。`model key` 仅从终端隐藏输入读取 key，留空取消；不存在的共享文件会以 0600 创建。命令行不接受 key 值。已配置只表示有非空值；缺少模型 key 仍允许启动，相应模型请求需要凭据。只更新 key 后退出并重新 `run`；URL/provider/model/角色改变后退出工具，执行 `setup` 再 `run`，已经运行的实例不会自动刷新。
+Model status reports missing fields, provider origins/status, role bindings, file locations, TOML groups, secret names, and provider associations. Verbose adds the full catalog and selector-preserving fill commands. It hides actual private URL/key values and does not check deployment freshness or account connectivity.
 
-共享文件格式如下，实际值由上述命令写入，不要将真实内容粘贴给 Agent：
+Model key accepts hidden terminal input only; blank cancels and no key value is accepted on the command line. A missing shared file is created with 0600. Configured means nonempty, not authenticated. Missing model keys allow startup but cannot support requests. After key-only changes, exit and run again. After URL/provider/model/role changes, stop the host, setup, then run; active processes do not refresh automatically.
+
+## Shared secret storage
+
+The default shared file is `$XDG_CONFIG_HOME/agentcfg/secrets.toml` or `$HOME/.config/agentcfg/secrets.toml`, shared across tools, machines, and recipes. New machine files contain no keys. The format below contains empty placeholders only:
 
 ```toml
 schema_version = 1
 
-# 可选池中的两份订阅凭据和一份 DeepSeek 按量凭据。
 [shared]
 kimi_code_key = ""
 glm_coding_key = ""
 deepseek_key = ""
 
-# omp-kernel 追加的 TF provider；其他选择相同 provider 的 profile 也可复用。
 [providers.kimi_tf]
 omp_kimi_tf_key = ""
 
@@ -52,20 +60,24 @@ omp_zhipu_tf_key = ""
 omp_deepseek_tf_key = ""
 ```
 
-新 key 自动分类：公共池的订阅与 DeepSeek 引用进入 `[shared]`，旧 `kimi_key`、`glm_key` 仍保持存储分组兼容，额外 provider 的 key 进入 `[providers.<provider-id>]`。`model key` 在输入前显示保存文件和分组。分组是组织方式，不是 profile 访问隔离，也不改变 `secret:<name>` 引用。密钥名在整个文件中必须唯一；跨组重复（包括空占位符）会报错。多个 profile 共用同一 provider 时引用同一个条目，不需要复制 key。
+New public-pool keys are grouped under `[shared]`; additional provider keys use `[providers.<provider-id>]`. Legacy Kimi/GLM storage groups remain compatible. Model key shows the destination/group before input. Groups organize storage, not profile access isolation, and do not change `secret:<name>` references. Names must be unique across the whole file, even for empty placeholders; multiple recipes sharing a provider reference one entry.
 
-旧共享文件的平铺 `[secrets]` 仍可读取和更新，状态页会标注“旧格式”。已有 key 保持原组和注释，不自动搬迁或重排整份文件；同一次更新只改目标条目。新分组也可与旧表并存，但不可重复声明相同密钥名。
+Legacy flat `[secrets]` in shared files remains readable/updateable and is labeled legacy in status. Existing keys retain their group and comments. New and old groups may coexist without duplicate names. Updates change the target entry rather than migrating/reordering the whole file.
 
-机器文件顶层可设置 `secrets_file = "~/private/agentcfg/secrets.toml"` 指定另一份共享文件，只支持绝对路径或 `~/`，不展开环境变量，不能指向机器文件或仓库内文件。缺失文件视为尚未填写；已存在的文件必须通过权限、属主、无链接校验。旧机器文件的 `[secrets]` 继续兼容，空占位符不遮蔽共享值；同一个引用在两处都有非空值时明确拒绝，避免悄悄用错账号。`model key` 更新已有旧 key 时会说明仍写回原位置，不自动迁移或删除旧秘密。把新 key 分文件降低误读和误分享风险，不构成对同用户进程的访问隔离。
+A top-level machine `secrets_file = "~/private/agentcfg/secrets.toml"` selects another shared file. Only absolute paths and leading `~/` are accepted; no environment expansion. It cannot point at the machine file or inside the repository. Missing means not yet filled; existing files must pass private-file checks.
 
-`./agentcfg model presets` 无需机器文件即可查看公共可选模型池，并区分订阅与按量路线；`--verbose` 展开公开地址、规格和来源。订阅项按套餐额度说明，不展示虚构的每 token 单价；DeepSeek 价格是有日期的目录快照，规格/思考档位更新不冒充价格已重新核验。`model enable kimi-code|glm-code|deepseek` 可以显式追加另一协议路线，OMP 可用 `--protocol openai`，不会替换已有主模型角色。
+Legacy inline machine `[secrets]` remains supported. Empty inline placeholders do not hide shared values; two nonempty values for the same reference fail rather than choosing an account silently. Updating an existing inline key explains that it stays in its original location. Separate files reduce accidental reading/sharing; they do not isolate credentials from other processes of the same user. Do not paste real contents into chat.
 
-TF 定义位于 `agents/omp/content.toml`，由 `omp-kernel` 选择 Kimi TF、GLM TF、DeepSeek TF 三个 provider，追加十一条模型绑定；它们不是全部工具共同继承的公共默认。DeepSeek TF 与 Kimi TF 共用 `local:tf_openai_url`，凭据独立为 `secret:omp_deepseek_tf_key`，可通过 `model key deepseek_tf` 填写。模型核心规格复用官方模板，但地址、凭据、协议兼容和费用分别维护；网关是否支持这些模型 ID 尚未实测，不能视为官方套餐或计费保证。
+## Public presets, TF URLs, and interactive additions
 
-企业地址等私人配置可以保存在机器文件 `[local_values]` 中。公共 provider 使用 `base_url_ref = "local:<名称>"` 引用地址，和直接 `base_url` 二选一；当前引用仅用于 provider URL，不进行通用字符串插值、环境变量展开或命令执行。例子：
+`./agentcfg model presets` requires no machine file. It distinguishes subscription and metered routes; verbose adds public addresses, specifications, dated pricing, and sources. Subscription entries do not invent per-token prices. DeepSeek pricing remains a dated snapshot rather than a live quote. To add the other supported protocol explicitly, use `model enable kimi-code|glm-code|deepseek`; for example, OMP can select `--protocol openai`. Enabling a route does not replace main.
+
+OMP TF definitions are in `agents/omp/content.toml`; omp-kernel selects three TF providers and eleven bindings. They are not global defaults. DSH has its own explicit bindings described in [DSH](dsh.md). DeepSeek TF shares `local:tf_openai_url` with Kimi TF but has the independent `secret:omp_deepseek_tf_key`, fillable with `model key deepseek_tf`. Shared templates do not guarantee gateway IDs, capability, billing, or official-plan entitlement.
+
+Private URLs belong in machine local_values. Public provider definitions use `base_url_ref = "local:<name>"` instead of literal base_url:
 
 ```toml
-# 公共 provider 定义，仅保存引用
+# Public registry: a reference only.
 [providers.kimi_tf]
 protocol = "openai-compatible"
 auth_kind = "api-key"
@@ -74,78 +86,93 @@ credential_ref = "secret:omp_kimi_tf_key"
 ```
 
 ```toml
-# 私人 machines/workstation.toml 中填写；这里的域名仅为虚构示例
+# Private machine file: fictional example addresses.
 [local_values]
 tf_openai_url = "https://gateway.example.invalid/v1"
 tf_anthropic_url = "https://gateway.example.invalid/anthropic"
 ```
 
-用 `./agentcfg --machine workstation --profile omp-kernel model url kimi_tf` 隐藏输入真实地址。`model status` 不显示实际 URL，只显示是否配置和填写位置；`--verbose` 展开逐项填写命令。缺 URL 不影响状态查看和补 key，但当前 profile 的部署、启动必须先补齐；未选择该 provider 的其他 profile 不因它缺值而失败。地址需为合法 HTTP(S) 绝对地址且不得包含 userinfo、凭据查询参数或控制字符。已有私人 `overrides.providers.<id>.base_url` 可以直接替换公共引用；反向用 `base_url_ref` 替换公共 literal 也支持，但同一层不能同时声明两者。
+```sh
+./agentcfg --machine workstation --profile omp-kernel model url kimi_tf
+```
 
-本地值不属于 API key 存储。未使用的 `local_values` 不进入生成结果；已引用地址必须进入本机私人原生配置供宿主连接，因此不能分享完整部署产物。公共仓库中只保留引用及虚构测试地址。只做结构和引用校验时，未选 profile 的缺失地址会推迟依赖地址的适配器校验；选择或部署它时必须补齐并通过完整校验。
+Model url reads the actual address with hidden input. Status reports only presence and location. Missing URLs do not block status/key entry or unrelated recipes, but selected providers must have valid URLs before deployment/startup. URLs must be absolute HTTP(S), without userinfo, credential query parameters, or control characters. A private literal base_url may replace a public reference and vice versa, but both cannot appear in the same layer.
 
-已有机器文件可以运行 `./agentcfg [--machine NAME] model add`，交互式一次新增私有 API-key provider、模型、选择列表和角色绑定。密钥用隐藏输入读取；该向导要求填写密钥，以保证新模型写入后即可调用。向导先完成 schema、适配器和候选产物校验，展示不含密钥的摘要；输入 `yes` 后写入 0600 私人配置和共享密钥文件；若配置提交失败，会尝试回滚本次共享密钥版本，并拒绝覆盖并发修改。它保留未触及的注释与字段；遇到复杂多行 TOML 或不能安全定位的表会拒绝改写并保持原文件。向导只支持新增静态 API-key 模型；OAuth 和现有实体更新仍使用明确的配置编辑流程。
+Local values are not key storage or general interpolation. Unused values are not rendered. Referenced URLs must appear in private native configuration for the host to connect, so do not share complete deployed artifacts. Missing URLs in unselected recipes defer URL-dependent adapter checks; selection/deployment requires complete validation.
 
-这些约束在每次读取时执行，不只在 init-local 时执行：拒绝符号链接、硬链接、非普通文件、不安全属主/权限及读取竞态。CLI `--local` 可用相对路径，包括经过真实目录检查的 `../`；框架 TOML 中的路径字段仍只接受下文的绝对路径/`~/` 规则。
+`./agentcfg --machine workstation model add` adds a static API-key provider/model, selections, and roles interactively to an existing machine. It requires a hidden key, validates schema/adapter/candidate output, shows a nonsecret summary, and writes only after `yes`. Private configuration and shared keys use 0600 with concurrent-update protection and attempted secret rollback if configuration commit fails. Unchanged comments/fields remain. Complex multiline TOML or tables that cannot be safely located cause refusal without rewriting. OAuth and existing-entity changes use explicit configuration editing.
 
-TOML 语法或编码错误返回 2，并给出安全来源和从 1 开始的行列，例如 `parse @ local.line.8.column.12.TOML`。`local` 指本次选择的私人机器文件，不回显其路径、正文或秘密字段。公共来源显示类别及加载序号：`registry.N`、`profile.N`、`adapter.N.agent|bindings|plugins`。默认仓库按文件名排序加载 `shared/*.toml` 和 `profiles/*.toml`；registry 再按适配器注册顺序追加已有的 `agents/<id>/content.toml`，adapter 顺序见 `src/agentcfg/workspace.py` 的 `ADAPTER_TYPES`。序号从 1 开始，表示本次加载顺序，不是永久文件 ID。修复语法后重新执行原命令，不要为排查而打印含秘密的整份文件。
+## Field reference
 
-| 表或字段 | 类型与用途 | 缺省行为 |
-|---|---|---|
-| `schema_version` | 整数，当前为 1 | 必填；不静默迁移 |
-| `machine.id` | 非空单路径段 ID，可含中文/空格，禁止 `/`、反斜线、控制字符、`.`、`..` | 必填 |
-| `machine.default_profile` | 仓库中已声明 profile 的 ID | `dsh-default`；命令前置 `--profile` 优先 |
-| `machine.editor` | 单个程序名或绝对程序路径，例如 `nvim` | 不填则使用允许的终端环境 |
-| `machine.paths.instances_root` | 实例根，绝对路径或 `~/` | XDG_DATA_HOME/agentcfg/instances |
-| `machine.paths.state_root` | 状态/锁/上一版备份根 | XDG_STATE_HOME/agentcfg |
-| `machine.paths.cache_root` | 私人生成物与安装缓存根 | XDG_CACHE_HOME/agentcfg |
-| `machine.environment.inherit` | 明确允许继承的非秘密变量名数组 | `[]`；不会复制全部父环境 |
-| `machine.environment.values` | 非秘密变量名到字符串的表 | 空表；不 eval，不展开 `$()` |
-| `overrides.providers.<id>` | 覆盖或新增 provider | 未选择的实体不启用 |
-| `overrides.models.<id>` | 覆盖或新增模型逻辑 ID | 远端 ID 不代表跨 provider 能力相同 |
-| `overrides.mcp.<id>` | 覆盖或新增私有 MCP 定义 | 默认不选中任何服务 |
-| `overrides.profiles.<id>` | 覆盖已存在 profile 的选择/角色/工具参数 | 不允许改变所属 agent 或偷偷创建 profile |
-| `local_values.<name>` | 私人字符串值，当前用于 provider 的 `local:<name>` URL 引用 | 缺失或空值在选中使用时必须补齐；不回显实际值 |
-| `secrets_file` | 顶层共享密钥文件路径 | `$XDG_CONFIG_HOME/agentcfg/secrets.toml`，或 `~/.config/agentcfg/secrets.toml` |
-| `secrets.<name>` | 旧内联秘密，引用为 `secret:<name>` | 向后兼容；新 key 默认写共享文件，不应把真实值交给 Agent |
+| Field | Meaning | Default/constraint |
+| --- | --- | --- |
+| `schema_version` | Framework format version | Required integer 1; no silent migration |
+| `machine.id` | Nonempty single path component | Unicode/spaces allowed; no slash, backslash, controls, `.` or `..` |
+| `machine.default_profile` | Declared recipe ID | `dsh-default`; explicit global --profile wins |
+| `machine.editor` | One executable name or absolute executable path | Otherwise use allowed terminal environment; no arguments/shell command |
+| `machine.paths.instances_root` | Instance root | XDG_DATA_HOME/agentcfg/instances |
+| `machine.paths.state_root` | State, locks, previous backup | XDG_STATE_HOME/agentcfg |
+| `machine.paths.cache_root` | Private output/install cache | XDG_CACHE_HOME/agentcfg |
+| `machine.environment.inherit` | Allowed nonsecret variable names | Empty array; never the whole parent environment |
+| `machine.environment.values` | Nonsecret names mapped to strings | Empty table; no eval or command expansion |
+| `overrides.providers.<id>` | Add/override provider | Unselected entities stay disabled |
+| `overrides.models.<id>` | Add/override logical model | Matching names across providers do not prove matching capabilities |
+| `overrides.mcp.<id>` | Add/override private MCP | No services selected by default |
+| `overrides.profiles.<id>` | Override an existing recipe | Cannot change agent or create a recipe implicitly |
+| `local_values.<name>` | Private strings used for provider URL references | Selected references must be nonempty; values are not echoed |
+| `secrets_file` | Shared secret file path | Default XDG configuration path above |
+| `secrets.<name>` | Legacy inline secrets | Supported; new keys default to shared storage |
 
-XDG 未设置时分别回落 `~/.local/share`、`~/.local/state`、`~/.cache`。TOML 路径允许中文和空格；仅开头 `~/` 展开，不支持相对路径、其他用户 `~user`、变量或命令插值。字段存在但为空不等于缺省。editor 不能写成 `nvim -f` 或 shell 命令。
+Unset XDG data/state/cache roots fall back to `$HOME/.local/share`, `$HOME/.local/state`, and `$HOME/.cache`. TOML path fields accept absolute paths or leading `~/`, including Unicode/spaces; no relative paths, `~otheruser`, variables, or command substitution. Empty is not omission. CLI `--local` separately allows relative paths, including checked `../` ancestors. `editor = "nvim -f"` is invalid.
 
-provider 字段：`protocol`、`auth_kind` 必填；静态 API-key provider 需 `base_url` 或 `base_url_ref`，凭据用 `credential_ref`。动态 OAuth provider 可没有静态地址，不应补虚构地址；路由和认证拥有者由工具 binding 决定。公共模型规格集中在 `shared/model-templates.toml`；公共绑定可用 `template` 引用一层模板，再显式覆盖型号字段。模板不包含 provider、地址、凭据、费用或 native 兼容设置，未知字段、缺失模板和重复定义均失败。解析器在 profile 选择之前将它们展开为完整模型；私人机器文件继续使用原有模型 override 格式，不支持模板声明。公共 `native.pi.disabled_thinking_levels = ["off"]` 在展开时转换为 Pi 支持的 `thinkingLevelMap.off = null`，与已有同档位映射冲突时报错；它不会作为自定义字段进入原生配置。
+Provider protocol/auth_kind are required. Static API-key providers need base_url or base_url_ref and a credential_ref. Dynamic OAuth providers may have no static URL; do not fabricate one. Adapter bindings own native routing/authentication.
 
-模型字段为 `provider`、`remote_id`、`input`（已知能力数组）；可选 `context_window`、`max_output_tokens` 为原生表使用的已核实正整数，`max_output_supported` 可额外记录服务端上限，`name`、`reasoning`、`reasoning_efforts` 和 `source` 记录展示名、推理能力及依据，未知时省略。DeepSeek Flash 的上下文与输出上限按官方模型目录更新为 1048576、393216；其 low/high/max 档位与工具历史要求按当前文档记录。`native.pi`、`native.omp` 仅容纳 schema 明确允许的兼容字段；DeepSeek OpenAI 预设据官方接入文档记录思考等级、历史消息与工具调用要求。`pricing` 记录币种、每百万 token 的输入/输出/缓存读写单价、查询日期和来源；分时价格另记 `off_peak` 与 `schedule`。价格是目录快照，使用前请在官方页面复核。OMP/Pi 将容量和推理能力投影到原生模型表；DSH 当前只支持容量。三种工具的原生成本字段均不能准确表达人民币币种或 DeepSeek 分时费率，因此公共价格保留在目录与 `model presets` 输出中，不写成误导性的原生成本。MCP 的 `command` 与 `args` 是 argv，远端 URL 与凭据引用能否转换由 adapter 检查。
+Public specifications live in `shared/model-templates.toml`. A binding may reference one template and override model fields. Templates omit provider, URL, credentials, price, and native compatibility. Unknown fields, missing templates, or duplicates fail; templates expand before recipe selection. Private model overrides keep their existing format and do not support template declarations. Public `native.pi.disabled_thinking_levels = ["off"]` becomes Pi `thinkingLevelMap.off = null`; conflicting mappings fail and the custom source field is not passed to native configuration.
 
-允许覆盖 profile 的 `providers/models/rules/skills/plugins/mcp` 选择数组、`roles` 模型别名和经 adapter schema 校验的 `agent_options`。合并顺序为 registry/工具默认值 → profile → 本地 overrides → 明确支持的单次参数；对象递归，标量覆盖；providers/models 按层去重追加，其他数组整体替换。`mcp = []` 清空选择，`terminal_images = false` 保留 false。省略字段继承原值；删除 registry 中仍被引用的 ID 会失败。
+Models require provider, remote_id, and known input capabilities. Optional context_window/max_output_tokens must be verified positive integers; max_output_supported can record a distinct server limit. Name, reasoning, reasoning_efforts, and source record verified display/capability facts; omit unknown values. Native Pi/OMP compatibility fields are schema-limited. DeepSeek thinking/history/tool constraints follow its documented integration. MCP command/args are argv; adapter checks determine whether remote URLs/credential references are supported.
 
-## 私有网关示例
+Pricing records currency, per-million input/output/cache rates, query date, and sources, with off_peak/schedule where relevant. It is a catalog snapshot. Native cost fields cannot accurately represent CNY or DeepSeek time bands, so prices are retained in catalog output rather than projected misleadingly. DSH currently projects capacities only; OMP/Pi also project reasoning capabilities. See [catalog](model-catalog.md).
+
+Allowed recipe overrides cover provider/model/rule/skill/plugin/MCP selections, role aliases, and adapter-validated agent_options. Merge order is registry/tool defaults → recipe → private overrides → explicitly supported one-shot parameters. Objects merge recursively and scalars replace. Providers/models append with deduplication; other arrays replace completely. `mcp = []` clears, and `terminal_images = false` stays false. Omission inherits. Removing a referenced registry ID fails.
+
+## Private gateway example
 
 ```toml
 schema_version = 1
+
 [machine]
 id = "workstation"
 default_profile = "dsh-default"
 editor = "nvim"
+
 [overrides.providers.private_gateway]
 protocol = "openai-compatible"
 auth_kind = "api-key"
 base_url = "https://gateway.example.invalid/v1"
 credential_ref = "secret:private_gateway_key"
+
 [overrides.models.private_main]
 provider = "private_gateway"
 remote_id = "fictional-private-chat"
 input = ["text"]
+
 [overrides.profiles.dsh-default]
 providers = ["private_gateway"]
 models = ["private_main"]
 mcp = []
+
 [overrides.profiles.dsh-default.roles]
 main = "private_main"
 ```
 
-配置后运行 `./agentcfg --machine NAME --profile dsh-default model key private_gateway` 隐藏输入其 key。
+```sh
+./agentcfg --machine workstation --profile dsh-default model key private_gateway
+```
 
-地址和模型须改为实际服务的已核实值；填写前先确认对应 adapter 已支持该协议。更多纯框架例子见 `examples/*.example.toml`。目前例子中的 `dsh-ssh` 需要仓库显式声明对应 profile；不能仅复制一个 override 就创建 profile。
+Replace the address/model with verified service values and confirm adapter protocol support first. See `examples/*.example.toml` for framework examples. An override alone cannot create an undeclared recipe such as dsh-ssh.
 
-环境表禁止覆盖管理器掌管的 HOME/XDG、DSH_/AGENTCFG_ 前缀、NODE_OPTIONS/NODE_PATH 或凭据目标变量。不要把带密码 URL、API_KEY、ACCESS_TOKEN 等放入普通环境表。machine.editor 会覆盖 EDITOR/VISUAL。编辑本地文件时只改本次需要的表，保留其他 profile、注释和秘密区域；无法安全局部修改时先形成局部提案。校验错误只展示字段位置和原因，私有值默认脱敏。
+Environment tables cannot override managed HOME/XDG, DSH_/AGENTCFG_ prefixes, NODE_OPTIONS/NODE_PATH, or credential destination variables. Do not place secret URLs, API_KEY, or ACCESS_TOKEN in ordinary environment settings. Machine editor overrides EDITOR/VISUAL. Edit only relevant tables, preserving other recipes, comments, and secrets; if a local rewrite cannot be safe, prepare a partial proposal instead.
 
-配置生成与部署不同：`render/plan` 不修改实例；`apply` 才应用并维护上一版备份。同一凭据引用下的 key 轮换在下一次启动解析，不需要将 key 写入生成配置。框架的备份不覆盖这份含秘密的机器文件。
+Parse/encoding failures return 2 with safe one-based line/column coordinates, for example `parse @ local.line.8.column.12.TOML`. `local` identifies the selected private source without printing its path/body/secret fields. Public locations use registry.N/profile.N/adapter.N.agent|bindings|plugins. Shared/profile files load in sorted filename order, then adapter registries in `ADAPTER_TYPES` order in workspace.py. Indices are per-load positions, not permanent IDs. Fix syntax and retry without dumping private files.
+
+Render/plan do not change instances; apply deploys and maintains the previous backup. Rotated keys are resolved on the next launch and never need to enter rendered configuration. Configuration backups do not include secret-bearing machine files. See [operations](operations.md) for deployment/recovery and [known issues](known-issues.md) for current blockers.

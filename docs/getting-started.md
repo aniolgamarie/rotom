@@ -1,149 +1,135 @@
-# 第一次使用 agentcfg
+# Getting started with agentcfg
 
-本教程从打开终端开始。`agentcfg` 负责准备软件和同步配置，实际与你对话、操作项目的是 DSH。另有独立 Pi/OMP 适配器；本文说明 DSH。当前升级候选尚未通过真实账号和 AI 审批验收，旧实例不得原地套用，先看 [DSH 升级与隔离边界](dsh.md)。Codex 和 Cursor 订阅保留为 DSH 模型来源。
+`agentcfg` prepares software and deploys configuration; DSH is the agent that talks to you and works on your project. This tutorial uses the single `dsh-default` recipe. Pi and OMP have separate [Pi](pi.md) and [OMP](omp.md) guides. Read the [DSH guide](dsh.md) before migrating an existing instance: the current Core is a prerelease, and the default AI approval integration has accepted, unresolved limitations.
 
-下面用 `workstation` 作为这台机器的配置名称。你可以原样使用；如果改成 `macbook` 等名称，后续所有命令也要一起替换。`dsh-default` 是仓库提供的配方，可以先保留。
+The examples call this machine `workstation`. If you choose another name, use it consistently in every command. `--machine`, `--local`, and `--profile` are global selectors and go **before** the subcommand.
 
-## 1. 打开仓库并检查环境
+## 1. Prepare the repository and toolchain
 
-已经有这个仓库就进入它，无需再次 clone。在当前开发机器上：
-
-```sh
-cd /data/1/private-user/dev_tool/rotom
-```
-
-另一台机器需要先取得包含实现代码的仓库版本，再进入自己的 `rotom` 目录。仅提交到本地 Git 的内容不会自动出现在 GitHub，换机器之前需要由你决定何时推送。
-
-在终端检查：
+Open your checkout:
 
 ```sh
+cd /path/to/rotom
 uv --version
 node --version
 npm --version
 ```
 
-管理器需要 Python 3.11+ 和 uv。当前 DSH 锁使用 **Node 24.14.0、npm 11.19.1** 生成，这也是已完成原生 smoke 的工具链。版本检查规则如下：
+You need Python 3.11+ and uv. DSH's recorded native checks used Node **24.14.0** and npm **11.19.1**. Command requirements differ:
 
-| 命令 | 接受的工具链 |
-|---|---|
-| `sync` | Node **24.x 且至少 24.2.0**；npm **11.x** |
-| `run` | Node **24.x 且至少 24.2.0** |
-| `lock --agent dsh` | 精确的 Node **24.14.0**、npm **11.19.1** |
+| Command | Accepted toolchain |
+| --- | --- |
+| `sync` | Node 24.x, at least 24.2.0; npm 11.x |
+| `run` | Node 24.x, at least 24.2.0 |
+| `lock --agent dsh` | Exactly Node 24.14.0 and npm 11.19.1 |
 
-Node 24.1.0 缺少 DSH 入口需要的 `import.meta.main`，可能退出 0 却没有启动；[Node 官方文档](https://nodejs.org/download/release/v24.3.0/docs/api/esm.html#importmetamain) 记录该功能从 24.2.0 提供。其他满足检查的版本尚未逐一完成原生 smoke；需要使用已有验证结果时，选择 24.14.0 / 11.19.1。
-
-如命令不存在或版本不符，先使用你已有的工具链管理方式准备兼容版本，再继续安装。版本错误会显示要求和有效的实际版本；无法解析的输出会隐藏。`agentcfg sync` 不负责安装 Node/npm，也不会自动改你的全局版本。
-
-准备本仓库的 Python 环境：
+Node 24.1.0 lacks the `import.meta.main` support required by the entry point and may exit successfully without starting DSH. [Node documents its availability from 24.2.0](https://nodejs.org/download/release/v24.3.0/docs/api/esm.html#importmetamain). Other accepted versions have not all received native smoke testing. Prepare a compatible toolchain using your normal version manager; `agentcfg` does not install Node/npm or change global versions.
 
 ```sh
 uv sync --locked
 ./agentcfg --help
 ```
 
-`uv sync` 可能联网下载依赖。成功后 `--help` 应列出 validate、plan、sync、apply、run 等命令。以后无需手动激活 `.venv`，也不用把命令改成 `uv run`。
+`uv sync` may download Python dependencies. The entry point then uses the repository `.venv` directly; you do not need to activate it or use `uv run`. Changes committed only in a local checkout are not automatically available on another machine.
 
-## 2. 创建这台机器的配置
+## 2. Initialize this machine
 
 ```sh
 ./agentcfg init-local --machine workstation
+./agentcfg --machine workstation model status
 ```
 
-初始化成功时会报告机器配置和共享密钥文件的位置，并生成所选 profile 需要的 URL/key 空占位。文件已存在时会检查并只补缺失字段，保留已填写值和注释；再次运行且无缺项时不重写文件。默认 `dsh-default` 保留 Codex/Cursor 登录入口；实际主模型沿用 Kimi Code，未填 key 时可在原生界面明确选择已有授权模型。若要用其他配方，先运行 `./agentcfg profiles` 查看 ID，再在初始化时加 `--profile ID`；对已有机器，这只补齐该 profile 的字段，默认 profile 仍由 `machine.default_profile` 决定。填值位置和命令可用 `./agentcfg --machine workstation model status` 查看。
+Initialization reports the private machine and shared secret file locations. It creates missing URL/key placeholders required by the selected recipe, preserving existing values and comments. A repeat invocation with nothing missing does not rewrite the files. Use `./agentcfg profiles` to list recipes; `init-local --profile ID` prepares that recipe's fields without changing an existing machine's default recipe.
 
-**只使用 Codex/Cursor 订阅时，文件可以保持如下内容。** `editor` 是可选项；新增时要放在 `[machine]` 内、`[secrets]` 前。
+A minimal machine file for native subscription login is:
 
 ```toml
-# agentcfg 框架格式，不是 DSH 原生配置。
+# agentcfg framework configuration, not native DSH YAML.
 schema_version = 1
 
 [machine]
 id = "workstation"
 default_profile = "dsh-default"
 editor = "nvim"
-
 ```
 
-Codex/Cursor 订阅登录稍后在 DSH 内完成，无需在机器文件写入登录信息。新建机器文件不包含密钥；`init-local` 在共享秘密文件中为 Kimi Code、GLM Coding Plan 准备空占位。缺少这些 key 不影响部署和对应 OAuth 入口启动；不要把 Codex 订阅登录信息当作 OpenAI API key。
+`editor` is optional and belongs inside `[machine]`. New machine files contain no keys. Shared secrets default to `$HOME/.config/agentcfg/secrets.toml`, or the corresponding XDG configuration directory. These files stay outside Git, with file mode 0600 and private directory mode 0700.
 
-如果使用百炼或私有 API，可以运行 `./agentcfg --machine workstation model add`，在终端内一次填写 provider、model、角色及必需的密钥；向导校验后展示脱敏摘要，确认才写入。地址、模型 ID 和容量必须来自你的服务。也可按 [本地配置参考](local-config.md#私有网关示例) 手动编辑。示例中的 `example.invalid` 和 `fictional-*` 是虚构数据，不能直接调用。
+The public model pool includes Kimi Code and GLM Coding Plan subscriptions and the metered DeepSeek API. Unless a role explicitly selects another model, the main model remains Kimi Code `kimi-for-coding`. Missing model keys allow startup but leave those routes unusable. To enter matching service keys without putting them in command history:
 
-公共默认可选池加入 Kimi Code、GLM Coding Plan 订阅模型与 DeepSeek 按量模型；没有显式主模型时仍选择 Kimi Code `kimi-for-coding`。执行 `./agentcfg --machine workstation model key kimi-code` 和 `model key glm-code` 隐藏输入匹配的套餐 key，按量 DeepSeek 使用 `model key deepseek`。填写 key 不会切换已有角色。新凭据不复用旧 Kimi/GLM 通用 API key；过时的开放平台模型入口已删除，但已有秘密不会自动删除。`model presets` 显示池中模型的订阅/按量性质，模型池与使用时的角色组合分别管理。更多地址与迁移说明见[本地配置参考](local-config.md)。
+```sh
+./agentcfg --machine workstation model key kimi-code
+./agentcfg --machine workstation model key glm-code
+./agentcfg --machine workstation model key deepseek
+```
 
-机器文件保存在仓库外，初始化权限是 0600；不要提交到 Git。它可以包含 API key，也可以包含这台机器独有的路径和模型。所有字段说明见 [本地配置参考](local-config.md)。
+Entering a key does not switch roles. Use the matching Coding Plan credentials, rather than an old general Kimi/GLM API key. Codex/ChatGPT subscription login is separate from an OpenAI API key.
 
-## 3. 检查、安装和部署
+For another API service, `./agentcfg --machine workstation model add` interactively collects a provider, exact model ID, role, and hidden key, validates the proposal, and asks you to confirm the redacted summary before writing. Obtain actual addresses, IDs, and capacities from your service. See [local configuration](local-config.md) for manual configuration and private gateway examples; `example.invalid` and `fictional-*` values are deliberately unusable.
 
-在仓库目录执行一条命令。它先预览变化；发现冲突、漂移或待恢复事务会在安装前停止。预览通过后同步已锁定的依赖（缺失时可能联网），再重新检查并部署：
+## 3. Preview, install, and deploy
 
 ```sh
 ./agentcfg --machine workstation setup
 ```
 
-需要逐项审阅或排障时，仍可分别执行 `validate`、`plan`、`sync`、`apply`、`doctor`：
+`setup` previews first and stops before installation on conflicts, drift, or pending recovery. It then synchronizes locked dependencies, checks again, and deploys. Installation may use the network. The individual commands remain available:
 
-| 操作 | 做什么 | 怎样理解结果 |
-|---|---|---|
-| `validate` | 离线检查配置和依赖锁 | 终端显示“配置有效”（JSON 为 `"valid": true`）；不会验证账号是否已登录 |
-| `plan` | 预览将改哪些配置，不写入实例 | 首次 `changes` 大于 0 正常；`conflicts` 应为 0；`sync-required` 表示尚需安装依赖 |
-| `sync` | 按已有锁安装 DSH、插件和 OpenSpec，可能联网 | 完成后依赖可用；不会登录或启动 DSH |
-| `apply` | 将配置部署到独立实例，并保留上一版受管内容 | 会重新检查冲突；你执行该命令就表示应用本次配置 |
-| `doctor` | 离线检查部署、依赖和备份状态，适用于 DSH、Pi、OMP | `readiness` 给出阻塞项和下一条命令；不代表已登录或模型可调用 |
-| `doctor --input` | 补充诊断命令所在终端的标志与离线交互就绪信息 | OMP 另报告受管事件循环阻塞日志；DSH/Pi 明确标记无受管事件源，不读取按键 |
+| Command | Effect and interpretation |
+| --- | --- |
+| `validate` | Offline configuration and lock checks; success does not verify login. |
+| `plan` | Preview without writing the instance. Initial changes are expected; conflicts should be zero. `sync-required` means dependencies still need installation. |
+| `sync` | Install or repair from the existing lock; no login, host startup, or lock update. DSH does not install OpenSpec. |
+| `apply` | Deploy configuration after checking ownership and conflicts; retain one previous managed version. |
+| `doctor` | Offline deployment, dependency, and backup diagnosis for DSH, Pi, and OMP; readiness reports blockers and next commands. |
+| `doctor --input` | Also diagnose terminal flags and offline input readiness. OMP reports managed event-loop blocking logs; DSH/Pi report no managed event source and do not read keys. |
 
-`setup` 在标准输出给出简短摘要；`setup` 和 `sync` 的阶段进度写到标准错误，安装耗时较长时会定时提示已等待时间。校验、预览、部署、启动及模型向导也显示当前阶段；失败时显示所在步骤、退出码和建议执行的诊断命令。分步命令在终端显示可读摘要，在管道或重定向中保留原有单行 JSON；进度不会打印安装器原始日志、参数或密钥。`doctor` 的 `authentication: "not-inspected; use native auth status"` 表示管理器没有查看账号数据，不是登录失败。
+Progress goes to stderr, including elapsed-time updates during long installations. Final summaries go to stdout. Installer logs, raw arguments, and keys are not printed. Authentication marked `not-inspected; use native auth status` means account data was not inspected.
 
-结构化结果支持 `--format auto|human|json`，放在具体子命令后；默认 `auto` 根据标准输出是否为终端选择。适用于 `validate`、`render`、`plan`、`lock`、`sync`、`apply`、`inventory`、`doctor`、`capture`、`rollback`、`recover` 和 `project init`。例如：
+Structured commands accept `--format auto|human|json` **after** their subcommand. In `auto`, a terminal receives readable output and a pipe receives single-line JSON. This applies to validate, render, plan, lock, sync, apply, inventory, doctor, capture, rollback, recover, and project init.
 
 ```sh
-# 在终端查看完整 JSON；脚本也可显式指定，避免依赖终端检测
 ./agentcfg --machine workstation plan --format json
-# 保存易读的诊断摘要
 ./agentcfg --machine workstation doctor --format human > doctor.txt
-# 展开当前模型目录与逐项填写命令
 ./agentcfg --machine workstation model status --verbose
 ```
 
-`setup`、`init-local` 和 `model` 继续输出文本，不接受 `--format`；`profiles` 在终端为表格，在管道中保持原有 TSV。`run`、`usage` 的原生输出保持透传。模型状态页只反映配置是否填写，不验证部署同步、账号或服务连通性。
+`setup`, `init-local`, and `model` use text and do not accept `--format`. `profiles` uses a terminal table or piped TSV. `run` and `usage` pass through native output. Model status checks configured values, not deployment freshness, account entitlement, or connectivity.
 
-首次使用不需要执行 `lock`，仓库已经带有依赖锁；`lock` 用于开发维护或明确升级版本。也不必单独执行 `render`，`plan/apply` 会计算需要的产物。
+The repository includes locks: ordinary first-time DSH use does not need `lock`. That command is for deliberate dependency maintenance. `render` is optional because plan/apply compute the required output.
 
-## 4. 启动 DSH 并登录
-
-将下面路径换成你希望 Agent 操作的项目目录，路径有空格时保留引号：
+## 4. Start DSH and sign in
 
 ```sh
-./agentcfg --machine workstation run --cwd "/你的项目绝对路径"
+./agentcfg --machine workstation run --cwd "/path/to/workspace"
 ```
 
-该路径必须存在。`--cwd` 决定 DSH 操作哪个项目；不要为了方便填 rotom 路径，除非你确实要维护 rotom。日常启动仍用这条命令，无需每次 sync/apply。
+The directory must exist and should be the project you want DSH to work on. Keep quotes around paths containing spaces. Daily startup uses this command without repeating sync/apply.
 
-**下面是输入到 DSH 对话输入框的命令，不是在系统 Shell 执行：**
-
-使用 Codex 订阅：
+The following are commands **inside DSH**, not shell commands. For a Codex/ChatGPT subscription:
 
 ```text
 /auth status
 /auth login openai-codex
+/model
 ```
 
-按登录提示操作，然后输入 `/model` 选择该 provider 的模型。
-
-使用 Cursor 订阅：
+For Cursor:
 
 ```text
 /cursor-login
+/model
 ```
 
-打开它返回的登录 URL。完成授权后，在同一个 DSH 实例中用 `/model` 查看并选择 `cursor-subscription` 的账号模型。取消等待中的授权可输入 `/cursor-login cancel`。Cursor 是社区接入，详细说明见 [DSH 认证](dsh.md)。SSH 场景按登录入口实际提示操作，不需要另外启动一个 DSH Web 实例。
+Follow the native login prompts, then select the account model. `/cursor-login cancel` cancels a pending login. Cursor uses a community provider and does not require a separate DSH Web instance over SSH. The [DSH guide](dsh.md) covers device-code prerequisites, full login links, account boundaries, and the actual scope of login evidence. `doctor` success is not evidence of a working subscription request.
 
-登录入口和插件加载已做无账号验证；真实登录及模型调用还没有完成账号实测。如果模型不可见或请求失败，应按 [live 验收说明](live-acceptance.md) 检查，不能根据 `doctor` 成功推断订阅调用成功。
+The default mode is workspace-write + ask, with Perry auto-review enabled for eligible pending write/edit requests. Its unresolved late-approval, OFF-state, and audit limitations matter during ordinary use. For persistent manual approval, follow the shutdown/configuration/restart procedure in the [DSH approval instructions](dsh.md#ai-approval-and-persistent-manual-mode); `/auto-review off` is not a reliable persistent emergency stop.
 
-要退出时使用 DSH 的退出操作，确认终端回到 Shell 后再部署新配置。管理器会阻止修改它启动的活动实例，不会自动结束你的会话。
+Exit DSH and wait for the shell before deploying changes. The manager blocks changes to its active instances and does not terminate your sessions.
 
-## 5. 修改配置和恢复上一版
+## 5. Change configuration or restore the previous version
 
-修改这台机器的偏好，编辑第 2 步的本地 TOML；修改多台机器共用的规则、技能或模板，编辑 rotom 仓库里的对应文件。退出正在运行的 DSH 后执行：
+Edit the private machine TOML for machine preferences, or repository sources for shared rules, skills, and templates. Then, with the instance stopped:
 
 ```sh
 ./agentcfg --machine workstation validate
@@ -151,39 +137,32 @@ Codex/Cursor 订阅登录稍后在 DSH 内完成，无需在机器文件写入�
 ./agentcfg --machine workstation apply
 ```
 
-规则、技能、模板怎么添加，以及怎样让 Agent 使用 `maintain-agent-config` 维护技能，见 [日常维护](operations.md)。数组是整体替换：例如只写一个 skill，就只选择这一个；希望保留已有技能时需写完整列表。
-
-发现刚部署的配置有问题，可以恢复上一版：
+See [operations](operations.md) for maintaining complete skills and rules. Most selection arrays replace the whole list: include every entry you want to retain. Provider/model selections have the explicitly documented append-and-deduplicate behavior in [local configuration](local-config.md).
 
 ```sh
 ./agentcfg --machine workstation rollback
 ./agentcfg --machine workstation doctor
 ```
 
-只保留一个备份：A 改为 B 后备份 A；再成功改为 C 后备份 B。没有变化或部署失败不会轮换。恢复成功后该备份被消费，不能反复向更早版本回退。
+There is one backup: A → B saves A; B → C saves B. No-change or failed deployment does not rotate it. Successful rollback consumes it. Rollback restores deployed managed configuration, not Git sources, local TOML, account state, sessions, software versions, or databases. Fix the source before applying again, or the unwanted configuration will return.
 
-**恢复的是已部署的受管配置，不会改回 Git 源文件或本地 TOML。** 恢复后需要在来源中修正刚才的问题，否则再次 apply 会重新部署那些错误设置。账号、会话、软件版本和含密钥的机器文件都不属于这份备份。
+On conflicts, preserve the files and inspect plan/doctor. Do not delete backups or a whole native home to force adoption. Existing nonempty unmanaged targets require an explicit safe migration.
 
-如提示冲突，先保留现场，用 `plan` 和 `doctor` 查看受影响项；不要删除备份或整个 DSH home 来解决。首次部署前存在的非空同名文件不会被自动接管。
+## 6. Use your project's workflow
 
-## 6. 项目自己的工作流
+DSH reads project AGENTS.md and Skills without installing OpenSpec, Spec Kit, or another specification tool. Existing `openspec/`, `.specify/`, `specs/`, and user skills remain in place. `project init openspec` is available only to a Pi recipe explicitly selecting that optional capability; see [Pi](pi.md).
 
-DSH 继续读取项目 AGENTS.md 和 Skills，不自动安装 OpenSpec、Spec Kit 或其他 Spec 工具。已有 `openspec/`、`.specify/`、`specs/` 与用户技能保留。`project init openspec` 仅在明确选择可选 openspec 能力的 Pi 配方中可用，见 [Pi 项目操作](openspec.md)。
+## Troubleshooting
 
-## 遇到问题先看这里
+| Symptom | Next step |
+| --- | --- |
+| Entry point missing | Enter `/path/to/rotom`, or call the entry point by absolute path. |
+| Missing virtual environment | Run `uv sync --locked` in the checkout. |
+| Machine file missing | Use the same `--machine` name as initialization; omission selects `default`. |
+| Toolchain mismatch | Match the requirements for the specific command above. |
+| Exit 2 | Correct the reported configuration, reference, or lock error; machine TOML is not native DSH YAML. |
+| Exit 3 | Fill the required service/MCP secret. Model key status comes from `model status`; subscriptions use native login. |
+| Exit 4 | Stop the active instance, inspect plan/doctor, and preserve ownership/conflict/recovery evidence. |
+| Exit 5 or damaged runtime | Check the toolchain and installation network, then use sync to stage a repair while preserving the account home. |
 
-| 提示或现象 | 下一步 |
-|---|---|
-| 找不到 `./agentcfg` | 进入 rotom 仓库目录；从其他目录调用时使用入口的绝对路径 |
-| 虚拟环境缺失 | 在仓库执行 `uv sync --locked` |
-| 机器文件不存在 | 检查 `--machine` 名称是否与初始化一致；初始化后不要漏写它，否则默认找 `default` |
-| Node/npm 版本不符 | 按第 1 步的命令对应要求选用版本；生成锁必须精确匹配 |
-| 配置或引用错误，退出码 2 | 根据报错字段检查 TOML，对照本地配置参考；不要把 DSH 原生 YAML 填进去 |
-| 必需的服务凭据缺失，退出码 3 | 在所选机器文件的 `[secrets]` 填写相应 MCP/服务密钥；用 `model status` 查看模型 key 状态。模型 key 缺失只提示，不阻止工具启动；调用该模型前仍需填写。订阅账号走原生工具内登录 |
-| 冲突、活动实例或恢复待处理，退出码 4 | 先退出 DSH，查看 plan/doctor；保留冲突文件，按日常维护文档处理 |
-| 缺运行包、doctor 显示 damaged 或依赖失败，退出码 5 | 退出实例，检查工具链及安装网络，重新 sync 暂存修复；账号目录保持不变 |
-| Cursor 代理端口占用 | 退出重复实例；确需多实例时按 DSH 文档配置不同 `cursor_port` |
-
-需要协助时提供失败的命令名称、退出码和脱敏报错即可。不要粘贴整个机器文件、环境变量列表或 OAuth 文件。
-
-报错带 `target-…` 或 `credential-…` 编号时，用本地编辑器打开 plan/doctor 输出的 `diagnostics` 文件，按编号定位具体字段或密钥引用。该文件不含密钥值，但可能包含私有路径，不要整份发到对话或提交 Git。升级步骤见 [日常维护](operations.md#审查修复后的升级)，外部验收事项见 [改进计划](improvement-plan.md)。
+For help, share the command name, exit code, and redacted error. Never share complete machine files, environment dumps, or OAuth files. A `target-…` or `credential-…` ID maps to the private diagnostics file reported by plan/doctor. It contains no secret values but can contain private paths; inspect it locally. See [known issues](known-issues.md), [testing](testing.md), and [release status](releases.md) for current limitations and evidence.

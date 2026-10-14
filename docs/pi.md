@@ -1,115 +1,102 @@
-# 使用 agentcfg 管理 Pi
+# Manage Pi with agentcfg
 
-Pi 迁移 spec 已按 2026-09-24 用户确认的范围完成：四配方、实例隔离、配置部署、Task Keeper 和 model-delegate 软件集成，以及 Linux x86_64 四配方 mock/native 与每配方双路径冷重建。候选 `9d6a9270` 已冻结，当前软件范围 81 项验收全部通过。其他三平台实机及真实账号／服务验证已移至[独立后续清单](follow-ups/pi-platform-and-live-validation.md)，仍为未验证。具体证据见 [完成报告](acceptance/pi-spec-closure-20260924/README.md)、[实施任务](../specs/001-unify-pi-capabilities/tasks.md)和 [支持矩阵](acceptance/pi-support-matrix.md)。
+The Pi adapter implements isolated instances, configuration deployment, Task Keeper, and model-delegate. **The current Pi 0.84.4 checkout has a stale checked-in dependency lock. New deployment requires lock repair before sync/setup can be treated as usable.** An existing deployed runtime may still work, but that does not make the current repository lock valid. Do not bypass the lock checks or regenerate it as an incidental setup step.
 
-## 配置分别放在哪里
+Historical candidate `9d6a9270…` passed the agreed Linux x86_64 mock/native and two-path rebuild checks for four recipes. Those results belong to that candidate and do not certify this checkout. Other platforms, actual accounts, and real services retain their unverified status. See [known issues](known-issues.md), [testing](testing.md), and [releases](releases.md).
 
-上述关闭结果绑定历史候选锁 `9d6a9270…`；当前锁和源码变化后的 native/cold 状态以 [支持矩阵的当前 checkout 说明](acceptance/pi-support-matrix.md#当前-checkout-与历史证据) 为准，不继承旧候选的通过结果。
+## Configuration ownership
 
-| 内容 | 管理位置 |
+| Content | Location |
 | --- | --- |
-| 跨机器复用的技能、规则 | `shared/skills/`、`shared/content.toml` |
-| Pi 角色、提示、主题、插件声明 | `agents/pi/` |
-| 机器无关的能力组合 | `profiles/pi-*.toml` |
-| 本机路径、精确模型绑定、服务与检查程序 | 私人 `local.toml` 的 `overrides` |
-| API 密钥 | 私人 `local.toml` 的 `secrets`；不提交 |
-| 原生 OAuth 登录、会话、任务数据 | agentcfg 生成的独立实例；不复制旧 HOME |
-| 可重建依赖及来源摘要 | `locks/pi/`；四配方完整候选锁已生成 |
+| Reusable skills and rules | `shared/skills/`, `shared/content.toml` |
+| Pi roles, prompts, themes, plugin declarations | `agents/pi/` |
+| Machine-independent capabilities | `profiles/pi-*.toml` |
+| Paths, exact model bindings, services, check programs | Private machine TOML `overrides` |
+| API keys | Private shared SecretStore; legacy inline `secrets` remains supported |
+| Native OAuth, sessions, task data | Isolated instance; no automatic import of an old HOME |
+| Rebuildable dependencies and source identities | `locks/pi/`; currently stale against the checked-in package contents |
 
-机器文件使用 0600 权限。数组覆盖会替换整个数组，例如追加插件时需要保留仍需启用的插件名称。
+Private files require mode 0600. Most arrays replace the complete selection, so retain all plugins you need when editing a list. See [local configuration](local-config.md) for the provider/model selection exception and secret storage.
 
-## 选择配方
+## Choose a recipe
 
-| 配方 | 宿主 | 用途 |
+| Recipe | Host | Purpose |
 | --- | --- | --- |
-| `pi-default` | Node | 父会话实施，scout/reviewer 只读协作，Pi backend 委托 |
-| `pi-managed` | Node | Task Keeper 候选 worktree、检查、审查和预算管理 |
-| `pi-codex` | Node | 普通协作，以及通过 model-delegate 使用官方 Codex CLI |
-| `pi-cursor` | Bun | Cursor provider 的独立普通会话和只读 Pi backend 委托 |
+| `pi-default` | Node | Parent-session implementation, read-only scout/reviewer cooperation, Pi-backend delegation |
+| `pi-managed` | Node | Task Keeper candidate worktrees, checks, reviews, and budgets |
+| `pi-codex` | Node | Ordinary cooperation and official Codex CLI delegation through model-delegate |
+| `pi-cursor` | Bun | Separate Cursor-provider sessions and read-only Pi-backend delegation |
 
-普通核心默认选择 Todo、循环保护和状态栏，Todo 独立于 Task Keeper 的任务/预算。`agent_options.todo` 可显式设置 `locale`、`maxWidgetLines`、`collapseKey` 与提示指导；不扫描旧 Todo 配置。
+Ordinary recipes select Todo, loop protection, and a status bar. Todo is separate from Task Keeper tasks and budgets. `agent_options.todo` can explicitly set `locale`, `maxWidgetLines`, `collapseKey`, and guidance without scanning old Todo settings.
 
-固定基线为 Pi 0.84.4、Node 24.14.0、npm 11.19.1、Bun 1.4.0、Codex 0.154.0、pi-cursor 1.4.29。版本声明不是平台通过证据。Cursor/Bun 与 Task Keeper 互斥；目前 Cursor 路线只接受显式直连，委托重试为零，代理配置会明确拒绝。
+The declared baseline is Pi 0.84.4, Node 24.14.0, npm 11.19.1, Bun 1.4.0, Codex 0.154.0, and pi-cursor 1.4.29. These declarations do not prove installation or platform support. Cursor/Bun and Task Keeper are mutually exclusive. The Cursor route currently requires explicit direct connectivity, has zero delegation retries, and rejects proxy configuration.
 
-Linux 四个配方都安装锁定的 bwrap 辅助程序，Pi 宿主在独立 PID 命名空间中执行；宿主退出时由内核终止其后代，监督者核验回收后才解除保护。该辅助程序复用固定 Codex 发行物中的 bwrap，来源及许可证随锁保留；安装它不代表启用 Codex 委托。宿主门控保留原始标准输入，文件授权仍由原有实例策略决定。
+On Linux, all four recipes use the locked bwrap helper in a separate PID namespace. Host exit causes the kernel to terminate descendants; the supervisor verifies collection before releasing protection. The helper comes from the fixed Codex distribution with source/license metadata. Installing it does not enable Codex delegation. Host gating preserves original stdin, and file authorization remains governed by instance policy.
 
-## 新机准备顺序
+## Preparation and deployment sequence
 
-以下是安装管线的使用顺序；历史候选已取得约定 Linux 范围的冷重建与原生证据，其他平台和当前新候选不由该结果推定为已验证。
+The following is the intended sequence **after maintainers repair and verify the current lock**. It is not a claim that a fresh deployment works today.
 
-1. 获取仓库，准备 Python 3.11+、uv 和所选配方要求的精确 Node/npm/Bun。agentcfg 不修改系统工具链。
-2. 在仓库执行 `uv sync --locked`，之后使用 `./agentcfg`；该入口直接使用仓库 `.venv`。
-3. 从 [普通示例](../examples/pi-workstation.toml) 或 [Task Keeper 示例](../examples/pi-managed.toml) 建立私人机器文件。替换虚构的 provider、远程模型 ID 和绝对路径；只把真实密钥放入私人 secrets。
-4. 先验证、计划，再显式同步运行包和部署。常规机器消费已经审阅的锁；只有更新依赖的维护步骤才运行 `lock --agent pi`。
+1. Prepare Python 3.11+, uv, and the exact Node/npm/Bun required by the recipe. The manager does not alter the system toolchain.
+2. Run `uv sync --locked` in `/path/to/rotom`. Use `./agentcfg` directly afterward.
+3. Prepare a private machine file from [pi-workstation.toml](../examples/pi-workstation.toml) or [pi-managed.toml](../examples/pi-managed.toml). Replace fictional providers, exact remote IDs, and workspace paths; keep real keys private.
+4. Validate and preview before explicitly synchronizing and deploying the reviewed lock.
 
 ```sh
-./agentcfg --local /private/local.toml --profile pi-default validate
-./agentcfg --local /private/local.toml --profile pi-default plan
-./agentcfg --local /private/local.toml --profile pi-default sync
-./agentcfg --local /private/local.toml --profile pi-default apply
-./agentcfg --local /private/local.toml --profile pi-default doctor
-./agentcfg --local /private/local.toml --profile pi-default run pi --cwd /absolute/project
+./agentcfg --machine workstation --profile pi-default validate
+./agentcfg --machine workstation --profile pi-default plan
+./agentcfg --machine workstation --profile pi-default sync
+./agentcfg --machine workstation --profile pi-default apply
+./agentcfg --machine workstation --profile pi-default doctor
+./agentcfg --machine workstation --profile pi-default run pi --cwd /path/to/workspace
 ```
 
-`sync` 才执行依赖下载和批准的必要构建。npm 生命周期脚本默认不执行；官方 Codex 原生资产按当前平台下载并核验 SHA256、入口和架构。下载或安装失败保留旧运行包。下载阶段保留标准 `http_proxy` / `https_proxy` / `no_proxy`（及大写形式）；代理 URL 不能内嵌凭据，系统 CA 校验保持开启。这些下载代理不会进入模型宿主，模型代理仍使用本机配置中的显式路线。`validate`、`render`、`plan`、`apply` 不以安装器隐式补齐依赖。
+Only sync downloads dependencies and performs approved preparation/build steps. npm lifecycle scripts are disabled by default. Official Codex native assets are checked for SHA256, entry points, and architecture. Failed installation preserves the prior runtime. Downloads accept standard lower/uppercase HTTP proxy variables without embedded credentials and retain CA validation; those download proxies are not injected into the model host. Model routes use explicit machine configuration. Validate, render, plan, and apply do not install missing dependencies.
 
-## 模型与账号
+## Models and accounts
 
-模型引用必须在当前 profile 选中的集合内。绑定 `main`、`scout`、`reviewer` 以及 managed 角色时填写逻辑模型 ID；模型声明中的 `remote_id` 必须精确，不使用模糊模型匹配。
+Roles such as main, scout, reviewer, and managed roles reference logical model IDs selected by the recipe. Every `remote_id` must be exact. An ordinary configuration that truly resolves without main may open bootstrap login but cannot dispatch tasks. Current recipes inherit public Kimi Code main when no role overrides it. Selecting the Cursor plugin alone does not bind the main model to Cursor; configure that role explicitly.
 
-完整解析后仍无 `main` 的普通配方可以进入 bootstrap 登录界面，但不能派发任务。仓库现有 Pi 配方未声明 `main` 时会继承公共 Kimi Code 默认；选择 `pi-cursor` 的插件不等于自动绑定 Cursor 主模型，需要本机明确绑定所选模型，角色覆盖优先。API key 使用 `secret:名称`，运行时转换成实例环境引用。OAuth 在目标实例的原生登录流程中建立；不自动读取系统 Cursor 账号、旧 Pi auth.json 或全局 CODEX_HOME。Codex 显式控制与登录流程见 [model-delegate 使用说明](../shared/skills/model-delegate/USAGE.md)。
+Keys use `secret:<name>` and become runtime environment references. Native OAuth is established inside the target instance. The manager does not read system Cursor accounts, old Pi auth.json, or global CODEX_HOME. Codex login and explicit control are covered by [model-delegate usage](../shared/skills/model-delegate/USAGE.md).
 
-## Task Keeper
+## Task Keeper and delegation
 
-[pi-managed.toml](../examples/pi-managed.toml) 展示完整的机器绑定结构：
+The [managed example](../examples/pi-managed.toml) binds reader, writer, and reviewer, plus `second_view` when enabled; it declares project roots, permission policy, routes, trusted foreground check programs, fixed argv, parsers, and minimum test counts. Writes occur in a separate candidate worktree and are not automatically merged into the original checkout. A skill or purpose template does not grant a read-only role write permission.
 
-- 绑定 reader、writer、reviewer；第二视角开启时另绑 `second_view`。
-- 明确 project 根、候选权限策略和网络路线。
-- 构建、测试使用可信前台程序及固定 argv，记录必要输入、解析器和最低测试数量。
-- 写入在独立候选 worktree 中进行，原 checkout 不自动合并。只读角色不会因技能或用途模板而获得写权限。
-- 所有操作复用唯一 AgentManager 和 supervisor。取消请求被接受不等于物理进程已经终止。
+All execution shares one AgentManager and supervisor. Accepted cancellation does not prove the physical process has stopped. Ordinary mode keeps implementation in the parent session with a fresh reviewer; use `kernel_task` for managed work rather than creating a hidden managed writer.
 
-普通模式仍由父会话实施，并交给 fresh reviewer 审查；需要受管工作流时使用 `kernel_task`，不能把普通角色改成隐藏的 managed writer。
+`model_delegate` is the unified entry point and requires an explicit backend. The old codex-delegate is not retained. The general/context/challenge/plan/research/review/scout purpose templates add task requirements, not another permission layer. Codex uses the official CLI and native tools with execution-bound grants, sandbox, workspace, and supervision; Pi-backend delegation is read-only. Advanced Codex writes require an explicitly authorized separate worktree. See the [skill](../shared/skills/model-delegate/SKILL.md) and [API](../shared/skills/model-delegate/API.md).
 
-## model-delegate 替换
+Codex file operations require a projectable policy such as `agent_options.permissions.policy_ref = "delegate-worktree"`. Read-only grants and mounts still prohibit writes; writes additionally require `explicit-write`, `implement`, and user CLI worktree authorization. The default `project-default` denies operations. Selecting Codex does not open access. Linux rejects project roots broad enough to contain private instances and runtimes; use the actual business project root.
 
-迁移目标中不保留 codex-delegate。`model_delegate` 是统一入口，必须明确 backend；七个原 Codex 角色已转为 `general`、`context`、`challenge`、`plan`、`research`、`review`、`scout` 用途模板。模板只补充任务要求，不增加另一层角色或授权。
+Codex admission checks require absent/empty system configuration, absent managed preferences on macOS, and a recognized personal OAuth or explicit API-key identity. Organization, mixed, unknown, or unverifiable sources fail without rewriting account/admin state. These checks assume a trusted machine/account and are not an atomic configuration guarantee. See [Codex admission](pi-codex-admission.md).
 
-Codex backend 使用官方 CLI 和原生工具，按整次运行绑定授权、沙箱、工作区及监督生命周期。Pi backend 为只读委托。高级 Codex 写操作只能使用显式授权的独立 worktree；细节见 [技能](../shared/skills/model-delegate/SKILL.md) 与 [协议](../shared/skills/model-delegate/API.md)。
+## Daily maintenance
 
-Codex 文件操作需要明确选择可投影的策略，例如本机覆盖中的 `agent_options.permissions.policy_ref = "delegate-worktree"`。
-该策略声明完整的项目文件操作范围，但只读模式仍由执行 grant 和原生只读挂载禁止写入；写入还需要 `explicit-write`、`implement` 和用户 CLI 的 worktree 授权。
-默认 `project-default` 为 deny，不会因为选择了 Codex backend 自动开放文件。Linux 下过宽到同时包住私有实例和运行包的项目根会拒绝，需使用明确的业务项目目录。
+- **Add a skill:** copy its complete directory, relative resources, scripts, and license into `shared/skills/`; register it in `shared/content.toml` and select the ID in the recipe. External skills require explicit paths. Validate/plan/apply.
+- **Adjust roles:** edit role sources in `agents/pi/roles/` or logical model bindings. Managed name collisions fail; ordinary scout/reviewer stay read-only. Generated `pi-home/agents/` is not the source.
+- **Switch models:** register the provider and exact remote ID, select the logical model, and update roles. Prior route evidence becomes stale and needs applicable revalidation.
+- **Disable a plugin:** remove its selection from plugins or `agent_options.resources.extensions` and resolve dependent plugins/options. Stop or recover active hosts/children/unknown leases before deploying.
 
-按 2026-09-18 确认的路线，Codex 启动前执行受限配置准入：系统配置目录须为空或不存在，macOS 受管偏好须不存在，实例账号须为可识别的个人 OAuth 或明确 API key 模式。组织、未知或混合身份以及无法核验的配置来源会拒绝执行，保留原账号和管理员配置。稳定受信机器和账号是运行前提，预检不提供原子配置保证；平台行为仍待原生验收。详细原因码和处理方式见 [配置准入说明](pi-codex-admission.md)。
+## Optional capabilities
 
-## 四种日常维护
+| Capability | Scope |
+| --- | --- |
+| [Agent state](pi-agent-state.md) | OSC titles or explicitly bound agent-report service |
+| pi-rules | Explicit `root_refs`; no HOME scanning |
+| OpenSpec | Optional fixed 1.11.0 CLI and 12 complete skills; explicit project target with conflict checks. See [OpenSpec](openspec.md). |
+| Superpowers | Fixed-commit 14 skills and Pi bootstrap, loaded only when selected; helper services need explicit bindings. |
+| [Review/editor](pi-review.md) | Diff/annotation UI with supervised Git/file/editor access; interactive editor uses a bound private PTY. Real terminal behavior remains separately unverified. |
+| [MCP](pi-mcp.md) | Supervised stdio, explicit HTTP/SSE routes, Bearer/OAuth, sampling, input, scripts, Apps, direct tools; historical synthetic Linux results do not establish real service/account access. |
+| [ReadSeek](pi-readseek.md) | Nine-tool contract, supervision, Git/rg selection, submission, visual assets. Historical Linux native evidence applies to pi-default/codex/cursor; managed uses Task Keeper. macOS x86_64 source-build support lacks machine verification. |
+| [Web](pi-web.md) | Explicit providers, routes, credentials, and tools; historical synthetic SearXNG evidence is separate from real service validation. |
 
-**增加技能**：将完整技能目录（含相对引用、脚本、许可证）放入 `shared/skills/`，在 `shared/content.toml` 登记，再将 ID 加入目标 profile 的 `skills`。外部技能使用明确路径绑定，不扫描全局 HOME。重新 validate/plan/apply。
+Selected but unverified Codex, Cursor, MCP, web, proxy, and terminal services remain selected and unverified. Historical spec closure did not turn those into passes or remove them from scope.
 
-**调整角色**：修改 `agents/pi/roles/` 的来源或 profile 的逻辑模型绑定，再部署。受管角色同名冲突会失败；当前普通 scout/reviewer 保持只读。生成的 `pi-home/agents/` 不是编辑入口。
+## Recovery and diagnostics
 
-**切换模型**：登记 provider 和精确 remote_id，把逻辑 ID 加入所选 models，再调整角色引用。更改后旧模型／路线证据变为 stale，重新执行适用层级验证；不能把旧账号观测当成本次可用性证明。
+Plan reports dependency, role, policy, route, resource, and configuration changes plus historical runtime locations. Pi sessions and Task Keeper stores accept only declared v3 data; incompatible state is rejected without downgrade or rewrite.
 
-**禁用插件**：从 profile 的 `plugins` 或 `agent_options.resources.extensions` 移除对应选择，同时处理明确依赖它的插件与选项。使用 plan 查看变化；有活动实例、子进程或未知租约时先处理活动，不强制覆盖。
+Rollback restores managed configuration and saved runtime references, preserving accounts, sessions, and task databases. Changing HOME cannot bypass active write leases on a shared worktree. See [migration and explicit recovery](pi-migration.md) for stop/recovery commands, 300-second plan validity, and unknown activity handling.
 
-## 可选能力
-
-- [终端状态通知](pi-agent-state.md)：OSC 标题或明确绑定的 agent-report 服务。
-- pi-rules：显式 `root_refs`，只读已声明规则根；不扫描 HOME。
-- OpenSpec：固定 1.11.0 CLI 与 12 个完整技能；选择 `openspec` 后使用 `project init` 的显式目标目录，保留用户修改并进行冲突检查。
-- Superpowers：固定提交的 14 个完整技能及 Pi bootstrap；选择 `superpowers` 才加载。辅助服务脚本需要显式绑定，不自动启动。
-- [Slopchop 审查与编辑器](pi-review.md)：差异和标注 UI 保留，Git、文件与编辑器接入统一工作区监督；交互编辑器使用显式绑定的私人 PTY。代码与 mock 已接通，真实终端仍待验收。
-- [MCP](pi-mcp.md)：stdio 监督传输、HTTP/SSE 显式路线、Bearer／OAuth、sampling、用户输入、脚本、Apps 页面和直接工具已接入代码并登记四配方来源。候选 `9d6a9270` 的 Linux 合成服务原生连接场景通过；真实服务与认证调用仍待后续 live 验证。
-- [ReadSeek](pi-readseek.md)：九工具契约、监督控制器、Git/rg 选择、文件提交及视觉资产已接通。候选 `9d6a9270` 的 Linux pi-default、pi-codex、pi-cursor（Bun 宿主使用独立锁定 Node worker）均取得双目标九工具原生验证；pi-managed 使用 Task Keeper 工具。macOS x86_64 源码构建入口已有实现但缺实机验证，其他平台结果不由 Linux 结果推定。
-- [web](pi-web.md)：显式提供方、路线、凭据和工具适配已接入；候选上的合成 SearXNG 搜索原生验收通过，真实服务验收尚未执行。配置样例仅说明格式，不代表账号已可用。
-
-Codex、Cursor、MCP、web、代理、终端服务的真实验收选择保留，当前为“已选、未验证”，不会变成“未选择”。这些 live 验收与其他三平台实机验证已转出当前 spec，未来实际使用时另行处理；历史完整矩阵继续保留 not-run，不阻塞当前软件范围验收完成。
-
-## 升级、冲突和恢复
-
-`plan` 给出依赖、角色、策略、路线、资源与配置变化，以及旧 runtime 的历史定位。Pi session 和 Task Keeper store 当前都只接受已声明的 v3；不兼容数据明确拒绝，不自动降级或改写。
-
-回滚仅恢复配置和保存的运行引用；账号、会话和任务数据库保留。跨实例共享 worktree 的活动写租约不能由换 HOME 绕过。显式停止恢复命令、300 秒计划有效期与未知活动处理见 [迁移指南](pi-migration.md#活动阻塞与显式停止恢复)。
-
-诊断和发布验收是不同操作：`doctor` 分层显示状态；`report-only` 成功只表示报告生成；`check-release` 要求固定范围中所有适用证据匹配通过。命令与退出码见 [诊断说明](pi-diagnostics.md)。
+Doctor diagnostics and release acceptance are distinct. `report-only` success means a report was generated; `check-release` requires all applicable evidence in its fixed scope to match and pass. See [diagnostics](pi-diagnostics.md) and [testing](testing.md). Neither historical reports nor a working old deployment resolve today's stale-lock blocker.
