@@ -31,6 +31,8 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
         run: .venv/bin/python -m pytest -q -p no:cacheprovider
+      - name: Check public documentation and path hygiene
+        run: .venv/bin/python scripts/check-public-docs.py
       - name: Confirm lock remains unchanged
         run: git diff --exit-code -- uv.lock locks
 
