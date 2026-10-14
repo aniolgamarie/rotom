@@ -82,7 +82,7 @@ Codex/ChatGPT 订阅在 DSH TUI 内使用：
 
 设备码登录的账号侧前提是先在ChatGPT安全设置或工作区管理员权限中启用device code login，见[OpenAI官方认证文档](https://learn.chatgpt.com/docs/auth#preferred-device-code-authentication-beta)。它不能修复网络连接错误。当前pi-ai0.87.1先显示登录方式提问，用户选择设备码后才申请并轮询；申请或轮询的fetch异常会结束本次登录。失败后重新执行`/auth login openai-codex`会开始新的流程；有设备码面板时先选`Cancel sign-in`，卡住时退出TUI并用`dsh-proxy`重启，再打开登录方式窗口。此操作不需要删除认证目录或配置回滚。
 
-2026-10-14原生TUI+本地TLS假OAuth测试已验证发码失败、同会话重开、轮询失败、再次重开及取消停止轮询；初次和失败后选择页各等待5秒，回答前OAuth请求0。它不能证明真实登录已经修复：同10808代理下匿名Node fetch访问认证站点曾报ECONNRESET，而curl/Node https收到403、Node fetch访问example.com收到200，外部具体原因未确认。用户另反馈“选择窗口出现前直接fetch failed”，与受控设备码故障阶段不同，仍待重启后的真实UI观察；不从匿名HEAD推定实际发码请求同因。证据和明确未完成项见[认证故障验收](acceptance/dsh-upgrade-20261012.md#2026-10-14-codex设备码故障与键盘查看复核)。
+2026-10-14原生TUI+本地TLS假OAuth测试已验证发码失败、同会话重开、轮询失败、再次重开及取消停止轮询；初次和失败后选择页各等待5秒，回答前OAuth请求0。同10808代理下匿名Node fetch访问认证站点曾报ECONNRESET，而curl/Node https收到403、Node fetch访问example.com收到200，外部具体原因未确认，不从匿名HEAD推定实际发码请求同因。用户曾反馈“选择窗口出现前直接fetch failed”；退出失败TUI并用dsh-proxy重启后，用户确认登录方式窗口恢复，设备码显示并保持等待。这个实际恢复无需重部署或删除认证目录，不能证明故障根因已修复；浏览器授权完成及凭据保存仍待确认。证据和明确未完成项见[认证故障验收](acceptance/dsh-upgrade-20261012.md#2026-10-14-codex设备码故障与键盘查看复核)。
 
 2026-10-14 真实 `/auth login openai-codex` 浏览器模式在全新无账号 HOME 中能显示登录方法/授权码面板，空闲五秒后取消，退出和 termios 恢复通过。URL 只在内存验证，未写账号凭据；这不能证明已完成真实账号登录，也没有复现用户原会话“迅速退出”的症状。模拟 device-code 面板通过，不替代实际联网设备码发行/登录证据。真实浏览器入口另有一次原生 npm 版本 GET，单列为背景请求，无 OAuth 远端/真实模型调用或依赖安装。
 
