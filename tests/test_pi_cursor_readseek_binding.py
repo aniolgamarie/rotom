@@ -21,8 +21,7 @@ def _first_existing(candidates):
   return None
 
 REAL_RG = _first_existing([shutil.which("rg"), "/usr/bin/rg", "/bin/rg"]) or "/bin/rg"
-REAL_NODE = _first_existing([shutil.which("node"), "/usr/bin/node",
-  "/home/private-user/.local/share/agentcfg-pi-tools/node-v24.14.0-linux-x64/bin/node"]) or "/usr/bin/node"
+REAL_NODE = _first_existing([shutil.which("node"), "/usr/bin/node", "/bin/node"]) or "/usr/bin/node"
 
 # 保存真实的subprocess.run
 _REAL_SUBPROCESS_RUN = subprocess.run
@@ -70,7 +69,7 @@ def test_cursor_readseek_requires_independent_node(monkeypatch):
 def test_cursor_readseek_with_independent_node(monkeypatch):
   """ReadSeek配置使用独立的Node（用pi-default测试，避免cursor特殊配置）。"""
   # 恢复真实的PATH以找到rg和node
-  monkeypatch.setenv("PATH", "/bin:/usr/bin:/home/private-user/.nvm/versions/node/v24.1.0/bin")
+  monkeypatch.setenv("PATH", "/bin:/usr/bin:/home/user/.nvm/versions/node/v24.1.0/bin")
   # 恢复 subprocess.Popen 以检查 Node 版本（subprocess.run 内部使用 Popen）
   import subprocess as _sp
   import conftest as _conftest
@@ -141,7 +140,7 @@ def test_cursor_readseek_with_independent_node(monkeypatch):
 def test_cursor_readseek_node_version_mismatch(monkeypatch):
   """pi-cursor配置ReadSeek时Node版本不匹配应该报错。"""
   # 恢复真实的PATH以找到rg和node
-  monkeypatch.setenv("PATH", "/bin:/usr/bin:/home/private-user/.nvm/versions/node/v24.1.0/bin")
+  monkeypatch.setenv("PATH", "/bin:/usr/bin:/home/user/.nvm/versions/node/v24.1.0/bin")
   
   if not Path(REAL_RG).exists():
     pytest.skip("rg未安装")
@@ -193,7 +192,7 @@ def test_cursor_readseek_node_version_mismatch(monkeypatch):
 def test_readseek_preserves_other_plugins(monkeypatch):
   """ReadSeek配置保留其他原有插件。"""
   # 恢复真实的PATH以找到rg和node
-  monkeypatch.setenv("PATH", "/bin:/usr/bin:/home/private-user/.nvm/versions/node/v24.1.0/bin")
+  monkeypatch.setenv("PATH", "/bin:/usr/bin:/home/user/.nvm/versions/node/v24.1.0/bin")
   
   # Mock subprocess.run 以返回 Node 版本
   import subprocess as _sp
@@ -259,7 +258,7 @@ def test_readseek_preserves_other_plugins(monkeypatch):
 
 def test_cursor_readseek_keeps_cursor_plugin_and_endpoint(monkeypatch):
   """ReadSeek接线只能给cursor追加pi-readseek；不得整表替换剥离cursor provider所有者pi-cursor插件。"""
-  monkeypatch.setenv("PATH", "/bin:/usr/bin:/home/private-user/.nvm/versions/node/v24.1.0/bin")
+  monkeypatch.setenv("PATH", "/bin:/usr/bin:/home/user/.nvm/versions/node/v24.1.0/bin")
   import subprocess as _sp
   import conftest as _conftest
   monkeypatch.setattr(_sp, "Popen", _conftest._REAL_POPEN)

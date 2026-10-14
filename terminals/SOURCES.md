@@ -1,6 +1,6 @@
 # 公开来源与迁移审查
 
-调查基线：`/root/gitLocal/starter` 提交 `cc5b08bbdacd506192ef9ee08d7c64ef68274be9`。此绝对路径仅标识调查来源，不是部署依赖。mihomo mgr 的原许可为 MIT，见 `mihomo/LICENSE`；shell 配置没有独立许可证声明，按本仓库自有配置迁移。
+调查基线：`/path/to/starter` 提交 `cc5b08bbdacd506192ef9ee08d7c64ef68274be9`。此绝对路径仅标识调查来源，不是部署依赖。mihomo mgr 的原许可为 MIT，见 `mihomo/LICENSE`；shell 配置没有独立许可证声明，按本仓库自有配置迁移。
 
 | 旧文件 | 旧 SHA-256 | 决策 |
 | --- | --- | --- |
