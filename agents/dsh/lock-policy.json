@@ -4,7 +4,7 @@
   "adapter_version": "dsh-1",
   "upstream": {
     "host": "639ed015397290b3745d163aafe02ffee4aa3f84",
-    "tui": "c2eee95218d1decfce138f7d31ef7099cc391d00",
+    "tui": "18e4a206afc367f055a2b3379bb221abcbb5d99e",
     "cursor": "936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8"
   },
   "npm_integrity": "sha512-ztsxKxt/kkIaAs+2i0GU6I+DRmUdrNasxTZKJe9TCdSjKxlhah/4r/hl5ygMD6XAg1qZ9c2TNomR4qgOydp10g==",
@@ -14,10 +14,10 @@
   ],
   "packages": {
     "@deepseek-ai/dsh": "0.2.0-rc.2",
-    "@deepseek-harness-tui/dsh-tui": "0.14.0",
+    "@deepseek-harness-tui/dsh-tui": "0.15.0",
     "@deepseek-ai/cordis": "4.0.5-alpha.1",
     "@deepseek-ai/schemastery": "3.18.5-alpha.1",
-    "rotom-dsh-cursor-terminal": "file:vendor/rotom-dsh-cursor-terminal-0.1.1.tgz",
+    "rotom-dsh-cursor-terminal": "file:vendor/rotom-dsh-cursor-terminal-0.1.2.tgz",
     "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
     "@deepseek-ai/dsh-agent": "0.2.0-rc.2",
     "@deepseek-ai/dsh-scope": "0.2.0-rc.2",
@@ -152,5 +152,8 @@
     "@deepseek-ai/dsh-output-retention": "0.2.0-rc.2"
   },
   "pnpm": "11.19.0",
-  "pnpm_integrity": "sha512-eIHz7VkNRyxKlV4riLISF5ERYGbcyIy8o4SeybYPG7qm0syyIfqR2k4cZb7yvL43k2Wup6xTnHv4be3DobItzg=="
+  "pnpm_integrity": "sha512-eIHz7VkNRyxKlV4riLISF5ERYGbcyIy8o4SeybYPG7qm0syyIfqR2k4cZb7yvL43k2Wup6xTnHv4be3DobItzg==",
+  "minimum_release_age_exclude": [
+    "@deepseek-harness-tui/dsh-tui@0.15.0"
+  ]
 }

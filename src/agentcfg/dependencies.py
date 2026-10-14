@@ -45,7 +45,7 @@ def recipe_digest(repository, adapter_id="dsh"):
     h.update(relative.encode())
     h.update(path.read_bytes())
     local_packages = {
-      "vendor/rotom-dsh-cursor-terminal-0.1.1.tgz": ("cursor-terminal", ("package.json", "index.mjs")),
+      "vendor/rotom-dsh-cursor-terminal-0.1.2.tgz": ("cursor-terminal", ("package.json", "index.mjs")),
       "vendor/rotom-dsh-review-context-0.1.0.tgz": ("review-context", ("package.json", "index.mjs", "cordis.patch.yml")),
     }
     if relative in local_packages:
@@ -95,6 +95,8 @@ class Lock:
 
 def lock_identity(package, resolution, metadata, installer_resolution=b""):
   tools = {key: metadata[key] for key in ("node", "npm", "pnpm", "pnpm_integrity", "adapter_version")}
+  if metadata.get("minimum_release_age_exclude"):
+    tools["minimum_release_age_exclude"] = metadata["minimum_release_age_exclude"]
   if metadata.get("resolution_kind"):
     tools["resolution_kind"] = metadata["resolution_kind"]
   return hashlib.sha256(package + resolution + installer_resolution + json_bytes(tools)).hexdigest()
@@ -197,6 +199,8 @@ def read_lock(repository, adapter_id="dsh", expected_adapter_version=None):
     if not Draft202012Validator(schema).is_valid(metadata):
       raise ValueError()
     policy = lock_policy(repository, adapter_id, expected_adapter_version)
+    if metadata.get("minimum_release_age_exclude", []) != policy.get("minimum_release_age_exclude", []):
+      raise ValueError("installer policy differs")
     if (type(metadata.get("version")) is not int or metadata["version"] not in (1, 2)
         or any(metadata.get(key) != policy[key] for key in ("adapter_version", "node", "npm", "pnpm", "pnpm_integrity", "npm_integrity", "upstream"))
         or not isinstance(metadata.get("platforms"), dict)
@@ -247,7 +251,11 @@ def lock_policy(repository, adapter_id="dsh", expected_adapter_version=None):
       or policy["upstream"]["tui"] != agent["tui_commit"]
       or policy["upstream"]["cursor"] != plugins["cursor-auth"]["commit"]
       or policy["supported_platforms"] != ["linux", "darwin"]
-      or set(policy) != LOCK_POLICY_KEYS
+      or set(policy) not in (LOCK_POLICY_KEYS, LOCK_POLICY_KEYS | {"minimum_release_age_exclude"})
+      or policy.get("minimum_release_age_exclude", []) not in ([],
+        ["@deepseek-harness-tui/dsh-tui@" + packages["@deepseek-harness-tui/dsh-tui"]])
+      or any(re.fullmatch(r"@deepseek-harness-tui/dsh-tui@(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", spec) is None
+        for spec in policy.get("minimum_release_age_exclude", []))
       or not policy["packages"]
       or policy["packages"] != packages
       or any("openspec" in name.lower() for name in packages)
@@ -258,6 +266,13 @@ def lock_policy(repository, adapter_id="dsh", expected_adapter_version=None):
       or any(not re.fullmatch(r"sha512-[A-Za-z0-9+/]+=*", policy[key]) for key in ("npm_integrity", "pnpm_integrity"))):
     raise ValueError("incompatible lock policy")
   return policy
+
+
+def prepare_pnpm_policy(destination, policy):
+  """公开 pnpm 项目配置；仅豁免已核验的精确 TUI 版本。"""
+  exceptions = policy.get("minimum_release_age_exclude", [])
+  if exceptions:
+    (destination / "pnpm-workspace.yaml").write_text(yaml.safe_dump({"minimumReleaseAgeExclude": exceptions}))
 
 
 def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_version=None):
@@ -284,6 +299,7 @@ def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_ve
     ensure_exact_toolchain("npm", policy["npm"], npm_version)
     # TUI/Perry 的 npm peer 声明冲突不靠强制解析掩盖；实际安装器只消费完整 pnpm 锁。
     resolution = b""
+    prepare_pnpm_policy(root, policy)
     pnpm = prepare_pnpm(repository, root, policy, adapter_id)
     check_pnpm_version(pnpm, policy["pnpm"], cwd=root, env=env)
     checked([*pnpm, "install", "--lockfile-only", "--ignore-scripts", "--node-linker=hoisted", "--package-import-method=copy",
@@ -297,6 +313,8 @@ def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_ve
       "adapter_version": policy["adapter_version"],
       "platforms": {name: "not-smoked" for name in policy["supported_platforms"]},
       "upstream": policy["upstream"], "npm_integrity": policy["npm_integrity"]}
+    if policy.get("minimum_release_age_exclude"):
+      manifest["minimum_release_age_exclude"] = policy["minimum_release_age_exclude"]
     manifest["identity"] = lock_identity(package, resolution, manifest, installer_resolution)
     # 仓库锁是公开产物；先校验所有结果，再单文件原子替换，manifest 最后提交。
     out = repository / f"locks/{adapter_id}"
@@ -351,6 +369,7 @@ def sync(workspace, lock, adapter_id="dsh", *, progress=None):
         (stage / "package-lock.json").write_bytes(lock.resolution)
       (stage / "pnpm-lock.yaml").write_bytes(lock.installer_resolution)
       copy_vendors(workspace.repository, stage, lock.package, adapter_id)
+      prepare_pnpm_policy(stage, lock.metadata)
       pnpm = prepare_pnpm(workspace.repository, stage, lock.metadata, adapter_id)
       check_pnpm_version(pnpm, lock.metadata["pnpm"], cwd=stage, env=env)
       announce("安装锁定依赖")
@@ -360,6 +379,8 @@ def sync(workspace, lock, adapter_id="dsh", *, progress=None):
       if ((npm_path.read_bytes() if npm_path.exists() else b"") != lock.resolution
           or (stage / "pnpm-lock.yaml").read_bytes() != lock.installer_resolution):
         raise DependencyError("安装过程修改了锁，拒绝激活")
+      # 安装策略只用于本次 stage；普通 run 不保留可供原生自更新使用的项目配置。
+      (stage / "pnpm-workspace.yaml").unlink(missing_ok=True)
       announce("校验安装结果")
       validation = workspace.repository / f"agents/{adapter_id}/templates/check-runtime.mjs"
       checked(["node", str(validation), str(stage)], cwd=stage, env=env)

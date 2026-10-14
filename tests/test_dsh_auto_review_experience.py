@@ -28,8 +28,8 @@ def experience(tmp_path):
   graph.update(contexts={}, loadedFiles=[])
   (runtime / "actual-module-graph.json").write_text(json.dumps(graph))
   for name, version in {"@deepseek-ai/dsh": "0.2.0-rc.2", "dsh-auto-review": "0.12.17",
-      "@deepseek-harness-tui/dsh-tui": "0.14.0", "@deepseek-ai/dsh-base": "0.2.0-rc.2",
-      "rotom-dsh-cursor-terminal": "0.1.1", "@deepseek-ai/cordis": "4.0.5-alpha.1",
+      "@deepseek-harness-tui/dsh-tui": "0.15.0", "@deepseek-ai/dsh-base": "0.2.0-rc.2",
+      "rotom-dsh-cursor-terminal": "0.1.2", "@deepseek-ai/cordis": "4.0.5-alpha.1",
       "@deepseek-ai/schemastery": "3.18.5-alpha.1"}.items():
     path = runtime / "node_modules" / name
     path.mkdir(parents=True)

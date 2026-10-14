@@ -146,6 +146,7 @@ class DshAdapter(Adapter):
     # 原生 /settings 偏好逐叶首次初始化，后续 apply 不覆盖用户修改。
     for field, value in {"brand": "deepseek", "whale": True, "whaleGirl": False, "companion/skin": "whale",
         "whaleIdle": False, "minimal": False,
+        "taskNotifications": "unfocused", "notificationMethod": "auto",
         "sidePanel/open": False, "sidePanel/panels": "todo,jobs,agents,trajectory,info",
         "statusBar/compact": True, "statusBar/model": True, "statusBar/thinking": True,
         "statusBar/cwd": True, "statusBar/contextUsage": True, "statusBar/cache": True,
@@ -229,6 +230,8 @@ class DshAdapter(Adapter):
     patch = [{"id": "working-activity", "disabled": True}, {"id": "llm-deepseek", "disabled": True},
              {"id": "dsh-tui-webserver", "disabled": True}, {"id": "deepseek-account", "disabled": True},
              {"id": "llm-deepseek-account", "disabled": True},
+             {"id": "plugin-package-inventory-deepseek", "config": {"enabled": False}},
+             {"id": "session-log-deepseek", "config": {"enabled": False}},
              {"id": "dsh-tui-auth", "disabled": not codex_enabled, "name": "@deepseek-harness-tui/dsh-tui/oauth",
               "config": {"providers": ["openai-codex"]}}]
     patch.append({"id": "auto-review", "disabled": "auto-review" not in data["plugins"]
@@ -277,7 +280,7 @@ class DshAdapter(Adapter):
       if "credential_ref" in server:
         environment.append(EnvironmentBinding(env_name("MCP", key), SecretRef(server["credential_ref"])))
     return LaunchSpec(("node", str(instance_root / "launch.mjs"), str(runtime_root),
-                       str(instance_root / "dsh-home/agentcfg.patch.yml")),
+                       str(instance_root / "dsh-home/agentcfg.patch.yml"), "--profile", "agentcfg"),
                       cwd, lock_identity, tuple(environment))
 
   def launch_preflight(self, lock):

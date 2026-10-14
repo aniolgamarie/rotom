@@ -1,10 +1,11 @@
-# TUI 0.14 的静态受管字段；与原生 UI 偏好共同保存在 profile 用户层。
+# TUI 0.15 的静态受管字段；与原生 UI 偏好共同保存在 profile 用户层。
 # workspace 使用薄启动器绑定的业务 cwd，不借用用户 dotenv。
 - id: dsh-tui
   config:
     backend: dsh
     preset: standard
     terminalImages: false
+    upstreamRetry: false
     modes:
       - id: default
         plan: false

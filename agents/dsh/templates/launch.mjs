@@ -12,6 +12,11 @@ const [runtimeRoot, patchFile, ...args] = process.argv.slice(2);
 if (!runtimeRoot || !patchFile || !path.isAbsolute(runtimeRoot) || !path.isAbsolute(patchFile)) {
   throw new Error("managed runtime and patch paths must be absolute");
 }
+// 新版 TUI 从公开 --profile 识别设置来源；此标志只给宿主，不作为用户提示词。
+if (args[0] === "--profile") {
+  if (args[1] !== "agentcfg") throw new Error("managed profile identity must be agentcfg");
+  args.splice(0, 2);
+}
 const require = createRequire(path.join(runtimeRoot, "package.json"));
 const { runProfile } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh/profile-boot")));
 const { createLaunchEnvironmentSnapshot } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh-launch-environment")));

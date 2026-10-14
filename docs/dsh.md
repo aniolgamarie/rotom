@@ -9,9 +9,9 @@
 | 组件 | 当前日常配方 | 来源与边界 |
 | --- | --- | --- |
 | DSH Core | `0.2.0-rc.2` | `639ed015397290b3745d163aafe02ffee4aa3f84`；预发布版 |
-| TUI | `0.14.0` | `c2eee95218d1decfce138f7d31ef7099cc391d00`；未改动 npm 原包 |
+| TUI | `0.15.0` | `18e4a206afc367f055a2b3379bb221abcbb5d99e`；未改动 npm 原包 |
 | Cursor Provider | `dsh-cursor-subscription@0.6.12` | `936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8`；未改动原包，通过薄终端适配调用公开 API |
-| 薄终端适配 | `rotom-dsh-cursor-terminal@0.1.1` | 本仓库 `agents/dsh/packages/cursor-terminal`；使用 TUI 公开 QuestionBridge，不复制 OAuth 或 Cursor wire 协议 |
+| 薄终端适配 | `rotom-dsh-cursor-terminal@0.1.2` | 本仓库 `agents/dsh/packages/cursor-terminal`；使用 TUI 公开 QuestionBridge，不复制 OAuth 或 Cursor wire 协议 |
 | 认证 | TUI 的 `./oauth` | 仅挂载 `openai-codex`；不使用旧独立 dsh-auth 包或 OpenAI API key 替代订阅 |
 | AI 审批 | `dsh-auto-review@0.12.17` | Perry 原始 npm 包，SHA `2b931b8375f9ee9ebe20e80ef336c69804e1aac0`，已进入正式锁 |
 | 审查上下文 | `rotom-dsh-review-context@0.1.0` | 本仓库常量工具，不读取文件、环境、账号，不提供用户授权 |
@@ -21,6 +21,8 @@
 `locks/dsh/pnpm-lock.yaml` 是唯一完整安装锁；manifest v2 明确 `resolution_kind=pnpm`。TUI 可选 Schema peer 的稳定版范围与 Perry alpha 下界使正常 npm 解析 ERESOLVE，未用 force、legacy-peer-deps、overrides 或删除 peer 绕过。当前配方不提供 npm ci，旧双锁仍可从历史 Git 追溯。Node/npm 工具链记录保留，实际解析和安装都使用锁定原始 pnpm。声明冲突仍存在，不把正常 pnpm 安装等同整棵 peer 通过。
 
 普通 `sync` 从原始 pnpm 归档验证 SHA-512、解压固定安装器，使用 `--frozen-lockfile --ignore-scripts --node-linker=hoisted --package-import-method=copy`。唯一审核过的原生准备步骤仍是官方 `ensure-spawn-helper.mjs` 设置包内 helper 的执行位。`apply` 和 `run` 不安装依赖、不更新锁、不追踪 latest。
+
+TUI 0.15 的精确 npm 版本、Git SHA 和 dist integrity 已核验。pnpm 11 默认等待发布满 24 小时；本次安装时尚未满期，因此 `lock-policy.json` 与 manifest 只声明 `@deepseek-harness-tui/dsh-tui@0.15.0` 的 `minimum_release_age_exclude`。它纳入锁身份、严格禁止 wildcard/其他包/未选择版本，并仅通过暂存目录的公开 pnpm-workspace.yaml 生效；其余供应链检查保留，安装后移除该临时配置。普通 sync 消费同一策略，不需临时改全局 pnpm 设置。
 
 `pnpm peers check` 仍报告上游未启用的 working-activity 与实验 Web UI peer 警告。working-activity 会动态改写 Session 事件表，本配方明确禁用；TUI 使用自己的 spinner、聊天、工具卡和状态显示。实验 Agent Teams、语音等没有启用。不能把警告记为整棵依赖声明全部通过；主运行路径以公开模块身份检查和原生加载证据单独验收。
 
@@ -112,7 +114,7 @@ Cursor 的终端入口：
 
 DSH 内核、standard preset、workspace-write + ask 为默认。默认显示原生欢迎页与品牌横幅，采用 Catppuccin Mocha 配色，与 OMP 的暗色主题对齐。`agent_options.show_welcome=false` 可选择直接进入会话；通过公开 `DSH_TUI_NO_LAUNCHPAD` 控制，不修改 TUI。视觉 minimal 与工具 minimal preset 不混用；本配方没有为了界面削减文件工具、压缩或原生子代理。
 
-实际 RC2 `/settings` 写入 `dsh-home/profiles/agentcfg/cordis.patch.yml`。`~/.dsh-tui/settings.json` 不是该版本的活动设置文件；其 npm 包 `lib/settings.json` 是字段目录。本配方保留用户已有文件，不构造不存在的双向同步。
+TUI 0.15 的 `/settings` 活动文件为隔离 HOME 内的 `.dsh-tui/settings.json`，结构是 `version/values/imported`。第一次启动从 `dsh-home/profiles/agentcfg/cordis.patch.yml` 导入可编辑设置；之后用户文件优先于 profile 默认。Rotom 保留原 profile 作为部署默认及首次导入来源，不接管、重置或删除原生 settings.json，也不伪装为双向同步。包内 `lib/settings.json` 仍只是字段目录；0.14 的 Cordis 设置存储说明属于旧版。
 
 - API providers、Core `agent-default-model` 的默认路由及 TUI 的内核/preset/modes 等明确字段使用按行 id 的 `cordis-yaml` 三方比较。TUI 不再固定 provider/model，避免覆盖恢复会话的记录。未知行、未知字段和未执行的标量 JS 保留；重复 id/重复键、非法结构和受管字段父节点被改成 JS 都失败。
 - whale/idle/minimal、侧栏开关和面板列表只首次初始化。默认 whale=true、whaleGirl=false、companion.skin=whale，显示鲸鱼；minimal=false 显示品牌横幅，whaleIdle=false 避免空闲动画。鲸鱼选择已进入正式配置来源，重建不依赖手改生成文件；开发 preset 仍为 standard。收起侧栏，按需打开 todo/jobs/agents/trajectory/info。重复 apply 不恢复用户改变的这些偏好。
@@ -120,23 +122,38 @@ DSH 内核、standard preset、workspace-write + ask 为默认。默认显示原
 - 主题偏好、home/onboarding 标记也只初始化，默认 `rotom-catppuccin`，同时保留可选择的 Poimandres 资产。主题 capture 是初始化默认提案，不保证双向同步。首次已有非空且未接管的偏好文件会报告冲突，不会覆盖未知字段。已初始化实例不会因 apply 自动改主题；本次手测候选的主题和横幅按用户明确要求，在活动锁释放后逐字段修改。
 - `.dsh-tui` 始终位于实例 `user-home`，HOME/DSH_HOME 身份固定。全局 AGENTS.md、完整两项框架技能、独占 overlay、主题资产和薄启动器按文件管理；账号、会话和日志由原生服务拥有。
 - 薄启动器使用公开 `@deepseek-ai/dsh/profile-boot` 与 launch environment snapshot；不调用 dotenv 发现，不改 Node fs 或上游。业务 cwd 不变，cwd/.env 与 DSH_HOME/.env 不被隐式导入。
-- 原生 packageManager 通过公开启动参数指向拒绝更新的受管入口；普通 TUI 自更新不受支持。独立 CLI/手工修改不能当作受管操作，doctor/run 会检查受管运行包漂移。
+- 原生 packageManager 通过公开启动参数指向拒绝包操作的受管入口。0.15 显式识别 profile 后原生 `/update` 可能显示；该手动路径会先写 profile 安装设置再调用外部 dsh，不完全受 Core packageManager 控制，受管实例不得使用。更新只走 agentcfg 的锁/sync/apply；doctor/run 检查运行包与 profile 所有权漂移，不修改 TUI 以隐藏命令。
 
 常用状态入口是 `/status`、`/tokens`、`/settings`、`/panel`、`/preset` 与 `/permission`。实际快捷键以该版本 `/help` 为准；tmux 的 Ctrl+B 会吃掉默认侧栏键，可在原生设置中重绑。本配方的 `terminalImages` 默认关闭（TUI 原生默认开启），它控制主渲染器的图像协议探测，同时影响图片预览和头部立绘原图；模型自身图片输入能力保留。在 `/settings` 的「终端图片预览」调整后，用 `/restart` 生效。中文/多行粘贴、窄窗和退出的实际验收范围以记录为准；未运行 SSH/tmux 客户端交互不能据 PTY 推断通过。
 
-原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及内置固定字面，以实际选择器为准。立绘是原生用户偏好，不是 Rotom 强制默认，保存在同一用户 Cordis patch 中，apply 保留。0.14.0 的伙伴皮肤会优先接管头部：默认 `companion.skin=deepy` 会盖过立绘开关。显示作者的头部女仆立绘需 `whaleGirl=true` 配合 `companion.skin=whale`；选择 `companion.skin=whaleGirl` 则是另一套动态吉祥物素材。原图还需开启 `terminalImages`、重启后成功探测到 Kitty/Sixel，并成功解码资产。0.14.0 在 tmux/screen 中直接禁用图像探测，即使外层终端支持图像协议也使用字符画。回退是作者自带的 30×30 真彩色精灵，用半块字符显示为30列×15行；复制为纯文本会丢失颜色，只剩轮廓。图像协议缺失本身不会回退成鲸鱼。矮窗口会由原生布局收起立绘，扩大终端后再查看。女仆组合曾完成真实欢迎页/会话头部字符画验证，原图协议未验收；正式默认延续用户的 Ghostty+tmux 使用偏好，选择像素鲸鱼（whaleGirl=false、whale=true、companion.skin=whale），主题与推荐状态栏保留。
+原生 `/settings` 还可以选择女仆娘立绘（`whaleGirl`）、欢迎期闲置动画和开屏大字字体；字体有按天轮换及内置固定字面，以实际选择器为准。立绘是原生用户偏好，不是 Rotom 强制默认，0.15 保存在原生 settings.json 中，apply 保留；以下立绘素材限制在 0.14 已核对。0.14.0 的伙伴皮肤会优先接管头部：默认 `companion.skin=deepy` 会盖过立绘开关。显示作者的头部女仆立绘需 `whaleGirl=true` 配合 `companion.skin=whale`；选择 `companion.skin=whaleGirl` 则是另一套动态吉祥物素材。原图还需开启 `terminalImages`、重启后成功探测到 Kitty/Sixel，并成功解码资产。0.14.0 在 tmux/screen 中直接禁用图像探测，即使外层终端支持图像协议也使用字符画。回退是作者自带的 30×30 真彩色精灵，用半块字符显示为30列×15行；复制为纯文本会丢失颜色，只剩轮廓。图像协议缺失本身不会回退成鲸鱼。矮窗口会由原生布局收起立绘，扩大终端后再查看。女仆组合曾完成真实欢迎页/会话头部字符画验证，原图协议未验收；正式默认延续用户的 Ghostty+tmux 使用偏好，选择像素鲸鱼（whaleGirl=false、whale=true、companion.skin=whale），主题与推荐状态栏保留。
 
-原生主题切换使用 `/theme` 实时预览，或 `/theme dark`、`/theme rotom-catppuccin`。作者的主题文档介绍 Gentle Mist Blue 色系，深色终端对应 `dark`，没有明确指定“最好看”的主题；Catppuccin 是 Rotom 通过公开 JSON 主题格式配置的色板，不是 0.14.0 内置主题。
+原生主题切换使用 `/theme` 实时预览，或 `/theme dark`、`/theme rotom-catppuccin`。作者的主题文档介绍 Gentle Mist Blue 色系，深色终端对应 `dark`，没有明确指定“最好看”的主题；Catppuccin 是 Rotom 通过公开 JSON 主题格式配置的色板，不是 0.15.0 内置主题。新版也提供 pink-night/pink-day/pink-ansi；本配方沿用用户已选择的 Catppuccin。
 
 0.14.0 的立绘仅支持内置素材选择：`whaleGirl` 是头部女仆开关，`companion.skin` 可选 deepy/whale/whaleGirl；静态头图与伙伴动画是不同素材。没有公开配置可导入任意图片或自定义皮肤目录。内部皮肤注册函数未通过包 exports 开放，不能当作已交付的扩展 API；不替换安装包 assets。[Ghostty 支持 Kitty 图像协议](https://ghostty.org/docs/features)，但该 TUI 的 tmux 分支仍直接禁用探测。查看原图可先退出当前 TUI，在不进入 tmux 的 Ghostty 标签页运行同一入口，开启「终端图片预览」并 `/restart`；仅增加 tmux passthrough 设置不会改变上游的禁用分支。
 
-Catppuccin 色表来自官方 [Neovim Mocha](https://github.com/catppuccin/nvim/blob/edefef779ab08ce1a4a404713e3012b0d202bd35/lua/catppuccin/palettes/mocha.lua)，本配方覆写 TUI 0.14.0 全部 81 个 Theme 字段，保留空 cursor 的原生反显语义。强调色 peach、边框 blue/lavender、关键字 mauve、函数 blue、字符串 green、数值 peach、运算符 sky、标点 overlay2，与本仓库 OMP Catppuccin 对齐。注释 overlay0、变量 text 沿用 OMP 的选择；它们不等同于 Neovim `syntax.lua` 的传统 Comment/Identifier 映射，也不是唯一的官方映射。
+Catppuccin 色表来自官方 [Neovim Mocha](https://github.com/catppuccin/nvim/blob/edefef779ab08ce1a4a404713e3012b0d202bd35/lua/catppuccin/palettes/mocha.lua)，本配方覆写 TUI 0.15.0 全部 81 个 Theme 字段；字段集与 0.14 相同。空 cursor 保留绘制 caret/图片标记焦点的反显，普通 TTY 光标则使用终端自身设置。强调色 peach、边框 blue/lavender、关键字 mauve、函数 blue、字符串 green、数值 peach、运算符 sky、标点 overlay2，与本仓库 OMP Catppuccin 对齐。注释 overlay0、变量 text 沿用 OMP 的选择；它们不等同于 Neovim `syntax.lua` 的传统 Comment/Identifier 映射，也不是唯一的官方映射。
 
 TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 base 保持对比；它不是终端整体背景。`inputBackground` 为 Mocha base，主题不修改系统终端背景/壁纸。Diff 行背景按官方 [Neovim DiffAdd/DiffDelete](https://github.com/catppuccin/nvim/blob/edefef779ab08ce1a4a404713e3012b0d202bd35/lua/catppuccin/groups/syntax.lua) 的 green/red 与 base 18% 混色，得到 `#364143` / `#443244`；dimmed 用 9% 是本适配的选择，变更字色保持纯 green/red。不能把 OMP 的 diff 文字色直接移作 TUI 的行背景。女仆原图和上游固定的品牌渐变保留作者配色，不能称所有像素都由主题覆写。
 
 公共默认模型来源与私人密钥文件是两层配置：DSH 继承 `shared/defaults/models.toml` 的模型入口及 main 角色；同一个 `secret:` 引用供多个 Agent 共用时，需使用同一私人来源。正式 workstation 保留原共享来源，main 仍为 Kimi Code 的 `kimi-for-coding`。本轮空 `SecretStore` 验证产生的“key 未填写”提示仅描述测试上下文，不能解释为用户共享文件缺 key；代理没有读取该文件。用户自行运行 `dsh-config model status` 可查看缺项。
 
 正式普通部署省略 `secrets_file` 时沿用 `XDG_CONFIG_HOME/agentcfg/secrets.toml`，没有设置 XDG_CONFIG_HOME 时为 `~/.config/agentcfg/secrets.toml`；共享文件在管理器解析配置时读取，再通过已选引用注入实例环境，不因子进程 HOME 隔离而改变来源。DSH 和 OMP 标准 Kimi/GLM Provider 分别走 OpenAI/Anthropic 协议，但共用 `kimi_code_key` / `glm_coding_key`。OMP 的 TokensFlow `kimi_tf` 等扩展 Provider 使用独立引用，不能因为同叫 Kimi 就自动改用其 key。共享读取、跨 profile/协议、写入分组与不泄漏渲染的现有离线测试已复核通过。
+
+### 0.15 配置复核
+
+| 调整 | 原因与所有权 |
+| --- | --- |
+| `upstreamRetry=false` | 关闭新版为未声明渠道自动添加的最多 5 次重试；沿用既有明确的 provider retryPolicy，避免叠加，持续受管。 |
+| `plugin-package-inventory-deepseek.config.enabled=false`、`session-log-deepseek.config.enabled=false` | 不向 DeepSeek 官方协议的 baseURL 额外发送插件清单和增量会话日志；本地原生会话存储保持工作。 |
+| `taskNotifications=unfocused`、`notificationMethod=auto` | 只首次初始化，后台完成提示由终端能力决定；用户可在 `/settings` 关闭。没有修改 tmux focus-events/passthrough，不能保证通知在当前客户端显示。 |
+| UI 偏好迁入原生 settings.json | 使用上游首导，旧 profile 只提供默认；重复 apply 保留原生用户值和未知 values。 |
+| 保留 Catppuccin、鲸鱼、收起侧栏、现有状态栏、standard | 新版 Theme 仍为 81 字段；无需换主题或削减工具。 |
+| 保留手动 `/effort`、workspace-write + ask、Perry ON | 不为所有模型强制统一推理档位，不因权限记忆扩大默认权限；已接受的 Perry 上游缺口继续追踪。 |
+
+薄启动器通过公开 `--profile agentcfg` 标明设置来源，并在传给 Core 应用参数前消费标志，避免导入错误的 dsh-tui 目录或把标志发送为任务正文。
+
+新版插件查询命令改为 `/plugin`，旧 `/plugins` 已移除；`/plugin list`、`/plugin info` 是查询入口，受管安装仍由 agentcfg 锁和 sync 管理。`dsh-proxy` 与 `dsh` 共用同一实例及新锁，不维护第二份运行包。
 
 ### 日常 UI、状态栏与图标
 
@@ -146,11 +163,11 @@ TUI 的 `background` 表示徽标填充，配置为 blue，与 inverseText 的 b
 
 推理档位还要求当前会话有明确的effort值；未指定时即使`statusBar.thinking=true`也留空，不能由此判断推理已关闭。`/effort status`将当前档位或`—`写入会话的本地输出，便于回看；`/effort`在当前路由支持多个档位时打开选择器，左右键即时设置，Enter或Esc关闭而不回滚；`/effort medium`可直接设置有效档位。原生设置立即作用于当前路由，并保存到隔离HOME的`.dsh-tui/effort.json`，正式workstation对应`~/.local/share/agentcfg/instances/dsh/dsh-default/user-home/.dsh-tui/effort.json`。它属于本实例的共享原生偏好，不是每模型独立记录；其他路由会按支持档位回退，不应向所有provider硬写medium。若status已有档位但底栏仍缺失，在`/settings`检查状态栏的Thinking开关；apply保留用户现有UI偏好。`/thinking`只控制推理文本展示，不调整effort。锁定pi-ai目录的`openai-codex/gpt-6-sol`标注支持推理，TUI提供low/medium/high/xhigh/max，但这不是远端所有档位均已实测的证据。
 
-按2026-10-14用户决定，Rotom不新增固定effort默认值，采用手动`/effort`。当原生`/settings`的effortDefault为auto、且没有固定effort时，保存的偏好可跨启动及模型重绑定复用；更高优先级的effortDefault或effort会覆盖该偏好，不支持的模型则回退或保持原生默认。受管apply不写入、重置或删除原生effort.json；取消的默认配置试验没有部署到本机。
+按2026-10-14用户决定，Rotom不新增固定effort默认值，采用手动`/effort`。0.15 同样会记忆手动档位；也可在新版 `/model` 页调整。当原生`/settings`的effortDefault为auto、且没有固定effort时，保存的偏好可跨启动及模型重绑定复用；只有显式 effortDefault 优先于已保存的手动偏好；profile 的 effort 只在没有手动偏好时作为 fallback，不支持的模型则回退或保持原生默认。受管apply不写入、重置或删除原生effort.json；取消的默认配置试验没有部署到本机。
 
 `—`不是缺少API参数的证明：DSH请求先取当前reasoningEffort，再取provider profile的reasoning；两者都未指定时，锁定pi-ai对`openai-codex/gpt-6-sol`按模型的off映射构造`reasoning.effort=none`。因此希望明确使用推理档位时应在DSH聊天框设置有效档位，再用`/effort status`确认，而非依赖空读数。`Current reasoning effort …`和Usage两行在此版本对应status分支；不能将其当作选择器已经打开的证据。上述斜杠命令不是Shell命令。
 
-无鼠标查看当前供应商：输入裸`/model`并按Enter打开选择器，看`✓`标记的当前provider/model；`❯`仅是键盘焦点。有最近模型时行前显示provider，分组视图中当前provider组也有选中标记；看完按Esc退出。带`provider/model`参数的`/model`会切换路由。0.14.0的statusBar schema没有provider字段，公开贡献协议也没有状态栏片段接口；不添加无效字段或改写模型ID。`/status`只报模型，不报provider。
+无鼠标查看当前供应商：输入裸 `/model` 打开新版提供商标签、模型、推理档位三段选择器；Tab/Shift+Tab 切提供商，↑/↓选模型，←/→调档位，Enter 应用，Esc 取消。当前模型置顶，键盘焦点不等于已切换；带 provider/model 参数会直接切换。0.15 的内置 statusBar 仍没有 provider 字段；新增公开独立状态贡献接口不等于内置 provider 插槽，本配方没有为此添加另一套 UI。`/status` 仍不作为供应商读数。
 
 可配置类别包括主题/极简界面、欢迎图形与大字、伙伴皮肤、侧栏及面板、状态栏字段与紧凑布局、工具卡/滚动展示、图片预览、按键等。通过 `/settings` 修改原生用户偏好，`/theme` 选主题，`/panel` 打开面板。TUI 的大字字体不是系统字体选择器。0.14.0 没有 Nerd Font 图标主题开关；可在客户端采用 Nerd Font 绘制普通 Unicode，但不会自动变成 OMP 的 Nerd 图标集。SSH 字体由本地终端决定。
 
@@ -261,7 +278,7 @@ DSH 不安装 OpenSpec，不自动部署 Spec 工作流/技能，也不使用 Sp
   --evidence /absolute/path/to/new-evidence-directory
 ```
 
-中文多行/窄窗/原生文件工具/退出的独立入口为 `scripts/smoke-dsh-ui.py --allow-host --runtime ... --evidence ...`（仅本地假模型）。加 `--agentcfg-cli` 可验收真实 `agentcfg --local <临时配置> --profile dsh-default apply/sync/run`；完整复制已有 sealed runtime 及原收据，sync 必须保持无变化，run 不联网安装。两个新 HOME 的重建入口为 `scripts/smoke-dsh-rebuild.py --allow-install --cache /absolute/task-cache --evidence ...`，缓存根必须满足私人路径祖先保护；记录显式共享下载缓存，不称两次 cold build。两个脚本均用本任务私人 `/dev/shm` HOME，当前仅在 Linux 运行。
+中文多行/窄窗/原生文件工具/退出的独立入口为 `scripts/smoke-dsh-ui.py --allow-host --runtime ... --evidence ...`（仅本地假模型）。`--settings-migration` 单独验证原生首导、两次重启、手动 effort 持久化、模型标签取消及未知偏好/重复 apply 保留，不进行模型请求。加 `--agentcfg-cli` 可验收真实 `agentcfg --local <临时配置> --profile dsh-default apply/sync/run`；完整复制已有 sealed runtime 及原收据，sync 必须保持无变化，run 不联网安装。两个新 HOME 的重建入口为 `scripts/smoke-dsh-rebuild.py --allow-install --cache /absolute/task-cache --evidence ...`，缓存根必须满足私人路径祖先保护；记录显式共享下载缓存，不称两次 cold build。两个脚本均用本任务私人 `/dev/shm` HOME，当前仅在 Linux 运行。
 
 Cursor 原生认证面板的独立入口为 `scripts/smoke-dsh-auth-panel.py --allow-host --runtime ... --evidence ...`，使用真实 TUI/QuestionBridge、假 Coordinator 和明确标记的假长链接，验证面板交互，不访问真实认证。`scripts/check-dsh-cursor-panel.mjs /absolute/runtime` 另测并发、重新显示、错误隔离、注销失败和文件漂移。复制动作的完整参数可验证，真实 SSH 剪贴板和浏览器仍需客户端手测。
 

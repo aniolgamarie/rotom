@@ -44,6 +44,10 @@ def test_real_recipe_preserves_full_tui_config_and_has_no_static_oauth_catalog(t
   assert fields["/llm-pi-ai/config/providers/agentcfg-kimi_code_openai/baseURL"] == w.resolved.data["providers"]["kimi_code_openai"]["base_url"]
   assert fields["/dsh-tui/config/terminalImages"] is False
   assert fields["/dsh-tui/config/backend"] == "dsh"
+  assert fields["/dsh-tui/config/upstreamRetry"] is False
+  for plugin in ("plugin-package-inventory-deepseek", "session-log-deepseek"):
+    assert next(row for row in patch if row.get("id") == plugin) == {"id": plugin, "config": {"enabled": False}}
+  assert not any(a.target.path.endswith(("settings.json", "effort.json")) for a in candidate.artifacts)
   status_bar = [a for a in candidate.artifacts if a.target.selector and a.target.selector.startswith("/dsh-tui/config/statusBar/")]
   assert len(status_bar) == 18
   assert all(a.target.ownership is Ownership.INITIALIZE for a in status_bar)

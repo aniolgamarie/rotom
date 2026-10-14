@@ -240,6 +240,117 @@ def session_resume_smoke(spec, env, project, instance, state, target, content, r
     resume_picker="NOT RUN", cursor_account="NOT RUN", compaction="NOT RUN", geometry=[[100, 24], [100, 24]])
 
 
+def settings_migration_smoke(spec, env, project, workspace, lock, state, result, transcript):
+  """真实首导与重启；仅编辑测试实例的原生用户偏好，不复制真实账号。"""
+  from agentcfg import commands
+  prefs = workspace.instance / "user-home/.dsh-tui"
+  settings = prefs / "settings.json"
+  effort = prefs / "effort.json"
+  assert not settings.exists()
+  for phase in ("import", "restart"):
+    result["stage"] = "settings." + phase
+    master, slave = pty.openpty()
+    before = termios.tcgetattr(slave)
+    fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 120, 0, 0))
+    child, start = None, len(transcript)
+    try:
+      child = subprocess.Popen(list(spec.argv), cwd=project, env=env, stdin=slave, stdout=slave, stderr=slave)
+      def pump():
+        if select.select([master], [], [], 0.1)[0]:
+          try:
+            transcript.extend(os.read(master, 65536))
+          except OSError:
+            pass
+      def visible():
+        text = transcript[start:].decode(errors="replace")
+        text = re.sub(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)", "", text)
+        return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
+      def wait(predicate, seconds=30):
+        deadline = time.monotonic() + seconds
+        while not predicate() and child.poll() is None and time.monotonic() < deadline:
+          pump()
+        if not predicate():
+          raise RuntimeError("SETTINGS_STAGE_TIMEOUT")
+      def settle():
+        deadline = time.monotonic() + 0.7
+        while time.monotonic() < deadline:
+          pump()
+      def command(text):
+        os.write(master, (text + "\r").encode())
+        settle()
+      wait(lambda: settings.exists() and not termios.tcgetattr(slave)[3] & termios.ICANON)
+      settle()
+      os.write(master, b"\r")
+      settle()
+      document = json.loads(settings.read_bytes())
+      result.setdefault("observed_settings", {})[phase] = document
+      result["stage"] = "settings." + phase + ".assert_values"
+      assert document["version"] == 1
+      values = document["values"]
+      if phase == "import":
+        assert values["brand"] == "deepseek" and values["whale"] is True
+        assert values["statusBar"]["tps"] is True
+        assert values["taskNotifications"] == "unfocused" and values["notificationMethod"] == "auto"
+        assert values.get("effortDefault", "auto") == "auto"
+        result["settings_imports_upstreamRetry"] = "upstreamRetry" in values
+        result["checks"]["native_settings_first_import"] = "PASS"
+        result["stage"] = "settings.import.effort"
+        command("/effort high")
+        wait(lambda: effort.exists() and json.loads(effort.read_bytes()).get("effort") == "high", 10)
+      else:
+        assert values["statusBar"]["tps"] is False
+        assert values["statusBar"]["rotomFixtureUnknown"] == {"keep": True}
+        assert values["taskNotifications"] == "off"
+        result["checks"]["native_user_values_survive_restart"] = "PASS"
+      result["stage"] = "settings." + phase + ".effort_status"
+      command("/effort status")
+      wait(lambda: "Currentreasoningefforthigh" in re.sub(r"\s+", "", visible()), 10)
+      result["checks"]["manual_effort_" + phase] = "PASS"
+      model = prefs / "model.json"
+      model_before = model.read_bytes() if model.exists() else None
+      result["stage"] = "settings." + phase + ".model_cancel"
+      command("/model")
+      wait(lambda: "fixture-not-real" in visible(), 10)
+      os.write(master, b"\t")
+      settle()
+      os.write(master, b"\x1b")
+      settle()
+      assert (model.read_bytes() if model.exists() else None) == model_before
+      result["checks"]["model_tabs_cancel_" + phase] = "PASS"
+      os.write(master, b"\x03")
+      settle()
+      if child.poll() is None:
+        os.write(master, b"\x03")
+      wait(lambda: child.poll() is not None, 10)
+      assert child.returncode == 0 and before == termios.tcgetattr(slave)
+      result.setdefault("settings_processes", []).append({"phase": phase, "exit": 0, "termios_restored": True})
+    finally:
+      if child is not None and child.poll() is None:
+        child.terminate()
+        try:
+          child.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+          child.kill()
+          child.wait()
+      os.close(master)
+      os.close(slave)
+    if phase == "import":
+      document = json.loads(settings.read_bytes())
+      document["values"]["statusBar"].update(tps=False, rotomFixtureUnknown={"keep": True})
+      document["values"]["taskNotifications"] = "off"
+      settings.write_text(json.dumps(document) + "\n")
+      settings.chmod(0o600)
+      saved_settings, saved_effort = settings.read_bytes(), effort.read_bytes()
+      applied = commands.apply_candidate(workspace, lock, workspace.candidate(lock.identity))
+      assert applied["changes"] == 0
+      assert settings.read_bytes() == saved_settings and effort.read_bytes() == saved_effort
+      result["checks"]["repeat_apply_preserves_native_preferences"] = "PASS"
+  assert state["requests"] == 0
+  result.update(overall="PASS", stage="complete", settings_shape="version/values/imported",
+    settings_edits="synthetic file edits in isolated HOME", real_model_calls=0,
+    http=dict(state), geometry=[[120, 32], [120, 32]])
+
+
 def agentcfg_cli_argv(repo, machine, command, project=None):
   # --machine 接受配置名称，临时配置文件必须使用公开 --local 选择器。
   argv = [str(repo / "agentcfg"), "--local", str(machine), "--profile", "dsh-default", command]
@@ -282,6 +393,7 @@ def main():
   parser.add_argument("--agentcfg-cli", action="store_true", help="通过真实 agentcfg apply/sync/run 验收已封存包，不联网安装")
   parser.add_argument("--maid-portrait", action="store_true", help="验证原生女仆立绘及伙伴皮肤优先级，仍使用假模型")
   parser.add_argument("--session-resume", action="store_true", help="验证原生模型偏好、公开 --resume 路由和短工具正文历史")
+  parser.add_argument("--settings-migration", action="store_true", help="验证原生设置首导、重启与手动 effort，不调用真实模型")
   args = parser.parse_args()
   if not args.allow_host:
     parser.error("需要 --allow-host；默认测试不启动第三方宿主")
@@ -289,6 +401,8 @@ def main():
     parser.error("--agentcfg-cli 单独验收欢迎、输入、工具、取消与退出")
   if args.session_resume and args.maid_portrait:
     parser.error("--session-resume 与 --maid-portrait 分别验收")
+  if args.settings_migration and (args.agentcfg_cli or args.session_resume or args.maid_portrait):
+    parser.error("--settings-migration 单独验收")
   repo = Path(__file__).resolve().parents[1]
   sys.path.insert(0, str(repo / "src"))
   from agentcfg import commands, dependencies, runtime_packages
@@ -340,6 +454,8 @@ def main():
         '[overrides.profiles.dsh-default]\nproviders=["fixture"]\nmodels=["fixture"]\n[overrides.profiles.dsh-default.roles]\nmain="fixture"\n'
         f'[secrets]\nfixture={json.dumps(key)}\n')
       machine.chmod(0o600)
+      if args.settings_migration:
+        machine.write_text(machine.read_text().replace('input=["text"]\n', 'input=["text"]\nreasoning_efforts=["low","high"]\n'))
       if args.session_resume:
         raw = machine.read_text().replace('remote_id="fixture-not-real"', 'remote_id="fixture-a"')
         raw += '\n[overrides.models.fixture_b]\nprovider="fixture"\nremote_id="fixture-b"\ninput=["text"]\n'
@@ -371,7 +487,10 @@ def main():
       if not args.agentcfg_cli:
         launch_argv = list(spec.argv)
       result.update(argv=launch_argv, native_argv=list(spec.argv), candidate_digest=candidate.generation)
-      if args.session_resume:
+      if args.settings_migration:
+        result.update(candidate_digest=candidate.generation, node=node)
+        settings_migration_smoke(spec, child_env, project, workspace, lock, state, result, transcript)
+      elif args.session_resume:
         result.update(candidate_digest=candidate.generation, node=node)
         session_resume_smoke(spec, child_env, project, workspace.instance, state, target, content, result, transcript)
       else:

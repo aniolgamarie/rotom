@@ -341,7 +341,7 @@ def test_unknown_custom_theme_is_rejected():
 
 def test_catppuccin_covers_selected_tui_theme_contract_and_official_mocha():
   colors = json.loads((ROOT / "agents/dsh/templates/theme-catppuccin.json").read_bytes())["colors"]
-  # TUI 0.14.0 的现行 Theme 字段；防止静默继承雾蓝或写入不生效的别名。
+  # TUI 0.15.0 的现行 Theme 字段；防止静默继承雾蓝或写入不生效的别名。
   fields = set("""autoAccept bashBorder accent toolNameMutate toolNameExec accentShimmer activity activityShimmer
     permission permissionShimmer planMode ide promptBorder promptBorderShimmer text inverseText inactive inactiveShimmer
     subtle suggestion remember background success error warning merged warningShimmer diffAdded diffRemoved
@@ -454,3 +454,35 @@ def test_existing_status_bar_in_owned_shared_file_consumes_initialization_withou
     items = dep.read_state(tree)["current"]["items"].values()
   imported = [item for item in items if item["selector"].startswith("/dsh-tui/config/statusBar/")]
   assert len(imported) == 18 and all(item["baseline"] == dep.ABSENT for item in imported)
+
+
+def test_tui_upgrade_preserves_native_settings_effort_and_profile_preferences(tmp_path):
+  root, state = tmp_path / "instance", tmp_path / "state"
+  _, proposal = route_candidates()
+  fields = {a.target.selector: a for a in proposal.artifacts if a.target.path == PATCH}
+  for key, value in (("upstreamRetry", False), ("taskNotifications", "unfocused"), ("notificationMethod", "auto")):
+    artifact = fields["/dsh-tui/config/" + key]
+    assert json.loads(artifact.content) == value
+    assert artifact.target.ownership is (Ownership.FIELDS if key == "upstreamRetry" else Ownership.INITIALIZE)
+  assert not any("effort" in selector.lower() for selector in fields)
+  dep.apply(root, state, proposal, BINDING, LAUNCH)
+  preserved = {
+    "user-home/.dsh-tui/settings.json": b'{"taskNotifications":"always","notificationMethod":"bel","unknown":{"keep":true}}',
+    "user-home/.dsh-tui/effort.json": b'{"effort":"xhigh","unknown":{"keep":true}}',
+  }
+  with Tree(root) as tree:
+    document = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")
+    config = document["dsh-tui"]["config"]
+    config.update(taskNotifications="off", notificationMethod="osc9", effort="high", unknown={"keep": True})
+    tree.write_state(PATCH, dep.encode_native(document, "cordis-yaml"))
+    for path, raw in preserved.items():
+      tree.write_state(path, raw)
+  for _ in range(2):
+    assert dep.apply(root, state, proposal, BINDING, LAUNCH)["changes"] == 0
+    with Tree(root) as tree:
+      config = dep.parse_native(tree.read(PATCH)[0], "cordis-yaml")["dsh-tui"]["config"]
+      assert config["upstreamRetry"] is False
+      assert config["taskNotifications"] == "off" and config["notificationMethod"] == "osc9"
+      assert config["effort"] == "high" and config["unknown"] == {"keep": True}
+      for path, raw in preserved.items():
+        assert tree.read(path)[0] == raw

@@ -12,12 +12,12 @@ const manifest = (resolve, name) => JSON.parse(readFileSync(resolve.resolve(`${n
 const fail = () => { throw new Error("managed runtime package versions or module identities differ"); };
 for (const [name, version] of Object.entries(expected)) {
   const actual = manifest(require, name);
-  const localVersion = { "rotom-dsh-cursor-terminal": "0.1.1", "rotom-dsh-review-context": "0.1.0" }[name];
+  const localVersion = { "rotom-dsh-cursor-terminal": "0.1.2", "rotom-dsh-review-context": "0.1.0" }[name];
   if (actual.name !== name || actual.version !== (localVersion ?? version)) fail();
 }
 if (manifest(require, "@deepseek-ai/cordis").version !== "4.0.5-alpha.1"
     || manifest(require, "@deepseek-ai/schemastery").version !== "3.18.5-alpha.1"
-    || manifest(require, "@deepseek-harness-tui/dsh-tui").version !== "0.14.0") fail();
+    || manifest(require, "@deepseek-harness-tui/dsh-tui").version !== "0.15.0") fail();
 const tui = createRequire(require.resolve("@deepseek-harness-tui/dsh-tui/package.json"));
 const thin = createRequire(require.resolve("rotom-dsh-cursor-terminal"));
 const cursor = createRequire(thin.resolve("dsh-cursor-subscription"));

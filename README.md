@@ -22,7 +22,7 @@ Use [`omp-kernel`](docs/omp-kernel.md) to reproduce the reviewed kernel configur
 
 **First-time users: start with the [Getting Started Guide](docs/getting-started.md).** It walks through environment setup, local file creation, installation, deployment, login, daily startup, and backup/restore in actual operation order, and explains command output. When using only Codex/Cursor subscriptions, you can leave `[secrets]` empty — no need to copy the private-gateway example below.
 
-DSH upgrade candidate: Core 0.2.0-rc.2 (prerelease), unmodified TUI 0.14.0 and Cursor subscription 0.6.12. Use a separate HOME/XDG instance; old deployments are blocked from automatic migration and remain available from their original checkout. Live accounts and AI approval are pending. See [DSH guide](docs/dsh.md) and [current acceptance](docs/acceptance/dsh-upgrade-20261012.md).
+DSH uses one managed dsh-default recipe: Core 0.2.0-rc.2 (prerelease), unmodified TUI 0.15.0, Cursor subscription 0.6.12, and Perry auto-review 0.12.17. Native UI preferences and manual effort persist in the isolated instance HOME. Auto-review is enabled with documented upstream limitations; live account evidence is tracked separately. See [DSH guide](docs/dsh.md) and [current acceptance](docs/acceptance/dsh-upgrade-20261012.md).
 
 Three commands cover the basics: `sync` installs software, `apply` deploys configuration, `run` starts DSH. Run them in order the first time; afterwards `run` is usually all you need. In the examples below, `workstation` is the local machine config name and `dsh-default` is the recipe name — both can be used as-is.
 

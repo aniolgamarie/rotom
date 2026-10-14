@@ -4,10 +4,10 @@
   "private": true,
   "dependencies": {
     "@deepseek-ai/dsh": "0.2.0-rc.2",
-    "@deepseek-harness-tui/dsh-tui": "0.14.0",
+    "@deepseek-harness-tui/dsh-tui": "0.15.0",
     "@deepseek-ai/cordis": "4.0.5-alpha.1",
     "@deepseek-ai/schemastery": "3.18.5-alpha.1",
-    "rotom-dsh-cursor-terminal": "file:vendor/rotom-dsh-cursor-terminal-0.1.1.tgz",
+    "rotom-dsh-cursor-terminal": "file:vendor/rotom-dsh-cursor-terminal-0.1.2.tgz",
     "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
     "@deepseek-ai/dsh-agent": "0.2.0-rc.2",
     "@deepseek-ai/dsh-scope": "0.2.0-rc.2",

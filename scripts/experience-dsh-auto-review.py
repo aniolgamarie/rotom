@@ -49,7 +49,7 @@ def runtime_info(runtime):
       ("sdkRootMainStatus", "perryTuiMainStatus", "publicMainImport", "alpha1EvalNotLoaded"))):
     raise Conflict("需要已完成安装和主路径检查的 RC2 诊断 runtime")
   expected = {"@deepseek-ai/dsh": "0.2.0-rc.2", "dsh-auto-review": "0.12.17",
-    "@deepseek-harness-tui/dsh-tui": "0.14.0", "@deepseek-ai/cordis": "4.0.5-alpha.1",
+    "@deepseek-harness-tui/dsh-tui": "0.15.0", "@deepseek-ai/cordis": "4.0.5-alpha.1",
     "@deepseek-ai/schemastery": "3.18.5-alpha.1"}
   for name, version in expected.items():
     if json.loads((runtime / "node_modules" / name / "package.json").read_bytes())["version"] != version:

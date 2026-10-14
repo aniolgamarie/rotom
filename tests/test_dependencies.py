@@ -41,6 +41,7 @@ def test_failed_sync_keeps_old_runtime_and_repository_lock(tmp_path, monkeypatch
     if "--frozen-lockfile" in argv:
       assert "--ignore-scripts" in argv and "--node-linker=hoisted" in argv and "--package-import-method=copy" in argv
       assert "--force" not in argv and "--legacy-peer-deps" not in argv
+      assert yaml.safe_load((cwd / "pnpm-workspace.yaml").read_bytes())["minimumReleaseAgeExclude"] == lock.metadata["minimum_release_age_exclude"]
       (cwd / "partial").write_text("partial installation")
       if failure == "install":
         raise DependencyError("合成安装失败")
@@ -283,3 +284,43 @@ def test_read_lock_rejects_missing_pnpm_integrity_even_with_recomputed_identity(
   (root / "manifest.json").write_text(json.dumps(metadata))
   with pytest.raises(ConfigError):
     dep.read_lock(repository)
+
+
+@pytest.mark.parametrize("spec", ["*", "execa@10.1.1", "@deepseek-harness-tui/dsh-tui@latest", "@deepseek-harness-tui/dsh-tui@0.14.0"])
+def test_release_age_exception_rejects_unselected_or_unbounded_versions(tmp_path, spec):
+  repository = lock_repository(tmp_path)
+  path = repository / "agents/dsh/lock-policy.json"
+  policy = json.loads(path.read_bytes())
+  policy["minimum_release_age_exclude"] = [spec]
+  path.write_text(json.dumps(policy))
+  with pytest.raises(ValueError):
+    dep.lock_policy(repository)
+
+
+def test_release_age_exception_is_locked_and_cannot_drift(tmp_path):
+  repository = lock_repository(tmp_path)
+  lock = dep.read_lock(repository)
+  dep.prepare_pnpm_policy(tmp_path, lock.metadata)
+  assert yaml.safe_load((tmp_path / "pnpm-workspace.yaml").read_bytes()) == {"minimumReleaseAgeExclude": ["@deepseek-harness-tui/dsh-tui@0.15.0"]}
+  changed = {**lock.metadata, "minimum_release_age_exclude": []}
+  assert dep.lock_identity(lock.package, lock.resolution, changed, lock.installer_resolution) != lock.identity
+  path = repository / "locks/dsh/manifest.json"
+  path.write_text(json.dumps(changed))
+  with pytest.raises(ConfigError):
+    dep.read_lock(repository)
+
+
+@pytest.mark.parametrize("version", ["*", "latest"])
+def test_release_age_exception_rejects_mutable_input_before_resolution(tmp_path, version):
+  repository = lock_repository(tmp_path)
+  path = repository / "agents/dsh/dependencies.json"
+  package = json.loads(path.read_bytes())
+  package["dependencies"]["@deepseek-harness-tui/dsh-tui"] = version
+  path.write_text(json.dumps(package))
+  path = repository / "agents/dsh/lock-policy.json"
+  policy = json.loads(path.read_bytes())
+  policy["packages"] = package["dependencies"]
+  policy["minimum_release_age_exclude"] = ["@deepseek-harness-tui/dsh-tui@" + version]
+  path.write_text(json.dumps(policy))
+  with pytest.raises(ValueError):
+    dep.lock_policy(repository)
