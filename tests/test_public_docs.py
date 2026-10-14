@@ -11,7 +11,7 @@ spec.loader.exec_module(public_docs)
 
 def test_broken_link_and_machine_path_report_locations_only(tmp_path):
   path = tmp_path / "README.md"
-  private_path = "/home/private-person/private-project"
+  private_path = "/home/" + "private-person/private-project"
   path.write_text("[missing](docs/absent.md)\n" + private_path + "\n")
   findings = public_docs.inspect(tmp_path, ["README.md"])
   assert {item["category"] for item in findings} == {"broken-local-link", "machine-specific-path"}
