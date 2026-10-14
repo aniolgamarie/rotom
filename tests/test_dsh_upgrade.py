@@ -317,6 +317,8 @@ def test_welcome_default_and_visual_preferences_use_public_configuration():
   targets = {target.path for target in adapter.managed_targets(data)}
   assert {"user-home/.dsh-tui/themes/rotom-catppuccin.json", "user-home/.dsh-tui/themes/rotom-poimandres.json"} <= targets
   assert fields["/dsh-tui/config/whale"] == (True, Ownership.INITIALIZE)
+  assert fields["/dsh-tui/config/whaleGirl"] == (False, Ownership.INITIALIZE)
+  assert fields["/dsh-tui/config/companion/skin"] == ("whale", Ownership.INITIALIZE)
   assert fields["/dsh-tui/config/whaleIdle"] == (False, Ownership.INITIALIZE)
   assert fields["/dsh-tui/config/minimal"] == (False, Ownership.INITIALIZE)
   assert fields["/dsh-tui/config/sidePanel/open"] == (False, Ownership.INITIALIZE)

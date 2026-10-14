@@ -143,7 +143,8 @@ class DshAdapter(Adapter):
     for field, value in config.items():
       yield "/dsh-tui/config/" + field, value, Ownership.FIELDS
     # 原生 /settings 偏好逐叶首次初始化，后续 apply 不覆盖用户修改。
-    for field, value in {"brand": "deepseek", "whale": True, "whaleIdle": False, "minimal": False,
+    for field, value in {"brand": "deepseek", "whale": True, "whaleGirl": False, "companion/skin": "whale",
+        "whaleIdle": False, "minimal": False,
         "sidePanel/open": False, "sidePanel/panels": "todo,jobs,agents,trajectory,info",
         "statusBar/compact": True, "statusBar/model": True, "statusBar/thinking": True,
         "statusBar/cwd": True, "statusBar/contextUsage": True, "statusBar/cache": True,
