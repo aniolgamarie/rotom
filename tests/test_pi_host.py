@@ -3,6 +3,7 @@
 from pathlib import Path
 from types import SimpleNamespace
 import os
+import json
 
 import pytest
 
@@ -14,6 +15,8 @@ from test_pi_supervisor import request
 
 
 def test_supervisor_registers_before_exec_and_outlives_parent_host(tmp_path, monkeypatch):
+  from agentcfg.pi_control import DIRECTORY_ENV
+  monkeypatch.setenv(DIRECTORY_ENV, '{"device":1,"inode":2,"uid":3}')
   processes = FakeProcesses()
   processes.current[os.getpid()] = identity(os.getpid())
   processes.identity = lambda pid: processes.current[pid]
@@ -68,7 +71,9 @@ def test_supervisor_registers_before_exec_and_outlives_parent_host(tmp_path, mon
         args = {"kind": "worker", "execution_id": "worker", "task_id": "task", "attempt_id": "attempt", "lock_identity": "a" * 64,
           "slice_identity": "b" * 64, "policy_digest": "c" * 64, "candidate_digest": "d" * 64, "planned_workspaces": []}
         allocated = host.service.reply(token, os.geteuid(), request("allocate", args))["result"]
-        host.service.command_resolver = lambda *args: SpawnCommand(("synthetic-worker",), tmp_path, {})
+        host.service.command_resolver = lambda lease, program, payload: SpawnCommand(("synthetic-worker",), tmp_path,
+          {"AGENTCFG_SUPERVISOR_ENDPOINT": str(self.endpoint),
+            "AGENTCFG_SUPERVISOR_CAPABILITY": host.service.issue_capability("worker", lease["lease_id"]), DIRECTORY_ENV: "invalid-old-value"})
         started = host.service.reply(token, os.geteuid(), request("start", {"lease_id": allocated["lease_id"], "program": "worker", "payload": {}}))
         assert started["result"]["state"] == "running"
         assert os.read(children[1].gate, 1) == b"G"
@@ -90,6 +95,9 @@ def test_supervisor_registers_before_exec_and_outlives_parent_host(tmp_path, mon
   assert host.run() == 0
   assert endpoint.polls == 2 and endpoint.closed is True
   assert registered == [201, 202]
+  info = tmp_path.stat()
+  for child in children:
+    assert json.loads(child.environment[DIRECTORY_ENV]) == {"device": info.st_dev, "inode": info.st_ino, "uid": info.st_uid}
   assert processes.signals and all(value["pid"] == 202 for value in processes.signals)
   host.store.assert_mutable()
 

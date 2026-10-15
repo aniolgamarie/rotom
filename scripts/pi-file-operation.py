@@ -7,7 +7,7 @@ import sys
 import uuid
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from agentcfg.pi_control import request
+from agentcfg.pi_control import runtime_request as request
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(allow_abbrev=False)

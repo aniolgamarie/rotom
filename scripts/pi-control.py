@@ -9,7 +9,7 @@ import sys
 # 已密封运行包不能在导入时生成 __pycache__。
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from agentcfg.pi_control import read_frame, request
+from agentcfg.pi_control import read_frame, runtime_request as request
 
 
 def main():

@@ -4,6 +4,22 @@ import { SupervisorClient } from "../supervisor-client.ts";
 
 const options = { python: "/fixture/python", client: "/fixture/pi-control.py", endpoint: "/fixture/control.json", capability: "private-fixture-capability" };
 
+test("control directory identity is an opaque construction-time binding", async () => {
+  const key = "AGENTCFG_SUPERVISOR_DIRECTORY_IDENTITY", previous = process.env[key];
+  const identity = '{"device":1,"inode":18446744073709551614,"uid":1000}';
+  try {
+    process.env[key] = identity;
+    const client = new SupervisorClient({ ...options, invoke: async value => {
+      assert.equal(value.directoryIdentity, identity);
+      return JSON.stringify({ schema_version: 1, ok: true, result: {} });
+    } });
+    process.env[key] = "changed-after-construction";
+    await client.call("handshake", {});
+  } finally {
+    if (previous === undefined) delete process.env[key]; else process.env[key] = previous;
+  }
+});
+
 test("control messages use a separate trusted capability and preserve literal arguments", async () => {
   const calls = [];
   const client = new SupervisorClient({ ...options, invoke: async value => {

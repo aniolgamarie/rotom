@@ -9,11 +9,12 @@ const codexAdmissionCodes = new Set(["CODEX_SYSTEM_CONFIG_PRESENT", "CODEX_SYSTE
   "CODEX_MANAGED_PREFERENCES_PRESENT", "CODEX_MANAGED_PREFERENCES_UNVERIFIED", "CODEX_ACCOUNT_CONFIG_UNVERIFIED",
   "CODEX_ORGANIZATION_ACCOUNT_UNSUPPORTED", "CODEX_CONFIG_PLATFORM_UNSUPPORTED", "CODEX_LOGIN_CONFIG_UNVERIFIED"]);
 
-function invokeProcess({ python, client, endpoint, capability, request, timeout }) {
+function invokeProcess({ python, client, endpoint, capability, directoryIdentity, request, timeout }) {
   return new Promise((resolveDone, rejectDone) => {
     const child = spawn(python, ["-I", client], { stdio: ["pipe", "pipe", "pipe"],
       env: { HOME: process.env.HOME ?? "/", PATH: process.env.PATH ?? "/usr/bin:/bin",
-        AGENTCFG_SUPERVISOR_ENDPOINT: endpoint, AGENTCFG_SUPERVISOR_CAPABILITY: capability } });
+        AGENTCFG_SUPERVISOR_ENDPOINT: endpoint, AGENTCFG_SUPERVISOR_CAPABILITY: capability,
+        ...(directoryIdentity === undefined ? {} : { AGENTCFG_SUPERVISOR_DIRECTORY_IDENTITY: directoryIdentity }) } });
     const chunks = [];
     let bytes = 0, failed = false;
     const fail = () => {
@@ -38,10 +39,11 @@ function invokeProcess({ python, client, endpoint, capability, request, timeout 
 }
 
 export class SupervisorClient {
-  constructor({ python, client, endpoint, capability, invoke = invokeProcess, timeout = 30000 }) {
+  constructor({ python, client, endpoint, capability, directoryIdentity = process.env.AGENTCFG_SUPERVISOR_DIRECTORY_IDENTITY, invoke = invokeProcess, timeout = 30000 }) {
     if (![python, client, endpoint].every(value => text(value) && isAbsolute(value)) || !text(capability)
-        || !Number.isSafeInteger(timeout) || timeout < 1 || timeout > 30000) reject();
-    this.options = { python, client, endpoint, capability, timeout };
+        || !Number.isSafeInteger(timeout) || timeout < 1 || timeout > 30000
+        || directoryIdentity !== undefined && (!text(directoryIdentity) || directoryIdentity.length > 1024)) reject();
+    this.options = { python, client, endpoint, capability, directoryIdentity, timeout };
     this.invoke = invoke;
   }
   async call(method, args) {

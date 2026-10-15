@@ -12,7 +12,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from agentcfg.activity import digest
 from agentcfg.model_delegate import validate_record
-from agentcfg.pi_control import request as control_request
+from agentcfg.pi_control import runtime_request as control_request
 from agentcfg.pi_delegate_mcp import DelegateMcp
 from agentcfg.storage import Conflict, Tree
 

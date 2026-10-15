@@ -18,7 +18,7 @@ from agentcfg.activity import digest
 from agentcfg.deployment import json_bytes
 from agentcfg.model_delegate import validate_record
 from agentcfg.model_delegate_backends import CodexEvents, codex_command
-from agentcfg.pi_control import request as control_request
+from agentcfg.pi_control import runtime_request as control_request
 from agentcfg.pi_codex_admission import CodexAdmissionError, admit_codex_execution, admit_codex_endpoint
 from agentcfg.pi_delegate_policy import validate_policy_binding
 from agentcfg.pi_supervisor import closed

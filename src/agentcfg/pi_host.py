@@ -173,6 +173,15 @@ class HostSupervisor:
     if command.stdin_pipe: streams["stdin"] = subprocess.PIPE
     terminal = None
     environment = dict(command.environment)
+    # 用户命名空间会隐藏根祖先 UID；只交付本监督者已严格验证的控制目录身份。
+    from .pi_control import DIRECTORY_ENV
+    environment.pop(DIRECTORY_ENV, None)
+    if (environment.get("AGENTCFG_SUPERVISOR_ENDPOINT")
+        and environment["AGENTCFG_SUPERVISOR_ENDPOINT"] == str(self.server.endpoint)
+        and environment.get("AGENTCFG_SUPERVISOR_CAPABILITY")):
+      with Tree(self.server.endpoint.parent) as directory:
+        info = os.fstat(directory.fd)
+        environment[DIRECTORY_ENV] = json.dumps({"device": info.st_dev, "inode": info.st_ino, "uid": info.st_uid}, separators=(",", ":"))
     environment.pop("AGENTCFG_EXECUTION_TTY", None)
     if command.terminal_size is not None:
       from .pi_terminal import TerminalChannels

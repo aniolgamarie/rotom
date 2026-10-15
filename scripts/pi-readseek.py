@@ -13,7 +13,7 @@ import uuid
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from agentcfg.pi_checks import check_environment, linux_verifier_argv, macos_verifier_policy
-from agentcfg.pi_control import request
+from agentcfg.pi_control import runtime_request as request
 from agentcfg.pi_supervisor import closed
 from agentcfg.storage import Tree, ensure_private
 
