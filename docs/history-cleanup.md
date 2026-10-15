@@ -1,48 +1,44 @@
 # Publication privacy and Git history remediation
 
-Current-tree cleanup and historical erasure are separate operations. This preparation removes public operational transcripts, replaces private machine paths, and preserves useful support conclusions. It does **not** rewrite Git history, change author identity, delete other worktrees, or update remote refs.
+The authorized **local `main`-only history cleanup was completed on 2026-10-15**. Other branches, worktrees, remote-tracking refs, and private backups retain their original history. No remote fetch, push, tag, or release was performed. This is a bounded publication cleanup, not whole-repository erasure or an anonymity guarantee.
 
-## What was found and retained
+The durable rules are the [publication policy](publication-policy.md) and [worktree merge gates](worktrees.md). Every future integration into `main` must satisfy those gates. Retained old-lineage branches must start from cleaned `main` and replay only reviewed changes; an ordinary merge would reconnect the history removed from `main`.
 
-The bounded repository scan found local absolute paths and environment details concentrated in dated handoffs and raw acceptance output. Selected history searches confirmed such text had been committed. Commit author metadata also links identities. Pattern hits in synthetic tests, loopback protocol addresses, RFC private-network checks, public upstream URLs, and required third-party notices are not automatically disclosures.
+## Scope and completed evidence
 
-The scan did not inspect real key/authentication/session files, browser data, keychains, or other applications' account stores. Named credential-like tracked paths were excluded from body inspection. This is not a claim that all historical credentials have been exhaustively checked.
+The rewritten base is `a43dc4445da49e15179d6f0a90343e2b7a214fa5`, with tree `546b64df73c3e8e956231c5d63bc3de83460bc12`. The following documentation-only completion record builds on that base. Platform: Linux x86_64, CPython 3.11.11. `git-filter-repo` reported version identifier `a40bce548d2c`.
 
-Publication cleanup retains:
+| Check | Result and boundary |
+| --- | --- |
+| Private backup | PASS: all 17 original refs bundled and verified; staged and unstaged patches saved for four original worktrees, without copying native credentials or sessions |
+| Restore trial | PASS: all refs and the original `main` tree restored in isolation; both worktrees with unfinished changes reproduced exactly, including staged/unstaged status and patch bytes |
+| Rewrite scope | PASS: only `refs/heads/main` changed; the other 16 refs and three retained development worktrees remained unchanged |
+| Retired documents | PASS: 1,118 exact retired document/report paths removed throughout `main` history, with Git-quoted non-ASCII filenames decoded before filtering |
+| Retained historical text | PASS: known local username/private-email literals absent from 3,650 distinct text blobs and commit messages; this is not a general credential scan |
+| Commit metadata | PASS: all 119 commits retained; approved public attribution uses a GitHub noreply address; the existing GitHub bot committer is preserved |
+| Immutable material | PASS: 123,094 per-commit lock, vendor, upstream, and legal entries unchanged; the current complete file tree is byte-identical before and after filtering |
+| Source archives | PASS within scope: 27 source archives, 4,449 members, and 3,214 safe text members checked for known identifiers; no matches |
+| Compressed test fixture | PASS within scope: the public synthetic gzip corpus was checked in memory, expanding to 8,347,197 bytes; no known-identifier matches |
+| Remote history, other clones, other operating systems | NOT RUN; outside this local cleanup |
 
-- English functional/configuration guides, architecture/design explanations, testing policy, release scope, Roadmap, and known issues.
-- Project-owned `specs/`, `.specify/`, and `openspec/` records, with private path redaction where needed. Directory names alone never authorize deletion.
-- Immutable upstream source identities and required LICENSE/NOTICE/attribution material.
-- Concise historical support summaries that state their original scope rather than transferring acceptance to a new candidate.
+The archive check did not read 279 credential-named members and did not text-scan 956 other members. The main text scan excluded 35 binary/non-UTF-8 blobs; the bounded archive and gzip checks cover selected compressed content separately. No real key, authentication, or session store was read. These limits do not establish that historical credentials never existed or that every binary is free of private data.
 
-Raw retired files are not publicly attested by rewritten hashes. An ignored local backup may aid review but is not a public release artifact and should be removed or stored privately after review.
+Private evidence includes exact local commands, filtering callbacks, before/after refs, commit maps, checksums, and restoration results. It is retained outside the public repository with directories at `0700` and files at `0600`; its machine-specific location is not published here. Local Git identity now requires explicit repository configuration, retains the approved public name, and uses a publicly derived GitHub noreply address. Private account email settings were not inspected.
 
-## Reviewable remediation procedure
+## What was removed and preserved
 
-History rewriting is destructive and needs separate explicit approval, coordinated branch handling, and a publication decision. The following is a procedure for a **new disposable clone**, not a command to run in a working repository with active worktrees.
+Retired handoffs, raw acceptance output, repeated progress reports, and their historical file contents were removed from `main`. Confirmed machine identifiers in retained project-owned documentation, specifications, examples, and tests were replaced precisely. Personal email metadata was normalized to the approved public identity.
 
-1. Freeze the proposed publication candidate and inventory branches, tags, remote refs, pull-request refs, existing clones, and author metadata. Preserve active/staged work separately. Retain a private access-controlled backup outside the publication clone.
-2. Build a reviewed path-removal list and literal replacement list in private files. Include historical renamed paths. Avoid broad patterns that remove project specifications or third-party attribution. If any actual credential is confirmed exposed, its owner must revoke or rotate it first.
-3. Decide whether author metadata should use an approved public identity. Changing current Git config does not anonymize old commits. Never invent or silently substitute a contributor's identity; retain legally required attribution.
-4. In the disposable clone only, use a verified `git-filter-repo` version supporting `--sensitive-data-removal` (at least 2.47 per GitHub's documentation). Example forms, after the lists are reviewed:
+Project-owned `specs/`, `.specify/`, and `openspec/` records remain. Maintained English guides, design explanations, Roadmap, known issues, and concise historical support summaries remain. Required LICENSE/NOTICE files, upstream attribution, public source identifiers, dependency locks, and current runtime/configuration resources remain unchanged. Synthetic test values, loopback addresses, and public upstream identities were not treated as private data merely because a pattern matched them.
 
-   ```sh
-   # Remove reviewed paths, including their former names; list is private.
-   git filter-repo --sensitive-data-removal --invert-paths --paths-from-file /private/reviewed-paths.txt
-   # A separate alternative/pass for reviewed literal replacements.
-   git filter-repo --sensitive-data-removal --replace-text /private/replacements.txt
-   ```
+This operation did not alter any deployed agent, key, account, session, proxy, shell, or terminal setting. Existing functional checks retain their original source/digest and execution scope in [release verification](release-verification.md); they are not relabeled as new test runs after a metadata rewrite. Historical commits whose text was redacted are not newly attested reproducible releases, and original commit IDs may no longer resolve from cleaned `main`. Original signatures are not valid attestations of rewritten commits. The private commit map preserves the correspondence.
 
-5. Inspect changed-ref and commit maps, rescan all intended publication refs, verify notices/licenses and current file content, and rerun source/lock validation. Rewriting source bytes can invalidate content identities; do not modify a lock merely to silence that failure.
-6. Present the exact ref changes, backup location, identity decision, tests, and force-update plan for approval. No remote update is included in this preparation.
-7. After an approved remote rewrite, coordinate fresh clones or carefully migrated work. Old branch merges can reintroduce removed history. Review releases, CI artifacts, cached views, pull-request refs, forks, and mirrors separately.
+## Recovery and remaining publication work
 
-Literal text replacement does not automatically sanitize content inside compressed archives. Inventory affected blobs separately and choose exact removal paths or a properly rebuilt declared artifact, preserving required licenses and source/lock closure. Do not assume a clean text scan covers binary history.
+Recovery uses a **new private directory**, never an automatic reset of an active worktree. The backup contains an original all-ref bundle, a separate public-policy increment, a cleaned-main bundle, worktree patches, and manifests. The original bundle restore and unfinished-patch replay were tested. Inspect the manifests and verify bundle checksums before choosing the original or cleaned history; apply each patch only to its recorded base. Restoring old history is a deliberate privacy reversal and must remain private.
 
-A history rewrite changes commit IDs and may invalidate signatures and existing evidence references. It cannot erase copies held by others. Public repository ownership, package/source URLs, license notices, and prior public associations can still identify the project; machine-path cleanup is not anonymity.
+The backup preserves Git content and unfinished tracked work, not a full machine or native-account backup. Configuration rollback, software redeployment, and session-database downgrade are separate operations. No credential or session migration is implied by this history cleanup.
 
-GitHub describes credential rotation, clone coordination, cached/PR references, and rewriting side effects in its [sensitive-data removal guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository). Use the [git-filter-repo documentation](https://github.com/newren/git-filter-repo/blob/main/Documentation/git-filter-repo.txt) for exact supported options. Both should be rechecked at execution time.
+Cached `origin/main` still refers to old history. A local ahead/behind report after the cutover is expected; ordinary pull/merge would reconnect that history. Do not use `git push --mirror`. Any remote rewrite needs a separately authorized, reviewed ref-update plan and coordination for collaborators. Remote-only refs, pull-request refs, releases, CI artifacts, cached views, forks, and mirrors were not inventoried or erased here.
 
-## Preventing recurrence
-
-Use generic `$HOME`, XDG, and `/path/to/workspace` examples. Keep machine overrides, keys, sessions, raw logs, and test accounts outside Git or under explicitly ignored private directories. Run `scripts/check-public-docs.py`; it reports selected path/link findings without echoing matched values. Review staged content and use a credential scanner configured for redacted output in a controlled publication clone if full historical credential assurance is required. Do not publish raw scanner output or add secrets to an AI prompt to investigate a hit.
+GitHub describes credential rotation and remote/cached-copy limits in its [sensitive-data removal guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository). The [git-filter-repo manual](https://github.com/newren/git-filter-repo/blob/main/Documentation/git-filter-repo.txt) documents partial rewrites and callbacks. The executed operation used a fresh local mirror with `--no-local`, explicit `--no-fetch`, and `--refs refs/heads/main`; it did not bypass fresh-clone checks with `--force`.

@@ -25,6 +25,6 @@ The [publication policy](docs/publication-policy.md) covers public content and c
 
 Use fictional domains such as `example.invalid`, reserved test addresses, generic paths, and clearly marked synthetic canaries. Preserve legally required third-party attribution. Run the public-content check before submitting documentation. That check detects selected accidental machine identifiers and broken local links; it is not a comprehensive credential scanner.
 
-Current-tree cleanup does not erase older commits, author metadata, clones, forks, cached views, or CI artifacts. The [history remediation plan](docs/history-cleanup.md) describes the separate, destructive process and its authorization boundary.
+Current-tree cleanup does not erase older commits, author metadata, clones, forks, cached views, or CI artifacts. The [history remediation record](docs/history-cleanup.md) describes the completed local main-only rewrite, private recovery evidence, remaining scope, and authorization boundary.
 
 Store remediation backups outside the public repository with directory mode `0700` and file mode `0600`. Cleanup is not proof that no credentials were exposed. A cleanup limited to `main` leaves old history in retained private refs, worktrees, and backups; remote publication requires separate authorization.

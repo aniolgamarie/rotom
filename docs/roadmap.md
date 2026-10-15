@@ -7,7 +7,7 @@ This roadmap records intended work, not release commitments. Recheck source, loc
 | Priority | Work | Exit condition |
 | --- | --- | --- |
 | Required for a Pi deployment claim | PI-LOCK: rebuild the stale Pi lock through the official repository workflow | Complete source/lock closure and current native/cold evidence; no digest-only refresh |
-| Required for privacy-sensitive publication | Review the [history remediation plan](history-cleanup.md) | Approved disposition of historical machine identifiers and author metadata; current-tree cleanup alone is insufficient |
+| Required for remote publication | Coordinate the remote disposition after [local main-only cleanup](history-cleanup.md) | Separately authorized ref updates and collaborator migration; retained old refs must remain private |
 | Required before tagging | Freeze a candidate and record validation | Relevant tests, lock checks, documentation links, source/license inventory, explicit unresolved limitations |
 | Ongoing | Upstream DSH/Perry fixes | Repeat the real approval-chain and sandbox tests before changing accepted limitations |
 
@@ -26,7 +26,7 @@ Implementation stages:
 3. Compute the selected profile's transitive closure, avoiding static imports that silently require unselected plugins.
 4. Replace historical adaptations with unmodified upstream packages and public extensions where possible; record unsupported behavior otherwise.
 5. Verify cold acquisition, warm offline deployment, cancellation, failure recovery, upgrades, and protection of old installations before removing vendor inputs.
-6. Consider a separately authorized history rewrite only after the new source workflow is reproducible.
+6. Consider any further source/archive history rewrite only after the new source workflow is reproducible; the completed privacy cleanup does not remove declared vendor dependencies.
 
 No floating latest versions at launch, unreviewed lifecycle scripts, force/legacy peer bypasses, or patched hosts. Preserve required notices and licenses. Measure clone size and selected-profile download cost after migration rather than inferring improvements from deleted file counts.
 
@@ -45,4 +45,4 @@ Validation must cover foreground commands, native exit, manager failure, daemon 
 - Extend native and account validation to additional platforms only when suitable authorized environments exist.
 - Maintain English documentation and clearly scoped translations. Prefer durable guides and issue registers over public operational transcripts.
 
-Parallel feature branches and staged work must be reviewed separately. Roadmap entries do not authorize merging unfinished Pi/CLI changes, rewriting history, publishing releases, or modifying deployed instances.
+Parallel feature branches and staged work must satisfy the [worktree merge gates](worktrees.md), including the history cutover procedure where applicable. Roadmap entries do not authorize merging unfinished Pi/CLI changes, rewriting history, publishing releases, or modifying deployed instances.

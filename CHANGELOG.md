@@ -14,7 +14,8 @@ Notable user-visible changes are recorded here. Unreleased entries describe repo
 
 - Established English user guides, reference documentation, design explanations, release scope, known issues, and contribution/security policies.
 - Removed temporary handoffs, repeated phase reports, and raw machine-specific acceptance output from the publication tree; preserved project specifications and third-party provenance.
-- Replaced private machine paths in maintained public material and documented the separate Git history remediation process.
+- Replaced private machine paths in maintained public material and completed the separately authorized local main-only history cleanup; retained private refs and remote history remain outside that cleanup.
+- Added publication privacy, explicit public commit identity, and pre-integration gates for every branch and worktree, including migration of retained old-lineage work.
 - Corrected stale OMP version statements and removed obsolete DSH OpenSpec installation guidance.
 
 ### Existing integration baseline
