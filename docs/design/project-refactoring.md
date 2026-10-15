@@ -262,8 +262,8 @@ performed. Runtime code was frozen before the final offline rerun. Later documen
 changes do not modify the managed host or package inputs.
 
 The user subsequently authorized integration into `main` and local redeployment.
-Those operations are pending execution; authorization does not record completion
-or authorize a remote push.
+The local integration and deployment results are recorded below; no remote push
+was performed or authorized by that integration.
 
 Platform: Linux x86_64, CPython 3.11.11, Node 24.14.0 and npm 11.19.1. The isolated
 toolchain uses the exact declared npm tarball and integrity; no global tool was
@@ -328,10 +328,46 @@ entry and its isolation contract are unchanged.
 
 | Work state | Scope |
 | --- | --- |
-| Completed | Shared admission/exclusive maintenance, preparation recovery, Pi full-owner supervision and control, DSH/OMP publication, deferred credentials, terminal-only migration, matching Pi lock and Linux native checks above |
-| In progress | None within the recorded implementation and Linux validation scope; release, merge and real deployment are separate operations |
+| Completed | Implementation and Linux validation above; fast-forward integration into local `main` at `de2201b`; local DSH apply and deployment/admission checks; termcfg v2 migration and terminal apply below |
+| In progress | Local OMP apply waits for the user to exit the protected native process; dependencies are installed and plan reports no changes. Release and remote publication remain separate |
 | Failed pending decision | No unresolved implementation failure in the recorded scope; superseded failures and fixes remain documented above |
 | Environment unavailable or not run | Other operating systems; Pi Cursor/Bun and other profile native/cold builds; real accounts, concurrent login/refresh and UI-preference stress; broader MCP/PTC/reviewer coverage |
+
+### Local integration and deployment follow-up
+
+The reviewed candidate was fast-forwarded from cleaned `main` to `de2201b` locally,
+without a push. The existing Linux DSH `dsh-default` deployment then passed official
+apply with zero changes. Doctor reported offline-ready, installed dependencies, no
+pending transaction, and zero changes, drift or conflicts; repeated apply was
+idempotent. Checks against the deployed resources and two simultaneous shared
+admissions passed, with exclusive maintenance refused while admission was held.
+These are deployment and lease checks, not a new dual-TUI or live-account test.
+The `dsh` and `dsh-proxy` shortcuts still select the same main-checkout deployment;
+the latter's loopback port 10808 setting changes only the launched process environment.
+
+The termcfg legacy state had no pending transaction. Explicit `migrate --drop-mihomo`
+completed, v2 status and strict doctor passed, and apply succeeded with all four
+terminal targets unchanged. The existing proxy service was not operated on.
+No managed Pi instance was present, so no additional Pi deployment was created.
+
+For `omp-kernel`, dependencies were installed and plan reported zero changes.
+Apply returned exit 4 because a native process held the activity lock. That process
+was not terminated; apply remains pending until the user exits it.
+
+The command selections below use a generic machine name; private paths and native
+account state are not part of this public record:
+
+```sh
+./agentcfg --machine workstation --profile dsh-default apply
+./agentcfg --machine workstation --profile dsh-default doctor
+./agentcfg --machine workstation --profile dsh-default apply
+./termcfg --machine workstation migrate --drop-mihomo
+./termcfg --machine workstation status
+./termcfg --machine workstation doctor --strict
+./termcfg --machine workstation apply
+./agentcfg --machine workstation --profile omp-kernel plan
+./agentcfg --machine workstation --profile omp-kernel apply
+```
 
 Existing deployments remain available. Stop their sessions before explicit
 `plan`/`sync`/`apply`; old Pi launch contracts require migration rather than implicit
