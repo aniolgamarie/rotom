@@ -358,3 +358,26 @@ test("standard empty Response has no body and fails strict JSON", async () => {
   const result = await reviewCommand(input, runtime(async () => new Response(null)));
   expect(result.primary).toMatchObject({ failureCode: "RESPONSE_JSON_INVALID" });
 });
+
+for (const [api, baseUrl, expected] of [
+  ["openai-completions", "https://provider.invalid/v1", "https://provider.invalid/v1/chat/completions"],
+  ["openai-completions", "https://provider.invalid/api/coding/paas/v4", "https://provider.invalid/api/coding/paas/v4/chat/completions"],
+  ["openai-completions", "https://provider.invalid/custom/path///", "https://provider.invalid/custom/path/chat/completions"],
+  ["openai-completions", "https://provider.invalid/", "https://provider.invalid/chat/completions"],
+  ["anthropic-messages", "https://provider.invalid", "https://provider.invalid/v1/messages"],
+  ["anthropic-messages", "https://provider.invalid/v1///", "https://provider.invalid/v1/messages"],
+  ["anthropic-messages", "https://provider.invalid/custom/path/", "https://provider.invalid/custom/path/v1/messages"],
+  ["anthropic-messages", " https://provider.invalid/custom/v1/ ", "https://provider.invalid/custom/v1/messages"],
+]) test(`${api} request preserves configured API base path: ${baseUrl}`, async () => {
+  const requests: string[] = [];
+  const r = runtime(async (url, init) => {
+    requests.push(url);
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body)).model).toBe(model.id);
+    return new Response(JSON.stringify(reviewEnvelope(api, valid(), false)));
+  });
+  r.current = () => ({ ...model, api, baseUrl });
+  r.deadlines = { totalMs: 1000, primaryMs: 1000 };
+  expect((await reviewCommand(input, r)).status).toBe("valid");
+  expect(requests).toEqual([expected]);
+});

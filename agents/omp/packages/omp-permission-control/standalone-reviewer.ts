@@ -241,8 +241,11 @@ export function parseStandaloneReview(text: string): StandaloneReview | undefine
   }
 }
 
-function endpoint(baseUrl: string, suffix: string): string {
-  return `${baseUrl.replace(/\/$/u, "")}${baseUrl.replace(/\/$/u, "").endsWith("/v1") ? "" : "/v1"}${suffix}`;
+function endpoint(baseUrl: string, anthropic: boolean): string {
+  // 与锁定官方 transport 一致：OpenAI 的 baseUrl 已包含 API 路径。
+  if (!anthropic) return `${baseUrl.replace(/\/+$/u, "")}/chat/completions`;
+  const base = baseUrl.trim().replace(/\/+$/u, "");
+  return `${base.endsWith("/v1") ? base.slice(0, -3) : base}/v1/messages`;
 }
 
 const SYSTEM = [
@@ -383,7 +386,7 @@ async function request(model: ReviewerModel, prompt: string, runtime: ReviewRunt
   clock.check(signal);
   clock.enter("response-headers"); onCall();
   let response: Response;
-  try { response = await raceAbort(runtime.fetch(endpoint(model.baseUrl, anthropic ? "/messages" : "/chat/completions"), {
+  try { response = await raceAbort(runtime.fetch(endpoint(model.baseUrl, anthropic), {
     method: "POST",
     signal,
     redirect: "error",

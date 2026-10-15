@@ -7,7 +7,9 @@ import { prepareReviewPacket, type RawReviewInput } from "./review-input";
 import { parseGenericCommands } from "./standalone-shell-analysis";
 import { readCorpusFile } from "../../../../scripts/check-omp-command-history";
 import { join } from "node:path";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { parseGenericCommands as frozenParser } from "../../../../tests/fixtures/omp/command-scenarios/parser-before-home-query";
 
@@ -1403,5 +1405,80 @@ describe("authorization and cwd remain bound across review and execution", () =>
     const result = await (await ready(h)).execute("call_unresolved_deny", { command: "cat *.txt" }, undefined, undefined, h.ctx);
     expect(result.isError).toBe(true); expect(h.fetchCalls).toHaveLength(1); expect(h.execCalls).toHaveLength(0);
     expect(h.selectCalls).toHaveLength(0); expect(h.auditEntries.at(-1).data.reasonCode).toBe("RULE_TARGET_UNVERIFIED");
+  });
+});
+
+
+describe("raw Bash inherited startup environment", () => {
+  test("BASH_ENV is rejected before review or raw execution and never runs its script", async () => {
+    const root = mkdtempSync(join(tmpdir(), "omp-raw-startup-"));
+    const startup = join(root, "startup.sh"), sentinel = join(root, "executed");
+    writeFileSync(startup, `printf startup > '${sentinel}'\n`);
+    const previous = process.env.BASH_ENV;
+    process.env.BASH_ENV = startup;
+    try {
+      // 控制组证明 --noprofile/--norc 仍会执行 BASH_ENV，所有文件均在临时 HOME。
+      const control = spawnSync("/bin/bash", ["--noprofile", "--norc", "-c", ":"], {
+        cwd: root, env: { ...process.env, HOME: root }, encoding: "utf8",
+      });
+      expect(control.status).toBe(0); expect(existsSync(sentinel)).toBe(true);
+      rmSync(sentinel);
+      const h = await fakeHost({ execImpl: async (command, args) => {
+        const result = spawnSync(command === "bash" ? "/bin/bash" : command, args, { cwd: root, env: { ...process.env, HOME: root }, encoding: "utf8" });
+        return { stdout: result.stdout, stderr: result.stderr, code: result.status, killed: false };
+      } });
+      const result = await (await ready(h)).execute("startup", { command: "printf reviewed" }, undefined, undefined, h.ctx);
+      expect(result.isError).toBe(true);
+      expect(result.details.reasonCode).toBe("RAW_BASH_STARTUP_ENVIRONMENT");
+      expect(h.fetchCalls).toHaveLength(0); expect(h.selectCalls).toHaveLength(0); expect(h.execCalls).toHaveLength(0);
+      expect(existsSync(sentinel)).toBe(false);
+    } finally {
+      if (previous === undefined) delete process.env.BASH_ENV; else process.env.BASH_ENV = previous;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+  for (const key of ["SHELLOPTS", "BASHOPTS", "BASH_FUNC_printf%%"]) {
+    test(`rejects inherited ${key} without calling raw exec`, async () => {
+      const previous = process.env[key]; process.env[key] = "fixture";
+      try {
+        const h = await fakeHost({ config: { ...baseConfig, defaultMode: "manual" }, select: "Approve" });
+        const result = await (await ready(h)).execute("startup", { command: "printf reviewed" }, undefined, undefined, h.ctx);
+        expect(result.isError).toBe(true); expect(h.execCalls).toHaveLength(0); expect(h.selectCalls).toHaveLength(0);
+      } finally { if (previous === undefined) delete process.env[key]; else process.env[key] = previous; }
+    });
+  }
+  test("empty startup values and ENV preserve ordinary raw Bash approval", async () => {
+    const keys = ["BASH_ENV", "SHELLOPTS", "BASHOPTS", "ENV"];
+    const previous = keys.map(key => process.env[key]);
+    try {
+      for (const key of keys) process.env[key] = key === "ENV" ? "/fixture/interactive-only" : "";
+      const h = await fakeHost({ config: { ...baseConfig, defaultMode: "manual" }, select: "Approve" });
+      const result = await (await ready(h)).execute("ordinary-startup", { command: "printf reviewed" }, undefined, undefined, h.ctx);
+      expect(result.isError).toBeUndefined(); expect(h.selectCalls).toHaveLength(1); expect(h.execCalls).toHaveLength(1);
+    } finally {
+      keys.forEach((key, index) => { if (previous[index] === undefined) delete process.env[key]; else process.env[key] = previous[index]; });
+    }
+  });
+  test("rechecks startup environment after human approval", async () => {
+    const previous = process.env.BASH_ENV;
+    try {
+      delete process.env.BASH_ENV;
+      const h = await fakeHost({ config: { ...baseConfig, defaultMode: "manual" }, selectImpl: async () => {
+        process.env.BASH_ENV = "/fixture/late-startup"; return "Approve";
+      } });
+      const result = await (await ready(h)).execute("late-startup", { command: "printf reviewed" }, undefined, undefined, h.ctx);
+      expect(result.isError).toBe(true); expect(h.selectCalls).toHaveLength(1); expect(h.execCalls).toHaveLength(0);
+      expect(result.details.reasonCode).toBe("RAW_BASH_STARTUP_ENVIRONMENT");
+    } finally { if (previous === undefined) delete process.env.BASH_ENV; else process.env.BASH_ENV = previous; }
+  });
+  test("native Bash delegation retains its own environment behavior", async () => {
+    const previous = process.env.BASH_ENV; process.env.BASH_ENV = "/fixture/native-startup";
+    try {
+      const native = fakeNativeRuntime();
+      const h = await fakeHost({ config: { ...baseConfig, nativeBash: true }, nativeRuntime: native.runtime });
+      const { tool } = await nativeReady(h);
+      const result = await tool.execute("native-startup", { command: "printf reviewed" }, undefined, undefined, h.ctx);
+      expect(result.isError).not.toBe(true); expect(h.invokeCalls).toHaveLength(1); expect(h.execCalls).toHaveLength(0);
+    } finally { if (previous === undefined) delete process.env.BASH_ENV; else process.env.BASH_ENV = previous; }
   });
 });

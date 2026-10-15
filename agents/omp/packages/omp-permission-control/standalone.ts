@@ -84,6 +84,12 @@ const CONFIG_KEYS = new Set(["schemaVersion", "defaultMode", "reviewer", "remote
 const TARGET_KEYS = new Set(["provider", "model"]);
 const PLAIN_BASH_KEYS = new Set(["command", "cwd", "timeout"]);
 
+// 公开 exec API 不提供 env 覆盖；拒绝实际继承的 Bash 初始化输入，不读取其内容。
+function rawBashStartupEnvironment(): boolean {
+  return Object.keys(process.env).some(key =>
+    !!process.env[key] && (["BASH_ENV", "SHELLOPTS", "BASHOPTS"].includes(key) || key.startsWith("BASH_FUNC_")));
+}
+
 function exactKeys(value: unknown, allowed: Set<string>): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value) &&
     Object.keys(value).every(key => allowed.has(key));
@@ -601,6 +607,9 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
       };
       try {
         if (!current()) { diagnostic.gates("STALE_REVIEW"); return blocked("STALE_REVIEW"); }
+        if (toolName === "permission_bash" && rawBashStartupEnvironment()) {
+          diagnostic.gates("UNSUPPORTED_EXECUTION_CONTEXT"); return blocked("RAW_BASH_STARTUP_ENVIRONMENT");
+        }
         let snapshot: NativeSettingsSnapshot | undefined;
         if (nativeRuntime && config.nativeBash === true) {
           diagnostic.phase("capture");
@@ -629,6 +638,10 @@ export function createStandalonePlugin(dependencies: StandaloneDependencies = {}
         if (toolName === "bash" && !ctx.invokeTool) {
           state.native.delegateAvailable = false; diagnostic.gates("NATIVE_DELEGATE_UNAVAILABLE");
           return blocked("NATIVE_DELEGATE_UNAVAILABLE");
+        }
+        // 审批期间环境可能变化；最后一个 await 后再检查，且不改变原生 Bash/Brush。
+        if (toolName === "permission_bash" && rawBashStartupEnvironment()) {
+          diagnostic.gates("UNSUPPORTED_EXECUTION_CONTEXT"); return blocked("RAW_BASH_STARTUP_ENVIRONMENT");
         }
         // 不含 await 的消费边界：模式撤销仅影响尚未消费的操作。
         clearInterval(monitor); state.pending.delete(pending); pendingDiagnostics.delete(pending);
