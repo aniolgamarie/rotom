@@ -24,7 +24,8 @@ REPO = Path(__file__).resolve().parents[1]
 @pytest.mark.parametrize("failure", ["install", "changed-lock", "changed-installer-lock", "runtime-check", "missing-helper"])
 def test_failed_sync_keeps_old_runtime_and_repository_lock(tmp_path, monkeypatch, failure):
   w = SimpleNamespace(instance=tmp_path / "instance", state_root=tmp_path / "state",
-    cache=tmp_path / "cache", repository=REPO, resolved=SimpleNamespace(data={"machine": {}}))
+    cache=tmp_path / "cache", repository=REPO, profile="dsh-default", binding={"profile": "dsh-default"},
+    resolved=SimpleNamespace(data={"machine": {}}))
   lock = dep.read_lock(REPO)
   previous = w.instance / "runtimes/previous"
   ensure_private(previous)
@@ -64,7 +65,8 @@ def test_failed_sync_keeps_old_runtime_and_repository_lock(tmp_path, monkeypatch
 @pytest.mark.parametrize(("tool", "actual"), [("node", "v25.0.0"), ("npm", "12.0.0"), ("node", "v24.1.0")])
 def test_sync_rejects_incompatible_toolchain_version(tmp_path, monkeypatch, tool, actual):
   w = SimpleNamespace(instance=tmp_path / "instance", state_root=tmp_path / "state",
-    cache=tmp_path / "cache", repository=REPO, agent="dsh", resolved=SimpleNamespace(data={"machine": {}}))
+    cache=tmp_path / "cache", repository=REPO, agent="dsh", profile="dsh-default", binding={"profile": "dsh-default"},
+    resolved=SimpleNamespace(data={"machine": {}}))
   lock = dep.read_lock(REPO)
   def fake(argv, *, cwd, env):
     if argv == ["node", "--version"]:
@@ -101,8 +103,9 @@ def test_toolchain_rejects_and_hides_malformed_output(tool, actual, locked):
   ("node", "v24.14.1"), ("npm", "11.19.2"), ("node", "v24.14.0\nsynthetic-private-token"),
 ])
 def test_resolve_lock_requires_exact_toolchain_before_install(tmp_path, monkeypatch, tool, actual):
-  lock = dep.read_lock(REPO)
-  before = {name: (REPO / "locks/dsh" / name).read_bytes()
+  repository = lock_repository(tmp_path)
+  lock = dep.read_lock(repository)
+  before = {name: (repository / "locks/dsh" / name).read_bytes()
             for name in ("package.json", "pnpm-lock.yaml", "manifest.json")}
 
   def fake(argv, *, cwd, env):
@@ -114,10 +117,10 @@ def test_resolve_lock_requires_exact_toolchain_before_install(tmp_path, monkeypa
 
   monkeypatch.setattr(dep, "checked", fake)
   with pytest.raises(DependencyError) as caught:
-    dep.resolve_lock(REPO)
+    dep.resolve_lock(repository)
   assert "期望" in str(caught.value) and "实际" in str(caught.value)
   assert "synthetic-private-token" not in str(caught.value)
-  assert all((REPO / "locks/dsh" / name).read_bytes() == raw for name, raw in before.items())
+  assert all((repository / "locks/dsh" / name).read_bytes() == raw for name, raw in before.items())
 
 
 def test_lock_rejects_adapter_declaration_drift(monkeypatch):

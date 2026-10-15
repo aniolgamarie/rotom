@@ -203,9 +203,18 @@ def validate_installer_plugin_versions(repository, resolution, adapter_id="dsh")
 
 
 def read_lock(repository, adapter_id="dsh", expected_adapter_version=None):
-  root = repository / f"locks/{adapter_id}"
+  from .publication import reader_lease
   try:
-    metadata = json.loads((root / "manifest.json").read_bytes())
+    with reader_lease(repository, adapter_id) as tree:
+      return _read_lock_unlocked(repository, adapter_id, expected_adapter_version, lock_tree=tree)
+  except FileNotFoundError:
+    from .schema import ConfigError
+    raise ConfigError(f"lock-missing-or-stale: 请执行 lock --agent {adapter_id}") from None
+
+
+def _read_lock_unlocked(repository, adapter_id="dsh", expected_adapter_version=None, *, lock_tree):
+  try:
+    metadata = json.loads(lock_tree.read("manifest.json")[0])
     from jsonschema import Draft202012Validator
     schema = json.loads((Path(__file__).resolve().parents[2] / "schemas/lock.schema.json").read_bytes())
     if not Draft202012Validator(schema).is_valid(metadata):
@@ -219,12 +228,12 @@ def read_lock(repository, adapter_id="dsh", expected_adapter_version=None):
         or sys.platform not in policy["supported_platforms"]
         or sys.platform not in metadata["platforms"]):
       raise ValueError()
-    package = (root / "package.json").read_bytes()
+    package = lock_tree.read("package.json")[0]
     pnpm_only = metadata["version"] == 2
-    if pnpm_only and (root / "package-lock.json").exists():
+    if pnpm_only and lock_tree.read("package-lock.json") is not None:
       raise ValueError("unexpected npm resolution")
-    resolution = b"" if pnpm_only else (root / "package-lock.json").read_bytes()
-    installer_resolution = (root / "pnpm-lock.yaml").read_bytes()
+    resolution = b"" if pnpm_only else lock_tree.read("package-lock.json")[0]
+    installer_resolution = lock_tree.read("pnpm-lock.yaml")[0]
     validate_installer_resolution(package, installer_resolution)
     digest = lock_identity(package, resolution, metadata, installer_resolution)
     if pnpm_only:
@@ -288,6 +297,13 @@ def prepare_pnpm_policy(destination, policy):
 
 
 def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_version=None):
+  from .publication import publisher_lease
+  with publisher_lease(repository, adapter_id) as publisher:
+    return _resolve_lock_unlocked(repository, npm=npm, adapter_id=adapter_id,
+                                  expected_adapter_version=expected_adapter_version, publisher=publisher)
+
+
+def _resolve_lock_unlocked(repository, *, npm="npm", adapter_id="dsh", expected_adapter_version=None, publisher):
   try:
     policy = lock_policy(repository, adapter_id, expected_adapter_version)
   except (OSError, ValueError, KeyError, TypeError):
@@ -296,6 +312,8 @@ def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_ve
     raise DependencyError(
       f"当前平台 {sys.platform} 不在支持列表 {policy['supported_platforms']} 内"
     )
+  initial_recipe = recipe_digest(repository, adapter_id)
+  initial_declaration = (repository / f"agents/{adapter_id}/agent.toml").read_bytes()
   package = (repository / f"agents/{adapter_id}/dependencies.json").read_bytes()
   with tempfile.TemporaryDirectory(prefix="agentcfg-lock-") as directory:
     root = Path(directory)
@@ -320,7 +338,7 @@ def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_ve
     validate_installer_resolution(package, installer_resolution)
     validate_installer_plugin_versions(repository, installer_resolution, adapter_id)
     manifest = {"version": 2, "resolution_kind": "pnpm", "identity": hashlib.sha256(package + resolution).hexdigest(),
-      "recipe": recipe_digest(repository, adapter_id), "node": node_version, "npm": npm_version,
+      "recipe": initial_recipe, "node": node_version, "npm": npm_version,
       "pnpm": policy["pnpm"], "pnpm_integrity": policy["pnpm_integrity"],
       "adapter_version": policy["adapter_version"],
       "platforms": {name: "not-smoked" for name in policy["supported_platforms"]},
@@ -328,17 +346,13 @@ def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_ve
     if policy.get("minimum_release_age_exclude"):
       manifest["minimum_release_age_exclude"] = policy["minimum_release_age_exclude"]
     manifest["identity"] = lock_identity(package, resolution, manifest, installer_resolution)
-    # 仓库锁是公开产物；先校验所有结果，再单文件原子替换，manifest 最后提交。
-    out = repository / f"locks/{adapter_id}"
-    out.mkdir(parents=True, exist_ok=True)
-    for name, data in (("package.json", package),
-        ("pnpm-lock.yaml", installer_resolution), ("manifest.json", json_bytes(manifest))):
-      temporary = out / ("." + name + ".tmp")
-      temporary.write_bytes(data)
-      os.replace(temporary, out / name)
-    # 多文件替换不是事务；中断后的 stale 锁必须拒绝，恢复时重复显式 lock。
-    (out / "package-lock.json").unlink(missing_ok=True)
-    return read_lock(repository, adapter_id, expected_adapter_version)
+    if (recipe_digest(repository, adapter_id) != initial_recipe or
+        (repository / f"agents/{adapter_id}/agent.toml").read_bytes() != initial_declaration or
+        lock_policy(repository, adapter_id, expected_adapter_version) != policy):
+      raise Conflict("依赖锁配方在解析期间发生变化；拒绝发布")
+    return publisher.publish({"package.json": package, "package-lock.json": None,
+      "pnpm-lock.yaml": installer_resolution, "manifest.json": json_bytes(manifest)},
+      validate=lambda: _read_lock_unlocked(repository, adapter_id, expected_adapter_version, lock_tree=publisher.tree))
 
 
 def runtime_root(workspace, lock):
@@ -350,6 +364,26 @@ def installed(workspace, lock):
 
 
 def sync(workspace, lock, adapter_id="dsh", *, progress=None):
+  from .publication import reader_lease
+  # 整段消费持有公开锁代租约，先于实例和运行包锁；拒绝过期内存快照。
+  with reader_lease(workspace.repository, adapter_id):
+    if read_lock(workspace.repository, adapter_id) != lock:
+      from .schema import ConfigError
+      raise ConfigError("依赖锁已变化；请重新执行 sync")
+    return _sync_guarded(workspace, lock, adapter_id, progress=progress)
+
+
+def _sync_guarded(workspace, lock, adapter_id, *, progress=None):
+  from .lifecycle import guard
+  # 已知恢复待处理时不初始化物理实例；排他状态锁内仍会再次复核。
+  with Tree(workspace.state_root) as state:
+    if state.read("pending.json"):
+      raise Conflict("存在待恢复部署；请先 apply/rollback，恢复完成前不能 sync")
+  with guard(workspace):
+    return _sync(workspace, lock, adapter_id, progress=progress)
+
+
+def _sync(workspace, lock, adapter_id="dsh", *, progress=None):
   announce = progress or (lambda stage: None)
   announce("检查运行包")
   with Tree(workspace.state_root, create=True) as state, instance_lock(state):

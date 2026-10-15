@@ -113,9 +113,18 @@ class OmpBackend:
   adapter_version = "omp-1"
 
   def read_lock(self, repository):
+    from .publication import reader_lease
+    try:
+      with reader_lease(repository, self.adapter_id) as tree:
+        return self._read_lock_unlocked(repository, lock_tree=tree)
+    except FileNotFoundError:
+      raise ConfigError("omp-lock-missing-or-stale") from None
+
+  def _read_lock_unlocked(self, repository, *, lock_tree):
     try:
       repository = Path(repository)
-      with Tree(repository / "locks/omp", private=False) as tree:
+      from contextlib import nullcontext
+      with nullcontext(lock_tree) as tree:
         data = json.loads(_read(tree, "manifest.json")[0])
         schema = json.loads((ROOT / "schemas/omp-lock.schema.json").read_bytes())
         Draft202012Validator(schema).validate(data)
@@ -165,8 +174,15 @@ class OmpBackend:
       raise ConfigError("omp-lock-missing-or-stale") from None
 
   def resolve_lock(self, repository, *, source_archive=None, checksums=None):
+    from .publication import publisher_lease
+    with publisher_lease(repository, self.adapter_id) as publisher:
+      return self._resolve_lock_unlocked(repository, source_archive=source_archive,
+                                         checksums=checksums, publisher=publisher)
+
+  def _resolve_lock_unlocked(self, repository, *, source_archive=None, checksums=None, publisher):
     """显式维护操作；固定来源校验成功后写入完整锁，绝不执行上游。"""
     repository = Path(repository)
+    initial_resources = self._resources(repository)
     archive = Path(source_archive).read_bytes() if source_archive is not None else _download(SOURCE_URL)
     if sha(archive) != SOURCE_SHA256:
       raise ConfigError("omp-source-integrity")
@@ -190,20 +206,17 @@ class OmpBackend:
     upstream["upstream/NOTICE.md"] = ("# OMP upstream notices\n\nFixed " + TAG + " / " + COMMIT
       + "\n\nSee LICENSE and complete THIRD-PARTY-NOTICES.txt beside this file.\n"
       + "Official binaries embed their runtime; the Bun lock records source dependency resolution, not a claim of reproducible release builds.\n").encode()
-    resources, packages, recipe = self._resources(repository)
+    resources, packages, recipe = initial_resources
     body = {"version": 1, "adapter_version": self.adapter_version, "tag": TAG, "commit": COMMIT,
       "source": {"url": SOURCE_URL, "sha256": SOURCE_SHA256}, "assets": ASSETS,
       "upstream": {name: sha(value) for name, value in upstream.items()}, "resources": resources,
       "packages": packages, "recipe": recipe,
       "interpreters": {"python": PYTHON_REQUIREMENT} if any(entry["target"].endswith(".py") for entry in resources) else {}}
     manifest = {"identity": sha(json_bytes(body)), **body}
-    directory = repository / "locks/omp"
-    directory.mkdir(parents=True, exist_ok=True)
-    with Tree(directory, private=False) as tree:
-      for name, value in upstream.items():
-        tree.write_state(name, value)
-      tree.write_state("manifest.json", json_bytes(manifest))
-    return self.read_lock(repository)
+    if self._resources(repository) != initial_resources:
+      raise Conflict("OMP依赖锁配方在解析期间发生变化；拒绝发布")
+    return publisher.publish({**upstream, "manifest.json": json_bytes(manifest)},
+      validate=lambda: self._read_lock_unlocked(repository, lock_tree=publisher.tree))
 
   def _resources(self, repository):
     resources, packages, recipe = [], {}, {}
@@ -414,6 +427,12 @@ class OmpBackend:
       tree.replace(name, None, expected=raw[2])
 
   def sync(self, workspace, lock, *, progress=None):
+    from .publication import reader_lease
+    # 发布锁先于运行包锁，覆盖校验、安装和激活的完整消费期。
+    with reader_lease(workspace.repository, "omp"):
+      return self._sync(workspace, lock, progress=progress)
+
+  def _sync(self, workspace, lock, *, progress=None):
     announce = progress or (lambda stage: None)
     announce("检查锁与运行包")
     # 从受信仓库重读，防止调用者用伪造的内存对象绕过锁完整性。
