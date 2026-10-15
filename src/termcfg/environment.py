@@ -1,15 +1,12 @@
 """离线汇总平台、程序、公开来源、目标和运行包状态。"""
 
-import os
-from pathlib import Path
 import shutil
-import stat
 
 from .catalog import load_catalog
 from .config import MachineSelection
 from .errors import TermcfgError
 from .home_targets import inspect_target
-from .packages import current_platform, installed_core, installed_plugins
+from .packages import current_platform, installed_plugins
 from .state import journal_exists, read_journal, read_state
 
 
@@ -33,29 +30,7 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
           degraded.append("optional_plugins_not_synced")
       except TermcfgError as exc:
         degraded.append(exc.reason)
-    if component == "mihomo":
-      try:
-        installed_core(machine)
-      except TermcfgError as exc:
-        blockers.append(exc.reason)
-      private_config = machine.private_state_root / "mihomo" / "private.yaml"
-      if not private_config.exists():
-        unverified.append("private_config_missing")
-      else:
-        info = private_config.lstat()
-        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or
-            info.st_nlink != 1 or stat.S_IMODE(info.st_mode) != 0o600):
-          unverified.append("private_config_unsafe")
-      from .mihomo import service_status
-      service = service_status(machine)
-      if service["service"] == "unknown/external":
-        blockers.append("external_service_identity")
-      elif service["service"] != "running":
-        unverified.append("service_not_running")
-      elif service["effective"] == "unverified":
-        unverified.append("service_effect_unverified")
-    else:
-      service = {"service": "not_applicable"}
+    service = {"service": "not_applicable"}
     if journal_exists(machine):
       blockers.append("recovery_pending")
     for item in catalog:
@@ -75,7 +50,6 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
                          "target_issues": target_issues,
                          "service": service,
                          "next_command": ("./termcfg recover" if "recovery_pending" in blockers else
-                                          "./termcfg sync --component mihomo" if component == "mihomo" and blockers else
                                           "./termcfg doctor" if blockers else "./termcfg plan")}
   return result
 
@@ -107,8 +81,7 @@ def status_report(machine: MachineSelection, components: tuple[str, ...]) -> dic
         targets[item.id] = "synced" if identity == record["after"] else "drift"
       except TermcfgError:
         targets[item.id] = "conflict"
-    from .mihomo import service_status
-    service = service_status(machine) if component == "mihomo" else {"service": "not_applicable"}
+    service = {"service": "not_applicable"}
     if any(value in {"drift", "conflict"} for value in targets.values()):
       blockers = set(environment[component]["required_blockers"])
       blockers.add("target_drift")
@@ -120,8 +93,6 @@ def status_report(machine: MachineSelection, components: tuple[str, ...]) -> dic
       files=targets,
       previous_backup=component in state["previous"],
       recovery_pending=pending,
-      pending_core_effect=state["pending_core_effect"] if component == "mihomo" else False,
-      pending_config_effect=state["pending_config_effect"] if component == "mihomo" else False,
       service=service,
     )
   return {"components": environment, "overall_ready": all(value["ready"] for value in environment.values()) and not pending,

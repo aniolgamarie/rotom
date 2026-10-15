@@ -132,7 +132,7 @@ def test_repository_snapshot_change_during_confirmation_prevents_backup(isolated
   machine = _setup("zsh")
   from termcfg import preview as preview_module
   identity = ["old"]
-  monkeypatch.setattr(preview_module, "_lock_digest", lambda: identity[0])
+  monkeypatch.setattr(preview_module, "_lock_digest", lambda *args: identity[0])
   def confirm(plan):
     identity[0] = "new"
     return set(), None

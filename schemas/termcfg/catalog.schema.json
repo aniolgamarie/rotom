@@ -13,7 +13,7 @@
         "required": ["id", "component", "source", "destination", "sha256", "mode"],
         "properties": {
           "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$"},
-          "component": {"enum": ["zsh", "tmux", "mihomo"]},
+          "component": {"enum": ["zsh", "tmux"]},
           "source": {"type": "string", "minLength": 1},
           "destination": {"type": "string", "minLength": 1},
           "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},

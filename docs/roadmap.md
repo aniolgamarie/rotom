@@ -23,8 +23,9 @@ publication coordination and native validation are gates before changing default
 
 The same plan covers nonsecret configuration loading and an explicit migration to
 remove mihomo management from `termcfg`, retaining zsh/tmux and their generic package
-machinery. A future independent proxy project is not yet implemented; no proxy service
-or private configuration is moved or deleted in this planning stage.
+machinery. That terminal-only package is implemented with explicit v1 metadata
+migration and isolated tests. A future independent proxy project is not implemented;
+existing proxy services and private configuration are not moved or deleted.
 
 ## RM-001: Declared sources and on-demand dependencies
 

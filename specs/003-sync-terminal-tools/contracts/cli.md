@@ -1,3 +1,5 @@
+> Historical scope: this specification describes the retired mihomo integration. Current termcfg manages zsh/tmux only; use [the maintained migration guide](../../../docs/termcfg.md) for supported commands and legacy recovery.
+
 # CLI Contract: `termcfg`
 
 本文件约定首版用户接口。命令名称和选项在实现前固定；目标标识来自目录清单，用户输入不能作为任意文件路径使用。`./termcfg` 使用仓库 `.venv`，不依赖旧 `starter` 工作目录。

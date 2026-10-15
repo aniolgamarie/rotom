@@ -4,7 +4,7 @@
 
 [Getting started](docs/getting-started.md) · [Documentation](docs/README.md) · [Roadmap](docs/roadmap.md) · [Known issues](docs/known-issues.md) · [简体中文](README.zh-CN.md)
 
-Rotom keeps shared model definitions, rules, complete skill packages, native configuration templates, and dependency locks in Git. Machine overrides, credentials, native logins, and sessions stay private. `agentcfg` validates, previews, installs, deploys, and launches DSH, Pi, and OMP through their own adapters. `termcfg` separately manages selected zsh, tmux, and mihomo components.
+Rotom keeps shared model definitions, rules, complete skill packages, native configuration templates, and dependency locks in Git. Machine overrides, credentials, native logins, and sessions stay private. `agentcfg` validates, previews, installs, deploys, and launches DSH, Pi, and OMP through their own adapters. `termcfg` separately manages selected zsh/tmux configuration and pinned plugins. Proxy service management is outside its scope.
 
 Integrations use official configuration, public extension APIs, and official CLIs. Rotom does not modify agent host source or official binaries. Historical deviations remain documented as migration work; they are not permission to build new patched hosts.
 
@@ -17,7 +17,7 @@ This repository is preparing its first public release. The manager package versi
 | DSH | Core `0.2.0-rc.2`, TUI `0.15.0` | One `dsh-default` recipe; Cursor Provider and Perry auto-review `0.12.17`. Core is a prerelease. Auto-review has accepted, unresolved upstream limitations. |
 | OMP | `18.8.6` | Unmodified official runtime with an independent Rotom permission plugin. Platform and operation coverage is recorded separately. |
 | Pi | `0.84.4` | Implemented adapter; the checked-in lock is stale against current source. New deployment is blocked pending a proper lock rebuild and matching validation. Historical acceptance does not validate this checkout. |
-| termcfg | Component-specific locks | Explicit configuration, download, and service operations; independent of agent profiles. |
+| termcfg | Component-specific locks | Explicit terminal configuration and plugin downloads; independent of agent profiles. Legacy metadata has an explicit migration path. |
 
 Read [known issues](docs/known-issues.md) before selecting an integration. Python tests, native smoke, and authenticated model calls provide different evidence; [testing and support](docs/testing.md) explains the distinction.
 

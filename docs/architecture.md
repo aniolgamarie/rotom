@@ -35,7 +35,7 @@ flowchart LR
 | Native adapters | `dsh.py`, `pi.py`, `omp.py` and related modules |
 | Pi supervision and evidence | `pi_supervisor.py`, `pi_delegate*.py`, `pi_validation*.py` |
 
-`src/termcfg/` separately implements terminal previews, transactions, packages, and explicit mihomo service control. It does not run implicitly from agent setup or launch.
+`src/termcfg/` separately implements zsh/tmux previews, transactions, pinned plugins, and explicit legacy metadata migration. Proxy service control has been removed. It does not run implicitly from agent setup or launch.
 
 ## Configuration and secrets
 
@@ -70,9 +70,9 @@ is independent per-run supervisors/namespaces with instance-wide maintenance
 aggregation and cross-run worktree leases. Its state schema and migration protocol
 remain an implementation design gate; a daemon or shared activation is not assumed.
 
-`termcfg` currently manages zsh/tmux and mihomo. The target narrows it to zsh/tmux,
-with explicit compatibility and recovery for existing machine/state/journal records
-before removing mihomo. A future independent proxy project has not been created.
-Proxy environment values remain an external-service contract consumed by agentcfg;
-`dsh-proxy` does not own service startup. These are planned changes, not delivered
-runtime behavior or permission to move private proxy configuration.
+`termcfg` now manages zsh/tmux. Its [explicit migration](termcfg.md#retiring-an-existing-mihomo-selection)
+retires mihomo ownership metadata while preserving old targets, backups and private
+proxy data. Strict v1 recovery remains available before migration to v2 state.
+A future independent proxy project has not been created. Proxy environment values
+remain an external-service contract consumed by agentcfg; `dsh-proxy` does not own
+service startup. No existing proxy service is stopped or transferred by this change.

@@ -16,36 +16,6 @@ from termcfg.lease import operation_lease, repository_lease
 from termcfg.state import read_state, state_file, write_json
 
 
-def _load_legacy_mgr():
-  source = REPO_ROOT / "terminals/mihomo/mihomo-mgr.py"
-  spec = importlib.util.spec_from_file_location("termcfg_legacy_mgr", source)
-  module = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(module)
-  return module
-
-
-def test_legacy_mgr_private_config_is_0600_under_umask_022(isolated_environment, monkeypatch):
-  module = _load_legacy_mgr()
-  path = isolated_environment.home / ".config/mihomo-mgr/config.yaml"
-  monkeypatch.setenv("MIHOMO_MGR_CONFIG", str(path))
-  old = os.umask(0o022)
-  try:
-    module._save_mgr_config({"secret": "synthetic-private"})
-  finally:
-    os.umask(old)
-  assert path.stat().st_mode & 0o777 == 0o600
-  assert path.parent.stat().st_mode & 0o777 == 0o700
-
-
-def test_legacy_mgr_start_entry_is_disabled(isolated_environment, monkeypatch, capsys):
-  module = _load_legacy_mgr()
-  monkeypatch.setattr(sys, "argv", ["mihomo-mgr", "start"])
-  with pytest.raises(SystemExit) as error:
-    module.main()
-  assert error.value.code == 2
-  assert "legacy_command_disabled" in capsys.readouterr().err
-
-
 def test_machine_and_repo_lease_paths_never_alias(isolated_environment):
   digest = hashlib.sha256(str(REPO_ROOT.resolve()).encode()).hexdigest()[:32]
   machine_id = "repo-" + digest

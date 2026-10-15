@@ -1,6 +1,7 @@
 # Project review and refactoring plan
 
-Status: design and staged implementation plan, 2026-10-15; runtime changes are not delivered.
+Status: implementation in progress, 2026-10-15. The terminal-only termcfg package is
+implemented and tested; other stages retain the status listed below.
 The reviewed source baseline is `6e9513a`. This review covers agent configuration,
 launch and supervision, dependency publication, credentials, and terminal management.
 It does not renew native-host, live-account, or cross-platform acceptance.
@@ -16,7 +17,7 @@ Retain one `dsh-default` recipe. Do not introduce core/full/proxy profile famili
 `dsh-proxy` selects process environment, not a second deployment or proxy service.
 Narrow `termcfg` to zsh/tmux and remove its mihomo management through an explicit
 migration. A future independent proxy project has not been created or handed control.
-This planning stage changes no runtime, service, or private data.
+Implementation preserves existing deployments, running services and private data.
 
 Use unchanged upstream hosts and public APIs. Do not add a universal plugin,
 approval service, audit database, or instance daemon to achieve these changes.
@@ -162,9 +163,12 @@ to a future independent project. The configured proxy endpoint and environment v
 remain an external-service contract; agentcfg and `dsh-proxy` may consume that
 contract without starting or managing the service.
 
-Removal inventory includes:
+The removal inventory describes baseline `6e9513a`; runtime and asset removal is
+implemented. [Migration](../../src/termcfg/migration.py) owns metadata compatibility.
 
-- [mihomo.py](../../src/termcfg/mihomo.py), CLI imports/service/lock/sync dispatch,
+The baseline inventory includes:
+
+- former `src/termcfg/mihomo.py`, CLI imports/service/lock/sync dispatch,
   unconditional `_read_lock_raw` in components/plan/doctor/apply/rollback, and
   `preview.py`'s unconditional `mihomo.json` output.
 - [packages.py](../../src/termcfg/packages.py)'s mixed core/plugin paths,
@@ -173,7 +177,7 @@ Removal inventory includes:
   [state.py](../../src/termcfg/state.py) / [transaction.py](../../src/termcfg/transaction.py)
   fields `pending_core_effect`, `pending_config_effect`, `public_config_identity`.
 - [catalog](../../terminals/catalog.json) entries `mihomo-base`/`mihomo-mgr`,
-  [public assets](../../terminals/mihomo/), required licenses and provenance,
+  former `terminals/mihomo/` public assets, required licenses and provenance,
   [machine example](../../examples/termcfg-machine.toml), service/sync/catalog tests,
   README/guides, and specification references. Preserve historical records as scoped
   records; they must not advertise a still-supported removed command.
@@ -201,7 +205,7 @@ recovery inputs without pretending an external proxy service has been transferre
 | 2 / Planned | Pi namespace/schema and owner migration design, then lifecycle/activity/supervisor implementation | Design approval first; two independent runs, children and cross-run worktree conflicts, targeted stop/recovery, stale generations, PID reuse, crash and unknown legacy records. Maintain old evidence and test rollback compatibility. |
 | 3 / Planned | Repository lock publication in DSH/OMP, with Pi path inventory | Two writers, lock-versus-sync, interruption at each publish boundary, reader recheck, and previous-lock restoration. No mixed generation accepted; no lock/source mismatch hidden. |
 | 4 / Planned | Nonsecret loading and explicit credential operation paths | Sentinel tests prove configuration-only operations avoid secret bodies; inline conflict/error behavior and required key/status/login access remain compatible. No real credential reads. |
-| 5 / Planned | termcfg legacy-state migration, then mihomo removal across inventory | Old machine, state and pending-journal fixtures migrate or recover explicitly; zsh/tmux-only operations work without a mihomo lock; generic plugin integrity and rollback remain tested. Check concurrent distinct machine IDs targeting the same canonical HOME before claiming cross-machine exclusion; that case is unverified. No service/secret migration. |
+| 5 / Implemented; 106 isolated tests passed | termcfg v1 metadata migration and mihomo removal across inventory | Old machine, state and pending-journal fixtures migrate or recover explicitly; zsh/tmux-only operations work without a mihomo lock; generic plugin integrity and rollback remain tested. Check concurrent distinct machine IDs targeting the same canonical HOME before claiming cross-machine exclusion; that case is unverified. No service/secret migration. |
 | 6 / Not run | Authorized native and platform validation after implementation and matching locks | DSH distinct-session parallel use, same-session refusal, settings merge, auth serialization/isolation, inject discovery outcome and reviewer separation; Pi true lock closure before current native/cold tests; OMP regression. Test missing/corrupt/unwritable mount ledgers and their recovery, distinguishing existing mounts from new-session reservations. Verify canonical path/alias handling and Pi cross-run worktree conflicts; record DSH/OMP's manual writer-coordination boundary. Record every untested platform. |
 
 Keep each stage as focused commits with affected offline tests and stable final review.

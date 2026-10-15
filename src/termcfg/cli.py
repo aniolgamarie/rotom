@@ -14,8 +14,7 @@ from .diagnostics import current_progress, emit, reset_progress
 from .environment import inspect_environment, status_report
 from .errors import TermcfgError
 from .lease import operation_lease
-from .mihomo import service_operation
-from .packages import _read_lock_raw, lock_mihomo, lock_plugin, sync
+from .packages import lock_plugin, sync
 from .preview import build_preview
 from .state import read_journal, require_no_pending_recovery
 from .transaction import apply, recover, rollback, rollback_preview
@@ -27,7 +26,7 @@ class Parser(argparse.ArgumentParser):
 
 
 def build_parser() -> Parser:
-  parser = Parser(prog="./termcfg", description="同步公开的终端与代理配置")
+  parser = Parser(prog="./termcfg", description="同步公开的终端配置")
   parser.add_argument("--machine", default="default")
   parser.add_argument("--json", action="store_true")
   commands = parser.add_subparsers(dest="command", required=True)
@@ -62,9 +61,8 @@ def build_parser() -> Parser:
   sync_parser = commands.add_parser("sync")
   sync_parser.add_argument("--component", required=True, choices=sorted(COMPONENTS))
   sync_parser.add_argument("--timeout", type=int, default=300)
-  service_parser = commands.add_parser("service")
-  service_parser.add_argument("action", choices=("status", "start", "stop", "reload", "restart"))
-  service_parser.add_argument("--timeout", type=int)
+  migrate_parser = commands.add_parser("migrate")
+  migrate_parser.add_argument("--drop-mihomo", action="store_true", required=True)
   rollback_parser = commands.add_parser("rollback")
   rollback_parser.add_argument("--component", required=True, choices=sorted(COMPONENTS))
   rollback_parser.add_argument("--plan-only", action="store_true")
@@ -106,8 +104,8 @@ def _interactive_selection(previous: tuple[str, ...] | None) -> tuple[str, ...]:
     name for name in ("zsh", "tmux") if shutil.which(name)
   )
   print("选择组件（逗号分隔；留空保持默认；输入 none 清空）：", file=sys.stderr)
-  for name in ("zsh", "tmux", "mihomo"):
-    required = "就绪" if (name == "mihomo" or shutil.which(name)) else "缺少本地程序"
+  for name in ("zsh", "tmux"):
+    required = "就绪" if shutil.which(name) else "缺少本地程序"
     print(f"  {name}: {required}{' [预选]' if name in defaults else ''}", file=sys.stderr)
   print("组件> ", end="", file=sys.stderr, flush=True)
   answer = input().strip()
@@ -169,7 +167,7 @@ def cmd_init(args) -> dict:
 def _selected(machine: MachineSelection, args, *, empty_all: bool = False) -> tuple[str, ...]:
   values = tuple(args.component) if args.component else machine.components
   if not values and empty_all:
-    values = ("zsh", "tmux", "mihomo")
+    values = ("zsh", "tmux")
   if len(set(values)) != len(values):
     raise TermcfgError(2, "duplicate_component")
   if not values:
@@ -203,15 +201,13 @@ def _failure_payload(args, reason: str, next_command: str, *, context: dict | No
             "next_command": next_command}
   if args is None:
     return result
-  result["command"] = args.command if args.command != "service" else "service " + args.action
+  result["command"] = args.command
   result["machine_id"] = args.machine
   component = getattr(args, "component", None)
   if isinstance(component, str):
     result["component"] = component
   elif isinstance(component, list):
     result["components"] = component
-  elif args.command == "service":
-    result["component"] = "mihomo"
   if context:
     result.update(context)
   for key, value in current_progress().items():
@@ -233,9 +229,6 @@ def _failure_payload(args, reason: str, next_command: str, *, context: dict | No
   elif args.command == "lock":
     result["side_effect"] = ("check_repository_lock" if result.get("stage") == "activate"
                              else "repository_lock_unchanged")
-  elif args.command == "service" and args.action != "status":
-    result["side_effect"] = ("service_may_have_changed" if result.get("stage") in {"start-or-signal", "health"}
-                             else "private_effective_config_may_have_changed")
   return result
 
 
@@ -248,8 +241,6 @@ def main(argv: list[str] | None = None) -> int:
     catalog = None
     if args.command in {"components", "plan", "doctor", "apply", "rollback"}:
       catalog = load_catalog()
-      _read_lock_raw("mihomo")
-      _read_lock_raw("zsh")
     if args.command == "components":
       result = {"command": "components", "components": {name: [entry.id for entry in catalog if entry.component == name] for name in sorted(COMPONENTS)}, "overall_ready": True, "ready": True, "next_command": "./termcfg init-local --component zsh"}
     elif args.command == "init-local":
@@ -273,9 +264,20 @@ def main(argv: list[str] | None = None) -> int:
                 "ready": overall, "next_command": "./termcfg plan" if overall else "./termcfg doctor"}
       emit(result, json_mode=args.json)
       if args.strict and not overall:
-        return 4 if any("recovery_pending" in entry["required_blockers"] or "external_service_identity" in entry["required_blockers"] for entry in environments.values()) else 5
+        return 4 if any("recovery_pending" in entry["required_blockers"] for entry in environments.values()) else 5
       return 0
     elif args.command == "status":
+      machine = read_machine(args.machine, legacy=True)
+      from .state import read_state
+      state = read_state(machine, legacy=True)
+      if "mihomo" in machine.components or state["version"] == 1:
+        journal = read_journal(machine)
+        result = {"command": "status", "machine_id": args.machine,
+                  "ready": False, "overall_ready": False,
+                  "reason": "legacy_migration_required", "recovery_pending": journal is not None,
+                  "next_command": "./termcfg recover" if journal else "./termcfg migrate --drop-mihomo"}
+        emit(result, json_mode=args.json)
+        return 0
       machine = _diagnostic_home(read_machine(args.machine), args)
       try:
         result = {"command": "status", **status_report(machine, _selected(machine, args, empty_all=True))}
@@ -303,7 +305,7 @@ def main(argv: list[str] | None = None) -> int:
                 "components": {component: {"changed": [value for value in outcome["changed"] if value in [a.id for a in catalog if a.component == component]]} for component in selection},
                 **outcome, "overall_ready": True, "ready": True, "next_command": "./termcfg doctor"}
     elif args.command == "recover":
-      result = {"command": "recover", **recover(read_machine(args.machine)),
+      result = {"command": "recover", **recover(read_machine(args.machine, legacy=True)),
                 "overall_ready": True, "ready": True, "next_command": "./termcfg plan"}
     elif args.command == "rollback":
       machine = read_machine(args.machine)
@@ -326,16 +328,11 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "lock":
       if not 10 <= args.timeout <= 3600:
         raise TermcfgError(2, "invalid_timeout")
-      if args.component == "mihomo":
-        if args.plugin:
-          raise TermcfgError(2, "plugin_not_applicable")
-        outcome = lock_mihomo(args.version, timeout=args.timeout)
-      else:
-        plugin = args.plugin or ("zinit" if args.component == "zsh" else None)
-        if plugin is None:
-          raise TermcfgError(2, "plugin_required")
-        outcome = lock_plugin(args.component, plugin, args.version, repo=args.repo,
-                              entry=args.entry, timeout=args.timeout)
+      plugin = args.plugin or ("zinit" if args.component == "zsh" else None)
+      if plugin is None:
+        raise TermcfgError(2, "plugin_required")
+      outcome = lock_plugin(args.component, plugin, args.version, repo=args.repo,
+                            entry=args.entry, timeout=args.timeout)
       result = {"command": "lock", **outcome,
                 "overall_ready": True, "ready": True}
     elif args.command == "sync":
@@ -343,13 +340,9 @@ def main(argv: list[str] | None = None) -> int:
         raise TermcfgError(2, "invalid_timeout")
       result = {"command": "sync", **sync(read_machine(args.machine), args.component, timeout=args.timeout),
                 "overall_ready": True, "ready": True}
-    elif args.command == "service":
-      if args.timeout is not None and not 10 <= args.timeout <= 3600:
-        raise TermcfgError(2, "invalid_timeout")
-      result = {"command": "service " + args.action,
-                **service_operation(read_machine(args.machine), args.action, timeout=args.timeout),
-                "overall_ready": True, "ready": True,
-                "next_command": "./termcfg service status"}
+    elif args.command == "migrate":
+      from .migration import migrate
+      result = {"command": "migrate", **migrate(args.machine), "ready": True, "overall_ready": True}
     else:
       raise TermcfgError(2, "unsupported_command")
     emit(result, json_mode=args.json)

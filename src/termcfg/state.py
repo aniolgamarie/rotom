@@ -48,9 +48,7 @@ def require_no_pending_recovery(machine: MachineSelection) -> None:
 
 
 def blank_state(machine: MachineSelection) -> dict:
-  return {"version": 1, "machine_id": machine.machine_id, "selected_core": None,
-          "public_config_identity": None, "pending_core_effect": False,
-          "pending_config_effect": False, "targets": {}, "previous": {}}
+  return {"version": 2, "machine_id": machine.machine_id, "targets": {}, "previous": {}}
 
 
 def read_json(path: Path) -> dict | None:
@@ -77,15 +75,26 @@ def read_json(path: Path) -> dict | None:
   return value
 
 
-def read_state(machine: MachineSelection) -> dict:
+def read_state(machine: MachineSelection, *, legacy: bool = False) -> dict:
+  if not legacy:
+    marker = read_json(machine.private_state_root / "drop-mihomo-migration.json")
+    if marker is not None:
+      from .migration import _validate_marker
+      _validate_marker(marker, machine.machine_id, machine)
+      if marker["phase"] != "complete":
+        raise TermcfgError(4, "migration_pending", "./termcfg migrate --drop-mihomo")
   value = read_json(state_file(machine))
   if value is None:
     return blank_state(machine)
   try:
-    schema = json.loads((REPO_ROOT / "schemas/termcfg/state.schema.json").read_text())
+    schema = json.loads((REPO_ROOT / "schemas/termcfg" / ("legacy-state-v1.schema.json" if value.get("version") == 1 else "state.schema.json")).read_text())
     Draft202012Validator(schema).validate(value)
+  except TermcfgError:
+    raise
   except Exception as exc:
     raise TermcfgError(2, "invalid_private_state") from exc
+  if value["version"] == 1 and not legacy:
+    raise TermcfgError(4, "legacy_migration_required", "./termcfg migrate --drop-mihomo")
   if value["machine_id"] != machine.machine_id:
     raise TermcfgError(2, "state_machine_mismatch")
   backup_root = machine.private_state_root / "backups"
@@ -103,7 +112,7 @@ def read_journal(machine: MachineSelection) -> dict | None:
   if value is None:
     return None
   try:
-    schema = json.loads((REPO_ROOT / "schemas/termcfg/state.schema.json").read_text())
+    schema = json.loads((REPO_ROOT / "schemas/termcfg" / ("legacy-state-v1.schema.json" if value.get("version") == 1 else "state.schema.json")).read_text())
     journal_schema = {"$schema": schema["$schema"], "$defs": schema["$defs"], "$ref": "#/$defs/journal"}
     Draft202012Validator(journal_schema).validate(value)
     Draft202012Validator(schema).validate(value["state_before"])

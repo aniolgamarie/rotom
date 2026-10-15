@@ -37,7 +37,6 @@ def test_first_adoption_rollback_restores_old_file_and_removes_new(isolated_envi
   assert _apply("zsh") == 0
   machine = read_machine("default")
   state_with_core = read_state(machine)
-  state_with_core["selected_core"] = "a" * 64
   write_json(state_file(machine), state_with_core)
   plan = rollback_preview(machine, "zsh")
   previous_backup = Path(state_with_core["previous"]["zsh"]["zshenv"]["path"])
@@ -50,7 +49,6 @@ def test_first_adoption_rollback_restores_old_file_and_removes_new(isolated_envi
   state = read_state(machine)
   assert "zsh" not in state["previous"]
   assert "zshenv" not in state["targets"]
-  assert state["selected_core"] == "a" * 64
   assert not previous_backup.exists()
 
 

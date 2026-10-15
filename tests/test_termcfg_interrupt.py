@@ -115,8 +115,8 @@ def test_recover_and_rescue_status_work_when_public_source_is_broken(isolated_en
                       adopted=set(), confirm_zshenv=None)
   monkeypatch.setattr(transaction, "atomic_target_bytes", original_write)
   monkeypatch.setattr(SourceArtifact, "bytes", lambda self: (_ for _ in ()).throw(TermcfgError(5, "source_digest_mismatch")))
-  from termcfg import cli
-  monkeypatch.setattr(cli, "_read_lock_raw", lambda component: (_ for _ in ()).throw(TermcfgError(2, "invalid_asset_lock")))
+  from termcfg import packages
+  monkeypatch.setattr(packages, "_read_lock_raw", lambda component: (_ for _ in ()).throw(TermcfgError(2, "invalid_asset_lock")))
   capsys.readouterr()
   assert main(["status", "--component", "zsh", "--json"]) == 0
   status = json.loads(capsys.readouterr().out)

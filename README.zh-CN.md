@@ -4,7 +4,7 @@
 
 [English（正式文档）](README.md) · [文档索引](docs/README.md) · [路线图](docs/roadmap.md) · [已知问题](docs/known-issues.md)
 
-Rotom 使用 `agentcfg` 管理 DSH、Pi 和 OMP 的配置、完整依赖、部署与启动。公共模型、规则、完整 Skills 和配方进入 Git；机器覆盖、密钥、原生登录与会话保留在私人目录。`termcfg` 独立管理 zsh、tmux 和 mihomo。
+Rotom 使用 `agentcfg` 管理 DSH、Pi 和 OMP 的配置、完整依赖、部署与启动。公共模型、规则、完整 Skills 和配方进入 Git；机器覆盖、密钥、原生登录与会话保留在私人目录。`termcfg` 独立管理 zsh/tmux 配置及锁定插件；代理服务不再由它管理，旧元数据通过显式命令迁移。
 
 ## 当前状态
 

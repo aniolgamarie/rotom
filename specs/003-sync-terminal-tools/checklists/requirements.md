@@ -1,3 +1,5 @@
+> Historical scope: this specification describes the retired mihomo integration. Current termcfg manages zsh/tmux only; use [the maintained migration guide](../../../docs/termcfg.md) for supported commands and legacy recovery.
+
 # Specification Quality Checklist: 同步代理与终端工具配置
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning

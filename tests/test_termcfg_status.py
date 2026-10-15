@@ -41,37 +41,24 @@ def test_offline_plan_apply_status_and_drift(isolated_environment, fake_terminal
   assert "target_drift" in result["components"]["zsh"]["required_blockers"]
 
 
-def test_pending_effect_causes_are_separate(isolated_environment, capsys):
-  assert main(["init-local", "--component", "mihomo"]) == 0
-  machine = read_machine("default")
-  state = read_state(machine)
-  state["pending_core_effect"] = True
-  state["pending_config_effect"] = False
-  write_json(state_file(machine), state)
-  capsys.readouterr()
-  assert main(["status", "--component", "mihomo", "--json"]) == 0
-  result = json.loads(capsys.readouterr().out)
-  info = result["components"]["mihomo"]
-  assert info["pending_core_effect"] is True
-  assert info["pending_config_effect"] is False
 
 
 def test_plan_ready_reflects_required_environment(isolated_environment, capsys):
-  assert main(["init-local", "--component", "mihomo"]) == 0
+  assert main(["init-local", "--component", "zsh"]) == 0
   capsys.readouterr()
-  assert main(["plan", "--component", "mihomo", "--json"]) == 0
+  assert main(["plan", "--component", "zsh", "--json"]) == 0
   result = json.loads(capsys.readouterr().out)
   assert result["overall_ready"] is False
-  assert result["environment"]["mihomo"]["ready"] is False
+  assert result["environment"]["zsh"]["ready"] is False
 
 
 def test_failure_reports_component_and_next_command(isolated_environment, capsys):
-  assert main(["init-local", "--component", "mihomo"]) == 0
+  assert main(["init-local", "--component", "zsh"]) == 0
   capsys.readouterr()
-  assert main(["sync", "--component", "mihomo", "--timeout", "1", "--json"]) == 2
+  assert main(["sync", "--component", "zsh", "--timeout", "1", "--json"]) == 2
   result = json.loads(capsys.readouterr().out)
   assert result["command"] == "sync"
-  assert result["component"] == "mihomo"
+  assert result["component"] == "zsh"
   assert result["reason"] == "invalid_timeout"
   assert result["next_command"]
 
@@ -97,8 +84,6 @@ def test_interrupted_apply_reports_recovery_transaction(isolated_environment, fa
   state_before = state_file(machine).read_bytes() if state_file(machine).exists() else None
   assert main(["sync", "--component", "zsh", "--json"]) == 4
   assert json.loads(capsys.readouterr().out)["reason"] == "recovery_pending"
-  assert main(["service", "stop", "--json"]) == 4
-  assert json.loads(capsys.readouterr().out)["reason"] == "recovery_pending"
   assert main(["init-local", "--edit", "--none", "--json"]) == 4
   assert json.loads(capsys.readouterr().out)["reason"] == "recovery_pending"
   assert (state_file(machine).read_bytes() if state_file(machine).exists() else None) == state_before
@@ -108,25 +93,6 @@ def test_interrupted_apply_reports_recovery_transaction(isolated_environment, fa
   assert status["transaction"]["items"]
 
 
-def test_failed_sync_json_reports_stage_and_side_effect(isolated_environment, monkeypatch, capsys):
-  import gzip
-  import hashlib
-  from termcfg import packages
-  assert main(["init-local", "--component", "mihomo"]) == 0
-  archive = gzip.compress(b"synthetic core")
-  asset = {"version": "v1.0.0", "platform": "linux-x86_64",
-           "name": "mihomo-linux-amd64-compatible-v1.0.0.gz",
-           "url": "https://github.com/MetaCubeX/mihomo/releases/download/v1.0.0/mihomo-linux-amd64-compatible-v1.0.0.gz",
-           "size": len(archive), "sha256": hashlib.sha256(archive).hexdigest(),
-           "archive": "gzip-single", "entry": "mihomo", "resources": []}
-  monkeypatch.setattr(packages, "_read_lock_raw", lambda component: ({"assets": {"linux-x86_64": asset}}, "synthetic-snapshot"))
-  monkeypatch.setattr(packages, "_download", lambda *a, **k: b"tampered")
-  capsys.readouterr()
-  assert main(["sync", "--component", "mihomo", "--json"]) == 5
-  result = json.loads(capsys.readouterr().out)
-  assert result["stage"] == "verify"
-  assert result["component"] == "mihomo"
-  assert result["side_effect"] == "package_selection_unchanged"
 
 
 def test_apply_source_failure_identifies_component_and_target(isolated_environment,

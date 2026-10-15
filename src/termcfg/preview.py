@@ -48,13 +48,10 @@ def _digest_object(value: object) -> str:
   return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
-def _lock_digest() -> str:
-  from .catalog import REPO_ROOT
-  values = {}
-  for name in ("mihomo.json", "plugins.json"):
-    path = REPO_ROOT / "locks/termcfg" / name
-    values[name] = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
-  return _digest_object(values)
+def _lock_digest(components: tuple[str, ...]) -> str:
+  from .packages import _read_lock_raw
+  lock, _ = _read_lock_raw(components[0])
+  return _digest_object({name: lock["assets"][name] for name in sorted(set(components))})
 
 
 def _old_starter_link(target_id: str, link: str) -> bool:
@@ -100,7 +97,7 @@ def build_preview(machine: MachineSelection, components: tuple[str, ...]) -> Pre
       action, reason = "adopt-required", "unmanaged_target"
     targets.append(PlannedTarget(artifact, before, action, reason, backup, custom_zshenv))
   snapshot = {"machine_id": machine.machine_id, "home": str(machine.target_home),
-              "components": components, "state": state, "lock": _lock_digest(),
+              "components": components, "state": state, "lock": _lock_digest(components),
               "targets": [{"id": t.artifact.id, "source": t.artifact.sha256,
                            "before": t.before.as_dict(), "action": t.action} for t in targets]}
   return Preview(_digest_object(snapshot), tuple(targets), state,

@@ -1,3 +1,5 @@
+> Historical scope: this specification describes the retired mihomo integration. Current termcfg manages zsh/tmux only; use [the maintained migration guide](../../docs/termcfg.md) for supported commands and legacy recovery.
+
 # Data Model: termcfg
 
 本模型描述非秘密同步事实。所有路径均在加载机器配置时校验；公开来源与私人目标使用不同信任边界。对象字段名称供后续契约与任务引用，不要求持久化采用某一种语法。

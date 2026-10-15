@@ -93,7 +93,7 @@ def _restore_one(machine: MachineSelection, relative: Path, backup: dict, *, bef
 
 def _journal_items(machine: MachineSelection, preview: Preview, changes: list[PlannedTarget]) -> dict:
   transaction_id = uuid.uuid4().hex
-  return {"version": 1, "kind": "apply", "transaction_id": transaction_id,
+  return {"version": 2, "kind": "apply", "transaction_id": transaction_id,
           "phase": "prepared", "plan_id": preview.plan_id,
           "state_before": preview.state,
           "items": [{"target_id": item.artifact.id,
@@ -191,9 +191,7 @@ def _check_approvals(preview: Preview, *, adopted: set[str], confirm_zshenv: str
 def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progress) -> dict:
   changes = [item for item in preview.targets if item.action != "unchanged"]
   if not changes:
-    return {"changed": [], "unchanged": [item.artifact.id for item in preview.targets],
-            "pending_core_effect": preview.state["pending_core_effect"],
-            "pending_config_effect": preview.state["pending_config_effect"]}
+    return {"changed": [], "unchanged": [item.artifact.id for item in preview.targets]}
   private_dir(machine.private_state_root)
   journal = _journal_items(machine, preview, changes)
   transaction_id = journal["transaction_id"]
@@ -261,9 +259,6 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
     for component in changed_components:
       new_previous[component] = {record["target_id"]: record["backup"] for record in journal["items"] if record["component"] == component}
     new_state["previous"] = new_previous
-    if "mihomo" in changed_components:
-      new_state["pending_config_effect"] = True
-      new_state["public_config_identity"] = hashlib.sha256("".join(item.artifact.sha256 for item in preview.targets if item.artifact.component == "mihomo").encode()).hexdigest()
     progress.stage("commit")
     write_json(state_file(machine), new_state)
     journal["phase"] = "committed"
@@ -285,9 +280,7 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
   return {"changed": [item.artifact.id for item in changes],
           "unchanged": [item.artifact.id for item in preview.targets if item.action == "unchanged"],
           "transaction_id": transaction_id,
-          "cleanup_pending": cleanup_pending,
-          "pending_core_effect": new_state["pending_core_effect"],
-          "pending_config_effect": new_state["pending_config_effect"]}
+          "cleanup_pending": cleanup_pending}
 
 
 def apply(machine: MachineSelection, components: tuple[str, ...], *, plan_id: str | None,
@@ -325,7 +318,7 @@ def apply(machine: MachineSelection, components: tuple[str, ...], *, plan_id: st
 def recover(machine: MachineSelection) -> dict:
   """只恢复仍匹配本事务写后字节或写前身份的目标。"""
   with operation_lease(machine.machine_id):
-    require_current_machine(machine)
+    require_current_machine(machine, legacy=True)
     journal = read_journal(machine)
     if journal is None:
       return {"recovered": False, "reason": "no_recovery_pending"}
@@ -421,7 +414,7 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
     transaction_id = uuid.uuid4().hex
     backup_dir = machine.private_state_root / "backups" / transaction_id
     private_dir(backup_dir)
-    journal = {"version": 1, "kind": "rollback", "transaction_id": transaction_id,
+    journal = {"version": 2, "kind": "rollback", "transaction_id": transaction_id,
                "phase": "prepared", "plan_id": plan["plan_id"], "state_before": state,
                "items": []}
     _write_journal(machine, journal)
@@ -486,8 +479,6 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
           new_state["targets"].pop(target_id, None)
       progress.stage("verify", component=component)
       new_state["previous"].pop(component)
-      if component == "mihomo":
-        new_state["pending_config_effect"] = True
       progress.stage("commit", component=component)
       write_json(state_file(machine), new_state)
       journal["phase"] = "committed"
@@ -505,5 +496,4 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
     except (OSError, TermcfgError):
       cleanup_pending = True
     return {"component": component, "restored": [item["target_id"] for item in plan["targets"]],
-            "transaction_id": transaction_id, "cleanup_pending": cleanup_pending,
-            "pending_config_effect": new_state["pending_config_effect"]}
+            "transaction_id": transaction_id, "cleanup_pending": cleanup_pending}

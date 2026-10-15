@@ -26,9 +26,9 @@ def test_default_explicit_selection_and_clear(isolated_environment):
 def test_edit_preserves_machine_home(isolated_environment):
   assert main(["init-local", "--component", "zsh"]) == 0
   original = read_machine("default")
-  assert main(["init-local", "--edit", "--component", "mihomo"]) == 0
+  assert main(["init-local", "--edit", "--component", "tmux"]) == 0
   updated = read_machine("default")
-  assert updated.components == ("mihomo",)
+  assert updated.components == ("tmux",)
   assert updated.target_home == original.target_home
   assert updated.private_state_root == original.private_state_root
 

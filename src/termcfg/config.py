@@ -11,7 +11,7 @@ import tomllib
 from .errors import TermcfgError
 
 
-COMPONENTS = frozenset(("zsh", "tmux", "mihomo"))
+COMPONENTS = frozenset(("zsh", "tmux"))
 MACHINE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
 
 
@@ -43,7 +43,7 @@ class MachineSelection:
   components: tuple[str, ...]
 
   @classmethod
-  def from_dict(cls, data: dict, *, expected_id: str | None = None):
+  def from_dict(cls, data: dict, *, expected_id: str | None = None, legacy: bool = False):
     if set(data) != {"machine_id", "target_home", "private_state_root", "components"}:
       raise TermcfgError(2, "invalid_machine_fields")
     machine_id = data["machine_id"]
@@ -51,7 +51,7 @@ class MachineSelection:
       raise TermcfgError(2, "invalid_machine_id")
     values = data["components"]
     if (not isinstance(values, list) or any(not isinstance(v, str) for v in values) or
-        len(set(values)) != len(values) or any(v not in COMPONENTS for v in values)):
+        len(set(values)) != len(values) or any(v not in (COMPONENTS | {"mihomo"} if legacy else COMPONENTS) for v in values)):
       raise TermcfgError(2, "invalid_components")
     if not isinstance(data["target_home"], str) or not isinstance(data["private_state_root"], str):
       raise TermcfgError(2, "invalid_machine_path")
@@ -67,7 +67,7 @@ class MachineSelection:
     return cls(machine_id, home, private, tuple(values))
 
 
-def read_machine(machine_id: str) -> MachineSelection:
+def read_machine(machine_id: str, *, legacy: bool = False) -> MachineSelection:
   path = machine_path(machine_id)
   try:
     info = path.lstat()
@@ -82,15 +82,21 @@ def read_machine(machine_id: str) -> MachineSelection:
         value = tomllib.load(stream)
     finally:
       os.close(fd)
-    return MachineSelection.from_dict(value, expected_id=machine_id)
+    machine = MachineSelection.from_dict(value, expected_id=machine_id, legacy=True)
+    if "mihomo" in machine.components and not legacy:
+      raise TermcfgError(4, "legacy_migration_required", "./termcfg migrate --drop-mihomo")
+    if not legacy:
+      from .state import read_state
+      read_state(machine)
+    return machine
   except FileNotFoundError as exc:
     raise TermcfgError(2, "machine_missing", "./termcfg init-local --component zsh") from exc
   except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
     raise TermcfgError(2, "invalid_machine_file") from exc
 
 
-def require_current_machine(machine: MachineSelection) -> None:
-  if read_machine(machine.machine_id) != machine:
+def require_current_machine(machine: MachineSelection, *, legacy: bool = False) -> None:
+  if read_machine(machine.machine_id, legacy=legacy) != machine:
     raise TermcfgError(4, "machine_selection_changed", "./termcfg status")
 
 

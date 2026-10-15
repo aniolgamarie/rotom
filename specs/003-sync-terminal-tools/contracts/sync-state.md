@@ -1,3 +1,5 @@
+> Historical scope: this specification describes the retired mihomo integration. Current termcfg manages zsh/tmux only; use [the maintained migration guide](../../../docs/termcfg.md) for supported commands and legacy recovery.
+
 # 同步、备份与服务状态契约
 
 本契约约束 `plan`、`apply`、`rollback` 和显式 mihomo 服务操作。私有状态路径仅由当前用户访问；以下字段为语义模型，具体落盘格式由实现确定，但未知字段必须拒绝。
