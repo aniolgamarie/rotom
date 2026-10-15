@@ -355,7 +355,8 @@ Apply returned exit 4 because a native process held the activity lock. That proc
 was not terminated; apply remains pending until the user exits it.
 
 The command selections below use a generic machine name; private paths and native
-account state are not part of this public record:
+account state are not part of this public record. Replace `<reviewed-plan-id>` with
+the plan ID from the preceding termcfg plan after reviewing that plan:
 
 ```sh
 ./agentcfg --machine workstation --profile dsh-default apply
@@ -364,7 +365,8 @@ account state are not part of this public record:
 ./termcfg --machine workstation migrate --drop-mihomo
 ./termcfg --machine workstation status
 ./termcfg --machine workstation doctor --strict
-./termcfg --machine workstation apply
+./termcfg --machine workstation plan
+./termcfg --machine workstation apply --plan-id <reviewed-plan-id>
 ./agentcfg --machine workstation --profile omp-kernel plan
 ./agentcfg --machine workstation --profile omp-kernel apply
 ```
