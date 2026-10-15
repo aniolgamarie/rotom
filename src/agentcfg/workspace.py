@@ -103,7 +103,8 @@ def load_workspace(local, profile=None, *, repository=None, proposal=None,
                    allow_missing_local_values=False):
   repository = repository or Path(__file__).resolve().parents[2]
   catalog, adapters = load_public_catalog(repository=repository)
-  config, store = load_local(local, adapter_schemas=catalog.adapter_schemas)
+  config, store = load_local(local, adapter_schemas=catalog.adapter_schemas,
+    load_credentials=False)
   if proposal is not None:
     from .merge import merge_layers
     from .schema import validate_document

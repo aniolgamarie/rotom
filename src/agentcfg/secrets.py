@@ -35,12 +35,21 @@ def _valid_values(values: object) -> bool:
 class SecretStore:
   """仅 resolve 可返回秘密；不是防止同进程主动反射的安全沙箱。"""
 
-  __slots__ = ("__values",)
+  __slots__ = ("__values", "__loader")
 
   def __init__(self, values: dict[str, str]):
     if not _valid_values(values):
       raise CredentialError()
     self.__values = dict(values)
+    self.__loader = None
+
+  @classmethod
+  def _deferred(cls, loader):
+    """保留读取能力，首次有效解析时才加载并校验凭据。"""
+    store = cls.__new__(cls)
+    store.__values = None
+    store.__loader = loader
+    return store
 
   def __repr__(self) -> str:
     return "SecretStore()"
@@ -51,6 +60,10 @@ class SecretStore:
   def resolve(self, reference: SecretRef, *, required: bool = True) -> str | None:
     if not isinstance(reference, SecretRef) or type(required) is not bool:
       raise CredentialError()
+    if self.__loader is not None:
+      loaded = self.__loader()
+      self.__values = loaded.__values
+      self.__loader = None
     value = self.__values.get(reference.reference[len("secret:"):])
     if not value:
       if required:

@@ -88,3 +88,39 @@ def test_invalid_local_secrets_never_reach_schema_error_context(tmp_path, secret
     config.load_local(path)
   assert caught.value.__context__ is None
   assert "PRIVATE-CANARY" not in "".join(traceback.format_exception(caught.value))
+
+
+def test_deferred_store_loads_only_on_first_valid_resolution():
+  secrets = api()
+  calls = []
+  def load():
+    calls.append("loaded")
+    return secrets.SecretStore({"key": CANARY})
+  store = secrets.SecretStore._deferred(load)
+  assert repr(store) == "SecretStore()"
+  for operation in (vars, dict, list, asdict, json.dumps, pickle.dumps):
+    with pytest.raises((TypeError, ValueError)):
+      operation(store)
+  for reference, required in ((CANARY, True), (SecretRef("secret:key"), 1)):
+    with pytest.raises(secrets.CredentialError):
+      store.resolve(reference, required=required)
+  assert calls == []
+  assert store.resolve(SecretRef("secret:key")) == CANARY
+  assert store.resolve(SecretRef("secret:missing"), required=False) is None
+  assert store.resolve(SecretRef("secret:key")) == CANARY
+  assert calls == ["loaded"]
+
+
+def test_deferred_store_retries_failed_load_without_caching_empty_values():
+  secrets = api()
+  calls = []
+  def load():
+    calls.append("loaded")
+    if len(calls) == 1:
+      raise secrets.CredentialError()
+    return secrets.SecretStore({"key": CANARY})
+  store = secrets.SecretStore._deferred(load)
+  with pytest.raises(secrets.CredentialError):
+    store.resolve(SecretRef("secret:key"), required=False)
+  assert store.resolve(SecretRef("secret:key")) == CANARY
+  assert calls == ["loaded", "loaded"]

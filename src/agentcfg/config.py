@@ -101,7 +101,10 @@ def _read_toml(path: Path, *, source: tuple[str, ...] = ("public", "1")) -> dict
   return _parse_toml(content, source)
 
 
-def load_local(path: Path, *, adapter_schemas: AdapterSchemas | None = None) -> tuple[LocalConfig, SecretStore]:
+def load_local(path: Path, *, adapter_schemas: AdapterSchemas | None = None,
+               load_credentials: bool = True) -> tuple[LocalConfig, SecretStore]:
+  if type(load_credentials) is not bool:
+    raise TypeError("load_credentials 必须为布尔值")
   missing = False
   try:
     document = read_local_document(path)
@@ -111,7 +114,8 @@ def load_local(path: Path, *, adapter_schemas: AdapterSchemas | None = None) -> 
     raise ConfigError("read")
   ordinary, _ = separate_local(document)
   validate_document("local", ordinary, adapter_schemas=adapter_schemas)
-  store = load_secrets(document, path)
+  store = (load_secrets(document, path) if load_credentials else
+    SecretStore._deferred(lambda: load_secrets(document, path)))
   return LocalConfig(ordinary), store
 
 
