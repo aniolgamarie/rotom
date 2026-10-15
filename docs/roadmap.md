@@ -29,6 +29,27 @@ machinery. That terminal-only package is implemented with explicit v1 metadata
 migration and isolated tests. A future independent proxy project is not implemented;
 existing proxy services and private configuration are not moved or deleted.
 
+## Execution-environment consistency
+
+**Status: implemented and accepted in the task worktree; awaiting integration, daily deployment unchanged.**
+
+The [execution-environment follow-up](design/project-refactoring.md#execution-environment-follow-up)
+now separates caller development paths from native state ownership, restricted
+workers, installation and tests. Persistent unset, name-only one-shot controls
+and mandatory value-free difference warnings share one launch contract. OMP and
+Pi main sessions retain caller paths; DSH preserves native TUI HOME and uses its
+public subprocess provider plus separate stdio MCP exec configuration. Terminal
+NVM/XDG behavior and the corresponding guides are corrected.
+
+Native evidence is scoped by channel and lock. Keep the existing deployment until
+the reviewed branch is explicitly integrated and deployed; configuration rollback does not imply a
+software or session database downgrade. Unverified platforms and native profile
+combinations remain listed explicitly.
+
+GPT-6.1 catalog support and its candidate host-stack upgrade are deferred by
+maintainer decision. Do not add a provider replacement or force dependency ranges
+for that model. Per-route proxy and lease-lifecycle redesign remain separate work.
+
 ## RM-001: Declared sources and on-demand dependencies
 
 **Status: deferred design and migration; not delivered.**

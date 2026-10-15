@@ -47,6 +47,7 @@ def recipe_digest(repository, adapter_id="dsh"):
     local_packages = {
       "vendor/rotom-dsh-cursor-terminal-0.1.2.tgz": ("cursor-terminal", ("package.json", "index.mjs")),
       "vendor/rotom-dsh-review-context-0.1.0.tgz": ("review-context", ("package.json", "index.mjs", "cordis.patch.yml")),
+      "vendor/rotom-dsh-execution-environment-0.1.0.tgz": ("execution-environment", ("package.json", "index.mjs", "environment.mjs")),
     }
     if relative in local_packages:
       directory, files = local_packages[relative]

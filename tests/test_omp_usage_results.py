@@ -34,8 +34,11 @@ def test_native_bytes_and_exit_are_not_reinterpreted(case, mode, tmp_path, monke
   assert result == case["exit"]
   captured = capfdbinary.readouterr()
   assert captured.out == stdout
-  assert captured.err == stderr
   if mode == "native":
+    assert captured.err == stderr
     assert seen == [["/fake/omp", "usage", *case["tail"]]]
   else:
+    # 受管启动先报告环境变更，原生命令的 stderr 字节仍须原样保留。
+    assert captured.err.startswith(b"environment warning (host):")
+    assert captured.err.endswith(stderr)
     assert seen[0][3:] == ["usage", *case["tail"]]

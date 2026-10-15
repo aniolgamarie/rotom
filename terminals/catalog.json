@@ -6,7 +6,7 @@
       "component": "zsh",
       "source": "terminals/zsh/zshrc.zsh",
       "destination": ".zshrc",
-      "sha256": "d37313407eaaaee257245e661bef4eb8af00d2a674d3a1debcdd2122a746786b",
+      "sha256": "0d52ffb6713f1e519cb31839b8f51c0ec0d682d8b9b86c3d3c0b86c40ffff139",
       "mode": "0644"
     },
     {
@@ -14,7 +14,7 @@
       "component": "zsh",
       "source": "terminals/zsh/zshenv",
       "destination": ".zshenv",
-      "sha256": "8562c1d37720a5eff17f0459a52e37f368621d7736c5f212e906df7ae0c8bda4",
+      "sha256": "9985af51295258039f24cd46734b4336e2e1fa9e52ad107aac3e02e268632999",
       "mode": "0600"
     },
     {

@@ -1,6 +1,7 @@
 """两组路径下使用真实 Pi 适配器与完整虚构依赖锁；宿主和安装器均为替身。"""
 
 import json
+import os
 from pathlib import Path
 import shutil
 
@@ -109,6 +110,11 @@ def test_full_pi_fixture_pipeline(name, tmp_path, monkeypatch, capsys, fake_subp
   assert cli.main([*args, "apply"]) == 0
   result = json.loads(capsys.readouterr().out.splitlines()[-1])
   assert result["changes"] == 0
+  assert cli.main([*args, "plan"]) == 0
+  planned = json.loads(capsys.readouterr().out.splitlines()[-1])
+  assert planned["changes"] == 0
+  assert planned["upgrade"]["changed_categories"] == []
+  assert planned["upgrade"]["previous_runtime_identity"] == planned["upgrade"]["current_runtime_identity"]
   assert cli.main([*args, "doctor"]) == 0
   diagnosis = json.loads(capsys.readouterr().out.splitlines()[-1])
   assert diagnosis["platform_evidence"] == "not-recorded"
@@ -127,7 +133,7 @@ def test_full_pi_fixture_pipeline(name, tmp_path, monkeypatch, capsys, fake_subp
   call = fake_subprocess.calls[-1]
   assert call["cwd"] == cwd
   assert call["argv"][-2:] == ["-p", "a b"]
-  assert call["env"]["HOME"] == str(w.instance / "user-home")
+  assert call["env"]["HOME"] == os.environ["HOME"]
   assert call["env"]["PI_CODING_AGENT_DIR"] == str(w.instance / "pi-home")
   assert "synthetic-fixture-secret" not in (w.state_root / "deployment.json").read_text()
   before = len(fake_subprocess.calls)

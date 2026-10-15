@@ -121,6 +121,8 @@ def _saved(workspace):
 
 def _legacy(fixture, *, old_source_digest=False):
   contract = deepcopy(runtime.record(fixture.workspace, fixture.lock))
+  for name in ("environment_version", "environment_policy", "caller_paths"):
+    contract.pop(name, None)
   contract["adapter_binding"].pop("execution_environment", None)
   if old_source_digest:
     contract["adapter_binding"]["source_policy"]["manifest_sha256"] = _OLD_SOURCE_DIGEST
@@ -309,14 +311,14 @@ def test_caller_pi_config_injection_remains_forbidden(contract_workspace, fake_s
 def test_final_environment_pi_config_injection_rejected(contract_workspace, fake_subprocess, monkeypatch):
   fixture = contract_workspace
   _apply(fixture)
-  original = runtime.launch_environment
+  original = runtime.prepare_environment
 
-  def injected(spec, machine, store):
-    env = original(spec, machine, store)
+  def injected(*args, **kwargs):
+    env, report = original(*args, **kwargs)
     env["PI_CONFIG_DIR"] = ".synthetic-injected"
-    return env
+    return env, report
 
-  monkeypatch.setattr(runtime, "launch_environment", injected)
+  monkeypatch.setattr(runtime, "prepare_environment", injected)
   with pytest.raises((ConfigError, Conflict)):
     runtime.run(fixture.workspace, cwd=fixture.cwd)
   assert not fake_subprocess.calls

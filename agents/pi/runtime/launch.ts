@@ -224,7 +224,7 @@ async function main(argv) {
   const manifestPath = argv[1];
   const instanceRoot = dirname(dirname(manifestPath));
   if (manifestPath !== join(instanceRoot, "pi-home/agentcfg-manifest.json")
-      || process.env.HOME !== join(instanceRoot, "user-home") || process.env.PI_CODING_AGENT_DIR !== join(instanceRoot, "pi-home")
+      || process.env.HOME !== (process.env.AGENTCFG_PI_EXECUTION_HOME ?? join(instanceRoot, "user-home")) || process.env.PI_CODING_AGENT_DIR !== join(instanceRoot, "pi-home")
       || process.env.PI_CODING_AGENT_SESSION_DIR !== join(instanceRoot, "pi-home/sessions")) failure("pi-instance-environment", 4);
   const runtimeRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   process.env.PI_SKIP_VERSION_CHECK = "1";

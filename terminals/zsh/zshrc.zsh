@@ -107,10 +107,24 @@ fi
 
 unset _termcfg_zsh_plugins
 
-export NVM_DIR="$HOME/.nvm"
-[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+# 显式空值表示不加载 NVM；仅在变量未设置时提供默认路径。
+(( ${+NVM_DIR} )) || NVM_DIR="$HOME/.nvm"
+export NVM_DIR
+[[ -n "$NVM_DIR" && -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 
 # 机器专属配置（代理、API key、本地函数等）放这里，不写入公开文件。
-if [[ -f "$HOME/.config/termcfg/zshrc.local" ]]; then
-  source "$HOME/.config/termcfg/zshrc.local"
+# XDG 优先、缺失时兼容 legacy；冲突时不执行任一私人 hook，不输出路径或正文。
+if [[ -n "${XDG_CONFIG_HOME:-}" && "$XDG_CONFIG_HOME" != /* ]]; then
+  print -u2 -r -- "termcfg: invalid XDG_CONFIG_HOME; zshrc private hook not loaded"
+else
+  _termcfg_private_hook="${XDG_CONFIG_HOME:-$HOME/.config}/termcfg/zshrc.local"
+  _termcfg_legacy_hook="$HOME/.config/termcfg/zshrc.local"
+  if [[ -f "$_termcfg_private_hook" && -f "$_termcfg_legacy_hook" && ! "$_termcfg_private_hook" -ef "$_termcfg_legacy_hook" ]]; then
+    print -u2 -r -- "termcfg: conflicting zshrc private hooks; neither loaded"
+  elif [[ -f "$_termcfg_private_hook" ]]; then
+    source "$_termcfg_private_hook"
+  elif [[ -f "$_termcfg_legacy_hook" ]]; then
+    source "$_termcfg_legacy_hook"
+  fi
+  unset _termcfg_private_hook _termcfg_legacy_hook
 fi

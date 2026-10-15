@@ -154,18 +154,20 @@ class HostSupervisor:
       input_name = "activity/inputs/" + lease["lease_id"] + ".json"
       tree.write_immutable(input_name, json_bytes(payload))
     ensure_private(root / "pi-home")
+    ensure_private(root / "tmp")
     with Tree(root) as tree:
       tree.write_immutable("pi-home/models.json", json_bytes(models))
-    env = environment(home=root)
-    for name in ("SSH_AUTH_SOCK", "EDITOR", "VISUAL", "TMUX", "TMUX_PANE", "SSH_TTY"):
-      env.pop(name, None)
+    from .execution_environment import restricted_environment
+    if self.engine_executable is None:
+      raise DependencyError("受限worker缺少已验证的运行时解释器")
+    env = restricted_environment(root, self.engine_executable)
     env.update(selected_env)
     env["AGENTCFG_TASK_KEEPER_DATABASE"] = str(Path(self.config["instance_root"]) / "pi-home/task-keeper/runtime.db")
     env.update(PI_CODING_AGENT_DIR=str(root / "pi-home"), PI_CODING_AGENT_SESSION_DIR=str(root / "sessions"),
       AGENTCFG_SUPERVISOR_ENDPOINT=str(self.server.endpoint), AGENTCFG_SUPERVISOR_CAPABILITY=self.service.issue_capability("worker", lease["lease_id"]),
       AGENTCFG_SUPERVISOR_CLIENT=str(self.repository / "scripts/pi-control.py"), AGENTCFG_PYTHON=sys.executable,
       AGENTCFG_INSTANCE_ID=self.store.owner["instance_id"], AGENTCFG_EXECUTION_LEASE_ID=lease["lease_id"])
-    return SpawnCommand((definition["engine"], str(entrypoint), "--input", str(self.root / input_name), "--runtime-root", str(self.runtime_root)), Path(descriptor["cwd"]), env)
+    return SpawnCommand((self.engine_executable, str(entrypoint), "--input", str(self.root / input_name), "--runtime-root", str(self.runtime_root)), Path(descriptor["cwd"]), env)
 
   def spawn(self, command, lease):
     capture = OutputCapture(command.capture_root) if command.capture_root else None

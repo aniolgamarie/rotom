@@ -149,7 +149,8 @@
     "@deepseek-ai/dsh-llm-deepseek": "0.2.0-rc.2",
     "@deepseek-ai/dsh-anonymous-user-id": "0.2.0-rc.2",
     "@deepseek-ai/dsh-spill": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-output-retention": "0.2.0-rc.2"
+    "@deepseek-ai/dsh-output-retention": "0.2.0-rc.2",
+    "rotom-dsh-execution-environment": "file:vendor/rotom-dsh-execution-environment-0.1.0.tgz"
   },
   "pnpm": "11.19.0",
   "pnpm_integrity": "sha512-eIHz7VkNRyxKlV4riLISF5ERYGbcyIy8o4SeybYPG7qm0syyIfqR2k4cZb7yvL43k2Wup6xTnHv4be3DobItzg==",

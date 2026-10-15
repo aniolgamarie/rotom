@@ -18,10 +18,24 @@ _EXPRESSIONS = frozenset({
   "process.env.DSH_TUI_WORKSPACE_TARGET ?? undefined",
   "process.env.DSH_TUI_RESUME_SESSION ?? undefined",
 })
+_MCP_ARGS_PREFIX = "JSON.parse(process.env.AGENTCFG_MCP_ENV_ARGS).concat("
+
+
+def mcp_arguments_expression(expression):
+  import json
+  if not expression.startswith(_MCP_ARGS_PREFIX) or not expression.endswith(")"):
+    return False
+  try:
+    arguments = json.loads(expression[len(_MCP_ARGS_PREFIX):-1])
+    return (isinstance(arguments, list) and bool(arguments) and all(isinstance(item, str) and "\0" not in item for item in arguments)
+      and bool(arguments[0]) and "=" not in arguments[0])
+  except (ValueError, TypeError):
+    return False
 
 
 def check_expression(expression):
-  return expression in _EXPRESSIONS or re.fullmatch(r"process\.env\.AGENTCFG_MCP_[A-F0-9]{16}", expression) is not None
+  return (expression in _EXPRESSIONS or mcp_arguments_expression(expression)
+    or re.fullmatch(r"process\.env\.AGENTCFG_MCP_[A-F0-9]{16}", expression) is not None)
 
 
 class NativeLoader(yaml.SafeLoader):
@@ -53,6 +67,8 @@ def _walk(value, path=()):
              "workspace": "process.env.DSH_TUI_WORKSPACE_TARGET ?? undefined",
              "sessionId": "process.env.DSH_TUI_RESUME_SESSION ?? undefined"}
     if field in known and value.expression == known[field]:
+      return
+    if field == "args" and mcp_arguments_expression(value.expression):
       return
     if "headers" in path or "env" in path:
       if re.fullmatch(r"process\.env\.AGENTCFG_MCP_[A-F0-9]{16}", value.expression):

@@ -57,7 +57,10 @@ def test_review_toggle_disables_plugin_without_inserting_duplicate(enabled):
   patch = native.load(next(a.content for a in rendered if a.target.path == "dsh-home/agentcfg.patch.yml"))
   row = next(row for row in patch if row.get("id") == "auto-review")
   assert row == {"id": "auto-review", "disabled": not enabled}
-  assert not any("insert" in row for row in patch)
+  inserted = [item for row in patch for item in row.get("insert", [])]
+  assert not any(item.get("id") == "auto-review" or item.get("name") == "dsh-auto-review" for item in inserted)
+  assert sum(item.get("name") == "rotom-dsh-execution-environment" for item in inserted) == 1
+  assert {"id": "subprocess", "disabled": True} in patch
   fields = {a.target.selector: json.loads(a.content) for a in rendered if a.target.selector}
   assert fields["/auto-review/config/enableByDefault"] is True
   dependencies = adapter.dependency_plan(data(enabled)).requirements

@@ -293,6 +293,10 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="工作目录（默认调用时 cwd）",
     )
+    run.add_argument("--inherit-env", action="append", default=[], metavar="NAME",
+        help="仅本次普通启动继承调用者的非秘密变量；只接受名称")
+    run.add_argument("--unset-env", action="append", default=[], metavar="NAME",
+        help="仅本次普通启动删除非秘密变量，区别于空字符串")
 
     subparsers.add_parser("usage", help="透传OMP原生usage；前置显式profile时使用受管身份")
     inventory = subparsers.add_parser("inventory", help="只读盘点旧OMP配置，生成私人审阅提案")
@@ -304,6 +308,7 @@ def build_parser() -> argparse.ArgumentParser:
         "doctor",
         help="离线报告实例/依赖/漂移/备份/权限状态",
     )
+    doctor.add_argument("--environment", action="store_true", help="显示环境变量处理状态与来源，不显示值或读取凭据")
     doctor.add_argument(
         "--live",
         action="store_true",

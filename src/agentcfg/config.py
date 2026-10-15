@@ -277,6 +277,22 @@ def _path(value: str, location: tuple[str, ...]) -> str:
   return result
 
 
+def validate_environment_settings(environment, credential_targets=frozenset(), *, reserved_environment=frozenset()):
+  from .execution_environment import CONTROL_NAMES
+  reserved = _RESERVED_ENVIRONMENT | credential_targets | reserved_environment | CONTROL_NAMES
+  if set(environment.get("unset", [])) & (set(environment.get("inherit", [])) | set(environment.get("values", {}))):
+    raise ConfigError("environment-unset-conflict")
+  for channel in ("inherit", "values", "unset"):
+    for name in environment.get(channel, {}):
+      location = ("machine", "environment", channel, "<key>")
+      if name in reserved or name.startswith(("AGENTCFG_", "DSH_")) or _credential_name(name):
+        raise ConfigError("environment", location)
+      if channel == "values":
+        value = environment[channel][name]
+        if "\0" in value or value.startswith("secret:") or _credential_url(value):
+          raise ConfigError("environment", location)
+
+
 def _machine_layers(machine: dict, credential_targets: set[str], *, reserved_environment=frozenset()) -> tuple[dict, dict]:
   defaults = {"paths": {}, "environment": {"inherit": [], "values": {}}}
   local = deepcopy(machine)
@@ -298,17 +314,7 @@ def _machine_layers(machine: dict, credential_targets: set[str], *, reserved_env
       local["editor"] = _path(editor, ("machine", "editor"))
     elif not re.fullmatch(r"[\w.+-]+", editor) or editor in (".", ".."):
       raise ConfigError("editor", ("machine", "editor"))
-  environment = local.get("environment", {})
-  reserved = _RESERVED_ENVIRONMENT | credential_targets | reserved_environment
-  for channel in ("inherit", "values"):
-    for name in environment.get(channel, {}):
-      location = ("machine", "environment", channel, "<key>")
-      if name in reserved or name.startswith(("AGENTCFG_", "DSH_")) or _credential_name(name):
-        raise ConfigError("environment", location)
-      if channel == "values":
-        value = environment[channel][name]
-        if "\0" in value or value.startswith("secret:") or _credential_url(value):
-          raise ConfigError("environment", location)
+  validate_environment_settings(local.get("environment", {}), credential_targets, reserved_environment=reserved_environment)
   return defaults, local
 
 

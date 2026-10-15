@@ -3,6 +3,7 @@
 from copy import deepcopy
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import yaml
@@ -480,7 +481,8 @@ class PiAdapter(Adapter):
   def launch_spec(self, data, *, cwd, runtime_root, instance_root, lock_identity):
     self.validate_selected(data)
     engine = data["profile"]["agent_options"].get("runtime", {}).get("engine", "node")
-    env = [EnvironmentBinding("HOME", str(instance_root / "user-home")),
+    env = [EnvironmentBinding("HOME", os.environ["HOME"]),
+      EnvironmentBinding("AGENTCFG_PI_EXECUTION_HOME", os.environ["HOME"]),
       EnvironmentBinding("PI_CODING_AGENT_DIR", str(instance_root / "pi-home")),
       EnvironmentBinding("PI_CODING_AGENT_SESSION_DIR", str(instance_root / "pi-home/sessions"))]
     if "codex" in data["profile"]["agent_options"].get("model_delegate", {}).get("backends", []):
@@ -515,7 +517,7 @@ class PiAdapter(Adapter):
       flags = ("--no-install", "--no-env-file", "--no-macros", "--config=" + str(runtime_root / "runtime/bunfig.locked.toml"),
         "--tsconfig-override=" + str(runtime_root / "runtime/tsconfig.locked.json"))
       env.extend((EnvironmentBinding("BUN_OPTIONS", ""), EnvironmentBinding("BUN_RUNTIME_TRANSPILER_CACHE_PATH", "0")))
-    return LaunchSpec((engine, *flags, str(runtime_root / "runtime/launch.mjs"), "--manifest", str(instance_root / "pi-home/agentcfg-manifest.json")), cwd, lock_identity, tuple(env))
+    return LaunchSpec((engine, *flags, str(runtime_root / "runtime/launch.mjs"), "--manifest", str(instance_root / "pi-home/agentcfg-manifest.json")), cwd, lock_identity, tuple(env), environment_policy="caller")
 
   def prepare_runtime(self, workspace, root):
     directories = ["pi-home", "user-home", "pi-home/sessions"]

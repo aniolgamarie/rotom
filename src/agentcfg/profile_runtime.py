@@ -11,7 +11,7 @@ from .storage import Conflict, Tree, ensure_private
 
 
 PROFILE_PROJECTIONS = ("@deepseek-harness-tui/dsh-tui", "rotom-dsh-cursor-terminal",
-  "dsh-auto-review", "rotom-dsh-review-context")
+  "dsh-auto-review", "rotom-dsh-review-context", "rotom-dsh-execution-environment")
 LEGACY_BUNDLES = ["@deepseek-ai/dsh-base", "@deepseek-harness-tui/dsh-tui"]
 PROFILE_BUNDLES = ["@deepseek-ai/dsh-base", "rotom-dsh-review-context", "dsh-auto-review",
   "@deepseek-harness-tui/dsh-tui"]

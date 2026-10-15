@@ -278,3 +278,17 @@ def test_simple_results_do_not_repeat_json_hint(monkeypatch):
     "artifacts": 2, "cache": "/tmp/rendered"}, mode="human")
   assert "原生产物已生成" in output
   assert "--format json" not in output
+
+
+def test_doctor_environment_is_visible_in_terminal_and_never_dumps_values(monkeypatch):
+  payload = {"command": "doctor", "agent": "dsh", "profile": "dsh-default",
+    "environment": {"status": "host-preview", "policy": "isolated", "declarations_pending": True,
+      "sensitive_excluded": 2, "value": "PRIVATE_ENVIRONMENT_CANARY", "variables": [
+        {"name": "HOME", "status": "overridden", "source": "adapter-policy", "value": "PRIVATE_HOME_CANARY"},
+        {"name": "CUSTOM_BUILD_ROOT", "status": "removed", "source": "not-inherited"},
+        {"name": "PRIVATE_API_KEY", "status": "removed", "source": "not-inherited"}]}}
+  for mode, tty in (("human", False), ("auto", True)):
+    output = emit(monkeypatch, payload, mode=mode, tty=tty)
+    assert "环境诊断" in output and "独立宿主" in output and "环境声明待部署" in output
+    assert "HOME" in output and "CUSTOM_BUILD_ROOT" in output and "适配器策略" in output
+    assert "PRIVATE_" not in output

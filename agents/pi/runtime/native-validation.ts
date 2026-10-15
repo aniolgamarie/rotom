@@ -317,7 +317,8 @@ async function main(path) {
   const runtimeRoot = resolve(dirname(fileURLToPath(import.meta.url)), ".."), installed = JSON.parse(privateFile(join(runtimeRoot, "runtime/profile.json")));
   const engine = typeof globalThis.Bun !== "undefined" ? "bun" : "node", version = engine === "bun" ? globalThis.Bun.version : process.version;
   if (installed.runtime_identity !== input.runtime_identity || installed.engine !== engine || installed.toolchains[engine] !== version) reject("NATIVE_ENGINE_UNVERIFIED", 5);
-  if (process.env.HOME !== join(input.instance_root, "user-home") || process.env.PI_CODING_AGENT_DIR !== join(input.instance_root, "pi-home")) reject("NATIVE_ENVIRONMENT_UNVERIFIED", 5);
+  if (process.env.HOME !== (process.env.AGENTCFG_PI_EXECUTION_HOME ?? join(input.instance_root, "user-home"))
+      || process.env.PI_CODING_AGENT_DIR !== join(input.instance_root, "pi-home")) reject("NATIVE_ENVIRONMENT_UNVERIFIED", 5);
   const manifest = JSON.parse(privateFile(join(input.instance_root, "pi-home/agentcfg-manifest.json")));
   if (!manifest.allowed_models?.length || manifest.allowed_models.some(row => !/^agentcfg-native-[a-z-]+$/.test(row.model))
       || existsSync(join(input.instance_root, "pi-home/auth.json"))) reject("NATIVE_ACCOUNT_INPUT_DENIED", 4);

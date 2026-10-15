@@ -145,6 +145,8 @@ Whale defaults are whale=true, whaleGirl=false, companion.skin=whale, minimal=fa
 
 The default theme is `rotom-catppuccin`, with Poimandres assets retained as an option. `/theme` changes native preference. Brand behavior can affect theme choice; no environment variable forcibly overrides the user's selection. Theme capture is an initial-default proposal, not a guarantee of continuous synchronization.
 
+The TUI host retains its instance HOME for settings, model preferences and native state. Developer subprocesses and PTYs use the caller HOME/XDG through `rotom-dsh-execution-environment`, a public subclass of the unchanged upstream local subprocess provider. Stdio MCP uses its own public command/args configuration and `/usr/bin/env` exec so unset variables stay absent; HTTP MCP does not launch a local process. See [environment controls](local-config.md). PTC or a trusted plugin executing directly in the Node host still sees the isolated host environment. This does not add approval coverage or sandbox otherwise unconfined channels.
+
 The thin launcher uses public `@deepseek-ai/dsh/profile-boot` and an environment snapshot. It does not patch Node fs, discover dotenv, or implicitly import cwd/.env or DSH_HOME/.env. Working cwd stays the business project.
 
 The native package manager points to a managed entry that rejects package operations. TUI `/update` can still appear and has an upstream manual path that may write profile installation settings before invoking external dsh. **Do not use `/update` in managed instances.** Updates go through reviewed locks, sync, and apply. Doctor/run check runtime/profile drift rather than patching TUI to hide commands.

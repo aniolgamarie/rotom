@@ -256,7 +256,8 @@ def cmd_sync(args):
 def cmd_run(args):
   Progress("run", args).stage("检查部署、依赖与启动条件", hint="doctor")
   w = workspace(args)
-  code = runtime.run(w, cwd=args.cwd.absolute(), arguments=args.passthrough)
+  code = runtime.run(w, cwd=args.cwd.absolute(), arguments=args.passthrough,
+    inherit_env=getattr(args, "inherit_env", ()), unset_env=getattr(args, "unset_env", ()))
   if code:
     print(f"run: 原生进程已退出（退出码 {code}）", file=sys.stderr)
     print("检查离线状态：\n  " + command_line(args, "doctor"), file=sys.stderr)
@@ -311,6 +312,8 @@ def cmd_doctor(args):
       "authentication": "not-inspected; use native auth status", "live": False,
       "notes": list(w.adapter.doctor({}))}
   result["required_toolchain"] = w.backend.toolchain(lock)
+  if getattr(args, "environment", False):
+    result["environment"] = runtime.environment_diagnostics(w, saved["current"])
   identity_report = getattr(w.adapter, "identity_diagnostics", None)
   if identity_report is not None:
     result["identity"] = identity_report(w)

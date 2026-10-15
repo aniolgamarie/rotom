@@ -1,4 +1,16 @@
 # termcfg 管理整个 .zshenv；私人变量请移入独立的 0600 文件。
-if [[ -f "$HOME/.config/termcfg/zshenv.local" ]]; then
-  source "$HOME/.config/termcfg/zshenv.local"
+# XDG 优先、缺失时兼容 legacy；冲突时不执行任一私人 hook，不输出路径或正文。
+if [[ -n "${XDG_CONFIG_HOME:-}" && "$XDG_CONFIG_HOME" != /* ]]; then
+  print -u2 -r -- "termcfg: invalid XDG_CONFIG_HOME; zshenv private hook not loaded"
+else
+  _termcfg_private_hook="${XDG_CONFIG_HOME:-$HOME/.config}/termcfg/zshenv.local"
+  _termcfg_legacy_hook="$HOME/.config/termcfg/zshenv.local"
+  if [[ -f "$_termcfg_private_hook" && -f "$_termcfg_legacy_hook" && ! "$_termcfg_private_hook" -ef "$_termcfg_legacy_hook" ]]; then
+    print -u2 -r -- "termcfg: conflicting zshenv private hooks; neither loaded"
+  elif [[ -f "$_termcfg_private_hook" ]]; then
+    source "$_termcfg_private_hook"
+  elif [[ -f "$_termcfg_legacy_hook" ]]; then
+    source "$_termcfg_legacy_hook"
+  fi
+  unset _termcfg_private_hook _termcfg_legacy_hook
 fi

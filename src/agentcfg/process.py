@@ -36,6 +36,15 @@ def environment(machine=None, *, home=None):
 
 
 def launch_environment(spec, machine, store):
+  if spec.environment_policy != "legacy":
+    from .execution_environment import prepare, apply_bindings
+    result = prepare(spec, machine)
+    env = apply_bindings(result, spec, store, secrets=True)
+    if spec.environment_policy == "isolated":
+      import json
+      env["AGENTCFG_DEVELOPMENT_ENV"] = json.dumps({"version": 1, "values": result.values,
+        "unset": sorted(result.removed)}, ensure_ascii=False, separators=(",", ":"))
+    return env
   home = next((binding.value for binding in spec.environment if binding.name == "HOME"), None)
   from pathlib import Path
   env = environment(machine, home=Path(home) if home else None)

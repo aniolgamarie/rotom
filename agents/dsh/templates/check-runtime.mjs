@@ -12,7 +12,8 @@ const manifest = (resolve, name) => JSON.parse(readFileSync(resolve.resolve(`${n
 const fail = () => { throw new Error("managed runtime package versions or module identities differ"); };
 for (const [name, version] of Object.entries(expected)) {
   const actual = manifest(require, name);
-  const localVersion = { "rotom-dsh-cursor-terminal": "0.1.2", "rotom-dsh-review-context": "0.1.0" }[name];
+  const localVersion = { "rotom-dsh-cursor-terminal": "0.1.2", "rotom-dsh-review-context": "0.1.0",
+    "rotom-dsh-execution-environment": "0.1.0" }[name];
   if (actual.name !== name || actual.version !== (localVersion ?? version)) fail();
 }
 if (manifest(require, "@deepseek-ai/cordis").version !== "4.0.5-alpha.1"
@@ -23,6 +24,9 @@ const thin = createRequire(require.resolve("rotom-dsh-cursor-terminal"));
 const cursor = createRequire(thin.resolve("dsh-cursor-subscription"));
 const perry = createRequire(require.resolve("dsh-auto-review"));
 const reviewContext = createRequire(require.resolve("rotom-dsh-review-context"));
+const execution = createRequire(require.resolve("rotom-dsh-execution-environment"));
+if (realpathSync(execution.resolve("@deepseek-ai/dsh-subprocess-local"))
+    !== realpathSync(require.resolve("@deepseek-ai/dsh-subprocess-local"))) fail();
 if (manifest(cursor, "dsh-cursor-subscription").version !== "0.6.12") fail();
 for (const resolve of [tui, thin, cursor, perry, reviewContext]) {
   for (const name of ["@deepseek-ai/dsh-llm", "@deepseek-ai/dsh-credentials", "@deepseek-ai/cordis"]) {

@@ -115,6 +115,7 @@ Local values are not key storage or general interpolation. Unused values are not
 | `machine.paths.cache_root` | Private output/install cache | XDG_CACHE_HOME/agentcfg |
 | `machine.environment.inherit` | Allowed nonsecret variable names | Empty array; never the whole parent environment |
 | `machine.environment.values` | Nonsecret names mapped to strings | Empty table; no eval or command expansion |
+| `machine.environment.unset` | Remove declared ordinary variable names | Empty array; distinct from an empty string; cannot conflict with inherit/values |
 | `overrides.providers.<id>` | Add/override provider | Unselected entities stay disabled |
 | `overrides.models.<id>` | Add/override logical model | Matching names across providers do not prove matching capabilities |
 | `overrides.mcp.<id>` | Add/override private MCP | No services selected by default |
@@ -171,7 +172,32 @@ main = "private_main"
 
 Replace the address/model with verified service values and confirm adapter protocol support first. See `examples/*.example.toml` for framework examples. An override alone cannot create an undeclared recipe such as dsh-ssh.
 
-Environment tables cannot override managed HOME/XDG, DSH_/AGENTCFG_ prefixes, NODE_OPTIONS/NODE_PATH, or credential destination variables. Do not place secret URLs, API_KEY, or ACCESS_TOKEN in ordinary environment settings. Machine editor overrides EDITOR/VISUAL. Edit only relevant tables, preserving other recipes, comments, and secrets; if a local rewrite cannot be safe, prepare a partial proposal instead.
+Ordinary sessions use a declared development environment. OMP and Pi preserve the caller's HOME/XDG; DSH preserves its native TUI HOME and forwards the development environment through its public subprocess provider and a separate stdio MCP exec configuration. Native account and session paths remain instance-owned. This is environment selection, not filesystem or credential isolation.
+
+```toml
+[machine.environment]
+inherit = ["CUSTOM_BUILD_ROOT", "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"]
+unset = ["VIRTUAL_ENV"]
+
+[machine.environment.values]
+BUILD_MODE = "debug"
+```
+
+The precedence is caller defaults, machine inherit/values/editor, machine unset, then one-shot changes. An empty value is present; unset removes it. Machine inherit is optional when absent. A changed declaration requires `plan` and `apply`; inherited values are resolved anew on each run. Shell expansion and command substitution are not performed.
+
+```sh
+./agentcfg --machine workstation --profile dsh-default run --inherit-env CUSTOM_BUILD_ROOT
+./agentcfg --machine workstation --profile pi-default run --unset-env VIRTUAL_ENV
+./agentcfg --machine workstation --profile omp-default doctor --environment
+```
+
+One-shot options accept names only. An explicit missing inherited variable, repeated/conflicting options, unsupported operation or protected variable fails before resolving credentials or starting the host. One-shot inherit can restore a machine-unset variable from the caller. Options after `--` still belong to the native program. Installers and restricted workers do not acquire these ordinary-session overrides.
+
+Each launch warns when caller inputs are omitted or overridden, including intentional changes. Ordinary names and reason categories are bounded; protected inputs are counted without reading/comparing their values. `doctor --environment` shows a value-free preview of the deployed host contract and pending declaration changes, not proof of every downstream process. No values or hashes are logged.
+
+Environment tables and one-shot options cannot override managed HOME/XDG, DSH_/AGENTCFG_ prefixes, NODE_OPTIONS/NODE_PATH, credential destinations or startup/preload controls. Pi Cursor proxy clearing and other adapter restrictions remain enforced; an incompatible explicit override is rejected rather than silently undone. Keep secrets out of ordinary environment settings and use the credential workflow. Machine editor overrides EDITOR/VISUAL before explicit unset.
+
+Edit only relevant tables, preserving other recipes, comments, and secrets; if a local rewrite cannot be safe, prepare a partial proposal instead.
 
 Parse/encoding failures return 2 with safe one-based line/column coordinates, for example `parse @ local.line.8.column.12.TOML`. `local` identifies the selected private source without printing its path/body/secret fields. Public locations use registry.N/profile.N/adapter.N.agent|bindings|plugins. Shared/profile files load in sorted filename order, then adapter registries in `ADAPTER_TYPES` order in workspace.py. Indices are per-load positions, not permanent IDs. Fix syntax and retry without dumping private files.
 

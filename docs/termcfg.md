@@ -54,3 +54,25 @@ Migration holds the machine operation lease and changes only machine/state metad
 If interrupted, repeat the same command. Durable before/after digests allow either metadata write to resume; observed drift refuses further changes. These are best-effort checks under the machine operation lease; they do not provide atomic compare-and-swap against an external writer changing files between the final check and replacement. Completed migration is idempotent and never restores archived ownership. Ordinary commands report the migration instruction until completion. Unknown metadata fields fail validation.
 
 Machine leases are scoped to machine IDs. Different machine IDs sharing a target HOME are not serialized; use one machine ID per HOME and avoid concurrent management of the same HOME. Native terminal acceptance remains separate from isolated tests.
+
+## Zsh development environment and private hooks
+
+Zsh defaults `NVM_DIR` to `$HOME/.nvm` only when it is unset. An explicit path is
+preserved; an explicitly empty value disables NVM loading, including `/nvm.sh`.
+The selected directory is exported. Shell startup does not install NVM or plugins.
+
+For each of `zshenv.local` and `zshrc.local`, the shell checks
+`${XDG_CONFIG_HOME:-$HOME/.config}/termcfg/` first. If that file is absent, it uses
+`$HOME/.config/termcfg/` as a legacy fallback. If both files exist and refer to
+different files, a fixed stderr warning is printed and neither is loaded. Paths
+that refer to the same file load once. A nonempty relative `XDG_CONFIG_HOME` also
+warns and skips private hooks. Warnings include no private paths or contents.
+Keep private hook files outside Git and mode 0600.
+
+Doctor/status show metadata-only hook selection for the target HOME and the
+manager's current `XDG_CONFIG_HOME`. This is a preview, not evidence of an existing
+shell or tmux server's environment. A private zshenv hook can change the environment
+used later by zshrc; each stage selects its own hook. Changes require a new shell
+for verification. Existing tmux servers retain their environment independently.
+Deploy through the ordinary plan/apply drift checks; do not overwrite changed
+user startup files to force these defaults.

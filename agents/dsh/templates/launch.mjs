@@ -20,6 +20,9 @@ if (args[0] === "--profile") {
 const require = createRequire(path.join(runtimeRoot, "package.json"));
 const { runProfile } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh/profile-boot")));
 const { createLaunchEnvironmentSnapshot } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh-launch-environment")));
+const { mcpArguments } = await import(pathToFileURL(require.resolve("rotom-dsh-execution-environment/environment")));
+// 正式 MCP stdio 配置通过 env 直接 exec，避免新增中继进程及取消边界。
+process.env.AGENTCFG_MCP_ENV_ARGS = JSON.stringify(mcpArguments("/rotom-placeholder", []).slice(1, -1));
 process.env.DSH_TUI_WORKSPACE_TARGET = process.cwd();
 const environment = createLaunchEnvironmentSnapshot([{ source: "process", values: process.env }]);
 await runProfile({ environment, profile: "agentcfg", patchFiles: [patchFile], args,

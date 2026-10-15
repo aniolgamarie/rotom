@@ -11,7 +11,13 @@ def manifest_from_state(current):
   for item in current["items"].values():
     if item["path"] == "pi-home/agentcfg-manifest.json" and not item["selector"]:
       try:
-        value = json.loads(base64.b64decode(item["desired"]["value"]["bytes"], validate=True))
+        # 已部署状态只保存 baseline；desired 仅存在于部署前的计划中。
+        baseline = item["baseline"]
+        if not isinstance(baseline, dict) or baseline.get("present") is not True:
+          raise ValueError()
+        value = json.loads(base64.b64decode(baseline["value"]["bytes"], validate=True))
+        if not isinstance(value, dict):
+          raise ValueError()
       except (ValueError, KeyError, TypeError): raise ConfigError("pi-upgrade-manifest") from None
       if value.get("schema_version") != 1: raise ConfigError("pi-upgrade-manifest-version")
       return value

@@ -6,7 +6,7 @@ The OMP adapter uses the **unmodified official OMP 18.8.6** runtime and reposito
 
 A rotom recipe selects shared models, roles, rules, skills, and OMP resources. Each recipe receives a separate native OMP profile for configuration, login, and sessions. Its name is derived from the first 24 hexadecimal characters of the recipe ID's UTF-8 SHA256; the full ID and hash are also checked.
 
-Each instance has a separate HOME because some OMP facilities live outside native profiles. Native configuration is under `<instance>/user-home/.omp/profiles/<native-name>/agent`. The manager sets HOME/XDG; it does not accept arbitrary profile names, old agent directories, or settings paths, and does not copy existing login or sessions.
+Ordinary sessions preserve the caller HOME/XDG and use an explicit, instance-bound PI_CONFIG_DIR. Native configuration remains under `<instance>/user-home/.omp/profiles/<native-name>/agent`; information/login operations retain their declared native-state scope. The manager rejects arbitrary profile names, old agent directories and settings paths, and does not copy existing logins or sessions. See [environment controls](local-config.md) for name-only inheritance/deletion and value-free warnings.
 
 Managed startup and modifications share the physical instance lock. Concurrent sessions use shared leases; configuration changes require an exclusive lease. Moving the state directory does not authorize takeover. Switching recipes changes the account/session scope and leaves the old scope intact.
 
@@ -21,7 +21,7 @@ Managed startup and modifications share the physical instance lock. Concurrent s
 | Capability selection | `profiles/omp-*.toml` |
 | Machine paths and nonsecret overrides | Private machine TOML |
 | API keys or complete Authorization headers | Private SecretStore, referenced through `secret:<name>` |
-| Native login and runtime state | Isolated instance HOME; excluded from capture and configuration backups |
+| Native login and runtime state | Explicit instance-bound native directories; excluded from capture and configuration backups |
 
 Objects merge recursively. Most arrays replace; provider/model selections append with deduplication as described in [local configuration](local-config.md). Explicit false and empty arrays retain their meaning. Unknown fields, undeclared references, ambiguous model IDs, and credential-bearing URLs fail validation. The shared `main` role maps to native `default`; supported role combinations are documented in [model presets](omp-model-presets.md). Static custom models require verified capacities; do not invent prices.
 

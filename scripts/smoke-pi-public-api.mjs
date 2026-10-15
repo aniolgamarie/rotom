@@ -24,6 +24,12 @@ try {
     PI_CODING_AGENT_SESSION_DIR: join(agentDir, "sessions"), PI_OFFLINE: "1", PI_SKIP_VERSION_CHECK: "1",
     XDG_CONFIG_HOME: join(root, "config"), XDG_DATA_HOME: join(root, "data"), XDG_CACHE_HOME: join(root, "cache"), XDG_STATE_HOME: join(root, "state") };
   const save = (path, data) => writeFileSync(path, data, { mode: 0o600 });
+  // 合成调用者 HOME 下放置不可用全局来源；受管 SDK 必须选择显式实例路径。
+  const globalAgent = join(root, "home/.pi/agent");
+  mkdirSync(join(globalAgent, "extensions"), { recursive: true, mode: 0o700 });
+  save(join(globalAgent, "auth.json"), "synthetic-global-auth-must-not-be-parsed");
+  save(join(globalAgent, "models.json"), "synthetic-global-models-must-not-be-parsed");
+  save(join(globalAgent, "extensions/unselected.mjs"), "throw Error('GLOBAL_HOME_EXTENSION_MUST_NOT_LOAD');\n");
   save(join(agentDir, "settings.json"), JSON.stringify({ packages: ["npm:must-not-install"], extensions: ["/must-not-load"], theme: "dark" }));
   save(join(agentDir, "AGENTS.md"), "Synthetic selected rules\n");
   save(join(agentDir, "APPEND_SYSTEM.md"), "Synthetic append rules\n");
@@ -52,6 +58,8 @@ try {
       const runtime = this.runtime, session = runtime.session;
       checks.selected_extension = globalThis.__rotomSelected === 1;
       checks.model = session.model.provider === "fixture" && session.model.id === "selected";
+      checks.caller_home_global_sources_not_adopted = checks.selected_extension && checks.model;
+      assert(checks.caller_home_global_sources_not_adopted);
       assert.ok(Object.isFrozen(session.model));
       const sessions = join(agentDir, "sessions"), bad = join(sessions, "old.jsonl"), current = join(sessions, "current.jsonl");
       mkdirSync(sessions, { recursive: true, mode: 0o700 });

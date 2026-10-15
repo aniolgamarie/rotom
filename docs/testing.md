@@ -51,6 +51,37 @@ replace the native TUI or OS sandbox checks:
 node scripts/smoke-pi-public-api.mjs --allow-host <sealed-pi-default-runtime> <new-private-report.json>
 ```
 
+### Development-environment validation
+
+The DSH environment entry loads the locked public subprocess extension in the real
+host and renders its synthetic stdio MCP configuration through the normal adapter.
+It observes ordinary and PTY children, the standard Bash tool, MCP assignment and
+deletion, and removal of synthetic manager credential variables. An external
+sentinel checks that the original workspace-write sandbox still rejects writes.
+It makes no model requests and does not import accounts:
+
+```sh
+.venv/bin/python scripts/smoke-dsh-environment.py --allow-host --runtime <sealed-dsh-runtime> --evidence <new-private-directory>
+```
+
+Use the repository mock runner for the Pi TypeScript suites; raw `node --test`
+does not install the fixture module aliases and is not an equivalent entry point:
+
+```sh
+node scripts/test-pi-mock.mjs \
+  agents/pi/runtime/tests/*.test.ts \
+  agents/pi/packages/task-keeper/tests/agentcfg-*.test.ts \
+  agents/pi/packages/task-keeper/tests/request-ledger.test.ts \
+  agents/pi/packages/task-keeper/tests/one-shot-schedule.test.ts \
+  agents/pi/packages/model-delegate/tests/bridge.test.ts \
+  agents/pi/packages/openai-proxy/routing.test.mjs \
+  agents/pi/packages/openai-proxy/diagnostics.test.mjs
+node --test tests/node/dsh_execution_environment.test.mjs
+```
+
+Both commands use synthetic inputs. They establish protocol and boundary
+contracts, separately from actual native SDK, TUI and OS sandbox behavior.
+
 The concurrency checks require two live native TUIs, independent native session
 or supervisor identities, maintenance refusal while either run is active, clean
 exit and terminal restoration. DSH also verifies explicit refusal of a third TUI
@@ -64,7 +95,9 @@ Neither test establishes authenticated-provider or concurrent-login safety.
 Large source/asset fixtures can consume substantial temporary storage. To remove
 passed pytest fixtures after each case while retaining failures, add
 `-o tmp_path_retention_policy=failed -o tmp_path_retention_count=1`. Keep private logs
-outside pytest's temporary fixture root. Current results and limitations belong to
+outside pytest's temporary fixture root. Keep explicit `--basetemp` paths short
+for Unix-domain socket fixtures; a long test prefix can exceed the existing socket
+path limit before any operation starts. Current results and limitations belong to
 the single [refactoring record](design/project-refactoring.md).
 
 ## Release-preparation results

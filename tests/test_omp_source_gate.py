@@ -67,14 +67,14 @@ def test_runtime_rejects_config_root_injected_into_final_environment(
   clear_omp_identity_environment(monkeypatch)
   isolate_runtime_discovery(monkeypatch)
   workspace, _ = runtime_workspace(tmp_path)
-  original = runtime.launch_environment
+  original = runtime.prepare_environment
 
-  def redirected(spec, machine, store):
-    env = original(spec, machine, store)
+  def redirected(*args, **kwargs):
+    env, report = original(*args, **kwargs)
     env["PI_CONFIG_DIR"] = ".foreign"
-    return env
+    return env, report
 
-  monkeypatch.setattr(runtime, "launch_environment", redirected)
+  monkeypatch.setattr(runtime, "prepare_environment", redirected)
   with pytest.raises(ConfigError, match="operation-environment-mismatch"):
     runtime.run(workspace, cwd=tmp_path)
   assert not fake_subprocess.calls

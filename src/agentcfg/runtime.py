@@ -3,6 +3,7 @@
 from dataclasses import replace
 from contextlib import nullcontext
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -11,9 +12,10 @@ from types import SimpleNamespace
 from .adapter import EnvironmentBinding, LaunchSpec, SecretRef
 from .deployment import read_state, recover
 from .presentation import command_line
-from .process import DependencyError, checked, environment, launch_environment
+from .process import DependencyError, checked
 from .toolchain import ensure_compatible_toolchain
 from .storage import Conflict, Tree, ensure_private, instance_lock
+from . import execution_environment as execution_env
 
 
 def runtime_identity(workspace, lock):
@@ -34,6 +36,8 @@ def record(workspace, lock):
   guards = getattr(workspace.adapter, "runtime_guards", None)
   binding = getattr(workspace.adapter, "runtime_binding", None)
   return {"argv": list(spec.argv), "lock_identity": lock.identity,
+    **({"environment_version": 1, "environment_policy": spec.environment_policy,
+      "caller_paths": execution_env.caller_paths()} if spec.environment_policy != "legacy" else {}),
     **({"runtime_identity": identity} if identity != lock.identity else {}),
     "shared_files": list(workspace.adapter.shared_files),
     "preflight": preflight,
@@ -50,10 +54,54 @@ def record(workspace, lock):
 def decode(value, cwd, arguments):
   return LaunchSpec(tuple(value["argv"]) + tuple(arguments), cwd, value["lock_identity"],
     tuple(EnvironmentBinding(e["name"], SecretRef(e["secret_ref"]) if "secret_ref" in e else e["literal"], e["required"])
-          for e in value["environment"]), value.get("runtime_identity", value["lock_identity"]))
+          for e in value["environment"]), value.get("runtime_identity", value["lock_identity"]),
+    value.get("environment_policy", "legacy"))
 
 
-def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environment=None):
+def prepare_environment(workspace, contract, spec, *, inherit=(), unset=()):
+  from .config import validate_environment_settings
+  schemas = getattr(workspace, "schemas", None)
+  data = workspace.resolved.data
+  if schemas is not None and data.get("adapter_documents"):
+    bundle = schemas.bundles[data["profile"]["agent"]]
+    policy = bundle.policy(data["adapter_documents"])
+    validate_environment_settings({"inherit": list(inherit), "unset": list(unset)},
+      policy.credential_targets, reserved_environment=policy.reserved_environment)
+  extra = getattr(workspace.adapter, "tool_environment_names", ())
+  observed = tuple(item.name for item in spec.environment if isinstance(item.value, str))
+  names, caller = execution_env.capture_caller(contract["machine"], inherit, (*extra, *observed))
+  result = execution_env.prepare(spec, contract["machine"], caller=caller, inherit=inherit, unset=unset, extra_names=extra)
+  env = execution_env.apply_bindings(result, spec)
+  adjust = getattr(workspace.adapter, "adjust_launch_environment", None)
+  if adjust is not None:
+    env = adjust(workspace, spec, env, contract.get("adapter_binding"))
+  if spec.environment_policy == "legacy":
+    root = workspace.backend.root(workspace, contract.get("runtime_identity", contract["lock_identity"]))
+    env["PATH"] = os.pathsep.join([*(str(path) for path in workspace.backend.executable_paths(root)), env.get("PATH", "")])
+  if spec.environment_policy == "isolated":
+    # 每次启动生成；只含声明过的非秘密开发环境，不进入部署/渲染或日志。
+    env["AGENTCFG_DEVELOPMENT_ENV"] = json.dumps({"version": 1, "values": result.values,
+      "unset": sorted(result.removed)}, ensure_ascii=False, separators=(",", ":"))
+  sources = {**result.sources, **{item.name: "adapter-policy" for item in spec.environment if isinstance(item.value, str)}}
+  return env, execution_env.differences(caller, env, sources=sources, names=names)
+
+
+def environment_diagnostics(workspace, current):
+  if current is None:
+    return {"status": "not-deployed", "values": "not-disclosed"}
+  contract = current["launch"]
+  spec = decode(contract, Path.cwd(), ())
+  _, report = prepare_environment(workspace, contract, spec)
+  return {"status": "host-preview", "policy": spec.environment_policy, **report,
+    "declarations_pending": execution_env.declarations(contract["machine"]) != execution_env.declarations(workspace.resolved.data["machine"]),
+    "downstream": "requires per-channel native evidence"}
+
+
+def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environment=None, inherit_env=(), unset_env=()):
+  override_supported = getattr(workspace.adapter, "environment_override_supported", None)
+  if (inherit_env or unset_env) and override_supported is not None and not override_supported(arguments):
+    from .schema import ConfigError
+    raise ConfigError("environment-overrides-operation")
   validate_arguments = getattr(workspace.adapter, "validate_arguments", None)
   if validate_arguments is not None:
     validate_arguments(arguments)
@@ -71,6 +119,14 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
     if current is None or current["binding"] != workspace.binding:
       raise Conflict("未部署当前实例，请先 apply")
     contract = current["launch"]
+    if execution_env.declarations(contract["machine"]) != execution_env.declarations(workspace.resolved.data["machine"]):
+      raise Conflict("环境声明已变化；请先 plan/apply，不会静默使用旧声明")
+    if "environment_version" in contract:
+      if contract["environment_version"] != 1 or contract.get("caller_paths") != execution_env.caller_paths():
+        raise Conflict("调用者HOME/XDG或环境契约已变化；请先 plan/apply")
+    if (inherit_env or unset_env) and (launch_operation is not None or select_environment is not None):
+      from .schema import ConfigError
+      raise ConfigError("environment-overrides-operation")
     validate_binding = getattr(workspace.adapter, "validate_runtime_binding", None)
     if validate_binding is not None:
       validate_binding(workspace, contract.get("adapter_binding"))
@@ -105,7 +161,14 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
       if select_environment is not None:
         # 受信操作可缩小环境绑定；复用同一部署/运行包/实例准入，不另建启动路径。
         spec = replace(spec, environment=tuple(item for item in spec.environment if select_environment(item)))
-      preflight_env = environment(contract["machine"], home=workspace.instance / "user-home")
+      preflight_env, environment_report = prepare_environment(workspace, contract, spec, inherit=inherit_env, unset=unset_env)
+      validate_environment = getattr(workspace.adapter, "validate_operation_environment", None)
+      if validate_environment is not None:
+        validate_environment(workspace, spec=spec, env=preflight_env)
+      before_spawn = getattr(workspace.adapter, "validate_before_spawn", None)
+      if before_spawn is not None:
+        before_spawn(workspace, effective_cwd, arguments, preflight_env)
+      execution_env.warn(environment_report)
       for check in contract.get("preflight", []):
         actual = checked(check["argv"], cwd=effective_cwd, env=preflight_env)
         tool = "Node" if check["argv"][0] == "node" else check["argv"][0]
@@ -128,15 +191,17 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
         selector = SimpleNamespace(local=workspace.local_path, profile=workspace.profile)
         print(f"run: {missing} 个模型 key 未填写；工具仍可启动，对应模型暂不可调用。\n"
           "填写位置：\n  " + command_line(selector, "model", "status"), file=sys.stderr)
-      env = launch_environment(spec, contract["machine"], workspace.secret_store)
-      adjust_environment = getattr(workspace.adapter, "adjust_launch_environment", None)
-      if adjust_environment is not None:
-        env = adjust_environment(workspace, spec, env, contract.get("adapter_binding"))
-      import os
-      env["PATH"] = os.pathsep.join([*(str(path) for path in workspace.backend.executable_paths(root)), env.get("PATH", "")])
+      env = dict(preflight_env)
+      for binding in spec.environment:
+        if isinstance(binding.value, SecretRef):
+          value = workspace.secret_store.resolve(binding.value, required=binding.required)
+          if value is not None:
+            if "\0" in value:
+              from .secrets import CredentialError
+              raise CredentialError()
+            env[binding.name] = value
       if validate_environment is not None:
         validate_environment(workspace, spec=spec, env=env)
-      before_spawn = getattr(workspace.adapter, "validate_before_spawn", None)
       if before_spawn is not None:
         before_spawn(workspace, effective_cwd, arguments, env)
       # 不打印 argv/env，原生子进程继承终端用于正常 TUI 交互。

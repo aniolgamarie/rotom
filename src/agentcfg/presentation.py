@@ -381,6 +381,31 @@ def _render_doctor(payload, args, stream):
       ("账号登录与模型调用", "未验证；在线检查只验证显式路线的 HTTP 可达性")), stream)
   elif status == "offline-ready" and not capability_blocked:
     _write_fields((("账号登录与模型服务", "未验证；请使用原生状态检查"),), stream)
+  environment = payload.get("environment")
+  if isinstance(environment, dict):
+    _write_fields((("环境诊断", {"host-preview": "宿主启动预览，不包含变量值",
+      "not-deployed": "尚未部署"}.get(environment.get("status"), "未知")),
+      ("环境策略", {"caller": "调用者开发环境", "isolated": "独立宿主，开发工具使用单独边界",
+        "legacy": "旧版契约，需 plan/apply 迁移"}.get(environment.get("policy"))),
+      ("环境声明待部署", environment.get("declarations_pending")),
+      ("受保护输入数量", environment.get("sensitive_excluded"))), stream)
+    from .config import _credential_name
+    reasons = {"caller": "调用者", "machine-inherit": "机器继承", "machine-value": "机器固定值",
+      "machine-editor": "机器编辑器", "machine-unset": "机器删除", "one-shot-inherit": "本次继承",
+      "one-shot-unset": "本次删除", "adapter-policy": "适配器策略", "not-inherited": "未声明继承"}
+    rows = []
+    for item in environment.get("variables", []):
+      if not isinstance(item, dict):
+        continue
+      name = item.get("name")
+      if (not isinstance(name, str) or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) is None
+          or _credential_name(name) or name.startswith(("AGENTCFG_", "DSH_"))):
+        continue
+      rows.append((name, {"removed": "删除", "overridden": "覆盖"}.get(item.get("status"), "未知"),
+        reasons.get(item.get("source"), "未知")))
+    if rows:
+      table(("变量名称", "处理", "原因"), rows, stream=stream)
+    print("环境诊断不读取凭据；下游工具行为以对应原生验收范围为准。", file=stream)
   blockers = _blocker_labels(readiness.get("blockers"))
   if blockers:
     print("需要处理的原因:", file=stream)

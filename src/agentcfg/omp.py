@@ -698,6 +698,9 @@ class OmpAdapter(Adapter):
       return spec
     return replace(spec, environment=tuple(item for item in spec.environment if not isinstance(item.value, SecretRef)))
 
+  def environment_override_supported(self, arguments):
+    return classify_operation(arguments) == "session"
+
   def operation_guard(self, workspace, cwd, arguments):
     self._validate_caller_environment()
     operation = classify_operation(arguments)
@@ -779,6 +782,8 @@ class OmpAdapter(Adapter):
     identity = native_identity(workspace.profile, workspace.instance)
     if validate_execution_environment(identity, saved, os.environ) != execution:
       raise ConfigError("omp-operation-environment-mismatch")
+    if spec.environment_policy == "caller":
+      return env
     # 通用builder先构造隔离默认；只变更已声明的用户路径，不修复意外注入。
     home = Path(execution["home"])
     initial = {"HOME": str(home), "PI_CONFIG_DIR": execution["config_dir"],
@@ -885,7 +890,9 @@ class OmpAdapter(Adapter):
       if permission and permission.get("nativeBash") else ())
     return LaunchSpec((str(runtime_root / "bin/omp"), "--profile", identity.native_name), cwd, lock_identity,
       (EnvironmentBinding("HOME", execution["home"]), EnvironmentBinding("PI_CONFIG_DIR", execution["config_dir"]),
-       *route, *secrets))
+       *route, *secrets), environment_policy="caller")
+
+  tool_environment_names = TOOL_ENVIRONMENT
 
   def runtime_binding(self, data, instance_root):
     value = self._physical_runtime_binding(data, instance_root)

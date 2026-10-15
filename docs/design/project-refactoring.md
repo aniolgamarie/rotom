@@ -1,7 +1,9 @@
 # Project review and refactoring plan
 
-Status: implemented and verified within the Linux scope below, 2026-10-15. This record distinguishes
-implemented contracts, executed tests and remaining native/platform evidence.
+Status: concurrency, terminal-scope and review fixes were verified in the Linux
+scope below on 2026-10-15. The execution-environment follow-up is also implemented;
+its separate 2026-10-16 acceptance and review record appears at the end. This record
+distinguishes implemented contracts, executed tests and remaining native/platform evidence.
 The reviewed source baseline is `6e9513a`. This review covers agent configuration,
 launch and supervision, dependency publication, credentials, and terminal management.
 It does not renew native-host, live-account, or cross-platform acceptance.
@@ -482,3 +484,397 @@ only failed fixtures retained for the shards. This preserved the default network
 HOME, credential and third-party-host boundaries. Offline uv lock validation,
 public-document validation, changed-text privacy checks and `git diff --check`
 also passed.
+
+## Execution-environment follow-up
+
+Status: implemented and reviewed in the task worktree; Linux acceptance passed
+within the scope below. Integration and daily deployment remain deferred. The reviewed main snapshot was `4610678`
+and the preceding repair base was `93cac69`; evidence for that earlier repair
+remains scoped to its original changes.
+GPT-6.1 catalog support is deferred by maintainer decision and is not a prerequisite.
+
+### Goal and invariants
+
+Ordinary development tools should use the caller's development environment while
+each adapter locates native configuration, authentication and sessions through
+supported public interfaces. Keep one DSH recipe and the existing physical
+instance identities. Do not create environment-specific user profiles, an
+environment daemon, an OAuth replacement, or a general tool interception layer.
+
+The common implementation must distinguish the following purposes:
+
+| Purpose | Environment and ownership |
+| --- | --- |
+| Manager storage | Existing declared machine paths and private-file protections; independent of child HOME |
+| Ordinary host and developer tools | Caller HOME/XDG where the adapter can preserve native ownership; declared developer variables and explicit machine overrides |
+| Native configuration and authentication | Adapter-owned public directory/file settings and stable instance binding; no automatic adoption of global accounts |
+| Restricted helper or delegate | Explicit minimal environment and grants; no automatic inheritance of ordinary development capabilities |
+| Dependency installation and default tests | Isolated staging or temporary HOME/XDG; no real native account discovery |
+
+HOME/XDG lookup is separate from filesystem permission. Restoring a developer
+HOME does not grant writes outside the workspace. Preserve `workspace-write + ask`,
+existing approval behavior and sandbox failure handling. An external build-log
+directory needs a supported output setting or an explicit native per-action
+approval; it must not trigger default Full access or a broad directory grant.
+
+Do not automatically source shell startup files, copy the complete parent
+environment, or treat nonsecret variables as harmless. Loader paths and runtime
+options can execute code. Retain existing preload, credential and identity guards.
+Native shell functions and aliases are not promised by environment inheritance.
+Native state isolation is not general credential, network or same-user isolation.
+
+### Adapter feasibility and adoption order
+
+| Adapter | Confirmed baseline | Implementation and gate |
+| --- | --- | --- |
+| OMP | Caller HOME/XDG is restored after the generic builder, with explicit native storage binding. Some guides still describe the old isolated execution HOME. | Preserve behavior and storage guards while moving shared environment policy into the common launch contract. Correct the contradictory guides. |
+| Pi | Main sessions bind instance HOME although native agent/session paths are explicit. Restricted workers and delegates have separate minimal environments. | Verify native discovery and authentication fallback with synthetic sentinels, then adopt caller HOME for the main development path. Keep restricted paths unchanged unless their own contract requires a change. |
+| DSH | RC2 standard Bash derives HOME from the host process. TUI 0.15 preferences use `homedir()/.dsh-tui`; launch snapshots are not a subprocess boundary. Public subprocess providers and per-server MCP environment configuration offer separate candidate integration seams. | Prototype replacement of the existing host subprocess provider through the official composition overlay, preserving TUI HOME. Validate MCP separately, including variable deletion. Keep the current deployment until these paths pass native tests; diagnostics alone do not complete compatibility. |
+| termcfg | Shell configuration overwrites NVM_DIR and private hooks use a fixed HOME-relative config directory. | Preserve explicit NVM_DIR, including empty values; load NVM only from a nonempty selected path. Define XDG-aware hook selection with a reviewed legacy fallback and an explicit conflict when both locations are ambiguous. Never source both automatically. |
+
+The DSH gate must inventory settings, model preferences, history, authentication
+and sessions separately. Public provider composition must cover the actual
+enabled channels, rather than proving only a replacement Bash command. Moving UI
+preferences into caller HOME changes ownership and is not a transparent fix.
+Do not modify upstream modules, change process HOME around module imports, create
+redirection symlinks, or force a host upgrade to bypass this gate. Record the
+remaining limitation if the locked public interfaces are insufficient; proceed
+with independent common, OMP, Pi and terminal work, but keep the unresolved DSH
+compatibility item open.
+
+### Explicit overrides and visible environment differences
+
+The earlier plan did not define a complete repair interface. Add the following
+small contract using the existing machine schema, launch contract and CLI:
+
+| Source | Semantics |
+| --- | --- |
+| `machine.environment.inherit` | Keep the existing name list. Resolve values from the caller on every run; an absent optional inherited name stays absent. |
+| `machine.environment.values` | Keep literal nonsecret strings, including empty strings. Machine declarations require plan/apply; do not expand shell syntax or environment references. |
+| `machine.environment.unset` | Add an explicit deletion list. Remove the variable rather than setting an empty string. Reject a name also declared in machine inherit/values. |
+| `run --inherit-env NAME` | Ordinary-run option: explicitly use this invocation's caller value after machine values. Missing input fails before credentials or host startup. Only names enter manager argv. |
+| `run --unset-env NAME` | Ordinary-run option: delete the variable for this run; deleting an absent variable is idempotent. Reject conflicting or repeated one-shot declarations. |
+
+These CLI options and the unset field are implemented. Keep literal one-shot
+values out of the manager CLI; callers
+can supply nonsecret values through their shell environment. This avoids putting
+values in manager arguments, not the caller shell's own history. Neither interface
+is a credential channel. Native arguments after `--` remain untouched.
+
+Precedence is caller baseline, deployed machine inherit/values/editor, machine
+unset, explicit one-shot changes, then final validation. Machine unset removes
+EDITOR after machine.editor has set it, without implicitly removing VISUAL. A
+one-shot inherit clears an earlier deletion marker and uses the caller value;
+a one-shot unset creates the final deletion marker. Protected identity, credential and preload
+bindings are not ordinary overrides. HOME/XDG select a supported execution policy
+and stable identity, not an unrestricted alternate account directory. An adapter
+must reject an incompatible override before resolving SecretRefs or spawning;
+it must not accept a value and then silently clear or replace it. Preserve the
+existing Pi Cursor proxy restriction until a supported separate route exists,
+and report conflicting explicit proxy overrides as unsupported. This does not
+deliver the deferred per-route network redesign.
+
+Deletion markers must survive every builder and adapter layer: OMP must not refill
+a deleted TOOL_ENVIRONMENT variable, and package PATH assembly must not undo an
+explicit selection. If environment declarations differ from the saved deployment,
+fail with the existing conflict exit 4 and an actionable plan/apply instruction.
+Do not reject changes to unrelated model declarations through this check. Values
+of inherited variables remain dynamic and need no apply.
+
+Ordinary overlays must not propagate implicitly into restricted workers. At the
+review baseline, `PiHost.worker_command` called `environment(home=root)`, which
+inherited BASE_ENV from its already-overlaid parent. The implementation replaces
+that dependency with an explicitly scoped restricted environment and the frozen
+engine executable. Installers retain only their declared toolchain and
+network inputs and temporary HOME, and default tests retain their isolated fixtures.
+
+Warnings are a required behavior, not an optional doctor feature. Capture original
+caller names and only permitted values before constructing host environments;
+do not persist a full parent snapshot or read unknown credential values for this
+comparison. Before launch, compare that caller basis with the effective environment
+for the declared path, using the platform's environment-name semantics.
+An originally present variable that is omitted or changed produces a visible,
+bounded stderr summary, including changes explicitly requested by configuration.
+List ordinary names and fixed reason categories, never values or value hashes.
+Summarize credential-shaped variables without exposing their values or individual
+names. Empty-but-present differs from absent. An identical value with a different
+source is provenance, not a false changed-value warning.
+
+Provide details through an explicit environment view in the existing doctor
+interface: variable name where allowed, source, inherited/overridden/removed/
+unsupported status, purpose and reason. It must use the same resolution path,
+avoid credential files and never claim that a host preview proves downstream
+propagation. Warn once per relevant launch/channel rather than on every model
+turn. A child policy change discovered at a later boundary needs its own scoped
+notice; unobservable boundaries are reported as unverified. Do not suppress the
+default warning merely because a change is intentional.
+
+### DSH public integration and coverage gates
+
+Further locked-source review found a more specific public path than a missing
+single HOME setting. `SubprocessRuntime` supports an independent provider;
+`LocalSubprocessRuntime` exposes public executable resolution, spawn and terminal
+methods. `runProfile` composes official bundle/profile/overlay rows. The adapter
+replaces the existing `subprocess` row through that composition and uses a thin
+public subclass of the official local provider, retaining its managed process
+lifecycle. Do not register a second provider, mutate the original instance, use
+test hooks or implement another process supervisor. Native composition, standard
+Bash and dual-TUI checks passed on the matching final lock.
+
+The public subprocess spawn environment accepts undefined deletion markers;
+the shell request environment has a narrower type. Keep that distinction.
+Cover executable resolution and PTY shell selection as well as spawn, and retain
+native sandbox arguments, cancellation, signals and termination behavior. Do not
+let caller values replace managed DSH facts or gain reviewer tool capabilities.
+
+MCP stdio bypasses this service and has its own public per-server string env map.
+It can override HOME/XDG when supplied a trusted nonsecret caller context, but
+cannot express a deletion marker. Prove an exact public launch/configuration
+solution for removal as well as assignment before claiming general MCP support;
+empty strings are not a substitute for removal. A small argv-only environment
+launcher may be evaluated if required, using declared inputs and unchanged MCP
+transport; it must not become a general plugin framework or bypass the sandbox.
+HTTP MCP has no local child HOME. File tools resolve paths through their fs service,
+not through the subprocess provider, and require a separate path-behavior test.
+PTC/direct Node and external agents are separate channels; do not infer coverage
+from Bash or a parent delegation. Unsupported channels must be explicitly reported
+or unavailable for this override feature. The current DSH deployment remains until
+this coverage gate passes.
+
+### Ordered work packages
+
+The packages below define the implemented scope and acceptance conditions.
+Retain earlier repair evidence without transferring it to changed source.
+Use one writer for shared files and independent read-only reviews at boundaries.
+
+| Package | Scope and prerequisites | Completion condition |
+| --- | --- | --- |
+| ENV-0: Freeze the contract | Review `adapter.py`, `process.py`, `runtime.py`, `config.py`, adapter bindings and CLI diagnostics. Prototype the DSH public subprocess/MCP paths before promising adoption. | Document variable precedence, deletion, visible warnings, operation scope, native identity paths and per-channel capabilities. No new user profile or unsupported configuration fields. |
+| ENV-1: Common launch construction | After ENV-0, extend the existing launch contract minimally and version saved semantics. Keep explicit isolated-HOME construction for installers and restricted operations. | New contracts do not infer all XDG changes from one HOME binding. Construct the nonsecret basis once per invocation, resolve required executables consistently for preflight/spawn, and inject only selected secrets afterward. Old contracts retain their recorded behavior until apply. |
+| ENV-2: Adapter adoption | After ENV-1, migrate OMP policy without changing behavior, then Pi main sessions after native-state tests; close the restricted-worker inheritance gap. DSH adopts only after the ENV-0 prototype passes. | Caller tool paths and explicit overrides work, native storage stays in the same instance, deletion is not undone, restricted helpers retain separate environments, and each channel advertises only verified capabilities. |
+| ENV-3: Terminal consistency | Independent after ENV-0; update `terminals/zsh`, its catalog digests, relevant tests and guide. | Custom and empty NVM_DIR cases work as specified; XDG/legacy hooks are selected once, ambiguity is reported without private content, and repeated deployment preserves user drift. Test new shells separately from an existing tmux server's environment. |
+| ENV-4: Migration and diagnostics | Design with ENV-1 and implement before promoting ENV-2. Reuse plan/apply/doctor and existing deployment journals. | Default run warnings identify omitted/changed caller variables with redacted reasons; doctor distinguishes execution HOME, storage and variable provenance. Stale environment declarations fail explicitly. Apply requires exclusive maintenance; failures and rollback preserve synthetic state. |
+| ENV-5: Acceptance and delivery | Stable implementation, matching complete locks, then final diff review. | Affected offline and native no-account checks pass; remaining limitations have explicit states. Merge/deploy only the reviewed supported scope through the normal manager path. |
+
+Precedence must be explicit: declared caller inheritance, then allowed machine
+values/editor settings, then machine unset, one-shot ordinary changes and final validation of
+adapter-owned identity bindings, with selected credential references resolved for
+the required consumer. Contradictory reserved
+controls fail instead of being silently repaired. Keep caller development values
+fresh on each run while native identity remains bound to the saved deployment.
+Preserve the distinction between absent, empty and invalid path values; preserving
+an input does not require accepting an invalid native path.
+
+Do not prepend runtime directories to the business PATH without accounting for
+their effect. Use explicit host entry points where possible and inventory shebang
+interpreters and helper subprocesses as well. Required checks and execution must
+select the same tools. Optional project tools are not universal host prerequisites.
+An upstream host may filter shell environments or forward variables to MCP; test
+those actual boundaries and document any propagation that public APIs cannot limit.
+An in-process reviewer is not a separately isolated process.
+
+### Acceptance and evidence
+
+Extend existing test families rather than adding tests that merely mirror a new
+environment dictionary. All default tests keep temporary HOME/XDG, fictional
+credentials, blocked network and fake subprocesses. Required scenarios include:
+
+- A synthetic caller HOME containing a build launcher, custom Git configuration,
+  developer PATH, virtual environment and library paths. Check declared inheritance,
+  explicit overrides and unknown-variable exclusion for each adopted adapter.
+- Custom, absent and empty XDG states; native discovery/authentication sentinels;
+  unsafe paths and symlinks; forbidden preload and credential controls. No global
+  account import and no default shell-startup loading.
+- A PATH collision that proves preflight and spawn use the same required tool,
+  including a host helper. Check that runtime packaging does not replace the
+  developer toolchain unexpectedly.
+- Legacy/current launch contracts, environment-only apply and rollback, active
+  runs, interrupted maintenance, drift and repeated apply. Configuration rollback
+  must not be described as a native data or software downgrade.
+- Restricted workers, reviewers where applicable, delegates, installers and test
+  fixtures retain their own grants and environment boundaries.
+- NVM and private-hook selection, legacy ambiguity, catalog integrity, and terminal
+  environment behavior without reading or sourcing real private hook files.
+- Persistent and one-shot precedence, missing explicit inheritance, deletion versus
+  empty values, conflicting names, protected controls and native `--` passthrough.
+  Prove that OMP refill and Pi fixed proxy policy cannot silently undo an override.
+  Include machine.editor with EDITOR unset, and machine unset followed by one-shot
+  inheritance, so deletion precedence has one explicit result.
+- Caller variables omitted or changed produce a default warning with a reason;
+  unchanged values do not produce a false difference. Use synthetic credential
+  canaries to prove no value, hash or credential name leaks through errors,
+  warnings, diagnostics, saved contracts or one-shot records. Warning generation
+  must not read credential files. Verify ordinary overrides do not reach restricted
+  worker/delegate or installer environments through a parent process.
+
+After offline checks, extend the existing explicit native smoke entries only as
+needed. Use exact locked hosts, two fresh synthetic HOME trees, a fake provider,
+and controlled workspace/external sentinels. Exercise the native Bash/file/MCP
+channels actually enabled; record unsupported channels rather than implying
+coverage. Verify an allowed build launcher and a denied external write independently.
+No business compiler, real account files, production endpoints or global shell
+changes are acceptance inputs. Distinguish shared-cache rebuilds from cold installs.
+Require one matrix row for each enabled execution channel and each supported
+override operation: inherit, set, empty and unset. Record actual child observations
+from controlled fixtures, not only the dictionary passed to the host. Channels
+without a child environment need an explicit not-applicable rationale and their
+own path-behavior check. A missing DSH channel or failed deletion case keeps the
+corresponding capability open. All supported explicit overrides must either reach
+their declared consumer or fail before the action starts; accepting and silently
+ignoring an override is an acceptance failure.
+
+The design-review baseline ran `tests/test_isolation.py`, `tests/test_runtime.py`
+and `tests/test_omp_execution_contract.py`: 79 passed on Linux. A UID-mapped
+sandbox attempt was rejected by ownership checks; rerunning as the host user
+passed without weakening guards. The implementation baseline subsequently passed
+321 affected offline tests before source changes. Neither baseline transfers
+acceptance to the new implementation; matching native results are recorded below.
+
+Use the existing [test entry points and isolation rules](../testing.md). Starting
+families are `test_config_policy.py`, `test_config_secret_loading.py`, OMP's
+`test_omp_execution_environment.py` / `test_omp_pipeline.py`, Pi's
+`test_pi_pipeline.py` / `test_pi_test_boundaries.py` / migration families, DSH's
+`test_dsh_pipeline.py` / `test_dsh_upgrade.py`, and termcfg's security/status/apply
+families. Extend these with the new scenarios; their current coverage is not proof
+of the proposed semantics. Native entry points include
+`scripts/smoke-pi-public-api.mjs`, `scripts/smoke-pi-concurrency.py`,
+`scripts/smoke-dsh-concurrency.py`, `scripts/smoke-dsh-environment.py` and
+`scripts/verify-pi.py`; inspect their actual
+arguments and extend only where the new behavior requires it. Do not add native
+host execution to default pytest.
+
+Bind final evidence to source and lock identities, exact commands, exits, platform
+and redacted reports. Rebuild only locks whose declared source inputs changed,
+using the actual resolver and existing publication protocol; never edit digests to
+claim freshness. Record dependency changes and rerun their affected tests. Repeat
+the final review after writes stop. Existing privacy, commit identity and clean
+history merge gates remain mandatory.
+
+### Delivery boundary and deferred work
+
+The deliverable is a small common execution contract, verified per-adapter adoption,
+terminal fixes, migration diagnostics and updated guides. Before local deployment,
+review the selected machine's nonsecret plan, preserve native ownership, wait for
+active leases to release, and use ordinary sync/apply/doctor. Do not copy real
+accounts or sessions into fixtures, stop user processes, reset branches, or clean
+unowned worktrees. Configuration rollback restores the saved environment contract;
+it does not authorize old hosts to consume newly written native data.
+
+Defer GPT-6.1 catalog additions and the associated alpha-stack evaluation. Retain
+the current model IDs, default model and official runtime pins. A future ordinary
+upstream upgrade can reevaluate the catalog; no model alias, OAuth replacement,
+forced override or vendor edit is part of this work. Per-route network redesign,
+LEASE-01 descriptor lifetime, Perry DSH-AR-01–04, and unrelated Task Keeper or
+vendor/source migrations remain separately tracked. This plan does not change the
+maintainer's existing auto-review deployment choice or its accepted limitations.
+
+
+### Implemented environment boundary
+
+New deployments save environment version 1, caller HOME/XDG identity and the
+existing native bindings. A changed declaration or caller path requires explicit
+plan/apply before credentials or preflight. Legacy contracts keep their saved
+behavior until apply; rollback restores configuration/contract state and does not
+promise software or native database downgrade. Synthetic migration and native
+state preservation are tested separately from authenticated accounts.
+
+DSH disables the original subprocess row and inserts one public
+`LocalSubprocessRuntime` subclass. RC2 patch `name` is a matching guard, so changing
+that field alone does not select a replacement. Cordis service proxies also
+require ordinary immutable properties instead of JavaScript private-field brands.
+No upstream module or binary is modified. Ordinary and PTY process lifetime,
+termination and containment remain owned by the inherited provider.
+
+MCP stdio uses its separate public command/args configuration and `/usr/bin/env`
+to exec directly, without an extra relay process. Assignment-like commands are
+rejected before launch; bare commands require a selected nonempty PATH. The
+platform env executable is checked before credentials. Internal AGENTCFG_ names,
+including hashed MCP credential destinations, are removed from subprocesses and
+MCP children by name-only tombstones; their values never enter the development
+payload or argv. Explicit HTTP MCP authorization remains scoped to that client.
+
+| Channel | Environment behavior | Permission boundary |
+| --- | --- | --- |
+| DSH host/TUI/auth/settings | Instance HOME and native storage unchanged | Trusted host and selected plugins; no general same-user isolation |
+| Ordinary subprocess and PTY | Caller development HOME/XDG, declared values and final deletions | Original provider containment; a direct spawn is not itself an OS sandbox |
+| standard Bash | Same public provider; real tool and sandbox result tested | Original workspace-write sandbox and native approval policy |
+| stdio MCP | Separate direct exec with matching assignment/deletion and internal-variable filtering | Existing MCP/approval behavior; no additional OS sandbox is claimed |
+| HTTP MCP | No local child environment | Explicit configured headers stay with the selected client |
+| File tools | Native workspace/path semantics, not shell tilde expansion | Original fs service and native policy; subprocess overlays do not redirect files |
+| Native in-process subagents | Shared host services; ordinary tool boundary where used | Per-action native policy; parent permission is not blanket child approval |
+| PTC/direct Node/trusted plugins | Isolated host environment | Separate existing boundary; caller overlay is not promised |
+| External agents | Only a public subprocess boundary receives this overlay | No new external-agent permission or account adoption |
+
+Linux native acceptance uses temporary state, synthetic internal credentials and
+MCP servers, and zero account/model calls. The sandbox probe lives outside /tmp
+and /dev because upstream bwrap remounts those locations; changing that fixture
+preserves rather than weakens the real sandbox. Live accounts, business builds,
+other platforms and other Pi profile-native combinations remain unverified.
+
+### Environment acceptance results
+
+The implementation is based on `93cac69`. Linux x86_64 acceptance uses Node
+24.14.0 and npm 11.19.1. Upstream pins remain DSH `0.2.0-rc.2`, TUI `0.15.0`,
+Cursor subscription `0.6.12`, Perry auto-review `0.12.17`, Pi SDK `0.84.4` and
+official OMP `18.8.6`; DSH remains a prerelease host. The new repository-owned
+public extension is `rotom-dsh-execution-environment@0.1.0`.
+
+| Candidate | Complete lock identity | Scope |
+| --- | --- | --- |
+| DSH | `f9da5fd8538eeee6d3526ac5cb160095f0c3d1ff36e3bde072f04441ce208d15` | Matching local extension source archive and complete pnpm resolution |
+| Pi | `632795dddc4484e4b220814f013c6da724a9aae02f2e6863b6784e341d7d5125` | Rebuilt runtime archive and all four profile resolutions; native acceptance selects pi-default |
+| OMP | `90357d838801ddab2d3ebe54d57f8cdc49ca31870b9c1e9615409ab58be592ca` | Upstream runtime lock unchanged; common launch integration tested offline |
+
+The DSH resolver also refreshed transitive loader/include/group, cosmokit,
+undici and build-tool packages. This is not a package-only lock edit. Approval,
+session and subagent packages remain RC2; realpath checks confirm that the new
+extension and host share the same subprocess/Cordis runtime. Native DSH evidence
+below uses the new lock rather than inheriting the former lock's results. Both
+local archives match the exact source inventories; Pi's four npm graphs change
+only the local runtime archive reference. No force or peer-range bypass was used.
+
+| Check | Result | Evidence scope |
+| --- | --- | --- |
+| DSH real environment and sandbox | PASS, 6 checks | Public provider composition, ordinary/PTY children, standard Bash, real configured stdio MCP and actual external-write rejection; zero model calls |
+| DSH dual native TUI | PASS, 8 checks | Separate sessions, collision refusal, maintenance leases, clean exit and terminal restoration; synthetic loopback model only |
+| Pi public SDK | PASS, 13 checks | Instance model/resource selection, synthetic caller-global sources not adopted, sessions, worker registry and unchanged host methods; simulated supervisor, zero model calls |
+| Pi native resources | PASS | Real SDK guarded read, todo and role-resource round trips through the existing outer sandbox; synthetic model only |
+| Pi dual native TUI | PASS, 8 checks | Independent live supervisors/endpoints, cross-owner refusal, maintenance leases, exit and terminal restoration; zero model calls |
+| DSH/Pi rebuilds | PASS, two fresh HOME trees per lock | Actual locked installation and unchanged repeated sync; shared verified public vendor/toolchain and large Pi asset cache, not fully cold downloads |
+| termcfg | PASS | 115 affected offline tests and 18 actual isolated zsh cases; synthetic hooks only |
+| Node contract suites | PASS | 340 Pi mock-runner cases and 50 DSH environment helper cases; no native or account claim |
+| Full Python coverage | PASS, 3,886 passed, 9 skipped, 7 subtests passed | All 3,895 collected node IDs reconciled without gaps; complete-file reruns cover the final Pi plan repair |
+| Final independent review | PASS, no unresolved findings | Runtime/lock and terminal/documentation reviews; necessary fixes re-reviewed against the final 60-file source manifest |
+| Live accounts, business compiler, other OS, nondefault Pi native profiles | NOT RUN | No account or business-environment access; no cross-platform inference |
+
+The explicit native commands are documented in [testing](../testing.md).
+Private evidence retains commands, exit codes, sanitized reports and source/lock
+digests. The changed code/configuration/lock/test manifest relative to `93cac69`
+has SHA256 `6f4c223e6c25889e8a29195e7e6b22bdcfb35df33fc85a28a1a8d3b48637800c`;
+documentation result metadata is excluded from that digest. DSH's native source
+manifest contains 159 source files and matches the
+current implementation. Native checks do not establish a same-user credential
+boundary, a fully cold download, Perry's deferred safety properties, or permission
+to write external build logs. Main, real machine files, credentials, sessions and
+daily deployments remain unchanged pending review and merge authorization.
+
+The first complete Python run exited 1 with 12 obsolete assertions/fixtures
+(3,867 passed, 9 skipped); those files were corrected and rerun. The final offline
+suite was split into three disjoint complete-file groups. The third initially
+hit the existing Unix socket path-length guard because its
+explicit temporary prefix was too long. All six cases in that file then passed
+with a short prefix, and a full retry of that group exited 0. Final group results
+were 1,295 passed/2 skipped, 1,297 passed/7 subtests, and 1,289 passed/7 skipped.
+All three complete groups exited 0. The subsequent real CLI check uncovered an
+existing Pi upgrade-preview bug: it read plan-only `desired` from saved state,
+which actually retains `baseline`. The strict baseline repair and deployed-plan
+regression passed 22 cases across three complete files, including five additional
+corruption cases. File-level reconciliation replaces older results for those
+files: the 22-case rerun replaces 17 existing results and adds 5 new cases.
+Thus the original groups cover 3,890 cases, and the final collection contains
+3,895 unique cases (3,886 passed, 9 skipped); the 7 subtests are counted separately.
+Duplicate results are not added. Actual two-HOME plan/apply/doctor checks
+also passed on the final lock, and both saved launch identities match it.
+No socket, owner or sandbox guard was
+weakened. Raw logs retain superseded failures rather than representing them as
+successful commands.

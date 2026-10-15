@@ -1,5 +1,7 @@
 """离线汇总平台、程序、公开来源、目标和运行包状态。"""
 
+import os
+from pathlib import Path
 import shutil
 
 from .catalog import load_catalog
@@ -8,6 +10,27 @@ from .errors import TermcfgError
 from .home_targets import inspect_target
 from .packages import current_platform, installed_plugins
 from .state import journal_exists, read_journal, read_state
+
+
+def private_hook_status(home: Path, config_home: str | None) -> dict[str, str]:
+  """仅查看当前环境对应的 hook 元数据，不读取或执行私人正文。"""
+  names = ("zshenv", "zshrc")
+  if config_home and not Path(config_home).is_absolute():
+    return {name: "invalid_config_home" for name in names}
+  config = Path(config_home) if config_home else home / ".config"
+  result = {}
+  for name in names:
+    selected = config / "termcfg" / (name + ".local")
+    legacy = home / ".config/termcfg" / (name + ".local")
+    try:
+      selected_present, legacy_present = selected.is_file(), legacy.is_file()
+      if selected_present and legacy_present:
+        result[name] = "shared" if selected.samefile(legacy) else "conflict"
+      else:
+        result[name] = "xdg" if selected_present else "legacy" if legacy_present else "absent"
+    except OSError:
+      result[name] = "unverified"
+  return result
 
 
 def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) -> dict:
@@ -30,6 +53,13 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
           degraded.append("optional_plugins_not_synced")
       except TermcfgError as exc:
         degraded.append(exc.reason)
+    hooks = private_hook_status(machine.target_home, os.environ.get("XDG_CONFIG_HOME")) if component == "zsh" else None
+    if hooks and "conflict" in hooks.values():
+      degraded.append("private_hook_conflict")
+    if hooks and "invalid_config_home" in hooks.values():
+      degraded.append("private_hook_invalid_config_home")
+    if hooks and "unverified" in hooks.values():
+      unverified.append("private_hook_metadata_unverified")
     service = {"service": "not_applicable"}
     if journal_exists(machine):
       blockers.append("recovery_pending")
@@ -44,6 +74,7 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
         target_issues[item.id] = exc.reason
     status = "blocked" if blockers else "degraded" if degraded else "unverified" if unverified else "ready"
     result[component] = {"status": status, "ready": not blockers,
+                         **({"private_hooks": {"scope": "current_environment_preview", "selection": hooks}} if hooks else {}),
                          "required_blockers": sorted(set(blockers)),
                          "optional_degradations": sorted(set(degraded)),
                          "unverified": sorted(set(unverified)),

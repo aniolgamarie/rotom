@@ -24,6 +24,7 @@
           "type": "object", "additionalProperties": false,
           "properties": {
             "inherit": {"type": "array", "items": {"$ref": "#/$defs/environment_name"}, "uniqueItems": true},
+            "unset": {"type": "array", "items": {"$ref": "#/$defs/environment_name"}, "uniqueItems": true},
             "values": {"type": "object", "propertyNames": {"$ref": "#/$defs/environment_name"}, "additionalProperties": {"type": "string"}}
           }
         }

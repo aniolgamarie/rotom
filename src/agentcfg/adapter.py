@@ -159,6 +159,7 @@ class LaunchSpec:
   lock_identity: str = field(repr=False)
   environment: tuple[EnvironmentBinding, ...] = ()
   runtime_identity: str | None = field(default=None, repr=False)
+  environment_policy: str = "legacy"
 
   def __post_init__(self):
     if (not isinstance(self.argv, tuple) or not self.argv or not _text(self.argv[0])
@@ -170,6 +171,8 @@ class LaunchSpec:
       raise ContractError("启动契约必须声明所需锁身份")
     if self.runtime_identity is not None and not _text(self.runtime_identity):
       raise ContractError("运行包身份必须是明确的非空标识")
+    if self.environment_policy not in ("legacy", "caller", "isolated"):
+      raise ContractError("环境策略必须为已支持的启动契约")
     if (not isinstance(self.environment, tuple)
         or not all(isinstance(binding, EnvironmentBinding) for binding in self.environment)):
       raise ContractError("环境映射必须为 EnvironmentBinding tuple")

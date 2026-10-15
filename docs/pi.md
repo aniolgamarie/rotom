@@ -66,6 +66,8 @@ download test.
 
 Roles such as main, scout, reviewer, and managed roles reference logical model IDs selected by the recipe. Every `remote_id` must be exact. An ordinary configuration that truly resolves without main may open bootstrap login but cannot dispatch tasks. Current recipes inherit public Kimi Code main when no role overrides it. Selecting the Cursor plugin alone does not bind the main model to Cursor; configure that role explicitly.
 
+Ordinary main sessions preserve caller HOME/XDG while PI_CODING_AGENT_DIR, session directories and explicit SDK auth/model paths remain instance-bound. Restricted workers use their own temporary HOME and a fixed minimal PATH; they do not inherit ordinary overrides, library paths or SSH sockets. See [environment controls](local-config.md).
+
 Keys use `secret:<name>` and become runtime environment references. Native OAuth is established inside the target instance. The manager does not read system Cursor accounts, old Pi auth.json, or global CODEX_HOME. Codex login and explicit control are covered by [model-delegate usage](../shared/skills/model-delegate/USAGE.md).
 
 ## Task Keeper and delegation

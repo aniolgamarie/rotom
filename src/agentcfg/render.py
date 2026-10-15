@@ -201,7 +201,7 @@ def _selected_data(resolved: ResolvedConfig, schemas: AdapterSchemas, declaratio
       raise ValueError()
   machine = data["machine"]
   if (set(machine.get("paths", {})) != {"instances_root", "state_root", "cache_root"}
-      or set(machine.get("environment", {})) != {"inherit", "values"}
+      or not {"inherit", "values"} <= set(machine.get("environment", {})) <= {"inherit", "values", "unset"}
       or any(not path.startswith("/") for path in machine["paths"].values())):
     raise ValueError()
   # 已解析路径全部存在，不读取环境默认值；复用机器秘密通道及字面路径校验。

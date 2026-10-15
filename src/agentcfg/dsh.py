@@ -3,6 +3,7 @@
 from copy import deepcopy
 import hashlib
 import json
+import os
 from pathlib import Path
 
 from .adapter import (Adapter, AdapterDeclaration, Artifact, DependencyPlan,
@@ -104,6 +105,8 @@ class DshAdapter(Adapter):
       if server["transport"] == "stdio":
         if "command" not in server or "url" in server or "credential_ref" in server:
           raise ConfigError("mcp-stdio-mapping")
+        if not server["command"] or "=" in server["command"] or "\0" in server["command"]:
+          raise ConfigError("mcp-stdio-command")
       elif server["transport"] in ("http", "streamable-http"):
         if "url" not in server or "command" in server or "args" in server:
           raise ConfigError("mcp-http-mapping")
@@ -227,7 +230,8 @@ class DshAdapter(Adapter):
     result = [Artifact(targets[0], render_rules(self.repository, rules, {}))]
     codex_enabled = data["providers"].get("codex", {}).get("auth_kind") == "oauth" and "codex-auth" in data["plugins"]
     # 该可选插件动态改写 Session 的事件表；候选只使用 TUI 原生状态显示。
-    patch = [{"id": "working-activity", "disabled": True}, {"id": "llm-deepseek", "disabled": True},
+    patch = [{"id": "subprocess", "disabled": True},
+             {"id": "working-activity", "disabled": True}, {"id": "llm-deepseek", "disabled": True},
              {"id": "dsh-tui-webserver", "disabled": True}, {"id": "deepseek-account", "disabled": True},
              {"id": "llm-deepseek-account", "disabled": True},
              {"id": "plugin-package-inventory-deepseek", "config": {"enabled": False}},
@@ -236,11 +240,13 @@ class DshAdapter(Adapter):
               "config": {"providers": ["openai-codex"]}}]
     patch.append({"id": "auto-review", "disabled": "auto-review" not in data["plugins"]
       or not data["profile"]["agent_options"].get("auto_review", True)})
-    inserts = []
+    inserts = [{"id": "agentcfg-development-subprocess", "name": "rotom-dsh-execution-environment"}]
     for key, server in data["mcp"].items():
       conf = {"serverName": key}
       if server["transport"] == "stdio":
-        conf.update(transport="stdio", command=server["command"], args=server.get("args", []))
+        arguments = json.dumps([server["command"], *server.get("args", [])], ensure_ascii=False)
+        conf.update(transport="stdio", command="/usr/bin/env", args=native.JS(
+          "JSON.parse(process.env.AGENTCFG_MCP_ENV_ARGS).concat(" + arguments + ")"))
       else:
         conf["transport"] = "streamable-http"
         conf["url"] = server["url"]
@@ -271,6 +277,10 @@ class DshAdapter(Adapter):
       EnvironmentBinding("DSH_TUI_PRESET", data["profile"]["agent_options"]["preset"]),
       EnvironmentBinding("DSH_PERMISSION_MODE", "workspace-write"),
       EnvironmentBinding("DSH_TELEMETRY_DISABLED", "1")]
+    stdio = [server for server in data["mcp"].values() if server["transport"] == "stdio"]
+    if stdio:
+      environment.append(EnvironmentBinding("AGENTCFG_MCP_REQUIRES_PATH",
+        "1" if any("/" not in server["command"] for server in stdio) else "0"))
     if not data["profile"]["agent_options"]["terminal_images"]:
       environment.append(EnvironmentBinding("DSH_TUI_DISABLE_TERMINAL_IMAGES", "1"))
     for key, provider in data["providers"].items():
@@ -281,10 +291,18 @@ class DshAdapter(Adapter):
         environment.append(EnvironmentBinding(env_name("MCP", key), SecretRef(server["credential_ref"])))
     return LaunchSpec(("node", str(instance_root / "launch.mjs"), str(runtime_root),
                        str(instance_root / "dsh-home/agentcfg.patch.yml"), "--profile", "agentcfg"),
-                      cwd, lock_identity, tuple(environment))
+                      cwd, lock_identity, tuple(environment), environment_policy="isolated")
 
   def launch_preflight(self, lock):
     return [{"argv": ["node", "--version"], "version": lock.metadata["node"]}]
+
+  def validate_operation_environment(self, workspace, *, spec, env=None):
+    if env is not None and env.get("AGENTCFG_MCP_REQUIRES_PATH") == "1" and not env.get("PATH"):
+      # env/execvp 缺 PATH 时会搜索系统默认目录，必须在凭据解析前拒绝。
+      raise ConfigError("mcp-stdio-path-required")
+    if env is not None and "AGENTCFG_MCP_REQUIRES_PATH" in env and not os.access("/usr/bin/env", os.X_OK):
+      from .process import DependencyError
+      raise DependencyError("DSH stdio MCP requires the platform /usr/bin/env executable")
 
   def validate_deployment_state(self, saved):
     from .storage import Conflict

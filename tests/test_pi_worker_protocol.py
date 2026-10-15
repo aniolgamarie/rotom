@@ -1,6 +1,7 @@
 """worker 投影仅携带所选模型及环境引用；不读取账号或返回凭据摘要。"""
 
 from copy import deepcopy
+import os
 from pathlib import Path
 
 import pytest
@@ -95,6 +96,7 @@ def test_supervisor_resolves_worker_with_closed_input_and_selected_environment(t
     "root_bindings": {"project": {"path": str(root), "identity": root_identity(root)}}, "artifacts": {}, "result_schema": {}, "minimum_remaining": 0,
     "database": {"root": str(instance / "pi-home/task-keeper"), "filename": "runtime.db", "owner": {"scopeId": "scope", "token": "owner", "epoch": 1}}}
   host = object.__new__(HostSupervisor)
+  host.engine_executable = "/synthetic/locked-engine/node"
   host.store, host.root, host.runtime_root, host.repository = store, store.root, runtime, tmp_path
   host.config = {"instance_root": str(instance), "engine": "node", "policy_digest": digest(policy), "manifest_digest": digest(manifest)}
   host.server = SimpleNamespace(endpoint=tmp_path / "control.json")
@@ -108,6 +110,8 @@ def test_supervisor_resolves_worker_with_closed_input_and_selected_environment(t
   assert not errors, [(list(error.path), error.message) for error in errors]
   command = host.resolve_command(lease, "worker", {"descriptor": descriptor, "context": context})
   assert command.cwd == root
+  assert command.argv[0] == host.engine_executable
+  assert command.environment["PATH"] == "/synthetic/locked-engine" + os.pathsep + os.defpath
   input_path = Path(command.argv[command.argv.index("--input") + 1])
   assert input_path == store.root / "activity/inputs" / (lease["lease_id"] + ".json")
   assert json.loads(input_path.read_bytes()) == {"descriptor": descriptor, "context": context}

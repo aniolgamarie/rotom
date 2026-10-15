@@ -1,0 +1,15 @@
+{
+  "name": "rotom-dsh-execution-environment",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs",
+    "./environment": "./environment.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": ["index.mjs", "environment.mjs"],
+  "peerDependencies": {
+    "@deepseek-ai/dsh-subprocess-local": "0.2.0-rc.2"
+  }
+}

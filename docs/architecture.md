@@ -31,7 +31,7 @@ flowchart LR
 | Commands and selection | `cli.py`, `commands.py`, `workspace.py` |
 | Input and rendering | `config.py`, `schema.py`, `merge.py`, `render.py` |
 | Ownership and recovery | `deployment.py`, `native_projection.py`, `storage.py` |
-| Dependencies and launch | `backends.py`, `runtime.py`, `process.py` |
+| Dependencies and launch | `backends.py`, `runtime.py`, `process.py`, `execution_environment.py` |
 | Native adapters | `dsh.py`, `pi.py`, `omp.py` and related modules |
 | Pi supervision and evidence | `pi_supervisor.py`, `pi_delegate*.py`, `pi_validation*.py` |
 
@@ -63,6 +63,15 @@ Deployment/profile, runtime package, run invocation, native session, Pi executio
 attempt, Git worktree and credential provider have separate identities. Shared run
 admission does not authorize uncontrolled writers in the same worktree or alter
 native sandbox and approval boundaries.
+
+The versioned execution-environment contract separately controls ordinary caller
+variables and native instance storage. OMP/Pi main sessions retain caller HOME/XDG;
+DSH retains its TUI HOME and applies the caller environment at public subprocess
+and stdio MCP boundaries. Restricted workers and installers keep their own minimal
+environments. Explicit deletion and name-only one-shot controls share precedence
+and value-free diagnostics; they neither expand filesystem permissions nor promise
+credential or network isolation. See the [machine guide](local-config.md) and
+[environment channel matrix](design/project-refactoring.md#implemented-environment-boundary).
 
 Shared resources must be prepared or migrated under maintenance; ordinary run then
 validates them and allocates only necessary private run state. Pi keeps its existing
