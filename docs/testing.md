@@ -30,11 +30,39 @@ The public-document check validates maintained Markdown links and selected accid
 
 Native test scripts in `scripts/` have distinct purposes and arguments. Inspect their `--help` and the selected integration guide. Do not treat a script's presence, printed fixture status, or npm installation as native acceptance. A source/lock change invalidates affected evidence until rerun.
 
+### Concurrent-run validation
+
+The explicit DSH and Pi checks require a sealed runtime matching the selected
+repository lock. They create their own synthetic configuration and new HOME/XDG
+directories; never supply a real native account or session directory.
+
+```sh
+.venv/bin/python scripts/smoke-dsh-concurrency.py --allow-host --runtime <sealed-dsh-runtime> --evidence <new-private-directory>
+.venv/bin/python scripts/smoke-pi-concurrency.py --allow-host --runtime <sealed-pi-default-runtime> --evidence <new-private-directory>
+.venv/bin/python scripts/verify-pi.py --tier native --case host-resources --allow-host --runtime <sealed-pi-default-runtime> --output <new-private-report.json>
+```
+
+The concurrency checks require two live native TUIs, independent native session
+or supervisor identities, maintenance refusal while either run is active, clean
+exit and terminal restoration. DSH also verifies explicit refusal of a third TUI
+resuming an occupied session, then confirms that the original session still
+responds. It uses bounded loopback model responses. The Pi
+concurrency check sends no prompts; the separate resource test uses a synthetic
+model for its guarded-read round trip. Pi's CLI check exercises the native PID
+namespace; its resource check also uses the existing outer filesystem sandbox.
+Neither test establishes authenticated-provider or concurrent-login safety.
+
+Large source/asset fixtures can consume substantial temporary storage. To remove
+passed pytest fixtures after each case while retaining failures, add
+`-o tmp_path_retention_policy=failed -o tmp_path_retention_count=1`. Keep private logs
+outside pytest's temporary fixture root. Current results and limitations belong to
+the single [refactoring record](design/project-refactoring.md).
+
 ## Release-preparation results
 
 The baseline review of `66ad5e4` ran the full Linux x86_64 offline suite: **3602 passed, 1 failed, 9 skipped, 7 subtests passed**. The sole failure was the obsolete OMP artifact count. The narrow code fix then passed **136 tests** across dependency, OMP foundation, and project-role suites. Final results for the prepared snapshot are recorded in [release verification](release-verification.md).
 
-The checked-in DSH and OMP locks were readable at baseline. Pi's lock was internally identifiable but stale against source; it is an explicit open issue, not a passing lock check. Default fixtures construct synthetic locks, so a passing suite does not by itself prove every checked-in runtime lock is current.
+The checked-in DSH and OMP locks were readable at that baseline. Pi's lock was internally identifiable but stale against source at the time. The subsequent [refactoring record](design/project-refactoring.md) records its complete rebuild and matching validation separately. Default fixtures construct synthetic locks, so a passing suite does not by itself prove every checked-in runtime lock is current.
 
 ## Historical support summary
 

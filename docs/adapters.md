@@ -15,10 +15,12 @@ DSH, Pi, and OMP reuse configuration merging, SecretStore, deterministic artifac
 | `render_with_context` | Explicit RenderContext for locked absolute resource paths; delegates to render by default |
 | `dependency_plan` | Declared requirements without installation or implicit resolution |
 | `launch_spec` | Arguments, cwd, environment literals or SecretRefs, and lock identity |
+| `prepare_runtime` | Exclusive maintenance only; recoverable preparation, no implicit install |
+| `validate_runtime` | Read-only launch-resource checks during shared run admission |
 | `capture` | Valid local override proposal from an allowlisted native projection |
 | `doctor` | Diagnostics from nonsecret status projections |
 
-Adapters may also provide schemas and validated authentication claims, `capture_projection`, `prepare_runtime`, `launch_preflight`, and lifecycle hooks. Empty defaults do not imply a capability is supported. Use the existing concrete adapters as references rather than embedding one host's paths in the public configuration model.
+Adapters may also provide schemas and validated authentication claims, `capture_projection`, `launch_preflight`, and lifecycle hooks. `shared_run_lease` defaults to true for declared adapters; lifecycle hooks must use shared physical admission for runs and exclusive admission for maintenance. Legacy duck-typed adapters without the declaration retain the fail-closed exclusive fallback. Empty hooks do not imply native concurrent support has been validated. Use the existing concrete adapters as references rather than embedding one host's paths in the public configuration model.
 
 `DependencyBackend` supplies `read_lock`, `resolve_lock`, `sync`, `root`, `status`, `executable_paths`, and `toolchain`. Commands dispatch through the selected backend rather than assuming a node_modules layout. Optional `openspec_argv` exists only where a backend actually supplies the locked CLI; DSH does not.
 

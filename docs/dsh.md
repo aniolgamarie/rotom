@@ -103,6 +103,28 @@ Authentication, refresh, and logout belong to upstream public AuthService/Creden
 
 The framework provider ID stays `cursor`; native routing is `cursor-subscription`, replacing `oauth-cursor`. The old `agent_options.cursor_port` is removed: this terminal flow does not create that proxy port. Old fields fail strict validation. Remove them only through a reviewed migration of configuration intent; do not rewrite old sessions or convert oauth-subs credentials. New native homes need new login. Actual account catalogs, model/tool round trips, resume, refresh, and quota correspondence need their own evidence.
 
+## Concurrent sessions and maintenance
+
+`dsh` and `dsh-proxy` select the same deployment; the proxy shortcut changes only
+process network environment. Different native sessions can run concurrently after
+maintenance prepares the managed profile. Run does not repair shared projections.
+Existing deployments need an explicit `plan` and `apply` while all their sessions
+are stopped. Active runs block apply, sync, rollback and repair with exit code 4.
+The last run releasing its leases permits maintenance; exiting one TUI does not
+release the other TUI's protection.
+
+Use independent native sessions. A session writer lease does not coordinate native
+tool writes to project files: use separate worktrees or coordinate writers. Shared
+admission does not alter sandbox or Perry approval coverage and accepted limitations.
+
+Only one Cursor login should be pending per instance. The private link file is
+published exclusively and a collision is reported rather than replacing another
+attempt. TUI 0.15 inject discovery can lose concurrent registration updates because
+upstream rewrites a shared discovery file without a lock. Session persistence uses a
+different native writer lease; do not equate discovery loss with corrupted sessions.
+Use the foreground TUI for the affected session instead of assuming external inject
+discovery is reliable across simultaneous launches. See [known issues](known-issues.md).
+
 ## Settings and preference ownership
 
 Defaults use the native DSH kernel, standard preset, Catppuccin Mocha, the native welcome screen, and whale branding. `agent_options.show_welcome=false` skips the launchpad through public `DSH_TUI_NO_LAUNCHPAD`. Visual minimal mode is separate from the tools preset; the recipe retains file tools, compaction, and native subagents.

@@ -1,7 +1,7 @@
 # Project review and refactoring plan
 
-Status: implementation in progress, 2026-10-15. The terminal-only termcfg package is
-implemented and tested; other stages retain the status listed below.
+Status: implemented and verified within the Linux scope below, 2026-10-15. This record distinguishes
+implemented contracts, executed tests and remaining native/platform evidence.
 The reviewed source baseline is `6e9513a`. This review covers agent configuration,
 launch and supervision, dependency publication, credentials, and terminal management.
 It does not renew native-host, live-account, or cross-platform acceptance.
@@ -27,8 +27,8 @@ separate constraints. OMP network routing is a separate project.
 ## Review findings and confidence
 
 Severity describes implementation priority, not a claim of an observed incident.
-Confirmed means current code or locked-source behavior; static risk still needs a
-race or failure test. Native behavior remains unverified unless separately recorded.
+The findings table describes the reviewed baseline, before implementation.
+Confirmed means baseline code or locked-source behavior; completion is listed below. Native behavior remains unverified unless separately recorded.
 
 | ID / severity | Evidence and finding | Required response |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ race or failure test. Native behavior remains unverified unless separately recor
 The [locked DSH recipe](../dsh.md#packages-and-reproducibility) and
 [manifest](../../locks/dsh/manifest.json) identify Core RC2, TUI `0.15.0`, and
 Perry `0.12.17`. The following package-relative source evidence is not a new native
-acceptance result; no pair of real TUIs was launched for this review.
+acceptance result; native concurrency results are recorded separately below.
 
 - TUI `lib/types/sessionMounts.js` (530–573, 614–631, 678–705) uses a cross-process
   mount ledger; Core RC2 `@deepseek-ai/dsh-session-persistence-jsonl/lib/index.js`
@@ -83,7 +83,7 @@ acceptance result; no pair of real TUIs was launched for this review.
 
 ### Target lock and operation matrix
 
-This is the target contract, not the current DSH/Pi behavior. Preserve OMP's
+This is the implemented admission and maintenance contract; native coverage is separately recorded. Preserve OMP's
 physical-instance → state → runtime-package nesting. The common acquisition order
 is repository publication, when needed, then physical instance, deployment state,
 runtime package, run records, and canonical sorted workspace leases. Take only
@@ -116,27 +116,35 @@ record this boundary rather than imply that a session lock protects project file
 
 ## Pi design decision and implementation gate
 
-Prefer an independent supervisor and execution namespace for each run in the same
-instance, with instance-wide aggregation for maintenance. Reuse existing records,
-owner identities, Linux/macOS process backends, workspace leases, and generation /
-termination evidence. One current supervisor already handles multiple children;
-that does not establish support for multiple independent activations in one store.
+The implementation retains the existing globally unique execution IDs and evidence
+store. Each run has its own supervisor, activation, nonce and endpoint at
+`activity/control/<activation>/control.json`; no new daemon or registry is introduced.
+Version 2 owner markers permit coexistence only when the exact peer process and owner
+are proven live. Legacy, dead, malformed or unknown protected records fail closed.
 
-Before implementation, specify the run namespace schema, registry/aggregation
-protocol, atomic allocation and cleanup, owner authority, and migration from current
-records. Define which records are read-only compatibility inputs and how incomplete
-registration is detected. Keep cross-run worktree arbitration and canonical lock
-ordering. Do not allow unrelated processes to pretend to share an activation.
+A short instance-wide mutation lease serializes allocation and updates; readers reject
+in-flight snapshots. Supervisors defer transient busy reads rather than abandoning
+children. Capacity remains per run. Project-resource discovery still takes exclusive physical
+admission: cwd-dependent native role projections have not been separated by run.
+Instance-wide native UI preferences have no new transaction guarantee across processes;
+concurrent settings editing is not validated. Workspace writer leases remain instance-wide and
+use canonical worktree identity. Every control, parent/child and summary lookup is
+scoped to the complete owner. Legacy fixed endpoints are accepted only for an exact
+matching owner; endpoint discovery never scans for a convenient live peer.
 
-Stop/recovery must address one run and its proven descendants. Instance maintenance
-must consider every run, including unknown legacy owners; no deletion of old records
-or assumed-dead PID may substitute for termination evidence. Retain grant generation,
-nonce and process identity checks, cancellation boundaries, and failure recovery.
+Maintenance considers all records. Targeted recovery retains generation/termination
+proof and may address a dead owner while another proven run remains active. Recovery
+of version 2 records preserves interrupted recovery evidence. Unknown records cannot
+be discarded to admit a launch. The saved launch contract declares supervisor
+protocol 2: old contracts must be explicitly rebuilt, synced and applied with matching
+source. Old sealed runtimes are retained; the new manager refuses to launch an old
+exclusive supervisor through shared admission.
 
-A central supervisor with attach/multiclient support is an alternative only if public
-interfaces and lifecycle evidence establish it. That evidence is currently missing;
-do not introduce a daemon or choose that architecture by assumption. The preferred
-option remains a design direction, not a finalized runnable state schema.
+DSH preparation participates in the deployment journal before any shared projection
+changes. Recovery selects the persisted current launch and restores its projections
+before removing the journal. Repeated interruption retains the observed owned link
+values; external drift remains a conflict. Ordinary run only validates these resources.
+This restores configuration and launch preparation, not native account/session data.
 
 ## Dependency publication and credential loading
 
@@ -201,17 +209,17 @@ recovery inputs without pretending an external proxy service has been transferre
 | Stage / state | Owned scope and prerequisite | Acceptance and recovery gate |
 | --- | --- | --- |
 | 0 / Review completed | This design and linked architecture/issues; source baseline `6e9513a` | Findings, scope and operation matrix reviewed; nine-file offline baseline: 189 passed, exit 0; scope below. No runtime or service changes. |
-| 1 / Planned | Shared admission/preparation contract; `runtime.py`, adapter hooks, DSH profile preparation | Fake-process tests show parallel distinct runs and exclusive maintenance; interrupted preparation, drift and unknown ownership fail safely. Test descendant descriptor retention, foreground exit and active delegated work before releasing protection. Preserve OMP behavior and fixed lock order. |
-| 2 / Planned | Pi namespace/schema and owner migration design, then lifecycle/activity/supervisor implementation | Design approval first; two independent runs, children and cross-run worktree conflicts, targeted stop/recovery, stale generations, PID reuse, crash and unknown legacy records. Maintain old evidence and test rollback compatibility. |
-| 3 / Planned | Repository lock publication in DSH/OMP, with Pi path inventory | Two writers, lock-versus-sync, interruption at each publish boundary, reader recheck, and previous-lock restoration. No mixed generation accepted; no lock/source mismatch hidden. |
-| 4 / Planned | Nonsecret loading and explicit credential operation paths | Sentinel tests prove configuration-only operations avoid secret bodies; inline conflict/error behavior and required key/status/login access remain compatible. No real credential reads. |
-| 5 / Implemented; 106 isolated tests passed | termcfg v1 metadata migration and mihomo removal across inventory | Old machine, state and pending-journal fixtures migrate or recover explicitly; zsh/tmux-only operations work without a mihomo lock; generic plugin integrity and rollback remain tested. Check concurrent distinct machine IDs targeting the same canonical HOME before claiming cross-machine exclusion; that case is unverified. No service/secret migration. |
-| 6 / Not run | Authorized native and platform validation after implementation and matching locks | DSH distinct-session parallel use, same-session refusal, settings merge, auth serialization/isolation, inject discovery outcome and reviewer separation; Pi true lock closure before current native/cold tests; OMP regression. Test missing/corrupt/unwritable mount ledgers and their recovery, distinguishing existing mounts from new-session reservations. Verify canonical path/alias handling and Pi cross-run worktree conflicts; record DSH/OMP's manual writer-coordination boundary. Record every untested platform. |
+| 1 / Implemented and tested | Shared admission/preparation contract; `runtime.py`, adapter hooks, DSH profile preparation | Offline tests cover parallel distinct runs, exclusive maintenance, interrupted preparation, drift, unknown ownership and repeated recovery interruption. Descendant descriptor retention remains LEASE-01; protection is preserved rather than removed. |
+| 2 / Implemented; native evidence separate | Pi namespace/schema and owner migration design, then lifecycle/activity/supervisor implementation | Existing global store with version 2 owner markers and per-run endpoints; two independent runs, children and cross-run worktree conflicts, targeted stop/recovery, stale generations, PID reuse, crash and unknown legacy records. Maintain old evidence and test rollback compatibility. |
+| 3 / Implemented for DSH/OMP | Repository lock publication in DSH/OMP, with Pi path inventory | Two writers, lock-versus-sync, interruption at each publish boundary, reader recheck, and previous-lock restoration. No mixed generation accepted; no lock/source mismatch hidden. |
+| 4 / Implemented; 220 targeted tests passed | Nonsecret loading and explicit credential operation paths | Sentinel tests prove configuration-only operations avoid secret bodies; inline conflict/error behavior and required key/status/login access remain compatible. No real credential reads. |
+| 5 / Implemented; 106 isolated tests passed | termcfg v1 metadata migration and mihomo removal across inventory | Old machine, state and pending-journal fixtures migrate or recover explicitly; zsh/tmux-only operations work without a mihomo lock; generic plugin integrity and rollback remain tested. A bounded test confirms different machine IDs sharing HOME are not serialized; use one machine ID per HOME. No service/secret migration. |
+| 6 / Linux native concurrency passed; extended scopes separate | Authorized native validation after implementation and matching locks | DSH distinct sessions and simultaneous-resume refusal; Pi independent live supervisors, owner-specific control, namespace and terminal restoration; Pi sandboxed resource round trip. Settings/auth stress, other profiles/platforms and reviewer isolation retain their explicit unverified scope. OMP regression uses the offline suite. |
 
 Keep each stage as focused commits with affected offline tests and stable final review.
 Run shared-infrastructure regression for all adapters when its contract changes.
-Do not flip the global default until the applicable adapters satisfy their gates;
-intermediate releases must state adapter-specific support rather than imply parity.
+Shared admission is the base adapter default. Native validation and deployment remain
+adapter-specific; do not infer platform or authentication parity from that default.
 If native public APIs cannot meet a gate, escalate the limitation and choose an explicit
 supported scope; do not ship a host patch or weaken an ownership check.
 
@@ -232,9 +240,10 @@ This is a regression baseline, not evidence that planned concurrent runs work.
 Documentation checks cover links, selected public paths and whitespace. Native hosts,
 real account data, network calls and new race tests were not executed.
 
-Preserve PI-LOCK, PI-SOURCE/RM-001, REVIEW-F02, DSH-AR-01–04, LEASE-01/RM-002,
+Track PI-LOCK separately until real materialization/native evidence is recorded; preserve PI-SOURCE/RM-001, REVIEW-F02, DSH-AR-01–04, LEASE-01/RM-002,
 and platform/live gaps as independent issues. Pi requires real source/lock closure,
-not a hash-only repair. OMP-NET is not part of this concurrency change.
+not a hash-only repair. Pi publication still has dynamic vendor/profile paths and no
+new multi-publisher protocol; serialize explicit Pi lock resolution. OMP-NET is not part of this concurrency change.
 
 The cleaned `main` has since been manually pushed by the user and anonymously
 verified; this does not rewrite the original local-cleanup evidence or authorize
@@ -243,3 +252,87 @@ reviewed changes from clean `main`, never ordinarily merge it. All worktrees ret
 [the same integration gates](../worktrees.md), including privacy and public identity.
 No historical acceptance is renewed by this plan, and no unrelated user work,
 credential state, runtime service, or upstream source may be changed implicitly.
+
+## Implementation and acceptance record
+
+The runtime implementation is committed as `3720067`, following focused terminal,
+credential, publication and shared-admission commits. Target `main` remains
+`6e9513a`; no merge, push or real-machine deployment was performed. Runtime code
+was frozen before the final offline rerun. Later documentation and smoke-harness
+changes do not modify the managed host or package inputs.
+
+Platform: Linux x86_64, CPython 3.11.11, Node 24.14.0 and npm 11.19.1. The isolated
+toolchain uses the exact declared npm tarball and integrity; no global tool was
+replaced. DSH and OMP retain their original locks. Pi's final complete lock is
+`f9ed17268271f5f0565604f71791d3c74d88b1d1a477b4dc1784f45f69e8e08c`.
+All four npm slices were resolved through the real backend. Direct pins remain
+unchanged; resolution updates 70 transitive versions in each Node slice and 71 in
+the Cursor slice, adding one transitive package in each. Only pi-default was
+materialized and exercised natively. Downloads and large public assets reused
+verified caches: this is not four-profile or cold-download acceptance.
+
+Native commands use the explicit entries in [testing](../testing.md#concurrent-run-validation).
+Raw results retain exact argv, configuration/lock/source digests, exit codes and
+private log hashes. They are not published with machine paths or account data.
+
+| Evidence | Result and scope | Private result SHA-256 |
+| --- | --- | --- |
+| DSH CLI/TUI, including same-session refusal | PASS: independent results, explicit occupied-session refusal, no collision requests, original session remains responsive, maintenance `4/4/0`, both original exits 0, terminal restored, source unchanged; five loopback requests, zero live calls | `2f5867431046c56205ddc6f104813f28ab588c92a461522aeff55af451aae643` |
+| Pi concurrent CLI/TUI | PASS: two complete live owners, unique endpoints/activations, cross-owner refusal, verified PID namespaces, maintenance `4/4/0`, exits 0 and terminal restored; zero model requests | `e4e1505821c5d14056b7d9042bdae4b3e047d3f52d58930bca6fd87e53153c2d` |
+| Pi native host-resources | PASS: unchanged outer filesystem sandbox, real SDK, guarded read, two synthetic model requests, exit 0 and confirmed termination | `ecac1e199421d3bd11992bb606be641f8abef7c2566aefd3ef877425626394c3` |
+| Pi control directory and OS mapping | PASS: unanchored and incorrect-directory requests fail before opening a socket; the exact parent-verified directory completes real RPC under the unchanged PID namespace flags | `0a615036439c5cfe2db2bde84ee5dc9449f2c400ae9fb2d36ad1bc4300c58634` |
+
+Pi's first interactive launch failed because namespace UID mapping hid trusted root
+ancestry. The fix preserves ordinary path validation and passes only an exact
+parent-verified control-directory identity to runtime clients. It exposes a fixed,
+bounded, read-only control record, retaining socket, peer and capability checks.
+It does not trust unmapped UIDs or alter the upstream host. The fix passed 84 related
+offline cases, 12 isolated Node mocks, independent review and the native checks above.
+
+A later Pi concurrency attempt hit the original 180-second harness budget after
+the first TUI became ready. The final bounded harness records stage timings:
+preparation/copy/apply/sync consumed 106.7 seconds, and both TUIs became ready at
+139.3 and 175.2 seconds. A 600-second total budget permits the remaining checks;
+readiness, ownership, sandbox, execution-count and exit criteria were not relaxed.
+
+An earlier full run exposed 16 regressions in legacy probe preparation, a test
+publisher operating on the actual repository, and OMP drift-injection hooks after
+preparation moved to maintenance. Those paths were corrected and retested before
+the final run. The publisher test now uses its own copied repository.
+
+One superseded full-suite attempt exhausted temporary storage and is recorded as
+an environment failure. Its output is not counted as passing evidence. Closed
+task-owned fixture inputs were retired after private log preservation; the final
+rerun retains failed pytest fixtures and promptly removes passed ones. No system
+permissions, sandbox, proxy service or real account state were changed.
+
+The final full offline run covered all **3,813 collected cases in 204 files**,
+partitioned into two disjoint groups with the unchanged network/host/account guards:
+
+| Group | Actual result | Exit | Retained log SHA-256 |
+| --- | --- | --- | --- |
+| 102 files | 2,226 passed, 13 skipped, 7 subtests passed; 986.54 seconds | 0 | `858d57eb452c8dce5028859ab6ca13973f28809fc47d2f52eba7d393e7f1b3c0` |
+| 102 files | 1,574 passed; 1,027.22 seconds | 0 | `fbb3f2b545df38e571db3128be52b2f3824db2bafd1f8e58cbbaf2297b513e8b` |
+
+Combined: **3,800 passed, 13 skipped, 7 subtests passed**. A separate explicit
+Node/rg toolchain run passed all five ReadSeek binding tests, covering four of the
+skipped cases without starting a third-party host. The remaining nine skips are
+seven retired OMP host-patch fixtures and two unavailable locked-Bun standalone
+checks; they are not passes. The 12 restricted Node mocks, public-document checker,
+whitespace check and Python offline lock check also passed. The ordinary pytest
+entry and its isolation contract are unchanged.
+
+| Work state | Scope |
+| --- | --- |
+| Completed | Shared admission/exclusive maintenance, preparation recovery, Pi full-owner supervision and control, DSH/OMP publication, deferred credentials, terminal-only migration, matching Pi lock and Linux native checks above |
+| In progress | None within the recorded implementation and Linux validation scope; release, merge and real deployment are separate operations |
+| Failed pending decision | No unresolved implementation failure in the recorded scope; superseded failures and fixes remain documented above |
+| Environment unavailable or not run | Other operating systems; Pi Cursor/Bun and other profile native/cold builds; real accounts, concurrent login/refresh and UI-preference stress; broader MCP/PTC/reviewer coverage |
+
+Existing deployments remain available. Stop their sessions before explicit
+`plan`/`sync`/`apply`; old Pi launch contracts require migration rather than implicit
+reinterpretation. termcfg v1 state uses `recover` when necessary, followed by
+`migrate --drop-mihomo`. That operation retires ownership metadata and does not
+transfer a service to a new project. Configuration rollback is not a software or
+session-database downgrade. Preserve matching old software and data separately;
+do not hand new session data to an older host and claim recovery.

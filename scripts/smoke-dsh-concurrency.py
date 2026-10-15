@@ -48,7 +48,10 @@ def handler(state, key):
         selected = [label for label in ("ONE", "TWO") if "CONCURRENCY_" + label in user]
         if len(selected) > 1:
           raise ValueError()
-        content = "DONE_" + selected[0] if selected else "AUXILIARY"
+        keep_alive = "KEEP_ALIVE_AFTER_COLLISION" in user
+        if keep_alive and selected != ["ONE"]:
+          raise ValueError()
+        content = "KEPT_ONE_ALIVE" if keep_alive else "DONE_" + selected[0] if selected else "AUXILIARY"
         packet = {"id": "chatcmpl-concurrency", "object": "chat.completion.chunk", "created": 1,
                   "model": body.get("model"), "choices": [{"index": 0, "delta": {"role": "assistant", "content": content}, "finish_reason": None}]}
         if not body.get("stream"):
@@ -67,7 +70,7 @@ def handler(state, key):
         self.wfile.write(raw)
         self.wfile.flush()
         if selected:
-          state["responses"].add(selected[0])
+          state["responses"].add("KEPT_ONE_ALIVE" if keep_alive else selected[0])
       except Exception:
         state["error"] = "FIXTURE_REQUEST_REJECTED"
         self.close_connection = True
@@ -97,7 +100,7 @@ def main():
     "accounts": "NOT RUN", "same_session_resume_refusal": "NOT RUN", "jsonl_session_files": "NOT RUN"}
   children, server, key = [], None, "synthetic-" + uuid.uuid4().hex
   state = {"gate": threading.Lock(), "requests": 0, "responses": set(), "error": None}
-  deadline = time.monotonic() + 180
+  deadline = time.monotonic() + 240
   def budget(limit=60):
     remaining = deadline - time.monotonic()
     if remaining <= 0:
@@ -116,7 +119,12 @@ def main():
   def wait(child, predicate, seconds=60):
     until = time.monotonic() + budget(seconds)
     while not predicate() and time.monotonic() < until:
-      if state["error"] or child["process"].poll() is not None:
+      if child["process"].poll() is not None:
+        pump(0)
+        if predicate():
+          break
+        raise RuntimeError("FIXTURE_OR_PROCESS_FAILED")
+      if state["error"]:
         raise RuntimeError("FIXTURE_OR_PROCESS_FAILED")
       pump()
     if not predicate():
@@ -212,16 +220,39 @@ def main():
         return {path.parent.name: path for path in sessions.glob("*/*/session*.jsonl*")
           if re.fullmatch(r"session(?:\.v[1-9][0-9]*)?\.jsonl(?:\.zstd)?", path.name)
           and path.is_file() and not path.is_symlink() and not path.parent.is_symlink()}
+      def launch(label, argv):
+        master, slave = pty.openpty()
+        child = {"master": master, "slave": slave, "before": termios.tcgetattr(slave), "output": bytearray(), "label": label}
+        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 120, 0, 0))
+        child["process"] = subprocess.Popen(argv, cwd=project, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
+        children.append(child)
+        return child
+      def close_panel(child, record):
+        os.write(child["master"], b"\x03")
+        until = time.monotonic() + 0.3
+        while time.monotonic() < until:
+          pump()
+        if child["process"].poll() is None:
+          os.write(child["master"], b"\x03")
+        wait(child, lambda: child["process"].poll() is not None, 10)
+        record.update(exit=child["process"].returncode, termios_restored=child["before"] == termios.tcgetattr(child["slave"]))
+        if not record["termios_restored"]:
+          raise RuntimeError("EXIT_TERMIOS")
+      def stable_requests():
+        count, stable_until, until = state["requests"], time.monotonic() + 1, time.monotonic() + budget(5)
+        while time.monotonic() < stable_until:
+          pump()
+          if state["error"] or time.monotonic() > until:
+            raise RuntimeError("PROVIDER_NOT_QUIET")
+          if state["requests"] != count:
+            count, stable_until = state["requests"], time.monotonic() + 1
+        return count
       for label in ("ONE", "TWO"):
         result["stage"] = "launch_" + label
         prior, known = session_id(), set(session_records())
         argv = [str(repo / "agentcfg"), "--local", str(machine), "--profile", "dsh-default", "run", "--cwd", str(project)]
-        master, slave = pty.openpty()
-        before = termios.tcgetattr(slave)
-        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 120, 0, 0))
-        child = {"master": master, "slave": slave, "before": before, "output": bytearray(), "label": label}
-        child["process"] = subprocess.Popen(argv, cwd=project, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
-        children.append(child)
+        child = launch(label, argv)
+        master, slave = child["master"], child["slave"]
         record = {"label": label, "argv": argv, "resume_before_start": prior}
         result["processes"].append(record)
         wait(child, lambda: not termios.tcgetattr(slave)[3] & termios.ICANON and "fixture-not-real" in visible(child))
@@ -239,21 +270,37 @@ def main():
       if any("DONE_" + other in re.sub(r"\s+", "", visible(child)) for child, other in zip(children, ("TWO", "ONE"))):
         raise RuntimeError("MIXED_SESSION_OUTPUT")
       result["checks"].update(distinct_native_sessions="PASS", isolated_plaintext_responses="PASS")
+      hosts = tuple(children)
+      result["stage"] = "same_session_resume"
+      expected_sessions = {row["session_id"] for row in result["processes"]}
+      before_collision = stable_requests()
+      collision_argv = [*result["processes"][0]["argv"], "--", "--resume", result["processes"][0]["session_id"]]
+      collision = launch("COLLISION", collision_argv)
+      result["collision"] = {"argv": collision_argv, "target_session_id": result["processes"][0]["session_id"], "requests_before": before_collision}
+      phrases = (result["processes"][0]["session_id"], "it is mounted by another TUI terminal", "two processes driving one session log would corrupt it.")
+      wait(collision, lambda: all(phrase in " ".join(visible(collision).split()) for phrase in phrases))
+      if set(session_records()) != expected_sessions or stable_requests() != before_collision:
+        raise RuntimeError("COLLISION_CREATED_SESSION_OR_REQUEST")
+      close_panel(collision, result["collision"])
+      if set(session_records()) != expected_sessions or stable_requests() != before_collision:
+        raise RuntimeError("COLLISION_EXIT_CHANGED_SESSION_OR_REQUEST")
+      result["collision"].update(occupied_notice_verified=True, canonical_sessions_unchanged=True, requests_after=state["requests"])
+      result["stage"] = "keep_alive_after_collision"
+      os.write(hosts[0]["master"], b"\x1b[200~KEEP_ALIVE_AFTER_COLLISION\x1b[201~")
+      wait(hosts[0], lambda: "KEEP_ALIVE_AFTER_COLLISION" in re.sub(r"\s+", "", visible(hosts[0])), 5)
+      os.write(hosts[0]["master"], b"\r")
+      wait(hosts[0], lambda: "KEPT_ONE_ALIVE" in state["responses"] and "KEPT_ONE_ALIVE" in re.sub(r"\s+", "", visible(hosts[0])))
+      if any(child["process"].poll() is not None for child in hosts) or set(session_records()) != expected_sessions:
+        raise RuntimeError("ORIGINAL_HOSTS_NOT_PRESERVED")
+      result["same_session_resume_refusal"] = "PASS"
+      result["checks"]["collision_refused_and_original_hosts_preserved"] = "PASS"
       result["stage"] = "both_active_maintenance"
       cli("apply", 4)
       result["checks"]["maintenance_blocked_both_active"] = "PASS"
-      for index, child in enumerate(children):
+      for index, child in enumerate(hosts):
         result["stage"] = "exit_" + child["label"]
-        os.write(child["master"], b"\x03")
-        until = time.monotonic() + 0.3
-        while time.monotonic() < until:
-          pump()
-        if child["process"].poll() is None:
-          os.write(child["master"], b"\x03")
-        wait(child, lambda: child["process"].poll() is not None, 10)
-        restored = child["before"] == termios.tcgetattr(child["slave"])
-        result["processes"][index].update(exit=child["process"].returncode, termios_restored=restored)
-        if child["process"].returncode != 0 or not restored:
+        close_panel(child, result["processes"][index])
+        if child["process"].returncode != 0:
           raise RuntimeError("EXIT_OR_TERMIOS")
         if session_id() != result["processes"][index]["session_id"]:
           raise RuntimeError("EXIT_RESUME_MISMATCH")
@@ -261,7 +308,7 @@ def main():
         result["processes"][index].update(resume_after_exit=session_id(),
           session_artifact=artifact.relative_to(sessions).as_posix(), session_artifact_sha256=hashlib.sha256(artifact.read_bytes()).hexdigest())
         if index == 0:
-          if children[1]["process"].poll() is not None:
+          if hosts[1]["process"].poll() is not None:
             raise RuntimeError("SECOND_NOT_ALIVE")
           cli("apply", 4)
           result["checks"]["first_exit_preserves_second_lease"] = "PASS"
@@ -287,6 +334,8 @@ def main():
       server.shutdown()
       server.server_close()
     result.update(fixture_requests=state["requests"], fixture_responses=sorted(state["responses"]), fixture_error=state["error"])
+    if state["error"]:
+      result.update(overall="FAIL", error="FIXTURE_REQUEST_REJECTED")
     (evidence / "result.json").write_text(json.dumps(result, indent=2) + "\n")
   print(json.dumps({"overall": result["overall"], "evidence": str(evidence)}))
   return 0 if result["overall"] == "PASS" else 1

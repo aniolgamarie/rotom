@@ -1,6 +1,6 @@
 # Manage Pi with agentcfg
 
-The Pi adapter implements isolated instances, configuration deployment, Task Keeper, and model-delegate. **The current Pi 0.84.4 checkout has a stale checked-in dependency lock. New deployment requires lock repair before sync/setup can be treated as usable.** An existing deployed runtime may still work, but that does not make the current repository lock valid. Do not bypass the lock checks or regenerate it as an incidental setup step.
+The Pi adapter implements isolated instances, configuration deployment, Task Keeper, and model-delegate. **The Pi 0.84.4 full lock has been rebuilt through the real resolver for this change.** Source/lock closure and an isolated pi-default sync/apply succeeded; matching native and platform evidence is recorded separately. Existing deployments are not automatically migrated. Do not bypass lock checks or regenerate a lock as an incidental setup step.
 
 Historical candidate `9d6a9270…` passed the agreed Linux x86_64 mock/native and two-path rebuild checks for four recipes. Those results belong to that candidate and do not certify this checkout. Other platforms, actual accounts, and real services retain their unverified status. See [known issues](known-issues.md), [testing](testing.md), and [releases](releases.md).
 
@@ -14,7 +14,7 @@ Historical candidate `9d6a9270…` passed the agreed Linux x86_64 mock/native an
 | Paths, exact model bindings, services, check programs | Private machine TOML `overrides` |
 | API keys | Private shared SecretStore; legacy inline `secrets` remains supported |
 | Native OAuth, sessions, task data | Isolated instance; no automatic import of an old HOME |
-| Rebuildable dependencies and source identities | `locks/pi/`; currently stale against the checked-in package contents |
+| Rebuildable dependencies and source identities | `locks/pi/`; fixed sources, integrity and per-profile complete npm locks |
 
 Private files require mode 0600. Most arrays replace the complete selection, so retain all plugins you need when editing a list. See [local configuration](local-config.md) for the provider/model selection exception and secret storage.
 
@@ -93,10 +93,40 @@ Codex admission checks require absent/empty system configuration, absent managed
 
 Selected but unverified Codex, Cursor, MCP, web, proxy, and terminal services remain selected and unverified. Historical spec closure did not turn those into passes or remove them from scope.
 
+## Concurrent runs
+
+New protocol-2 deployments admit independent supervisors in the same instance.
+Each run retains a unique activation/nonce and control endpoint; execution IDs and
+recovery evidence remain in the existing global store. Child/service capacity is
+per run. The default recipes disable project-resource discovery. Explicit
+`discovery.project_resources=true` retains exclusive physical admission because
+the current native role projections depend on cwd and are shared within an instance.
+The saved launch binding includes this policy; changing it requires apply before
+another run can start. Stop, cancellation, delegation and status use the exact saved owner and
+cannot borrow another run's endpoint. Managed workspace writers still conflict across
+runs using canonical worktree leases; parallel readers remain allowed.
+
+Old saved launch contracts fail with a migration instruction. Stop/recover old runs,
+rebuild through the complete lock workflow, then sync and apply before using the new
+shared contract. Do not overwrite a frozen supervisor or update only a recipe hash.
+Native UI preferences remain instance-wide; concurrent preference editing has no
+new cross-process transaction guarantee. Avoid simultaneous settings edits.
+Legacy or unknown protected owners block admission/maintenance until explicit
+recovery establishes their outcome. A temporary busy activity snapshot is retried by
+the host loop; it does not authorize abandoning live work or deleting evidence.
+
+On Linux, the supervisor verifies its private control directory before entering a
+PID namespace. Runtime clients receive that directory's exact device/inode/UID
+binding as an opaque string. This permits a fixed, read-only `control.json` lookup
+when namespace UID mapping hides root ancestry. Wrong or malformed bindings fail
+without fallback; file, socket, peer-UID and capability checks still apply. Ordinary
+CLI requests retain the original strict ancestor checks. This mechanism grants no
+general filesystem access and changes no upstream host or sandbox implementation.
+
 ## Recovery and diagnostics
 
 Plan reports dependency, role, policy, route, resource, and configuration changes plus historical runtime locations. Pi sessions and Task Keeper stores accept only declared v3 data; incompatible state is rejected without downgrade or rewrite.
 
 Rollback restores managed configuration and saved runtime references, preserving accounts, sessions, and task databases. Changing HOME cannot bypass active write leases on a shared worktree. See [migration and explicit recovery](pi-migration.md) for stop/recovery commands, 300-second plan validity, and unknown activity handling.
 
-Doctor diagnostics and release acceptance are distinct. `report-only` success means a report was generated; `check-release` requires all applicable evidence in its fixed scope to match and pass. See [diagnostics](pi-diagnostics.md) and [testing](testing.md). Neither historical reports nor a working old deployment resolve today's stale-lock blocker.
+Doctor diagnostics and release acceptance are distinct. `report-only` success means a report was generated; `check-release` requires all applicable evidence in its fixed scope to match and pass. See [diagnostics](pi-diagnostics.md) and [testing](testing.md). Neither historical reports nor a working old deployment substitutes for current native/cold evidence.

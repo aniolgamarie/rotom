@@ -6,22 +6,24 @@ This roadmap records intended work, not release commitments. Recheck source, loc
 
 | Priority | Work | Exit condition |
 | --- | --- | --- |
-| Required for a Pi deployment claim | PI-LOCK: rebuild the stale Pi lock through the official repository workflow | Complete source/lock closure and current native/cold evidence; no digest-only refresh |
+| Required for broader Pi acceptance | PI-LOCK: full lock rebuilt and pi-default materialized; repeat remaining profile/platform native/cold scopes | Match exact source/lock/runtime; no digest-only refresh or transfer of historical results |
 | Ongoing publication hygiene | Cleaned `main` was manually pushed by the user and anonymously verified; review any other ref separately | Retained old-lineage refs require separate review and enter clean `main` only through reviewed replay; no ordinary merge |
 | Required before tagging | Freeze a candidate and record validation | Relevant tests, lock checks, documentation links, source/license inventory, explicit unresolved limitations |
 | Ongoing | Upstream DSH/Perry fixes | Repeat the real approval-chain and sandbox tests before changing accepted limitations |
 
 ## Project refactoring: concurrent runs and terminal scope
 
-**Status: review and implementation plan; runtime changes not delivered.**
+**Status: implemented and verified in an isolated task branch on Linux; merge and real deployment are separate.**
 
 The [project refactoring plan](design/project-refactoring.md) defines distinct
 instance, runtime, run, native-session, Pi-attempt, worktree and credential identities.
-Target concurrent different-session runs with exclusive maintenance across DSH, Pi
-and OMP. Current DSH/Pi admission remains exclusive. Preparation, Pi owner namespaces,
-publication coordination and native validation are gates before changing defaults.
+Shared run admission and exclusive maintenance now cover DSH, Pi and OMP. DSH
+preparation is journaled maintenance; Pi uses full owner identities and per-run
+endpoints in its existing evidence store. DSH/OMP lock publication and full sync
+consumption are leased. Native and cross-platform coverage must remain explicit;
+Pi lock publication still requires a single publisher.
 
-The same plan covers nonsecret configuration loading and an explicit migration to
+The same work implements deferred credential reads and an explicit migration to
 remove mihomo management from `termcfg`, retaining zsh/tmux and their generic package
 machinery. That terminal-only package is implemented with explicit v1 metadata
 migration and isolated tests. A future independent proxy project is not implemented;

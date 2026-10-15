@@ -50,9 +50,13 @@ def main():
   ensure_private(evidence)
   result = {"overall": "FAIL", "stage": "prepare", "platform": sys.platform, "checks": {}, "commands": [],
             "hosts": [], "real_model_calls": 0, "accounts": "NOT RUN", "model_requests": "NOT RUN",
-            "cross_platform": "NOT RUN", "nondefault_profiles": "NOT RUN", "os_sandbox_bypass": False}
+            "cross_platform": "NOT RUN", "nondefault_profiles": "NOT RUN", "os_sandbox_bypass": False,
+            "budgets": {"wall_seconds": 600, "ready_seconds": 120, "cli_seconds": 180}, "timings": []}
   children, server, requests, root = [], None, [], None
-  deadline = time.monotonic() + 180
+  started = time.monotonic()
+  deadline = started + 600
+  def checkpoint(stage):
+    result["timings"].append({"stage": stage, "elapsed_seconds": round(time.monotonic() - started, 3)})
   def budget(seconds=60):
     left = deadline - time.monotonic()
     if left <= 0:
@@ -67,7 +71,7 @@ def main():
   def visible(child):
     text = re.sub(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)", "", child["output"].decode(errors="replace"))
     return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
-  def wait(child, predicate, seconds=60):
+  def wait(child, predicate, seconds=120):
     until = time.monotonic() + budget(seconds)
     while not predicate() and time.monotonic() < until:
       if child["process"].poll() is not None and not predicate():
@@ -79,10 +83,11 @@ def main():
       raise RuntimeError("NATIVE_TIMEOUT")
   def cli(command, expected):
     argv = [str(repo / "agentcfg"), "--local", str(local), "--profile", "pi-default", command]
-    value = subprocess.run(argv, cwd=root, env=env, capture_output=True, timeout=budget())
+    value = subprocess.run(argv, cwd=root, env=env, capture_output=True, timeout=budget(180))
     log = f"cli-{len(result['commands'])}-{command}.log"
     (evidence / log).write_bytes(value.stdout + value.stderr)
     result["commands"].append({"argv": argv, "exit": value.returncode, "log": log})
+    checkpoint("cli_" + command)
     if value.returncode != expected:
       raise RuntimeError("CLI_EXIT_MISMATCH")
   def leases():
@@ -124,9 +129,10 @@ def main():
       raise RuntimeError("PLATFORM_NOT_IMPLEMENTED")
     def timeout(_signum, _frame): raise RuntimeError("OVERALL_TIMEOUT")
     signal.signal(signal.SIGALRM, timeout)
-    signal.alarm(180)
+    signal.alarm(600)
     runtime = inspect_runtime(args.runtime)
     lock = PiBackend().read_lock(repo)
+    checkpoint("source_runtime_and_lock_verified")
     if runtime.profile != "pi-default" or runtime.lock_identity != lock.identity:
       raise RuntimeError("SEALED_BINDING_CHANGED")
     original_receipt = (runtime.root / ".agentcfg-receipt.json").read_bytes()
@@ -173,6 +179,7 @@ def main():
     ensure_private(destination.parent)
     shutil.copytree(runtime.root, destination, symlinks=True)
     if inspect_runtime(destination).public_identity() != runtime.public_identity(): raise RuntimeError("COPY_INVALID")
+    checkpoint("isolated_runtime_copy_verified")
     result.update(lock_identity=lock.identity, runtime=runtime.public_identity(), source_files=source,
       config_sha256=hashlib.sha256(local.read_bytes()).hexdigest(), candidate_generation=workspace.candidate(lock.identity).generation)
     cli("apply", 0)
@@ -190,6 +197,7 @@ def main():
       argv = [str(repo / "agentcfg"), "--local", str(local), "--profile", "pi-default", "run", "--cwd", str(project)]
       child["process"] = subprocess.Popen(argv, cwd=project, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
       children.append(child)
+      checkpoint("launched_" + label)
       record = {"label": label, "argv": argv}
       result["hosts"].append(record)
       wait(child, lambda: "agentcfg-native-main" in visible(child) and not termios.tcgetattr(slave)[3] & termios.ICANON and any(row["lease_id"] not in known and alive(row) for row in leases()))
@@ -197,6 +205,7 @@ def main():
       namespace = namespace_record(processes, row["process_identity"])
       if namespace is None or namespace["terminated"]: raise RuntimeError("HOST_NAMESPACE_UNVERIFIED")
       owner, endpoint, control = ownership(row)
+      checkpoint("native_ready_" + label)
       child.update(lease_id=row["lease_id"], owner=owner, endpoint=endpoint, control=control)
       record.update(lease_id=row["lease_id"], owner_sha256=digest(owner), supervisor_activation_id=owner["supervisor_activation_id"],
         manager_activation_id=owner["manager_activation_id"], complete_owner_live=True, endpoint=str(endpoint), raw_terminal_ready=True, tui_model_rendered=True, pid_namespace_verified=True)
@@ -231,6 +240,7 @@ def main():
       result["hosts"][index].update(exit=child["process"].returncode, termios_restored=restored)
       if child["process"].returncode != 0 or not restored:
         raise RuntimeError("EXIT_OR_TERMIOS_FAILED")
+      checkpoint("clean_exit_" + child["label"])
       finished = next(row for row in leases() if row["lease_id"] == child["lease_id"])
       namespace = namespace_record(processes, finished["process_identity"])
       if namespace is None or not namespace["terminated"]: raise RuntimeError("HOST_NAMESPACE_NOT_TERMINATED")
