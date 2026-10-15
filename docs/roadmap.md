@@ -7,9 +7,24 @@ This roadmap records intended work, not release commitments. Recheck source, loc
 | Priority | Work | Exit condition |
 | --- | --- | --- |
 | Required for a Pi deployment claim | PI-LOCK: rebuild the stale Pi lock through the official repository workflow | Complete source/lock closure and current native/cold evidence; no digest-only refresh |
-| Required for remote publication | Coordinate the remote disposition after [local main-only cleanup](history-cleanup.md) | Separately authorized ref updates and collaborator migration; retained old refs must remain private |
+| Ongoing publication hygiene | Cleaned `main` was manually pushed by the user and anonymously verified; review any other ref separately | Retained old-lineage refs require separate review and enter clean `main` only through reviewed replay; no ordinary merge |
 | Required before tagging | Freeze a candidate and record validation | Relevant tests, lock checks, documentation links, source/license inventory, explicit unresolved limitations |
 | Ongoing | Upstream DSH/Perry fixes | Repeat the real approval-chain and sandbox tests before changing accepted limitations |
+
+## Project refactoring: concurrent runs and terminal scope
+
+**Status: review and implementation plan; runtime changes not delivered.**
+
+The [project refactoring plan](design/project-refactoring.md) defines distinct
+instance, runtime, run, native-session, Pi-attempt, worktree and credential identities.
+Target concurrent different-session runs with exclusive maintenance across DSH, Pi
+and OMP. Current DSH/Pi admission remains exclusive. Preparation, Pi owner namespaces,
+publication coordination and native validation are gates before changing defaults.
+
+The same plan covers nonsecret configuration loading and an explicit migration to
+remove mihomo management from `termcfg`, retaining zsh/tmux and their generic package
+machinery. A future independent proxy project is not yet implemented; no proxy service
+or private configuration is moved or deleted in this planning stage.
 
 ## RM-001: Declared sources and on-demand dependencies
 

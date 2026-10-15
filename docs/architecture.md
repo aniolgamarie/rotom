@@ -41,7 +41,7 @@ flowchart LR
 
 Objects merge recursively; arrays normally replace wholesale, including empty arrays. `false` remains meaningful. The shared default model layer adds deduplicated provider/model choices and lets explicit role bindings take precedence. Stable local model IDs are separate from remote IDs and protocol routes.
 
-SecretStore is separate from ordinary configuration. Renderers and digest builders receive no secret values. Shared secret files and legacy inline entries may coexist only under the documented conflict rules. Launch resolves the deployed references for the required operation; capture reads a narrow nonsecret allowlist.
+SecretStore is separate from ordinary configuration. Renderers and digest builders receive no secret values. Shared secret files and legacy inline entries may coexist only under the documented conflict rules. Launch resolves the deployed references for the required operation; capture reads a narrow nonsecret allowlist. Current `load_local` also loads SecretStore on configuration preparation paths. Avoiding early credential reads is a planned refinement, not a property already established for every validate/render/plan/doctor path.
 
 Native authentication, trust, sessions, and logs remain native-owned. A user interface preference may be initialized once without becoming continuously managed. Unknown native fields survive field-level merges; unknown Rotom input fields fail validation.
 
@@ -51,6 +51,28 @@ A deployment has a stable owner, current field baselines, at most one previous c
 
 The dependency backend consumes a complete lock and verifies staged output before activation. `apply` installs nothing. `run` uses a saved deployment contract and performs no implicit sync or apply. A stale repository lock can block new deployment while an earlier deployed runtime remains launchable under its saved contract; this distinction matters for the current Pi issue.
 
-Private storage uses directory handles, no-follow traversal, ownership and ancestor checks, and rechecks before writes. Leases protect managed instance, state, and runtime operations. OMP ordinary sessions use shared leases and configuration mutation requires exclusive access. Background descendants may inherit lease descriptors; the unresolved lifecycle issue is tracked in the Roadmap.
+Private storage uses directory handles, no-follow traversal, ownership and ancestor checks, and rechecks before writes. Leases protect managed instance, state, and runtime operations. OMP ordinary sessions use shared leases and configuration mutation requires exclusive access. DSH and Pi still use exclusive run admission; DSH also prepares shared profile resources during run, and Pi ties admission to exclusive physical-instance and activation ownership. Background descendants may inherit lease descriptors; the unresolved lifecycle issue is tracked in the Roadmap.
 
 These controls are not an OS sandbox against arbitrary same-user processes. Host sandbox and approval coverage must be assessed independently. See [state and recovery](design/configuration-state.md), [approval design](design/approvals.md), [adapter contract](adapters.md), and [testing](testing.md).
+
+## Planned project boundaries
+
+The [project refactoring plan](design/project-refactoring.md) targets concurrent runs
+of different native sessions with exclusive maintenance across all three adapters.
+Deployment/profile, runtime package, run invocation, native session, Pi execution
+attempt, Git worktree and credential provider have separate identities. Shared run
+admission does not authorize uncontrolled writers in the same worktree or alter
+native sandbox and approval boundaries.
+
+Shared resources must be prepared or migrated under maintenance; ordinary run then
+validates them and allocates only necessary private run state. Pi's preferred direction
+is independent per-run supervisors/namespaces with instance-wide maintenance
+aggregation and cross-run worktree leases. Its state schema and migration protocol
+remain an implementation design gate; a daemon or shared activation is not assumed.
+
+`termcfg` currently manages zsh/tmux and mihomo. The target narrows it to zsh/tmux,
+with explicit compatibility and recovery for existing machine/state/journal records
+before removing mihomo. A future independent proxy project has not been created.
+Proxy environment values remain an external-service contract consumed by agentcfg;
+`dsh-proxy` does not own service startup. These are planned changes, not delivered
+runtime behavior or permission to move private proxy configuration.
