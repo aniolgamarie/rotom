@@ -35,7 +35,7 @@ On Linux, all four recipes use the locked bwrap helper in a separate PID namespa
 
 ## Preparation and deployment sequence
 
-The following is the intended sequence **after maintainers repair and verify the current lock**. It is not a claim that a fresh deployment works today.
+The current full lock has been rebuilt through the real resolver. Isolated Linux pi-default sync/apply, concurrent TUIs and sandboxed host-resource checks passed. Use the preparation sequence below for a reviewed deployment. Other profiles, Bun, platforms and real accounts require their own validation; see the [acceptance record](design/project-refactoring.md#implementation-and-acceptance-record).
 
 1. Prepare Python 3.11+, uv, and the exact Node/npm/Bun required by the recipe. The manager does not alter the system toolchain.
 2. Run `uv sync --locked` in `/path/to/rotom`. Use `./agentcfg` directly afterward.

@@ -256,10 +256,14 @@ credential state, runtime service, or upstream source may be changed implicitly.
 ## Implementation and acceptance record
 
 The runtime implementation is committed as `3720067`, following focused terminal,
-credential, publication and shared-admission commits. Target `main` remains
-`6e9513a`; no merge, push or real-machine deployment was performed. Runtime code
-was frozen before the final offline rerun. Later documentation and smoke-harness
+credential, publication and shared-admission commits. At implementation acceptance,
+target `main` was `6e9513a`; no merge, push or real-machine deployment had been
+performed. Runtime code was frozen before the final offline rerun. Later documentation and smoke-harness
 changes do not modify the managed host or package inputs.
+
+The user subsequently authorized integration into `main` and local redeployment.
+Those operations are pending execution; authorization does not record completion
+or authorize a remote push.
 
 Platform: Linux x86_64, CPython 3.11.11, Node 24.14.0 and npm 11.19.1. The isolated
 toolchain uses the exact declared npm tarball and integrity; no global tool was
