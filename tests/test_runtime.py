@@ -48,7 +48,7 @@ def test_run_keeps_deployed_selection_uses_current_secret_and_cwd(tmp_path, fake
   assert "UNRELATED_PARENT_SECRET" not in call["env"]
   assert "synthetic-unused" not in call["env"].values()
   assert all(CANARY not in arg for arg in call["argv"])
-  assert len(call["pass_fds"]) == 1
+  assert len(call["pass_fds"]) == 2
   assert CANARY not in capsys.readouterr().out
   assert CANARY.encode() not in (w.state_root / "deployment.json").read_bytes()
 

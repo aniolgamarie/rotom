@@ -20,7 +20,7 @@ from .pi_catalog import validate
 from .pi_lifecycle import guard
 from .process import DependencyError
 from .schema import ConfigError, validate_document
-from .storage import Conflict, Tree
+from .storage import Conflict, Tree, instance_lock
 from .workspace_leases import WorkspaceLeases
 
 
@@ -81,9 +81,8 @@ def recover(args):
   if bool(args.stop) != bool(args.expect_plan) or args.expect_plan is not None and not re.fullmatch(r"[0-9a-f]{64}", args.expect_plan):
     raise ConfigError("pi-recovery-plan-arguments")
   workspace = recovery_workspace(args)
-  with guard(workspace, allow_active=True, create=False):
-    with Tree(workspace.state_root) as tree:
-      raw = tree.read("activity/leases/" + safe_id(args.lease) + ".json")
+  with guard(workspace, allow_active=True, create=False, shared=True), Tree(workspace.state_root) as tree, instance_lock(tree, shared=True) as lease_fd:
+    raw = tree.read("activity/leases/" + safe_id(args.lease) + ".json")
     try:
       lease = json.loads(raw[0])
       validate("execution-lease", lease)
@@ -95,7 +94,8 @@ def recover(args):
     identity = processes.identity(os.getpid())
     owner = {"instance_id": lease["instance_id"], "supervisor_activation_id": uuid.uuid4().hex,
       "manager_activation_id": "recovery-only", "owner_nonce": secrets.token_hex(32), "supervisor_process_identity": identity}
-    store = ExecutionStore(workspace.state_root, owner, processes, workspaces=WorkspaceLeases(identity["boot_id"]))
+    store = ExecutionStore(workspace.state_root, owner, processes,
+      workspaces=WorkspaceLeases(identity["boot_id"]), lease_fd=lease_fd)
     if args.stop:
       result = store.recover_stop(args.lease, args.expect_plan, request_id="stop-" + args.expect_plan)
       return workspace, {"lease_id": result["lease_id"], "state": result["state"], "protected": protected(result)}

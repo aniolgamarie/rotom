@@ -1,14 +1,13 @@
 """Pi 持久执行记录；结果完成不等于物理终止，未知活动始终阻止变更。"""
 
 from copy import deepcopy
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import os
 from pathlib import Path
 import uuid
-import fcntl
 import stat
 import threading
 
@@ -56,7 +55,7 @@ def protected(lease):
 
 
 class ExecutionStore:
-  def __init__(self, root, owner, processes, *, workspaces=None, fault=None, now=None, lease_fd=None):
+  def __init__(self, root, owner, processes, *, workspaces=None, fault=None, now=None, lease_fd=None, concurrent=False):
     if set(owner) != set(OWNER_KEYS):
       raise ConfigError("pi-supervisor-owner")
     validate("process-identity", owner["supervisor_process_identity"])
@@ -66,26 +65,32 @@ class ExecutionStore:
     self.now = now or (lambda: datetime.now(timezone.utc))
     self.lease_fd = lease_fd
     self.mutex = threading.RLock()
+    self.concurrent = concurrent
+    self._mutation_depth = 0
 
   @contextmanager
   def _guard(self, tree):
-    with self.mutex:
-      if self.lease_fd is None:
-        with instance_lock(tree) as fd:
-          yield fd
+    with self.mutex, ExitStack() as stack:
+      if self._mutation_depth:
+        yield
         return
-      info = os.fstat(self.lease_fd)
-      with tree.parent("instance.lock") as (parent, name):
-        expected = os.stat(name, dir_fd=parent, follow_symlinks=False)
-      if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != 0o600
-          or info.st_nlink != 1 or (info.st_dev, info.st_ino) != (expected.st_dev, expected.st_ino)):
-        raise Conflict("监督者继承的实例租约身份不匹配")
+      if self.lease_fd is None:
+        stack.enter_context(instance_lock(tree))
+      else:
+        info = os.fstat(self.lease_fd)
+        with tree.parent("instance.lock") as (parent, name):
+          expected = os.stat(name, dir_fd=parent, follow_symlinks=False)
+        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != 0o600
+            or info.st_nlink != 1 or (info.st_dev, info.st_ino) != (expected.st_dev, expected.st_ino)):
+          raise Conflict("监督者继承的实例租约身份不匹配")
+      # 准入租约保护整个运行期；短事务另用跨进程写锁，绝不把共享准入升级为排他。
+      mutations = stack.enter_context(Tree(self.root / "activity", create=True))
+      stack.enter_context(instance_lock(mutations, timeout=5))
+      self._mutation_depth += 1
       try:
-        fcntl.flock(self.lease_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-      except OSError:
-        raise Conflict("监督者没有实例排他租约") from None
-      # 此句柄由监督者持有至所有子工作结束，单个请求不解锁。
-      yield self.lease_fd
+        yield self.lease_fd
+      finally:
+        self._mutation_depth -= 1
 
   def _path(self, lease_id):
     return "activity/leases/" + safe_id(lease_id) + ".json"
@@ -123,16 +128,41 @@ class ExecutionStore:
     return value
 
   def records(self):
-    # 同一监督者的原子发布会短暂创建暂存文件；读取也串行，不能把在途写入误判为损坏。
-    with self.mutex:
+    # 跨监督者也持快照读锁；在途暂存文件与崩溃遗留的未知文件仍须区分。
+    with self.mutex, ExitStack() as stack:
       directory = self.root / "activity/leases"
       if not directory.exists() and not directory.is_symlink():
         return []
+      if not self._mutation_depth:
+        mutations = stack.enter_context(Tree(self.root / "activity"))
+        stack.enter_context(instance_lock(mutations, shared=True))
       with Tree(directory) as tree:
         names = sorted(os.listdir(tree.fd))
       if any(not name.endswith(".json") for name in names):
         raise Conflict("Pi执行记录目录包含未知状态")
       return [self.read(name[:-5]) for name in names]
+
+  def owns(self, lease):
+    return all(lease[key] == self.owner[key] for key in OWNER_KEYS)
+
+  def owned_records(self):
+    return [lease for lease in self.records() if self.owns(lease)]
+
+  def _concurrent_owner(self, lease):
+    if not self.concurrent or self.processes.observe(lease["supervisor_process_identity"]) != "alive":
+      return False
+    with Tree(self.root) as tree:
+      raw = tree.read("activity/supervisors/" + safe_id(lease["supervisor_activation_id"]) + ".json")
+    try:
+      owner = {key: lease[key] for key in OWNER_KEYS}
+      return raw is not None and raw[1] == 0o600 and json.loads(raw[0]) == {"version": 2, "owner": owner}
+    except (ValueError, TypeError):
+      return False
+
+  def assert_admissible(self):
+    with Tree(self.root, create=True) as tree, self._guard(tree):
+      if any(protected(lease) and not self.owns(lease) and not self._concurrent_owner(lease) for lease in self.records()):
+        raise Conflict("实例有旧格式、已失联或未知执行；请先检查并显式恢复")
 
   def assert_mutable(self):
     if any(protected(lease) for lease in self.records()):
@@ -145,10 +175,11 @@ class ExecutionStore:
   def _register_owner(self, tree):
     path = "activity/supervisors/" + safe_id(self.owner["supervisor_activation_id"]) + ".json"
     raw = tree.read(path)
-    if raw is not None and raw[0] != json_bytes(self.owner):
+    value = {"version": 2, "owner": self.owner} if self.concurrent else self.owner
+    if raw is not None and raw[0] != json_bytes(value):
       raise Conflict("监督者激活身份已被其他控制者使用")
     if raw is None:
-      tree.write_state(path, json_bytes(self.owner))
+      tree.write_state(path, json_bytes(value))
 
   def _authority(self, lease, owner):
     if owner != self.owner or any(lease[key] != self.owner[key] for key in OWNER_KEYS):
@@ -190,12 +221,14 @@ class ExecutionStore:
       self._register_owner(tree)
       old_records = self.records()
       for old in old_records:
+        if self.concurrent and not self.owns(old):
+          continue
         if old["execution_id"] == execution_id:
           keys = (*OWNER_KEYS, "kind", "task_id", "attempt_id", "parent_execution_id", "lock_identity", "slice_identity", "policy_digest", "candidate_digest", "planned_workspaces")
           if any(old[key] != lease[key] for key in keys):
             raise Conflict("同一执行ID不能被不同描述或控制者复用")
           return old
-      if any(protected(old) and old["supervisor_activation_id"] != self.owner["supervisor_activation_id"] for old in old_records):
+      if any(protected(old) and not self.owns(old) and not self._concurrent_owner(old) for old in old_records):
         raise Conflict("旧执行尚未回收，不能创建新激活的执行")
       self._save(tree, lease)
       self.fault("intent", deepcopy(lease))
@@ -315,7 +348,8 @@ class ExecutionStore:
 
   def derived_terminated(self, lease):
     # 也覆盖分配落盘后、登记父引用前崩溃的子操作。
-    return (not any(protected(child) and child["parent_execution_id"] == lease["execution_id"] for child in self.records())
+    return (not any(protected(child) and child["parent_execution_id"] == lease["execution_id"]
+        and all(child[key] == lease[key] for key in OWNER_KEYS) for child in self.records())
       and all(self.external_status(lease, key) == "terminated" for key in lease["active_external_work_ids"] if key.startswith("execution-lease:")))
 
   def _terminated(self, lease):
@@ -433,6 +467,10 @@ class ExecutionStore:
           raw = tree.read("activity/supervisors/" + safe_id(grant["new_supervisor_activation_id"]) + ".json")
           try:
             previous = json.loads(raw[0]) if raw else {}
+            if set(previous) == {"version", "owner"} and previous["version"] == 2:
+              previous = previous["owner"]
+            if raw is None or raw[1] != 0o600 or set(previous) != set(OWNER_KEYS):
+              raise ValueError()
             stopped = self.processes.observe(previous["supervisor_process_identity"]) == "dead"
           except (ValueError, TypeError, KeyError):
             stopped = False

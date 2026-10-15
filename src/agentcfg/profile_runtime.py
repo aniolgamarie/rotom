@@ -17,6 +17,30 @@ PROFILE_BUNDLES = ["@deepseek-ai/dsh-base", "rotom-dsh-review-context", "dsh-aut
   "@deepseek-harness-tui/dsh-tui"]
 
 
+def verify(workspace, runtime):
+  """共享启动不修复资源；所有权不完整、漂移或旧布局均要求显式 apply。"""
+  profile = workspace.instance / "dsh-home/profiles/agentcfg"
+  projections = {name: str(runtime / "node_modules" / Path(name)) for name in PROFILE_PROJECTIONS}
+  expected = {"binding": workspace.binding, "modules": "isolated", "projections": projections}
+  manifest = {"name": "agentcfg-managed-profile", "version": "1.0.0", "private": True,
+    "dsh": {"profile": {"bundles": PROFILE_BUNDLES}}}
+  try:
+    with Tree(profile) as tree:
+      owner, package = tree.read(".agentcfg-package-owner.json"), tree.read("package.json")
+      if (owner is None or owner[1] != 0o600 or json.loads(owner[0]) != expected
+          or package is None or package[0] != json_bytes(manifest) or package[1] != 0o600):
+        raise ValueError()
+      for name, target in projections.items():
+        with tree.parent("node_modules/" + name) as (fd, leaf):
+          info = os.stat(leaf, dir_fd=fd, follow_symlinks=False)
+          if (not stat.S_ISLNK(info.st_mode) or info.st_uid != os.geteuid()
+              or os.readlink(leaf, dir_fd=fd) != target):
+            raise ValueError()
+  except (OSError, ValueError, TypeError):
+    raise Conflict("DSH启动资源未准备完成或发生漂移；请先 plan/apply，不会在 run 中修复") from None
+  return profile
+
+
 def project_runtime_modules(profile, runtime, record, expected):
   """只投影 profile 直接加载的包；DSH 的 fallback 仍写入 profile 自己的目录。"""
   previous = record.get("projections", {})
@@ -82,9 +106,24 @@ def prepare(workspace, runtime):
         raise Conflict("原生 profile 运行包链接已被外部修改")
       if isolated and (owner is None or "isolated" not in (record.get("modules"), record.get("pending_modules"))):
         raise Conflict("原生 profile node_modules 目录没有隔离所有权记录")
+      observed = {}
+      if isolated:
+        # 恢复也可能再次中断：先验证并保存各链接的实际前值，不能抹掉上一 pending。
+        for module, target in projections.items():
+          try:
+            with tree.parent("node_modules/" + module) as (parent, leaf):
+              info = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+              if not stat.S_ISLNK(info.st_mode) or info.st_uid != os.geteuid():
+                raise Conflict("原生 profile 必需模块不是受管链接")
+              value = os.readlink(leaf, dir_fd=parent)
+          except FileNotFoundError:
+            continue
+          if value not in {record.get("projections", {}).get(module), record.get("pending_projections", {}).get(module), target}:
+            raise Conflict("原生 profile 必需模块链接已被外部修改")
+          observed[module] = value
       # 先记录允许的前后值；中断后只能恢复明确归本次准备所有的目录。
       pending = {"binding": workspace.binding, "modules": record.get("modules"), "pending_modules": "isolated",
-        "projections": record.get("projections", {}), "pending_projections": projections}
+        "projections": observed, "pending_projections": projections}
       if old is not None:
         pending.update({"runtime": old, "pending_runtime": old})
       tree.write_state(".agentcfg-package-owner.json", json_bytes(pending))

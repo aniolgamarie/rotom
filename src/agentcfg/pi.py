@@ -451,6 +451,28 @@ class PiAdapter(Adapter):
     from .pi_lifecycle import guard
     return guard(workspace)
 
+  def run_lifecycle_guard(self, workspace):
+    from .pi_lifecycle import guard
+    # 项目发现会按 cwd 重建实例级角色投影；原生资源尚未按 run 隔离，继续独占。
+    discovery = workspace.resolved.data["profile"].get("agent_options", {}).get("discovery", {})
+    shared = not discovery.get("project_resources", False)
+    return guard(workspace, shared=shared, allow_active=shared, create=False)
+
+  shared_run_lease = True
+
+  def runtime_binding(self, data, instance):
+    discovery = data["profile"].get("agent_options", {}).get("discovery", {})
+    return {"supervisor_protocol": 2, "project_resources": discovery.get("project_resources", False)}
+
+  def validate_runtime_binding(self, workspace, saved):
+    expected = self.runtime_binding(workspace.resolved.data, workspace.instance)
+    # 锁模式依据当前来源选择；未部署的安全策略变化必须在启动宿主之前拒绝。
+    if (not isinstance(saved, dict) or set(saved) != set(expected)
+        or type(saved["supervisor_protocol"]) is not int or saved["supervisor_protocol"] != 2
+        or type(saved["project_resources"]) is not bool or saved != expected):
+      from .storage import Conflict
+      raise Conflict("Pi运行契约或项目发现策略尚未迁移；请保留旧部署并用匹配的锁 sync/apply")
+
   def launch_executor(self):
     from .pi_host import execute
     return execute

@@ -18,11 +18,16 @@ import { checkpointClient } from "./checkpoints.ts";
 import { inspectGitStatus } from "./git-status.ts";
 import { requireOrdinaryHelper } from "./capability-policy.ts";
 
-function failure(code, exitCode = 2) {
-  const error = new Error(code);
-  error.exitCode = exitCode;
-  throw error;
+class LaunchError extends Error {
+  constructor(code, exitCode) { super(code); this.code = code; this.exitCode = exitCode; }
 }
+
+function failure(code, exitCode = 2) {
+  throw new LaunchError(code, exitCode);
+}
+
+// 仅公开本模块产生的固定原因；第三方异常正文可能含路径或凭据，不回显。
+export const launchFailureCode = error => error instanceof LaunchError ? error.code : "pi-launch-failed";
 
 export function privateBytes(path) {
   const parent = lstatSync(dirname(path));
@@ -229,7 +234,7 @@ async function main(argv) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try { process.exitCode = await main(process.argv.slice(2)); }
   catch (error) {
-    process.stderr.write("Pi managed launcher failed; check agentcfg configuration, bindings and runtime readiness.\n");
+    process.stderr.write("Pi managed launcher failed (" + launchFailureCode(error) + "); check agentcfg configuration, bindings and runtime readiness.\n");
     process.exitCode = Number.isInteger(error?.exitCode) ? error.exitCode : 5;
   }
 }

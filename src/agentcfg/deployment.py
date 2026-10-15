@@ -343,39 +343,51 @@ def write_changes(target, changes, *, reverse=False):
     target.replace(path, content, mode, expected=raw[2] if raw else None)
 
 
-def recover(target, state):
+def recover(target, state, *, prepare=None):
   raw = state.read("pending.json")
   if raw is None:
     return False
   try:
     journal = json.loads(raw[0])
+    if "prepare_launch" in journal and journal["prepare_launch"] is not True:
+      raise ValueError()
     validate_saved_state(journal["after_state"])
     for change in journal["changes"]:
       validate_change(change)
     committed = same(read_state(state), normalize_state(journal["after_state"]))
   except Exception:
     raise Conflict("恢复记录损坏，停止修改") from None
+  if journal.get("prepare_launch") and prepare is None:
+    raise Conflict("启动资源准备待恢复；请执行 apply/rollback")
   if not committed:
     write_changes(target, journal["changes"], reverse=True)
+  if journal.get("prepare_launch"):
+    # 配置事实决定恢复到哪套投影；成功准备后才允许移除恢复记录。
+    current = read_state(state)["current"]
+    if current is not None:
+      prepare(current["launch"])
   state.replace("pending.json", None, expected=raw[2])
   return True
 
 
-def transact(target, state, old_state, after_state, changes):
+def transact(target, state, old_state, after_state, changes, *, prepare=None):
   validate_saved_state(old_state)
   validate_saved_state(after_state)
   for change in changes:
     validate_change(change)
-  journal = {"after_state": after_state, "changes": changes}
+  journal = {"after_state": after_state, "changes": changes,
+    **({"prepare_launch": True} if prepare is not None else {})}
   state.write_state("pending.json", json_bytes(journal))
   try:
+    if prepare is not None and after_state["current"] is not None:
+      prepare(after_state["current"]["launch"])
     write_changes(target, changes)
     state.write_state("deployment.json", json_bytes(after_state))
   except BaseException:
     # 若恢复也冲突则保留 journal。进程硬中断由下次操作恢复。
-    recover(target, state)
+    recover(target, state, prepare=prepare)
     raise
-  recover(target, state)
+  recover(target, state, prepare=prepare)
 
 
 def guard_saved_state(state, state_guard):
@@ -393,11 +405,11 @@ def guard_saved_state(state, state_guard):
   state_guard({**saved, "pending": journal})
 
 
-def apply(instance: Path, state_root: Path, candidate, binding, launch, *, expected_plan=None, state_guard=None):
+def apply(instance: Path, state_root: Path, candidate, binding, launch, *, expected_plan=None, state_guard=None, prepare=None):
   with Tree(state_root, create=True) as state, instance_lock(state):
     guard_saved_state(state, state_guard)
     with Tree(instance, create=True) as target:
-      recover(target, state)
+      recover(target, state, prepare=prepare)
       old = read_state(state)
       change = plan(target, old, candidate, binding, launch)
       if expected_plan is not None and change != expected_plan:
@@ -405,19 +417,21 @@ def apply(instance: Path, state_root: Path, candidate, binding, launch, *, expec
       if change.conflicts:
         raise Conflict("部署有未接管目标或双方修改冲突；请先查看 plan")
       if same(old["current"], change.current) and not change.changes:
+        if prepare is not None:
+          transact(target, state, old, old, [], prepare=prepare)
         return change.public()
       # 只变更基线（如 C=D）也记录当前事实，但无实际变更不轮换 previous。
       binding_changed = old["current"] is None or old["current"]["launch"] != launch
       previous = {"current": old["current"], "changes": change.changes} if change.changes or binding_changed else old["previous"]
       owner = old.get("owner") or {"binding": binding, "shared_files": launch.get("shared_files", [])}
       after = {"version": 1, "current": change.current, "previous": previous, "owner": owner}
-      transact(target, state, old, after, change.changes)
+      transact(target, state, old, after, change.changes, prepare=prepare)
       return change.public()
 
 
-def rollback(instance: Path, state_root: Path, binding):
+def rollback(instance: Path, state_root: Path, binding, *, prepare=None):
   with Tree(state_root, create=True) as state, instance_lock(state), Tree(instance) as target:
-    recover(target, state)
+    recover(target, state, prepare=prepare)
     old = read_state(state)
     if not old["current"] or old["current"]["binding"] != binding:
       raise Conflict("不存在属于当前机器配置的部署")
@@ -437,5 +451,5 @@ def rollback(instance: Path, state_root: Path, binding):
       if not same(current, change["before"]) and not same(current, change["after"]):
         raise Conflict("受管内容已在部署后修改；恢复冲突")
     after = {"version": 1, "current": backup["current"], "previous": None, "owner": old.get("owner")}
-    transact(target, state, old, after, changes)
+    transact(target, state, old, after, changes, prepare=prepare)
     return {"restored": len(changes)}

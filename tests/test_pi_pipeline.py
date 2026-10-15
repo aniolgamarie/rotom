@@ -141,6 +141,44 @@ def test_agent_profile_mismatch_fails_before_installer(tmp_path, monkeypatch):
   assert cli.main(["--local", str(local), "run", "dsh"]) == 2
 
 
+def test_pi_shared_supervisor_contract_requires_explicit_migration(tmp_path, monkeypatch):
+  from agentcfg import runtime
+  from agentcfg.storage import Conflict
+  local, w = fixture_workspace(tmp_path, monkeypatch)
+  lock = w.backend.read_lock(w.repository)
+  launch = runtime.record(w, lock)
+  assert launch["adapter_binding"] == {"supervisor_protocol": 2, "project_resources": False}
+  w.adapter.validate_runtime_binding(w, launch["adapter_binding"])
+  for legacy in (None, {}, {"supervisor_protocol": 1}, {"supervisor_protocol": 2},
+      {"supervisor_protocol": 2, "project_resources": 0},
+      {"supervisor_protocol": 2.0, "project_resources": False},
+      {"supervisor_protocol": 2, "project_resources": False, "unknown": True}):
+    with pytest.raises(Conflict, match="sync/apply"):
+      w.adapter.validate_runtime_binding(w, legacy)
+
+
+@pytest.mark.parametrize("deployed,current", [(True, False), (False, True)])
+def test_pi_unapplied_discovery_change_refuses_saved_host_policy(deployed, current, tmp_path, monkeypatch, fake_subprocess):
+  import agentcfg.pi_dependencies as dependencies
+  local, w = fixture_workspace(tmp_path, monkeypatch)
+  monkeypatch.setattr(dependencies, "checked", fake_installer([]))
+  def configure(enabled):
+    text = local.read_text().split("\n[overrides.profiles.pi-fixture.agent_options.discovery]")[0]
+    local.write_text(text + "\n[overrides.profiles.pi-fixture.agent_options.discovery]\nproject_resources=" + str(enabled).lower() + "\n")
+  configure(deployed)
+  args = ["--local", str(local)]
+  assert cli.main([*args, "sync"]) == 0
+  assert cli.main([*args, "apply"]) == 0
+  configure(current)
+  assert cli.main([*args, "run", "pi"]) == 4
+  assert fake_subprocess.calls == []
+  # 显式部署新策略后，才可按新策略准入。
+  assert cli.main([*args, "apply"]) == 0
+  fake_subprocess.queue(returncode=0, stdout="v24.14.0")
+  fake_subprocess.queue(returncode=0)
+  assert cli.main([*args, "run", "pi"]) == 0
+
+
 def test_pi_missing_model_key_still_launches_and_damaged_runtime_fails(tmp_path, monkeypatch, fake_subprocess, capsys):
   import agentcfg.pi_dependencies as dependencies
   local, w = fixture_workspace(tmp_path, monkeypatch)

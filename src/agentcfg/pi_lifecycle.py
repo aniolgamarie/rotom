@@ -1,7 +1,6 @@
 """Pi 稳定实例准入：锁绑定实例目录，不能通过换 state_root 绕过运行保护。"""
 
 from contextlib import contextmanager
-import fcntl
 from pathlib import Path
 
 from .deployment import json_bytes
@@ -36,25 +35,9 @@ def assert_inactive(state_root):
 
 
 @contextmanager
-def guard(workspace, *, allow_active=False, create=True):
-  with Tree(workspace.instance, create=create) as tree:
-    if tree.fd is None:
-      raise Conflict("Pi实例不存在，不能建立恢复控制")
-    try:
-      fcntl.flock(tree.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except OSError:
-      raise Conflict("Pi实例目录仍被运行或其他操作保护") from None
-    try:
-      binding = {"schema_version": 1, "state_root": str(workspace.state_root),
-        "binding": getattr(workspace, "binding", {"profile": workspace.profile})}
-      if create:
-        tree.write_immutable(".agentcfg-instance.json", json_bytes(binding))
-      else:
-        raw = tree.read(".agentcfg-instance.json")
-        if raw is None or raw[1] != 0o600 or raw[0] != json_bytes(binding):
-          raise Conflict("保存的实例归属与恢复目标不匹配")
-      if not allow_active:
-        assert_inactive(workspace.state_root)
-      yield tree.fd
-    finally:
-      fcntl.flock(tree.fd, fcntl.LOCK_UN)
+def guard(workspace, *, allow_active=False, create=True, shared=False):
+  from .lifecycle import guard as physical_guard
+  with physical_guard(workspace, shared=shared, create=create) as fd:
+    if not allow_active:
+      assert_inactive(workspace.state_root)
+    yield fd

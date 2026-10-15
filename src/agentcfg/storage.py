@@ -23,6 +23,10 @@ class Conflict(StateError):
   exit_code = 4
 
 
+class LockBusy(Conflict):
+  """暂时的锁竞争，不能被当作损坏或宿主退出。"""
+
+
 def identity(info):
   return (info.st_dev, info.st_ino, info.st_mode, info.st_size,
           info.st_mtime_ns, info.st_ctime_ns)
@@ -231,8 +235,10 @@ class Tree:
 
 
 @contextmanager
-def instance_lock(state: Tree, *, shared=False):
+def instance_lock(state: Tree, *, shared=False, timeout=0):
   """运行可共享读租约；配置写入仍独占，不替换或删除锁文件。"""
+  if type(timeout) not in (int, float) or not 0 <= timeout <= 5:
+    raise ValueError("锁等待预算必须介于 0 与 5 秒")
   with state.parent("instance.lock") as (parent, name):
     fd = os.open(name, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=parent)
   try:
@@ -240,12 +246,18 @@ def instance_lock(state: Tree, *, shared=False):
     if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
         or info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != 0o600):
       raise Conflict("实例锁文件不安全")
-    try:
-      fcntl.flock(fd, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
-    except OSError as error:
-      if error.errno in (errno.EAGAIN, errno.EACCES):
-        raise Conflict("实例正在运行或有其他操作；退出后重试") from None
-      raise
+    import time
+    deadline = time.monotonic() + timeout
+    while True:
+      try:
+        fcntl.flock(fd, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+        break
+      except OSError as error:
+        if error.errno not in (errno.EAGAIN, errno.EACCES):
+          raise
+        if time.monotonic() >= deadline:
+          raise LockBusy("实例正在运行或有其他操作；退出后重试") from None
+        time.sleep(min(0.01, max(0, deadline - time.monotonic())))
     yield fd
   finally:
     os.close(fd)

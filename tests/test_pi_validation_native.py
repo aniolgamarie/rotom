@@ -177,24 +177,31 @@ def test_controller_exit_cannot_clear_unknown_inner_activity(tmp_path, monkeypat
 
 def test_timeout_cancel_uses_only_fixture_user_capability_and_preserves_unknown_leases(tmp_path, monkeypatch):
   state = tmp_path / "state"
-  rows = [
-    {"lease_id": "host", "kind": "host", "state": "running", "spawn_committed": True},
-    {"lease_id": "waiting", "kind": "worker", "state": "allocating", "spawn_committed": False},
-    {"lease_id": "unknown", "kind": "worker", "state": "unknown", "spawn_committed": True},
-  ]
-  with Tree(state, create=True) as tree:
-    tree.write_new("activity/control/control.json", json_bytes({"user_capability": "synthetic-user"}))
-    for row in rows: tree.write_new("activity/leases/" + row["lease_id"] + ".json", json_bytes(row))
-  monkeypatch.setattr(native, "protected", lambda row: True)
+  from test_pi_activity import make_store, identity
+  store, processes = make_store(tmp_path)
+  processes.current[201] = identity(201)
+  def allocate(kind, execution):
+    return store.allocate(kind=kind, execution_id=execution, task_id=None, attempt_id="attempt",
+      lock_identity="a" * 64, slice_identity="b" * 64, policy_digest="c" * 64,
+      candidate_digest=None, planned_workspaces=[])
+  host = allocate("host", "host")
+  store.start(host["lease_id"], store.owner, spawn=lambda _: identity(201))
+  waiting = allocate("worker", "waiting")
+  unknown = allocate("worker", "unknown")
+  unknown.update(state="unknown", spawn_committed=True)
+  with Tree(state) as tree:
+    tree.write_new("activity/control/control.json", json_bytes({"schema_version": 1, "owner": store.owner,
+      "socket_name": "control.sock", "socket_identity": {}, "user_capability": "synthetic-user"}))
+    tree.write_state("activity/leases/" + unknown["lease_id"] + ".json", json_bytes(unknown))
   calls = []
   def send(endpoint, capability, message):
     assert endpoint == state / "activity/control/control.json" and capability == "synthetic-user"
     calls.append(message)
-    return {"ok": message["args"]["lease_id"] != "unknown"}
+    return {"ok": message["args"]["lease_id"] != unknown["lease_id"]}
   assert native.cancel_fixture(state, send=send) is False
-  assert calls[-1]["args"]["lease_id"] == "host"
-  assert next(row for row in calls if row["args"]["lease_id"] == "waiting")["method"] == "abort_allocation"
-  assert (state / "activity/leases/unknown.json").exists()
+  assert calls[-1]["args"]["lease_id"] == host["lease_id"]
+  assert next(row for row in calls if row["args"]["lease_id"] == waiting["lease_id"])["method"] == "abort_allocation"
+  assert (state / "activity/leases" / (unknown["lease_id"] + ".json")).exists()
 
 
 def test_unresponsive_sandbox_is_stopped_only_through_its_owned_child_handle(tmp_path):
@@ -260,7 +267,7 @@ def test_parent_loss_host_termination_dispatches_by_platform(tmp_path):
     def send_signal(self, identity, number): calls.append(("pidfd_signal", identity["pid"], number))
   supervisor = ParentLossSupervisor({"state_root": str(tmp_path), "instance_root": str(tmp_path), "repository": str(tmp_path),
     "runtime_root": str(tmp_path), "instance_id": "i", "lock_identity": "l", "slice_identity": "s", "policy_digest": "p",
-    "cwd": str(tmp_path), "engine": "node", "argv": []}, lease_fd=tmp_path / "lease", readiness=tmp_path / "ready",
+    "cwd": str(tmp_path), "engine": "node", "argv": []}, lease_fd=None, readiness=tmp_path / "ready",
     nonce="n", model_started=lambda: False, kill_platform="darwin")
   supervisor.store = Store(); supervisor.processes = Processes()
   supervisor.terminate_parent_host("host-lease")
@@ -464,3 +471,30 @@ def test_standalone_cli_requires_every_control_operation_and_verified_resume(mis
       "fresh_resume_verified": True, "cancel_after_request_verified": True, "source_preserved": True, "probe_metadata_only": True,
       "activity_drained": True, "verified_results": 2}}
   assert native.verified_result(value, nonce="fixture", scenario=scenario, runtime=runtime) is (missing is None)
+
+
+def test_fixture_cancel_routes_each_full_owner_and_preserves_missing_peer(tmp_path):
+  from test_pi_activity import make_store
+  from test_pi_control_routing import write_endpoint
+  first, processes = make_store(tmp_path)
+  second, _ = make_store(tmp_path, processes=processes, activation="supervisor-two")
+  first.concurrent = second.concurrent = True
+  leases = []
+  for store in (first, second):
+    lease = store.allocate(kind="worker", execution_id="same", task_id=None, attempt_id="attempt",
+      lock_identity="a" * 64, slice_identity="b" * 64, policy_digest="c" * 64,
+      candidate_digest=None, planned_workspaces=[])
+    leases.append(lease)
+  endpoints = [write_endpoint(store.root, store.owner) for store in (first, second)]
+  calls = []
+  def send(endpoint, capability, message):
+    calls.append((endpoint, message["args"]["lease_id"]))
+    return {"ok": True}
+  assert native.cancel_fixture(first.root, send=send) is True
+  assert set(calls) == set(zip(endpoints, [row["lease_id"] for row in leases]))
+  endpoints[0].unlink()
+  calls.clear()
+  before = (first.root / "activity/leases" / (leases[0]["lease_id"] + ".json")).read_bytes()
+  assert native.cancel_fixture(first.root, send=send) is False
+  assert calls == [(endpoints[1], leases[1]["lease_id"])]
+  assert (first.root / "activity/leases" / (leases[0]["lease_id"] + ".json")).read_bytes() == before

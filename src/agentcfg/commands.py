@@ -165,7 +165,14 @@ def apply_candidate(w, lock, candidate, *, expected_plan=None):
   guard = getattr(w.adapter, "apply_lifecycle_guard", None) or getattr(w.adapter, "lifecycle_guard", None)
   with guard(w) if guard else nullcontext():
     return deployment.apply(w.instance, w.state_root, candidate, w.binding, runtime.record(w, lock),
-      expected_plan=expected_plan, state_guard=getattr(w.adapter, "validate_deployment_state", None))
+      expected_plan=expected_plan, state_guard=getattr(w.adapter, "validate_deployment_state", None),
+      prepare=lambda launch: prepare_launch(w, launch))
+
+
+def prepare_launch(workspace, launch):
+  """调用者持物理实例和部署状态排他锁；只准备已声明资源，不安装依赖。"""
+  root = workspace.backend.root(workspace, launch.get("runtime_identity", launch["lock_identity"]))
+  workspace.adapter.prepare_runtime(workspace, root)
 
 
 def sync_backend(w, lock, progress):
@@ -219,7 +226,8 @@ def cmd_rollback(args):
   w = workspace(args)
   guard = getattr(w.adapter, "lifecycle_guard", None)
   with guard(w) if guard else nullcontext():
-    return output(w, "rollback", deployment.rollback(w.instance, w.state_root, w.binding), args=args)
+    return output(w, "rollback", deployment.rollback(w.instance, w.state_root, w.binding,
+      prepare=lambda launch: prepare_launch(w, launch)), args=args)
 
 
 def cmd_lock(args):

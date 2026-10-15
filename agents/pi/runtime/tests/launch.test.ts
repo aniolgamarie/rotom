@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { constrainModels, launch, settingsStorage } from "../launch.ts";
+import { constrainModels, launch, launchFailureCode, settingsStorage } from "../launch.ts";
 
 function models() {
   const allowed = { provider: "fixture", id: "selected" }, other = { provider: "fixture", id: "unselected" };
@@ -15,6 +15,18 @@ function models() {
   }
   return { runtime, calls, allowed, other };
 }
+
+test("launch diagnostics expose only fixed local failure codes", async () => {
+  await assert.rejects(launch({ manifest: { bootstrap: true }, argv: ["--print", "private prompt"] }), error => {
+    assert.equal(launchFailureCode(error), "pi-main-model-unbound");
+    return true;
+  });
+  const canary = "synthetic-private-exception-body";
+  for (const error of [new Error(canary), { code: canary, exitCode: 4 }, null]) {
+    assert.equal(launchFailureCode(error), "pi-launch-failed");
+    assert.doesNotMatch(launchFailureCode(error), /synthetic-private/);
+  }
+});
 
 test("bootstrap cannot select defaults or send model/helper requests; login remains separate", async () => {
   const f = models();

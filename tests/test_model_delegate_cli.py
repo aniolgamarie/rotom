@@ -132,3 +132,85 @@ def test_start_uses_profile_timeout_and_reports_execution_failure_as_nonzero(tmp
   code = module.main(["start", "--instance", str(instance), "--backend", "pi", "--mode", "review", "--provider", "fixture", "--model", "selected", "--cwd", str(tmp_path), "--prompt-file", str(prompt)])
   assert code == 5 and calls[0]["timeout_seconds"] == 20
   assert json.loads(capsys.readouterr().out)["state"] == "failed"
+
+
+def routed_runs(tmp_path):
+  from copy import deepcopy
+  from test_pi_control_routing import write_endpoint
+  controller, host, args, _ = fixture(tmp_path)
+  instance = Path(host.config["instance_root"])
+  binding = {"machine": "fixture", "local": str(tmp_path / "local.toml"), "profile": "pi-fixture"}
+  host.store.owner["instance_id"] = digest({"instance": str(instance), "binding": binding})
+  host.store.concurrent = True
+  with Tree(instance, create=True) as tree:
+    tree.write_state(".agentcfg-instance.json", json_bytes({"schema_version": 1, "binding": binding, "state_root": str(host.root)}))
+  runs = []
+  for index in range(2):
+    if index:
+      host.store.owner.update(supervisor_activation_id="supervisor-two", manager_activation_id="manager-two", owner_nonce="nonce-two")
+    request = controller.prepare(Principal("delegate"), {**args, "idempotency_key": "routing-" + str(index)})
+    controller.start(Principal("delegate"), request["run_id"])
+    owner = deepcopy(host.store.owner)
+    endpoint = write_endpoint(host.root, owner)
+    runs.append((request, owner, endpoint))
+  return instance, host, controller, runs
+
+
+def test_cli_routes_each_run_to_its_saved_lease_owner(tmp_path, monkeypatch):
+  import agentcfg.model_delegate_cli as module
+  instance, host, _, runs = routed_runs(tmp_path)
+  calls = []
+  def send(endpoint, capability, message):
+    calls.append((endpoint, message))
+    return {"ok": True, "result": {"run_id": message["args"]["run_id"]}}
+  monkeypatch.setattr(module, "control_request", send)
+  with monkeypatch.context() as guarded:
+    guarded.setattr("os.listdir", lambda *_: pytest.fail("run routing must not scan endpoints"))
+    for request, owner, endpoint in runs:
+      assert module.endpoint_call(instance, "delegate_cancel", {"run_id": request["run_id"]}) == {"run_id": request["run_id"]}
+      assert calls[-1][0] == endpoint
+  assert calls[0][0] != calls[1][0]
+
+
+@pytest.mark.parametrize("damage", ["request-nonce", "instance-binding", "lease-digest", "endpoint-owner"])
+def test_cli_rejects_wrong_request_lease_or_endpoint_identity_before_rpc(tmp_path, monkeypatch, damage):
+  import agentcfg.model_delegate_cli as module
+  from test_pi_control_routing import endpoint_record
+  instance, host, controller, runs = routed_runs(tmp_path)
+  request, owner, endpoint = runs[0]
+  if damage == "request-nonce":
+    with Tree(controller.runs.root) as tree:
+      path = controller.runs._key(request["run_id"])
+      row = json.loads(tree.read(path)[0])
+      row["request"]["owner_nonce"] = "wrong-nonce"
+      tree.write_state(path, json_bytes(row))
+  elif damage == "instance-binding":
+    with Tree(instance) as tree:
+      row = json.loads(tree.read(".agentcfg-instance.json")[0])
+      row["binding"]["machine"] = "other-machine"
+      tree.write_state(".agentcfg-instance.json", json_bytes(row))
+  elif damage == "lease-digest":
+    with Tree(host.root) as tree:
+      path = "activity/leases/" + request["lease_id"] + ".json"
+      row = json.loads(tree.read(path)[0])
+      row["allocation_journal_digest"] = "f" * 64
+      tree.write_state(path, json_bytes(row))
+  else:
+    with Tree(endpoint.parent) as tree:
+      tree.write_state(endpoint.name, json_bytes(endpoint_record(runs[1][1])))
+  monkeypatch.setattr(module, "control_request", lambda *_: pytest.fail("invalid owner must never reach RPC"))
+  with pytest.raises(Conflict): module.endpoint_call(instance, "delegate_cancel", {"run_id": request["run_id"]})
+
+
+def test_missing_owner_endpoint_preserves_offline_unknown_status_and_never_borrows_peer(tmp_path, monkeypatch, capsys):
+  import agentcfg.model_delegate_cli as module
+  instance, host, _, runs = routed_runs(tmp_path)
+  request, owner, endpoint = runs[0]
+  endpoint.unlink()
+  before = (host.root / "activity/leases" / (request["lease_id"] + ".json")).read_bytes()
+  monkeypatch.setattr(module, "control_request", lambda *_: pytest.fail("missing endpoint must not use peer"))
+  assert module.main(["status", "--instance", str(instance), "--run-id", request["run_id"]]) == 4
+  assert json.loads(capsys.readouterr().out)["state"] == "start_unknown"
+  with pytest.raises(Conflict):
+    module.main(["cancel", "--instance", str(instance), "--run-id", request["run_id"]])
+  assert (host.root / "activity/leases" / (request["lease_id"] + ".json")).read_bytes() == before

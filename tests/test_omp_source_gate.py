@@ -111,13 +111,13 @@ def test_runtime_rechecks_dotenv_sources_before_spawn(
     _write(source, "SYNTHETIC_PRIVATE_BODY=must-not-load\n")
 
   if after_prepare:
-    original = workspace.adapter.prepare_runtime
+    original = workspace.adapter.validate_runtime
 
     def prepare(workspace, root):
       original(workspace, root)
       introduce()
 
-    monkeypatch.setattr(workspace.adapter, "prepare_runtime", prepare)
+    monkeypatch.setattr(workspace.adapter, "validate_runtime", prepare)
   else:
     introduce()
   with pytest.raises(Conflict, match="dotenv"):

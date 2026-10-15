@@ -253,7 +253,7 @@ class DelegateController:
 
   def tick(self):
     # detach 后仍由 supervisor 执行硬时限；不依赖观察客户端继续 poll。
-    for lease in self.host.store.records():
+    for lease in self.host.store.owned_records():
       if not protected(lease) or not lease["execution_id"].startswith("run-"):
         continue
       try:

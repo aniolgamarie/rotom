@@ -1,5 +1,6 @@
 """原生验收的新实例与合成 Git 项目；不采纳真实机器模型、账号或 HOME。"""
 import base64
+import hashlib
 import json
 import os
 import subprocess
@@ -9,10 +10,11 @@ from urllib.parse import urlsplit
 from .adapter import SecretRef
 from .deployment import json_bytes, put_field
 from .process import DependencyError
+from .model_defaults import read_model_defaults
 from .schema import ConfigError
 from .pi_scope import PROFILES
 from .storage import Conflict, Tree, ensure_private
-from .workspace import load_workspace
+from .workspace import load_public_catalog, load_workspace
 
 
 MODELS = {role: "agentcfg-native-" + role for role in ("main", "reader", "writer", "reviewer", "second-view")}
@@ -156,6 +158,7 @@ def prepare_configuration(root, repository, profile, provider_url, programs, *, 
     "overrides": {"providers": {"native-fixture": {"protocol": "openai-compatible", "base_url": provider_url, "auth_kind": "api-key", "credential_ref": "secret:native-key"}},
       "models": {"native-" + role: {"provider": "native-fixture", "remote_id": model, "input": ["text"], "context_window": 32768, "max_output_tokens": 4096} for role, model in MODELS.items()},
       "profiles": {profile: {"providers": ["native-fixture", *(["cursor"] if profile == "pi-cursor" else [])], "models": ["native-" + role for role in MODELS], "roles": roles, "agent_options": options}}},
+    "secrets_file": str(root / "fixture-secrets.toml"),
     "secrets": {"native-key": "synthetic-native-key"}}
   local = root / "local.toml"
   if proxy:
@@ -191,6 +194,20 @@ def prepare_configuration(root, repository, profile, provider_url, programs, *, 
     # cursor 配方的 cursor provider 由 pi-cursor 插件拥有；ReadSeek 接线只能追加，不能整表替换后剥离必需插件。
     selected["plugins"] = ["pi-subagents", "pi-permissions", "model-delegate", "pi-todo", "loop-guard", "colorful-footer",
       *(["pi-cursor"] if profile == "pi-cursor" else []), "pi-readseek"]
+  defaults_path = repository / "shared/defaults/models.toml"
+  defaults = read_model_defaults(defaults_path)["pi"] if defaults_path.exists() else {}
+  catalog = load_public_catalog(repository=repository)[0] if defaults_path.exists() else None
+  # 共享模型池仍按生产规则追加；仅在新夹具中把每个公开默认值映射为合成输入。
+  for identity in defaults.get("providers", []):
+    if identity != "cursor":  # Cursor 账号 provider 仍归原生插件所有，夹具不会选它发请求。
+      document["overrides"]["providers"][identity] = dict(document["overrides"]["providers"]["native-fixture"])
+  for identity in defaults.get("models", []):
+    if identity in document["overrides"]["models"]:
+      continue
+    # 映射十六进制数字为 g-p，使固定摘要完全符合原生合成模型的纯小写字母约束。
+    suffix = hashlib.sha256(identity.encode()).hexdigest().translate(str.maketrans("0123456789", "ghijklmnop"))
+    document["overrides"]["models"][identity] = {"provider": catalog.registry["models"][identity]["provider"], "remote_id": "agentcfg-native-default-" + suffix,
+      "input": ["text"], "context_window": 32768, "max_output_tokens": 4096}
   with Tree(root) as tree: tree.write_new(local.name, _toml(document))
   workspace = load_workspace(local, profile, repository=repository)
   return {"workspace": workspace, "environment": environment, "project": project, "model_ids": tuple(MODELS.values()), "fixture_root": root}

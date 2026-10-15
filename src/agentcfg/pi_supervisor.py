@@ -86,7 +86,7 @@ class SupervisorService:
     self.service_leases.add(lease_id)
 
   def execution_children(self):
-    return [row for row in self.store.records() if protected(row) and row["kind"] != "host"
+    return [row for row in self.store.owned_records() if protected(row) and row["kind"] != "host"
       and row["spawn_committed"] and row["lease_id"] not in self.service_leases]
 
   def issue_capability(self, role, lease_id=None):
@@ -113,6 +113,8 @@ class SupervisorService:
 
   def _scope(self, principal, lease_id, *, mutate=False):
     lease = self.store.read(lease_id)
+    if not self.store.owns(lease):
+      raise Conflict("此运行通道不能访问其他监督者的执行")
     if principal.role == "worker":
       if principal.lease_id != lease_id:
         raise Conflict("worker不能访问其他执行")
@@ -164,7 +166,7 @@ class SupervisorService:
       closed(args, ())
       if principal.role not in ("manager", "delegate", "user"):
         raise Conflict("此通道不能读取父会话活动")
-      active = [row for row in self.store.records() if row["kind"] != "host" and protected(row)]
+      active = [row for row in self.store.owned_records() if row["kind"] != "host" and protected(row)]
       return {"active_count": len(active), "unknown_count": sum(row["state"] in ("starting", "unknown") for row in active)}
     if method in ("workspace_identity", "workspace_snapshot"):
       closed(args, ("path",))
@@ -234,7 +236,7 @@ class SupervisorService:
         raise Conflict("不能启动旧控制者的分配")
       active = self.execution_children()
       if lease["lease_id"] not in self.service_leases and not lease["spawn_committed"] and len(active) >= self.active_children:
-        raise Conflict("实例执行容量已占用")
+        raise Conflict("本次运行的执行容量已占用")
       command = self.command_resolver(lease, args["program"], args["payload"])
       if not isinstance(command, SpawnCommand):
         raise ConfigError("pi-spawn-contract")
@@ -263,7 +265,7 @@ class SupervisorService:
       if principal.role != "worker" or lease["grant_generation"] != args["grant_generation"]:
         raise Conflict("此通道没有worker操作授权")
       if lease["execution_id"].startswith("delegate-command-"):
-        parents = [row for row in self.store.records() if row["execution_id"] == lease["parent_execution_id"]]
+        parents = [row for row in self.store.owned_records() if row["execution_id"] == lease["parent_execution_id"]]
         if len(parents) != 1 or parents[0]["state"] != "running" or self.store.processes.observe(parents[0]["process_identity"]) != "alive":
           raise Conflict("DELEGATE_GRANT_REVOKED")
       if self.worker_validate:
@@ -305,7 +307,7 @@ class SupervisorServer:
 
   def __init__(self, service):
     self.service = service
-    self.directory = service.store.root / "activity/control"
+    self.directory = service.store.root / "activity/control" / service.store.owner["supervisor_activation_id"]
     self.endpoint = self.directory / "control.json"
     self.socket = None
     self.socket_identity = None

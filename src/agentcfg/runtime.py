@@ -93,7 +93,9 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
     with (package_guard(workspace, identity) if package_guard else nullcontext(None)) as package_fd:
       if workspace.backend.status(workspace, identity) != "installed":
         raise DependencyError("当前部署的运行包缺失或损坏；请 sync 对应依赖锁修复")
-      workspace.adapter.prepare_runtime(workspace, root)
+      validate_runtime = getattr(workspace.adapter, "validate_runtime", None)
+      if validate_runtime is not None:
+        validate_runtime(workspace, root)
       operation_arguments = getattr(workspace.adapter, "operation_arguments", None)
       effective_arguments = operation_arguments(arguments) if operation_arguments is not None else arguments
       spec = decode(contract, effective_cwd, effective_arguments)

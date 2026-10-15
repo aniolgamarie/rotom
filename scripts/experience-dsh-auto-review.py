@@ -11,7 +11,7 @@ import sys
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY / "src"))
-from agentcfg import commands, dependencies, native, profile_runtime, runtime_packages
+from agentcfg import commands, dependencies, deployment, native, profile_runtime, runtime as launch_runtime, runtime_packages
 from agentcfg.adapter import Artifact, ManagedTarget, Ownership
 from agentcfg.process import launch_environment
 from agentcfg.render import RenderCandidate
@@ -150,7 +150,10 @@ def _prepare_locked(local, directory, runtime):
         "runtime": info, "sources": source, "candidate": candidate.generation, "owned_files": {}, "projections": {}}
       with Tree(directory) as tree:
         tree.write_state(OWNER, encoded(record))
-  commands.apply_candidate(workspace, lock, candidate)
+  # 此独立夹具由下方 phase/owned_files 日志准备专属 profile，不调用正式 profile 准备。
+  with workspace.adapter.lifecycle_guard(workspace):
+    deployment.apply(workspace.instance, workspace.state_root, candidate, workspace.binding,
+      launch_runtime.record(workspace, lock))
   with Tree(workspace.state_root) as state, instance_lock(state):
     files = wanted_files(workspace, runtime)
     if record["owned_files"]:

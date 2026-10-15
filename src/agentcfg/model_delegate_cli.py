@@ -12,11 +12,11 @@ import tempfile
 import time
 import uuid
 
-from .activity import digest
+from .activity import ExecutionStore, OWNER_KEYS, digest
 from .deployment import json_bytes, read_state
 from .model_delegate import DelegationRuns, control_envelope, selected_route, saved_termination, verify_receipt
 from .pi import key_variable, route_key_variable
-from .pi_control import read_frame, request as control_request
+from .pi_control import endpoint_for_owner, read_frame, request as control_request
 from .process import DependencyError
 from .schema import ConfigError
 from .storage import Conflict, Tree
@@ -49,12 +49,22 @@ def instance_binding(instance):
 
 def endpoint_call(instance, method, args):
   instance, binding = instance_binding(instance)
-  endpoint = Path(binding["state_root"]) / "activity/control/control.json"
-  with Tree(endpoint.parent) as tree:
-    raw = tree.read(endpoint.name)
-  if raw is None:
-    raise Conflict("DELEGATE_SUPERVISOR_UNAVAILABLE")
-  record = json.loads(raw[0])
+  runs = DelegationRuns(instance / "pi-home/model-delegate/runs")
+  saved = runs.read(args["run_id"])["request"]
+  expected_instance = digest({"instance": str(instance), "binding": binding["binding"]})
+  try:
+    with Tree(Path(binding["state_root"])) as tree:
+      raw = tree.read("activity/leases/" + saved["lease_id"] + ".json")
+    lease = json.loads(raw[0])
+    owner = {key: lease[key] for key in OWNER_KEYS}
+    lease = ExecutionStore(binding["state_root"], owner, None).read(saved["lease_id"])
+    if (saved["instance_id"] != expected_instance or lease["instance_id"] != expected_instance
+        or saved["owner_nonce"] != lease["owner_nonce"] or saved["lease_id"] != lease["lease_id"]):
+      raise ValueError()
+  except (ValueError, TypeError, KeyError, ConfigError):
+    raise Conflict("DELEGATE_EXECUTION_IDENTITY") from None
+  owner = {key: lease[key] for key in OWNER_KEYS}
+  endpoint, record = endpoint_for_owner(binding["state_root"], owner)
   reply = control_request(endpoint, record["user_capability"], {"schema_version": 1, "request_id": uuid.uuid4().hex, "method": method, "args": args})
   if reply.get("ok") is not True:
     raise DelegateFailure(reply.get("exit_code"), reply.get("error"))

@@ -235,11 +235,11 @@ def test_neutral_operation_rejects_its_actual_cwd_dotenv(contract_workspace, fak
   def introduce():
     (identity.home / ".env.development.local").write_text("SYNTHETIC=must-not-load\n")
   if after_prepare:
-    original = fixture.workspace.adapter.prepare_runtime
+    original = fixture.workspace.adapter.validate_runtime
     def prepare(workspace, root):
       original(workspace, root)
       introduce()
-    monkeypatch.setattr(fixture.workspace.adapter, "prepare_runtime", prepare)
+    monkeypatch.setattr(fixture.workspace.adapter, "validate_runtime", prepare)
   else:
     introduce()
   with pytest.raises(Conflict, match="dotenv"):
@@ -337,13 +337,13 @@ def test_declared_staging_mode_is_checked_before_spawn_and_after_prepare(
     source.write_text("SYNTHETIC_PRIVATE_BODY=must-not-read\n")
 
   if after_prepare:
-    original = fixture.workspace.adapter.prepare_runtime
+    original = fixture.workspace.adapter.validate_runtime
 
     def prepare(workspace, root):
       original(workspace, root)
       introduce()
 
-    monkeypatch.setattr(fixture.workspace.adapter, "prepare_runtime", prepare)
+    monkeypatch.setattr(fixture.workspace.adapter, "validate_runtime", prepare)
   else:
     introduce()
   with pytest.raises(Conflict, match="dotenv"):

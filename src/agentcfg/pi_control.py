@@ -16,6 +16,36 @@ from .storage import Conflict, Tree
 MAX_FRAME = 1024 * 1024
 
 
+def endpoint_for_owner(state_root, owner):
+  """只定位指定控制者；旧端点仅在完整归属一致时兼容，不扫描其他运行。"""
+  from .activity import OWNER_KEYS
+  from .paths import PathError, read_private_file, safe_id
+  from .pi_catalog import validate
+  from .schema import ConfigError
+  try:
+    if not isinstance(owner, dict) or set(owner) != set(OWNER_KEYS):
+      raise ValueError()
+    activation = safe_id(owner["supervisor_activation_id"])
+    validate("process-identity", owner["supervisor_process_identity"])
+    root = Path(state_root)
+    with Tree(root):
+      endpoint = root / "activity/control" / activation / "control.json"
+      try:
+        content = read_private_file(endpoint)
+      except FileNotFoundError:
+        endpoint = root / "activity/control/control.json"
+        content = read_private_file(endpoint)
+    record = json.loads(content)
+    if (set(record) != {"schema_version", "owner", "socket_name", "socket_identity", "user_capability"}
+        or record["schema_version"] != 1 or record["owner"] != owner
+        or record["socket_name"] != "control.sock" or not isinstance(record["user_capability"], str)
+        or not record["user_capability"]):
+      raise ValueError()
+    return endpoint, record
+  except (OSError, PathError, ConfigError, ValueError, TypeError, KeyError):
+    raise Conflict("监督端点缺失、不安全或控制者不匹配") from None
+
+
 def read_frame(stream):
   data = stream.readline(MAX_FRAME + 1)
   if not data or len(data) > MAX_FRAME or not data.endswith(b"\n"):

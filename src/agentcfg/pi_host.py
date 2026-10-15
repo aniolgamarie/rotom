@@ -24,7 +24,7 @@ from .pi_worker_files import WorkerFiles, source_scope
 from .pi_worker_protocol import scoped_models, validate_context, validate_descriptor
 from .pi_output import OutputCapture
 from .secrets import CredentialError
-from .storage import Conflict, Tree, ensure_private
+from .storage import Conflict, LockBusy, Tree, ensure_private
 from .workspace_leases import WorkspaceLeases
 
 
@@ -57,8 +57,9 @@ class HostSupervisor:
     activation = uuid.uuid4().hex
     owner = {"instance_id": config["instance_id"], "supervisor_activation_id": activation,
       "manager_activation_id": uuid.uuid4().hex, "owner_nonce": secrets.token_hex(32), "supervisor_process_identity": identity}
-    self.store = ExecutionStore(self.root, owner, self.processes, workspaces=WorkspaceLeases(identity["boot_id"]), lease_fd=lease_fd)
-    self.store.assert_mutable()
+    self.store = ExecutionStore(self.root, owner, self.processes, workspaces=WorkspaceLeases(identity["boot_id"]),
+      lease_fd=lease_fd, concurrent=True)
+    self.store.assert_admissible()
     self.service = SupervisorService(self.store, self.resolve_command, self.spawn, activate=self.activate,
       runtime_identity=self.runtime_root.name, slice_identity=config["slice_identity"],
       worker_operation=WorkerFiles(self.store, self.manifest, config["instance_root"], protected_roots=config.get("protected_roots", [])),
@@ -343,11 +344,14 @@ class HostSupervisor:
       self.activate(host)
       while True:
         self.server.poll()
-        self.poll()
-        with self.service.mutex:
-          if self.host_exit is not None and not any(protected(item) for item in self.store.records()):
-            self.service.closing = True
-            break
+        try:
+          self.poll()
+          with self.service.mutex:
+            if self.host_exit is not None and not any(protected(item) for item in self.store.owned_records()):
+              self.service.closing = True
+              break
+        except LockBusy:
+          continue  # 其他运行的短事务或停止证明尚未完成，保持监督而不误判退出。
       return self.host_exit if self.host_exit >= 0 else 128 - self.host_exit
     finally:
       # 停止只针对本监督者已登记的执行；未确认回收的记录始终保留。
@@ -377,12 +381,15 @@ class HostSupervisor:
         return reply.get("exit_code", 5)
       while True:
         self.server.poll()
-        self.poll()
-        with self.service.mutex:
-          if not any(protected(item) for item in self.store.records()):
-            self.delegates.refresh(run_id)
-            self.service.closing = True
-            break
+        try:
+          self.poll()
+          with self.service.mutex:
+            if not any(protected(item) for item in self.store.owned_records()):
+              self.delegates.refresh(run_id)
+              self.service.closing = True
+              break
+        except LockBusy:
+          continue
       return 0 if self.delegates.runs.status(run_id)["state"] == "completed" else 5
     finally:
       if ready_fd is not None:

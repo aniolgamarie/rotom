@@ -306,6 +306,20 @@ class DshAdapter(Adapter):
       ensure_private(workspace.instance / relative)
     prepare(workspace, root)
 
+  def lifecycle_guard(self, workspace):
+    from .lifecycle import guard
+    return guard(workspace)
+
+  def run_lifecycle_guard(self, workspace):
+    from .lifecycle import guard
+    return guard(workspace, shared=True, create=False)
+
+  shared_run_lease = True
+
+  def validate_runtime(self, workspace, root):
+    from .profile_runtime import verify
+    verify(workspace, root)
+
   def capture_projection(self, tree):
     from .deployment import parse_native
     projection = {}

@@ -10,11 +10,11 @@ import tempfile
 import subprocess
 import time
 
-from .activity import protected
+from .activity import ExecutionStore, OWNER_KEYS, protected
 from .deployment import json_bytes
 from .pi_cold_rebuild import copy_source
 from .pi_dependencies import PiBackend
-from .pi_control import request
+from .pi_control import endpoint_for_owner, request
 from .pi_lifecycle import assert_inactive
 from .pi_output import OutputCapture
 from .pi_validation_runtime import inspect_runtime
@@ -86,19 +86,31 @@ def program_bindings(runtime):
 
 def cancel_fixture(state, *, send=request):
   """只向本次临时实例的已认证控制通道请求停止，不操作外部 PID。"""
-  endpoint = state / "activity/control/control.json"
-  with Tree(endpoint.parent) as tree: raw = tree.read(endpoint.name)
-  if raw is None: return False
-  capability = json.loads(raw[0])["user_capability"]
   leases = state / "activity/leases"
   with Tree(leases) as tree:
-    records = [json.loads(tree.read(name)[0]) for name in sorted(os.listdir(tree.fd)) if name.endswith(".json")]
+    if tree.fd is None: return False
+    names = sorted(os.listdir(tree.fd))
+    records = []
+    for name in names:
+      if not name.endswith(".json"): raise Conflict("验收实例包含未知执行记录")
+      try:
+        lease = json.loads(tree.read(name)[0])
+        owner = {key: lease[key] for key in OWNER_KEYS}
+        records.append(ExecutionStore(state, owner, None).read(name[:-5]))
+      except (ValueError, TypeError, KeyError, ConfigError):
+        raise Conflict("验收实例执行记录无效") from None
   accepted = True
   # 先撤销子任务，再停止宿主；保留所有未知记录供恢复核验。
   for lease in sorted(records, key=lambda row: row["kind"] == "host"):
     if not protected(lease): continue
+    owner = {key: lease[key] for key in OWNER_KEYS}
+    try:
+      endpoint, record = endpoint_for_owner(state, owner)
+    except Conflict:
+      accepted = False
+      continue
     allocating = lease["state"] == "allocating" and not lease["spawn_committed"]
-    reply = send(endpoint, capability, {"schema_version": 1, "request_id": secrets.token_hex(16),
+    reply = send(endpoint, record["user_capability"], {"schema_version": 1, "request_id": secrets.token_hex(16),
       "method": "abort_allocation" if allocating else "cancel",
       "args": {"lease_id": lease["lease_id"], **({} if allocating else {"force": True})}})
     accepted &= reply.get("ok") is True

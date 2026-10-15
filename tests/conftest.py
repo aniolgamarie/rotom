@@ -237,6 +237,10 @@ def prepared_runtime():
       target.parent.mkdir(parents=True, exist_ok=True)
       target.write_bytes(lock.package if name == "package.json" else lock.installer_resolution if name == "pnpm-lock.yaml" else b"synthetic installed artifact\n")
     seal(root, lock.identity)
+    from contextlib import nullcontext
+    guard = getattr(workspace.adapter, "apply_lifecycle_guard", None) or getattr(workspace.adapter, "lifecycle_guard", None)
+    with guard(workspace) if guard else nullcontext():
+      workspace.adapter.prepare_runtime(workspace, root)
     return root
   return prepare
 

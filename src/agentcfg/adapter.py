@@ -201,6 +201,9 @@ class Adapter(ABC, Generic[Config, NativeProjection, CaptureProposal]):
   capture/doctor 仅接收预过滤的 allowlist 投影，不接收 OAuth 或完整原生文件。
   """
 
+  # 声明式适配器默认共享运行；未实现此契约的外部适配器须显式关闭。
+  shared_run_lease = True
+
   @property
   @abstractmethod
   def declaration(self) -> AdapterDeclaration:
@@ -262,6 +265,11 @@ class Adapter(ABC, Generic[Config, NativeProjection, CaptureProposal]):
     return None
 
   def prepare_runtime(self, workspace, root) -> None:
+    """仅在持有独占维护锁的 apply/rollback 阶段准备资源。"""
+    return None
+
+  def validate_runtime(self, workspace, root) -> None:
+    """普通启动只校验维护阶段准备的共享资源。"""
     return None
 
   @property
