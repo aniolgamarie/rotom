@@ -44,3 +44,9 @@ DSH auto-review remains enabled in the public recipe by explicit maintainer choi
 - Current guides use OMP `18.8.6`, describe the formal DSH recipe, and no longer claim DSH installs OpenSpec.
 
 See [testing](testing.md) for current automated results and [Roadmap](roadmap.md) for larger work. Do not mark an environment-dependent item passed merely because implementation or mocks exist.
+
+## Pi public API limits
+
+- Pi 0.84.4 native session import has no source-file preflight event. Managed `/import` is disabled; current-format resume and fork remain supported. Revisit when an upstream public hook can validate the source before copy/migration.
+- pi-cursor 1.4.29 has no public transport audit injection API. Cursor read-only `model_delegate` is rejected before credential access or spawn. Cursor main sessions remain separately available; model-delegate support requires an upstream public connector or equivalent auditable transport.
+- Trusted extensions execute JavaScript in the host process. Resource selection and grant checks do not isolate a malicious selected extension or other same-user process.

@@ -84,7 +84,7 @@ export async function runManagedWorker({ sdk, input, agentDir, modelRuntime, tra
   if (!model || model.provider !== descriptor.provider_id || model.id !== descriptor.model_id || model.api !== "openai-completions") reject("UNBOUND_MODEL", 2);
   if (descriptor.thinking !== "off" && model.reasoning !== true) reject("THINKING_LEVEL_UNSUPPORTED", 2);
   const bound = await transport.bind(modelRuntime, { descriptor, context, authorize });
-  if (!bound || typeof bound.close !== "function") reject("UNSUPPORTED_TRANSPORT", 5);
+  if (!bound || !bound.runtime || typeof bound.close !== "function") reject("UNSUPPORTED_TRANSPORT", 5);
   const active = new Set(), producer = randomUUID();
   let candidateDigest = descriptor.snapshot_digest, mutationSequence = 0;
   let sequence = 0, session, reportTail = Promise.resolve();
@@ -119,7 +119,7 @@ export async function runManagedWorker({ sdk, input, agentDir, modelRuntime, tra
   try {
     const settingsManager = sdk.SettingsManager.inMemory({ compaction: { enabled: false },
       retry: { enabled: false, maxRetries: 0, provider: { maxRetries: 0 } }, packages: [], extensions: [], skills: [], prompts: [], themes: [] });
-    const created = await sdk.createAgentSession({ cwd: descriptor.cwd, agentDir, modelRuntime, model,
+    const created = await sdk.createAgentSession({ cwd: descriptor.cwd, agentDir, modelRuntime: bound.runtime, model,
       thinkingLevel: descriptor.thinking, scopedModels: [{ model }], settingsManager,
       resourceLoader: workerLoader(sdk, context.role), sessionManager: sdk.SessionManager.inMemory(descriptor.cwd),
       noTools: "builtin", tools: [...descriptor.allowed_tools], customTools });
@@ -127,10 +127,7 @@ export async function runManagedWorker({ sdk, input, agentDir, modelRuntime, tra
     if (session.thinkingLevel !== descriptor.thinking) reject("THINKING_LEVEL_UNSUPPORTED", 2);
     if (created.modelFallbackMessage || canonical(session.getActiveToolNames().sort()) !== canonical([...descriptor.allowed_tools].sort())) reject("WORKER_SESSION_MISMATCH", 5);
     session.setAutoCompactionEnabled(false); session.setAutoRetryEnabled(false);
-    // 动态工具选择、角色切换和资源 reload 都不能扩大这里的 allowlist。
-    session.setActiveTools = names => {
-      if (canonical([...names].sort()) !== canonical([...descriptor.allowed_tools].sort())) reject("WORKER_TOOLS_MISMATCH", 5);
-    };
+    // 空 loader、禁用内置工具和仅含授权工具的 registry 保证动态选择无法扩大能力。
     signal?.addEventListener("abort", stop, { once: true });
     timer = setTimeout(() => { deadlineReached = true; stop(); }, Math.max(1, Math.min(2147483647, Date.parse(descriptor.deadline) - now())));
     await publish("started");

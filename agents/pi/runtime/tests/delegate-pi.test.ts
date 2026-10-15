@@ -6,7 +6,7 @@ function fixture(api = "openai-completions") {
   const calls = [], events = [], model = { provider: "fixture", id: "model", api, baseUrl: "https://fixture.invalid/v1" };
   const session = { isStreaming: false, messages: [{ role: "assistant", stopReason: "stop", usage: { input: 10, output: 5 } }],
     getActiveToolNames: () => ["tk_read"], setAutoRetryEnabled: value => calls.push(["retry", value]), setAutoCompactionEnabled() {},
-    async prompt() { calls.push(["prompt"]); await modelRuntime.streamSimple(model, {}); this.messages.push({ role: "assistant", stopReason: "stop", usage: { input: 10, output: 5 } }); }, getLastAssistantText: () => "fixture final", async abort() {}, dispose() {} };
+    async prompt() { calls.push(["prompt"]); await calls.find(([name]) => name === "session")[1].modelRuntime.streamSimple(model, {}); this.messages.push({ role: "assistant", stopReason: "stop", usage: { input: 10, output: 5 } }); }, getLastAssistantText: () => "fixture final", async abort() {}, dispose() {} };
   const invoke = async (_model, _context, options) => { const response = await options.fetch(model.baseUrl + (api === "openai-responses" ? "/responses" : api === "openai-codex-responses" ? "/codex/responses" : "/chat/completions"), { method: "POST", body: JSON.stringify({ model: model.id, stream: true }) }); await response.text(); };
   const modelRuntime = { getModel: () => model, stream: invoke, streamSimple: invoke };
   const sdk = { createExtensionRuntime: () => ({}), SettingsManager: { inMemory: value => value },
@@ -20,7 +20,9 @@ function fixture(api = "openai-completions") {
 }
 
 test("Pi delegate uses closed resources and readonly tools, with unknown server identity and cost", async () => {
-  const f = fixture(), result = await runPiDelegate(f.options);
+  const f = fixture(), original = f.options.modelRuntime.streamSimple, result = await runPiDelegate(f.options);
+  assert.equal(f.options.modelRuntime.streamSimple, original);
+  assert.equal(Object.hasOwn(f.session, "setActiveTools"), false);
   const session = f.calls.find(([name]) => name === "session")[1];
   assert.deepEqual(session.resourceLoader.getExtensions().extensions, []);
   assert.deepEqual(session.resourceLoader.getSkills().skills, []);
@@ -102,7 +104,7 @@ test("selected Pi OAuth access uses the explicit route, bounded decompression an
 
 test("a resumed session's old assistant answer cannot substitute for a new empty turn", async () => {
   const f = fixture();
-  f.session.prompt = async () => { await f.options.modelRuntime.streamSimple(f.options.modelRuntime.getModel(), {}); };
+  f.session.prompt = async () => { await f.calls.find(([name]) => name === "session")[1].modelRuntime.streamSimple(f.options.modelRuntime.getModel(), {}); };
   await assert.rejects(runPiDelegate(f.options), /DELEGATE_RESULT_EMPTY/);
   assert.equal(f.events.some(event => event.kind === "completed"), false);
 });

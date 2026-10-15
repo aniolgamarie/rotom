@@ -1,3 +1,4 @@
+import { modelFacade } from "./model-facade.ts";
 // 固定 openai-completions 的实际 fetch 边界；SDK 与 provider 两层重试均关闭。
 import { randomUUID } from "node:crypto";
 import { digest, reject } from "./managed-types.ts";
@@ -34,12 +35,14 @@ export class ManagedHttpTransport {
     if (this.bound) reject("TRANSPORT_ALREADY_BOUND", 4);
     if (requestMethods.some(name => typeof runtime[name] !== "function")) reject("UNSUPPORTED_TRANSPORT", 5);
     this.bound = true;
-    const originals = new Map();
-    const replace = (name, fn) => { originals.set(name, runtime[name]); runtime[name] = fn; };
+    let closed = false;
+    const overrides = {};
+    const replace = (name, fn) => { overrides[name] = fn; };
     for (const name of requestMethods) {
       if (typeof runtime[name] !== "function") reject("UNSUPPORTED_TRANSPORT", 5);
       const original = runtime[name].bind(runtime);
       replace(name, (model, context, options = {}) => {
+        if (closed) reject("TRANSPORT_CLOSED", 4);
         if (model.provider !== this.descriptor.provider_id || model.id !== this.descriptor.model_id || model.api !== this.api
             || new URL(model.baseUrl).href.replace(/\/$/, "") !== new URL(this.route.base_url).href.replace(/\/$/, "")) reject("MODEL_ROUTE_MISMATCH", 4);
         const turn = ++this.turns, turn_id = "turn-" + turn;
@@ -57,8 +60,9 @@ export class ManagedHttpTransport {
       });
     }
     for (const name of forbiddenMethods) if (typeof runtime[name] === "function") replace(name, () => reject("UNMETERED_HELPER_FORBIDDEN", 5));
-    return { finish: () => this.finish(), close: async () => {
-      for (const [name, original] of originals) runtime[name] = original;
+    const delegated = modelFacade(runtime, overrides);
+    return { runtime: delegated, finish: () => this.finish(), close: async () => {
+      closed = true;
       this.bound = false;
       this.fetchRoute.close?.();
       await this.finish();

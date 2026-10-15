@@ -25,17 +25,17 @@ Private files require mode 0600. Most arrays replace the complete selection, so 
 | `pi-default` | Node | Parent-session implementation, read-only scout/reviewer cooperation, Pi-backend delegation |
 | `pi-managed` | Node | Task Keeper candidate worktrees, checks, reviews, and budgets |
 | `pi-codex` | Node | Ordinary cooperation and official Codex CLI delegation through model-delegate |
-| `pi-cursor` | Bun | Separate Cursor-provider sessions and read-only Pi-backend delegation |
+| `pi-cursor` | Bun | Separate Cursor-provider sessions; Cursor model delegation unavailable |
 
 Ordinary recipes select Todo, loop protection, and a status bar. Todo is separate from Task Keeper tasks and budgets. `agent_options.todo` can explicitly set `locale`, `maxWidgetLines`, `collapseKey`, and guidance without scanning old Todo settings.
 
-The declared baseline is Pi 0.84.4, Node 24.14.0, npm 11.19.1, Bun 1.4.0, Codex 0.154.0, and pi-cursor 1.4.29. These declarations do not prove installation or platform support. Cursor/Bun and Task Keeper are mutually exclusive. The Cursor route currently requires explicit direct connectivity, has zero delegation retries, and rejects proxy configuration.
+The declared baseline is Pi 0.84.4, Node 24.14.0, npm 11.19.1, Bun 1.4.0, Codex 0.154.0, and pi-cursor 1.4.29. These declarations do not prove installation or platform support. Cursor/Bun and Task Keeper are mutually exclusive. The Cursor main-session route requires explicit direct connectivity and rejects proxy configuration. Cursor read-only model delegation is unavailable: pi-cursor 1.4.29 exposes no public transport audit injection API. The adapter rejects this branch before reading credentials or spawning a delegate; it does not replace Node HTTP/2 methods to manufacture an audit boundary. Other explicitly supported Pi model-delegate routes remain available.
 
 On Linux, all four recipes use the locked bwrap helper in a separate PID namespace. Host exit causes the kernel to terminate descendants; the supervisor verifies collection before releasing protection. The helper comes from the fixed Codex distribution with source/license metadata. Installing it does not enable Codex delegation. Host gating preserves original stdin, and file authorization remains governed by instance policy.
 
 ## Preparation and deployment sequence
 
-The current full lock has been rebuilt through the real resolver. Isolated Linux pi-default sync/apply, concurrent TUIs and sandboxed host-resource checks passed. Use the preparation sequence below for a reviewed deployment. Other profiles, Bun, platforms and real accounts require their own validation; see the [acceptance record](design/project-refactoring.md#implementation-and-acceptance-record).
+The current full lock has been rebuilt through the real resolver. Earlier Linux pi-default sync/apply, concurrent TUI and sandboxed host-resource results belong to their recorded candidates; matching results for this repair are recorded separately. Use the preparation sequence below for a reviewed deployment. Other profiles, Bun, platforms and real accounts require their own validation; see the [acceptance record](design/project-refactoring.md#implementation-and-acceptance-record).
 
 1. Prepare Python 3.11+, uv, and the exact Node/npm/Bun required by the recipe. The manager does not alter the system toolchain.
 2. Run `uv sync --locked` in `/path/to/rotom`. Use `./agentcfg` directly afterward.
@@ -52,6 +52,15 @@ The current full lock has been rebuilt through the real resolver. Isolated Linux
 ```
 
 Only sync downloads dependencies and performs approved preparation/build steps. npm lifecycle scripts are disabled by default. Official Codex native assets are checked for SHA256, entry points, and architecture. Failed installation preserves the prior runtime. Downloads accept standard lower/uppercase HTTP proxy variables without embedded credentials and retain CA validation; those download proxies are not injected into the model host. Model routes use explicit machine configuration. Validate, render, plan, and apply do not install missing dependencies.
+
+A fresh checkout does not contain the ignored large binary/model asset cache.
+Offline lock validation accepts an absent cache; sync downloads only the assets
+selected for the profile and current platform, verifies their locked digest, size
+and executable format, then publishes them inside the staged runtime. An existing
+unsafe or corrupted cache is an error and is never silently overwritten or treated
+as a cache miss. `scripts/fetch-pi-assets.py` remains an optional explicit cache
+preparation tool. A build using verified cached assets is a warm build, not a cold
+download test.
 
 ## Models and accounts
 
@@ -130,3 +139,11 @@ Plan reports dependency, role, policy, route, resource, and configuration change
 Rollback restores managed configuration and saved runtime references, preserving accounts, sessions, and task databases. Changing HOME cannot bypass active write leases on a shared worktree. See [migration and explicit recovery](pi-migration.md) for stop/recovery commands, 300-second plan validity, and unknown activity handling.
 
 Doctor diagnostics and release acceptance are distinct. `report-only` success means a report was generated; `check-release` requires all applicable evidence in its fixed scope to match and pass. See [diagnostics](pi-diagnostics.md) and [testing](testing.md). Neither historical reports nor a working old deployment substitutes for current native/cold evidence.
+
+## SDK integration boundaries
+
+The launcher uses the unmodified 0.84.4 SDK. Empty native package lists, explicit local resource paths, and the official `no*` discovery options control resource loading. `PI_OFFLINE=1` and `PI_SKIP_VERSION_CHECK=1` suppress the documented startup checks; these flags are not network isolation. A Rotom-owned `ResourceLoader` delegates public methods and validates dynamic resource additions. Stable request facades delegate public model/session/runtime methods without replacing SDK methods or prototypes. They are adapter code verified against this lock, not an upstream request-interceptor API. Exposed model routes are immutable snapshots for each runtime.
+
+Public pre-switch and pre-fork events reject incompatible headers and active managed work before session restoration. The managed TUI also checks activity before invoking session reload. Native `/import` is unavailable because the SDK event supplies the destination, not the source before copying; it cannot provide the same migration preflight. Existing current-format sessions can still be resumed and forked. Direct SDK calls by trusted JavaScript extensions are not a process or credential isolation boundary.
+
+Read-only delegates and managed workers use an empty resource loader, disabled built-in tools, and a registry containing only their grant's custom tools. Each tool reauthorizes its grant. Dynamic tool selection cannot activate an unregistered tool; the adapter does not overwrite an invented SDK tool setter. Request facades for these workers enforce their explicit transport and budgets and become unusable after close.

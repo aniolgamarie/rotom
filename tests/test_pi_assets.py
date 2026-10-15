@@ -10,6 +10,7 @@ import pytest
 from agentcfg import pi_assets
 from agentcfg.pi_dependencies import PiBackend
 from agentcfg.process import DependencyError
+from agentcfg.schema import ConfigError
 from agentcfg.storage import ensure_private
 from test_pi_dependencies import fixture_repository, digest, payload
 
@@ -95,6 +96,29 @@ def test_matching_platform_downloads_verified_entry_and_license_only(tmp_path, m
   assert (stage / "licenses/codex/0-LICENSE").read_text() == "synthetic license"
 
 
+@pytest.mark.parametrize("cache", ["absent", "valid", "corrupt", "symlink", "directory"])
+def test_optional_binary_cache_is_verified_or_downloaded_only_when_absent(tmp_path, monkeypatch, cache):
+  root, stage, source, calls = fixture(tmp_path, monkeypatch)
+  source["vendor_path"] = "vendor/optional.tgz"
+  cached = root / "locks/pi/vendor/optional.tgz"
+  cached.parent.mkdir(parents=True)
+  raw = archive_bytes([("codex", executable(), tarfile.REGTYPE)])
+  # 使用同一归档字节，避免 gzip 时间戳影响本测试的固定摘要。
+  source["archive_digest"] = hashlib.sha256(raw).hexdigest()
+  monkeypatch.setattr(pi_assets, "open_download", lambda url: calls.append(url) or io.BytesIO(raw))
+  if cache == "valid": cached.write_bytes(raw)
+  elif cache == "corrupt": cached.write_bytes(b"corrupt synthetic archive")
+  elif cache == "symlink": cached.symlink_to(tmp_path / "outside")
+  elif cache == "directory": cached.mkdir()
+  if cache in {"corrupt", "symlink", "directory"}:
+    with pytest.raises(DependencyError): install(root, stage, source)
+    assert calls == [] and not (stage / "bin/codex").exists()
+  else:
+    install(root, stage, source)
+    assert (stage / "bin/codex").read_bytes() == executable()
+    assert calls == ([source["url"]] if cache == "absent" else [])
+
+
 @pytest.mark.parametrize("kind", ["digest", "platform", "missing", "duplicate", "traversal", "symlink", "hardlink", "limit"])
 def test_invalid_asset_never_installs_executable(tmp_path, monkeypatch, kind):
   entries = [("codex", executable(), tarfile.REGTYPE)]
@@ -134,6 +158,27 @@ def test_remote_assets_do_not_require_download_for_offline_lock_validation(tmp_p
   manifest["identity"] = digest({k: v for k, v in manifest.items() if k != "identity"})
   (root / "locks/pi/manifest.json").write_bytes(payload(manifest))
   assert PiBackend().read_lock(root).identity == manifest["identity"]
+  assert calls == []
+
+
+def test_missing_optional_cache_does_not_block_offline_lock_validation(tmp_path, monkeypatch):
+  root, manifest = fixture_repository(tmp_path)
+  _, _, source, calls = fixture(tmp_path, monkeypatch)
+  source["vendor_path"] = "vendor/not-downloaded.tgz"
+  manifest["sources"]["codex"] = source
+  manifest["platforms"] = ["linux-x86_64"]
+  piece = manifest["profile_slices"]["pi-fixture"]
+  piece["source_ids"].append("codex")
+  piece["identity"] = digest({k: v for k, v in piece.items() if k != "identity"})
+  manifest["identity"] = digest({k: v for k, v in manifest.items() if k != "identity"})
+  (root / "locks/pi/manifest.json").write_bytes(payload(manifest))
+  assert PiBackend().read_lock(root).identity == manifest["identity"]
+  assert calls == []
+  cached = root / "locks/pi/vendor/not-downloaded.tgz"
+  cached.parent.mkdir()
+  cached.write_bytes(b"corrupt synthetic cache")
+  with pytest.raises(ConfigError, match="pi-lock-missing-or-stale"):
+    PiBackend().read_lock(root)
   assert calls == []
 
 

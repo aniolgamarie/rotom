@@ -42,6 +42,15 @@ directories; never supply a real native account or session directory.
 .venv/bin/python scripts/verify-pi.py --tier native --case host-resources --allow-host --runtime <sealed-pi-default-runtime> --output <new-private-report.json>
 ```
 
+The separate SDK boundary check uses a controlled interaction driver and a simulated
+supervisor with the real SDK. It sends no prompts and verifies resource drift,
+session preflight, the worker tool registry, and unchanged host methods. It does not
+replace the native TUI or OS sandbox checks:
+
+```sh
+node scripts/smoke-pi-public-api.mjs --allow-host <sealed-pi-default-runtime> <new-private-report.json>
+```
+
 The concurrency checks require two live native TUIs, independent native session
 or supervisor identities, maintenance refusal while either run is active, clean
 exit and terminal restoration. DSH also verifies explicit refusal of a third TUI

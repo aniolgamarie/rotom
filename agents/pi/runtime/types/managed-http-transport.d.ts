@@ -6,6 +6,6 @@ export class ManagedHttpTransport {
   readonly route_id: string;
   observed_model: { provider_id: string; model_id: string } | null;
   readonly budgetExhausted: boolean;
-  bind(runtime: unknown, options: unknown): Promise<{ finish(): Promise<void>; close(): Promise<void> }>;
+  bind(runtime: unknown, options: unknown): Promise<{ runtime: unknown; finish(): Promise<void>; close(): Promise<void> }>;
   finish(): Promise<void>;
 }

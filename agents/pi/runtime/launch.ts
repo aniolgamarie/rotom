@@ -1,4 +1,6 @@
-import { installSessionCompatibility } from "./session-compatibility.ts";
+import { modelFacade } from "./model-facade.ts";
+import { detectImageMimeType } from "./image-mime.ts";
+import { sessionCompatibility, SESSION_GUARD_PATH } from "./session-compatibility.ts";
 import { OrdinaryOperations } from "./ordinary-operations.ts";
 import { ReadseekController } from "./readseek-controller.ts";
 import { WebRuntime } from "./web-runtime.ts";
@@ -10,7 +12,7 @@ import { constants, closeSync, fstatSync, lstatSync, mkdirSync, openSync, readFi
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createHash, randomUUID } from "node:crypto";
-import { installPackagePolicy, loaderOptions, parseArguments, selectResources, restrictExtensions } from "./resource-loader.ts";
+import { assertResourceSelection, managedResourceLoader, loaderOptions, parseArguments, selectResources, restrictExtensions } from "./resource-loader.ts";
 import { SupervisorClient } from "./supervisor-client.ts";
 import { ManagedBackend } from "./managed-backend.ts";
 import { agentStateClient } from "./service-bindings.ts";
@@ -72,29 +74,38 @@ export function settingsStorage(path, { compaction = "native" } = {}) {
 }
 
 export function constrainModels(runtime, manifest, managedRequestScope) {
-  const get = runtime.getModel.bind(runtime);
+  const get = runtime.getModel.bind(runtime), bindings = new Map();
+  const binding = model => {
+    const key = JSON.stringify([model.provider, model.id]);
+    if (!bindings.has(key)) {
+      const original = get(model.provider, model.id);
+      if (original) bindings.set(key, Object.freeze({ ...original }));
+    }
+    return bindings.get(key);
+  };
   const permitted = model => {
     if (manifest.bootstrap || !model || !manifest.allowed_models.some(item => item.provider === model.provider && item.model === model.id)) return false;
-    const bound = get(model.provider, model.id);
+    const bound = binding(model);
     return bound && bound.api === model.api && bound.baseUrl === model.baseUrl;
   };
+  const overrides = {};
   for (const name of ["getModels", "getAvailableSnapshot"]) {
     const original = runtime[name].bind(runtime);
-    runtime[name] = (...args) => original(...args).filter(permitted);
+    overrides[name] = (...args) => original(...args).filter(permitted).map(binding);
   }
   const available = runtime.getAvailable.bind(runtime);
-  runtime.getAvailable = async (...args) => (await available(...args)).filter(permitted);
-  runtime.getModel = (...args) => { const model = get(...args); return permitted(model) ? model : undefined; };
-  for (const name of ["prepareRequest", "stream", "complete", "streamSimple", "completeSimple", "fetchDeferred", "cancelDeferred"]) {
+  overrides.getAvailable = async (...args) => (await available(...args)).filter(permitted).map(binding);
+  overrides.getModel = (...args) => { const model = get(...args); return permitted(model) ? binding(model) : undefined; };
+  for (const name of ["stream", "complete", "streamSimple", "completeSimple", "fetchDeferred", "cancelDeferred"]) {
     const original = runtime[name].bind(runtime);
-    runtime[name] = (model, ...args) => {
+    overrides[name] = (model, ...args) => {
       const scope = managedRequestScope?.getStore();
       if (scope) { scope.recordDenial?.("UNBUDGETED_PARENT_HELPER_DENIED"); failure("pi-managed-parent-helper-denied", 5); }
       if (!permitted(model)) failure(manifest.bootstrap ? "pi-main-model-unbound" : "pi-model-not-selected");
       return original(model, ...args);
     };
   }
-  return runtime;
+  return modelFacade(runtime, overrides);
 }
 
 export function compileRoles(sdk, manifest, selection, agentDir) {
@@ -122,7 +133,7 @@ export function compileRoles(sdk, manifest, selection, agentDir) {
 function assertLoaded(loader, selection) {
   const extensions = loader.getExtensions();
   if (extensions.errors.length) failure("pi-extension-load-failed", 5);
-  const expected = selection.resources.extensions.map(entry => entry.path).sort();
+  const expected = [...selection.resources.extensions.map(entry => entry.path), SESSION_GUARD_PATH].sort();
   const actual = extensions.extensions.map(entry => entry.resolvedPath).sort();
   if (JSON.stringify(actual) !== JSON.stringify(expected)) failure("pi-extension-load-mismatch", 5);
   for (const [kind, method] of [["skills", "getSkills"], ["prompts", "getPrompts"], ["themes", "getThemes"]]) {
@@ -152,8 +163,7 @@ export async function launch({ sdk, manifest, installed, instanceRoot, runtimeRo
       roleManifest: JSON.parse(privateFile(process.env.AGENTCFG_PI_ROLE_MANIFEST)) };
     managedContext.extensionApi = Object.freeze({ agentStateClient, checkpointClient, inspectGitStatus, assertSessionBoundary, requireOrdinaryHelper });
     managedContext.permissionAccess = new PermissionAccess(managedContext);
-    const mimeModule = await import(pathToFileURL(join(dirname(resolve(runtimeRoot, installed.entrypoint)), "utils/mime.js")).href);
-    managedContext.ordinaryOperations = new OrdinaryOperations(sdk, managedContext, { mime: mimeModule.detectSupportedImageMimeType });
+    managedContext.ordinaryOperations = new OrdinaryOperations(sdk, managedContext, { mime: detectImageMimeType });
     let readseekInstalled = false;
     if (manifest.plugins.includes("pi-readseek")) {
       try {
@@ -166,11 +176,16 @@ export async function launch({ sdk, manifest, installed, instanceRoot, runtimeRo
     managedContext.web = new WebRuntime(managedContext);
     if (manifest.options?.task_keeper?.enabled) managedContext.managedBackend = new ManagedBackend(managedContext);
     globalThis[Symbol.for("agentcfg.pi.runtime.v1")] = Object.freeze(managedContext);
-    installPackagePolicy(sdk, selection);
     const modelRuntime = constrainModels(await sdk.ModelRuntime.create({ authPath: join(agentDir, "auth.json"), modelsPath: join(agentDir, "models.json"), allowModelNetwork: false }), manifest, managedRequestScope);
     managedContext.models.current = modelRuntime;
     if (compactionOwner(manifest) !== "native") settingsManager.setCompactionEnabled(false);
-    const services = await sdk.createAgentSessionServices({ cwd: effectiveCwd, agentDir, settingsManager, modelRuntime, resourceLoaderOptions: loaderOptions(selection) });
+    await assertSessionBoundary(managedContext);
+    assertResourceSelection(selection);
+    const nativeServices = await sdk.createAgentSessionServices({ cwd: effectiveCwd, agentDir, settingsManager, modelRuntime,
+      resourceLoaderOptions: { ...loaderOptions(selection),
+        extensionFactories: [sessionCompatibility(sdk, join(agentDir, "sessions"), () => assertSessionBoundary(managedContext))] } });
+    const services = { ...nativeServices, resourceLoader: managedResourceLoader(nativeServices.resourceLoader, selection,
+      () => assertSessionBoundary(managedContext), loader => assertLoaded(loader, selection)) };
     if (services.diagnostics.some(item => item.type === "error")) failure("pi-services-not-ready", 5);
     assertLoaded(services.resourceLoader, selection);
     const main = manifest.model_bindings.main;
@@ -180,21 +195,22 @@ export async function launch({ sdk, manifest, installed, instanceRoot, runtimeRo
       thinkingLevel: args.thinking, scopedModels: services.modelRuntime.getModels().map(model => ({ model })),
       ...(manifest.bootstrap ? { noTools: "all" } : !manifest.plugins.includes("pi-permissions") ? { noTools: "builtin" } : {}) });
     if (args.thinking && result.session.thinkingLevel !== args.thinking) failure("pi-thinking-level-unsupported", 2);
-    const nativeReload = result.session.reload?.bind(result.session);
-    if (nativeReload) result.session.reload = async (...args) => {
-      await assertSessionBoundary(managedContext);
-      return nativeReload(...args);
-    };
-    // bootstrap 的 UI 仍可登录；模型请求和后台 helper 不得借原生默认模型绕过绑定。
-    if (manifest.bootstrap) result.session.prompt = async () => failure("pi-main-model-unbound");
     writePrivate(join(agentDir, "loaded-manifest.json"), JSON.stringify({ ...selection, loaded_manifest_digest: selection.digest,
       slice_identity: installed.slice_identity, tools: result.session.getActiveToolNames(), roles_verified: false,
       verification: "loaded-only" }, null, 2) + "\n");
-    return { ...result, services, diagnostics: services.diagnostics };
+    // 通过自有委托提供 UI 使用的公开 session；原始 SDK 对象保持原样。
+    const session = modelFacade(result.session, {
+      reload: async (...args) => { await assertSessionBoundary(managedContext); assertResourceSelection(selection); return result.session.reload(...args); },
+      ...(manifest.bootstrap ? { prompt: async () => failure("pi-main-model-unbound") } : {}),
+    });
+    return { ...result, session, services, diagnostics: services.diagnostics };
   };
-  installSessionCompatibility(sdk, join(agentDir, "sessions"));
   const sessionManager = sdk.SessionManager.create(cwd, join(agentDir, "sessions"));
-  const runtime = await sdk.createAgentSessionRuntime(create, { cwd, agentDir, sessionManager });
+  const nativeRuntime = await sdk.createAgentSessionRuntime(create, { cwd, agentDir, sessionManager });
+  const runtime = modelFacade(nativeRuntime, {
+    // 原生 import 的事件只给目标路径，无法校验复制前的源；受管入口明确拒绝。
+    importFromJsonl: async () => failure("pi-session-import-unsupported", 4),
+  });
   try {
     if (args.print) return { code: await sdk.runPrintMode(runtime, { mode: "text", messages: args.messages }) };
     const mode = new sdk.InteractiveMode(runtime, { initialMessages: args.messages });
@@ -212,6 +228,7 @@ async function main(argv) {
       || process.env.PI_CODING_AGENT_SESSION_DIR !== join(instanceRoot, "pi-home/sessions")) failure("pi-instance-environment", 4);
   const runtimeRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   process.env.PI_SKIP_VERSION_CHECK = "1";
+  process.env.PI_OFFLINE = "1";
   const installed = JSON.parse(privateFile(join(runtimeRoot, "runtime/profile.json")));
   const manifest = JSON.parse(privateFile(manifestPath));
   const supervisor = new SupervisorClient({ python: process.env.AGENTCFG_PYTHON, client: process.env.AGENTCFG_SUPERVISOR_CLIENT,

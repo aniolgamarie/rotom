@@ -1,6 +1,6 @@
 # Pi MCP configuration and boundaries
 
-MCP support is declared for the four Pi profiles. Source integration, isolated tests, and historical temporary installation are separate from native loading, OAuth, browser UI, and live-service acceptance. The current Pi 0.84.4 lock is pre-existing stale; see [testing](testing.md) and [known issues](known-issues.md).
+MCP support is declared for the four Pi profiles. Source integration, isolated tests, and historical temporary installation are separate from native loading, OAuth, browser UI, and live-service acceptance. The complete Pi lock has been rebuilt; consult [testing](testing.md) and [known issues](known-issues.md) for the current feature-specific evidence.
 
 ## Service selection
 

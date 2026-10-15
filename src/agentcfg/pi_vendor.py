@@ -326,6 +326,23 @@ def install_source_licenses(source, target, prefix, record):
       raise DependencyError("Pi依赖许可证文件缺失")
 
 
+def launcher_source_paths(repository, source_ids=None):
+  """冻结监督器输入与来源摘要共用清单；None 表示所有可选能力。"""
+  sources = []
+  for directory, pattern in (("src/agentcfg", "*.py"), ("schemas", "*.json"), ("agents/pi/schemas", "*.json")):
+    sources.extend(path for path in sorted((repository / directory).glob(pattern))
+      if path.name not in {"pi_delegate_mcp.py", "pi_delegate_commands.py"})
+  sources.extend(repository / "scripts" / name for name in ("pi-supervisor.py", "pi-control.py", "pi-exec.py", "pi-namespace-exec.py", "pi-project-check", "pi-delegate-codex.py", "model-delegate.py", "model-delegate-batch.py", "pi-file-operation.py", "pi-checkpoint.py", "pi-native-scenario.py", "pi-native-recovery.py"))
+  for identity, name in (("pi-readseek", "pi-readseek.py"), ("pi-web", "pi-web-cli.py")):
+    if source_ids is None or identity in source_ids:
+      sources.append(repository / "scripts" / name)
+  sources.extend((repository / "scripts/pi-supervisor-macos.c", repository / "agents/pi/runtime/sandbox-macos.sb"))
+  if source_ids is None or "model-delegate" in source_ids:
+    sources.extend(sorted((repository / "shared/skills/model-delegate/schemas").glob("*-v2.json")))
+    sources.extend(sorted((repository / "shared/skills/model-delegate/presets").glob("*.md")))
+  return sorted(set(sources))
+
+
 def install_launcher(repository, stage, piece, manifest):
   from .pi_dependencies import platform_id, digest
   with Tree(repository, private=False) as source, Tree(stage) as target:
@@ -345,21 +362,11 @@ def install_launcher(repository, stage, piece, manifest):
       # runtime 源码使用可直接执行的 ECMAScript 子集，无安装时编译器下载。
       content = re.sub(rb'("\./[a-z-]+)\.ts"', rb'\1.mjs"', raw[0])
       target.write_state("runtime/" + path.stem + ".mjs", content)
-    sources = []
-    for directory, pattern in (("src/agentcfg", "*.py"), ("schemas", "*.json"), ("agents/pi/schemas", "*.json")):
-      sources.extend(path for path in sorted((repository / directory).glob(pattern))
-        if path.name not in {"pi_delegate_mcp.py", "pi_delegate_commands.py"})
-    sources.extend(repository / "scripts" / name for name in ("pi-supervisor.py", "pi-control.py", "pi-exec.py", "pi-namespace-exec.py", "pi-project-check", "pi-delegate-codex.py", "model-delegate.py", "model-delegate-batch.py", "pi-file-operation.py", "pi-checkpoint.py", "pi-native-scenario.py", "pi-native-recovery.py"))
-    if "pi-readseek" in piece["source_ids"]: sources.append(repository / "scripts/pi-readseek.py")
-    if "pi-web" in piece["source_ids"]: sources.append(repository / "scripts/pi-web-cli.py")
-    sources.append(repository / "scripts/pi-supervisor-macos.c")
-    sources.append(repository / "agents/pi/runtime/sandbox-macos.sb")
+    sources = launcher_source_paths(repository, piece["source_ids"])
     if "model-delegate" in piece["source_ids"]:
-      sources.extend(sorted((repository / "shared/skills/model-delegate/schemas").glob("*-v2.json")))
       presets = list((repository / "shared/skills/model-delegate/presets").glob("*.md"))
       if len(presets) != 7:
         raise DependencyError("委托用途模板不完整")
-      sources.extend(sorted(presets))
     if not (repository / "src/agentcfg/pi_host.py").is_file():
       raise DependencyError("Pi监督源码尚未完整迁入")
     for path in sources:

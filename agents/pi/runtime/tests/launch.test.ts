@@ -10,7 +10,7 @@ function models() {
   const calls = [];
   const runtime = { getModels: () => [allowed, other], getAvailableSnapshot: () => [allowed, other],
     getAvailable: async () => [allowed, other], getModel: (_, id) => id === "selected" ? allowed : other };
-  for (const name of ["prepareRequest", "stream", "complete", "streamSimple", "completeSimple", "fetchDeferred", "cancelDeferred"]) {
+  for (const name of ["stream", "complete", "streamSimple", "completeSimple", "fetchDeferred", "cancelDeferred"]) {
     runtime[name] = model => { calls.push([name, model.id]); return "sent"; };
   }
   return { runtime, calls, allowed, other };
@@ -30,21 +30,22 @@ test("launch diagnostics expose only fixed local failure codes", async () => {
 
 test("bootstrap cannot select defaults or send model/helper requests; login remains separate", async () => {
   const f = models();
-  constrainModels(f.runtime, { bootstrap: true, allowed_models: [] });
-  assert.deepEqual(f.runtime.getModels(), []);
-  assert.deepEqual(await f.runtime.getAvailable(), []);
-  assert.equal(f.runtime.getModel("fixture", "selected"), undefined);
-  assert.throws(() => f.runtime.streamSimple(f.allowed), /pi-main-model-unbound/);
+  const runtime = constrainModels(f.runtime, { bootstrap: true, allowed_models: [] });
+  assert.deepEqual(runtime.getModels(), []);
+  assert.deepEqual(await runtime.getAvailable(), []);
+  assert.equal(runtime.getModel("fixture", "selected"), undefined);
+  assert.throws(() => runtime.streamSimple(f.allowed), /pi-main-model-unbound/);
   assert.equal(f.calls.length, 0);
   await assert.rejects(launch({ manifest: { bootstrap: true }, argv: ["--print", "task"] }), /pi-main-model-unbound/);
 });
 
 test("ordinary request route must remain in the explicit model set", () => {
   const f = models();
-  constrainModels(f.runtime, { bootstrap: false, allowed_models: [{ provider: "fixture", model: "selected" }] });
-  assert.deepEqual(f.runtime.getModels(), [f.allowed]);
-  assert.equal(f.runtime.streamSimple(f.allowed), "sent");
-  assert.throws(() => f.runtime.completeSimple(f.other), /pi-model-not-selected/);
+  const runtime = constrainModels(f.runtime, { bootstrap: false, allowed_models: [{ provider: "fixture", model: "selected" }] });
+  assert.deepEqual(runtime.getModels(), [f.allowed]);
+  assert.notEqual(runtime.getModels()[0], f.allowed);
+  assert.equal(runtime.streamSimple(f.allowed), "sent");
+  assert.throws(() => runtime.completeSimple(f.other), /pi-model-not-selected/);
   assert.deepEqual(f.calls, [["streamSimple", "selected"]]);
 });
 
@@ -87,17 +88,38 @@ test("project role frontmatter cannot replace configured identity, model or tool
 test("parent SDK helper requests cannot bypass the managed task scope using another transport", () => {
   const f = models();
   let denied = 0;
-  constrainModels(f.runtime, { bootstrap: false, allowed_models: [{ provider: "fixture", model: "selected" }] },
+  const runtime = constrainModels(f.runtime, { bootstrap: false, allowed_models: [{ provider: "fixture", model: "selected" }] },
     { getStore: () => ({ recordDenial: () => { denied++; } }) });
-  assert.throws(() => f.runtime.completeSimple(f.allowed), /pi-managed-parent-helper-denied/);
+  assert.throws(() => runtime.completeSimple(f.allowed), /pi-managed-parent-helper-denied/);
   assert.equal(f.calls.length, 0);
   assert.equal(denied, 1);
 });
 
 test("helper cannot keep a permitted model name while replacing its API or endpoint", () => {
   const f = models(); f.allowed.api = "openai-completions"; f.allowed.baseUrl = "https://fixture.invalid/v1";
-  constrainModels(f.runtime, { bootstrap: false, allowed_models: [{ provider: "fixture", model: "selected" }] });
-  assert.throws(() => f.runtime.completeSimple({ ...f.allowed, baseUrl: "https://unselected.invalid/v1" }), /pi-model-not-selected/);
-  assert.throws(() => f.runtime.completeSimple({ ...f.allowed, api: "different" }), /pi-model-not-selected/);
+  const runtime = constrainModels(f.runtime, { bootstrap: false, allowed_models: [{ provider: "fixture", model: "selected" }] });
+  assert.throws(() => runtime.completeSimple({ ...f.allowed, baseUrl: "https://unselected.invalid/v1" }), /pi-model-not-selected/);
+  assert.throws(() => runtime.completeSimple({ ...f.allowed, api: "different" }), /pi-model-not-selected/);
+  assert.equal(f.calls.length, 0);
+});
+
+ test("model facade preserves host methods and receiver while keeping one stable identity", () => {
+  const f = models(), original = f.runtime.streamSimple;
+  f.runtime.receiver = function () { return this; };
+  const runtime = constrainModels(f.runtime, { bootstrap: false, allowed_models: [{ provider: "fixture", model: "selected" }] });
+  assert.notEqual(runtime, f.runtime);
+  assert.equal(f.runtime.streamSimple, original);
+  assert.equal(runtime.receiver(), f.runtime);
+  assert.equal(runtime.receiver, runtime.receiver);
+  assert.throws(() => { runtime.streamSimple = original; }, /readonly/);
+});
+
+test("exposed model bindings are immutable snapshots, never a writable host route reference", () => {
+  const f = models(); f.allowed.api = "openai-completions"; f.allowed.baseUrl = "https://fixture.invalid/v1";
+  const runtime = constrainModels(f.runtime, { bootstrap: false, allowed_models: [{ provider: "fixture", model: "selected" }] });
+  const exposed = runtime.getModel("fixture", "selected");
+  assert.throws(() => { exposed.baseUrl = "https://unselected.invalid/v1"; }, TypeError);
+  f.allowed.baseUrl = "https://unselected.invalid/v1";
+  assert.throws(() => runtime.streamSimple(f.allowed), /pi-model-not-selected/);
   assert.equal(f.calls.length, 0);
 });

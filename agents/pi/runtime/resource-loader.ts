@@ -1,14 +1,12 @@
 // 只把预先选择并核验的路径交给 SDK；禁止解析器扫描、下载或扩充资源。
 import { createHash } from "node:crypto";
 import { lstatSync, readdirSync, readFileSync, realpathSync } from "node:fs";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { isAbsolute, join, parse, relative, resolve, sep } from "node:path";
 
 const groups = ["extensions", "skills", "prompts", "themes", "roles"];
 const approved = new WeakSet();
-const policies = new WeakMap();
 const hash = value => createHash("sha256").update(value).digest("hex");
 const fail = (code = "pi-resource-invalid") => { throw new Error(code); };
-const empty = () => ({ extensions: [], skills: [], prompts: [], themes: [] });
 
 function inside(root, path) {
   const rel = relative(root, path);
@@ -117,39 +115,38 @@ export function restrictExtensions(selection, ids) {
   return result;
 }
 
-export function installPackagePolicy(sdk, selection) {
+export function assertResourceSelection(selection) {
   if (!approved.has(selection)) fail();
-  const prototype = sdk.DefaultPackageManager?.prototype;
-  if (!prototype || typeof prototype.resolve !== "function" || typeof prototype.resolveExtensionSources !== "function") fail("pi-sdk-incompatible");
-  let policy = policies.get(prototype);
-  if (!policy) {
-    policy = { paths: new Set() };
-    policies.set(prototype, policy);
-    prototype.resolve = async () => empty();
-    prototype.checkForAvailableUpdates = async () => [];
-    prototype.resolveExtensionSources = async sources => {
-      if (!Array.isArray(sources) || sources.some(path => !policy.paths.has(path))) fail();
-      return { ...empty(), extensions: sources.map(path => ({ path, enabled: true,
-        metadata: { source: "agentcfg", scope: "user", origin: "top-level" } })) };
-    };
-    // 固定 SDK 的所有安装/更新入口，UI 内部新建 package manager 也遵守同一规则。
-    const methods = Object.getOwnPropertyNames(prototype).filter(name => /^(install|update|remove)/.test(name));
-    for (const name of methods) prototype[name] = async () => { throw new Error("Use agentcfg lock/sync to manage packages"); };
+  for (const entry of [selection.rules, selection.append, ...Object.values(selection.resources).flat()]) {
+    const root = parse(entry.path).root;
+    const current = snapshot(root, relative(root, entry.path).split(sep).join("/"));
+    if (current.path !== entry.path || current.digest !== entry.digest) fail("pi-resource-changed");
   }
-  policy.paths = new Set(selection.resources.extensions.map(entry => entry.path));
-  policy.resources = selection.resources;
-  const loader = sdk.DefaultResourceLoader?.prototype;
-  if (loader && !policies.has(loader)) {
-    policies.set(loader, policy);
-    const extend = loader.extendResources;
-    loader.extendResources = function (paths) {
-      for (const [key, entries] of Object.entries(paths)) {
-        const kind = { skillPaths: "skills", promptPaths: "prompts", themePaths: "themes" }[key];
-        if (!kind || !Array.isArray(entries) || entries.some(item => !policy.resources[kind].some(allowed => allowed.path === item.path))) fail();
-      }
-      return extend.call(this, paths);
-    };
+}
+
+// ResourceLoader 是公开可注入接口；包装自有对象，不改写 DefaultResourceLoader。
+export function managedResourceLoader(loader, selection, beforeReload, afterReload = () => {}) {
+  if (!approved.has(selection)) fail();
+  const result = {};
+  for (const name of ["getExtensions", "getSkills", "getPrompts", "getThemes", "getAgentsFiles", "getSystemPrompt",
+      "getSystemPromptSource", "getAppendSystemPrompt", "getAppendSystemPromptSources"]) {
+    result[name] = (...args) => loader[name](...args);
   }
+  result.extendResources = paths => {
+    for (const [key, entries] of Object.entries(paths)) {
+      const kind = { skillPaths: "skills", promptPaths: "prompts", themePaths: "themes" }[key];
+      if (!kind || !Array.isArray(entries) || entries.some(item => !selection.resources[kind].some(allowed => allowed.path === item.path))) fail();
+    }
+    return loader.extendResources(paths);
+  };
+  result.reload = async (...args) => {
+    await beforeReload();
+    assertResourceSelection(selection);
+    await loader.reload(...args);
+    assertResourceSelection(selection);
+    afterReload(result);
+  };
+  return Object.freeze(result);
 }
 
 export function loaderOptions(selection) {

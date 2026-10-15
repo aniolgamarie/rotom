@@ -194,7 +194,7 @@ def test_pi_delegate_cannot_read_a_machine_denied_subroot_through_project_allow(
       "grant_generation": request["grant_generation"], "operation_id": "read", "action": {"tool_id": "tk_read", "operation": "read", "path": "private/key", "offset": 0, "limit": 100}})
 
 
-def test_cursor_delegate_uses_only_selected_instance_access_and_bun_flags(tmp_path, monkeypatch):
+def test_cursor_delegate_rejects_before_credentials_without_public_transport_api(tmp_path, monkeypatch):
   from agentcfg.pi_delegate_spawn import resolve_delegate
   from datetime import datetime, timezone
   controller, host, args, _ = fixture(tmp_path)
@@ -215,15 +215,17 @@ def test_cursor_delegate_uses_only_selected_instance_access_and_bun_flags(tmp_pa
     tree.write_state("pi-home/cursor-cache/model-catalog.json", json_bytes({"version": 1, "savedAt": 1, "tokenHash": "must-not-copy-token-hash", "rawModels": [{"id": "fixture-cursor"}], "parameterizedModels": []}))
   monkeypatch.setenv("CURSOR_ACCESS_TOKEN", "unselected-global-token")
   request = controller.prepare(Principal("manager"), args)
-  command = resolve_delegate(host, host.store.read(request["lease_id"]), "delegate-pi", {"run_id": request["run_id"]})
-  assert command.argv[0] == str(executable) and "--no-install" in command.argv and "--no-env-file" in command.argv
-  assert command.environment["CURSOR_ACCESS_TOKEN"] == "synthetic-selected-cursor"
-  assert command.environment["PI_CURSOR_SYSTEM_CREDENTIALS"] == "deny"
-  worker_path = host.root / "activity/delegate-worker-inputs" / (request["lease_id"] + ".json")
-  assert "synthetic-selected-cursor" not in worker_path.read_text() and "must-not-copy-refresh" not in worker_path.read_text()
-  copied = Path(command.environment["PI_CURSOR_CACHE_DIR"]) / "model-catalog.json"
-  assert "tokenHash" not in copied.read_text()
-  assert command.environment["CURSOR_CONFIG_DIR"].startswith(str(host.root))
+  from agentcfg.process import DependencyError
+  # 不能读取实例 OAuth 或目录来弥补没有公开 transport 审计接口的问题。
+  native_read = Tree.read
+  def forbidden(tree, path, *args, **kwargs):
+    if path in ("pi-home/auth.json", "pi-home/models.json", "pi-home/cursor-cache/model-catalog.json"):
+      raise AssertionError("must reject before reading credentials")
+    return native_read(tree, path, *args, **kwargs)
+  lease = host.store.read(request["lease_id"])
+  monkeypatch.setattr(Tree, "read", forbidden)
+  with pytest.raises(DependencyError, match="public transport audit API"):
+    resolve_delegate(host, lease, "delegate-pi", {"run_id": request["run_id"]})
 
 
 def test_configuration_rejection_before_spawn_releases_only_unstarted_admission(tmp_path):

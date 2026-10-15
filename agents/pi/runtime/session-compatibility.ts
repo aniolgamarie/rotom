@@ -3,7 +3,6 @@ import { constants, closeSync, fstatSync, lstatSync, openSync, readSync } from "
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { reject } from "./managed-types.ts";
 
-const installed = new WeakMap();
 export function assertSessionCompatibility(path, root, version = 3) {
   if (typeof path !== "string" || !isAbsolute(path)) reject("SESSION_SCOPE_REQUIRED", 4);
   const target = resolve(path), base = resolve(root), tail = relative(base, target);
@@ -35,17 +34,25 @@ export function assertSessionCompatibility(path, root, version = 3) {
   } finally { closeSync(fd); }
 }
 
-export function installSessionCompatibility(sdk, root) {
-  const manager = sdk.SessionManager;
-  if (sdk.CURRENT_SESSION_VERSION !== 3 || typeof manager?.open !== "function" || typeof manager?.forkFrom !== "function"
-      || typeof manager.prototype?._setSessionFile !== "function") reject("SESSION_SDK_INCOMPATIBLE", 5);
-  let state = installed.get(manager);
-  if (state) { state.root = root; return; }
-  state = { root }; installed.set(manager, state);
-  for (const name of ["open", "forkFrom"]) {
-    const original = manager[name];
-    manager[name] = function (path, ...args) { assertSessionCompatibility(path, state.root); return original.call(this, path, ...args); };
-  }
-  const original = manager.prototype._setSessionFile;
-  manager.prototype._setSessionFile = function (path, ...args) { assertSessionCompatibility(path, state.root); return original.call(this, path, ...args); };
+// Runtime 在打开/迁移文件之前发出公开事件；失败必须返回 cancel，不能仅抛异常。
+export const SESSION_GUARD_PATH = "<inline:agentcfg-session-guard>";
+export function sessionCompatibility(sdk, root, beforeSwitch) {
+  if (sdk.CURRENT_SESSION_VERSION !== 3) reject("SESSION_SDK_INCOMPATIBLE", 5);
+  return { name: "agentcfg-session-guard", hidden: true, factory(api) {
+    const guard = async (event, context) => {
+      try {
+        await beforeSwitch();
+        const path = event.type === "session_before_switch" && event.reason === "resume"
+          ? event.targetSessionFile : event.type === "session_before_fork" ? context.sessionManager.getSessionFile() : null;
+        if (path) assertSessionCompatibility(path, root);
+        else if (event.type === "session_before_switch" && event.reason === "resume") reject("SESSION_SCOPE_REQUIRED", 4);
+        return {};
+      } catch {
+        try { context.ui.notify("Session change blocked; check managed activity and session compatibility.", "error"); } catch { /* 无 UI 时仍取消。 */ }
+        return { cancel: true };
+      }
+    };
+    api.on("session_before_switch", guard);
+    api.on("session_before_fork", guard);
+  } };
 }

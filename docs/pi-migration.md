@@ -1,6 +1,6 @@
 # Read-only Pi migration inventory
 
-agentcfg implements Pi inventory/proposal generation and configuration/dependency pipelines with four registered profiles. Source integration and historical installation evidence do not establish current final-candidate acceptance. Pi 0.84.4's lock is pre-existing stale; see [testing](testing.md) and [known issues](known-issues.md).
+agentcfg implements Pi inventory/proposal generation and configuration/dependency pipelines with four registered profiles. Source integration and historical installation evidence do not establish current final-candidate acceptance. The complete Pi lock has been rebuilt; see [testing](testing.md) and [known issues](known-issues.md) for candidate-specific acceptance and remaining limits.
 
 ## Generate a proposal
 

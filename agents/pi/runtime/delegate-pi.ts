@@ -1,10 +1,11 @@
+import { modelFacade } from "./model-facade.ts";
 // 单次只读 Pi 委托：封闭 loader、精确模型和显式 fetch，不创建管理者。
 import { observeDelegateResponse } from "./delegate-response.ts";
 import { workerLoader } from "./managed-worker.ts";
 import { canonical, reject, text } from "./managed-types.ts";
 import * as zlib from "node:zlib";
 
-export async function runPiDelegate({ sdk, input, modelRuntime, agentDir, sessionManager, tools, supervisor, fetchRoute, report, auth = null, nativeTransport = null,
+export async function runPiDelegate({ sdk, input, modelRuntime, agentDir, sessionManager, tools, supervisor, fetchRoute, report, auth = null,
     now = () => Date.now() }) {
   const { request, grant } = input;
   const retryLimit = input.retry_limit ?? 0;
@@ -22,10 +23,10 @@ export async function runPiDelegate({ sdk, input, modelRuntime, agentDir, sessio
   };
   await authorize();
   const selected = request.requested_model, model = modelRuntime.getModel(selected.provider_id, selected.model_id);
-  if (!model || model.provider !== selected.provider_id || model.id !== selected.model_id || !["openai-completions", "openai-responses", "openai-codex-responses", "cursor-native"].includes(model.api)
+  if (!model || model.provider !== selected.provider_id || model.id !== selected.model_id || !["openai-completions", "openai-responses", "openai-codex-responses"].includes(model.api)
       || model.api === "openai-codex-responses" && (!auth || model.provider !== "openai-codex")) reject("DELEGATE_MODEL_UNSUPPORTED", 5);
-  if (model.api === "cursor-native" && (!auth || model.provider !== "cursor" || nativeTransport?.api !== model.api || retryLimit !== 0)) reject("DELEGATE_MODEL_UNSUPPORTED", 5);
-  const original = new Map(), requests = [];
+  const overrides = {}, requests = [];
+  let closed = false;
   let session, timer, serial = Promise.resolve(), sequence = 0;
   const emit = (kind, phase) => {
     const event = { schema_version: 2, run_id: request.run_id, seq: ++sequence, timestamp: new Date(now()).toISOString(), kind, phase, artifact_id: null };
@@ -34,11 +35,10 @@ export async function runPiDelegate({ sdk, input, modelRuntime, agentDir, sessio
   try {
     for (const name of ["stream", "streamSimple"]) {
       if (typeof modelRuntime[name] !== "function") reject("DELEGATE_TRANSPORT_MISSING", 5);
-      original.set(name, modelRuntime[name]);
       const invoke = modelRuntime[name].bind(modelRuntime);
-      modelRuntime[name] = (target, context, options = {}) => {
+      overrides[name] = (target, context, options = {}) => {
+        if (closed) reject("DELEGATE_CLOSED", 4);
         if (target.provider !== selected.provider_id || target.id !== selected.model_id || target.baseUrl !== model.baseUrl) reject("DELEGATE_MODEL_UNBOUND", 2);
-        if (model.api === "cursor-native") return nativeTransport.invoke(invoke, target, context, { ...options, apiKey: auth.apiKey }, authorize, requests);
         let attempts = 0;
         return invoke(target, context, { ...options, ...(auth ? { apiKey: auth.apiKey } : {}), maxRetries: retryLimit, transport: "sse", fetch: async (resource, init) => {
           await authorize();
@@ -62,10 +62,10 @@ export async function runPiDelegate({ sdk, input, modelRuntime, agentDir, sessio
         } });
       };
     }
-    for (const name of ["complete", "completeSimple", "deferredFetch", "deferredCancel", "fetchDeferred", "cancelDeferred"]) if (typeof modelRuntime[name] === "function") {
-      original.set(name, modelRuntime[name]); modelRuntime[name] = () => reject("DELEGATE_HELPER_DISABLED", 5);
+    for (const name of ["complete", "completeSimple", "fetchDeferred", "cancelDeferred"]) if (typeof modelRuntime[name] === "function") {
+      overrides[name] = () => reject("DELEGATE_HELPER_DISABLED", 5);
     }
-    const created = await sdk.createAgentSession({ cwd: request.cwd, agentDir, modelRuntime, model, thinkingLevel: "off", scopedModels: [{ model }],
+    const created = await sdk.createAgentSession({ cwd: request.cwd, agentDir, modelRuntime: modelFacade(modelRuntime, overrides), model, thinkingLevel: "off", scopedModels: [{ model }],
       sessionManager, noTools: "builtin", tools: grant.allowed_tools,
       customTools: tools.map(tool => ({ ...tool, execute: async (...args) => { await authorize(); const result = await tool.execute(...args); await emit("checkpoint", "tool-completed"); return result; } })),
       resourceLoader: workerLoader(sdk, { system_prompt: input.system_prompt ?? "Perform the bounded readonly task. Report evidence and uncertainty. Do not delegate or change files." }),
@@ -74,7 +74,7 @@ export async function runPiDelegate({ sdk, input, modelRuntime, agentDir, sessio
     session = created.session;
     if (created.modelFallbackMessage || canonical(session.getActiveToolNames().sort()) !== canonical([...grant.allowed_tools].sort())) reject("DELEGATE_SESSION_MISMATCH", 5);
     session.setAutoCompactionEnabled(false); session.setAutoRetryEnabled(false);
-    session.setActiveTools = names => { if (canonical([...names].sort()) !== canonical([...grant.allowed_tools].sort())) reject("DELEGATE_TOOL_READONLY", 2); };
+    // registry 只含本次只读工具，公开动态选择不能激活未注册的工具。
     timer = setTimeout(() => { void session.abort().catch(() => {}); }, Math.max(1, Math.min(2147483647, Date.parse(grant.expires_at) - now())));
     await emit("ready", "started");
     const firstMessage = session.messages.length;
@@ -83,7 +83,6 @@ export async function runPiDelegate({ sdk, input, modelRuntime, agentDir, sessio
     const last = session.messages.at(-1), final = session.getLastAssistantText();
     if (!requests.some(value => !value.failed && value.done) || requests.some(value => !value.done)) reject("DELEGATE_STREAM_INCOMPLETE", 5);
     if (session.isStreaming || session.messages.length <= firstMessage || last?.role !== "assistant" || last.stopReason !== "stop" || !text(final) || !final.trim()) reject("DELEGATE_RESULT_EMPTY", 5);
-    nativeTransport?.verify();
     await emit("completed", "turn-completed");
     const messages = session.messages.slice(firstMessage).filter(message => message.role === "assistant");
     const total = key => messages.length && messages.every(message => Number.isSafeInteger(message.usage?.[key]) && message.usage[key] >= 0)
@@ -97,9 +96,8 @@ export async function runPiDelegate({ sdk, input, modelRuntime, agentDir, sessio
     clearTimeout(timer);
     try { await session?.dispose(); }
     finally {
-      for (const [name, method] of original) modelRuntime[name] = method;
-      try { await nativeTransport?.close(sessionManager); }
-      finally { await fetchRoute.close?.(); }
+      closed = true;
+      await fetchRoute.close?.();
     }
   }
 }

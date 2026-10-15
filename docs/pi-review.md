@@ -62,4 +62,4 @@ Shortcut/annotation settings come from `agent_options.slopchop.shortcuts`, not o
 
 ## Evidence boundary
 
-Plugin type checks, deterministic archives, and isolated Git/file/editor admission, PTY forwarding, and execution-gate tests cover implementation contracts. They do not establish current real keyboard/refresh behavior, submodule combinations, macOS terminal behavior, or platform termination. Pi 0.84.4's stale lock and historical native/cold evidence remain separate; see [Pi diagnostics](pi-diagnostics.md) and [known issues](known-issues.md).
+Plugin type checks, deterministic archives, and isolated Git/file/editor admission, PTY forwarding, and execution-gate tests cover implementation contracts. They do not establish current real keyboard/refresh behavior, submodule combinations, macOS terminal behavior, or platform termination. The Pi 0.84.4 complete lock has been rebuilt; historical native/cold evidence remains limited to its recorded candidates; see [Pi diagnostics](pi-diagnostics.md) and [known issues](known-issues.md).

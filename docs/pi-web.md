@@ -1,6 +1,6 @@
 # Pi Web integration
 
-The derived Web package is declared for four Pi profiles. This page describes implemented configuration and execution boundaries. It does not establish native loading, real accounts, or live services. Current Pi 0.84.4 has a pre-existing stale lock; historical native/cold results belong to a different candidate. See [testing](testing.md) and [known issues](known-issues.md).
+The derived Web package is declared for four Pi profiles. This page describes implemented configuration and execution boundaries. It does not establish native loading, real accounts, or live services. The complete Pi lock has been rebuilt; historical Web native/cold results still belong to their recorded candidates. See [testing](testing.md) and [known issues](known-issues.md).
 
 ## Configuration, requests, and models
 

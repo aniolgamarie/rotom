@@ -1,6 +1,6 @@
 # Operations and maintenance
 
-Start with [getting started](getting-started.md). This guide covers configuration changes after installation. Read the [DSH migration boundaries](dsh.md) before upgrading a legacy instance: current prerelease configuration must not be applied blindly over an old home. Configuration rollback is separate from software, session-format, or database downgrade. The [Pi lock blocker](pi.md) also applies before any new Pi deployment.
+Start with [getting started](getting-started.md). This guide covers configuration changes after installation. Read the [DSH migration boundaries](dsh.md) before upgrading a legacy instance: current prerelease configuration must not be applied blindly over an old home. Configuration rollback is separate from software, session-format, or database downgrade. Check the [Pi preparation and support scope](pi.md) before a new Pi deployment.
 
 ## Ask an agent to help
 
@@ -12,7 +12,7 @@ Specify whether a rule/skill is for all machines or only this machine. The skill
 
 ## Change configuration
 
-Edit shared Git sources or the private machine override, then:
+For changes to a private machine override, use the selected profile's commands:
 
 ```sh
 ./agentcfg --machine workstation validate
@@ -20,7 +20,27 @@ Edit shared Git sources or the private machine override, then:
 ./agentcfg --machine workstation apply
 ```
 
-Explicit lock/sync is needed for dependency changes, not ordinary configuration edits. Rendering does not install software; installing does not start an agent. Shared rules cannot remove differences in upstream system prompts.
+Public sources have adapter-specific lock boundaries. OMP locks its public profiles,
+catalogs, rules, Skills and local packages; Pi also locks its runtime, frozen
+supervisor inputs and selected resources. Changing these inputs requires an explicit
+lock rebuild even when no external package version changes. Rebuild the affected
+adapter lock with its exact declared toolchain, review the complete diff, then
+validate, plan, sync and apply. For example, an OMP public-resource change uses:
+
+```sh
+./agentcfg lock --agent omp
+./agentcfg --machine workstation --profile omp-kernel validate
+./agentcfg --machine workstation --profile omp-kernel plan
+./agentcfg --machine workstation --profile omp-kernel sync
+./agentcfg --machine workstation --profile omp-kernel apply
+```
+
+Pi uses `./agentcfg --machine workstation --profile pi-default lock --agent pi`.
+Shared source changes may affect both adapters, so check each affected lock. DSH
+configuration-only edits normally use validate/plan/apply; dependency or packaged
+extension changes require its explicit lock/sync workflow. Ordinary sync/run never
+refresh a lock automatically. Rendering does not install software; installing does
+not start an agent. Shared rules cannot remove differences in upstream system prompts.
 
 DSH uses pinned original pnpm 11.19.0 with its frozen pnpm-lock.yaml. Sync accepts Node 24.x from 24.2.0 and npm 11.x; run has the same Node floor. Lock generation requires exactly Node 24.14.0/npm 11.19.1. Node 24.1.0 cannot execute the selected entry point. See [toolchain preparation](getting-started.md).
 
@@ -127,7 +147,11 @@ Generate locks explicitly, for example `./agentcfg lock --agent dsh`, with the r
 
 ## Pi maintenance boundaries
 
-The current stale Pi lock is a pre-existing new-deployment blocker; the historical `9d6a9270…` rebuild/native results are not current checkout evidence. See [Pi](pi.md) and [migration](pi-migration.md) for adoption, drift, credentials, rollback, and recovery.
+The Pi lock has been rebuilt through the complete resolver. Source/lock consistency,
+installation and native feature acceptance remain separate checks; historical
+`9d6a9270…` results do not validate a later candidate. See [Pi](pi.md), the
+[current acceptance record](design/project-refactoring.md), and
+[migration](pi-migration.md) for adoption, drift, credentials, rollback and recovery.
 
 Pi project policy denies by default. `permissions.policy_ref = "task-keeper-candidate"` explicitly allows the candidate's tk_* reads/write while retaining role roots, task grants, secret exclusions, and supervisor write leases.
 

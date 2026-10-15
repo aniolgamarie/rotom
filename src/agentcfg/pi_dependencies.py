@@ -49,7 +49,7 @@ def recipe_digest(repository):
       raw = tree.read(name)
       if raw is not None:
         result.update(name.encode() + b"\0" + raw[0])
-  from .pi_vendor import source_files, source_digest
+  from .pi_vendor import launcher_source_paths, source_files, source_digest
   for name in ("runtime", "templates", "roles", "prompts", "themes", "packages", "build", "schemas", "profiles"):
     directory = repository / "agents/pi" / name
     if directory.exists():
@@ -58,7 +58,7 @@ def recipe_digest(repository):
   with Tree(repository, private=False) as tree:
     inputs = [*sorted((repository / "src/agentcfg").glob("*.py")), *sorted((repository / "scripts").glob("pi-*.py")),
       repository / "scripts/pi-supervisor-macos.c", repository / "scripts/pi-project-check", repository / "pyproject.toml", repository / "uv.lock"]
-    for path in inputs:
+    for path in sorted(set(inputs) | set(launcher_source_paths(repository))):
       name = path.relative_to(repository).as_posix()
       raw = tree.read(name)
       if raw is not None:
@@ -113,12 +113,10 @@ class PiBackend:
             if not VERSION.fullmatch(source["version"]) or not source["resolved"].startswith("https://") or _credential_url(source["resolved"]):
               raise ValueError()
           elif source["kind"] == "asset":
-            from .pi_assets import validate_asset
+            from .pi_assets import validate_asset, validate_cached_asset
             validate_asset(source)
             if "vendor_path" in source:
-              archive = tree.read(source["vendor_path"])
-              if archive is None or digest(archive[0]) != source["archive_digest"]:
-                raise ValueError()
+              validate_cached_asset(tree, source)
           else:
             if not {"vendor_path", "archive_digest"} <= source.keys():
               raise ValueError()

@@ -1,6 +1,7 @@
 """固定原生发行物：只在显式 sync 下载，不执行宿主，不使用归档路径写文件。"""
 
 import hashlib
+from contextlib import contextmanager, ExitStack
 import os
 import tarfile
 import tempfile
@@ -66,6 +67,43 @@ def open_download(url):
   return build_opener(HTTPSRedirects()).open(Request(url, headers={"User-Agent": "agentcfg"}), timeout=60)
 
 
+def validate_cached_asset(tree, source):
+  """固定 URL 的缓存可缺失；已有缓存必须流式校验，禁止将漂移当成下载理由。"""
+  limit = source["size"] if source.get("format") == "raw" else MAX_ARCHIVE
+  try:
+    with tree.open_read(source["vendor_path"], max_bytes=limit) as (stream, _):
+      checksum, size = hashlib.sha256(), 0
+      while chunk := stream.read(1024 * 1024):
+        size += len(chunk)
+        if size > limit:
+          raise ValueError("pi-cached-asset-too-large")
+        checksum.update(chunk)
+      if (checksum.hexdigest() != source["archive_digest"] or
+          source.get("format") == "raw" and size != source["size"]):
+        raise ValueError("pi-cached-asset-invalid")
+  except FileNotFoundError:
+    return False
+  return True
+
+
+@contextmanager
+def asset_stream(checkout, source):
+  """仅显式安装调用；缺失缓存使用锁中 URL，缓存错误和消费错误均不回退重发。"""
+  path = source.get("vendor_path")
+  if path is not None:
+    limit = source["size"] if source.get("format") == "raw" else MAX_ARCHIVE
+    with ExitStack() as stack:
+      try:
+        stream, _ = stack.enter_context(checkout.open_read("locks/pi/" + path, max_bytes=limit))
+      except FileNotFoundError:
+        pass
+      else:
+        yield stream
+        return
+  with open_download(source["url"]) as stream:
+    yield stream
+
+
 def binary_platform(raw):
   # 校验文件头而不运行发行物；拒绝脚本、胖二进制或错误体系结构。
   if len(raw) >= 64 and raw[:6] == b"\x7fELF\x02\x01":
@@ -119,29 +157,19 @@ def install_assets(repository, stage, piece, manifest, platform):
             raise DependencyError("Pi发行物许可证缺失")
           licenses[f"licenses/{key}/{index}-{Path(name).name}"] = raw[0]
         if source.get("format") == "raw":
-          if "vendor_path" in source:
-            with checkout.open_read("locks/pi/" + source["vendor_path"], max_bytes=source["size"]) as (stream, _):
-              install_data(target, stream, source)
-          else:
-            with open_download(source["url"]) as stream: install_data(target, stream, source)
+          with asset_stream(checkout, source) as stream:
+            install_data(target, stream, source)
           for name, data in licenses.items(): target.write_new(name, data)
           continue
         with tempfile.TemporaryFile(dir=stage) as archive:
           checksum, size = hashlib.sha256(), 0
-          if "vendor_path" in source:
-            raw = checkout.read("locks/pi/" + source["vendor_path"], max_bytes=MAX_ARCHIVE)
-            if raw is None:
-              raise DependencyError("Pi发行物归档缺失")
-            archive.write(raw[0])
-            checksum.update(raw[0])
-          else:
-            with open_download(source["url"]) as response:
-              while chunk := response.read(1024 * 1024):
-                size += len(chunk)
-                if size > MAX_ARCHIVE:
-                  raise DependencyError("Pi发行物下载超过限制")
-                archive.write(chunk)
-                checksum.update(chunk)
+          with asset_stream(checkout, source) as response:
+            while chunk := response.read(1024 * 1024):
+              size += len(chunk)
+              if size > MAX_ARCHIVE:
+                raise DependencyError("Pi发行物下载超过限制")
+              archive.write(chunk)
+              checksum.update(chunk)
           if checksum.hexdigest() != source["archive_digest"]:
             raise DependencyError("Pi发行物归档摘要不匹配")
           archive.seek(0)

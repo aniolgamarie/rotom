@@ -27,6 +27,9 @@ def resolve_delegate(host, lease, program, payload):
     raise Conflict("DELEGATE_SPAWN_IDENTITY")
   if datetime.now(timezone.utc) >= datetime.fromisoformat(value["grant"]["expires_at"]):
     raise Conflict("DELEGATE_ADMISSION_EXPIRED")
+  if request["backend"] == "pi" and request["requested_model"]["provider_id"] == "cursor":
+    # 锁定插件没有公开 transport 审计注入点，不能通过改写 HTTP/2 实现补足。
+    raise DependencyError("Pi Cursor delegation requires an upstream public transport audit API")
   manifest = host.manifest()
   from .pi_delegate_policy import execution_policy
   if digest(execution_policy(manifest, request["backend"])) != request["execution_policy_digest"]:
@@ -56,7 +59,7 @@ def resolve_delegate(host, lease, program, payload):
     provider_id = request["requested_model"]["provider_id"]
     provider = manifest.get("provider_bindings", {}).get(provider_id, {})
     if provider.get("auth_kind") == "oauth":
-      if (provider_id, provider.get("owner")) not in (("openai-codex", "pi-native"), ("cursor", "pi-cursor")):
+      if (provider_id, provider.get("owner")) not in (("openai-codex", "pi-native"),):
         raise DependencyError("所选OAuth委托transport尚未适配")
       from .secrets import CredentialError
       from .pi import key_variable
@@ -72,8 +75,6 @@ def resolve_delegate(host, lease, program, payload):
           raise ValueError()
       except (ValueError, TypeError, KeyError):
         raise CredentialError() from None
-      if provider_id == "cursor" and (host.config["engine"] != "bun" or route["mode"] != "direct" or value["retry_limit"] != 0):
-        raise DependencyError("Cursor 委托要求 Bun、明确 direct 路线与零重试")
       variable = key_variable(provider_id)
       credentials = {variable: selected["access"]}
       models = {"providers": {}}
@@ -103,29 +104,6 @@ def resolve_delegate(host, lease, program, payload):
     "runtime_root": str(host.runtime_root), "instance_root": host.config["instance_root"], "temporary": str(temporary)}
   if auth_binding:
     worker["auth_binding"] = auth_binding
-    if auth_binding["provider_id"] == "cursor":
-      cursor = manifest["options"].get("cursor", {})
-      if not cursor.get("endpoint"): raise DependencyError("Cursor 委托端点未绑定")
-      ensure_private(temporary / "cursor-cache"); ensure_private(temporary / "cursor-home")
-      env.update(CURSOR_ACCESS_TOKEN=credentials[auth_binding["environment"]], PI_CURSOR_SYSTEM_CREDENTIALS="deny",
-        CURSOR_CONFIG_DIR=str(temporary / "cursor-home"), PI_CURSOR_CACHE_DIR=str(temporary / "cursor-cache"),
-        PI_CURSOR_AGENT_URL=cursor["endpoint"], PI_CURSOR_STREAM_IDLE_MAX_RETRIES="0", PI_CURSOR_PROVIDER_DEBUG="0")
-      for name in ("PI_CURSOR_CLIENT_VERSION", "PI_CURSOR_RAW_MODELS", "PI_CURSOR_SLIM_TOOLS", "PI_CURSOR_PROMPT_HISTORY",
-          "PI_CURSOR_H2_CONNECT_TIMEOUT_MS", "PI_CURSOR_H2_IDLE_TIMEOUT_MS", "PI_CURSOR_STREAM_IDLE_TIMEOUT_MS", "PI_CURSOR_RESUME_IDLE_TIMEOUT_MS"):
-        if name in os.environ:
-          setting = os.environ[name]
-          if len(setting) > 512 or any(char in setting for char in "\0\r\n"): raise DependencyError("Cursor 委托设置无效")
-          env[name] = setting
-      worker["cursor_endpoint"] = cursor["endpoint"]
-      with Tree(Path(host.config["instance_root"])) as instance:
-        catalog = instance.read("pi-home/cursor-cache/model-catalog.json", max_bytes=1024 * 1024)
-      if catalog is not None:
-        try:
-          cached = json.loads(catalog[0])
-          selected_catalog = {key: cached[key] for key in ("version", "savedAt", "rawModels", "parameterizedModels")}
-          if selected_catalog["version"] != 1 or not isinstance(selected_catalog["rawModels"], list) or not isinstance(selected_catalog["parameterizedModels"], list): raise ValueError()
-        except (ValueError, KeyError, TypeError): raise DependencyError("Cursor 模型目录格式不兼容") from None
-        with Tree(temporary / "cursor-cache") as tree: tree.write_state("model-catalog.json", json_bytes(selected_catalog))
   if request["continuation_of"]:
     prior = host.delegates.runs.read(request["continuation_of"])
     token = prior["receipt"]["backend_resume_token"]

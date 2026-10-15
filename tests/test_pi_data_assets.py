@@ -44,6 +44,27 @@ def test_data_asset_streams_with_exact_size_hash_and_platform_independence(tmp_p
   assert inventory(stage)["data/readseek/model.gguf"]["sha256"] == hashlib.sha256(body).hexdigest()
 
 
+@pytest.mark.parametrize("cache", ["absent", "valid", "corrupt", "symlink"])
+def test_data_cache_miss_downloads_but_unsafe_or_drifted_cache_never_falls_back(tmp_path, monkeypatch, cache):
+  repo, stage, piece, manifest, body = fixture(tmp_path)
+  source = manifest["sources"]["model"]
+  source["vendor_path"] = "vendor/model.gguf"
+  cached = repo / "locks/pi/vendor/model.gguf"
+  cached.parent.mkdir(parents=True)
+  calls = []
+  monkeypatch.setattr("agentcfg.pi_assets.open_download", lambda url: calls.append(url) or io.BytesIO(body))
+  if cache == "valid": cached.write_bytes(body)
+  elif cache == "corrupt": cached.write_bytes(b"synthetic wrong bytes")
+  elif cache == "symlink": cached.symlink_to(tmp_path / "outside")
+  if cache in {"corrupt", "symlink"}:
+    with pytest.raises(DependencyError): install_assets(repo, stage, piece, manifest, "linux-x86_64")
+    assert calls == [] and not (stage / source["target"]).exists()
+  else:
+    install_assets(repo, stage, piece, manifest, "linux-x86_64")
+    assert (stage / source["target"]).read_bytes() == body
+    assert calls == ([source["url"]] if cache == "absent" else [])
+
+
 @pytest.mark.parametrize("kind", ["short", "long", "digest", "existing", "broken-stream"])
 def test_failed_data_download_never_publishes_partial_bytes_or_overwrites_existing_files(tmp_path, monkeypatch, kind):
   repo, stage, piece, manifest, body = fixture(tmp_path)

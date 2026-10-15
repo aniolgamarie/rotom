@@ -22,7 +22,7 @@ function fixture() {
     async createAgentSession(options) { calls.push(["session", options]); return { session }; } };
   const modelRuntime = { getModel: (provider, id) => ({ provider, id, api: "openai-completions", reasoning: true }) };
   const transport = { api: "openai-completions", certified: true, model_digest: value.model_digest, route_id: "direct",
-    async bind() { calls.push(["bind"]); return { async close() { calls.push(["transport-close"]); } }; } };
+    async bind(runtime) { calls.push(["bind"]); return { runtime, async close() { calls.push(["transport-close"]); } }; } };
   const tools = [{ name: "tk_read", async execute() { calls.push(["read"]); return { content: [] }; } }];
   let valid = true;
   const supervisor = { async call(method, args) { calls.push([method]); return { valid, grant_generation: args.grant_generation }; } };
@@ -37,6 +37,7 @@ test("fresh worker passes an explicit empty loader, exact tools and no retry to 
   const options = f.calls.find(([name]) => name === "session")[1];
   assert.equal(options.sessionManager.fresh, true);
   assert.equal(options.noTools, "builtin");
+  assert.equal(Object.hasOwn(f.session, "setActiveTools"), false);
   assert.deepEqual(options.tools, ["tk_read"]);
   assert.deepEqual(options.resourceLoader.getExtensions().extensions, []);
   assert.deepEqual(options.resourceLoader.getSkills().skills, []);

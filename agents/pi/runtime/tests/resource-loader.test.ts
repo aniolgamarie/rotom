@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { selectResources, installPackagePolicy, loaderOptions, parseArguments, restrictExtensions } from "../resource-loader.ts";
+import { selectResources, managedResourceLoader, loaderOptions, parseArguments, restrictExtensions } from "../resource-loader.ts";
 
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), "loader-"));
@@ -32,30 +32,25 @@ function fixture() {
   return { instanceRoot, runtimeRoot, cwd, manifest, installed, engine: "node", put };
 }
 
-test("selection precedes factories; neither cwd discovery nor installed extras participates", async () => {
-  const f = fixture();
-  const selected = selectResources(f);
-  const calls = [];
-  class FakePackages {
-    async resolve() { throw Error("native discovery"); }
-    async resolveExtensionSources() { throw Error("native temporary install"); }
-    async install() { calls.push("download"); }
-    async update() { calls.push("update"); }
-  }
-  installPackagePolicy({ DefaultPackageManager: FakePackages }, selected);
-  const manager = new FakePackages();
-  assert.deepEqual(await manager.resolve(), { extensions: [], skills: [], prompts: [], themes: [] });
+test("public loader configuration excludes discovery and wrapper rejects unselected additions without patching host", async () => {
+  const f = fixture(), selected = selectResources(f), calls = [];
   const options = loaderOptions(selected);
-  const paths = await manager.resolveExtensionSources(options.additionalExtensionPaths);
-  for (const resource of paths.extensions) calls.push(resource.path);
-  assert.deepEqual(calls, [join(f.runtimeRoot, "packages/selected/index.js")]);
+  assert.deepEqual(options.additionalExtensionPaths, [join(f.runtimeRoot, "packages/selected/index.js")]);
   assert.equal(options.noContextFiles, true);
   assert.equal(options.noExtensions, true);
   assert.equal(options.agentsFilesOverride({ agentsFiles: [] }).agentsFiles[0].content, "selected rules");
-  await assert.rejects(manager.install("npm:evil"), /agentcfg/);
-  await assert.rejects(manager.update(), /agentcfg/);
-  await assert.rejects(manager.resolveExtensionSources(["npm:evil"]), /pi-resource/);
-  await assert.rejects(manager.resolveExtensionSources([join(f.cwd, ".pi/extensions/undeclared.js")]), /pi-resource/);
+  const native = { extendResources: paths => calls.push(paths), async reload() { calls.push("reload"); } };
+  const extend = native.extendResources, reload = native.reload;
+  let permitted = false;
+  const loader = managedResourceLoader(native, selected, async () => { if (!permitted) throw Error("activity"); });
+  assert.throws(() => loader.extendResources({ extensionPaths: ["npm:evil"] }), /pi-resource/);
+  assert.throws(() => loader.extendResources({ promptPaths: [{ path: "/undeclared" }] }), /pi-resource/);
+  loader.extendResources({ promptPaths: [{ path: selected.resources.prompts[0].path }] });
+  await assert.rejects(loader.reload(), /activity/);
+  assert.equal(calls.includes("reload"), false);
+  permitted = true; await loader.reload();
+  assert.equal(calls.at(-1), "reload");
+  assert.equal(native.extendResources, extend); assert.equal(native.reload, reload);
 });
 
 test("service validation can narrow an approved selection but cannot add or restore extensions", () => {
@@ -125,4 +120,21 @@ test("a selected plugin absent from the installed resource manifest cannot silen
   const f = fixture();
   f.manifest.plugins.push("missing-todo");
   assert.throws(() => selectResources(f), /pi-resource-selected-plugin-missing/);
+});
+
+test("same-path content drift or symlink replacement is refused before native reload", async () => {
+  for (const change of ["content", "link"]) {
+    const f = fixture(), selection = selectResources(f);
+    let loaded = 0;
+    const native = { async reload() { loaded++; } };
+    const loader = managedResourceLoader(native, selection, async () => {});
+    if (change === "content") f.put(f.instanceRoot, "pi-home/prompts/review.md", "unexpected replacement");
+    else {
+      const { unlinkSync } = await import("node:fs");
+      unlinkSync(selection.resources.extensions[0].path);
+      symlinkSync(f.put(f.cwd, "unselected.mjs"), selection.resources.extensions[0].path);
+    }
+    await assert.rejects(loader.reload(), /pi-resource/);
+    assert.equal(loaded, 0);
+  }
 });

@@ -74,6 +74,19 @@ def test_full_slice_is_validated_and_runtime_identity_is_profile_specific(tmp_pa
     backend.read_lock(root)
 
 
+@pytest.mark.parametrize("name", ["scripts/model-delegate.py", "scripts/model-delegate-batch.py",
+  "schemas/local.schema.json", "schemas/registry.schema.json"])
+def test_frozen_delegate_input_changes_invalidate_the_source_lock(tmp_path, name):
+  root, manifest = fixture_repository(tmp_path)
+  from agentcfg.pi_dependencies import recipe_digest
+  before = recipe_digest(root)
+  path = root / name
+  path.write_bytes(path.read_bytes() + b"\n")
+  assert recipe_digest(root) != before
+  with pytest.raises(ConfigError, match="pi-lock-missing-or-stale"):
+    PiBackend().read_lock(root)
+
+
 def test_unknown_manifest_field_is_rejected_even_with_recomputed_hash(tmp_path):
   root, manifest = fixture_repository(tmp_path)
   manifest["untrusted"] = "synthetic"

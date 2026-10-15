@@ -11,7 +11,7 @@ Rotom's Python project metadata currently declares `0.1.0`. This checkout is rel
 | Cursor subscription | `0.6.12`, `936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8` | Main-session Provider through public terminal authentication adapter |
 | Perry auto-review | `0.12.17`, `2b931b8375f9ee9ebe20e80ef336c69804e1aac0` | Enabled; unresolved limitations explicitly retained |
 | OMP | `18.8.6`, `f068751e2f1dbdbc195977776d47a26db8697495` | Official standalone runtime; independent Rotom permission plugin |
-| Pi | `0.84.4` in current manifest | Current recipe mismatch blocks new deployment; not a release-ready Pi lock |
+| Pi | `0.84.4` in current manifest | Complete lock rebuilt through the resolver; Linux pi-default evidence is recorded separately. Other profiles, platforms and live services require their own acceptance. |
 | Manager | Python 3.11+; `uv.lock` | Locked environment, loaded directly from `.venv` |
 
 Lock manifests and complete installer lock files under `locks/` are the authoritative dependency records, including resolved sources, integrity, resources, and transitive dependencies. Do not copy a displayed digest into a lock to bypass validation. DSH's tested toolchain is Node `24.14.0` / npm `11.19.1` with frozen pnpm `11.19.0`; other accepted toolchain versions need their own native evidence.

@@ -29,7 +29,7 @@ test("actual HTTP boundary meters direct and proxy routes, forces zero retry and
   for (const proxy of [false, true]) {
     const f = setup({ proxy });
     const binding = await f.transport.bind(f.runtime, { authorize: async () => {} });
-    const response = await f.runtime.streamSimple(f.model, { messages: [] }, { maxRetries: 4, fetch: () => { throw Error("bypass"); } });
+    const response = await binding.runtime.streamSimple(f.model, { messages: [] }, { maxRetries: 4, fetch: () => { throw Error("bypass"); } });
     await response.text(); await binding.finish(); await binding.close();
     assert.equal(f.calls[0].sdkOptions.maxRetries, 0);
     assert.equal(f.calls[1].options.redirect, "error");
@@ -46,7 +46,7 @@ test("actual HTTP boundary meters direct and proxy routes, forces zero retry and
 test("early EOF and wrong observed model retain unknown reservation with no fallback request", async () => {
   for (const option of [{ broken: true }, { mismatch: true }]) {
     const f = setup(option), binding = await f.transport.bind(f.runtime, { authorize: async () => {} });
-    const response = await f.runtime.streamSimple(f.model, { messages: [] });
+    const response = await binding.runtime.streamSimple(f.model, { messages: [] });
     await assert.rejects(response.text(), /TRANSPORT_OUTCOME_UNKNOWN/);
     await assert.rejects(binding.close(), /TRANSPORT_OUTCOME_UNKNOWN/);
     const record = Object.values(Object.values(f.store.snapshot().request_budgets)[0].requests)[0];
@@ -57,7 +57,7 @@ test("early EOF and wrong observed model retain unknown reservation with no fall
 
 test("SDK cancel after receiving DONE does not convert proved completion into unknown", async () => {
   const f = setup({ usage: false }), binding = await f.transport.bind(f.runtime, { authorize: async () => {} });
-  const response = await f.runtime.streamSimple(f.model, { messages: [] });
+  const response = await binding.runtime.streamSimple(f.model, { messages: [] });
   const reader = response.body.getReader();
   await reader.read(); await reader.cancel(); await binding.close();
   const record = Object.values(Object.values(f.store.snapshot().request_budgets)[0].requests)[0];
@@ -70,9 +70,9 @@ test("budget denial is recorded before transport and never becomes an implicit r
   f.ledger.limits.model_requests = 1;
   f.transport.report = async value => { reports.push(value); };
   const binding = await f.transport.bind(f.runtime, { authorize: async () => {} });
-  const first = await f.runtime.streamSimple(f.model, { messages: [] });
+  const first = await binding.runtime.streamSimple(f.model, { messages: [] });
   await first.text();
-  await assert.rejects(f.runtime.streamSimple(f.model, { messages: [] }), /BUDGET_EXHAUSTED/);
+  await assert.rejects(binding.runtime.streamSimple(f.model, { messages: [] }), /BUDGET_EXHAUSTED/);
   const denied = reports.find(value => value.phase === "request_denied");
   assert.equal(denied.code, "BUDGET_EXHAUSTED");
   assert.equal(denied.ordinal, null);
@@ -85,8 +85,8 @@ test("turn ceiling records an independent denial even when the SDK absorbs the s
   f.value.turn_ceiling = 1;
   f.transport.report = async value => { await Promise.resolve(); reports.push(value); };
   const binding = await f.transport.bind(f.runtime, { authorize: async () => {} });
-  const response = await f.runtime.streamSimple(f.model, { messages: [] }); await response.text();
-  assert.throws(() => f.runtime.streamSimple(f.model, { messages: [] }), /BUDGET_EXHAUSTED/);
+  const response = await binding.runtime.streamSimple(f.model, { messages: [] }); await response.text();
+  assert.throws(() => binding.runtime.streamSimple(f.model, { messages: [] }), /BUDGET_EXHAUSTED/);
   await binding.finish();
   assert.equal(f.transport.budgetExhausted, true);
   assert.equal(reports.filter(row => row.phase === "request_denied" && row.code === "BUDGET_EXHAUSTED").length, 1);

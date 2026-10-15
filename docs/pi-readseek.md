@@ -1,6 +1,6 @@
 # Pi ReadSeek integration
 
-The derived ReadSeek sources, supervised controller, and fixed vision assets are declared for all four Pi profiles. Source/mock integration does not establish current Pi or ReadSeek native acceptance. The current Pi 0.84.4 lock is pre-existing stale; historical candidate results are recorded in [testing](testing.md).
+The derived ReadSeek sources, supervised controller, and fixed vision assets are declared for all four Pi profiles. Source/mock integration does not establish current Pi or ReadSeek native acceptance. The complete Pi lock has been rebuilt; feature-specific historical results remain limited to their recorded candidates in [testing](testing.md).
 
 ## Execution contract
 
