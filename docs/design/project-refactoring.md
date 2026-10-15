@@ -328,8 +328,8 @@ entry and its isolation contract are unchanged.
 
 | Work state | Scope |
 | --- | --- |
-| Completed | Implementation and Linux validation above; fast-forward integration into local `main` at `de2201b`; local DSH apply and deployment/admission checks; termcfg v2 migration and terminal apply below |
-| In progress | Local OMP apply waits for the user to exit the protected native process; dependencies are installed and plan reports no changes. Release and remote publication remain separate |
+| Completed | Implementation and Linux validation above; fast-forward integration into local `main` at `de2201b`; local DSH apply and deployment/admission checks; termcfg v2 migration and terminal apply; local OMP apply, doctor, plan and repeated apply below |
+| In progress | None within the authorized local integration and deployment scope. Release and remote publication remain separate |
 | Failed pending decision | No unresolved implementation failure in the recorded scope; superseded failures and fixes remain documented above |
 | Environment unavailable or not run | Other operating systems; Pi Cursor/Bun and other profile native/cold builds; real accounts, concurrent login/refresh and UI-preference stress; broader MCP/PTC/reviewer coverage |
 
@@ -350,9 +350,13 @@ completed, v2 status and strict doctor passed, and apply succeeded with all four
 terminal targets unchanged. The existing proxy service was not operated on.
 No managed Pi instance was present, so no additional Pi deployment was created.
 
-For `omp-kernel`, dependencies were installed and plan reported zero changes.
-Apply returned exit 4 because a native process held the activity lock. That process
-was not terminated; apply remains pending until the user exits it.
+For `omp-kernel`, the initial apply returned exit 4 because a native process held
+the activity lock. That process was not terminated. After the user exited OMP,
+the maintenance lease was available and official apply, doctor, plan and repeated
+apply all returned exit 0. Doctor reported offline-ready, installed dependencies,
+a matching deployed runtime and no pending transaction. Plan and both applies
+reported zero changes, drift or conflicts. This follow-up did not start a host,
+inspect credential/account files or call a model.
 
 The command selections below use a generic machine name; private paths and native
 account state are not part of this public record. Replace `<reviewed-plan-id>` with
@@ -367,6 +371,9 @@ the plan ID from the preceding termcfg plan after reviewing that plan:
 ./termcfg --machine workstation doctor --strict
 ./termcfg --machine workstation plan
 ./termcfg --machine workstation apply --plan-id <reviewed-plan-id>
+./agentcfg --machine workstation --profile omp-kernel plan
+./agentcfg --machine workstation --profile omp-kernel apply
+./agentcfg --machine workstation --profile omp-kernel doctor
 ./agentcfg --machine workstation --profile omp-kernel plan
 ./agentcfg --machine workstation --profile omp-kernel apply
 ```
