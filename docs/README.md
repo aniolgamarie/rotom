@@ -24,7 +24,7 @@ English is the authoritative language for maintained user and developer document
 - [Configuration state and recovery](design/configuration-state.md), [approval boundaries](design/approvals.md), and [model routing](design/model-routing.md).
 - [Testing and support](testing.md), [acceptance summary](acceptance.md), [versions](releases.md), and [changelog](../CHANGELOG.md).
 - [Known issues and TODOs](known-issues.md), [Roadmap](roadmap.md), [contributing](../CONTRIBUTING.md), and [security](../SECURITY.md).
-- [Publication privacy and history remediation](history-cleanup.md).
+- [Publication policy](publication-policy.md), [worktrees and merge gates](worktrees.md), and [history remediation](history-cleanup.md).
 
 Dated handoffs, repeated progress snapshots, and raw machine-specific acceptance output were removed from the publication tree. Their useful conclusions are consolidated here; summaries are not byte-for-byte replacements for the original evidence and do not renew historical acceptance.
 
