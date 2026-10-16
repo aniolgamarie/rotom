@@ -9,7 +9,7 @@ import tomllib
 from pathlib import Path
 
 from .config import LocalConfig, _parse_toml, resolve_config
-from .paths import (InitializationError, PathError, configured_path, prepare_initial_local,
+from .paths import (InitializationError, PathError, UnsupportedRootOwner, configured_path, prepare_initial_local,
                     read_private_file, safe_id)
 from .schema import ConfigError, separate_local, validate_document
 from .secret_files import ensure_shared_placeholders, validate_shared_placeholders
@@ -170,8 +170,8 @@ def initialize_local(machine_id: str, *, config_home: str | Path,
       secrets_action, local_additions, secret_additions)
   except InitializationError:
     raise
-  except PathError:
-    raise InitializationError(4) from None
+  except PathError as error:
+    raise InitializationError(4, unsupported_root_owner=isinstance(error, UnsupportedRootOwner)) from None
   except OSError as error:
     code = 4 if error.errno in (errno.EEXIST, errno.ELOOP, errno.ENOTDIR) else 6
     raise InitializationError(code) from None

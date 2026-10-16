@@ -6,7 +6,7 @@
       "component": "zsh",
       "source": "terminals/zsh/zshrc.zsh",
       "destination": ".zshrc",
-      "sha256": "0d52ffb6713f1e519cb31839b8f51c0ec0d682d8b9b86c3d3c0b86c40ffff139",
+      "sha256": "292cac8a78b25d4b17589109d49e38bf793c7702a2b0b7491bed00f5cdbe3c3f",
       "mode": "0644"
     },
     {
@@ -14,7 +14,7 @@
       "component": "zsh",
       "source": "terminals/zsh/zshenv",
       "destination": ".zshenv",
-      "sha256": "9985af51295258039f24cd46734b4336e2e1fa9e52ad107aac3e02e268632999",
+      "sha256": "10d8708d62b53a86e3e5db2493f321eb92a119f319619fa35af38ec1819b6447",
       "mode": "0600"
     },
     {
@@ -22,7 +22,7 @@
       "component": "tmux",
       "source": "terminals/tmux/tmux.conf",
       "destination": ".tmux.conf",
-      "sha256": "13f4ce001e84b05c34a133b18f51b06aa3184aeaf37550dce771a7b35ffa5820",
+      "sha256": "5bf8083d815b7dfbae3adbe01c7a19ee4f548a40c65d5bc287f70dfbbaf8380d",
       "mode": "0644"
     },
     {

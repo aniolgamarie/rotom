@@ -15,10 +15,24 @@ COMPONENTS = frozenset(("zsh", "tmux"))
 MACHINE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
 
 
+def _absolute_environment_path(value: str | None, reason: str) -> Path:
+  if (not value or not Path(value).is_absolute() or ".." in Path(value).parts
+      or "\\" in value or any(ord(char) < 32 or ord(char) == 127 for char in value)):
+    raise TermcfgError(2, reason)
+  return Path(value)
+
+
+def environment_home() -> Path:
+  """只接受环境中的绝对 HOME，不查询账户或修复调用者路径。"""
+  return _absolute_environment_path(os.environ.get("HOME"), "invalid_home")
+
+
 def xdg_path(name: str) -> Path:
   value = os.environ.get(name)
-  default = {"XDG_CONFIG_HOME": ".config", "XDG_STATE_HOME": ".local/state", "XDG_DATA_HOME": ".local/share"}[name]
-  return Path(value) if value else Path.home() / default
+  default = {"XDG_CONFIG_HOME": ".config", "XDG_STATE_HOME": ".local/state", "XDG_DATA_HOME": ".local/share", "XDG_CACHE_HOME": ".cache"}[name]
+  if value:
+    return _absolute_environment_path(value, "invalid_" + name.lower())
+  return environment_home() / default
 
 
 def machine_path(machine_id: str) -> Path:

@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 from .catalog import load_catalog
-from .config import COMPONENTS, MachineSelection, encode_machine, machine_path, read_machine, xdg_path
+from .config import COMPONENTS, MachineSelection, encode_machine, environment_home, machine_path, read_machine, xdg_path
 from .diagnostics import current_progress, emit, reset_progress
 from .environment import inspect_environment, status_report
 from .errors import TermcfgError
@@ -127,6 +127,7 @@ def _confirm(message: str) -> bool:
 def cmd_init(args) -> dict:
   if args.none and args.component:
     raise TermcfgError(2, "component_and_none_conflict")
+  home = None if args.edit else environment_home()
   path = machine_path(args.machine)
   with operation_lease(args.machine):
     exists = path.exists() or path.is_symlink()
@@ -147,7 +148,7 @@ def cmd_init(args) -> dict:
       components = _interactive_selection(previous.components if previous else None)
     else:
       raise TermcfgError(2, "selection_required", "./termcfg init-local --component zsh")
-    home = previous.target_home if previous else Path.home()
+    home = previous.target_home if previous else home
     state = previous.private_state_root if previous else xdg_path("XDG_STATE_HOME") / "termcfg" / "machines" / args.machine
     machine = MachineSelection.from_dict({
       "machine_id": args.machine,

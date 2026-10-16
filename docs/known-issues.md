@@ -53,3 +53,43 @@ See [testing](testing.md) for current automated results and [Roadmap](roadmap.md
 - Pi 0.84.4 native session import has no source-file preflight event. Managed `/import` is disabled; current-format resume and fork remain supported. Revisit when an upstream public hook can validate the source before copy/migration.
 - pi-cursor 1.4.29 has no public transport audit injection API. Cursor read-only `model_delegate` is rejected before credential access or spawn. Cursor main sessions remain separately available; model-delegate support requires an upstream public connector or equivalent auditable transport.
 - Trusted extensions execute JavaScript in the host process. Resource selection and grant checks do not isolate a malicious selected extension or other same-user process.
+
+Filesystem executors with an unsupported root ancestor owner remain unsupported
+for private configuration operations. The fixed `unsupported-root-owner`
+diagnostic propagates through initialization and initial configuration reads with
+exit 4. Read-only root mounts and a different `TMPDIR` do not change this trust
+boundary. Private-path tests require a working baseline and report NOT RUN when
+that root prevents it; classification mocks do not establish native support.
+
+The terminal XDG follow-up validates effective paths, including HOME defaults,
+and validates legacy hooks independently. Missing, empty or relative HOME cannot
+supply plugin, hook, cache, local-bin PATH, history or NVM defaults; explicit
+absolute XDG/NVM paths remain usable. Relative NVM_DIR is preserved but not
+sourced. Doctor reports invalid public path states without values. Existing
+absolute paths, empty/unset XDG defaults with a valid HOME, hook conflict and
+same-file selection, and explicit empty NVM_DIR semantics are preserved. The
+[explicit terminal smoke](../scripts/smoke-termcfg-environment.py) provides
+reproducible guard checks; synthetic tmux checks are not tmux-server acceptance,
+and completion initialization is separately READY or NOT VERIFIED.
+
+The locked FSH plugin's missing-secondary-theme branch can download a theme at
+startup. Termcfg now prepares that theme from the same installed lock's local
+free-theme file before loading FSH, with no-overwrite publication, and skips FSH
+if preparation or absolute working-path checks fail. Existing user themes,
+including empty files, are preserved. Stateful Zinit/OMZ/z.lua loading also
+validates HOME, effective cache and the relevant public override paths before
+sourcing. Synthetic fixture smoke checks do not replace real locked-plugin and
+platform acceptance; private user hooks remain outside this controlled scope.
+Affected historical terminal evidence does not transfer to this changed startup
+source; real locked-plugin acceptance must be recorded against the new snapshot.
+
+CLI and shared-key default discovery no longer consult account HOME when the
+HOME environment value is missing, empty or relative. Relative default XDG config
+paths fail as parameter errors instead of selecting a cwd file. New termcfg
+selection validates HOME before its write lease; editing keeps the saved target.
+Explicit absolute config/secret selections remain available. Existing readable
+FSH theme links are user-selected inputs and remain unchanged; directory or
+dangling links are skipped, without claiming protection from same-user tampering.
+Nonempty XDG values are absolute literal environment paths: `~/` is rejected,
+and dollar characters are preserved rather than expanded. Explicit machine TOML
+secret-file paths retain their documented configured-path syntax.

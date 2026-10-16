@@ -12,6 +12,15 @@ class PathError(Exception):
   """只包含固定说明，不携带私有路径或底层文件系统异常正文。"""
 
 
+class UnsupportedRootOwner(PathError):
+  """根祖先属主不受支持；不输出执行器身份或路径。"""
+
+  code = "unsupported-root-owner"
+
+  def __init__(self):
+    super().__init__("unsupported-root-owner: 根祖先属主不受支持；需要可信根祖先的执行环境")
+
+
 def _text(value: str) -> str:
   if (not isinstance(value, str) or not value or "\\" in value
       or any(ord(char) < 32 or ord(char) == 127 for char in value)):
@@ -41,13 +50,24 @@ def _absolute_path(value: str) -> Path:
   return Path(text)
 
 
+def environment_home() -> Path:
+  """仅使用环境中的字面 HOME，不查询账户目录。"""
+  return _absolute_path(os.environ.get("HOME", ""))
+
+
+def xdg_config_home() -> Path:
+  """XDG 是字面环境路径；非空值不展开 ~/、变量或账户默认值。"""
+  value = os.environ.get("XDG_CONFIG_HOME")
+  return _absolute_path(value) if value else environment_home() / ".config"
+
+
 def configured_path(value: str) -> Path:
   """仅用于框架 TOML 路径字段，不替代 CLI --local 的相对路径规则。"""
   text = _text(value)
   if re.search(r"\$(?:[A-Za-z_({])|`", text):
     raise PathError("配置路径不得包含变量插值或命令替换")
   if text.startswith("~/"):
-    home = _absolute_path(os.environ.get("HOME", ""))
+    home = environment_home()
     text = str(home) + "/" + text[2:]
   return _absolute_path(text)
 
@@ -61,9 +81,11 @@ def _check_private(fd: int) -> None:
     raise PathError("受管目录必须属于当前用户且权限为 0700")
 
 
-def _check_ancestor(fd: int) -> None:
+def _check_ancestor(fd: int, *, root: bool = False) -> None:
   info = os.fstat(fd)
   if info.st_uid not in (0, os.geteuid()):
+    if root:
+      raise UnsupportedRootOwner()
     raise PathError("路径祖先不属于可信用户")
   # 系统临时目录可有 sticky 位；最终创建父目录另行要求当前用户独占写入。
   if info.st_mode & 0o022 and not info.st_mode & stat.S_ISVTX:
@@ -89,7 +111,7 @@ def _open_directory(parent: int, name: str) -> int:
 def _absolute_directory(path: Path):
   fd = os.open("/", _DIRECTORY_FLAGS)
   try:
-    _check_ancestor(fd)
+    _check_ancestor(fd, root=True)
     for name in path.parts[1:]:
       child = _open_directory(fd, name)
       parent, fd = fd, child
@@ -169,9 +191,9 @@ def read_private_file(path: Path) -> bytes:
 class InitializationError(Exception):
   """初始化专用的固定脱敏错误；不携带路径或底层异常正文。"""
 
-  def __init__(self, exit_code: int):
+  def __init__(self, exit_code: int, *, unsupported_root_owner: bool = False):
     self.exit_code = exit_code
-    super().__init__({
+    super().__init__(str(UnsupportedRootOwner()) if unsupported_root_owner else {
       2: "初始化参数无效；请检查机器 ID、HOME 和配置路径",
       4: "初始化冲突；目标已存在、位于仓库内或目录不安全，请检查路径及权限",
       6: "初始化文件系统操作失败；请检查访问权限和可用空间",
@@ -189,7 +211,7 @@ def prepare_initial_local(config_home: Path) -> None:
   try:
     fd = os.open("/", _DIRECTORY_FLAGS)
     try:
-      _check_ancestor(fd)
+      _check_ancestor(fd, root=True)
       for name in config_home.parts[1:]:
         try:
           child = _open_directory(fd, name)
@@ -210,8 +232,8 @@ def prepare_initial_local(config_home: Path) -> None:
         _check_private(fd)
     finally:
       os.close(fd)
-  except PathError:
-    raise InitializationError(4) from None
+  except PathError as error:
+    raise InitializationError(4, unsupported_root_owner=isinstance(error, UnsupportedRootOwner)) from None
   except OSError as error:
     code = 4 if error.errno in (errno.EEXIST, errno.ELOOP, errno.ENOTDIR) else 6
     raise InitializationError(code) from None
@@ -226,7 +248,7 @@ def create_initial_local(config_home: Path, machine_id: str, data: bytes) -> Non
   try:
     fd = os.open("/", _DIRECTORY_FLAGS)
     try:
-      _check_ancestor(fd)
+      _check_ancestor(fd, root=True)
       for name in config_home.parts[1:]:
         try:
           child = _open_directory(fd, name)
@@ -259,8 +281,8 @@ def create_initial_local(config_home: Path, machine_id: str, data: bytes) -> Non
         os.close(file_fd)
     finally:
       os.close(fd)
-  except PathError:
-    raise InitializationError(4) from None
+  except PathError as error:
+    raise InitializationError(4, unsupported_root_owner=isinstance(error, UnsupportedRootOwner)) from None
   except OSError as error:
     code = 4 if error.errno in (errno.EEXIST, errno.ELOOP, errno.ENOTDIR) else 6
     raise InitializationError(code) from None

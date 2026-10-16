@@ -5,7 +5,7 @@ from pathlib import Path
 import shutil
 
 from .catalog import load_catalog
-from .config import MachineSelection
+from .config import MachineSelection, xdg_path
 from .errors import TermcfgError
 from .home_targets import inspect_target
 from .packages import current_platform, installed_plugins
@@ -17,17 +17,20 @@ def private_hook_status(home: Path, config_home: str | None) -> dict[str, str]:
   names = ("zshenv", "zshrc")
   if config_home and not Path(config_home).is_absolute():
     return {name: "invalid_config_home" for name in names}
+  if not config_home and not home.is_absolute():
+    return {name: "invalid_home" for name in names}
   config = Path(config_home) if config_home else home / ".config"
   result = {}
   for name in names:
     selected = config / "termcfg" / (name + ".local")
     legacy = home / ".config/termcfg" / (name + ".local")
     try:
-      selected_present, legacy_present = selected.is_file(), legacy.is_file()
+      selected_present = selected.is_file()
+      legacy_present = home.is_absolute() and legacy.is_file()
       if selected_present and legacy_present:
         result[name] = "shared" if selected.samefile(legacy) else "conflict"
       else:
-        result[name] = "xdg" if selected_present else "legacy" if legacy_present else "absent"
+        result[name] = "xdg" if selected_present else "legacy" if legacy_present else "absent" if home.is_absolute() else "invalid_home"
     except OSError:
       result[name] = "unverified"
   return result
@@ -41,13 +44,22 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
     degraded = []
     unverified = []
     target_issues = {}
+    xdg_paths = {}
+    for name in ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME"):
+      value = os.environ.get(name)
+      try:
+        xdg_path(name)
+        xdg_paths[name] = "absolute" if value else "default"
+      except TermcfgError as exc:
+        xdg_paths[name] = "invalid_home" if exc.reason == "invalid_home" else "invalid_relative"
+        blockers.append(exc.reason)
     if current_platform() != "linux-x86_64":
       blockers.append("unsupported_platform")
     if component in {"zsh", "tmux"} and shutil.which(component) is None:
       blockers.append("required_program_missing")
     if component == "tmux" and shutil.which("fzf") is None:
       degraded.append("optional_fzf_missing")
-    if component in {"zsh", "tmux"}:
+    if component in {"zsh", "tmux"} and xdg_paths["XDG_DATA_HOME"] in {"default", "absolute"}:
       try:
         if not installed_plugins(component):
           degraded.append("optional_plugins_not_synced")
@@ -58,6 +70,8 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
       degraded.append("private_hook_conflict")
     if hooks and "invalid_config_home" in hooks.values():
       degraded.append("private_hook_invalid_config_home")
+    if hooks and "invalid_home" in hooks.values():
+      degraded.append("private_hook_invalid_home")
     if hooks and "unverified" in hooks.values():
       unverified.append("private_hook_metadata_unverified")
     service = {"service": "not_applicable"}
@@ -73,7 +87,7 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
         blockers.append(exc.reason)
         target_issues[item.id] = exc.reason
     status = "blocked" if blockers else "degraded" if degraded else "unverified" if unverified else "ready"
-    result[component] = {"status": status, "ready": not blockers,
+    result[component] = {"status": status, "ready": not blockers, "xdg_paths": xdg_paths,
                          **({"private_hooks": {"scope": "current_environment_preview", "selection": hooks}} if hooks else {}),
                          "required_blockers": sorted(set(blockers)),
                          "optional_degradations": sorted(set(degraded)),

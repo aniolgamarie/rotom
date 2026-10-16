@@ -12,7 +12,7 @@ from .local_values import validate_local_url
 from .merge import Provenance, merge_layers
 from .model_defaults import (complete_pi_roles, merge_model_selections,
                              model_default_selection, validate_model_defaults)
-from .paths import PathError, configured_path, relative_path, safe_id
+from .paths import PathError, UnsupportedRootOwner, configured_path, relative_path, safe_id
 from .schema import (AdapterPolicy, AdapterSchemas, AuthenticationClaim, ConfigError,
                      _bundle, separate_local, validate_document)
 from .secret_files import load_secrets
@@ -127,6 +127,8 @@ def read_local_document(path):
     content = read_private_file(path)
   except FileNotFoundError:
     error = "missing"
+  except UnsupportedRootOwner as exc:
+    raise Conflict(str(exc)) from None
   except (OSError, PathError):
     error = "unsafe"
   if error == "missing":

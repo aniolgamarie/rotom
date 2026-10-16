@@ -76,3 +76,64 @@ used later by zshrc; each stage selects its own hook. Changes require a new shel
 for verification. Existing tmux servers retain their environment independently.
 Deploy through the ordinary plan/apply drift checks; do not overwrite changed
 user startup files to force these defaults.
+
+Nonempty `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME` and
+`XDG_CACHE_HOME` values must be absolute. The [XDG Base Directory
+Specification](https://specifications.freedesktop.org/basedir/latest/) treats
+relative values as invalid and defines HOME defaults for unset or empty values.
+Termcfg rejects relative manager paths with an explicit parameter error; shell
+loading skips the affected path and warns without values. Defaults require a
+nonempty absolute HOME. Missing, empty or relative HOME is rejected for manager
+fallbacks, without consulting account-derived home directories. Explicit absolute
+XDG values remain usable. Legacy private-hook candidates are independently
+checked: invalid HOME disables legacy lookup even when the selected XDG path is
+valid, while an absolute selected hook can still load. Conflict and same-file
+selection rules remain unchanged.
+
+Zsh skips invalid plugin paths and initializes fallback completion without reading
+or writing a dump cache when its cache path is invalid. With invalid HOME it also
+skips its local-bin PATH addition, history-file default and NVM default. Existing
+caller PATH, HISTFILE, HOME, XDG and explicit NVM_DIR values remain unchanged by
+these guards. Empty NVM_DIR still disables NVM; an explicit relative NVM_DIR warns
+and is not sourced, while an absolute value remains usable. Tmux skips TPM when
+its effective data path is invalid. Doctor reports XDG states as `absolute`,
+`default`, `invalid_relative` or `invalid_home`, without values. An invalid config
+path prevents selecting a machine file before doctor can inspect components.
+
+The explicit [terminal environment smoke](../scripts/smoke-termcfg-environment.py)
+checks real isolated zsh guards and synthetic tmux shell guards. It never starts
+or connects to a tmux server. See [testing](testing.md) for its opt-in command and
+the distinction between guard checks and completion initialization evidence.
+
+Zinit, Oh-My-Zsh and z.lua additionally require nonempty absolute HOME, an
+absolute effective cache path, and an absolute ZDOTDIR when nonempty. Otherwise
+the affected stateful plugins are skipped, with fixed warnings; the base
+completion/prompt, absolute selected private hooks and independent plugins can
+still load. Relative explicit ZSH_CACHE_DIR disables Zinit and OMZ; relative
+ZSH_COMPDUMP disables OMZ; relative _ZL_DATA disables z.lua. Caller HOME, XDG and
+ZDOTDIR values are not repaired. Private hook code remains user-controlled and
+can perform its own actions.
+
+Fast Syntax Highlighting uses the public FAST_WORK_DIR setting independently:
+a nonempty explicit value must be absolute, and an unset/empty value defaults
+to `f-sy-h` below the valid effective cache directory. Before loading FSH,
+termcfg preserves an existing readable `secondary_theme.zsh` file, including
+an empty user file or a user-selected symlink to a readable regular file. The
+link and its target are not replaced; directory and dangling theme links skip
+FSH. This is not a boundary against malicious changes by the same user. For a missing theme it copies the same installed plugin's
+`share/free_theme.zsh` into a private same-directory temporary file, then
+publishes it without replacement using GNU `ln -T`. This avoids the upstream
+fresh-cache download branch without patching upstream or blocking curl/wget
+globally. Preparation failures, invalid paths and non-file theme targets skip FSH and
+warn without values. Missing `ln -T` support also skips FSH when a new theme is
+needed. An existing readable user theme remains usable and is never
+overwritten or described as newly prepared. Platform-specific locked-plugin
+loading remains a separate native acceptance scope from synthetic guard tests.
+
+Manager path discovery also uses only the HOME environment value, with no
+account-database fallback. A new `termcfg init-local` requires nonempty absolute
+HOME before acquiring its operation lease, even when all XDG paths are explicit.
+`init-local --edit` retains the saved target HOME and private state root. Explicit
+absolute XDG config paths remain usable for diagnostics without a HOME default.
+XDG environment values are literal paths: `~/` is relative and rejected, while
+dollar characters in a valid absolute path are preserved without expansion.

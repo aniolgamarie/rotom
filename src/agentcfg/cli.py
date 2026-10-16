@@ -10,7 +10,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-from .paths import InitializationError, PathError, configured_path
+from .paths import InitializationError, PathError, UnsupportedRootOwner, environment_home, xdg_config_home
 
 # 退出码定义（CLI-08）
 EXIT_OK = 0
@@ -97,7 +97,10 @@ class SelectionError(Exception):
 def local_path(value):
   text = str(value)
   if text.startswith("~/"):
-    path = Path.home() / text[2:]
+    try:
+      path = environment_home() / text[2:]
+    except PathError:
+      raise SelectionError("--local: HOME 必须为非空绝对环境路径") from None
   elif text.startswith("~"):
     raise SelectionError("--local: 仅支持当前 HOME 的 ~/ 前缀")
   else:
@@ -109,6 +112,8 @@ def local_path(value):
     try:
       with _absolute_directory(path.absolute().parent) as parent:
         _check_private(parent)
+    except UnsupportedRootOwner as error:
+      raise Conflict(str(error)) from None
     except (OSError, PathError):
       raise Conflict("本地配置相对路径不安全；不得穿透符号链接") from None
     path = Path(os.path.abspath(path))
@@ -122,16 +127,18 @@ def resolve_selection(args):
   if args.command == "init-local":
     args.machine = args.init_machine or "default"
     try:
-      root = configured_path(os.environ.get("XDG_CONFIG_HOME") or "~/.config")
+      root = xdg_config_home()
     except PathError:
       raise InitializationError(EXIT_USAGE) from None
     args.local = root / "agentcfg" / "machines" / f"{args.machine}.toml"
     return
   if args.local is None:
     args.machine = args.machine or "default"
-    config_home = os.environ.get("XDG_CONFIG_HOME")
-    root = Path(config_home) if config_home else Path.home() / ".config"
-    args.local = (root / "agentcfg" / "machines" / f"{args.machine}.toml").absolute()
+    try:
+      root = xdg_config_home()
+    except PathError:
+      raise SelectionError("配置目录无效；XDG_CONFIG_HOME 或 HOME 需要绝对路径") from None
+    args.local = root / "agentcfg" / "machines" / f"{args.machine}.toml"
   else:
     args.local = local_path(args.local)
 

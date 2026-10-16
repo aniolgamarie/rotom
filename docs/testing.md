@@ -14,9 +14,80 @@ uv --no-config lock --check --offline
 
 The default pytest contract uses temporary HOME/DSH_HOME/XDG paths, fictional providers and credentials, blocked network access, and fake subprocesses. It must not launch DSH, Pi, Codex, OMP, or read actual native authentication. Use the prepared repository environment; `agentcfg` does not use `uv run` or unversioned npx.
 
-Filesystem permission checks need the actual user identity and a safe private temporary root. A sandbox that maps root ancestry to another UID can produce artificial failures. Use an exclusive `0700` temporary directory under a safe system temporary root; do not weaken owner, ancestor, symlink, or permission guards to make tests pass.
+HOME discovery contracts use unset, empty and relative HOME with absolute
+synthetic XDG paths, and replace `Path.home()` with a failure sentinel. Invalid
+CLI defaults and shared-key defaults must fail before configuration/credential
+reads; new termcfg selection must fail before entering its write lease. Explicit
+absolute config/secret selection and saved termcfg edit targets remain usable.
+Nonempty XDG environment paths are literal absolutes: `~/.config` is invalid,
+while `$literal` inside an absolute path is not interpolated. Explicit TOML
+secret paths retain their separate configured `~/` syntax.
+The CLI `~/child/../target` test checks delegation to the existing private-directory
+guard; it does not substitute for the controlled filesystem suite's actual
+no-follow and ownership evidence.
+
+Filesystem permission checks need the actual user identity and a safe private temporary root. An executor whose filesystem root has an unsupported owner is rejected with the fixed, redacted `unsupported-root-owner` diagnostic (exit 4). Read-only mounts do not establish trusted ownership. Changing `TMPDIR` cannot repair a shared unsupported root ancestor. Use an exclusive `0700` temporary directory under a safe system temporary root in a supported execution environment; do not weaken owner, ancestor, symlink, or permission guards to make tests pass.
+
+`tests/test_paths.py` first proves a normal private-directory create/open/write baseline before running filesystem guards. If root ownership is unsupported, those cases are explicitly skipped as NOT RUN, and their native boundary evidence remains BLOCKED. Independent classification/propagation unit tests can still run; mocked ownership is not native sandbox evidence.
 
 The public-document check validates maintained Markdown links and selected accidental local-path patterns. It reads repository text only, avoids named credential files and vendor trees, and prints finding locations and categories rather than matched values. It is not a comprehensive secret scan or an external-link validator.
+
+### Controlled Linux offline executor
+
+A supported Linux user-namespace executor can run the offline suite without
+relaxing Rotom's private-path checks:
+
+```sh
+.venv/bin/python scripts/test-sandboxed.py --help
+.venv/bin/python scripts/test-sandboxed.py --allow-sandbox --venv <absolute-prepared-venv> --evidence <new-absolute-private-directory>
+.venv/bin/python scripts/test-sandboxed.py --allow-sandbox --suite filesystem --venv <absolute-prepared-venv> --evidence <another-new-absolute-private-directory>
+```
+
+This explicit entry requires `/usr/bin/bwrap` and an already prepared Python
+3.11+ environment with a conventional `bin/python` and corresponding
+`lib/pythonX.Y` or `lib64/pythonX.Y` standard library distribution. Unsafe broad
+bindings, including account HOME directories and non-system source ancestors,
+are rejected without expanding the distribution to a parent directory. It
+copies only Git-tracked regular working-tree files into a private snapshot; add new files to Git's index before acceptance. It does not
+clone, download or install anything. The snapshot and selected venv/interpreter
+distribution are mounted read-only, with no host HOME or Git metadata mounted.
+The venv remains at its original absolute location, and the snapshot contains a
+synthetic `.venv` link to it so entry/temporary-venv tests retain their contract.
+An explicitly selected venv or distribution may be a HOME child directory;
+only that exact subtree is mounted, never its HOME parent or account/session
+siblings. Layout checks do not prove a selected tree contains only tool inputs:
+select dedicated public tool environments, without mixed authentication or
+session data. The entry does not scan private sibling directories.
+Only a new evidence output directory and isolated temporary filesystem are
+writable; the snapshot has no writable alias inside the executor. User, PID,
+network, IPC and UTS namespaces are isolated, capabilities are dropped, root and
+proc are read-only, and the process environment is rebuilt from fixed synthetic
+values (also on bwrap versions without `--clearenv`).
+
+A bounded real baseline first checks private create/read modes, symlink/hardlink
+refusal, read-only mounts and blocked networking. Baseline or executor failure
+records BLOCKED and exits nonzero without running pytest. A passing baseline
+starts the fixed offline pytest command in a fresh executor, with a short
+`/tmp` test root and a two-hour timeout. The default `--suite full` runs the
+complete suite. `--suite filesystem` runs
+only `tests/test_paths.py` and `tests/test_execution_environment.py` for the real
+filesystem and rendering boundary checks; neither selection accepts arbitrary
+pytest or host arguments. The report records the selection. Pytest failures
+remain FAIL; skipped cases retain their own limitations. Default pytest only mocks this entry's
+process and argument contracts and never starts bwrap. Entry tests may still
+launch their narrowly allowed synthetic Python subprocesses inside the executor;
+no third-party agent hosts or terminal-native smoke is enabled.
+
+Keep the new `0700` evidence directory private. Its `0600` report records the
+source manifest, lock hashes, interpreter identity, exact argv and stage exit
+codes, alongside private raw logs and pytest XML. Each attempted stage records
+its argv before launch; timeout/interruption keeps a BLOCKED record with no
+exit code instead of reporting success. Raw evidence can contain host
+paths and must not be published. Unsupported user namespaces or outer sandbox
+permissions require a supported outer executor; the entry never escalates,
+disables isolation or weakens ownership checks automatically. A controlled
+executor PASS does not establish support in the original unsupported namespace,
+other platforms, real agent hosts or authenticated services.
 
 ## Separate validation layers
 
@@ -29,6 +100,45 @@ The public-document check validates maintained Markdown links and selected accid
 | Rebuild/migration | Same lock reconstructs new state and supported migration/recovery behaves correctly | Distinguish cold downloads from shared warm cache; synthetic old sessions only |
 
 Native test scripts in `scripts/` have distinct purposes and arguments. Inspect their `--help` and the selected integration guide. Do not treat a script's presence, printed fixture status, or npm installation as native acceptance. A source/lock change invalidates affected evidence until rerun.
+
+### Terminal environment validation
+
+Inspect the explicit entry before running it:
+
+```sh
+.venv/bin/python scripts/smoke-termcfg-environment.py --help
+.venv/bin/python scripts/smoke-termcfg-environment.py --allow-terminal --evidence <new-absolute-private-directory>
+```
+
+This separate opt-in entry launches real zsh and sh with synthetic HOME, ZDOTDIR
+and XDG discovery paths, a minimal PATH, no inherited account environment and
+bounded child timeouts. Invalid HOME cases start with a safe temporary HOME,
+then unset or change it inside the test shell before explicitly sourcing the
+repository files. It tests repeated loading, XDG combinations, HOME fallbacks,
+private-hook conflicts and same-file selection, and NVM defaults/overrides.
+Additional synthetic plugin fixtures verify stateful loading guards, separate
+FSH working paths, fresh-theme publication, unchanged existing/empty themes
+and readable user theme links (both link and target),
+invalid/failed theme preparation, concurrent no-overwrite publication, and zero
+curl/wget attempts. Download counters are checked independently of shell exit
+status. These fixture entries are not the locked upstream plugins; the report
+marks locked-plugin acceptance NOT RUN.
+All fixtures live beneath the new private evidence directory and are removed at
+the end. Reports contain fixed results and repository-relative source digests,
+without private paths or captured shell bodies. The tmux portion executes the
+configuration's shell guards with synthetic tmux/TPM commands; it never starts or
+connects to a real tmux server. Default pytest only tests the entry's opt-in and
+reporting contracts without starting terminal programs.
+
+Guard PASS does not establish completion functionality: each zsh case separately
+records `completion_initialization` as READY or NOT VERIFIED from the initialized
+completion table and function. An executor can pass path guards while its system
+completion directories fail compaudit; this entry does not bypass that check or
+claim interactive completion, plugin-native, tmux-server or other-platform
+acceptance. Relative XDG values and unset/empty defaults follow the
+[XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/latest/);
+termcfg additionally requires a nonempty absolute HOME before forming its HOME
+defaults and does not replace caller variables.
 
 ### Concurrent-run validation
 

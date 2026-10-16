@@ -2,11 +2,10 @@
 
 import json
 from copy import deepcopy
-import os
 from pathlib import Path
 import re
 
-from .paths import PathError, configured_path, read_private_file, safe_id
+from .paths import PathError, configured_path, read_private_file, safe_id, xdg_config_home
 from .secrets import CredentialError, SecretStore
 from .storage import Conflict, Tree, instance_lock
 
@@ -70,8 +69,8 @@ def secrets_path(document, local_path):
     if value is not None:
       path = configured_path(value)
     else:
-      root = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
-      path = configured_path(root) / "agentcfg" / "secrets.toml"
+      root = xdg_config_home()
+      path = root / "agentcfg" / "secrets.toml"
     repository = Path(__file__).resolve().parents[2]
     if path == local_path.absolute() or path.is_relative_to(repository):
       raise PathError("秘密文件不能指向机器配置")

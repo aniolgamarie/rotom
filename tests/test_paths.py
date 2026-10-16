@@ -12,7 +12,7 @@ from agentcfg.paths import (
 )
 
 
-def test_concurrent_private_directory_creation_rechecks_new_path(tmp_path, monkeypatch):
+def test_concurrent_private_directory_creation_rechecks_new_path(private_parent, monkeypatch):
   from agentcfg import storage
 
   def competing_create(parent, name):
@@ -20,8 +20,8 @@ def test_concurrent_private_directory_creation_rechecks_new_path(tmp_path, monke
     raise FileExistsError(name)
 
   monkeypatch.setattr(storage, "_create_directory", competing_create)
-  storage.ensure_private(tmp_path / "created-by-peer")
-  assert stat.S_IMODE((tmp_path / "created-by-peer").stat().st_mode) == 0o700
+  storage.ensure_private(private_parent / "created-by-peer")
+  assert stat.S_IMODE((private_parent / "created-by-peer").stat().st_mode) == 0o700
 
 
 @pytest.mark.parametrize("value", ["", ".", "..", "/absolute", "a/b", "a\\b", "x\x00", "x\n", "x\x7f"])
@@ -72,6 +72,16 @@ def private_parent(isolated_environment):
   # pytest 的可信临时根在 macOS 可能已规范化；不能规范化业务输入来绕过检查。
   parent = isolated_environment.root / "private-parent"
   parent.mkdir(mode=0o700)
+  # 先证明正常安全路径可用，避免负向断言被不支持的根祖先提前满足。
+  from agentcfg.paths import UnsupportedRootOwner
+  try:
+    with PrivateDirectory.create(parent / "baseline") as root:
+      root.create_file("probe", b"baseline")
+    with PrivateDirectory.open_owned(parent / "baseline"):
+      pass
+  except UnsupportedRootOwner:
+    pytest.skip("NOT RUN: unsupported-root-owner; native private-path baseline unavailable")
+  assert (parent / "baseline/probe").read_bytes() == b"baseline"
   return parent
 
 
@@ -403,3 +413,53 @@ def test_closed_boundary_cannot_be_reused(private_parent):
     pass
   with pytest.raises(PathError):
     root.create_file("new", b"new")
+
+
+@pytest.mark.parametrize("mode", [0o40555, 0o40700, 0o41777])
+def test_unsupported_root_owner_classification_is_fixed(monkeypatch, mode):
+  from types import SimpleNamespace
+  from agentcfg import paths
+  monkeypatch.setattr(os, "geteuid", lambda: 1000)
+  monkeypatch.setattr(os, "fstat", lambda fd: SimpleNamespace(st_uid=2000, st_mode=mode))
+  with pytest.raises(paths.UnsupportedRootOwner, match="unsupported-root-owner"):
+    paths._check_ancestor(123, root=True)
+  with pytest.raises(PathError, match="路径祖先不属于可信用户") as caught:
+    paths._check_ancestor(123)
+  assert not isinstance(caught.value, paths.UnsupportedRootOwner)
+
+
+@pytest.mark.parametrize("operation", ["prepare_initial_local", "create_initial_local"])
+def test_initialization_preserves_unsupported_root_diagnostic(monkeypatch, tmp_path, operation):
+  from agentcfg import paths
+  def unsupported(fd, **kwargs):
+    assert kwargs == {"root": True}
+    raise paths.UnsupportedRootOwner()
+  monkeypatch.setattr(paths, "_check_ancestor", unsupported)
+  args = (tmp_path,) if operation == "prepare_initial_local" else (tmp_path, "fixture", b"")
+  with pytest.raises(paths.InitializationError, match="unsupported-root-owner") as caught:
+    getattr(paths, operation)(*args)
+  assert caught.value.exit_code == 4
+
+
+@pytest.mark.parametrize("argv", [["validate"], ["--local", "../private-canary.toml", "validate"], ["init-local"]])
+def test_cli_propagates_unsupported_root_diagnostic(monkeypatch, capsys, argv):
+  from agentcfg import cli, paths
+  def unsupported(fd, **kwargs):
+    raise paths.UnsupportedRootOwner()
+  monkeypatch.setattr(paths, "_check_ancestor", unsupported)
+  assert cli.main(argv) == 4
+  output = capsys.readouterr()
+  assert "unsupported-root-owner" in output.err + output.out
+  assert "private-canary" not in output.err + output.out
+
+
+def test_local_document_preserves_unsupported_root_diagnostic(monkeypatch, tmp_path):
+  from agentcfg import config, paths
+  from agentcfg.storage import Conflict
+  def unsupported(path):
+    raise paths.UnsupportedRootOwner()
+  monkeypatch.setattr(paths, "read_private_file", unsupported)
+  with pytest.raises(Conflict, match="unsupported-root-owner") as caught:
+    config.read_local_document(tmp_path / "private-canary")
+  assert caught.value.exit_code == 4
+  assert "private-canary" not in str(caught.value)
