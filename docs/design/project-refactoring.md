@@ -467,8 +467,9 @@ to their fresh fixtures. This is not a fully cold download or four-profile nativ
 acceptance. Raw commands, exits, XML, PTY logs and hashes remain in the private
 repair evidence directory; they contain synthetic configuration only.
 
-The repair does not inspect accounts, migrate sessions, switch local deployments,
-or update remote refs. Existing Perry limitations and the remaining source,
+The isolated repair acceptance did not inspect accounts, migrate sessions, switch
+local deployments, or update remote refs. Authorized integration and deployment
+are recorded in the final follow-up below. Existing Perry limitations and the remaining source,
 platform, lifecycle and development-tooling issues listed in the issue register
 remain separate from these fixes.
 
@@ -487,8 +488,9 @@ also passed.
 
 ## Execution-environment follow-up
 
-Status: implemented and reviewed in the task worktree; Linux acceptance passed
-within the scope below. Integration and daily deployment remain deferred. The reviewed main snapshot was `4610678`
+Status: Linux acceptance and final review passed within the scope below. The
+reviewed changes were integrated into local `main` at `de43346`, followed by the
+authorized local deployment recorded at the end. The reviewed main snapshot was `4610678`
 and the preceding repair base was `93cac69`; evidence for that earlier repair
 remains scoped to its original changes.
 GPT-6.1 catalog support is deferred by maintainer decision and is not a prerequisite.
@@ -855,8 +857,9 @@ documentation result metadata is excluded from that digest. DSH's native source
 manifest contains 159 source files and matches the
 current implementation. Native checks do not establish a same-user credential
 boundary, a fully cold download, Perry's deferred safety properties, or permission
-to write external build logs. Main, real machine files, credentials, sessions and
-daily deployments remain unchanged pending review and merge authorization.
+to write external build logs. At the isolated acceptance boundary, main and daily
+deployments were unchanged. The later authorized integration below updated
+managed deployment artifacts without inspecting credentials or native sessions.
 
 The first complete Python run exited 1 with 12 obsolete assertions/fixtures
 (3,867 passed, 9 skipped); those files were corrected and rerun. The final offline
@@ -878,3 +881,42 @@ also passed on the final lock, and both saved launch identities match it.
 No socket, owner or sandbox guard was
 weakened. Raw logs retain superseded failures rather than representing them as
 successful commands.
+
+### Authorized local integration and deployment
+
+The user authorized integration after final review. Local `main` fast-forwarded
+from `4610678` through four reviewed, single-parent commits to `de43346`; no remote
+push or history rewrite was performed. Commit identities, introduced history,
+public content, final source/lock consistency and the existing acceptance evidence
+passed the merge gates. The initial review summaries remain historical evidence;
+their findings were closed by the follow-up commits rather than deleted.
+
+The existing DSH `dsh-default` and OMP `omp-kernel` deployments were updated with
+`agentcfg setup` on the integrated checkout. DSH maintenance initially returned
+4 because a process still held the instance lease after the visible TUI closed.
+After separate user authorization, one SIGINT was sent to the verified DSH child;
+the child and manager exited normally, and setup then returned 0. No lock was
+deleted or bypassed. The `dsh` and `dsh-proxy` wrappers still reach the same
+main-checkout entry point and instance.
+
+| Local check | Result |
+| --- | --- |
+| DSH and OMP `setup` | Exit 0; normal frozen dependency installation and deployment |
+| DSH and OMP `doctor --environment --format json` | Exit 0; dependencies installed, deployed runtime matches current lock, no pending declarations or recovery, offline-ready |
+| DSH and OMP `plan --format json` | Exit 0; changes 0, drift 0, conflicts 0 |
+| DSH and OMP repeated `apply --format json` | Exit 0; changes 0, drift 0, conflicts 0 |
+| termcfg apply | Exit 0; two managed zsh files updated with private backups; tmux targets unchanged |
+| termcfg `doctor --strict`, plan and repeated apply | Exit 0; ready, all targets unchanged, no repeated file changes |
+
+The terminal manager required its explicit plan-bound `.zshenv` confirmation;
+the authorized deployment supplied the same reviewed plan ID and retained the
+normal backup/transaction mechanism. Existing shells and tmux servers were not
+restarted, and private hooks were not sourced for acceptance. Start a new shell
+to use the updated initialization. No managed Pi instance was present, so no
+additional Pi deployment was created.
+
+These local checks verify managed deployment and offline readiness, not live
+account access, the business compiler, non-Linux platforms, or deferred Perry
+safety properties. Credential and native-session files were not read for this
+follow-up. Configuration rollback remains distinct from software or session
+database downgrade. Remote publication remains a separate authorized operation.

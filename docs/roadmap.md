@@ -13,7 +13,7 @@ This roadmap records intended work, not release commitments. Recheck source, loc
 
 ## Project refactoring: concurrent runs and terminal scope
 
-**Status: implemented and verified in an isolated task branch on Linux; merge and real deployment are separate.**
+**Status: integrated into local `main`; authorized local DSH/OMP and terminal deployment completed. Linux acceptance and remaining platform scopes are recorded separately.**
 
 The [project refactoring plan](design/project-refactoring.md) defines distinct
 instance, runtime, run, native-session, Pi-attempt, worktree and credential identities.
@@ -31,7 +31,7 @@ existing proxy services and private configuration are not moved or deleted.
 
 ## Execution-environment consistency
 
-**Status: implemented and accepted in the task worktree; awaiting integration, daily deployment unchanged.**
+**Status: accepted and integrated into local `main` at `de43346`; existing local DSH/OMP instances and zsh configuration updated through the managers.**
 
 The [execution-environment follow-up](design/project-refactoring.md#execution-environment-follow-up)
 now separates caller development paths from native state ownership, restricted
@@ -41,8 +41,9 @@ Pi main sessions retain caller paths; DSH preserves native TUI HOME and uses its
 public subprocess provider plus separate stdio MCP exec configuration. Terminal
 NVM/XDG behavior and the corresponding guides are corrected.
 
-Native evidence is scoped by channel and lock. Keep the existing deployment until
-the reviewed branch is explicitly integrated and deployed; configuration rollback does not imply a
+Native evidence is scoped by channel and lock. The authorized local deployment
+passed offline doctor, zero-change plan and repeated apply checks. No managed Pi
+instance was present, so none was created. Configuration rollback does not imply a
 software or session database downgrade. Unverified platforms and native profile
 combinations remain listed explicitly.
 
