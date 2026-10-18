@@ -357,7 +357,10 @@ def test_release_age_exception_is_locked_and_cannot_drift(tmp_path):
   repository = lock_repository(tmp_path)
   lock = dep.read_lock(repository)
   dep.prepare_pnpm_policy(tmp_path, lock.metadata)
-  assert yaml.safe_load((tmp_path / "pnpm-workspace.yaml").read_bytes()) == {"minimumReleaseAgeExclude": ["@deepseek-harness-tui/dsh-tui@0.15.0"]}
+  assert yaml.safe_load((tmp_path / "pnpm-workspace.yaml").read_bytes()) == {
+    "minimumReleaseAgeStrict": True,
+    "minimumReleaseAgeExclude": lock.metadata["minimum_release_age_exclude"],
+  }
   changed = {**lock.metadata, "minimum_release_age_exclude": []}
   assert dep.lock_identity(lock.package, lock.resolution, changed, lock.installer_resolution) != lock.identity
   path = repository / "locks/dsh/manifest.json"
@@ -380,3 +383,57 @@ def test_release_age_exception_rejects_mutable_input_before_resolution(tmp_path,
   path.write_text(json.dumps(policy))
   with pytest.raises(ValueError):
     dep.lock_policy(repository)
+
+
+@pytest.mark.parametrize("spec", ["@deepseek-ai/dsh-agent@0.2.1-rc.1", "@deepseek-ai/dsh-*@0.2.1-rc.2",
+  "@deepseek-ai/cordis@4.0.5", "@deepseek-ai/dsh-agent@latest"])
+def test_core_release_age_exceptions_must_name_exact_selected_release(spec):
+  packages = {"@deepseek-ai/dsh": "0.2.1-rc.2", "@deepseek-harness-tui/dsh-tui": "file:vendor/tui.tgz"}
+  assert not dep.valid_release_age_exceptions({"minimum_release_age_exclude": [spec]}, packages)
+  assert dep.valid_release_age_exceptions({"minimum_release_age_exclude": ["@deepseek-ai/dsh-agent@0.2.1-rc.2"]}, packages)
+
+
+def test_release_age_exception_requires_package_in_complete_lock():
+  policy = {"minimum_release_age_exclude": ["@deepseek-ai/dsh-agent@0.2.1-rc.2"]}
+  with pytest.raises(ValueError, match="absent"):
+    dep.validate_release_age_resolution(policy, yaml.safe_dump({"packages": {"fixture@1.0.0": {}}}))
+  dep.validate_release_age_resolution(policy, yaml.safe_dump({"packages": {"@deepseek-ai/dsh-agent@0.2.1-rc.2": {}}}))
+
+
+@pytest.mark.parametrize("change", ["commit", "archive-content", "modified-source", "unknown-field", "build-commit", "build-repository", "build-patch"])
+def test_tui_source_archive_requires_matching_immutable_receipt(tmp_path, change):
+  vendor = tmp_path / "locks/dsh/vendor"
+  vendor.mkdir(parents=True)
+  archive = vendor / "tui.tgz"
+  package = json.dumps({"name": "@deepseek-harness-tui/dsh-tui", "version": "0.15.0"}).encode()
+  with tarfile.open(archive, "w:gz") as bundle:
+    member = tarfile.TarInfo("package/package.json")
+    member.size = len(package)
+    bundle.addfile(member, io.BytesIO(package))
+  document = {"schema_version": 1, "package": "@deepseek-harness-tui/dsh-tui", "version": "0.15.0",
+    "repository": "https://github.com/ccch1mneyyy/dsh-TUI", "commit": "a" * 40,
+    "archive": "vendor/tui.tgz", "integrity": "sha512-" + base64.b64encode(hashlib.sha512(archive.read_bytes()).digest()).decode(),
+    "source_modified": False, "build": {"commands": ["upstream build"], "source": {
+      "commit": "a" * 40, "url": "https://github.com/ccch1mneyyy/dsh-TUI.git",
+      "tracked_diff_clean": True, "patches_applied": False}}}
+  receipt = vendor / "tui-main-provenance.json"
+  receipt.write_text(json.dumps(document))
+  policy = {"packages": {document["package"]: "file:vendor/tui.tgz"}, "upstream": {"tui": "a" * 40}}
+  assert dep.tui_source_receipt(tmp_path, policy)
+  if change == "commit":
+    document["commit"] = "b" * 40
+  elif change == "archive-content":
+    archive.write_bytes(archive.read_bytes() + b"drift")
+  elif change == "modified-source":
+    document["source_modified"] = True
+  elif change == "build-commit":
+    document["build"]["source"]["commit"] = "b" * 40
+  elif change == "build-repository":
+    document["build"]["source"]["url"] = "https://example.invalid/other.git"
+  elif change == "build-patch":
+    document["build"]["source"]["patches_applied"] = True
+  else:
+    document["unknown"] = True
+  receipt.write_text(json.dumps(document))
+  with pytest.raises(DependencyError, match="来源收据"):
+    dep.tui_source_receipt(tmp_path, policy)

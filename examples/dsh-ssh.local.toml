@@ -1,0 +1,14 @@
+# 仅为公开示例。目标、路径和摘要须在机器私有文件中替换，不填写凭据。
+schema_version = 1
+
+[machine]
+id = "remote-development"
+default_profile = "dsh-ssh"
+
+[overrides.profiles.dsh-ssh.agent_options.ssh]
+host = "project-server"
+workspace = "/srv/project"
+helper = "/opt/dsh-helper/0.2.1-rc.2/dsh-ssh-helper"
+# 替换为可信 helper 发行清单中的可执行文件 SHA-256。
+helper_hash = "0000000000000000000000000000000000000000000000000000000000000000"
+permission_mode = "read-only"

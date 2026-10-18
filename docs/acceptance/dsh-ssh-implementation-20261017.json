@@ -1,0 +1,223 @@
+{
+  "base_commit": "a84710a98d1a687edb5033728178bf52ebc32214",
+  "branch": "feat/dsh-rc21-ssh-worktrees",
+  "inherited_patch_sha256": "2e340ddfaea8c6e35753049f269603fffb3d474db8cdd8089f19506d371d117f",
+  "inherited_untracked": [
+    "docs/acceptance/dsh-plugin-ssh-assessment-20261017.md",
+    "docs/acceptance/dsh-rc21-tui-main-20261017.json",
+    "locks/dsh/vendor/dsh-tui-0.15.0-e709863.tgz",
+    "locks/dsh/vendor/rotom-dsh-execution-environment-0.1.1.tgz",
+    "locks/dsh/vendor/rotom-dsh-review-context-0.1.1.tgz",
+    "locks/dsh/vendor/tui-main-LICENSE",
+    "locks/dsh/vendor/tui-main-THIRD_PARTY_LICENSES",
+    "locks/dsh/vendor/tui-main-provenance.json"
+  ],
+  "completed": [
+    "Created independent feature branch/worktree and preserved original worktree",
+    "Implemented local official tmux-context and Git Worktrees selection",
+    "Implemented strict independent SSH headless profile and private deployment inputs",
+    "Composed paired remote filesystem/process/sandbox, explicit remote shell cwd and verified PTC launch",
+    "Added public shell-env adapter that strips host path facts; archive/source drift guard passed",
+    "Published complete dependency lock using standard resolver and publication journal",
+    "Frozen installation and public module identities/inheritance passed; package/lock remained unchanged",
+    "Independent static implementation review found no blocking defects",
+    "Node environment test files and launch syntax checks passed",
+    "Public documentation and staged whitespace checks passed",
+    "Final stable-lock affected regression passed: 207 tests; extra new archive drift refusal passed separately"
+  ],
+  "in_progress": [],
+  "failed_pending_decision": [],
+  "environment_unverified": [
+    "Real host/TUI startup and account calls remain separately authorized and were not run",
+    "Real SSH helper, endpoint, sandbox/PTY/cancellation/disconnect behavior not exercised",
+    "Remote helper deployment material is unavailable from the selected upstream release assets",
+    "Darwin validation not run",
+    "Remote TUI, remote Worktrees and MCP composition not supported by this initial profile"
+  ],
+  "updated_date": "2026-10-18",
+  "scope": "Repository implementation and isolated tests; no deployed instance changes, real host startup, model calls or SSH connections",
+  "plan_review": {
+    "decision": "Official SSH headless first; local upgrade and two plugins; user explicitly confirmed this scope",
+    "corrections": [
+      "TUI direct host path consumers prevent claiming complete SSH TUI support",
+      "tmux context and Worktrees are local-only in this candidate",
+      "SSH excludes optional plugins, OAuth, MCP, auto-review, jobs and host spill retention",
+      "Selected upstream release has no SSH helper assets; trusted predeployment is required"
+    ],
+    "nonblocking_choices": [
+      "Only OpenSSH aliases are accepted; user@host syntax is intentionally excluded in favor of the alias User configuration"
+    ]
+  },
+  "candidate": {
+    "core": "0.2.1-rc.2",
+    "tui_commit": "e709863019d56897e64495699c3a945cce194d00",
+    "lock_identity": "0db3de99494cf78dc8c0e846bbdd7724e9ca2fbefdeb53ae1b9d9c4d942c919f",
+    "pnpm_lock_sha256": "1031e69e1da9bee2a9fbcb5ba14f48de39e5abb657e4804331ce679da7d960b8",
+    "release_age_exact_exceptions": 301,
+    "changed_files_source_digest": {
+      "sha256": "cf5dabbe61e1bffcf820d9f4205331d721538d230b6ab7b8c586cb92653dd702",
+      "files": 43,
+      "base_commit": "a84710a98d1a687edb5033728178bf52ebc32214",
+      "excludes": [
+        "docs/acceptance/dsh-ssh-implementation-20261017.json"
+      ],
+      "algorithm": "base commit plus sorted changed path, permission mode and SHA-256 of current file bytes"
+    }
+  },
+  "validation": {
+    "controlled_executor": {
+      "baseline": "14 checks passed: trusted synthetic root/private modes, symlink/hardlink rejection, readonly inputs, network isolation",
+      "outer_default": "Root ownership/namespace restrictions prevented ordinary execution; those failures are not counted as behavioral passes",
+      "evidence": ".cache/dsh-ssh-validation/test-output/baseline.json"
+    },
+    "initial_contract_regression": {
+      "passed": 224,
+      "failed": 1,
+      "exit_code": 1,
+      "resolution": "Fixed new test expectation to match the existing framework redacted adapter callback diagnostic"
+    },
+    "initial_broad_regression": {
+      "passed": 604,
+      "failed": 46,
+      "exit_code": 1,
+      "resolution": "The snapshot preceded new lock publication. All affected failed files were rerun against the published stable lock; no test failure remains."
+    },
+    "source_archive_negative": {
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_dsh_ssh.py",
+        "-k",
+        "ssh_shell_env_archive_rejects_unpacked_filter_change"
+      ],
+      "passed": 1,
+      "deselected": 34,
+      "exit_code": 0,
+      "evidence": ".cache/dsh-ssh-validation/focused-output/output.log"
+    },
+    "frozen_install": {
+      "argv": [
+        "${NODE24}/bin/node",
+        "/tooling/pnpm/bin/pnpm.cjs",
+        "--dir",
+        "/runtime",
+        "install",
+        "--frozen-lockfile",
+        "--ignore-scripts",
+        "--node-linker=hoisted",
+        "--package-import-method=copy",
+        "--store-dir",
+        "/runtime/.store"
+      ],
+      "exit_code": 0,
+      "same_release_age_policy_as_sync": true,
+      "package_and_lock_unchanged": true,
+      "evidence": ".cache/dsh-ssh-validation/install-output/result.json"
+    },
+    "public_module_check": {
+      "argv": [
+        "${NODE24}/bin/node",
+        "/workspace/rotom/agents/dsh/templates/check-runtime.mjs",
+        "/runtime"
+      ],
+      "exit_code": 0,
+      "hosts_started": false
+    },
+    "node_tests": {
+      "argv": [
+        "node",
+        "--test",
+        "tests/node/dsh_execution_environment.test.mjs",
+        "tests/node/dsh_ssh_shell_env.test.mjs"
+      ],
+      "files_passed": 2,
+      "exit_code": 0
+    },
+    "static_review": {
+      "blocking_findings": 0,
+      "scope": "Selected implementation and exact public upstream API; no native runtime acceptance"
+    },
+    "stable_lock_affected_rerun": {
+      "argv": [
+        "${PREPARED_PYTHON}",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/tmp/pytest",
+        "tests/test_dsh_pipeline.py",
+        "tests/test_dsh_tf.py",
+        "tests/test_review_hardening.py",
+        "tests/test_runtime_preparation_recovery.py",
+        "tests/test_dependencies.py",
+        "tests/test_config_examples.py",
+        "tests/test_dsh_ssh.py",
+        "tests/test_dsh_optional.py"
+      ],
+      "exit_code": 0,
+      "passed": 207,
+      "failed": 0,
+      "elapsed_seconds": 467.94,
+      "evidence": ".cache/dsh-ssh-validation/test-output/output.log"
+    },
+    "argument_redaction": "Raw executor argv stays in private .cache evidence; public vectors replace only private toolchain prefixes with symbolic prepared-tool bindings.",
+    "observed_tool_versions": {
+      "git": "2.50.0",
+      "node": "24.14.0",
+      "npm_lock_resolver": "11.19.1",
+      "pnpm": "11.19.0",
+      "python": "3.11.11"
+    },
+    "final_public_docs": {
+      "argv": [
+        "${PREPARED_PYTHON}",
+        "scripts/check-public-docs.py"
+      ],
+      "exit_code": 0,
+      "findings": []
+    },
+    "final_whitespace": {
+      "argv": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exit_code": 0
+    },
+    "launch_syntax": {
+      "argv": [
+        "node",
+        "--check",
+        "agents/dsh/templates/launch.mjs"
+      ],
+      "exit_code": 0
+    }
+  },
+  "delegation": [
+    {
+      "role": "executor",
+      "configured_model": "gpt-6.1-sol",
+      "configured_effort": "medium",
+      "scope": "Optional integrations, shell environment adapter and isolated tests"
+    },
+    {
+      "role": "scout",
+      "configured_model": "gpt-6-luna",
+      "configured_effort": "high",
+      "scope": "Exact upstream API/source and release asset checks; final static implementation review"
+    }
+  ],
+  "git": {
+    "commit_created": false,
+    "merged": false,
+    "pushed": false,
+    "reason": "Reviewable worktree changes; no publication/integration action performed",
+    "target_main": "a84710a98d1a687edb5033728178bf52ebc32214",
+    "original_worktree_diff_preserved": true
+  }
+}

@@ -17,6 +17,7 @@ _EXPRESSIONS = frozenset({
   "process.env.DSH_TUI_PRESET ?? undefined",
   "process.env.DSH_TUI_WORKSPACE_TARGET ?? undefined",
   "process.env.DSH_TUI_RESUME_SESSION ?? undefined",
+  "ctx.ssh.ptcLaunch",
 })
 _MCP_ARGS_PREFIX = "JSON.parse(process.env.AGENTCFG_MCP_ENV_ARGS).concat("
 
@@ -67,6 +68,8 @@ def _walk(value, path=()):
              "workspace": "process.env.DSH_TUI_WORKSPACE_TARGET ?? undefined",
              "sessionId": "process.env.DSH_TUI_RESUME_SESSION ?? undefined"}
     if field in known and value.expression == known[field]:
+      return
+    if field == "launch" and value.expression == "ctx.ssh.ptcLaunch":
       return
     if field == "args" and mcp_arguments_expression(value.expression):
       return

@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "package": "@deepseek-harness-tui/dsh-tui",
+  "version": "0.15.0",
+  "repository": "https://github.com/ccch1mneyyy/dsh-TUI",
+  "commit": "e709863019d56897e64495699c3a945cce194d00",
+  "archive": "vendor/dsh-tui-0.15.0-e709863.tgz",
+  "integrity": "sha512-3G2WR1CH8dGGGXJ++SHkUPqG9K5BNjsuthWJuQwZSZQ0x9ZZBu6BfLXlJk/rDU17jhqVg328Ac6GvWia5bMTqA==",
+  "source_modified": false,
+  "build": {
+    "schema_version": 1,
+    "status": "complete",
+    "source": {
+      "url": "https://github.com/ccch1mneyyy/dsh-TUI.git",
+      "ref": "main",
+      "commit": "e709863019d56897e64495699c3a945cce194d00",
+      "tracked_diff_clean": true,
+      "patches_applied": false,
+      "license": "MIT",
+      "license_sha256": "54f2c59427af6a22111dade86a39605a17826a7d44e98801c42e3ab21889f884",
+      "package_json_sha256": "2e9fa0ae1e1981cba7d04e909c4f2b8aa0177f2d7f5abc30189e99fc19d4673a",
+      "lockfile_sha256": "1db0a0e02d8e82c4eaffaf650c3b0c88028632dc9d1a6518d3a220761c539583",
+      "submodules": [
+        {
+          "path": "vendor/dsh-std",
+          "url": "https://github.com/T-Auto/dsh-std.git",
+          "commit": "614dfa1ac168db79fcf4577cf0ebb34e2e3b944b",
+          "tracked_diff_clean": true,
+          "license": "MIT",
+          "lockfile_sha256": "68fe6a8ecba21febf6e8ea0bed6875052c39a81150d9e1d17ce4aaba5c6fc37d"
+        }
+      ]
+    },
+    "toolchain": {
+      "node": "v24.14.0",
+      "npm": "11.9.0",
+      "pnpm": "11.21.0",
+      "bootstrap_pnpm": "11.19.0",
+      "platform": "linux",
+      "arch": "x64"
+    },
+    "environment": {
+      "temporary_home": true,
+      "empty_user_and_global_npm_config": true,
+      "git_global_and_system_config_disabled": true,
+      "ambient_credentials_removed": true,
+      "third_party_hosts_started": false,
+      "models_invoked": false
+    },
+    "commands": [
+      {
+        "cwd": "source",
+        "argv": [
+          "pnpm",
+          "install",
+          "--frozen-lockfile",
+          "--ignore-scripts"
+        ],
+        "exit_code": 0
+      },
+      {
+        "cwd": "source",
+        "argv": [
+          "pnpm",
+          "compile"
+        ],
+        "exit_code": 1,
+        "result": "Vendor packages built; npm rejected identical user/global config paths. No source changes."
+      },
+      {
+        "cwd": "source",
+        "argv": [
+          "pnpm",
+          "compile"
+        ],
+        "exit_code": 0,
+        "result": "Retried with distinct empty npm config files."
+      },
+      {
+        "cwd": "source",
+        "argv": [
+          "node",
+          "scripts/with-publish-manifest.mjs",
+          "npm",
+          "pack",
+          "--ignore-scripts",
+          "--json",
+          "--pack-destination",
+          "${BUILD_ROOT}/artifacts"
+        ],
+        "exit_code": 0
+      },
+      {
+        "cwd": "source",
+        "argv": [
+          "node",
+          "scripts/with-publish-manifest.mjs",
+          "npm",
+          "pack",
+          "--ignore-scripts",
+          "--json",
+          "--pack-destination",
+          "${BUILD_ROOT}/repeat-pack"
+        ],
+        "exit_code": 0
+      },
+      {
+        "cwd": "unpacked/package",
+        "argv": [
+          "node",
+          "--check",
+          "<entry file>"
+        ],
+        "exit_code": 0,
+        "result": "All 11 selected package/bin/bundled main JavaScript entries parsed without executing."
+      }
+    ],
+    "packaging": {
+      "upstream_publish_wrapper_used": true,
+      "manifest_restored_byte_for_byte": true,
+      "workspace_dependencies_published_as_exact_optional_bundles": true,
+      "lifecycle_scripts_during_pack": false
+    },
+    "artifact": {
+      "filename": "deepseek-harness-tui-dsh-tui-0.15.0.tgz",
+      "package": "@deepseek-harness-tui/dsh-tui",
+      "version": "0.15.0",
+      "core_compatibility": "0.2.1-rc.2",
+      "size": 18431456,
+      "sha512": "dc6d96475087f1d18619727ef921e450fa86f4ae41363b2eb61589b90c19499434c7d65906ee817cb5e5264feb0d4d7b8e1a95837dbc01ce86bd689ae5b313a8",
+      "integrity": "sha512-3G2WR1CH8dGGGXJ++SHkUPqG9K5BNjsuthWJuQwZSZQ0x9ZZBu6BfLXlJk/rDU17jhqVg328Ac6GvWia5bMTqA=="
+    },
+    "verification": {
+      "entry_targets_present": true,
+      "licenses_present_and_root_license_verbatim": true,
+      "bundled_packages_present": [
+        {
+          "name": "@dsh-std/command",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@dsh-std/connection",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@dsh-std/core",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@dsh-tui-vendor/mathjax-tex-svg",
+          "version": "0.0.0"
+        },
+        {
+          "name": "@dsh-std/manifest",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@dsh-std/messages",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@dsh-std/presentation",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@dsh-std/storage",
+          "version": "0.1.0"
+        }
+      ],
+      "published_workspace_dependencies_converted_by_upstream_wrapper": true,
+      "safe_archive_members": true,
+      "private_build_root_absent": true,
+      "source_and_git_metadata_absent": true,
+      "archive_members": 3263,
+      "upstream_root_third_party_licenses_packed": false,
+      "sha512": "dc6d96475087f1d18619727ef921e450fa86f4ae41363b2eb61589b90c19499434c7d65906ee817cb5e5264feb0d4d7b8e1a95837dbc01ce86bd689ae5b313a8",
+      "integrity": "sha512-3G2WR1CH8dGGGXJ++SHkUPqG9K5BNjsuthWJuQwZSZQ0x9ZZBu6BfLXlJk/rDU17jhqVg328Ac6GvWia5bMTqA==",
+      "size": 18431456,
+      "repeat_pack_byte_identical": true,
+      "node_syntax_check": [
+        {
+          "file": "bin/dsh-tui.js",
+          "exit_code": 0
+        },
+        {
+          "file": "lib/types/index.js",
+          "exit_code": 0
+        },
+        {
+          "file": "lib/types/dsh-adapter/invariant.js",
+          "exit_code": 0
+        },
+        {
+          "file": "node_modules/@dsh-std/command/lib/index.js",
+          "exit_code": 0
+        },
+        {
+          "file": "node_modules/@dsh-std/connection/lib/index.js",
+          "exit_code": 0
+        },
+        {
+          "file": "node_modules/@dsh-std/core/lib/index.js",
+          "exit_code": 0
+        },
+        {
+          "file": "node_modules/@dsh-tui-vendor/mathjax-tex-svg/lib/index.mjs",
+          "exit_code": 0
+        },
+        {
+          "file": "node_modules/@dsh-std/manifest/lib/index.js",
+          "exit_code": 0
+        },
+        {
+          "file": "node_modules/@dsh-std/messages/lib/index.js",
+          "exit_code": 0
+        },
+        {
+          "file": "node_modules/@dsh-std/presentation/lib/index.js",
+          "exit_code": 0
+        },
+        {
+          "file": "node_modules/@dsh-std/storage/lib/index.js",
+          "exit_code": 0
+        }
+      ]
+    },
+    "limitations": [
+      "No DSH/TUI/Codex host or real model was launched.",
+      "Full upstream verify:build and verify:package runtime imports were not run.",
+      "Repeat pack is byte-identical; no second independent clean full build was performed.",
+      "Upstream files policy omits root THIRD_PARTY_LICENSES from npm tarball; root MIT and bundled package LICENSE files are present."
+    ],
+    "evidence": {
+      "public": [
+        "tui-provenance.json",
+        "static-check.json"
+      ],
+      "private_logs": "Build logs and pack reports are retained separately outside the repository."
+    }
+  }
+}

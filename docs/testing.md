@@ -2,6 +2,8 @@
 
 Tests must distinguish implementation contracts from actual native behavior and authenticated service behavior. A configured CI workflow is not evidence that CI ran; a historical scope closure does not validate a different source or lock.
 
+The Core `0.2.1-rc.2` / fixed TUI main candidate has a separate [acceptance record](acceptance/dsh-rc21-tui-main-20261017.json). Its source build, frozen install and public module checks do not replace real TUI, account or platform smoke. Existing Perry safety limitations remain open. The later SSH/plugin worktree has its own [implementation record](acceptance/dsh-ssh-implementation-20261017.json); [SSH usage](dsh-ssh.md) describes its deliberately narrower headless boundary.
+
 ## Default offline suite
 
 ```sh

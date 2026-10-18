@@ -23,7 +23,15 @@ const { createLaunchEnvironmentSnapshot } = await import(pathToFileURL(require.r
 const { mcpArguments } = await import(pathToFileURL(require.resolve("rotom-dsh-execution-environment/environment")));
 // 正式 MCP stdio 配置通过 env 直接 exec，避免新增中继进程及取消边界。
 process.env.AGENTCFG_MCP_ENV_ARGS = JSON.stringify(mcpArguments("/rotom-placeholder", []).slice(1, -1));
-process.env.DSH_TUI_WORKSPACE_TARGET = process.cwd();
+const remote = process.env.AGENTCFG_DSH_EXECUTION === "ssh";
+if (remote) {
+  if (!process.env.AGENTCFG_DSH_REMOTE_WORKSPACE?.startsWith("/")) throw new Error("Remote workspace is not configured");
+  delete process.env.DSH_TUI_WORKSPACE_TARGET;
+  delete process.env.AGENTCFG_DEVELOPMENT_ENV;
+  delete process.env.AGENTCFG_MCP_ENV_ARGS;
+} else {
+  process.env.DSH_TUI_WORKSPACE_TARGET = process.cwd();
+}
 const environment = createLaunchEnvironmentSnapshot([{ source: "process", values: process.env }]);
 await runProfile({ environment, profile: "agentcfg", patchFiles: [patchFile], args,
   packageManager: { command: process.execPath, args: [process.argv[1], "--deny-package-operation"], env: {} },

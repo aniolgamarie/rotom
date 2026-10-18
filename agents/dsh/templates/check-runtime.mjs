@@ -12,12 +12,12 @@ const manifest = (resolve, name) => JSON.parse(readFileSync(resolve.resolve(`${n
 const fail = () => { throw new Error("managed runtime package versions or module identities differ"); };
 for (const [name, version] of Object.entries(expected)) {
   const actual = manifest(require, name);
-  const localVersion = { "rotom-dsh-cursor-terminal": "0.1.2", "rotom-dsh-review-context": "0.1.0",
-    "rotom-dsh-execution-environment": "0.1.0" }[name];
+  const localVersion = { "@deepseek-harness-tui/dsh-tui": "0.15.0", "rotom-dsh-cursor-terminal": "0.1.2", "rotom-dsh-review-context": "0.1.1",
+    "rotom-dsh-execution-environment": "0.1.1", "rotom-dsh-ssh-shell-env": "0.1.0" }[name];
   if (actual.name !== name || actual.version !== (localVersion ?? version)) fail();
 }
-if (manifest(require, "@deepseek-ai/cordis").version !== "4.0.5-alpha.1"
-    || manifest(require, "@deepseek-ai/schemastery").version !== "3.18.5-alpha.1"
+if (manifest(require, "@deepseek-ai/cordis").version !== "4.0.5"
+    || manifest(require, "@deepseek-ai/schemastery").version !== "3.18.5"
     || manifest(require, "@deepseek-harness-tui/dsh-tui").version !== "0.15.0") fail();
 const tui = createRequire(require.resolve("@deepseek-harness-tui/dsh-tui/package.json"));
 const thin = createRequire(require.resolve("rotom-dsh-cursor-terminal"));
@@ -37,10 +37,10 @@ for (const resolve of [tui, thin, perry, reviewContext]) {
   if (realpathSync(resolve.resolve("@deepseek-ai/schemastery")) !== realpathSync(require.resolve("@deepseek-ai/schemastery"))) fail();
 }
 // Cursor 的直接 Schema 依赖仅构造配置，不实例化审批/会话服务；它可单独解析稳定版。
-if (!["3.18.4", "3.18.5-alpha.1"].includes(manifest(cursor, "@deepseek-ai/schemastery").version)) fail();
-for (const name of ["dsh-agent", "dsh-session", "dsh-subagent", "dsh-tools", "dsh-user-approval", "dsh-invariants", "dsh-brand"]) {
+if (!["3.18.5"].includes(manifest(cursor, "@deepseek-ai/schemastery").version)) fail();
+for (const name of ["dsh-agent", "dsh-session", "dsh-subagent", "dsh-tools", "dsh-user-approval", "dsh-brand"]) {
   const packageName = "@deepseek-ai/" + name;
-  if (manifest(perry, packageName).version !== "0.2.0-rc.2"
+  if (manifest(perry, packageName).version !== "0.2.1-rc.2"
       || realpathSync(perry.resolve(packageName)) !== realpathSync(require.resolve(packageName))) fail();
 }
 if (manifest(tui, "react").version.split(".")[0] !== "19"
@@ -54,5 +54,12 @@ if (manifest(perry, "dsh-auto-review").version !== "0.12.17" || typeof review.ap
 for (const name of ["dsh-command-feedback", "dsh-spill-local", "dsh-spill-policy", "dsh-tool-fs-search", "dsh-tool-jobs"]) {
   await import(pathToFileURL(require.resolve("@deepseek-ai/" + name)));
 }
+for (const name of ["dsh-tmux-context", "dsh-experimental-worktree", "dsh-experimental-tool-worktree",
+  "dsh-headless", "dsh-ssh", "dsh-fs-ssh", "dsh-subprocess-ssh", "dsh-sandbox-ssh"]) {
+  await import(pathToFileURL(require.resolve("@deepseek-ai/" + name)));
+}
+const { ShellEnvRegistry } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh-shell-env")));
+const { default: SshShellEnvRegistry } = await import(pathToFileURL(require.resolve("rotom-dsh-ssh-shell-env")));
+if (!(SshShellEnvRegistry.prototype instanceof ShellEnvRegistry)) fail();
 if (!(CursorAdapter.prototype instanceof LlmAdapter) || !(TerminalCursorAdapter.prototype instanceof CursorAdapter)) fail();
 console.log("managed runtime versions and public module identities verified");

@@ -10,6 +10,8 @@ from .adapter import (Adapter, AdapterDeclaration, Artifact, DependencyPlan,
                       EnvironmentBinding, LaunchSpec, ManagedTarget, Ownership, SecretRef)
 from . import native
 from .render import render_rules
+from .dsh_optional import OPTIONAL_PLUGINS, optional_plugin_rows
+from .dsh_ssh import SSH_OPTIONS, is_ssh, ssh_patch, validate_ssh
 from .schema import AdapterPolicy, AdapterSchemaBundle, AdapterSchemas, AuthenticationClaim, ConfigError
 
 
@@ -30,6 +32,8 @@ OPTIONS = closed({"preset": {"type": "string", "enum": ["standard"]},
                   "show_welcome": BOOL,
                   "auto_review": BOOL,
                   "terminal_images": BOOL,
+                  "execution": {"type": "string", "enum": ["local", "ssh"]},
+                  "ssh": SSH_OPTIONS,
                   "provider_options": {"type": "object", "additionalProperties": PROVIDER_OPTIONS}},
                  ("preset", "theme", "terminal_images"))
 
@@ -64,9 +68,10 @@ class DshAdapter(Adapter):
   def validate(self, data):
     bindings = data["adapter_documents"]["bindings"]
     selected = data["profile"]
-    if "tui" not in data["plugins"]:
+    validate_ssh(data)
+    if not is_ssh(data) and "tui" not in data["plugins"]:
       raise ConfigError("dsh-tui-required")
-    if set(data["plugins"]) - {"tui", "codex-auth", "cursor-auth", "auto-review", "review-context"}:
+    if set(data["plugins"]) - ({"tui", "codex-auth", "cursor-auth", "auto-review", "review-context"} | OPTIONAL_PLUGINS):
       raise ConfigError("plugin-mapping-not-implemented")
     for key, plugin in data["plugins"].items():
       if not plugin["enabled"] or any(p not in data["plugins"] for p in plugin["requires"]):
@@ -141,6 +146,8 @@ class DshAdapter(Adapter):
         yield "/llm-pi-ai/config/providers/" + escaped(route) + "/" + field, value
 
   def _tui_fields(self, data):
+    if is_ssh(data):
+      return
     base = native.load((self.repository / "agents/dsh/templates/tui.yaml").read_bytes())
     config = base[0]["config"]
     config["terminalImages"] = data["profile"]["agent_options"]["terminal_images"]
@@ -189,6 +196,10 @@ class DshAdapter(Adapter):
 
   def _field_artifacts(self, data):
     path = self.shared_files[0]
+    if is_ssh(data):
+      rules = tuple(data["rules"][key] for key in data["profile"]["rules"])
+      yield Artifact(ManagedTarget(path, Ownership.FIELDS, "cordis-yaml", "/system-prompt/config/personaSuffix"),
+        json.dumps(render_rules(self.repository, rules, {}).decode("utf-8"), ensure_ascii=False).encode())
     # 默认路由交由 Core fallback；TUI 原生偏好和会话恢复可选择自己的模型。
     main = data["profile"]["roles"].get("main")
     if main:
@@ -205,6 +216,8 @@ class DshAdapter(Adapter):
     for selector, value, ownership in self._tui_fields(data):
       yield Artifact(ManagedTarget(path, ownership, "cordis-yaml", selector),
         json.dumps(value, ensure_ascii=False).encode())
+    if is_ssh(data):
+      return
     for selector, value in (("/completed", True), ("/version", 1)):
       yield Artifact(ManagedTarget("user-home/.dsh-tui/onboarding.json", Ownership.INITIALIZE, "json", selector),
         json.dumps(value).encode())
@@ -218,8 +231,8 @@ class DshAdapter(Adapter):
       ManagedTarget("dsh-home/agentcfg.patch.yml", Ownership.FILE, "bytes"),
       ManagedTarget("dsh-home/skills", Ownership.FILE, "skill-directory"),
       ManagedTarget("launch.mjs", Ownership.FILE, "bytes"),
-      ManagedTarget("user-home/.dsh-tui/themes/rotom-poimandres.json", Ownership.FILE, "json"),
-      ManagedTarget("user-home/.dsh-tui/themes/rotom-catppuccin.json", Ownership.FILE, "json"),
+      *((ManagedTarget("user-home/.dsh-tui/themes/rotom-poimandres.json", Ownership.FILE, "json"),
+         ManagedTarget("user-home/.dsh-tui/themes/rotom-catppuccin.json", Ownership.FILE, "json")) if not is_ssh(data) else ()),
       *(artifact.target for artifact in self._field_artifacts(data)),
     )
 
@@ -238,9 +251,15 @@ class DshAdapter(Adapter):
              {"id": "session-log-deepseek", "config": {"enabled": False}},
              {"id": "dsh-tui-auth", "disabled": not codex_enabled, "name": "@deepseek-harness-tui/dsh-tui/oauth",
               "config": {"providers": ["openai-codex"]}}]
-    patch.append({"id": "auto-review", "disabled": "auto-review" not in data["plugins"]
-      or not data["profile"]["agent_options"].get("auto_review", True)})
+    if is_ssh(data):
+      patch = ssh_patch(data)
+    else:
+      patch.append({"id": "auto-review", "disabled": "auto-review" not in data["plugins"]
+        or not data["profile"]["agent_options"].get("auto_review", True)})
     inserts = [{"id": "agentcfg-development-subprocess", "name": "rotom-dsh-execution-environment"}]
+    if is_ssh(data):
+      inserts = []
+    inserts.extend(optional_plugin_rows(data))
     for key, server in data["mcp"].items():
       conf = {"serverName": key}
       if server["transport"] == "stdio":
@@ -260,10 +279,11 @@ class DshAdapter(Adapter):
     result.append(Artifact(targets[1], native.dump(patch)))
     result.append(Artifact(ManagedTarget("launch.mjs", Ownership.FILE, "bytes"),
       (self.repository / "agents/dsh/templates/launch.mjs").read_bytes()))
-    result.append(Artifact(ManagedTarget("user-home/.dsh-tui/themes/rotom-poimandres.json", Ownership.FILE, "json"),
-      (self.repository / "agents/dsh/templates/theme.json").read_bytes()))
-    result.append(Artifact(ManagedTarget("user-home/.dsh-tui/themes/rotom-catppuccin.json", Ownership.FILE, "json"),
-      (self.repository / "agents/dsh/templates/theme-catppuccin.json").read_bytes()))
+    if not is_ssh(data):
+      result.append(Artifact(ManagedTarget("user-home/.dsh-tui/themes/rotom-poimandres.json", Ownership.FILE, "json"),
+        (self.repository / "agents/dsh/templates/theme.json").read_bytes()))
+      result.append(Artifact(ManagedTarget("user-home/.dsh-tui/themes/rotom-catppuccin.json", Ownership.FILE, "json"),
+        (self.repository / "agents/dsh/templates/theme-catppuccin.json").read_bytes()))
     result.extend(self._field_artifacts(data))
     return tuple(result)
 
@@ -273,10 +293,11 @@ class DshAdapter(Adapter):
   def launch_spec(self, data, *, cwd, runtime_root, instance_root, lock_identity):
     environment = [EnvironmentBinding("DSH_HOME", str(instance_root / "dsh-home")),
       EnvironmentBinding("HOME", str(instance_root / "user-home")),
-      EnvironmentBinding("DSH_TUI_NO_LAUNCHPAD", "0" if data["profile"]["agent_options"].get("show_welcome", True) else "1"),
-      EnvironmentBinding("DSH_TUI_PRESET", data["profile"]["agent_options"]["preset"]),
-      EnvironmentBinding("DSH_PERMISSION_MODE", "workspace-write"),
+      EnvironmentBinding("DSH_PERMISSION_MODE", data["profile"]["agent_options"].get("ssh", {}).get("permission_mode", "read-only") if is_ssh(data) else "workspace-write"),
       EnvironmentBinding("DSH_TELEMETRY_DISABLED", "1")]
+    if not is_ssh(data):
+      environment.extend([EnvironmentBinding("DSH_TUI_NO_LAUNCHPAD", "0" if data["profile"]["agent_options"].get("show_welcome", True) else "1"),
+        EnvironmentBinding("DSH_TUI_PRESET", data["profile"]["agent_options"]["preset"])])
     stdio = [server for server in data["mcp"].values() if server["transport"] == "stdio"]
     if stdio:
       environment.append(EnvironmentBinding("AGENTCFG_MCP_REQUIRES_PATH",
@@ -289,6 +310,10 @@ class DshAdapter(Adapter):
     for key, server in data["mcp"].items():
       if "credential_ref" in server:
         environment.append(EnvironmentBinding(env_name("MCP", key), SecretRef(server["credential_ref"])))
+    if is_ssh(data):
+      validate_ssh(data, selected=True)
+      environment.extend([EnvironmentBinding("AGENTCFG_DSH_EXECUTION", "ssh"),
+        EnvironmentBinding("AGENTCFG_DSH_REMOTE_WORKSPACE", data["profile"]["agent_options"]["ssh"]["workspace"])])
     return LaunchSpec(("node", str(instance_root / "launch.mjs"), str(runtime_root),
                        str(instance_root / "dsh-home/agentcfg.patch.yml"), "--profile", "agentcfg"),
                       cwd, lock_identity, tuple(environment), environment_policy="isolated")
@@ -402,5 +427,6 @@ class DshAdapter(Adapter):
       policy=lambda docs: AdapterPolicy(deepcopy(docs["agent"]["defaults"]), deepcopy(docs["plugins"]["plugins"]), frozenset()),
       authentication_claims=lambda data: tuple(AuthenticationClaim(key,
         data["adapter_documents"]["bindings"]["oauth"][key]["owner"] if value["auth_kind"] == "oauth" else "api-key")
-        for key, value in data["providers"].items()))
+        for key, value in data["providers"].items()),
+      validate_selected=lambda data: validate_ssh(data, selected=True))
     return AdapterSchemas({"dsh": bundle})

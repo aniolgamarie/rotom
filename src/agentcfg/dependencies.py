@@ -27,6 +27,56 @@ AUDITED_HELPER_SHA256 = "ca5509febf1e6ec1356df121835ebe5ed2f9cace4bdc2ba6d83d41c
 LOCK_POLICY_KEYS = frozenset({"node", "npm", "pnpm", "adapter_version", "upstream", "npm_integrity", "pnpm_integrity", "supported_platforms", "packages"})
 
 
+def tui_source_receipt(repository, policy):
+  """源码构建与同版本 npm 包分开锁定；来源收据也进入配方身份。"""
+  from .paths import PathError, relative_path
+  spec = policy["packages"]["@deepseek-harness-tui/dsh-tui"]
+  if not spec.startswith("file:"):
+    return b""
+  relative = "vendor/tui-main-provenance.json"
+  receipt = repository / "locks/dsh" / relative
+  try:
+    if receipt.is_symlink():
+      raise ValueError()
+    raw = receipt.read_bytes()
+    document = json.loads(raw)
+    if (set(document) != {"schema_version", "package", "version", "repository", "commit", "archive", "integrity", "source_modified", "build"}
+        or type(document["schema_version"]) is not int or document["schema_version"] != 1
+        or document["package"] != "@deepseek-harness-tui/dsh-tui"
+        or document["repository"] != "https://github.com/ccch1mneyyy/dsh-TUI"
+        or document["commit"] != policy["upstream"]["tui"]
+        or document["archive"] != spec[5:]
+        or document["source_modified"] is not False
+        or not isinstance(document["build"], dict)):
+      raise ValueError()
+    source = document["build"].get("source")
+    if (not isinstance(source, dict)
+        or source.get("commit") != document["commit"]
+        or source.get("url") != document["repository"] + ".git"
+        or source.get("tracked_diff_clean") is not True
+        or source.get("patches_applied") is not False):
+      raise ValueError()
+    archive = repository / "locks/dsh" / relative_path(document["archive"])
+    if archive.is_symlink() or not archive.is_file():
+      raise ValueError()
+    content = archive.read_bytes()
+    if document["integrity"] != "sha512-" + base64.b64encode(hashlib.sha512(content).digest()).decode():
+      raise ValueError()
+    with tarfile.open(fileobj=io.BytesIO(content), mode="r:gz") as bundle:
+      member = bundle.getmember("package/package.json")
+      if not member.isfile():
+        raise ValueError()
+      body = bundle.extractfile(member)
+      if body is None:
+        raise ValueError()
+      package = json.load(body)
+      if package["name"] != document["package"] or package["version"] != document["version"]:
+        raise ValueError()
+    return relative.encode() + raw
+  except (OSError, ValueError, KeyError, TypeError, PathError, tarfile.TarError):
+    raise DependencyError("TUI 源码构建归档与不可变来源收据不一致") from None
+
+
 def recipe_digest(repository, adapter_id="dsh"):
   h = hashlib.sha256()
   agent_root = f"agents/{adapter_id}"
@@ -35,6 +85,8 @@ def recipe_digest(repository, adapter_id="dsh"):
     h.update((repository / relative).read_bytes())
   package = (repository / f"{agent_root}/dependencies.json").read_bytes()
   policy = json.loads((repository / f"{agent_root}/lock-policy.json").read_bytes())
+  if adapter_id == "dsh":
+    h.update(tui_source_receipt(repository, policy))
   declared = {value[5:] for value in json.loads(package)["dependencies"].values() if value.startswith("file:")}
   declared.add(f"vendor/pnpm-{policy['pnpm']}.tgz")
   for relative in sorted(declared):
@@ -47,7 +99,10 @@ def recipe_digest(repository, adapter_id="dsh"):
     local_packages = {
       "vendor/rotom-dsh-cursor-terminal-0.1.2.tgz": ("cursor-terminal", ("package.json", "index.mjs")),
       "vendor/rotom-dsh-review-context-0.1.0.tgz": ("review-context", ("package.json", "index.mjs", "cordis.patch.yml")),
+      "vendor/rotom-dsh-review-context-0.1.1.tgz": ("review-context", ("package.json", "index.mjs", "cordis.patch.yml")),
       "vendor/rotom-dsh-execution-environment-0.1.0.tgz": ("execution-environment", ("package.json", "index.mjs", "environment.mjs")),
+      "vendor/rotom-dsh-execution-environment-0.1.1.tgz": ("execution-environment", ("package.json", "index.mjs", "environment.mjs")),
+      "vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz": ("ssh-shell-env", ("package.json", "index.mjs", "filter.mjs")),
     }
     if relative in local_packages:
       directory, files = local_packages[relative]
@@ -236,6 +291,7 @@ def _read_lock_unlocked(repository, adapter_id="dsh", expected_adapter_version=N
     resolution = b"" if pnpm_only else lock_tree.read("package-lock.json")[0]
     installer_resolution = lock_tree.read("pnpm-lock.yaml")[0]
     validate_installer_resolution(package, installer_resolution)
+    validate_release_age_resolution(policy, installer_resolution)
     digest = lock_identity(package, resolution, metadata, installer_resolution)
     if pnpm_only:
       validate_installer_plugin_versions(repository, installer_resolution, adapter_id)
@@ -274,10 +330,7 @@ def lock_policy(repository, adapter_id="dsh", expected_adapter_version=None):
       or policy["upstream"]["cursor"] != plugins["cursor-auth"]["commit"]
       or policy["supported_platforms"] != ["linux", "darwin"]
       or set(policy) not in (LOCK_POLICY_KEYS, LOCK_POLICY_KEYS | {"minimum_release_age_exclude"})
-      or policy.get("minimum_release_age_exclude", []) not in ([],
-        ["@deepseek-harness-tui/dsh-tui@" + packages["@deepseek-harness-tui/dsh-tui"]])
-      or any(re.fullmatch(r"@deepseek-harness-tui/dsh-tui@(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", spec) is None
-        for spec in policy.get("minimum_release_age_exclude", []))
+      or not valid_release_age_exceptions(policy, packages)
       or not policy["packages"]
       or policy["packages"] != packages
       or any("openspec" in name.lower() for name in packages)
@@ -290,11 +343,40 @@ def lock_policy(repository, adapter_id="dsh", expected_adapter_version=None):
   return policy
 
 
-def prepare_pnpm_policy(destination, policy):
-  """公开 pnpm 项目配置；仅豁免已核验的精确 TUI 版本。"""
+def valid_release_age_exceptions(policy, packages):
+  """只允许选定 TUI 或同一 Core 发布的逐包精确例外，不接受通配符。"""
+  specs = policy.get("minimum_release_age_exclude", [])
+  if not isinstance(specs, list) or not all(isinstance(spec, str) for spec in specs) or len(specs) != len(set(specs)):
+    return False
+  host = packages.get("@deepseek-ai/dsh", "")
+  tui = packages.get("@deepseek-harness-tui/dsh-tui", "")
+  for spec in specs:
+    if (re.fullmatch(r"\d+\.\d+\.\d+", tui)
+        and spec == "@deepseek-harness-tui/dsh-tui@" + tui):
+      continue
+    if (re.fullmatch(r"\d+\.\d+\.\d+-(?:alpha|beta|rc)\.\d+", host)
+        and re.fullmatch(r"@deepseek-ai/dsh(?:-[a-z0-9-]+)?@" + re.escape(host), spec)):
+      continue
+    return False
+  return True
+
+
+def validate_release_age_resolution(policy, resolution):
+  """例外必须实际出现在完整锁中，不能顺带授权未选中的包。"""
   exceptions = policy.get("minimum_release_age_exclude", [])
-  if exceptions:
-    (destination / "pnpm-workspace.yaml").write_text(yaml.safe_dump({"minimumReleaseAgeExclude": exceptions}))
+  if not exceptions:
+    return
+  selected = {name.split("(", 1)[0] for name in yaml.safe_load(resolution)["packages"]}
+  if not set(exceptions).issubset(selected):
+    raise ValueError("release-age exception is absent from the complete lock")
+
+
+def prepare_pnpm_policy(destination, policy):
+  """公开 pnpm 项目配置；禁止解析器自动扩大精确例外名单。"""
+  exceptions = policy.get("minimum_release_age_exclude", [])
+  (destination / "pnpm-workspace.yaml").write_text(yaml.safe_dump({
+    "minimumReleaseAgeStrict": True, "minimumReleaseAgeExclude": exceptions,
+  }))
 
 
 def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_version=None):
@@ -331,12 +413,16 @@ def _resolve_lock_unlocked(repository, *, npm="npm", adapter_id="dsh", expected_
     # TUI/Perry 的 npm peer 声明冲突不靠强制解析掩盖；实际安装器只消费完整 pnpm 锁。
     resolution = b""
     prepare_pnpm_policy(root, policy)
+    installer_policy = (root / "pnpm-workspace.yaml").read_bytes()
     pnpm = prepare_pnpm(repository, root, policy, adapter_id)
     check_pnpm_version(pnpm, policy["pnpm"], cwd=root, env=env)
     checked([*pnpm, "install", "--lockfile-only", "--ignore-scripts", "--node-linker=hoisted", "--package-import-method=copy",
       "--store-dir", str(root / "store")], cwd=root, env=env)
+    if (root / "pnpm-workspace.yaml").read_bytes() != installer_policy:
+      raise DependencyError("解析器修改了发布冷却期策略，拒绝发布锁")
     installer_resolution = (root / "pnpm-lock.yaml").read_bytes()
     validate_installer_resolution(package, installer_resolution)
+    validate_release_age_resolution(policy, installer_resolution)
     validate_installer_plugin_versions(repository, installer_resolution, adapter_id)
     manifest = {"version": 2, "resolution_kind": "pnpm", "identity": hashlib.sha256(package + resolution).hexdigest(),
       "recipe": initial_recipe, "node": node_version, "npm": npm_version,

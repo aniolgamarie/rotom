@@ -36,8 +36,24 @@ conflicts = []
 
 [plugins.review-context]
 package = "rotom-dsh-review-context"
-version = "0.1.0"
+version = "0.1.1"
 bundled = true
+enabled = true
+requires = ["tui"]
+conflicts = []
+
+[plugins.tmux-context]
+package = "@deepseek-ai/dsh-tmux-context"
+version = "0.2.1-rc.2"
+bundled = false
+enabled = true
+requires = ["tui"]
+conflicts = []
+
+[plugins.git-worktrees]
+package = "@deepseek-ai/dsh-experimental-tool-worktree"
+version = "0.2.1-rc.2"
+bundled = false
 enabled = true
 requires = ["tui"]
 conflicts = []

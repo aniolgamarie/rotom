@@ -82,7 +82,7 @@ def test_auto_review_option_is_boolean_and_defaults_on():
 def test_review_context_public_bundle_and_constant_tool():
   package = json.loads((ROOT / "agents/dsh/packages/review-context/package.json").read_text())
   assert package["dsh"] == {"bundle": {"patch": "./cordis.patch.yml"}}
-  assert package["peerDependencies"] == {"@deepseek-ai/dsh-tools": "0.2.0-rc.2"}
+  assert package["peerDependencies"] == {"@deepseek-ai/dsh-tools": "0.2.1-rc.2"}
   patch = native.load((ROOT / "agents/dsh/packages/review-context/cordis.patch.yml").read_bytes())
   assert patch == [{"insert": [{"id": "rotom-review-context", "name": "rotom-dsh-review-context"}]}]
   source = (ROOT / "agents/dsh/packages/review-context/index.mjs").read_text()
@@ -146,7 +146,7 @@ def test_declared_context_archive_refuses_unpacked_source(tmp_path, name):
   repository = recipe_repository(tmp_path)
   path = repository / "agents/dsh/dependencies.json"
   document = json.loads(path.read_text())
-  document["dependencies"]["rotom-dsh-review-context"] = "file:vendor/rotom-dsh-review-context-0.1.0.tgz"
+  document["dependencies"]["rotom-dsh-review-context"] = "file:vendor/rotom-dsh-review-context-0.1.1.tgz"
   path.write_text(json.dumps(document))
   recipe_digest(repository)
   source = repository / "agents/dsh/packages/review-context" / name

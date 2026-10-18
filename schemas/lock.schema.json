@@ -23,8 +23,8 @@
     "npm_integrity": {"type": "string", "pattern": "^sha512-[A-Za-z0-9+/]+=*$"},
     "pnpm_integrity": {"type": "string", "pattern": "^sha512-[A-Za-z0-9+/]+=*$"},
     "minimum_release_age_exclude": {
-      "type": "array", "maxItems": 1, "uniqueItems": true,
-      "items": {"type": "string", "pattern": "^@deepseek-harness-tui/dsh-tui@[0-9]+\\.[0-9]+\\.[0-9]+$"}
+      "type": "array", "maxItems": 1024, "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^(@deepseek-harness-tui/dsh-tui@[0-9]+\\.[0-9]+\\.[0-9]+|@deepseek-ai/dsh(-[a-z0-9-]+)?@[0-9]+\\.[0-9]+\\.[0-9]+-(alpha|beta|rc)\\.[0-9]+)$"}
     },
     "install_policy": {
       "type": "object", "additionalProperties": false,

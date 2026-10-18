@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-17",
+  "scope": "Core 0.2.1-rc.2 and immutable upstream TUI main source candidate; no deployed instance changes",
+  "candidate": {
+    "core": "0.2.1-rc.2",
+    "core_commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+    "tui_version": "0.15.0",
+    "tui_commit": "e709863019d56897e64495699c3a945cce194d00",
+    "lock_identity": "167545f35e1ee30d412c8161d397266814212bf2392549f3fdb16324f6f3e5b8",
+    "pnpm_lock_sha256": "1dedc844b7065703b9f4d6882dc6e7b6fa5c40e2f7b2303ef430d34e6c044a69"
+  },
+  "completed": [
+    "Unmodified fixed upstream source and submodule built using official publishing flow",
+    "Repeated packing produced identical bytes; static entry/license/archive checks passed",
+    "Frozen installation with lifecycle scripts disabled passed; package and lock unchanged",
+    "Public module imports, versions, inheritance and shared identities passed",
+    "Standard lock resolver and journaled repository lock publication passed in controlled namespace",
+    "Initial affected offline suite passed: 195 tests in controlled network-isolated executor",
+    "Final broad regression: 210 passed; two empty-exception publication failures corrected",
+    "Affected lock-publication and source-policy regression after corrections: 62 passed, 68 unrelated cases deselected",
+    "Independent stable diff/source/lock/privacy review completed; receipt cross-check strengthened and verified",
+    "Public documentation check, archive path classification and git diff whitespace check passed"
+  ],
+  "in_progress": [],
+  "failed_pending_decision": [],
+  "environment_unverified": [
+    "Real host/TUI interaction smoke not authorized or run",
+    "Authenticated model/account requests not authorized or run",
+    "Darwin native acceptance not run"
+  ],
+  "limitations": [
+    "Perry lifecycle, OFF-state persistence and durable-audit issues remain open",
+    "Published Cursor peer range still names older DSH prerelease line; peer warnings are retained",
+    "Full upstream runtime verification and a second independent clean source build were not run"
+  ],
+  "execution": {
+    "default_executor": "Filesystem ownership tests rejected unsupported root ownership; not counted as passes",
+    "controlled_executor": "bwrap baseline passed; no host HOME mounted; offline tests use isolated network and read-only source snapshot",
+    "build_toolchain": {
+      "node": "24.14.0",
+      "npm": "11.9.0",
+      "pnpm": "11.21.0"
+    },
+    "lock_toolchain": {
+      "node": "24.14.0",
+      "npm": "11.19.1",
+      "pnpm": "11.19.0"
+    },
+    "runtime_checks": {
+      "frozen_install_exit_code": 0,
+      "public_module_identity_exit_code": 0,
+      "hosts_started": false,
+      "models_invoked": false
+    },
+    "delegation": [
+      {
+        "role": "executor",
+        "configured_model": "gpt-6.1-sol",
+        "configured_effort": "medium",
+        "work": "Upstream source build and isolated candidate install/import checks"
+      },
+      {
+        "role": "scout",
+        "configured_model": "gpt-6-luna",
+        "configured_effort": "high",
+        "work": "Recipe/API and offline acceptance evidence"
+      }
+    ]
+  },
+  "final_regression": {
+    "broad_suite": {
+      "passed": 210,
+      "failed_before_fix": 2,
+      "exit_code": 1,
+      "scope": [
+        "tests/test_dependencies.py",
+        "tests/test_dsh_auto_review_config.py",
+        "tests/test_dsh_upgrade.py",
+        "tests/test_dsh_pipeline.py",
+        "tests/test_lock_publication.py",
+        "tests/test_dsh_auto_review_experience.py",
+        "tests/test_dsh_tf.py",
+        "tests/test_dsh_cli_smoke.py"
+      ]
+    },
+    "affected_rerun": {
+      "passed": 62,
+      "failed": 0,
+      "deselected": 68,
+      "exit_code": 0,
+      "scope": "tests/test_lock_publication.py plus source receipt and release-age policy tests",
+      "reason": "Corrected vacuous empty-exception check and added nested provenance consistency guards; broad suite was not repeated"
+    },
+    "node_environment_test": {
+      "exit_code": 0
+    },
+    "source_receipt_and_recipe_recheck": {
+      "exit_code": 0
+    },
+    "public_docs": {
+      "exit_code": 0,
+      "findings": []
+    },
+    "archive_scan": {
+      "files_checked": 3269,
+      "private_build_paths_found": 0,
+      "classified_public_examples": 1
+    },
+    "independent_review": {
+      "blocking_findings": 0
+    },
+    "final_lock_read": {
+      "exit_code": 0,
+      "identity": "167545f35e1ee30d412c8161d397266814212bf2392549f3fdb16324f6f3e5b8"
+    }
+  },
+  "runtime_validation": {
+    "status": "complete",
+    "toolchain": {
+      "node": "24.14.0",
+      "pnpm": "11.19.0"
+    },
+    "cwd": "runtime",
+    "commands": [
+      {
+        "argv": [
+          "node",
+          ".tooling/pnpm/package/bin/pnpm.cjs",
+          "install",
+          "--frozen-lockfile",
+          "--ignore-scripts",
+          "--node-linker=hoisted",
+          "--package-import-method=copy",
+          "--store-dir",
+          "${RUNTIME_ROOT}/.validation/store"
+        ],
+        "exit_code": 0
+      },
+      {
+        "argv": [
+          "node",
+          "../agents/dsh/templates/check-runtime.mjs",
+          "${RUNTIME_ROOT}"
+        ],
+        "exit_code": 0,
+        "result": "managed runtime versions and public module identities verified"
+      }
+    ],
+    "lockfile": {
+      "sha256_before": "1dedc844b7065703b9f4d6882dc6e7b6fa5c40e2f7b2303ef430d34e6c044a69",
+      "sha256_after": "1dedc844b7065703b9f4d6882dc6e7b6fa5c40e2f7b2303ef430d34e6c044a69",
+      "unchanged": true
+    },
+    "package_json": {
+      "sha256": "ac3ce5b33e4d84ad94b1878e7fac83aedb756a12e948526ea0ec8c45c05ffd45",
+      "unchanged": true
+    },
+    "isolation": {
+      "temporary_home_xdg": true,
+      "empty_distinct_npm_configs": true,
+      "authentication_environment_removed": true,
+      "lifecycle_scripts_ignored": true,
+      "package_cli_run": false,
+      "hosts_started": false,
+      "real_models_invoked": false
+    },
+    "unresolved_issues": []
+  }
+}

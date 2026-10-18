@@ -1,6 +1,12 @@
 # DSH user guide
 
-rotom maintains one DSH recipe, **`dsh-default`**, using unmodified upstream packages and small repository-owned public-API adapters. Its defaults are native **workspace-write + ask**, with Perry auto-review enabled for eligible pending write/edit requests. Core is a prerelease. The user accepted the known lifecycle and audit limitations for daily deployment on 2026-10-14; that deployment does not mean the outstanding safety gates passed or that upstream is stable. See [known issues](known-issues.md), [testing](testing.md), and [releases](releases.md).
+rotom maintains the interactive **`dsh-default`** recipe and a separate **`dsh-ssh`** headless remote-workspace recipe, using unmodified upstream packages and small repository-owned public-API adapters. The interactive defaults are native **workspace-write + ask**, with Perry auto-review enabled for eligible pending write/edit requests. The selected upgrade candidate uses Core `0.2.1-rc.2` and a fixed TUI main commit built through the upstream publishing flow. Frozen installation and public module identity checks passed for the initial candidate; native host, account and platform acceptance remain pending. The user accepted lifecycle and audit limitations for the previous daily deployment on 2026-10-14; that acceptance does not establish acceptance of this candidate. See [known issues](known-issues.md), [testing](testing.md), and [releases](releases.md).
+
+The [selected upgrade follow-up plan](acceptance/dsh-plugin-ssh-assessment-20261017.md#selected-upgrade-scope) is implemented in the candidate worktree: local TUI selects official tmux location context and experimental Git Worktrees, while [SSH remote work](dsh-ssh.md) uses a separate headless composition. These are repository changes, not deployed instances. Tmux notification changes and Web access remain deferred.
+
+The official Worktrees tool creates and enters a new branch/checkout; it does not merge or clean them up. Existing [worktree/publication gates](worktrees.md) still apply. Neither Worktrees nor tmux-context is enabled in the SSH composition: their complete remote behavior is unverified.
+
+Worktrees requires Git and Node in the same execution environment as the filesystem provider, plus a Git release honoring `GIT_NO_LAZY_FETCH` (Git 2.45+ or the upstream-listed maintenance releases). The implementation environment reports Git `2.50.0` and Node `24.14.0`; this version check is not a real Worktrees tool invocation. See the [upstream execution requirements](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.2/packages/experimental/worktree/README.md#known-limitations-and-deferred-work) before enabling it on another machine.
 
 Legacy patched instances must not receive an in-place apply of this configuration. Preserve their account/session/configuration recovery boundaries and test migration in a separate HOME/XDG/instance scope first. The former separate `dsh-auto-review` daily entry point has been retired; manual and AI-assisted approval use the same recipe and instance.
 
@@ -8,21 +14,24 @@ Legacy patched instances must not receive an in-place apply of this configuratio
 
 | Component | Pinned version | Source/boundary |
 | --- | --- | --- |
-| DSH Core | `0.2.0-rc.2` | `639ed015397290b3745d163aafe02ffee4aa3f84`; prerelease |
-| TUI | `0.15.0` | `18e4a206afc367f055a2b3379bb221abcbb5d99e`; original npm package |
+| DSH Core | `0.2.1-rc.2` | `687f282e8625c6b8d11ff58211a90524be2e4317`; prerelease |
+| TUI | `0.15.0` source build | `e709863019d56897e64495699c3a945cce194d00`; fixed upstream main commit, not the npm `0.15.0` archive |
 | Cursor provider | `dsh-cursor-subscription@0.6.12` | `936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8`; original package |
 | Terminal adapter | `rotom-dsh-cursor-terminal@0.1.2` | `agents/dsh/packages/cursor-terminal`; public TUI QuestionBridge, no copied OAuth/wire implementation |
 | Authentication | TUI `./oauth` | Only `openai-codex`; not the old standalone dsh-auth package |
 | AI approval | `dsh-auto-review@0.12.17` | Original [Perry package](https://github.com/PerryLink/dsh-auto-review/releases/tag/v0.12.17), SHA `2b931b8375f9ee9ebe20e80ef336c69804e1aac0` |
-| Review context | `rotom-dsh-review-context@0.1.0` | Constant configuration context; no file/environment/account reads or authority grants |
-| Shared runtime | Cordis `4.0.5-alpha.1`, Schemastery `3.18.5-alpha.1` | Prereleases required by Perry's peer floor; main/reviewer/subagent module identity checked |
+| Review context | `rotom-dsh-review-context@0.1.1` | Constant configuration context; no file/environment/account reads or authority grants |
+| Execution environment | `rotom-dsh-execution-environment@0.1.1` | Public subprocess provider API; peer aligned to Core RC |
+| Shared runtime | Cordis `4.0.5`, Schemastery `3.18.5` | Stable versions satisfying Perry's peer floor; public module identities checked |
 | Toolchain | Node `24.14.0`, npm `11.19.1`, pnpm `11.19.0` | pnpm original archive pinned by integrity; no global install |
 
-`locks/dsh/pnpm-lock.yaml` is the sole complete installation lock; manifest v2 declares `resolution_kind=pnpm`. Normal npm resolution encounters ERESOLVE between TUI's optional stable Schema peer range and Perry's alpha floor. No force, legacy-peer-deps, overrides, or deleted peer declaration is used. There is no npm-ci path for this recipe. A successful pnpm install does not mean every upstream peer declaration agrees.
+`locks/dsh/pnpm-lock.yaml` is the sole complete installation lock; manifest v2 declares `resolution_kind=pnpm`. No force, legacy-peer-deps, overrides, or deleted peer declaration is used. There is no npm-ci path for this recipe. Published Cursor peers still name the older DSH prerelease line, and optional plugin peer warnings remain; successful installation and public module imports do not establish whole-tree peer agreement or account behavior.
+
+The TUI source build retains upstream version `0.15.0`, so version text alone cannot distinguish it from the older npm release. The declared `file:vendor` archive, immutable commit, integrity and [build receipt](../locks/dsh/vendor/tui-main-provenance.json) enter the recipe identity. The source and fixed submodule were unchanged; the official publishing wrapper prepared the package manifest and restored it afterward. Repeated packing produced identical bytes, without a second independent clean build. The receipt records the separate source-build toolchain, commands and limitations.
 
 Sync verifies the pnpm archive's SHA-512 and uses the fixed installer with `--frozen-lockfile --ignore-scripts --node-linker=hoisted --package-import-method=copy`. The reviewed native preparation step is official `ensure-spawn-helper.mjs`, setting the packaged helper executable. Apply/run do not install or follow latest.
 
-pnpm's release-age policy has one exact exception for `@deepseek-harness-tui/dsh-tui@0.15.0`, recorded in lock-policy/manifest and lock identity. Wildcards, other packages, or unselected versions are rejected. It uses a temporary public pnpm-workspace.yaml in staging, removed afterward, without changing global pnpm settings. Other supply-chain checks remain enabled.
+pnpm's release-age policy records 301 exact package/version exceptions for the selected Core `0.2.1-rc.2` cohort in lock-policy/manifest and lock identity. Each must occur in the complete lock; wildcards, other releases and unrelated packages are rejected. `minimumReleaseAgeStrict` prevents automatic expansion during resolution, and a changed installer policy rejects publication. The temporary public pnpm-workspace.yaml is removed after installation; global pnpm settings are unchanged.
 
 Peer checks still warn about disabled working-activity and experimental Web UI. Working-activity dynamically changes Session event tables and is disabled; TUI supplies its own spinner, chat, cards, and status. Experimental Agent Teams and voice are not enabled. Runtime identity/native loading evidence is narrower than a clean whole-tree peer check.
 

@@ -1,0 +1,19 @@
+{
+  "name": "rotom-dsh-ssh-shell-env",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs",
+    "./filter": "./filter.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.mjs",
+    "filter.mjs",
+    "package.json"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/dsh-shell-env": "0.2.1-rc.2"
+  }
+}

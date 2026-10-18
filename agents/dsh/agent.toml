@@ -1,14 +1,14 @@
 schema_version = 1
 adapter_version = "dsh-1"
-upstream_commit = "639ed015397290b3745d163aafe02ffee4aa3f84"
-tui_commit = "18e4a206afc367f055a2b3379bb221abcbb5d99e"
+upstream_commit = "687f282e8625c6b8d11ff58211a90524be2e4317"
+tui_commit = "e709863019d56897e64495699c3a945cce194d00"
 
 [defaults]
-providers = ["codex", "cursor"]
+providers = []
 models = []
 rules = ["chinese", "terminal", "cpp-local-search"]
 skills = ["repo-navigation", "maintain-agent-config"]
-plugins = ["tui", "codex-auth", "cursor-auth", "auto-review", "review-context"]
+plugins = ["tui", "codex-auth", "cursor-auth", "auto-review", "review-context", "tmux-context", "git-worktrees"]
 mcp = []
 
 [defaults.agent_options]

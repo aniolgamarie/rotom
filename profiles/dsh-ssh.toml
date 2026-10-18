@@ -1,0 +1,10 @@
+# 远端目标仅由机器私有覆盖提供；缺项时只拒绝本 profile。
+schema_version = 1
+id = "dsh-ssh"
+agent = "dsh"
+plugins = []
+mcp = []
+
+[agent_options]
+execution = "ssh"
+auto_review = false

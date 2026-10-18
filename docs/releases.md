@@ -6,10 +6,12 @@ Rotom's Python project metadata currently declares `0.1.0`. This checkout is rel
 
 | Component | Version / immutable source | Notes |
 | --- | --- | --- |
-| DSH Core | `0.2.0-rc.2` | Prerelease; selected with the compatible TUI stack rather than newest alpha by version number |
-| dsh-TUI | `0.15.0`, `18e4a206afc367f055a2b3379bb221abcbb5d99e` | Unmodified upstream distribution |
+| DSH Core | `0.2.1-rc.2` | Selected upgrade candidate; native/account/platform acceptance pending |
+| dsh-TUI | `0.15.0` source build, `e709863019d56897e64495699c3a945cce194d00` | Unmodified upstream main source and fixed submodule; upstream build/publish flow, archived by integrity |
 | Cursor subscription | `0.6.12`, `936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8` | Main-session Provider through public terminal authentication adapter |
 | Perry auto-review | `0.12.17`, `2b931b8375f9ee9ebe20e80ef336c69804e1aac0` | Enabled; unresolved limitations explicitly retained |
+| Tmux context / Git Worktrees | Official `0.2.1-rc.2` packages | Selected in local TUI; experimental Worktrees follows existing repository gates |
+| SSH workspace | Official SSH provider family and headless `0.2.1-rc.2` | Independent read-only-by-default profile; trusted helper and native endpoint acceptance pending |
 | OMP | `18.8.6`, `f068751e2f1dbdbc195977776d47a26db8697495` | Official standalone runtime; independent Rotom permission plugin |
 | Pi | `0.84.4` in current manifest | Complete lock rebuilt through the resolver; Linux pi-default evidence is recorded separately. Other profiles, platforms and live services require their own acceptance. |
 | Manager | Python 3.11+; `uv.lock` | Locked environment, loaded directly from `.venv` |

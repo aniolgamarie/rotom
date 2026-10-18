@@ -8,22 +8,32 @@ import uuid
 
 from .deployment import json_bytes
 from .storage import Conflict, Tree, ensure_private
+from .dsh_ssh import SSH_BUNDLES, SSH_PROJECTIONS, is_ssh
 
 
 PROFILE_PROJECTIONS = ("@deepseek-harness-tui/dsh-tui", "rotom-dsh-cursor-terminal",
-  "dsh-auto-review", "rotom-dsh-review-context", "rotom-dsh-execution-environment")
+  "dsh-auto-review", "rotom-dsh-review-context", "rotom-dsh-execution-environment",
+  "@deepseek-ai/dsh-tmux-context", "@deepseek-ai/dsh-experimental-worktree",
+  "@deepseek-ai/dsh-experimental-tool-worktree")
 LEGACY_BUNDLES = ["@deepseek-ai/dsh-base", "@deepseek-harness-tui/dsh-tui"]
 PROFILE_BUNDLES = ["@deepseek-ai/dsh-base", "rotom-dsh-review-context", "dsh-auto-review",
   "@deepseek-harness-tui/dsh-tui"]
 
 
+def profile_layout(workspace):
+  if is_ssh(workspace.resolved.data):
+    return SSH_PROJECTIONS, SSH_BUNDLES
+  return PROFILE_PROJECTIONS, PROFILE_BUNDLES
+
+
 def verify(workspace, runtime):
   """共享启动不修复资源；所有权不完整、漂移或旧布局均要求显式 apply。"""
   profile = workspace.instance / "dsh-home/profiles/agentcfg"
-  projections = {name: str(runtime / "node_modules" / Path(name)) for name in PROFILE_PROJECTIONS}
+  packages, bundles = profile_layout(workspace)
+  projections = {name: str(runtime / "node_modules" / Path(name)) for name in packages}
   expected = {"binding": workspace.binding, "modules": "isolated", "projections": projections}
   manifest = {"name": "agentcfg-managed-profile", "version": "1.0.0", "private": True,
-    "dsh": {"profile": {"bundles": PROFILE_BUNDLES}}}
+    "dsh": {"profile": {"bundles": bundles}}}
   try:
     with Tree(profile) as tree:
       owner, package = tree.read(".agentcfg-package-owner.json"), tree.read("package.json")
@@ -75,8 +85,9 @@ def prepare(workspace, runtime):
   """调用者持实例锁。原生 cordis.yml/会话保持运行时拥有，不参与配置回滚。"""
   profile = workspace.instance / "dsh-home/profiles/agentcfg"
   ensure_private(profile)
+  packages, bundles = profile_layout(workspace)
   manifest = {"name": "agentcfg-managed-profile", "version": "1.0.0", "private": True,
-    "dsh": {"profile": {"bundles": PROFILE_BUNDLES}}}
+    "dsh": {"profile": {"bundles": bundles}}}
   with Tree(profile) as tree:
     owner = tree.read(".agentcfg-package-owner.json")
     package = tree.read("package.json")
@@ -92,7 +103,7 @@ def prepare(workspace, runtime):
     # 只迁移本仓库以前拥有的固定清单；用户新增的 bundle 或字段仍冲突。
     if package is not None and package[0] not in (expected_package, legacy_package):
       raise Conflict("包拥有的 profile 配置已被修改")
-    projections = {name: str(runtime / "node_modules" / Path(name)) for name in PROFILE_PROJECTIONS}
+    projections = {name: str(runtime / "node_modules" / Path(name)) for name in packages}
     with tree.parent("node_modules") as (fd, name):
       try:
         info = os.stat(name, dir_fd=fd, follow_symlinks=False)
