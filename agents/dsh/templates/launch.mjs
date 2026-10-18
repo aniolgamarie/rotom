@@ -18,21 +18,35 @@ if (args[0] === "--profile") {
   args.splice(0, 2);
 }
 const require = createRequire(path.join(runtimeRoot, "package.json"));
-const { runProfile } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh/profile-boot")));
-const { createLaunchEnvironmentSnapshot } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh-launch-environment")));
-const { mcpArguments } = await import(pathToFileURL(require.resolve("rotom-dsh-execution-environment/environment")));
-// 正式 MCP stdio 配置通过 env 直接 exec，避免新增中继进程及取消边界。
-process.env.AGENTCFG_MCP_ENV_ARGS = JSON.stringify(mcpArguments("/rotom-placeholder", []).slice(1, -1));
 const remote = process.env.AGENTCFG_DSH_EXECUTION === "ssh";
 if (remote) {
   if (!process.env.AGENTCFG_DSH_REMOTE_WORKSPACE?.startsWith("/")) throw new Error("Remote workspace is not configured");
   delete process.env.DSH_TUI_WORKSPACE_TARGET;
   delete process.env.AGENTCFG_DEVELOPMENT_ENV;
   delete process.env.AGENTCFG_MCP_ENV_ARGS;
-} else {
-  process.env.DSH_TUI_WORKSPACE_TARGET = process.cwd();
 }
-const environment = createLaunchEnvironmentSnapshot([{ source: "process", values: process.env }]);
-await runProfile({ environment, profile: "agentcfg", patchFiles: [patchFile], args,
-  packageManager: { command: process.execPath, args: [process.argv[1], "--deny-package-operation"], env: {} },
-});
+if (remote && args[0] === "--subscription-auth") {
+  // 显式认证操作使用相同实例凭据，但不启动任务宿主或 SSH 连接。
+  let providers;
+  try { providers = JSON.parse(process.env.AGENTCFG_DSH_SUBSCRIPTION_PROVIDERS ?? "[]"); }
+  catch { throw new Error("Managed subscription providers are invalid"); }
+  if (args.length !== 3 || !Array.isArray(providers) || !providers.includes(args[1])
+      || !["codex", "cursor"].includes(args[1]) || !["login", "status", "logout", "models"].includes(args[2])) {
+    throw new Error("Use --subscription-auth <configured codex|cursor> <login|status|logout|models>");
+  }
+  const { runAuth } = await import(pathToFileURL(require.resolve("rotom-dsh-ssh-subscription-auth/cli")));
+  process.exitCode = await runAuth(args.slice(1));
+} else {
+  const { runProfile } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh/profile-boot")));
+  const { createLaunchEnvironmentSnapshot } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh-launch-environment")));
+  const { mcpArguments } = await import(pathToFileURL(require.resolve("rotom-dsh-execution-environment/environment")));
+  // 正式 MCP stdio 配置通过 env 直接 exec，避免新增中继进程及取消边界。
+  if (!remote) {
+    process.env.AGENTCFG_MCP_ENV_ARGS = JSON.stringify(mcpArguments("/rotom-placeholder", []).slice(1, -1));
+    process.env.DSH_TUI_WORKSPACE_TARGET = process.cwd();
+  }
+  const environment = createLaunchEnvironmentSnapshot([{ source: "process", values: process.env }]);
+  await runProfile({ environment, profile: "agentcfg", patchFiles: [patchFile], args,
+    packageManager: { command: process.execPath, args: [process.argv[1], "--deny-package-operation"], env: {} },
+  });
+}

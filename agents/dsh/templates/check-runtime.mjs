@@ -13,7 +13,8 @@ const fail = () => { throw new Error("managed runtime package versions or module
 for (const [name, version] of Object.entries(expected)) {
   const actual = manifest(require, name);
   const localVersion = { "@deepseek-harness-tui/dsh-tui": "0.15.0", "rotom-dsh-cursor-terminal": "0.1.2", "rotom-dsh-review-context": "0.1.1",
-    "rotom-dsh-execution-environment": "0.1.1", "rotom-dsh-ssh-shell-env": "0.1.0" }[name];
+    "rotom-dsh-execution-environment": "0.1.1", "rotom-dsh-ssh-shell-env": "0.1.0",
+    "rotom-dsh-ssh-subscription-auth": "0.1.0" }[name];
   if (actual.name !== name || actual.version !== (localVersion ?? version)) fail();
 }
 if (manifest(require, "@deepseek-ai/cordis").version !== "4.0.5"
@@ -61,5 +62,13 @@ for (const name of ["dsh-tmux-context", "dsh-experimental-worktree", "dsh-experi
 const { ShellEnvRegistry } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh-shell-env")));
 const { default: SshShellEnvRegistry } = await import(pathToFileURL(require.resolve("rotom-dsh-ssh-shell-env")));
 if (!(SshShellEnvRegistry.prototype instanceof ShellEnvRegistry)) fail();
+const subscriptionAuth = await import(pathToFileURL(require.resolve("rotom-dsh-ssh-subscription-auth")));
+const subscriptionCli = await import(pathToFileURL(require.resolve("rotom-dsh-ssh-subscription-auth/cli")));
+if (typeof subscriptionAuth.apply !== "function" || typeof subscriptionCli.runAuth !== "function") fail();
+const { loadDependencies } = subscriptionAuth;
+const authDependencies = await loadDependencies(["codex", "cursor"]);
+if (authDependencies.TerminalCursorAdapter !== TerminalCursorAdapter
+    || typeof authDependencies.CredentialGatedAdapter !== "function"
+    || typeof authDependencies.createDshAuthApi !== "function") fail();
 if (!(CursorAdapter.prototype instanceof LlmAdapter) || !(TerminalCursorAdapter.prototype instanceof CursorAdapter)) fail();
 console.log("managed runtime versions and public module identities verified");

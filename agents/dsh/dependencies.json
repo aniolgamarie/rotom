@@ -150,6 +150,7 @@
     "@deepseek-ai/dsh-subprocess-ssh": "0.2.1-rc.2",
     "@deepseek-ai/dsh-sandbox-ssh": "0.2.1-rc.2",
     "@deepseek-ai/dsh-headless": "0.2.1-rc.2",
-    "rotom-dsh-ssh-shell-env": "file:vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz"
+    "rotom-dsh-ssh-shell-env": "file:vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz",
+    "rotom-dsh-ssh-subscription-auth": "file:vendor/rotom-dsh-ssh-subscription-auth-0.1.0.tgz"
   }
 }

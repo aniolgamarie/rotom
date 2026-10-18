@@ -103,6 +103,7 @@ def recipe_digest(repository, adapter_id="dsh"):
       "vendor/rotom-dsh-execution-environment-0.1.0.tgz": ("execution-environment", ("package.json", "index.mjs", "environment.mjs")),
       "vendor/rotom-dsh-execution-environment-0.1.1.tgz": ("execution-environment", ("package.json", "index.mjs", "environment.mjs")),
       "vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz": ("ssh-shell-env", ("package.json", "index.mjs", "filter.mjs")),
+      "vendor/rotom-dsh-ssh-subscription-auth-0.1.0.tgz": ("ssh-subscription-auth", ("package.json", "index.mjs", "cli.mjs")),
     }
     if relative in local_packages:
       directory, files = local_packages[relative]

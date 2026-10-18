@@ -20,8 +20,15 @@ SSH_OPTIONS = {
 }
 SSH_PROJECTIONS = ("@deepseek-ai/dsh-headless", "@deepseek-ai/dsh-ssh",
   "@deepseek-ai/dsh-fs-ssh", "@deepseek-ai/dsh-subprocess-ssh",
-  "@deepseek-ai/dsh-sandbox-ssh", "rotom-dsh-ssh-shell-env")
+  "@deepseek-ai/dsh-sandbox-ssh", "rotom-dsh-ssh-shell-env",
+  "rotom-dsh-ssh-subscription-auth")
 SSH_BUNDLES = ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-headless"]
+SSH_AUTH_PLUGIN = "ssh-subscription-auth"
+
+
+def subscription_providers(data):
+  return sorted(key for key, provider in data["providers"].items()
+    if provider["auth_kind"] == "oauth")
 
 
 def is_ssh(data):
@@ -36,10 +43,13 @@ def validate_ssh(data, *, selected=False):
       raise ConfigError("dsh-ssh-options-require-ssh-execution")
     return
   # 尚未证明 TUI 全部消费者、MCP 和辅助插件都遵守远端坐标，明确拒绝。
-  if data["plugins"] or data["mcp"] or options.get("auto_review", True):
+  if set(data["plugins"]) - {SSH_AUTH_PLUGIN} or data["mcp"] or options.get("auto_review", True):
     raise ConfigError("dsh-ssh-headless-only")
-  if any(provider["auth_kind"] != "api-key" for provider in data["providers"].values()):
-    raise ConfigError("dsh-ssh-api-provider-required")
+  subscriptions = subscription_providers(data)
+  if set(subscriptions) - {"codex", "cursor"}:
+    raise ConfigError("dsh-ssh-subscription-provider")
+  if bool(subscriptions) != (SSH_AUTH_PLUGIN in data["plugins"]):
+    raise ConfigError("dsh-ssh-subscription-plugin-required")
   if remote is None:
     if selected:
       raise ConfigError("dsh-ssh-not-configured")
@@ -72,6 +82,8 @@ def ssh_patch(data):
     {"id": "approval", "config": {"policy": "ask"}},
     {"id": "shell-env", "name": "rotom-dsh-ssh-shell-env", "config": {}},
     {"id": "ptc-runtime", "inject": ["ssh"], "config": {"launch": native.JS("ctx.ssh.ptcLaunch")}},
+    # headless 默认禁用凭据服务；订阅认证使用本实例的发起端存储。
+    {"id": "credentials", "disabled": not bool(subscription_providers(data))},
     # 前台命令保留执行器超时；不将远端 spill 路径交给宿主输出存储读取。
     {"id": "jobs", "disabled": True},
     {"id": "tool-jobs", "disabled": True},
@@ -89,5 +101,7 @@ def ssh_patch(data):
         "host": config["host"], "launch": {"kind": "executable"}, "helper": config["helper"],
         "helperHash": config["helper_hash"], "workspace": config["workspace"]}},
       {"id": "fs", "name": "@deepseek-ai/dsh-fs-ssh"},
+      *([{"id": "agentcfg-ssh-subscription-auth", "name": "rotom-dsh-ssh-subscription-auth",
+        "config": {"providers": subscription_providers(data)}}] if subscription_providers(data) else []),
     ]},
   ]

@@ -57,3 +57,11 @@ bundled = false
 enabled = true
 requires = ["tui"]
 conflicts = []
+
+[plugins.ssh-subscription-auth]
+package = "rotom-dsh-ssh-subscription-auth"
+version = "0.1.0"
+bundled = false
+enabled = true
+requires = []
+conflicts = []

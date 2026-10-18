@@ -1,0 +1,206 @@
+{
+  "date": "2026-10-18",
+  "branch": "feat/dsh-ssh-subscription-auth",
+  "base_commit": "858442e59cedf421f5ad8db05291f1138bb0bee8",
+  "scope": "Optional Codex/Cursor authentication for the SSH headless profile; helper manual-install documentation and read-only plugin update audit. No deployment, real account login, model call or SSH connection.",
+  "completed": [
+    "Public OAuth/provider adapter; upstream implementations unchanged",
+    "Explicit subscription opt-in; API-key-only default retained",
+    "Independent terminal authentication entry that starts no task/SSH connection",
+    "Per-instance credential ownership and exclusive authentication/task admission",
+    "Manual helper archive/build/install/checksum references",
+    "Read-only update audit of all managed DSH plugins; upstream package pins unchanged",
+    "Final frozen install, public module identities and offline public credential-library probe",
+    "Final affected Python and Node tests; stable source/archive/lock review"
+  ],
+  "in_progress": [],
+  "failed_pending_decision": [],
+  "environment_unverified": [
+    "Real terminal login, browser callbacks and account token refresh",
+    "Real subscription model requests",
+    "Real SSH helper/server, remote filesystem/sandbox and cancellation",
+    "Darwin",
+    "Cursor cross-process concurrent token refresh; upstream queue remains in-process only"
+  ],
+  "candidate": {
+    "core": "0.2.1-rc.2",
+    "tui_version": "0.15.0",
+    "tui_commit": "e709863019d56897e64495699c3a945cce194d00",
+    "local_package": "rotom-dsh-ssh-subscription-auth@0.1.0",
+    "lock_identity": "171668c55d8288894d2b3ae5ed0e5554773353bc7d6e5cd29699a4ab34c32e88",
+    "pnpm_lock_sha256": "2d0d2c343dab6702be1d13ba75d5ec4863736b2182ed39bf67110ebf58902220",
+    "archive_sha256": "6bbd8a1fd385b657834b5412b187316bf0e5424ede80aa5ffcdce2e10dab5116",
+    "changed_source": {
+      "sha256": "6faacd2251475e80e3ad48256ef928741e733ee3dcb111d92ab174c748bfebe1",
+      "files": 26,
+      "excludes": [
+        "docs/acceptance/dsh-ssh-subscription-auth-20261018.json"
+      ],
+      "algorithm": "SHA-256 of UTF-8 canonical JSON (sort_keys=true, separators comma/colon) with base_commit and sorted files rows containing path, integer permission mode and SHA-256 of file bytes"
+    }
+  },
+  "validation": {
+    "environment": "Controlled Linux synthetic root/HOME/XDG; source and prepared tools readonly; behavior tests and public credential probe have blocked network",
+    "baseline": {
+      "checks": 14,
+      "passed": 14,
+      "exit_code": 0,
+      "evidence": "ssh-subscription-final-baseline"
+    },
+    "final_affected_regression": {
+      "argv": [
+        "${PREPARED_PYTHON}",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/tmp/pytest",
+        "tests/test_dsh_ssh.py",
+        "tests/test_dependencies.py",
+        "tests/test_config_examples.py",
+        "tests/test_runtime.py",
+        "tests/test_runtime_concurrency.py",
+        "tests/test_runtime_preparation_recovery.py"
+      ],
+      "passed": 161,
+      "failed": 0,
+      "exit_code": 0,
+      "elapsed_seconds": 323.91,
+      "evidence": "ssh-subscription-final-regression",
+      "tested_base_commit": "9ab90f553417b0b81ea28d4b9e9f78ddbd4be845"
+    },
+    "initial_broad_regression": {
+      "passed": 232,
+      "failed": 2,
+      "exit_code": 1,
+      "resolution": "Both failures concerned implicit subscription defaults and API-only override behavior. Restored the API-only profile and made subscriptions explicit opt-in; the final 161-case regression includes both corrected cases."
+    },
+    "node_tests": {
+      "argv": [
+        "node",
+        "--test",
+        "tests/node/dsh_ssh_subscription_auth.test.mjs",
+        "tests/node/dsh_ssh_auth_launch.test.mjs"
+      ],
+      "files_passed": 2,
+      "in_file_cases": {
+        "subscription_auth": 17,
+        "launch_dispatch": 3
+      },
+      "exit_code": 0,
+      "evidence": "ssh-subscription-node-tests"
+    },
+    "frozen_install": {
+      "argv": [
+        "${NODE24}/bin/node",
+        "/tooling/pnpm/bin/pnpm.cjs",
+        "--dir",
+        "/runtime",
+        "install",
+        "--frozen-lockfile",
+        "--ignore-scripts",
+        "--node-linker=hoisted",
+        "--package-import-method=copy",
+        "--store-dir",
+        "/runtime/.store"
+      ],
+      "exit_code": 0,
+      "same_package_and_lock_before_after": true,
+      "lifecycle_scripts": false,
+      "evidence": "ssh-subscription-frozen-install"
+    },
+    "public_imports": {
+      "argv": [
+        "${NODE24}/bin/node",
+        "/workspace/rotom/agents/dsh/templates/check-runtime.mjs",
+        "/runtime"
+      ],
+      "exit_code": 0
+    },
+    "public_credential_library_probe": {
+      "scope": "Initialize official Cordis credential provider and query unsigned Codex/Cursor status in separate empty temporary instances; no host/task entrypoint",
+      "exit_code": 0,
+      "providers": [
+        "codex",
+        "cursor"
+      ],
+      "network": "blocked-by-namespace",
+      "hosts_started": false,
+      "model_calls": false,
+      "ssh_connected": false,
+      "evidence": "ssh-subscription-public-credential-probe"
+    },
+    "source_archive_review": {
+      "blocking_findings": 0,
+      "upstream_patches": false,
+      "local_archive_files_match_source": true
+    },
+    "docs_and_content": {
+      "argv": [
+        "${PREPARED_PYTHON}",
+        "scripts/check-public-docs.py"
+      ],
+      "exit_code": 0,
+      "bounded_private_content_findings": []
+    },
+    "whitespace": {
+      "argv": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exit_code": 0
+    },
+    "outer_executor_limit": "An ordinary lock publication attempt refused unsafe ancestor permissions; standard lock publication succeeded in the controlled trusted synthetic root. No guard was patched or disabled.",
+    "argument_redaction": "Raw executor argument vectors are retained privately; public vectors use symbolic prepared-tool prefixes.",
+    "main_advance_review": {
+      "original_base": "9ab90f553417b0b81ea28d4b9e9f78ddbd4be845",
+      "new_base": "858442e59cedf421f5ad8db05291f1138bb0bee8",
+      "source_files_unchanged": 26,
+      "affected_intersection": "CLI help/error diagnostics and doctor presentation; run passthrough and DSH/runtime/lifecycle implementations unchanged by target main",
+      "independent_review_blockers": 0,
+      "overlap_regression": {
+        "argv": [
+          "${PREPARED_PYTHON}",
+          "-m",
+          "pytest",
+          "-q",
+          "--tb=short",
+          "-p",
+          "no:cacheprovider",
+          "--basetemp=/tmp/pytest",
+          "tests/test_agentcfg_interaction.py",
+          "tests/test_agentcfg_doctor_identity.py",
+          "tests/test_dsh_ssh.py"
+        ],
+        "passed": 117,
+        "failed": 0,
+        "exit_code": 0,
+        "elapsed_seconds": 41.27,
+        "evidence": "ssh-subscription-rebased-overlap"
+      },
+      "native_scope": "unchanged; no host or account execution",
+      "node_files_rerun_passed": 2
+    }
+  },
+  "plugin_audit": "dsh-plugin-update-audit-20261018.md",
+  "helper_automatic_management": "Excluded by user; official manual instructions linked in docs/dsh-ssh.md",
+  "delegation": [
+    {
+      "role": "executor",
+      "configured_model": "gpt-6.1-sol",
+      "configured_effort": "medium",
+      "scope": "Public authentication adapter and fake terminal/provider tests"
+    },
+    {
+      "role": "scout",
+      "configured_model": "gpt-6-luna",
+      "configured_effort": "high",
+      "scope": "Plugin release audit and independent final source/archive review"
+    }
+  ],
+  "commit_binding": "Final candidate commit and fast-forward integration are bound to this source manifest in the local verification receipt; this record is excluded from its own source digest."
+}

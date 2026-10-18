@@ -111,8 +111,11 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
   if operation_guard is not None:
     operation_guard(workspace, effective_cwd, arguments)
   lifecycle = getattr(workspace.adapter, "run_lifecycle_guard", None) or getattr(workspace.adapter, "lifecycle_guard", None)
+  operation_lifecycle = getattr(workspace.adapter, "run_lifecycle_guard_for", None)
+  admission = (operation_lifecycle(workspace, tuple(arguments)) if operation_lifecycle is not None
+    else lifecycle(workspace) if lifecycle else nullcontext())
   shared = getattr(workspace.adapter, "shared_run_lease", False)
-  with (lifecycle(workspace) if lifecycle else nullcontext()) as lifecycle_fd, Tree(workspace.state_root, create=True) as state, instance_lock(state, shared=shared) as lease, Tree(workspace.instance) as target:
+  with admission as lifecycle_fd, Tree(workspace.state_root, create=True) as state, instance_lock(state, shared=shared) as lease, Tree(workspace.instance) as target:
     if state.read("pending.json"):
       raise Conflict("存在待恢复部署，请先 apply/rollback 恢复后再启动")
     current = read_state(state)["current"]

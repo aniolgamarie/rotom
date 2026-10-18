@@ -11,7 +11,8 @@ from .adapter import (Adapter, AdapterDeclaration, Artifact, DependencyPlan,
 from . import native
 from .render import render_rules
 from .dsh_optional import OPTIONAL_PLUGINS, optional_plugin_rows
-from .dsh_ssh import SSH_OPTIONS, is_ssh, ssh_patch, validate_ssh
+from .dsh_ssh import (SSH_AUTH_PLUGIN, SSH_OPTIONS, is_ssh, ssh_patch,
+                      subscription_providers, validate_ssh)
 from .schema import AdapterPolicy, AdapterSchemaBundle, AdapterSchemas, AuthenticationClaim, ConfigError
 
 
@@ -71,8 +72,10 @@ class DshAdapter(Adapter):
     validate_ssh(data)
     if not is_ssh(data) and "tui" not in data["plugins"]:
       raise ConfigError("dsh-tui-required")
-    if set(data["plugins"]) - ({"tui", "codex-auth", "cursor-auth", "auto-review", "review-context"} | OPTIONAL_PLUGINS):
+    if set(data["plugins"]) - ({"tui", "codex-auth", "cursor-auth", "auto-review", "review-context", SSH_AUTH_PLUGIN} | OPTIONAL_PLUGINS):
       raise ConfigError("plugin-mapping-not-implemented")
+    if not is_ssh(data) and SSH_AUTH_PLUGIN in data["plugins"]:
+      raise ConfigError("dsh-subscription-plugin-requires-ssh")
     for key, plugin in data["plugins"].items():
       if not plugin["enabled"] or any(p not in data["plugins"] for p in plugin["requires"]):
         raise ConfigError("plugin-dependency")
@@ -84,7 +87,8 @@ class DshAdapter(Adapter):
         expected = {"codex": ("openai-codex", "codex-auth"), "cursor": ("cursor-subscription", "cursor-auth")}
         if key not in expected or (bindings["oauth"].get(key, {}).get("route"), bindings["oauth"].get(key, {}).get("owner")) != expected[key]:
           raise ConfigError("oauth-native-route-mismatch")
-        if key not in bindings["oauth"] or bindings["oauth"][key]["owner"] not in data["plugins"]:
+        owner = SSH_AUTH_PLUGIN if is_ssh(data) else bindings["oauth"].get(key, {}).get("owner")
+        if key not in bindings["oauth"] or owner not in data["plugins"]:
           raise ConfigError("oauth-binding")
         if provider["protocol"] != "oauth-dynamic" or "credential_ref" in provider:
           raise ConfigError("oauth-credential")
@@ -272,7 +276,7 @@ class DshAdapter(Adapter):
         if "credential_ref" in server:
           conf["headers"] = {"Authorization": native.JS("process.env." + env_name("MCP", key))}
       inserts.append({"id": "agentcfg-mcp-" + key, "name": "@deepseek-ai/dsh-mcp-client", "config": conf})
-    if "cursor-auth" in data["plugins"] and data["providers"].get("cursor", {}).get("auth_kind") == "oauth":
+    if not is_ssh(data) and "cursor-auth" in data["plugins"] and data["providers"].get("cursor", {}).get("auth_kind") == "oauth":
       inserts.append({"id": "agentcfg-cursor-auth", "name": "rotom-dsh-cursor-terminal"})
     if inserts:
       patch.append({"insert": inserts})
@@ -313,6 +317,7 @@ class DshAdapter(Adapter):
     if is_ssh(data):
       validate_ssh(data, selected=True)
       environment.extend([EnvironmentBinding("AGENTCFG_DSH_EXECUTION", "ssh"),
+        EnvironmentBinding("AGENTCFG_DSH_SUBSCRIPTION_PROVIDERS", json.dumps(subscription_providers(data))),
         EnvironmentBinding("AGENTCFG_DSH_REMOTE_WORKSPACE", data["profile"]["agent_options"]["ssh"]["workspace"])])
     return LaunchSpec(("node", str(instance_root / "launch.mjs"), str(runtime_root),
                        str(instance_root / "dsh-home/agentcfg.patch.yml"), "--profile", "agentcfg"),
@@ -356,6 +361,12 @@ class DshAdapter(Adapter):
   def run_lifecycle_guard(self, workspace):
     from .lifecycle import guard
     return guard(workspace, shared=True, create=False)
+
+  def run_lifecycle_guard_for(self, workspace, arguments):
+    from .lifecycle import guard
+    # 认证会写入或删除实例凭据，独占维护边界避免与活动任务交错。
+    authentication = is_ssh(workspace.resolved.data) and arguments[:1] == ("--subscription-auth",)
+    return guard(workspace, shared=not authentication, create=False)
 
   shared_run_lease = True
 
@@ -426,7 +437,8 @@ class DshAdapter(Adapter):
       lambda kind, value: self.validate(value) if kind == "resolved" else None,
       policy=lambda docs: AdapterPolicy(deepcopy(docs["agent"]["defaults"]), deepcopy(docs["plugins"]["plugins"]), frozenset()),
       authentication_claims=lambda data: tuple(AuthenticationClaim(key,
-        data["adapter_documents"]["bindings"]["oauth"][key]["owner"] if value["auth_kind"] == "oauth" else "api-key")
+        (SSH_AUTH_PLUGIN if is_ssh(data) else data["adapter_documents"]["bindings"]["oauth"][key]["owner"])
+        if value["auth_kind"] == "oauth" else "api-key")
         for key, value in data["providers"].items()),
       validate_selected=lambda data: validate_ssh(data, selected=True))
     return AdapterSchemas({"dsh": bundle})

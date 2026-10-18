@@ -1,5 +1,7 @@
 # DSH 归档范围
 
+`rotom-dsh-ssh-subscription-auth-0.1.0.tgz` 为仓库自有 SSH 订阅认证适配器，复用锁定 TUI 的公开 OAuth 导出及 Cursor 的公开认证和 Provider 类。`package.json`、`index.mjs`、`cli.mjs` 与源码逐文件核对后进入 recipe digest。认证入口只启动发起端最小凭据服务，不连接 SSH 或运行模型；helper 手动安装见 [SSH 文档](../../../docs/dsh-ssh.md#manual-helper-installation)。
+
 当前配方消费 lock-policy 声明的 pnpm 11.19.0 原包、仓库自有 Cursor terminal、review-context 和 execution-environment 归档，以及固定上游提交的 TUI 源码构建归档。Core/Cursor/Perry 来自完整锁的原始 npm integrity，未经修改。
 
 `rotom-dsh-ssh-shell-env-0.1.0.tgz` 为仓库自有公开 API 适配器，只继承官方 `ShellEnvRegistry.collect()` 并过滤宿主 `DSH_HOME`、`DSH_PROFILE_DIR` 路径事实；不修改上游实现。归档与 `agents/dsh/packages/ssh-shell-env` 的三个源码文件逐项核对后进入 recipe digest。SSH helper 可执行发行包不在此归档中，须单独准备可信上游产物；当前配方不自动部署远端 helper。

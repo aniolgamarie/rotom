@@ -19,6 +19,8 @@ from agentcfg.workspace import load_public_catalog, load_workspace
 
 REMOTE = {"host": "fixture-server", "workspace": "/srv/fixture/project",
   "helper": "/opt/fixture/bin/dsh-ssh-helper", "helper_hash": "a" * 64}
+SUBSCRIPTIONS = ('\n[overrides.profiles.dsh-ssh]\nproviders=["codex","cursor"]\n'
+  'plugins=["ssh-subscription-auth"]\n')
 
 
 def machine(tmp_path, remote=None, *, extra=""):
@@ -34,7 +36,7 @@ def machine(tmp_path, remote=None, *, extra=""):
 
 @pytest.fixture
 def workspace(tmp_path):
-  return load_workspace(machine(tmp_path, REMOTE), "dsh-ssh")
+  return load_workspace(machine(tmp_path, REMOTE, extra=SUBSCRIPTIONS), "dsh-ssh")
 
 
 def test_public_catalog_and_unselected_ssh_preserve_local_defaults(tmp_path):
@@ -65,12 +67,13 @@ def test_direct_selected_ssh_validation_reports_missing_configuration():
   assert caught.value.code == "dsh-ssh-not-configured"
 
 
-def test_filled_ssh_resolves_global_api_models_and_renders_headless(workspace):
+def test_filled_ssh_resolves_api_and_subscription_models_and_renders_headless(workspace):
   data = workspace.resolved.data
   assert data["profile"]["roles"]["main"] == "kimi_code_openai"
   assert data["models"] and data["providers"]
-  assert all(provider["auth_kind"] == "api-key" for provider in data["providers"].values())
-  assert data["plugins"] == data["mcp"] == {}
+  assert {"codex", "cursor"} <= data["providers"].keys()
+  assert set(data["plugins"]) == {"ssh-subscription-auth"}
+  assert data["mcp"] == {}
   artifacts = workspace.adapter.render(data)
   assert all(".dsh-tui" not in artifact.target.path for artifact in artifacts)
   assert all(not (artifact.target.selector or "").startswith("/dsh-tui/") for artifact in artifacts)
@@ -96,7 +99,10 @@ def test_filled_ssh_resolves_global_api_models_and_renders_headless(workspace):
       "host": REMOTE["host"], "launch": {"kind": "executable"}, "helper": REMOTE["helper"],
       "helperHash": REMOTE["helper_hash"], "workspace": REMOTE["workspace"]}},
     {"id": "fs", "name": "@deepseek-ai/dsh-fs-ssh"},
+    {"id": "agentcfg-ssh-subscription-auth", "name": "rotom-dsh-ssh-subscription-auth",
+      "config": {"providers": ["codex", "cursor"]}},
   ]
+  assert rows["credentials"]["disabled"] is False
   packages, bundles = profile_runtime.profile_layout(workspace)
   assert packages == SSH_PROJECTIONS
   assert bundles == SSH_BUNDLES == ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-headless"]
@@ -113,6 +119,7 @@ def test_launch_binds_remote_workspace_and_permission_without_tui(workspace, tmp
   environment = {binding.name: binding.value for binding in spec.environment}
   assert environment["AGENTCFG_DSH_EXECUTION"] == "ssh"
   assert environment["AGENTCFG_DSH_REMOTE_WORKSPACE"] == REMOTE["workspace"]
+  assert json.loads(environment["AGENTCFG_DSH_SUBSCRIPTION_PROVIDERS"]) == ["codex", "cursor"]
   assert environment["DSH_PERMISSION_MODE"] == (permission or "read-only")
   assert "DSH_TUI_PRESET" not in environment
   assert "DSH_TUI_NO_LAUNCHPAD" not in environment
@@ -139,7 +146,7 @@ def test_ssh_rejects_unverified_execution_routes(workspace, kind):
     data["profile"]["agent_options"]["auto_review"] = True
   with pytest.raises(ConfigError) as caught:
     workspace.adapter.validate(data)
-  assert caught.value.code == ("dsh-ssh-api-provider-required" if kind == "oauth" else "dsh-ssh-headless-only")
+  assert caught.value.code == ("dsh-ssh-subscription-provider" if kind == "oauth" else "dsh-ssh-headless-only")
 
 
 @pytest.mark.parametrize(("key", "value", "code"), [
@@ -230,3 +237,51 @@ def test_ssh_shell_env_archive_rejects_unpacked_filter_change(tmp_path):
   source.write_bytes(source.read_bytes() + b"\n// unpacked fixture change\n")
   with pytest.raises(DependencyError, match="本地包源码与固定 vendor 归档不一致"):
     recipe_digest(repository)
+
+
+def test_ssh_api_only_override_does_not_mount_subscription_auth(tmp_path):
+  extra = '\n[overrides.profiles.dsh-ssh]\nproviders=[]\nplugins=[]\n'
+  workspace = load_workspace(machine(tmp_path, REMOTE, extra=extra), "dsh-ssh")
+  data = workspace.resolved.data
+  assert all(provider["auth_kind"] == "api-key" for provider in data["providers"].values())
+  patch = native.load(next(artifact.content for artifact in workspace.adapter.render(data)
+    if artifact.target.path == "dsh-home/agentcfg.patch.yml"))
+  assert next(row for row in patch if row.get("id") == "credentials")["disabled"] is True
+  assert not any(row.get("id") == "agentcfg-ssh-subscription-auth"
+    for operation in patch for row in operation.get("insert", []))
+
+
+def test_ssh_subscription_plugin_is_required_for_selected_oauth(workspace):
+  data = deepcopy(workspace.resolved.data)
+  del data["plugins"]["ssh-subscription-auth"]
+  with pytest.raises(ConfigError) as caught:
+    workspace.adapter.validate(data)
+  assert caught.value.code == "dsh-ssh-subscription-plugin-required"
+
+
+def test_ssh_auth_maintenance_excludes_active_tasks(workspace):
+  workspace.instance.mkdir(parents=True, mode=0o700)
+  with workspace.adapter.lifecycle_guard(workspace):
+    pass
+  with workspace.adapter.run_lifecycle_guard_for(workspace, ("task",)):
+    with pytest.raises(Conflict):
+      with workspace.adapter.run_lifecycle_guard_for(workspace, ("--subscription-auth", "codex", "login")):
+        pytest.fail("authentication must not enter during an active task")
+  with workspace.adapter.run_lifecycle_guard_for(workspace, ("--subscription-auth", "cursor", "logout")):
+    with pytest.raises(Conflict):
+      with workspace.adapter.run_lifecycle_guard_for(workspace, ("task",)):
+        pytest.fail("task must not enter during authentication maintenance")
+
+
+@pytest.mark.parametrize(("provider", "route"), [("codex", "openai-codex"), ("cursor", "cursor-subscription")])
+def test_ssh_subscription_main_model_uses_the_registered_route(tmp_path, provider, route):
+  extra = ('\n[overrides.models.ssh-main]\nprovider=' + json.dumps(provider)
+    + '\nremote_id="fixture-subscription-model"\ninput=["text"]\n'
+    + SUBSCRIPTIONS + 'models=["ssh-main"]\n'
+    + '\n[overrides.profiles.dsh-ssh.roles]\nmain="ssh-main"\n')
+  workspace = load_workspace(machine(tmp_path, REMOTE, extra=extra), "dsh-ssh")
+  fields = {artifact.target.selector: json.loads(artifact.content)
+    for artifact in workspace.adapter.render(workspace.resolved.data)
+    if artifact.target.serialization == "cordis-yaml"}
+  assert fields["/agent-default-model/config/provider"] == route
+  assert fields["/agent-default-model/config/model"] == "fixture-subscription-model"

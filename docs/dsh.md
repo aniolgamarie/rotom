@@ -18,6 +18,7 @@ Legacy patched instances must not receive an in-place apply of this configuratio
 | TUI | `0.15.0` source build | `e709863019d56897e64495699c3a945cce194d00`; fixed upstream main commit, not the npm `0.15.0` archive |
 | Cursor provider | `dsh-cursor-subscription@0.6.12` | `936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8`; original package |
 | Terminal adapter | `rotom-dsh-cursor-terminal@0.1.2` | `agents/dsh/packages/cursor-terminal`; public TUI QuestionBridge, no copied OAuth/wire implementation |
+| SSH subscription adapter | `rotom-dsh-ssh-subscription-auth@0.1.0` | Host-side Codex/Cursor authentication and providers for the headless SSH profile; [setup and manual helper installation](dsh-ssh.md) |
 | Authentication | TUI `./oauth` | Only `openai-codex`; not the old standalone dsh-auth package |
 | AI approval | `dsh-auto-review@0.12.17` | Original [Perry package](https://github.com/PerryLink/dsh-auto-review/releases/tag/v0.12.17), SHA `2b931b8375f9ee9ebe20e80ef336c69804e1aac0` |
 | Review context | `rotom-dsh-review-context@0.1.1` | Constant configuration context; no file/environment/account reads or authority grants |

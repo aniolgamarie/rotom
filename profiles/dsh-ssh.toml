@@ -2,6 +2,7 @@
 schema_version = 1
 id = "dsh-ssh"
 agent = "dsh"
+providers = []
 plugins = []
 mcp = []
 

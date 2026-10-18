@@ -12,3 +12,8 @@ helper = "/opt/dsh-helper/0.2.1-rc.2/dsh-ssh-helper"
 # 替换为可信 helper 发行清单中的可执行文件 SHA-256。
 helper_hash = "0000000000000000000000000000000000000000000000000000000000000000"
 permission_mode = "read-only"
+
+# 可选订阅认证；未选中时仍为 API key 配置。账号在本 profile 单独登录。
+# [overrides.profiles.dsh-ssh]
+# providers = ["codex", "cursor"]
+# plugins = ["ssh-subscription-auth"]

@@ -452,6 +452,9 @@ importers:
       rotom-dsh-ssh-shell-env:
         specifier: file:vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz
         version: file:vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz(@deepseek-ai/dsh-shell-env@0.2.1-rc.2(38b639f5d752e73edbd2dcc9a4f36618))
+      rotom-dsh-ssh-subscription-auth:
+        specifier: file:vendor/rotom-dsh-ssh-subscription-auth-0.1.0.tgz
+        version: file:vendor/rotom-dsh-ssh-subscription-auth-0.1.0.tgz(fc4f7afa483f36419705266ef881d061)
 
 packages:
 
@@ -5381,6 +5384,17 @@ packages:
     version: 0.1.0
     peerDependencies:
       '@deepseek-ai/dsh-shell-env': 0.2.1-rc.2
+
+  rotom-dsh-ssh-subscription-auth@file:vendor/rotom-dsh-ssh-subscription-auth-0.1.0.tgz:
+    resolution: {integrity: sha512-cPpgfs/zic13w9th4VKBXNl2Yvo76mG22PDqQ354jxf4jwljJT8qevR4ajnbBkunAzyViIqsL8vlxeWpHDDg8w==, tarball: file:vendor/rotom-dsh-ssh-subscription-auth-0.1.0.tgz}
+    version: 0.1.0
+    peerDependencies:
+      '@deepseek-ai/cordis': 4.0.5
+      '@deepseek-ai/dsh-credentials-local': 0.2.1-rc.2
+      '@deepseek-ai/dsh-launch-environment': 0.2.1-rc.2
+      '@deepseek-harness-tui/dsh-tui': 0.15.0
+      dsh-cursor-subscription: 0.6.12
+      rotom-dsh-cursor-terminal: 0.1.2
 
   run-applescript@7.1.0:
     resolution: {integrity: sha512-DPe5pVFaAsinSaV6QjQ6gdiedWDcRCbUuiQfQa2wmWV7+xC9bGulGI8+TdRmoFkAPaBXk8CrAbnlY2ISniJ47Q==}
@@ -11231,6 +11245,15 @@ snapshots:
   rotom-dsh-ssh-shell-env@file:vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz(@deepseek-ai/dsh-shell-env@0.2.1-rc.2(38b639f5d752e73edbd2dcc9a4f36618)):
     dependencies:
       '@deepseek-ai/dsh-shell-env': 0.2.1-rc.2(38b639f5d752e73edbd2dcc9a4f36618)
+
+  rotom-dsh-ssh-subscription-auth@file:vendor/rotom-dsh-ssh-subscription-auth-0.1.0.tgz(fc4f7afa483f36419705266ef881d061):
+    dependencies:
+      '@deepseek-ai/cordis': 4.0.5(@deepseek-ai/cordis-plugin-include@1.0.10)(@deepseek-ai/cordis-plugin-loader@1.0.6)
+      '@deepseek-ai/dsh-credentials-local': 0.2.1-rc.2(@deepseek-ai/cordis@4.0.5)(@deepseek-ai/dsh-atomic-write@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-credentials@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-home-paths@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-launch-environment@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))
+      '@deepseek-ai/dsh-launch-environment': 0.2.1-rc.2(@deepseek-ai/cordis@4.0.5)
+      '@deepseek-harness-tui/dsh-tui': file:vendor/dsh-tui-0.15.0-e709863.tgz(7fc89cb6bf05aa6edfdcabdce4cbea7c)
+      dsh-cursor-subscription: 0.6.12(@deepseek-ai/cordis@4.0.5)(@deepseek-ai/dsh-client-connection@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5)(@deepseek-ai/dsh-scope@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5)))(@deepseek-ai/dsh-client-locale@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-client-ui-primitives@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-client-ui-settings@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-client-ui-slots@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-client-ui-tool@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-credentials@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-llm@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-settings@0.2.1-rc.2(f19463d923a7a6aadc4d6ed675af1c31))(@deepseek-ai/dsh-tools@0.2.1-rc.2(f4f5dafa2004c02f6afbbbc8518bca23))(react@18.3.1)
+      rotom-dsh-cursor-terminal: file:vendor/rotom-dsh-cursor-terminal-0.1.2.tgz(@deepseek-ai/cordis@4.0.5)(@deepseek-ai/dsh-client-connection@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5)(@deepseek-ai/dsh-scope@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5)))(@deepseek-ai/dsh-client-locale@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-client-ui-primitives@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-client-ui-settings@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-client-ui-slots@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-client-ui-tool@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-credentials@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-llm@0.2.1-rc.2(@deepseek-ai/cordis@4.0.5))(@deepseek-ai/dsh-settings@0.2.1-rc.2(f19463d923a7a6aadc4d6ed675af1c31))(@deepseek-ai/dsh-tools@0.2.1-rc.2(f4f5dafa2004c02f6afbbbc8518bca23))(@deepseek-harness-tui/dsh-tui@file:vendor/dsh-tui-0.15.0-e709863.tgz(7fc89cb6bf05aa6edfdcabdce4cbea7c))(react@18.3.1)
 
   run-applescript@7.1.0: {}
 

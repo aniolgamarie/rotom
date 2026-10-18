@@ -160,7 +160,8 @@
     "@deepseek-ai/dsh-subprocess-ssh": "0.2.1-rc.2",
     "@deepseek-ai/dsh-sandbox-ssh": "0.2.1-rc.2",
     "@deepseek-ai/dsh-headless": "0.2.1-rc.2",
-    "rotom-dsh-ssh-shell-env": "file:vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz"
+    "rotom-dsh-ssh-shell-env": "file:vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz",
+    "rotom-dsh-ssh-subscription-auth": "file:vendor/rotom-dsh-ssh-subscription-auth-0.1.0.tgz"
   },
   "pnpm": "11.19.0",
   "pnpm_integrity": "sha512-eIHz7VkNRyxKlV4riLISF5ERYGbcyIy8o4SeybYPG7qm0syyIfqR2k4cZb7yvL43k2Wup6xTnHv4be3DobItzg==",
