@@ -22,6 +22,7 @@ English is the authoritative language for maintained user and developer document
 
 - [Architecture](architecture.md), [adapter contract](adapters.md), and [project review and refactoring plan](design/project-refactoring.md).
 - [Configuration state and recovery](design/configuration-state.md), [approval boundaries](design/approvals.md), and [model routing](design/model-routing.md).
+- [CLI interaction strategy](design/cli-interaction.md): first-delivery status summaries, contextual guidance and static parameter/help improvements; implementation evidence, test limits and conditional follow-ups.
 - [Testing and support](testing.md), [acceptance summary](acceptance.md), [versions](releases.md), and [changelog](../CHANGELOG.md).
 - [Known issues and TODOs](known-issues.md), [Roadmap](roadmap.md), [contributing](../CONTRIBUTING.md), and [security](../SECURITY.md).
 - [Publication policy](publication-policy.md), [worktrees and merge gates](worktrees.md), and [history remediation](history-cleanup.md).

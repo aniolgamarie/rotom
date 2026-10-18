@@ -59,13 +59,9 @@ def _heartbeat_loop(stop: threading.Event, progress: Progress, stage: str, compo
     progress.stage(stage, component=component, force=False)
 
 
-def emit(payload: dict, *, json_mode: bool = False) -> None:
+def emit(payload: dict, *, json_mode: bool = False, context: dict | None = None) -> None:
   if json_mode:
     print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
   else:
-    for name, value in payload.items():
-      if name == "components" and isinstance(value, dict):
-        for component, result in value.items():
-          print(f"{component}: {result}")
-      else:
-        print(f"{name}: {value}")
+    from .presentation import render_result
+    print(render_result(payload, context=context))

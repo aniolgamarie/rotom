@@ -1,8 +1,11 @@
 """稳定的错误码，异常文本不携带私人正文。"""
 
 
+from .guidance import hint
+
+
 class TermcfgError(Exception):
-  def __init__(self, code: int, reason: str, next_command: str = "./termcfg doctor",
+  def __init__(self, code: int, reason: str, next_command: str = hint("doctor"),
                *, component: str | None = None, target_id: str | None = None,
                stage: str | None = None):
     super().__init__(reason)

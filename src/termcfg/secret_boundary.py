@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 from .errors import TermcfgError
+from .guidance import hint
 
 
 _SENSITIVE = re.compile(rb"(?i)(token|secret|password|api[_-]?key|subscription|sub[_-]?url|bearer|authorization|webhook|private[_-]?key|proxy-authorization)")
@@ -15,11 +16,11 @@ def admit_existing(target_id: str, data: bytes, *, known_public_contents: set[by
   if data in known_public_contents:
     return hashlib.sha256(data).hexdigest()
   if len(data) > 1024 * 1024 or b"\0" in data or _SENSITIVE.search(data):
-    raise TermcfgError(4, "possible_private_content", "先把私人值迁到 0600 私人文件，再运行 ./termcfg plan")
+    raise TermcfgError(4, "possible_private_content", hint("plan"))
   if trusted_digest is not None:
     candidate = hashlib.sha256(data).hexdigest()
     if candidate == trusted_digest:
       return candidate
   if target_id == "zshenv" and all(_SIMPLE_ZSH.fullmatch(line) for line in data.splitlines()):
     return hashlib.sha256(data).hexdigest()
-  raise TermcfgError(4, "unclassified_existing_content", "先审阅并迁走私人值，再运行 ./termcfg plan")
+  raise TermcfgError(4, "unclassified_existing_content", hint("plan"))

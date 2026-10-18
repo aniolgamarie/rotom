@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import PurePath
 import re
 import shlex
 import shutil
@@ -302,7 +303,7 @@ def _count_summary(value):
   return "；".join(parts) if parts else "结构化保护信息见 JSON"
 
 
-def _command_suggestions(payload, args, readiness=None):
+def _command_suggestions(payload, args, readiness=None, *, commands=None):
   readiness = payload.get("readiness") if readiness is None else readiness
   if not isinstance(readiness, dict):
     return []
@@ -318,7 +319,7 @@ def _command_suggestions(payload, args, readiness=None):
         continue
       supported = (len(words) == 1 and words[0] in ("setup", "sync", "plan", "apply", "rollback")
         or len(words) == 3 and words[:2] == ["lock", "--agent"] and words[2] in ("dsh", "pi", "omp"))
-      if supported:
+      if supported and (commands is None or words[0] in commands):
         result.append(command_line(args, *words, profile=payload.get("profile")))
   return result
 
@@ -342,6 +343,65 @@ def _render_plan(payload, stream):
     table(("类型", "位置 ID", "目标", "字段", "动作"), rows, stream=stream)
 
 
+def _identity_summary(identity):
+  """仅投影已采集的固定身份状态；不读取路径或推断已部署环境。"""
+  if not isinstance(identity, dict):
+    return [], False
+  fields = []
+  blocked = identity.get("layout_conflict") == "xdg-or-identity-layout-conflict"
+  if blocked:
+    fields.append(("身份布局", "XDG 或身份布局冲突"))
+  execution = identity.get("planned_execution_environment")
+  if isinstance(execution, dict) and execution.get("scope") == "planned-not-deployed":
+    fields.append(("计划环境范围", "仅计划，非已部署环境验证"))
+    if execution.get("status") == "ready":
+      fields.append(("计划环境状态", "计划路径检查通过"))
+    elif execution.get("status") == "path-conflict":
+      fields.append(("计划环境状态", "计划路径冲突"))
+      blocked = True
+  return fields, blocked
+
+
+def _doctor_conditions(payload, readiness):
+  """只按已收集事实排列提示，不重新计算 readiness 或探测状态。"""
+  blockers = readiness.get("blockers")
+  codes = set()
+  for item in blockers if isinstance(blockers, list) else []:
+    code = item.get("code") if isinstance(item, dict) else item
+    if isinstance(code, str):
+      codes.add(code)
+  pending = payload.get("recovery_pending") is True or "recovery-pending" in codes
+  lock_bad = payload.get("lock") == "missing-or-invalid" or "lock-missing-or-invalid" in codes
+  return pending, lock_bad
+
+
+def _doctor_actions(payload, args, readiness, stream, *, pending, lock_bad, identity_blocked):
+  """恢复选项是备选，依赖重建是维护；均不得伪装成无条件操作序列。"""
+  if pending:
+    choices = _command_suggestions(payload, args, readiness, commands={"apply", "rollback"})
+    if choices:
+      print("先处理部署恢复（备选，不是依次执行；请先核对恢复意图）:", file=stream)
+      for suggestion in choices:
+        print(f"- {suggestion}", file=stream)
+    else:
+      print("本次报告未提供可执行的恢复选择；先核对所选配置、依赖锁与部署恢复记录。", file=stream)
+  ordinary = _command_suggestions(payload, args, readiness,
+    commands={"setup", "sync", "plan"} if pending else {"setup", "sync", "plan", "apply", "rollback"})
+  if ordinary:
+    label = ("恢复完成后重新诊断，再评估（不是当前执行顺序）:" if pending else
+      "依赖锁恢复并重新诊断后再评估:" if lock_bad else
+      "身份或计划环境冲突处理并重新诊断后再评估:" if identity_blocked else "下一步:")
+    print(label, file=stream)
+    for suggestion in ordinary:
+      print(f"- {suggestion}", file=stream)
+  maintenance = _command_suggestions(payload, args, readiness, commands={"lock"})
+  if maintenance:
+    prefix = "恢复完成后，" if pending else ""
+    print(prefix + "仅在有意重新解析依赖时考虑（不是普通修复）:", file=stream)
+    for suggestion in maintenance:
+      print(f"- {suggestion}", file=stream)
+
+
 def _render_doctor(payload, args, stream):
   readiness = payload.get("readiness")
   input_diagnostics = payload.get("input_diagnostics")
@@ -349,28 +409,46 @@ def _render_doctor(payload, args, stream):
     readiness = input_diagnostics.get("readiness")
   readiness = readiness if isinstance(readiness, dict) else {}
   status = readiness.get("status", "unknown")
+  pending, lock_bad = _doctor_conditions(payload, readiness)
+  identity_fields, identity_blocked = _identity_summary(payload.get("identity"))
   capability_rows, capability_blocked = _capability_summary(payload.get("capabilities"))
   live = payload.get("live") is True
   service_rows, service_counts = _service_summary(payload.get("service_checks")) if live else ([], {})
   if live:
-    if status != "offline-ready" or capability_blocked:
+    if status != "offline-ready" or capability_blocked or pending or lock_bad or identity_blocked:
       title = "在线检查完成，仍需处理"
     elif service_counts.get("unverified"):
       title = "在线检查完成，部分未验证"
     else:
       title = "在线检查完成"
-  elif status != "offline-ready" or capability_blocked:
+  elif status != "offline-ready" or capability_blocked or pending or lock_bad or identity_blocked:
     title = "需要处理"
   else:
     title = "离线就绪"
   print(f"doctor：{title}", file=stream)
+  machine = getattr(args, "machine", None)
+  local = getattr(args, "local", None)
+  _write_fields((("机器", machine),
+    ("本地配置", str(local) if machine is None and isinstance(local, (str, PurePath)) else None),
+    ("目标", _target(payload)),
+    ("检查范围", "本次显式在线检查；不等同账号或模型验证" if live else "本次离线诊断；不代表在线可用")), stream)
+  if pending:
+    print("恢复前置：存在待恢复的部署；暂缓普通同步、更新与启动，先核对恢复选择。", file=stream)
+  if lock_bad:
+    print("锁前置：核对或恢复所选仓库的依赖锁；不要将重建锁当成普通修复。", file=stream)
+  if identity_blocked:
+    print("身份前置：存在身份布局或计划执行环境路径冲突；暂缓启动与普通部署，先核对所选身份和环境布局，处理后重新诊断。", file=stream)
+  _write_fields(identity_fields, stream)
   readiness_labels = ({"offline-ready": "基础部署检查通过", "action-required": "基础部署需要处理"}
     if live else {"offline-ready": "基础部署离线就绪", "action-required": "基础部署需要处理"})
   readiness_label = readiness_labels.get(status, "状态未知")
   if capability_blocked:
     readiness_label += "；能力项仍有阻塞"
-  _write_fields((("目标", _target(payload)), ("就绪状态", readiness_label),
-    ("已部署", payload.get("deployed")), ("依赖", _dependency(payload.get("dependencies"))),
+  if identity_blocked:
+    readiness_label += "；身份或计划环境仍有冲突"
+  _write_fields((("就绪状态", readiness_label),
+    ("已部署", payload.get("deployed")), ("前版备份", payload.get("previous_backup")),
+    ("依赖", _dependency(payload.get("dependencies"))),
     ("已部署依赖", _dependency(payload.get("deployed_dependencies"))),
     ("漂移", payload.get("drift")), ("冲突", payload.get("conflicts")),
     ("待变更", payload.get("changes_pending")), ("待恢复", payload.get("recovery_pending")),
@@ -379,7 +457,7 @@ def _render_doctor(payload, args, stream):
     _write_fields((("在线服务检查", service_counts.get("total")),
       ("HTTP 可达", service_counts.get("reachable")), ("未验证", service_counts.get("unverified")),
       ("账号登录与模型调用", "未验证；在线检查只验证显式路线的 HTTP 可达性")), stream)
-  elif status == "offline-ready" and not capability_blocked:
+  else:
     _write_fields((("账号登录与模型服务", "未验证；请使用原生状态检查"),), stream)
   environment = payload.get("environment")
   if isinstance(environment, dict):
@@ -411,17 +489,14 @@ def _render_doctor(payload, args, stream):
     print("需要处理的原因:", file=stream)
     for blocker in blockers:
       print(f"- {blocker}", file=stream)
-  suggestions = _command_suggestions(payload, args, readiness)
-  if suggestions:
-    print("下一步:", file=stream)
-    for suggestion in suggestions:
-      print(f"- {suggestion}", file=stream)
+  _doctor_actions(payload, args, readiness, stream, pending=pending, lock_bad=lock_bad,
+    identity_blocked=identity_blocked)
   if capability_rows:
     blocked_rows = [(row[0], row[-2], row[-1]) for row in capability_rows if row[-2] != "无"]
     print(f"已选择能力: {len(capability_rows)} 项；阻塞 {len(blocked_rows)} 项（加载与执行证据见 JSON）。", file=stream)
     if blocked_rows:
-      print("能力阻塞（最多 8 项）:", file=stream)
-      table(("能力", "原因", "位置 ID"), blocked_rows[:8], stream=stream)
+      print("能力阻塞（全部必需处理项）:", file=stream)
+      table(("能力", "原因", "位置 ID"), blocked_rows, stream=stream)
   if live and service_rows:
     print("在线服务检查:", file=stream)
     table(("位置 ID", "状态", "HTTP", "说明"), service_rows, stream=stream)

@@ -9,6 +9,7 @@ import stat
 import tomllib
 
 from .errors import TermcfgError
+from .guidance import hint
 
 
 COMPONENTS = frozenset(("zsh", "tmux"))
@@ -98,20 +99,21 @@ def read_machine(machine_id: str, *, legacy: bool = False) -> MachineSelection:
       os.close(fd)
     machine = MachineSelection.from_dict(value, expected_id=machine_id, legacy=True)
     if "mihomo" in machine.components and not legacy:
-      raise TermcfgError(4, "legacy_migration_required", "./termcfg migrate --drop-mihomo")
+      # 尚未检查旧 journal；先观察，不能把迁移排在未知的待恢复事务之前。
+      raise TermcfgError(4, "legacy_migration_required", hint("status"))
     if not legacy:
       from .state import read_state
       read_state(machine)
     return machine
   except FileNotFoundError as exc:
-    raise TermcfgError(2, "machine_missing", "./termcfg init-local --component zsh") from exc
+    raise TermcfgError(2, "machine_missing", hint("init-local", fallback_components=("zsh",))) from exc
   except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
     raise TermcfgError(2, "invalid_machine_file") from exc
 
 
 def require_current_machine(machine: MachineSelection, *, legacy: bool = False) -> None:
   if read_machine(machine.machine_id, legacy=legacy) != machine:
-    raise TermcfgError(4, "machine_selection_changed", "./termcfg status")
+    raise TermcfgError(4, "machine_selection_changed", hint("status"))
 
 
 def encode_machine(machine: MachineSelection) -> bytes:

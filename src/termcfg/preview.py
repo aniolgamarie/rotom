@@ -8,6 +8,7 @@ from pathlib import Path
 from .catalog import SourceArtifact, load_catalog
 from .config import MachineSelection
 from .errors import TermcfgError
+from .guidance import hint
 from .home_targets import TargetIdentity, inspect_target, read_regular
 from .secret_boundary import admit_existing
 from .state import read_state, require_no_pending_recovery
@@ -41,7 +42,8 @@ class Preview:
     blocked = any(item.action in {"blocked", "conflict"} for item in self.targets)
     return {"plan_id": self.plan_id, "targets": [item.public_dict() for item in self.targets],
             "overall_ready": not blocked, "ready": not blocked,
-            "next_command": "./termcfg doctor" if blocked else "./termcfg apply"}
+            "next_command": (hint("doctor") if blocked else hint("status")
+                             if all(item.action == "unchanged" for item in self.targets) else hint("apply"))}
 
 
 def _digest_object(value: object) -> str:

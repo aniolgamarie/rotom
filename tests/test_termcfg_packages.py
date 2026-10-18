@@ -235,3 +235,45 @@ def test_plugin_lock_conflicts_with_apply_repository_read_lease(isolated_environ
     release.set()
     thread.join(5)
   assert results and results[0]["changed"]
+
+
+@pytest.mark.parametrize("json_mode", [False, True])
+def test_cached_group_interrupt_reports_completed_activation(isolated_environment, monkeypatch, capsys, json_mode):
+  assert main(["--machine", "workstation", "init-local", "--component", "zsh"]) == 0
+  machine = read_machine("workstation")
+  lock, data = _plugin_fixture(isolated_environment, monkeypatch)
+  old_lock = lock.read_bytes()
+  monkeypatch.setattr(packages, "_download", lambda *args, **kwargs: data)
+  packages.sync(machine, "zsh")
+  current = packages._plugin_group_root("zsh") / "current"
+  first_group = os.readlink(current)
+  changed = json.loads(old_lock)
+  asset = changed["assets"]["zsh"][0]
+  asset["commit"] = "b" * 40
+  asset["url"] = asset["url"].replace("a" * 40, "b" * 40)
+  lock.write_text(json.dumps(changed))
+  packages.sync(machine, "zsh")
+  assert os.readlink(current) != first_group
+  lock.write_bytes(old_lock)
+  capsys.readouterr()
+  def no_download(*args, **kwargs):
+    pytest.fail("cached group must not download again")
+  monkeypatch.setattr(packages, "_download", no_download)
+  activate = packages._activate_plugin_group
+  def interrupt_after_activation(*args):
+    activate(*args)
+    raise KeyboardInterrupt()
+  monkeypatch.setattr(packages, "_activate_plugin_group", interrupt_after_activation)
+  words = ["--machine", "workstation", "sync", "--component", "zsh"]
+  assert main([*words, *(["--json"] if json_mode else [])]) == 6
+  text = capsys.readouterr().out
+  assert os.readlink(current) == first_group
+  if json_mode:
+    result = json.loads(text)
+    assert result["reason"] == "interrupted" and result["stage"] == "activate"
+    assert result["side_effect"] == "private_package_or_selection_may_have_changed"
+    assert result["machine_id"] == "workstation"
+  else:
+    assert "包选择未激活" not in text
+    assert "激活选择可能已改变" in text
+    assert "HOME 配置未由 sync 部署" in text

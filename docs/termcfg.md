@@ -2,11 +2,20 @@
 
 `./termcfg` independently manages public zsh/tmux HOME files and pinned plugins. Prepare Python 3.11+ and the repository `.venv` with `uv sync --locked`.
 
+Without a command it prints static task guidance and exits 2, without inspecting machine state. `--help` shows the full index; `COMMAND --help` explains parameters, effects and examples. `status` describes managed targets and recovery, `doctor` explains environment blockers, and `plan` previews changes. None of these starts or reloads a shell/tmux session.
+
+The examples below use machine `default`. For another machine, consistently use `--machine NAME`; this selector and `--json` are accepted before or after the command. For example, `./termcfg --machine workstation status --json` observes that machine rather than `default`.
+
+Human output shows scope, blockers/degradation, effects, target/plan/transaction IDs and conditional next actions. `--json` retains one final structured object, including errors; piping alone does not switch formats. JSON is not consent: existing TTY prompts and progress remain on stderr. An invalid machine selector is redacted as `<invalid>` in error results rather than echoed.
+
+Suggested commands preserve the validated machine and component scope. Recovery/migration remain machine-wide. Optional per-component sync suggestions are alternatives, not required installation or a batch script. Diagnostic `--home` suggestions never transfer a plan ID or authorize writes: inspect the saved target with a fresh plan before applying there. `status` checks target contents; it is not a metadata-only health cache.
+
 ```sh
 ./termcfg components
 ./termcfg init-local --component zsh --component tmux
 ./termcfg doctor
 ./termcfg plan
+# Optional plugin preparation; not required to apply public configuration.
 ./termcfg sync --component zsh
 ./termcfg sync --component tmux
 ./termcfg apply
@@ -15,7 +24,7 @@
 
 Interactive initialization preselects available terminal programs. Noninteractive initialization requires explicit repeatable `--component` or `--none`. Use `init-local --edit` to change the selection. The private machine file stores exactly machine ID, target HOME, private state root and components; see the [fictional example](../examples/termcfg-machine.toml). Managed metadata files require 0600 and private directories 0700.
 
-Plan, doctor and status work offline. Sync explicitly downloads the [locked plugins](../locks/termcfg/plugins.json) into private XDG data storage. Shell and tmux loading never downloads plugins. Sync defaults to a 300-second total timeout; `--timeout` accepts 10–3600 seconds. Maintainers update exact plugin commits explicitly and review the resulting lock diff:
+Plan, doctor and status work offline. Sync explicitly downloads the [locked plugins](../locks/termcfg/plugins.json) into private XDG data storage. Shell and tmux loading never downloads plugins. Each archive download uses a 300-second default budget; `--timeout` accepts 10–3600 seconds. This is not an atomic, whole-command timeout across multiple plugins. Maintainers update exact plugin commits explicitly and review the resulting lock diff:
 
 ```sh
 ./termcfg lock --component tmux --plugin tpm --version <full-commit>
@@ -38,6 +47,8 @@ Apply backs up all affected existing files before the first replacement and jour
 ./termcfg rollback --component zsh --plan-only --json
 ./termcfg rollback --component zsh --plan-id <rollback-plan-id>
 ```
+
+A nonzero exit does not prove that nothing changed. Inspect `reason`, `stage`, `side_effect` and any transaction facts: cached plugin activation may already have switched the selection, and an interruption after commit may occur after the journal has been removed. In the latter case, check status rather than assuming unchanged HOME. If recovery refuses target drift, preserve the target and inspect status before deciding how to resolve it; do not blindly repeat recovery or migration.
 
 ## Retiring an existing mihomo selection
 

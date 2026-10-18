@@ -78,6 +78,32 @@ A background descendant may inherit an instance/state/runtime lease and retain i
 
 Validation must cover foreground commands, native exit, manager failure, daemon descendants, concurrent deployment, and PID reuse. An implementation must use public process and host interfaces; it must not patch an agent.
 
+## RM-003: CLI interaction model
+
+**Status: first delivery implemented and reviewed; final controlled Linux offline acceptance passed against main `9ab90f5` (4390 passed, 13 scoped skips, 7 subtests passed). The previous agent private-state validation gap and inherited stale model-default test are closed; no native deployment is included.**
+
+The [CLI interaction strategy](design/cli-interaction.md) defines a common user
+journey: choose scope, observe, diagnose or preview, explicitly act, and verify.
+Keep the tools' existing execution and grammar contracts rather than forcing
+identical commands. Prioritize context-correct next actions, status overviews on
+current doctor/status entries, readable results and completion feedback, then
+layered help and safe parameter guidance. Existing setup, model input, and progress
+remain in place. Diagnostic scope must not become write authority. Preserve
+structured output contracts, exit codes, native argument passthrough, and all
+ownership, approval, and recovery checks.
+
+A distinct saved-state agentcfg status command, additional human verbosity,
+explicit multi-component terminal sync, and opt-in completion are conditional
+follow-ups, not first-delivery requirements. Avoid hidden last-used targets,
+implicit profile switching, automatic repair, or batching downloads with adoption
+merely to reduce command count.
+
+The old CLI worktree is retained, not ordinarily merged or restored wholesale.
+Its retired proxy guidance and file-existence-based readiness hints are not part
+of the new scope. The design records implemented contracts, controlled offline
+acceptance and the remaining skipped/native/platform scopes; it does not authorize
+deployment or remote updates.
+
 ## Other planned work
 
 - Establish a matching independent TypeScript development lock for Task Keeper and real SDK typechecking.

@@ -88,12 +88,42 @@ def test_defaults_apply_to_future_profile_and_profile_local_roles_win():
   resolved = resolve_config(loaded, local, profile_id="dsh-future",
                             adapter_schemas=context)
   profile = resolved.data["profile"]
-  assert profile["providers"] == ["kimi_code_openai", "glm_coding_openai", "deepseek_openai", "codex", "cursor"]
+  # 本例重设了 future 配方自身的 providers；OAuth 不再从 adapter 默认层追加。
+  assert profile["providers"] == ["kimi_code_openai", "glm_coding_openai", "deepseek_openai"]
   assert profile["models"] == ["kimi_code_openai", "kimi_code_k3_openai", "kimi_code_k3_256k_openai", "kimi_code_highspeed_openai",
     "glm_coding_53_openai", "glm_coding_53_flash_openai", "deepseek_flash_openai", "deepseek_pro_openai"]
   assert profile["roles"]["main"] == "glm_coding_53_openai"
   assert resolved.provenance[("profile", "providers")] == "local"
   assert resolved.provenance[("profile", "models")] == "local"
+
+
+@pytest.mark.parametrize("profile_id, selection, oauth", [
+  ("dsh-default", None, ["codex", "cursor"]),
+  ("dsh-future", None, ["codex", "cursor"]),
+  ("dsh-future", [], []),
+  ("dsh-future", ["codex", "cursor"], ["codex", "cursor"]),
+  ("dsh-future", ["cursor"], ["cursor"]),
+])
+def test_oauth_providers_remain_explicit_profile_choices(profile_id, selection, oauth):
+  loaded = catalog()
+  profiles = deepcopy(loaded.profiles)
+  profile = deepcopy(profiles["dsh-default"])
+  profile["id"] = profile_id
+  # None 保留复制配方的显式选择；空列表才移除该配方层的 OAuth 选择。
+  if selection is not None:
+    profile["providers"] = selection
+  profiles[profile_id] = profile
+  context = AdapterSchemas(dict(loaded.adapter_schemas.bundles),
+    {**loaded.adapter_schemas.profile_agents, profile_id: "dsh"})
+  loaded = type(loaded)(loaded.registry, profiles, loaded.adapter_documents, context,
+                        loaded.model_defaults)
+  # 局部 API-only 列表仍按层追加，不会删除配方显式选中的 OAuth。
+  local = LocalConfig({"schema_version": 1, "machine": {"id": "fixture"}, "overrides": {
+    "profiles": {profile_id: {"providers": ["kimi_code_openai"]}}}})
+  resolved = resolve_config(loaded, local, profile_id=profile_id, adapter_schemas=context)
+  expected = ["kimi_code_openai", "glm_coding_openai", "deepseek_openai", *oauth]
+  assert resolved.data["profile"]["providers"] == expected
+  assert set(resolved.data["providers"]) == set(expected)
 
 
 def test_synthetic_catalog_without_global_defaults_keeps_empty_local_selection_provenance():

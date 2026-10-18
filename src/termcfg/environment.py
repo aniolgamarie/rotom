@@ -7,6 +7,7 @@ import shutil
 from .catalog import load_catalog
 from .config import MachineSelection, xdg_path
 from .errors import TermcfgError
+from .guidance import hint
 from .home_targets import inspect_target
 from .packages import current_platform, installed_plugins
 from .state import journal_exists, read_journal, read_state
@@ -94,8 +95,10 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
                          "unverified": sorted(set(unverified)),
                          "target_issues": target_issues,
                          "service": service,
-                         "next_command": ("./termcfg recover" if "recovery_pending" in blockers else
-                                          "./termcfg doctor" if blockers else "./termcfg plan")}
+                         "next_command": (hint("recover") if "recovery_pending" in blockers else
+                                          hint("doctor", components=(component,)) if blockers else
+                                          hint("sync", components=(component,)) if "optional_plugins_not_synced" in degraded else
+                                          hint("plan", components=(component,)))}
   return result
 
 
@@ -133,7 +136,7 @@ def status_report(machine: MachineSelection, components: tuple[str, ...]) -> dic
       environment[component]["required_blockers"] = sorted(blockers)
       environment[component]["status"] = "blocked"
       environment[component]["ready"] = False
-      environment[component]["next_command"] = "./termcfg plan --component " + component
+      environment[component]["next_command"] = hint("recover") if pending else hint("plan", components=(component,))
     environment[component].update(
       files=targets,
       previous_backup=component in state["previous"],
@@ -148,4 +151,4 @@ def status_report(machine: MachineSelection, components: tuple[str, ...]) -> dic
                            "items": [{"target_id": item.get("target_id"), "component": item.get("component"),
                                       "stage": item.get("stage")} for item in journal.get("items", [])]}
                           if journal else None),
-          "next_command": "./termcfg recover" if pending else "./termcfg plan"}
+          "next_command": hint("recover") if pending else hint("plan")}

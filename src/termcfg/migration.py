@@ -9,6 +9,7 @@ import stat
 
 from .config import MachineSelection, encode_machine, machine_path, read_machine
 from .errors import TermcfgError
+from .guidance import hint
 from .lease import operation_lease
 from .state import (atomic_bytes, journal_exists, private_dir, read_json, read_state,
                     state_file, write_json)
@@ -43,7 +44,7 @@ def migrate(machine_id: str) -> dict:
     if journal_exists(machine):
       from .state import read_journal
       read_journal(machine)
-      raise TermcfgError(4, "recovery_pending", "./termcfg recover")
+      raise TermcfgError(4, "recovery_pending", hint("recover"))
     marker_path = machine.private_state_root / "drop-mihomo-migration.json"
     marker = read_json(marker_path)
     if marker is None:
@@ -86,12 +87,12 @@ def migrate(machine_id: str) -> dict:
       # 完成后正常 apply 可以推进状态；再次迁移不回放归档。
       if "mihomo" in machine.components or read_state(machine, legacy=True)["version"] != 2:
         raise TermcfgError(4, "migration_metadata_drift")
-      return {"migrated": False, "reason": "already_migrated", "next_command": "./termcfg plan"}
+      return {"migrated": False, "reason": "already_migrated", "next_command": hint("plan")}
     current_machine = _contents(machine_path(machine_id))
     current_state = _contents(state_file(machine))
     if (_digest(current_machine) not in {marker["machine_before"], marker["machine_after"]} or
         _digest(current_state) not in {marker["state_before"], marker["state_after"]}):
-      raise TermcfgError(4, "migration_metadata_drift", "./termcfg status")
+      raise TermcfgError(4, "migration_metadata_drift", hint("status"))
     # 每次写入前再次 CAS；操作租约序列化本工具，外部修改不能静默丢弃。
     if _digest(current_state) != marker["state_after"]:
       if _digest(_contents(state_file(machine))) != marker["state_before"]:
@@ -106,7 +107,7 @@ def migrate(machine_id: str) -> dict:
       raise TermcfgError(4, "migration_metadata_drift")
     marker["phase"] = "complete"
     write_json(marker_path, marker)
-    return {"migrated": True, "next_command": "./termcfg plan"}
+    return {"migrated": True, "next_command": hint("plan")}
 
 
 def _validate_marker(marker, machine_id, machine):

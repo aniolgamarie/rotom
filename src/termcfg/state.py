@@ -11,6 +11,7 @@ from jsonschema import Draft202012Validator
 from .catalog import REPO_ROOT, _relative_path
 from .config import MachineSelection
 from .errors import TermcfgError
+from .guidance import hint
 
 
 def private_dir(path: Path) -> None:
@@ -44,7 +45,7 @@ def journal_exists(machine: MachineSelection) -> bool:
 
 def require_no_pending_recovery(machine: MachineSelection) -> None:
   if journal_exists(machine):
-    raise TermcfgError(4, "recovery_pending", "./termcfg recover")
+    raise TermcfgError(4, "recovery_pending", hint("recover"))
 
 
 def blank_state(machine: MachineSelection) -> dict:
@@ -82,7 +83,7 @@ def read_state(machine: MachineSelection, *, legacy: bool = False) -> dict:
       from .migration import _validate_marker
       _validate_marker(marker, machine.machine_id, machine)
       if marker["phase"] != "complete":
-        raise TermcfgError(4, "migration_pending", "./termcfg migrate --drop-mihomo")
+        raise TermcfgError(4, "migration_pending", hint("migrate", "--drop-mihomo"))
   value = read_json(state_file(machine))
   if value is None:
     return blank_state(machine)
@@ -94,7 +95,7 @@ def read_state(machine: MachineSelection, *, legacy: bool = False) -> dict:
   except Exception as exc:
     raise TermcfgError(2, "invalid_private_state") from exc
   if value["version"] == 1 and not legacy:
-    raise TermcfgError(4, "legacy_migration_required", "./termcfg migrate --drop-mihomo")
+    raise TermcfgError(4, "legacy_migration_required", hint("status"))
   if value["machine_id"] != machine.machine_id:
     raise TermcfgError(2, "state_machine_mismatch")
   backup_root = machine.private_state_root / "backups"

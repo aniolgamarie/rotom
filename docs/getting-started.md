@@ -2,7 +2,11 @@
 
 `agentcfg` prepares software and deploys configuration; DSH is the agent that talks to you and works on your project. This tutorial uses the single `dsh-default` recipe. Pi and OMP have separate [Pi](pi.md) and [OMP](omp.md) guides. Read the [DSH guide](dsh.md) before migrating an existing instance: the current Core is a prerelease, and the default AI approval integration has accepted, unresolved limitations.
 
-The examples call this machine `workstation`. If you choose another name, use it consistently in every command. `--machine`, `--local`, and `--profile` are global selectors and go **before** the subcommand.
+The examples call this machine `workstation`. If you choose another name, use it consistently in every command. `--machine`, `--local`, and `--profile` are global selectors and go **before** the subcommand. `init-local` is the exception: its machine/profile options go after it.
+
+Running `./agentcfg` without a command prints a short static task map and exits 2; it does not inspect configuration or choose an action. Use `./agentcfg --help` for the full index and `./agentcfg COMMAND --help` for effects, prerequisites and examples. Native `usage --help` and `run -- --help` remain native argument tails, not manager help.
+
+For a single default machine, the short path is `./agentcfg init-local`, then `./agentcfg model status`, filling any required fields before `./agentcfg setup` and `./agentcfg run`. Omit `--machine` only when you intend `default`; the selected machine's `default_profile` supplies the profile. `run` infers the agent from that profile; `run omp` does not switch profiles.
 
 ## 1. Prepare the repository and toolchain
 

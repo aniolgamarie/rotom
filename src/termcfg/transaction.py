@@ -13,6 +13,7 @@ from .catalog import REPO_ROOT, load_catalog
 from .config import MachineSelection, require_current_machine
 from .diagnostics import Progress
 from .errors import TermcfgError
+from .guidance import hint
 from .home_targets import atomic_target_bytes, atomic_target_link, inspect_target, read_regular, remove_target
 from .lease import operation_lease, repository_lease
 from .preview import Preview, PlannedTarget, build_preview
@@ -29,7 +30,7 @@ def _target_context(component: str, target_id: str, stage: str):
     exc.context.update({"component": component, "target_id": target_id, "stage": stage})
     raise
   except OSError as exc:
-    raise TermcfgError(6, "filesystem_failure", "./termcfg status",
+    raise TermcfgError(6, "filesystem_failure", hint("status"),
                        component=component, target_id=target_id, stage=stage) from exc
 
 
@@ -153,7 +154,7 @@ def _recovery_identity(machine: MachineSelection, relative: Path, record: dict) 
         return expected
   if observed["kind"] == "absent" and (record.get("expected_restore") or {}).get("kind") == "absent":
     return {"kind": "absent"}
-  raise TermcfgError(4, "recovery_target_drift", "./termcfg status")
+  raise TermcfgError(4, "recovery_target_drift", hint("status"))
 
 
 def _clean_old_backups(machine: MachineSelection, old: dict, current: dict) -> None:
@@ -178,11 +179,11 @@ def _clean_old_backups(machine: MachineSelection, old: dict, current: dict) -> N
 def _check_approvals(preview: Preview, *, adopted: set[str], confirm_zshenv: str | None) -> None:
   for item in preview.targets:
     if item.action in {"blocked", "conflict"}:
-      raise TermcfgError(4, item.reason or "target_conflict", "./termcfg plan")
+      raise TermcfgError(4, item.reason or "target_conflict", hint("plan"))
     if item.action == "adopt-required" and item.artifact.id not in adopted:
-      raise TermcfgError(4, "adoption_required", "./termcfg plan")
+      raise TermcfgError(4, "adoption_required", hint("plan"))
     if item.custom_zshenv and confirm_zshenv != preview.plan_id:
-      raise TermcfgError(4, "zshenv_confirmation_required", "./termcfg plan")
+      raise TermcfgError(4, "zshenv_confirmation_required", hint("plan"))
   unknown = adopted - {item.artifact.id for item in preview.targets if item.action == "adopt-required"}
   if unknown:
     raise TermcfgError(2, "invalid_adoption_target")
@@ -206,7 +207,7 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
       progress.stage("backup", component=item.artifact.component, item=f"{index}/{len(to_backup)} {item.artifact.id}")
       with _target_context(item.artifact.component, item.artifact.id, "backup"):
         if _identity_with_digest(machine, item) != item.before.as_dict():
-          raise TermcfgError(4, "target_changed_before_backup", "./termcfg plan")
+          raise TermcfgError(4, "target_changed_before_backup", hint("plan"))
         backup = _backup_one(machine, item, backups_dir)
         record = records.get(item.artifact.id)
         if record is not None:
@@ -238,7 +239,7 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
       progress.stage("write", component=item.artifact.component, item=f"{index}/{len(changes)} {item.artifact.id}")
       with _target_context(item.artifact.component, item.artifact.id, "write"):
         if _identity_with_digest(machine, item) != item.before.as_dict():
-          raise TermcfgError(4, "target_changed_during_write", "./termcfg recover")
+          raise TermcfgError(4, "target_changed_during_write", hint("recover"))
         def record_intent(identity):
           record["intended_after"] = identity
           _write_journal(machine, journal)
@@ -246,7 +247,7 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
                             item.artifact.mode, before_replace=record_intent, expected=item.before.as_dict())
         record["after"] = _identity_with_digest(machine, item)
         if record["after"].get("digest") != item.artifact.sha256 or record["after"].get("mode") != item.artifact.mode:
-          raise TermcfgError(6, "write_verify_failed", "./termcfg recover")
+          raise TermcfgError(6, "write_verify_failed", hint("recover"))
         record["stage"] = "verified"
         _write_journal(machine, journal)
         new_state["targets"][item.artifact.id] = {"component": item.artifact.component,
@@ -295,23 +296,23 @@ def apply(machine: MachineSelection, components: tuple[str, ...], *, plan_id: st
     environment = inspect_environment(machine, components)
     if any(not entry["ready"] for entry in environment.values()):
       if any("recovery_pending" in entry["required_blockers"] for entry in environment.values()):
-        raise TermcfgError(4, "recovery_pending", "./termcfg recover")
+        raise TermcfgError(4, "recovery_pending", hint("recover"))
       component = next(name for name, entry in environment.items() if not entry["ready"])
       target_id = next(iter(environment[component]["target_issues"]), None)
-      raise TermcfgError(5, "required_environment_missing", "./termcfg doctor --strict",
+      raise TermcfgError(5, "required_environment_missing", hint("doctor", "--strict"),
                          component=component, target_id=target_id, stage="validate")
     preview = build_preview(machine, components)
     if plan_id is not None and plan_id != preview.plan_id:
-      raise TermcfgError(2, "plan_id_mismatch", "./termcfg plan")
+      raise TermcfgError(2, "plan_id_mismatch", hint("plan"))
     if confirm is not None:
       adopted, confirm_zshenv = confirm(preview)
     elif plan_id is None:
-      raise TermcfgError(2, "plan_id_required", "./termcfg plan")
+      raise TermcfgError(2, "plan_id_required", hint("plan"))
     _check_approvals(preview, adopted=adopted, confirm_zshenv=confirm_zshenv)
     with repository_lease(REPO_ROOT, exclusive=False):
       current = build_preview(machine, components)
       if current.plan_id != preview.plan_id:
-        raise TermcfgError(4, "snapshot_changed", "./termcfg plan")
+        raise TermcfgError(4, "snapshot_changed", hint("plan"))
       return _commit_apply(machine, current, progress)
 
 
@@ -344,7 +345,7 @@ def recover(machine: MachineSelection) -> dict:
       if expected_restore is not None:
         if expected_restore["kind"] == "absent" and current.kind == "absent":
           continue
-      raise TermcfgError(4, "recovery_target_drift", "./termcfg status")
+      raise TermcfgError(4, "recovery_target_drift", hint("status"))
     journal["phase"] = "recovery_pending"
     _write_journal(machine, journal)
     restored_state = json.loads(json.dumps(journal["state_before"]))
@@ -372,7 +373,7 @@ def rollback_preview(machine: MachineSelection, component: str) -> dict:
   state = read_state(machine)
   previous = state["previous"].get(component)
   if not previous:
-    raise TermcfgError(4, "no_previous_version", "./termcfg status")
+    raise TermcfgError(4, "no_previous_version", hint("status"))
   from .catalog import load_catalog
   catalog = {item.id: item for item in load_catalog()}
   targets = []
@@ -384,7 +385,7 @@ def rollback_preview(machine: MachineSelection, component: str) -> dict:
     identity = _current_identity(machine, target_id, item.destination,
                                  (record["after"].get("digest"),))
     if identity != record["after"]:
-      raise TermcfgError(4, "rollback_target_drift", "./termcfg status")
+      raise TermcfgError(4, "rollback_target_drift", hint("status"))
     _verified_backup(machine, backup)
     targets.append({"target_id": target_id, "relative": str(item.destination),
                     "current": identity, "restore_kind": backup["before"]["kind"],
@@ -393,7 +394,7 @@ def rollback_preview(machine: MachineSelection, component: str) -> dict:
               "state": state, "targets": targets}
   plan_id = hashlib.sha256(json.dumps(snapshot, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
   return {"plan_id": plan_id, "component": component, "targets": targets,
-          "overall_ready": True, "ready": True, "next_command": "./termcfg rollback --component " + component + " --plan-id " + plan_id}
+          "overall_ready": True, "ready": True, "next_command": hint("rollback", "--plan-id", plan_id, components=(component,))}
 
 
 def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, confirm=None) -> dict:
@@ -403,12 +404,12 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
     progress.stage("validate", component=component)
     plan = rollback_preview(machine, component)
     if plan_id is not None and plan_id != plan["plan_id"]:
-      raise TermcfgError(2, "plan_id_mismatch", "./termcfg rollback --component " + component + " --plan-only")
+      raise TermcfgError(2, "plan_id_mismatch", hint("rollback", "--plan-only", components=(component,)))
     if confirm is not None:
       if not confirm(plan):
         raise TermcfgError(4, "confirmation_declined")
     elif plan_id is None:
-      raise TermcfgError(2, "plan_id_required", "./termcfg rollback --component " + component + " --plan-only")
+      raise TermcfgError(2, "plan_id_required", hint("rollback", "--plan-only", components=(component,)))
     state = read_state(machine)
     previous = state["previous"][component]
     transaction_id = uuid.uuid4().hex
@@ -425,7 +426,7 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
         current = target["current"]
         if _current_identity(machine, target_id, Path(target["relative"]),
                              (current.get("digest"),)) != current:
-          raise TermcfgError(4, "rollback_target_drift", "./termcfg rollback --component " + component + " --plan-only")
+          raise TermcfgError(4, "rollback_target_drift", hint("rollback", "--plan-only", components=(component,)))
         current_backup = {"before": current, "path": None, "digest": None,
                           "managed_before": True, "prior_source_digest": state["targets"][target_id]["source_digest"]}
         if current["kind"] == "file":
@@ -459,7 +460,7 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
         identity = _current_identity(machine, target_id, relative,
                                      (record["before"].get("digest"),))
         if identity != record["before"]:
-          raise TermcfgError(4, "rollback_target_drift", "./termcfg recover")
+          raise TermcfgError(4, "rollback_target_drift", hint("recover"))
         progress.stage("write", component=component, item=target_id)
         old_backup = previous[target_id]
         def record_intent(expected):

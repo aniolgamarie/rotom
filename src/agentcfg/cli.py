@@ -11,6 +11,7 @@ import tomllib
 from pathlib import Path
 
 from .paths import InitializationError, PathError, UnsupportedRootOwner, environment_home, xdg_config_home
+from .cli_help import ENTRY_GUIDE, action_label, configure_help, error_guidance
 
 # 退出码定义（CLI-08）
 EXIT_OK = 0
@@ -26,16 +27,37 @@ class CLIParser(argparse.ArgumentParser):
     super().__init__(*args, allow_abbrev=False, **kwargs)
 
   def fail(self, message):
-    self.print_usage(sys.stderr)
-    self.exit(EXIT_USAGE, f"{self.prog}: 错误: {message}\n")
+    current = getattr(self, "guidance_context", {}).get("parser", self)
+    current.print_usage(sys.stderr)
+    self.exit(EXIT_USAGE, f"{current.prog}: 错误: {message}\n{error_guidance(current)}\n")
 
   def error(self, message):
-    # argparse 的原始错误可能含私有参数，不回显。
-    self.fail("参数无效；请使用 --help 检查命令、参数名称和必填项")
+    # 不解释 argparse 错误文本；原始消息可能含未知 token、路径或秘密值。
+    self.fail("参数无效或缺少必填项；请检查当前命令的注册参数")
+
+  def parse_known_args(self, args=None, namespace=None):
+    # argparse 自己选择子解析器；只记录已识别的路径，不另行扫描或重排 argv。
+    if hasattr(self, "guidance_context"):
+      self.guidance_context["parser"] = self
+    return super().parse_known_args(args, namespace)
+
+  def _get_value(self, action, arg_string):
+    try:
+      return super()._get_value(action, arg_string)
+    except argparse.ArgumentError:
+      constraint = ("ID 必须为非空单一路径段，不得包含控制字符" if action.type is selection_id
+        else "参数值格式无效；请参考帮助中的约束")
+      self.fail(f"{action_label(action)}: {constraint}")
+
+  def _match_argument(self, action, arg_strings_pattern):
+    try:
+      return super()._match_argument(action, arg_strings_pattern)
+    except argparse.ArgumentError:
+      self.fail(f"{action_label(action)}: 缺少所需参数值")
 
   def _check_value(self, action, value):
     if action.choices is not None and value not in action.choices:
-      self.fail(f"{action.dest}: 不支持的选择；可选: {', '.join(action.choices)}")
+      self.fail(f"{action_label(action)}: 不支持的选择；可选: {', '.join(action.choices)}")
 
   def parse_args(self, args=None, namespace=None):
     tokens = list(sys.argv[1:] if args is None else args)
@@ -63,7 +85,7 @@ class CLIParser(argparse.ArgumentParser):
     if parsed.command == "init-local" and any(
       getattr(parsed, name) is not None for name in ("machine", "local", "profile")
     ):
-      self.fail("init-local 仅使用子命令后的 --machine；全局选择器不适用")
+      self.fail("init-local 仅使用子命令后的 --machine/--profile；全局选择器不适用")
     if parsed.command == "profiles" and any(
       getattr(parsed, name) is not None for name in ("machine", "local", "profile")
     ):
@@ -262,7 +284,7 @@ def build_parser() -> argparse.ArgumentParser:
     # lock: 依赖锁定
     lock = subparsers.add_parser(
         "lock",
-        help="解析并提交完整依赖锁",
+        help="有意重新解析并写入完整依赖锁；不是普通修复",
     )
     lock.add_argument(
         "--agent",
@@ -375,6 +397,7 @@ def build_parser() -> argparse.ArgumentParser:
     project_init.add_argument("--format", choices=("auto", "human", "json"), default="auto",
         help="结果格式：auto 在终端显示摘要、重定向时输出 JSON")
 
+    configure_help(parser)
     return parser
 
 
@@ -401,7 +424,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command is None:
-        parser.print_help()
+        print(ENTRY_GUIDE)
         return EXIT_USAGE
 
     # 分发命令

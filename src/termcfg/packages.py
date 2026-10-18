@@ -18,6 +18,7 @@ from .catalog import REPO_ROOT
 from .config import MachineSelection, require_current_machine, xdg_path
 from .diagnostics import Progress, heartbeat
 from .errors import TermcfgError
+from .guidance import hint
 from .lease import operation_lease, repository_lease
 from .state import atomic_bytes, private_dir, read_state, require_no_pending_recovery
 
@@ -129,7 +130,7 @@ def _download(url: str, *, expected_size: int | None, timeout: int, progress: Pr
     with heartbeat(progress, "download", component=component), urllib.request.urlopen(request, timeout=min(10, timeout)) as response:
       while True:
         if time.monotonic() - start > timeout:
-          raise TermcfgError(5, "download_total_timeout", "./termcfg sync --component " + component)
+          raise TermcfgError(5, "download_total_timeout", hint("sync", components=(component,)))
         chunk = response.read(256 * 1024)
         if not chunk:
           break
@@ -138,7 +139,7 @@ def _download(url: str, *, expected_size: int | None, timeout: int, progress: Pr
           raise TermcfgError(5, "asset_too_large")
         progress.stage("download", component=component, item=f"{result.tell()} bytes", force=False)
   except (OSError, TimeoutError) as exc:
-    raise TermcfgError(5, "download_failed", "./termcfg sync --component " + component) from exc
+    raise TermcfgError(5, "download_failed", hint("sync", components=(component,))) from exc
   data = result.getvalue()
   if expected_size is not None and len(data) != expected_size:
     raise TermcfgError(5, "asset_length_mismatch")
@@ -270,7 +271,7 @@ def _sync_plugins(machine: MachineSelection, component: str, assets: list[dict],
       _verify_plugin_group(stage, assets)
       with repository_lease(REPO_ROOT, exclusive=False):
         if _read_lock_raw(component)[1] != snapshot:
-          raise TermcfgError(4, "lock_snapshot_changed", "./termcfg sync --component " + component)
+          raise TermcfgError(4, "lock_snapshot_changed", hint("sync", components=(component,)))
         progress.stage("activate", component=component)
         if group.exists():
           _verify_plugin_group(group, assets)
@@ -285,10 +286,11 @@ def _sync_plugins(machine: MachineSelection, component: str, assets: list[dict],
     _verify_plugin_group(group, assets)
     with repository_lease(REPO_ROOT, exclusive=False):
       if _read_lock_raw(component)[1] != snapshot:
-        raise TermcfgError(4, "lock_snapshot_changed", "./termcfg sync --component " + component)
+        raise TermcfgError(4, "lock_snapshot_changed", hint("sync", components=(component,)))
+      progress.stage("activate", component=component)
       _activate_plugin_group(root, group)
   return {"component": component, "prepared": [asset["id"] for asset in assets],
-          "package": str(group), "next_command": "./termcfg doctor"}
+          "package": str(group), "next_command": hint("doctor")}
 
 
 def _activate_plugin_group(root: Path, group: Path) -> None:
@@ -350,8 +352,7 @@ def lock_plugin(component: str, plugin_id: str, commit: str, *, repo: str | None
     # 新增插件：必须由维护者显式提供仓库与入口文件，骨架先过一遍格式校验。
     if not repo or not entry:
       raise TermcfgError(2, "plugin_add_requires_repo_entry",
-                         "./termcfg lock --component " + component + " --plugin " + plugin_id +
-                         " --repo <owner/name> --entry <path> --version <完整提交>")
+                         hint("lock", "--help"))
     old = {"id": plugin_id, "repo": repo, "commit": commit,
            "platform": "all", "url": f"https://codeload.github.com/{repo}/tar.gz/{commit}",
            "size": 1, "sha256": "0" * 64, "archive": "tar.gz", "entry": entry,
@@ -402,9 +403,9 @@ def lock_plugin(component: str, plugin_id: str, commit: str, *, repo: str | None
     updated["assets"][component] = [asset if item["id"] == plugin_id else item for item in original["assets"][component]]
   with repository_lease(REPO_ROOT, exclusive=True):
     if _read_lock_raw(component)[1] != identity:
-      raise TermcfgError(4, "lock_snapshot_changed", "./termcfg lock --component " + component + " --plugin " + plugin_id + " --version " + commit)
+      raise TermcfgError(4, "lock_snapshot_changed", hint("lock", "--plugin", plugin_id, "--version", commit, components=(component,)))
     progress.stage("activate", component=component, item=plugin_id)
     atomic_bytes(lock_path(component), (json.dumps(updated, indent=2, sort_keys=True) + "\n").encode(), mode=0o644)
   return {"component": component, "plugin": plugin_id, "commit": commit,
           "sha256": asset["sha256"], "size": asset["size"],
-          "next_command": "./termcfg sync --component " + component}
+          "next_command": hint("sync", components=(component,))}
