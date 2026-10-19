@@ -1,7 +1,7 @@
 # rotom 工程约定
 
 个人 Agent 配置管理仓库。通过 `./agentcfg` 管理公共配置来源、机器覆盖、原生转换、完整依赖、部署与启动。
-已实现 DSH + `ccch1mneyyy/dsh-TUI`、Pi 和 OMP 适配；Pi 通过 model-delegate 调用官方 Codex CLI，Codex 不是独立配置适配器。`./termcfg` 独立管理 zsh/tmux；旧 mihomo 所有权仅保留显式元数据迁移和历史恢复入口。实现、历史验收与当前平台支持须分别判断，见 `docs/architecture.md` 和各工具支持矩阵。
+已实现 DSH + `ccch1mneyyy/dsh-TUI`、Pi 和 OMP 适配；Pi 的 `pi-base` / `pi-pro` 使用未经修改的官方 Pi CLI 与完整依赖锁；旧 model-delegate/Task Keeper 执行平台已退出发行路径，Codex 不是独立配置适配器。`./termcfg` 独立管理 zsh/tmux；旧 mihomo 所有权仅保留显式元数据迁移和历史恢复入口。实现、历史验收与当前平台支持须分别判断，见 `docs/architecture.md` 和各工具支持矩阵。
 
 ## 基本原则：不修改 agent 上游源码
 

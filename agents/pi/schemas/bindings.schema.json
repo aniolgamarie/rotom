@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "protocols": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "enum": [
+          "openai-completions",
+          "openai-responses",
+          "anthropic-messages"
+        ]
+      }
+    },
+    "oauth": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "route": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^\\u0000]+$"
+          },
+          "owner": {
+            "type": "string",
+            "enum": [
+              "pi-native",
+              "pi-cursor"
+            ]
+          }
+        },
+        "required": [
+          "route",
+          "owner"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "protocols",
+    "oauth"
+  ],
+  "additionalProperties": false
+}

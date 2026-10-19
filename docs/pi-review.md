@@ -1,5 +1,11 @@
 # Pi interactive review and editor
 
+> Historical reference for the retired Pi SDK/four-profile integration. Its commands, roles,
+> plugins and support claims do not apply to current Base/Pro and must not be used as current
+> operating instructions. The original body remains for historical scope only. See the
+> [current Pi guide](pi.md), [migration boundary](pi-migration.md) and [support matrix](pi-support.md).
+
+
 `pi-slopchop` preserves diff, last-commit, whole-file, submodule, annotation-shortcut, and feedback views. The derived version is `0.10.1-agentcfg.1`; its complete source and MIT license are in the four-profile source closure. This does not establish current-lock or native UI acceptance; see [testing](testing.md).
 
 ## Explicit bindings

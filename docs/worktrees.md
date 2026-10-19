@@ -32,3 +32,14 @@ A cleanup limited to `main` leaves old lineage in retained private branches and 
 Do not ordinarily merge an old-lineage branch into cleaned `main`. Start a new candidate from the clean `main`, then replay only the branch's own reviewed changes. Carefully selected cherry-picks may be appropriate, but inspect the resulting content and messages and normalize author and committer identity to the approved public identity. Preserve required upstream attribution. Check copied artifacts and dependencies for information removed during cleanup.
 
 Merging clean `main` into an old branch does not clean that branch's other parents. An ancestry or merge-base check showing clean `main` as an ancestor likewise does not prove that every reachable old parent is clean. Review the actual history that the candidate would introduce and run all gates again. Keep old refs private until separately reviewed; deleting, rewriting, or publishing them requires its own authorized scope. Remote updates remain a separate authorization decision.
+
+## Pi reboot branch scope
+
+The `design/pi-toolkit-reboot` work continues the Base/Pro official-CLI rebuild and explicit old
+repository retirement. Its [implementation record](../specs/005-rebuild-pi-toolkit/implementation-status.md),
+[acceptance record](../specs/005-rebuild-pi-toolkit/acceptance.md) and
+[retirement execution list](../specs/005-rebuild-pi-toolkit/retirement-execution.md) separate completed
+work from open native/account/Pro/status gates. Linux manager rebuild and isolated checks do not
+close those gates or macOS native support. Temporary design notes are consolidated into
+[formal Pi support and sources](pi-support.md). No source snapshot, local test result or branch
+status authorizes merge, publication, history rewrite or alteration of private running instances.

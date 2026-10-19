@@ -6,7 +6,7 @@ This roadmap records intended work, not release commitments. Recheck source, loc
 
 | Priority | Work | Exit condition |
 | --- | --- | --- |
-| Required for broader Pi acceptance | PI-LOCK: full lock rebuilt and pi-default materialized; repeat remaining profile/platform native/cold scopes | Match exact source/lock/runtime; no digest-only refresh or transfer of historical results |
+| Required for broader Pi acceptance | Base/Pro official CLI is implemented; complete final-candidate rebuilding, native/account gates, status parity, held collaboration and selected optional-module integration remain separate | Match exact source/lock/runtime and each gate; no transfer of historical four-profile results |
 | Ongoing publication hygiene | Cleaned `main` was manually pushed by the user and anonymously verified; review any other ref separately | Retained old-lineage refs require separate review and enter clean `main` only through reviewed replay; no ordinary merge |
 | Required before tagging | Freeze a candidate and record validation | Relevant tests, lock checks, documentation links, source/license inventory, explicit unresolved limitations |
 | Ongoing | Upstream DSH/Perry fixes | Repeat the real approval-chain and sandbox tests before changing accepted limitations |
@@ -18,10 +18,10 @@ This roadmap records intended work, not release commitments. Recheck source, loc
 The [project refactoring plan](design/project-refactoring.md) defines distinct
 instance, runtime, run, native-session, Pi-attempt, worktree and credential identities.
 Shared run admission and exclusive maintenance now cover DSH, Pi and OMP. DSH
-preparation is journaled maintenance; Pi uses full owner identities and per-run
-endpoints in its existing evidence store. DSH/OMP lock publication and full sync
+preparation is journaled maintenance. The record's old Pi supervisor/evidence-store design is
+historical; Base/Pro use independent main-run owners and retain unknown maintenance blocking. DSH/OMP lock publication and full sync
 consumption are leased. Native and cross-platform coverage must remain explicit;
-Pi lock publication still requires a single publisher.
+Pi now uses the common publisher/reader lease and recoverable publication protocol.
 
 The same work implements deferred credential reads and an explicit migration to
 remove mihomo management from `termcfg`, retaining zsh/tmux and their generic package
@@ -57,7 +57,7 @@ for that model. Per-route proxy and lease-lifecycle redesign remain separate wor
 
 Move toward immutable source declarations and profile-scoped materialization, retaining public configuration, locks, repository-owned adapters, and tests in Git. Third-party Git sources should record fixed commits, compatibility, licenses, and content identity; npm sources should record exact versions, resolved URLs, and integrity. Downloaded source and generated archives should live in verified caches where reproducibility permits.
 
-The current repository retains both third-party source and generated archives. Historical measurements showed that the current snapshot, rather than history alone, accounts for much of clone size. This is not solved by deleting archives while runtime/build paths still require them. Some Pi packages contain historical integration changes and cannot be replaced by an upstream URL without behavior analysis.
+The current repository retains both third-party source and generated archives. Historical measurements showed that the current snapshot, rather than history alone, accounts for much of clone size. This is not solved by deleting archives while runtime/build paths still require them. The old Pi executable package/vendor distribution has since been retired under an explicit source/consumer inventory. Required legal/source attribution remains; this does not erase Git history or alter installed private instances.
 
 Implementation stages:
 
@@ -106,9 +106,27 @@ deployment or remote updates.
 
 ## Other planned work
 
-- Establish a matching independent TypeScript development lock for Task Keeper and real SDK typechecking.
+- Reevaluate held Pi collaboration candidates through public interfaces and prove the per-main-run investigation contract. The accepted status-information differences and current footer evidence are recorded separately. Do not restore Task Keeper or a custom execution scheduler.
 - Evaluate explicit per-route proxy controls without conflating model, reviewer, ordinary tool, and download traffic.
 - Extend native and account validation to additional platforms only when suitable authorized environments exist.
 - Maintain English documentation and clearly scoped translations. Prefer durable guides and issue registers over public operational transcripts.
 
 Parallel feature branches and staged work must satisfy the [worktree merge gates](worktrees.md), including the history cutover procedure where applicable. Roadmap entries do not authorize merging unfinished Pi/CLI changes, rewriting history, publishing releases, or modifying deployed instances.
+
+## Pi Base/Pro remaining delivery gates
+
+The current [Pi support matrix](pi-support.md) separates Linux manager rebuild/isolation from
+bounded native/shared-model evidence from remaining account/performance/macOS scopes. Source retirement
+does not close those gates. The future
+collaboration contract allows at most two read-only investigations per main run, but the current
+3.1.0 candidate is held and tintinweb 0.22.0 can bypass the foreground cap through background/resume.
+The user retained community-only investigation plugins and deferred Pro until upstream improves;
+the public footer alternative passed the status gate with three explicitly accepted display differences.
+
+Fixed optional choices now connect complete locks and native resources, with bounded Context7,
+Chromium, footer/cache, bounded real-tool and no-account Brave/Cursor evidence. Selected-combination
+scenarios and startup/context/resource measurements are recorded in
+[current delivery acceptance](../specs/005-rebuild-pi-toolkit/current-delivery-acceptance.md). The user
+explicitly deferred Brave/Cursor real-account acceptance; Pro remains an upstream-dependent future gate. Linux child-subreaper observation can release the current owner only after
+complete kernel evidence; unavailable coverage and old unknown records still block maintenance.
+Neither timeouts nor forced owner cleanup is an accepted completion path.

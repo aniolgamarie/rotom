@@ -26,9 +26,9 @@ def emit(monkeypatch, payload, *, mode="auto", tty=False, args=None):
 
 
 def test_command_line_preserves_selectors_and_shell_quotes_dynamic_words():
-  machine = SimpleNamespace(machine="work station", local=Path("/ignored"), profile="pi-default")
+  machine = SimpleNamespace(machine="work station", local=Path("/ignored"), profile="pi-base")
   assert command_line(machine, "run", "--cwd", "/tmp/中文 project") == (
-    "./agentcfg --machine 'work station' --profile pi-default run --cwd '/tmp/中文 project'")
+    "./agentcfg --machine 'work station' --profile pi-base run --cwd '/tmp/中文 project'")
   local = SimpleNamespace(machine=None, local=Path("/tmp/private config.toml"), profile=None)
   assert command_line(local, "doctor", "--input", profile="omp-default") == (
     "./agentcfg --local '/tmp/private config.toml' --profile omp-default doctor --input")
@@ -87,7 +87,7 @@ def test_common_fields_use_compact_aligned_definition_lines(monkeypatch):
 
 
 def test_plan_uses_public_location_ids_and_never_prints_values(monkeypatch):
-  payload = {"command": "plan", "agent": "pi", "profile": "pi-default", "instance": "/instance",
+  payload = {"command": "plan", "agent": "pi", "profile": "pi-base", "instance": "/instance",
     "changes": 1, "drift": 1, "conflicts": 0, "dependencies": "sync-required",
     "diagnostics": "/cache/locations.json",
     "diff": [{"id": "public-change-id", "target": "<managed-resource>", "field": "<managed-field>",
@@ -146,15 +146,15 @@ def test_doctor_input_extracts_real_omp_event_shape_and_advice(monkeypatch):
 
 def test_validate_profile_list_uses_readable_join_without_repr(monkeypatch):
   payload = {"command": "validate", "agent": "dsh", "profile": "dsh-default", "valid": True,
-    "artifacts": 2, "profiles_checked": ["dsh-default", "pi-default"],
+    "artifacts": 2, "profiles_checked": ["dsh-default", "pi-base"],
     "credentials": "not-checked-offline"}
   output = emit(monkeypatch, payload, mode="human")
-  assert "dsh-default、pi-default" in output
+  assert "dsh-default、pi-base" in output
   assert "['dsh-default'" not in output
 
 
 def test_doctor_generic_host_status_uses_fixed_safe_advice(monkeypatch):
-  payload = {"command": "doctor", "agent": "pi", "profile": "pi-default", "deployed": False,
+  payload = {"command": "doctor", "agent": "pi", "profile": "pi-base", "deployed": False,
     "dependencies": "unknown", "recovery_pending": False,
     "readiness": {"status": "action-required", "blockers": ["lock-missing-or-invalid"],
       "next_commands": ["lock --agent pi"]},
@@ -162,37 +162,30 @@ def test_doctor_generic_host_status_uses_fixed_safe_advice(monkeypatch):
       "echo": None, "signals": None}, "host_events": {"status": "not-checked", "reason": "SECRET_CANARY"}}}
   output = emit(monkeypatch, payload, mode="human")
   assert "依赖锁缺失或无效" in output and "尚未检查宿主输入事件" in output
-  assert "./agentcfg --machine '测试 machine' --profile pi-default lock --agent pi" in output
+  assert "./agentcfg --machine '测试 machine' --profile pi-base lock --agent pi" in output
   assert "SECRET_CANARY" not in output
 
 
-def test_doctor_selected_capability_blockers_override_offline_ready(monkeypatch):
-  payload = {"command": "doctor", "agent": "pi", "profile": "pi-default", "deployed": True,
-    "dependencies": "installed", "deployed_dependencies": "installed", "recovery_pending": False,
-    "drift": False, "conflicts": False, "changes_pending": 0,
+def test_doctor_feature_declarations_use_fixed_labels_without_claiming_loaded(monkeypatch):
+  payload = {"command": "doctor", "agent": "pi", "profile": "pi-base", "deployed": True,
+    "dependencies": "installed", "recovery_pending": False,
     "readiness": {"status": "offline-ready", "blockers": [], "next_commands": []},
-    "capabilities": [
-      {"id": "pi-host", "selected": True, "configured": True, "deployed": True,
-        "dependencies": "sync-required", "load_evidence": "not-run", "execution_evidence": "not-run",
-        "authentication": "not-inspected", "blockers": ["PI_DEPENDENCIES_MISSING"],
-        "location_id": "capability:" + "a" * 20, "private": "SECRET_CANARY"},
-      {"id": "SECRET_CANARY", "selected": False, "configured": False, "deployed": False,
-        "dependencies": "not-selected", "blockers": [], "location_id": "SECRET_CANARY"}]}
+    "feature_readiness": {
+      "status_bar": {"status": "not_ready", "decision": "held", "candidate": "SECRET_CANARY"},
+      "collaboration": {"status": "not_ready", "decision": "held", "requested": "SECRET_CANARY"},
+      "optional_modules": {"status": "not_selected", "decision": "candidate", "selected": ["SECRET_CANARY"]}}}
   output = emit(monkeypatch, payload, mode="human")
-  assert "doctor：需要处理" in output and "doctor：离线就绪" not in output
-  assert "基础部署离线就绪；能力项仍有阻塞" in output
-  assert "pi-host" in output and "能力依赖缺失" in output and "capability:" + "a" * 20 in output
+  assert "功能声明（不代表已加载）" in output
+  assert "状态栏信息对齐" in output and "Pro调查协作" in output and "按需模块" in output
+  assert "未就绪；暂停准入" in output and "未选择；候选" in output
   assert "SECRET_CANARY" not in output
 
 
 def test_doctor_live_summarizes_real_service_checks_without_offline_claim(monkeypatch):
-  payload = {"command": "doctor", "agent": "pi", "profile": "pi-default", "deployed": True,
+  payload = {"command": "doctor", "agent": "pi", "profile": "pi-base", "deployed": True,
     "dependencies": "installed", "deployed_dependencies": "installed", "recovery_pending": False,
     "drift": False, "conflicts": False, "changes_pending": 0, "live": True,
     "readiness": {"status": "offline-ready", "blockers": [], "next_commands": []},
-    "capabilities": [{"id": "pi-host", "selected": True, "configured": True, "deployed": True,
-      "dependencies": "installed", "load_evidence": "verified", "execution_evidence": "not-run",
-      "authentication": "not-inspected", "blockers": [], "location_id": "capability:" + "b" * 20}],
     "service_checks": [
       {"location_id": "route:" + "c" * 20, "status": "reachable", "http_status": 401,
         "private": "SECRET_CANARY"},
@@ -211,18 +204,11 @@ def test_proposals_recovery_and_main_results_keep_semantics(monkeypatch):
   cases = [
     ({"command": "inventory", "agent": "omp", "profile": "omp-default", "items": 8,
       "ready_to_deploy": False, "proposal": "/tmp/review"}, ("尚未部署", "盘点条目", "/tmp/review")),
-    ({"command": "plan", "agent": "pi", "profile": "pi-default", "mode": "migration-preview",
+    ({"command": "plan", "agent": "pi", "profile": "pi-base", "mode": "migration-preview",
       "items": 4, "blockers": 2, "ready_to_deploy": False, "proposal": "/tmp/inventory.json"},
       ("迁移提案", "阻塞项", "/tmp/inventory.json")),
     ({"command": "rollback", "agent": "dsh", "profile": "dsh-default", "restored": 3},
       ("上一版已恢复", "已恢复项", "3")),
-    ({"command": "recover", "agent": "pi", "profile": "pi-default", "lease_id": "lease-public",
-      "plan_kind": "stop", "plan_digest": "a" * 64, "expires_at": "later", "target_processes": 2,
-      "external_work": 1, "workspace_leases": 1}, ("尚未执行", "lease-public", "目标进程")),
-    ({"command": "recover", "agent": "pi", "profile": "pi-default", "lease_id": "lease-public",
-      "state": "failed", "protected": True}, ("failed", "保护保持", "是")),
-    ({"command": "project", "agent": "pi", "profile": "pi-default", "integration": "upstream-agents-custom",
-      "changed": 2, "artifacts": ["a", "b", "c"]}, ("项目集成", "变更文件", "3")),
   ]
   for payload, expected in cases:
     output = emit(monkeypatch, payload, mode="human")
@@ -237,28 +223,10 @@ def test_failure_shaped_results_are_not_reported_as_success(monkeypatch):
     assert absent not in emit(monkeypatch, payload, mode="human")
 
 
-def test_sync_false_means_no_new_install_and_recover_blockers_are_visible(monkeypatch):
-  sync = emit(monkeypatch, {"command": "sync", "agent": "pi", "profile": "pi-default",
+def test_sync_false_means_no_new_install(monkeypatch):
+  sync = emit(monkeypatch, {"command": "sync", "agent": "pi", "profile": "pi-base",
     "installed": False, "identity": "public-runtime-id"}, mode="human")
   assert "依赖同步完成" in sync and "本次安装" in sync and "否" in sync
-  blocked = emit(monkeypatch, {"command": "recover", "agent": "pi", "profile": "pi-default",
-    "blockers": ["active-child-process"], "private": "SECRET_CANARY"}, mode="human")
-  assert "恢复受阻" in blocked and "存在其他阻塞项" in blocked
-  assert "active-child-process" not in blocked
-  assert "SECRET_CANARY" not in blocked
-
-
-def test_recover_structured_counts_keep_protection_summary_without_identifiers(monkeypatch):
-  payload = {"command": "recover", "agent": "pi", "profile": "pi-default", "lease_id": "lease-public",
-    "plan_kind": "stop_execution", "plan_digest": "a" * 64, "expires_at": "later",
-    "target_processes": [{"pid": 123, "private": "PROCESS_SECRET"}],
-    "external_work": {"private-id-one": "active", "private-id-two": "terminated"},
-    "workspace_leases": {"count": 2, "protected": True, "private": "LEASE_SECRET"}}
-  output = emit(monkeypatch, payload, mode="human")
-  assert "目标进程" in output and "外部工作" in output and "工作区租约" in output
-  assert "活动 1" in output and "已终止 1" in output and "受保护 是" in output
-  assert "PROCESS_SECRET" not in output and "LEASE_SECRET" not in output
-  assert "private-id-one" not in output and "private-id-two" not in output
 
 
 def test_plan_prioritizes_conflict_and_drift_locations_before_changes(monkeypatch):

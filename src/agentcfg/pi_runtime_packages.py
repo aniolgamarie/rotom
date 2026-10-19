@@ -1,7 +1,6 @@
 """Pi运行包内容收据；目录激活复用公共安全文件系统原语。"""
 
 import hashlib
-import json
 import os
 from pathlib import Path
 import stat
@@ -57,45 +56,33 @@ def inventory(root):
 
 
 def validate_installed(root, piece):
+  from .pi_dependencies import _json, digest, validate_installed_packages, validate_package_lock
   with Tree(root) as tree:
-    package = tree.read(piece["package_path"])
-    resolution = tree.read(piece["lock_path"])
+    package = tree.read("package.json")
+    resolution = tree.read("package-lock.json")
     if not package or not resolution:
       raise Conflict("Pi运行包缺少原始完整锁")
     if (hashlib.sha256(package[0]).hexdigest() != piece["package_json_digest"]
         or hashlib.sha256(resolution[0]).hexdigest() != piece["package_lock_digest"]):
       raise Conflict("Pi安装修改了完整锁")
-    locked = json.loads(resolution[0])
-    prefix = Path(piece["package_path"]).parent
-    for name, record in locked["packages"].items():
-      if not name:
-        continue
-      target = (prefix / relative_path(name) / "package.json").as_posix()
-      raw = tree.read(target)
-      if raw is None and record.get("optional"):
-        continue
-      if raw is None or json.loads(raw[0]).get("version") != record["version"]:
-        raise Conflict("Pi已安装依赖与锁不一致")
-    for name in [piece["entrypoint"], "runtime/launch.mjs", "runtime/resource-loader.mjs", "runtime/profile.json",
-        "supervisor/scripts/pi-supervisor.py", "supervisor/scripts/pi-control.py", "supervisor/scripts/pi-exec.py", "supervisor/src/agentcfg/pi_host.py"]:
-      if tree.read(name) is None:
-        raise Conflict("Pi必要运行入口缺失")
-    if piece["engine"] == "bun" and any(tree.read("runtime/" + name) is None for name in ("bunfig.locked.toml", "tsconfig.locked.json")):
-      raise Conflict("Bun封闭加载配置缺失")
-    for kind, entries in piece["resource_manifest"].items():
-      for entry in entries:
-        path = root / relative_path(entry["path"])
-        if path.is_symlink() or not path.exists() or (kind != "skills" and not path.is_file()):
-          raise Conflict("Pi声明资源入口缺失")
-        if kind == "skills" and path.is_dir() and tree.read(entry["path"] + "/SKILL.md") is None:
-          raise Conflict("Pi技能入口缺失")
+    if (piece["identity"] != digest({key: value for key, value in piece.items() if key != "identity"})
+        or _json(package[0])["dependencies"] != piece["dependencies"]):
+      raise Conflict("Pi安装配方身份不一致")
+    locked = _json(resolution[0])
+    validate_package_lock(locked, piece["dependencies"])
+    validate_installed_packages(root, locked, piece["script_audits"])
+    for name in piece["required_files"]:
+      raw = tree.read(relative_path(name).as_posix())
+      if raw is None or not raw[0].strip():
+        raise Conflict("Pi官方入口、所选资源或许可缺失")
 
 
 def seal(root, identity, lock_identity, piece, *, toolchains):
   from .pi_dependencies import digest, platform_id
   validate_installed(root, piece)
-  receipt = {"schema_version": 1, "status": "installed", "identity": identity, "lock_identity": lock_identity,
-    "slice_identity": piece["identity"], "slice": piece, "files": inventory(root),
+  files = inventory(root)
+  receipt = {"schema_version": 2, "status": "installed", "identity": identity, "lock_identity": lock_identity,
+    "profile_identity": piece["identity"], "profile": piece, "files": files, "manifest_digest": digest(files),
     "platform": platform_id(), "toolchains": dict(toolchains), "toolchain_identity": digest(toolchains)}
   with Tree(root) as tree:
     tree.write_state(".agentcfg-receipt.json", json_bytes(receipt))
@@ -106,26 +93,28 @@ def status(root, identity):
   if not root.exists() and not root.is_symlink():
     return "missing"
   try:
+    from .pi_dependencies import _json, digest, platform_id
     if not owned(root, identity):
       return "damaged"
     with Tree(root) as tree:
       raw = tree.read(".agentcfg-receipt.json")
       if raw is None or raw[1] != 0o600:
         return "damaged"
-      receipt = json.loads(raw[0])
-    from .pi_catalog import validate
-    validate("runtime-receipt", receipt)
-    from .pi_dependencies import digest, platform_id
-    if (receipt["identity"] != identity or receipt["slice_identity"] != receipt["slice"]["identity"]
-        or digest({k: v for k, v in receipt["slice"].items() if k != "identity"}) != receipt["slice_identity"]
+      receipt = _json(raw[0])
+    if (set(receipt) != {"schema_version", "status", "identity", "lock_identity", "profile_identity", "profile", "files",
+          "manifest_digest", "platform", "toolchains", "toolchain_identity"}
+        or receipt["schema_version"] != 2 or receipt["status"] != "installed"
+        or receipt["identity"] != identity or receipt["profile_identity"] != receipt["profile"]["identity"]
+        or digest({k: v for k, v in receipt["profile"].items() if k != "identity"}) != receipt["profile_identity"]
         or receipt["platform"] != platform_id() or receipt["toolchain_identity"] != digest(receipt["toolchains"])
-        or digest({"lock_identity": receipt["lock_identity"], "slice_identity": receipt["slice_identity"],
-          "platform": receipt["platform"], "toolchain_identity": receipt["toolchain_identity"]}) != identity
+        or digest({"profile_identity": receipt["profile_identity"],
+          "platform": receipt["platform"], "toolchains": receipt["toolchains"]}) != identity
+        or receipt["manifest_digest"] != digest(receipt["files"])
         or receipt["files"] != inventory(root)):
       return "damaged"
-    validate_installed(root, receipt["slice"])
+    validate_installed(root, receipt["profile"])
     return "installed"
-  except (OSError, ValueError, KeyError, TypeError, Conflict, PathError, ConfigError):
+  except (OSError, ValueError, KeyError, TypeError, Conflict, PathError, ConfigError, RecursionError):
     return "damaged"
 
 

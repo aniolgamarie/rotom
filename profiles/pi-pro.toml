@@ -1,0 +1,4 @@
+# 两档共用官方宿主和资源；Pro协作当前未准入。
+schema_version = 1
+id = "pi-pro"
+agent = "pi"

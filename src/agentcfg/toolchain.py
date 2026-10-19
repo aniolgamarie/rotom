@@ -54,6 +54,20 @@ def ensure_compatible_toolchain(tool: str, locked: str, actual: str) -> None:
   )
 
 
+def ensure_minimum_toolchain(tool: str, minimum: str, actual: str) -> None:
+  try:
+    if parse_toolchain_version(tool, actual) >= parse_toolchain_version(tool, minimum):
+      return
+  except ValueError:
+    pass
+  # 只报告已规范化版本，原生版本输出可能含不可信正文。
+  expected = canonical_toolchain_version(tool, minimum) or "无效最低版本"
+  raise DependencyError(
+    f"{tool} 版本不满足宿主最低要求：至少 {expected}，"
+    f"实际 {_actual_description(tool, actual)}；agentcfg 不安装 Node/npm"
+  )
+
+
 def ensure_exact_toolchain(tool: str, locked: str, actual: str) -> None:
   canonical = canonical_toolchain_version(tool, actual)
   if canonical is not None and canonical == locked:

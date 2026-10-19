@@ -12,7 +12,6 @@ COMMANDS = [
   ["validate"], ["render"], ["plan"], ["sync"], ["apply"],
   ["doctor"], ["doctor", "--live"], ["capture"], ["rollback"],
   ["lock", "--agent", "dsh"], ["run", "dsh"],
-  ["project", "init", "openspec", "--path", "业务 项目"],
 ]
 
 

@@ -256,6 +256,11 @@ def plan(tree, state, candidate, binding, launch):
   for key in sorted(previous.keys() | wanted.keys()):
     spec = deepcopy(wanted.get(key, previous[key] if key in previous else None))
     before = previous.get(key)
+    # 空祖先只有最初由管理器创建时才拥有；跨多次部署保留这份来源，
+    # 使退出模块能删除自己的空容器而不清理用户原生对象。
+    if spec["selector"]:
+      spec["created_parents"] = deepcopy(before.get("created_parents", [])) if before else missing_parents(
+        parse_native(tree.read(spec["path"])[0], spec["codec"]) if tree.read(spec["path"]) else {}, spec["selector"])
     if before is not None and key in wanted and bool(before.get("guard")) != bool(spec.get("guard")):
       raise Conflict("既有字段的引用保护不能隐式新增或移除")
     current = projection(tree, before if before is not None else spec)
@@ -285,7 +290,8 @@ def plan(tree, state, candidate, binding, launch):
       baseline = desired
     elif same(current, baseline):
       raw_file = tree.read(spec["path"])
-      parents = missing_parents(parse_native(raw_file[0], spec["codec"]) if raw_file else {}, spec["selector"]) if spec["selector"] else []
+      parents = list(dict.fromkeys(spec.get("created_parents", []) + (
+        missing_parents(parse_native(raw_file[0], spec["codec"]) if raw_file else {}, spec["selector"]) if spec["selector"] else [])))
       changes.append({"item": spec, "before": current, "after": desired,
                       "created_file": raw_file is None, "created_parents": parents,
                       **({"before_guard": before["guard"]} if before and before.get("guard") else {})})
@@ -357,6 +363,9 @@ def recover(target, state, *, prepare=None):
     committed = same(read_state(state), normalize_state(journal["after_state"]))
   except Exception:
     raise Conflict("恢复记录损坏，停止修改") from None
+  # 在恢复任何文件前检查整个当前/待恢复受管认证集合，不能等逐文件
+  # 恢复到末尾才发现后面的原生引用已被替换成明文。
+  validate_reference_targets(target, read_state(state), journal["after_state"], changes=journal["changes"])
   if journal.get("prepare_launch") and prepare is None:
     raise Conflict("启动资源准备待恢复；请执行 apply/rollback")
   if not committed:
@@ -368,6 +377,27 @@ def recover(target, state, *, prepare=None):
       prepare(current["launch"])
   state.replace("pending.json", None, expected=raw[2])
   return True
+
+
+def validate_reference_targets(target, *states, changes=()):
+  from .native_projection import is_omp_credential, is_pi_credential, validate_item_guard
+  items = {}
+  for state in states:
+    current = state.get("current")
+    for item in (current or {}).get("items", {}).values():
+      if is_omp_credential(item) or is_pi_credential(item):
+        key = item_key(item)
+        previous = items.get(key, {})
+        items[key] = {**item, "guard": transition_guard(previous.get("guard"), item.get("guard"))}
+  for change in changes:
+    item = change["item"]
+    if is_omp_credential(item) or is_pi_credential(item):
+      key = item_key(item)
+      items[key] = {**item, "guard": transition_guard(items.get(key, {}).get("guard"),
+        transition_guard(change.get("before_guard"), item.get("guard")))}
+  for item in items.values():
+    value = projection(target, item)
+    validate_item_guard(item, value)
 
 
 def transact(target, state, old_state, after_state, changes, *, prepare=None):
@@ -416,14 +446,18 @@ def apply(instance: Path, state_root: Path, candidate, binding, launch, *, expec
         raise Conflict("预览后部署状态已变化；请重新运行 setup")
       if change.conflicts:
         raise Conflict("部署有未接管目标或双方修改冲突；请先查看 plan")
-      if same(old["current"], change.current) and not change.changes:
+      # 只在计划通过后保留实际管理过的共享文件来源，支持动态模块退出再选；
+      # 不预认领候选路径，也不保存原生未知字段的内容。
+      owner = deepcopy(old.get("owner")) or {"binding": binding, "shared_files": launch.get("shared_files", [])}
+      shared = sorted({item["path"] for item in change.current["items"].values() if item["selector"]})
+      owner["shared_files"] = list(dict.fromkeys([*owner["shared_files"], *shared]))
+      if same(old["current"], change.current) and not change.changes and same(old.get("owner"), owner):
         if prepare is not None:
           transact(target, state, old, old, [], prepare=prepare)
         return change.public()
       # 只变更基线（如 C=D）也记录当前事实，但无实际变更不轮换 previous。
       binding_changed = old["current"] is None or old["current"]["launch"] != launch
       previous = {"current": old["current"], "changes": change.changes} if change.changes or binding_changed else old["previous"]
-      owner = old.get("owner") or {"binding": binding, "shared_files": launch.get("shared_files", [])}
       after = {"version": 1, "current": change.current, "previous": previous, "owner": owner}
       transact(target, state, old, after, change.changes, prepare=prepare)
       return change.public()
@@ -431,15 +465,12 @@ def apply(instance: Path, state_root: Path, candidate, binding, launch, *, expec
 
 def rollback(instance: Path, state_root: Path, binding, *, prepare=None):
   with Tree(state_root, create=True) as state, instance_lock(state), Tree(instance) as target:
+    validate_reference_targets(target, read_state(state))
     recover(target, state, prepare=prepare)
     old = read_state(state)
     if not old["current"] or old["current"]["binding"] != binding:
       raise Conflict("不存在属于当前机器配置的部署")
-    # OMP混合原生文档的认证叶子即使本轮不回滚，也必须保持已声明引用。
-    from .native_projection import is_omp_credential
-    for item in old["current"]["items"].values():
-      if is_omp_credential(item):
-        projection(target, item)
+    validate_reference_targets(target, old)
     if old["previous"] is None:
       raise Conflict("没有上一版备份可恢复")
     backup = old["previous"]

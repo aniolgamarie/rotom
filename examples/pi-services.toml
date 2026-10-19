@@ -1,10 +1,10 @@
-# 私人机器配置的服务绑定示例。替换虚构 endpoint、模型、目录和 secret。
-# MCP 已登记四配方来源；四配方锁已生成，最终候选与实网验收尚待完成，本文件不代表服务已经可用。
+# Base示例默认不选模块；逐项选择后须显式lock/sync/apply。
+# 精确候选/真实字段/数据与退出边界见specs/005-rebuild-pi-toolkit/optional-module-recipes.md。
 schema_version = 1
 
 [machine]
-id = "pi-services-workstation"
-default_profile = "pi-default"
+id = "pi-services-demo"
+default_profile = "pi-base"
 
 [overrides.providers.example]
 protocol = "openai-compatible"
@@ -17,63 +17,34 @@ provider = "example"
 remote_id = "fictional-exact-model"
 input = ["text"]
 
-[overrides.mcp.documentation]
-transport = "streamable-http"
-url = "https://mcp.example.invalid/service"
-credential_ref = "secret:mcp_token"
-
-[overrides.profiles.pi-default]
+[overrides.profiles.pi-base]
 providers = ["example"]
 models = ["main"]
-plugins = ["pi-subagents", "pi-permissions", "model-delegate", "pi-todo", "loop-guard", "colorful-footer", "pi-mcp", "pi-rules", "openspec", "superpowers"]
-mcp = ["documentation"]
+plugins = []
+mcp = []
 
-[overrides.profiles.pi-default.roles]
+[overrides.profiles.pi-base.roles]
 main = "main"
-scout = "main"
-reviewer = "main"
-
-[overrides.profiles.pi-default.agent_options.paths.roots.rules]
-path = "/absolute/path/to/selected-rules"
-purpose = "read"
-
-[overrides.profiles.pi-default.agent_options.rules]
-enabled = true
-root_refs = ["rules"]
-after_commit_nudge = false
-
-[overrides.profiles.pi-default.agent_options.mcp.servers.documentation]
-transport = "streamable-http"
-network_route = "documentation-proxy"
-authentication = "bearer"
-
-[overrides.profiles.pi-default.agent_options.network.routes.documentation-proxy]
-mode = "proxy"
-proxy_url = "http://127.0.0.1:8123"
-provider_ids = []
-service_ids = ["mcp:documentation"]
-# 认证代理需要显式 secret 引用，值为完整 Proxy-Authorization 头值。
-# credential_ref = "secret:proxy_authorization"
-
-[overrides.profiles.pi-default.agent_options.network.routes.models-direct]
-mode = "direct"
-provider_ids = ["example"]
-
-[overrides.profiles.pi-default.agent_options.resources]
-extensions = ["gentle-agent-state"]
-
-[overrides.profiles.pi-default.agent_options.agent_state]
-mode = "osc"
-title = "Pi services"
 
 [secrets]
 model_key = ""
-mcp_token = ""
 
-# 可选：允许已声明 MCP 服务申请模型辅助请求；仍需请求前和结果返回前确认。
-# 此部分代码／mock 已适配，完整 MCP 插件与原生服务验收仍待完成。
-# [overrides.profiles.pi-default.agent_options.mcp.sampling]
-# enabled = true
-# model = "agentcfg-example/fictional-exact-model"
-# max_tokens = 1024
-# auto_approve = false
+# 可把plugins改为["cache-hit-monitor"]，mcp改为["pi-context7"]或["pi-brave"]。
+# Context7 4.4.2：可无key；若添加credential_ref，则该引用启动前必须有值。
+# Brave 2.1.4：需在secrets设置pi_brave_key；只公开brave_web_search。
+# 工具白名单不限制summary/Pro等收费参数，账号/原生服务验证尚未运行。
+# Playwright CLI 0.1.22：仅skills显式加入playwright-cli后按锁准备受管wrapper。
+# 主运行session自动独立，不传-s；NO_UPDATE_NOTIFIER=1；浏览器二进制另行授权准备。
+# Cursor 1.4.39：只用本实例Pi OAuth；不提供环境token，不复用Keychain/IDE。
+# 选择pi-cursor时同步启用固定cursor provider与精确模型声明（模型/账号仍待原生验证）：
+# [overrides.providers.cursor]
+# protocol = "oauth-dynamic"
+# auth_kind = "oauth"
+# [overrides.models.cursor-main]
+# provider = "cursor"
+# remote_id = "fictional-cursor-model"
+# input = ["text"]
+# 将上方当前profile的providers/models/plugins/roles.main分别替换为
+# ["cursor"] / ["cursor-main"] / ["pi-cursor"] / "cursor-main"，不重复创建TOML表。
+# 原生显式/login及账号请求另行授权；禁用保留auth/cache/journal，不从个人资料自动迁移。
+# 其余未准入plugins/mcp选择仍exit2；本示例不启动服务、不提供账号通过证据。

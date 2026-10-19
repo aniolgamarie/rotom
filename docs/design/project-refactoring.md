@@ -6,7 +6,8 @@ its separate 2026-10-16 acceptance and review record appears at the end. This re
 distinguishes implemented contracts, executed tests and remaining native/platform evidence.
 The reviewed source baseline is `6e9513a`. This review covers agent configuration,
 launch and supervision, dependency publication, credentials, and terminal management.
-It does not renew native-host, live-account, or cross-platform acceptance.
+It does not renew native-host, live-account, or cross-platform acceptance. The Pi SDK/supervisor
+implementation described here was subsequently retired; see [current Pi support](../pi-support.md).
 
 ## Intended boundaries
 
@@ -36,7 +37,7 @@ Confirmed means baseline code or locked-source behavior; completion is listed be
 | --- | --- | --- |
 | RUN-01 / High | [runtime.py](../../src/agentcfg/runtime.py) defaults `shared_run_lease` to false, calls `prepare_runtime` inside admission, and passes lease FDs to the host. [omp.py](../../src/agentcfg/omp.py) explicitly enables shared lifecycle/state access. DSH and Pi remain exclusive. | Split maintenance preparation from ordinary-run validation before changing defaults. |
 | DSH-RUN-01 / High | [profile_runtime.py](../../src/agentcfg/profile_runtime.py), `prepare`, writes pending/final ownership and module projections during each run. Confirmed shared mutation. | Prepare and migrate under exclusive maintenance; run verifies prepared resources. |
-| PI-RUN-01 / High | [pi_lifecycle.py](../../src/agentcfg/pi_lifecycle.py) locks the physical instance inode exclusively. [pi_host.py](../../src/agentcfg/pi_host.py) creates a fresh activation/nonce and supervisor per run; [activity.py](../../src/agentcfg/activity.py), `allocate`, rejects protected executions from another activation. | Design run namespaces and instance-wide maintenance admission together; changing to a shared flock alone is unsafe. |
+| PI-RUN-01 / High | [pi_lifecycle.py](../../src/agentcfg/pi_lifecycle.py) locks the physical instance inode exclusively. `pi_host.py` (retired historical source) creates a fresh activation/nonce and supervisor per run; `activity.py` (retired historical source), `allocate`, rejects protected executions from another activation. | Design run namespaces and instance-wide maintenance admission together; changing to a shared flock alone is unsafe. |
 | PUB-01 / High | [dependencies.py](../../src/agentcfg/dependencies.py), `resolve_lock`, uses fixed per-file temporary names and publishes the manifest last; [omp_dependencies.py](../../src/agentcfg/omp_dependencies.py), `resolve_lock`, also publishes multiple files without repository publisher coordination. Static concurrency risk; no race reproduced. | Serialize publishers and protect readers from mixed generations; test two writers and lock-versus-sync. |
 | CFG-01 / Medium | [config.py](../../src/agentcfg/config.py), `load_local`, invokes `load_secrets`; [commands.py](../../src/agentcfg/commands.py) and [workspace.py](../../src/agentcfg/workspace.py) share preparation paths used by non-launch operations. | Separate nonsecret loading from explicitly required credential reads; runtime-only resolution is not the same as avoiding early file reads. No disclosure is claimed. |
 | TERM-01 / High | [cli.py](../../src/termcfg/cli.py) dispatches mihomo operations and reads its lock for general operations; [preview.py](../../src/termcfg/preview.py) always includes its output. State and recovery also encode proxy effects. | Remove the full dependency and recovery coupling, with a migration path for existing machines. |

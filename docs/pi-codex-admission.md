@@ -1,5 +1,11 @@
 # Restricted admission for the official Codex CLI
 
+> Historical reference for the retired Pi SDK/four-profile integration. Its commands, roles,
+> plugins and support claims do not apply to current Base/Pro and must not be used as current
+> operating instructions. The original body remains for historical scope only. See the
+> [current Pi guide](pi.md), [migration boundary](pi-migration.md) and [support matrix](pi-support.md).
+
+
 agentcfg pins official Codex 0.154.0. model-delegate manages its native tools, sandbox, and physical lifecycle. When configuration sources cannot be verified, execution is refused; this deliberately leaves compatibility gaps.
 
 Linux packages include the matching official bwrap at `bin/codex-resources/bwrap` with its license. All four platform packages also include the primary release's `codex-code-mode-host` and `codex-responses-api-proxy`, which are internal CLI dependencies rather than additional delegation entry points. Installing only the Codex executable archive is insufficient. Older system bwrap versions may lack required options. The CLI verifies the bundled bwrap's compiled digest; agentcfg also verifies release digests and architecture. See the pinned [upstream implementation](https://raw.githubusercontent.com/openai/codex/rust-v0.154.0/codex-rs/linux-sandbox/src/bundled_bwrap.rs).

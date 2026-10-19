@@ -1,5 +1,11 @@
 # Pi code checkpoints
 
+> Historical reference for the retired Pi SDK/four-profile integration. Its commands, roles,
+> plugins and support claims do not apply to current Base/Pro and must not be used as current
+> operating instructions. The original body remains for historical scope only. See the
+> [current Pi guide](pi.md), [migration boundary](pi-migration.md) and [support matrix](pi-support.md).
+
+
 `git-checkpoint` stores persistent code snapshots in the current agentcfg instance. It restores ordinary file contents and permission bits within an explicit scope. It does not switch branches, restore the Git index, call `git stash`, or run project Git filters.
 
 ## Configuration

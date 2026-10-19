@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "plugins": {
+      "type": "object",
+      "properties": {
+        "cache-hit-monitor": {
+          "type": "object",
+          "properties": {
+            "package": {
+              "type": "string",
+              "const": "@narumitw/pi-cache-hit-monitor"
+            },
+            "version": {
+              "type": "string",
+              "const": "0.1.1"
+            },
+            "entry": {
+              "type": "string",
+              "const": "src/index.ts"
+            }
+          },
+          "required": [
+            "package",
+            "version",
+            "entry"
+          ],
+          "additionalProperties": false
+        },
+        "pi-footer": {
+          "type": "object",
+          "properties": {
+            "package": {
+              "type": "string",
+              "const": "pi-footer"
+            },
+            "version": {
+              "type": "string",
+              "const": "0.5.1"
+            },
+            "entry": {
+              "type": "string",
+              "const": "src/index.ts"
+            }
+          },
+          "required": [
+            "package",
+            "version",
+            "entry"
+          ],
+          "additionalProperties": false
+        },
+        "pi-cursor": {
+          "type": "object",
+          "properties": {
+            "package": {
+              "type": "string",
+              "const": "@rahularya01/pi-cursor"
+            },
+            "version": {
+              "type": "string",
+              "const": "1.4.39"
+            },
+            "entry": {
+              "type": "string",
+              "const": "dist/index.js"
+            }
+          },
+          "required": [
+            "package",
+            "version",
+            "entry"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "plugins"
+  ],
+  "additionalProperties": false
+}

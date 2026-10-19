@@ -15,7 +15,7 @@ English is the authoritative language for maintained user and developer document
 | --- | --- |
 | DSH | [Daily use, authentication, UI, and permissions](dsh.md) |
 | OMP | [Overview](omp.md), [kernel recipe](omp-kernel.md), [profiles](omp-profiles.md), [models](omp-model-presets.md), [dependencies](omp-dependencies.md), [usage](omp-usage.md), [approval diagnostics](omp-approval-diagnostics.md), [support](omp-support.md) |
-| Pi | [Overview](pi.md), [state](pi-agent-state.md), [checkpoints](pi-checkpoints.md), [Codex admission](pi-codex-admission.md), [diagnostics](pi-diagnostics.md), [dirty repositories](pi-dirty-repo-guard.md), [MCP](pi-mcp.md), [ReadSeek](pi-readseek.md), [review](pi-review.md), [web](pi-web.md), [migration](pi-migration.md), [optional OpenSpec](openspec.md) |
+| Pi | [Base/Pro guide](pi.md), [support and sources](pi-support.md), [migration](pi-migration.md), [current feature record](../specs/005-rebuild-pi-toolkit/implementation-status.md) |
 | termcfg | [Configuration and commands](termcfg.md), [design](termcfg-design.md) |
 
 ## Understand and maintain

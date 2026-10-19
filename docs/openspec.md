@@ -1,5 +1,11 @@
 # Optional OpenSpec integration for Pi projects
 
+> Historical reference for the retired Pi SDK/four-profile integration. Its commands, roles,
+> plugins and support claims do not apply to current Base/Pro and must not be used as current
+> operating instructions. The original body remains for historical scope only. See the
+> [current Pi guide](pi.md), [migration boundary](pi-migration.md) and [support matrix](pi-support.md).
+
+
 Pi's optional `openspec` capability uses locked OpenSpec 1.11.0 and twelve complete skills, separate from any global development CLI used to maintain rotom. Select `openspec` explicitly in the Pi profile's `plugins`, retaining other needed plugins when replacing the array. See [Pi usage](pi.md). DSH provides no OpenSpec initialization capability or automatic injection; removing it does not authorize project cleanup.
 
 ```sh

@@ -1,3 +1,21 @@
 schema_version = 1
-[skills.kernel-orchestrate]
-path = "agents/pi/packages/task-keeper/skills/kernel-orchestrate"
+
+[mcp.pi-context7]
+transport = "stdio"
+command = "node"
+args = ["node_modules/@upstash/context7-mcp/dist/index.js", "--transport", "stdio"]
+
+[mcp.pi-brave]
+transport = "stdio"
+command = "node"
+args = ["node_modules/@brave/brave-search-mcp-server/dist/index.js"]
+credential_ref = "secret:pi_brave_key"
+
+[skills.playwright-cli]
+path = "shared/skills/playwright-cli"
+
+[skills.cpp-bounded-investigation]
+path = "shared/skills/cpp-bounded-investigation"
+
+[skills.long-command-handoff]
+path = "shared/skills/long-command-handoff"

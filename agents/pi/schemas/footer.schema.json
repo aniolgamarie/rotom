@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "enabled": {
+      "type": "boolean",
+      "const": true
+    },
+    "preset": {
+      "type": "string",
+      "const": "default"
+    },
+    "iconMode": {
+      "type": "string",
+      "const": "text"
+    },
+    "minimalist": {
+      "type": "boolean",
+      "const": true
+    },
+    "separator": {
+      "type": "string",
+      "const": "pipe"
+    },
+    "separatorFg": {
+      "type": "string",
+      "const": "default"
+    },
+    "separatorBg": {
+      "type": "string",
+      "const": "default"
+    },
+    "terminal": {
+      "type": "object",
+      "properties": {
+        "widthMode": {
+          "type": "string",
+          "const": "full"
+        },
+        "colorLevel": {
+          "type": "string",
+          "const": "ansi256"
+        }
+      },
+      "required": [
+        "widthMode",
+        "colorLevel"
+      ],
+      "additionalProperties": false
+    },
+    "extensionStatusRow": {
+      "type": "object",
+      "properties": {
+        "knownKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hiddenKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "knownKeys",
+        "hiddenKeys"
+      ],
+      "additionalProperties": false
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "event",
+                "cwd-basename",
+                "git-branch"
+              ]
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "options": {
+              "type": "object",
+              "properties": {
+                "widgetId": {
+                  "type": "string",
+                  "enum": [
+                    "agentcfg-selection",
+                    "agentcfg-activity",
+                    "agentcfg-context",
+                    "agentcfg-statistics"
+                  ]
+                },
+                "hideWhenEmpty": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "enabled",
+            "options"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "required": [
+    "version",
+    "enabled",
+    "preset",
+    "terminal",
+    "iconMode",
+    "minimalist",
+    "separator",
+    "separatorFg",
+    "separatorBg",
+    "extensionStatusRow",
+    "lines"
+  ],
+  "additionalProperties": false
+}

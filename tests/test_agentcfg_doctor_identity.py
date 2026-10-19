@@ -171,14 +171,13 @@ def test_unknown_planned_status_and_identity_shapes_are_safe(identity_workspace,
 
 
 @pytest.mark.parametrize("pending, lock_bad", [(False, False), (False, True), (True, True)])
-def test_conflict_keeps_recovery_lock_priority_and_all_blocker_ids(identity_workspace, pending, lock_bad, monkeypatch):
+def test_conflict_keeps_recovery_lock_priority_and_all_service_ids(identity_workspace, pending, lock_bad, monkeypatch):
   workspace, identity = identity_workspace
   (identity.xdg_config / "omp/profiles" / identity.native_name).mkdir(parents=True)
-  capabilities = [{"selected": True, "id": f"capability-{index}",
-    "location_id": "capability:" + f"{index:020x}", "dependencies": "missing",
-    "blockers": ["PI_AUTHENTICATION_PENDING"]} for index in range(12)]
+  services = [{"location_id": "service:" + f"{index:020x}", "status": "unverified",
+    "reason": "native-service-not-inspected", "url": CANARY} for index in range(12)]
   payload = collect_doctor(workspace, recovery_pending=pending, dependencies="sync-required",
-    capabilities=capabilities)
+    live=True, service_checks=services)
   if lock_bad:
     payload["lock"] = "missing-or-invalid"
     payload["readiness"]["blockers"].append("lock-missing-or-invalid")
@@ -199,8 +198,9 @@ def test_conflict_keeps_recovery_lock_priority_and_all_blocker_ids(identity_work
   else:
     assert "身份或计划环境冲突处理并重新诊断后再评估" in text
     assert "下一步:" not in text
-  for capability in capabilities:
-    assert capability["location_id"] in text
-  assert "等待原生登录" in text and "当前依赖需要同步" in text
+  for service in services:
+    assert service["location_id"] in text
+  assert "原生服务未检查" in text and "当前依赖需要同步" in text
+  assert_no_identity_values(text, payload["identity"])
   assert "最多 8 项" not in text
   assert payload == original

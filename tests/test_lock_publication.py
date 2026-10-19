@@ -14,7 +14,7 @@ from agentcfg.deployment import json_bytes
 from agentcfg.storage import Conflict, Tree
 
 
-@pytest.fixture(params=["dsh", "omp"])
+@pytest.fixture(params=["dsh", "omp", "pi"])
 def public_lock(tmp_path, request):
   adapter = request.param
   repository = tmp_path / "repository"
@@ -24,7 +24,7 @@ def public_lock(tmp_path, request):
   before = {}
   for index, name in enumerate(names):
     path = root / name
-    path.parent.mkdir(exist_ok=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
     if index == 0:
       before[name] = None
       continue
@@ -121,8 +121,14 @@ def test_sync_holds_reader_before_any_instance_or_package_work(public_lock, monk
     monkeypatch.setattr(dependencies, "read_lock", lambda *args: lock)
     monkeypatch.setattr(dependencies, "_sync_guarded", consume)
     result = dependencies.sync(workspace, lock)
-  else:
+  elif adapter == "omp":
     backend = omp_dependencies.OmpBackend()
+    monkeypatch.setattr(backend, "_sync", consume)
+    result = backend.sync(workspace, lock)
+  else:
+    from agentcfg.pi_dependencies import PiBackend
+    backend = PiBackend()
+    monkeypatch.setattr(backend, "_read_lock_unlocked", lambda *args, **kwargs: lock)
     monkeypatch.setattr(backend, "_sync", consume)
     result = backend.sync(workspace, lock)
   assert result == "complete" and calls == ["consumed"]
@@ -142,7 +148,7 @@ def test_dsh_sync_rejects_stale_snapshot_before_instance_creation(public_lock, m
 
 
 @pytest.mark.parametrize("public_lock,index",
-  [("dsh", index) for index in range(4)] + [("omp", index) for index in range(6)],
+  [("dsh", index) for index in range(4)] + [("omp", index) for index in range(6)] + [("pi", index) for index in range(5)],
   indirect=["public_lock"])
 def test_exception_at_each_write_restores_all_files_and_modes(public_lock, monkeypatch, index):
   repository, adapter, root, before, after = public_lock
@@ -235,7 +241,7 @@ def test_unsafe_journal_never_writes_any_lock_path(public_lock, monkeypatch, dam
   elif damage == "unknown-field":
     value["extra"] = True
   elif damage == "adapter":
-    value["adapter"] = "pi"
+    value["adapter"] = "unknown"
   else:
     value["files"][0]["before"] = "not base64"
   marker.write_bytes(json_bytes(value))
@@ -247,7 +253,7 @@ def test_unsafe_journal_never_writes_any_lock_path(public_lock, monkeypatch, dam
   assert marker.exists()
 
 
-@pytest.mark.parametrize("adapter", ["dsh", "omp"])
+@pytest.mark.parametrize("adapter", ["dsh", "omp", "pi"])
 def test_adapter_reader_holds_shared_lease_through_complete_read(tmp_path, monkeypatch, adapter):
   repository = tmp_path / "repository"
   (repository / "locks" / adapter).mkdir(parents=True)
@@ -259,8 +265,13 @@ def test_adapter_reader_holds_shared_lease_through_complete_read(tmp_path, monke
   if adapter == "dsh":
     monkeypatch.setattr(dependencies, "_read_lock_unlocked", read)
     assert dependencies.read_lock(repository) == "complete-generation"
-  else:
+  elif adapter == "omp":
     backend = omp_dependencies.OmpBackend()
+    monkeypatch.setattr(backend, "_read_lock_unlocked", read)
+    assert backend.read_lock(repository) == "complete-generation"
+  else:
+    from agentcfg.pi_dependencies import PiBackend
+    backend = PiBackend()
     monkeypatch.setattr(backend, "_read_lock_unlocked", read)
     assert backend.read_lock(repository) == "complete-generation"
 
@@ -393,8 +404,11 @@ def test_adapter_readers_fail_closed_on_pending_publication(public_lock, monkeyp
   with pytest.raises(Conflict, match="待恢复"):
     if adapter == "dsh":
       dependencies.read_lock(repository)
-    else:
+    elif adapter == "omp":
       omp_dependencies.OmpBackend().read_lock(repository)
+    else:
+      from agentcfg.pi_dependencies import PiBackend
+      PiBackend().read_lock(repository)
 
 
 def test_exception_with_external_edit_retains_journal_and_does_not_partially_restore(public_lock, monkeypatch):

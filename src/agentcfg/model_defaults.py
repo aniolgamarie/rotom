@@ -61,24 +61,3 @@ def merge_model_selections(layers) -> tuple[list[str], list[str]]:
           seen[kind].add(identity)
           merged[kind].append(identity)
   return merged["providers"], merged["models"]
-
-
-def complete_pi_roles(profile: dict, agent_document: dict) -> dict:
-  """Pi 启用主模型时，让已选角色资源及功能所需角色继承主模型。"""
-  if profile.get("agent") != "pi" or "main" not in profile.get("roles", {}):
-    return {}
-  roles = profile["roles"]
-  main = roles["main"]
-  options = profile.get("agent_options", {})
-  declarations = agent_document.get("resources", {})
-  required = set()
-  for resource_id in options.get("resources", {}).get("roles", []):
-    declaration = declarations.get(resource_id, {})
-    if declaration.get("kind") == "role" and isinstance(declaration.get("model_role"), str):
-      required.add(declaration["model_role"])
-  task_keeper = options.get("task_keeper", {})
-  if task_keeper.get("enabled"):
-    required.update(("task_keeper_reader", "task_keeper_writer", "task_keeper_reviewer"))
-    if task_keeper.get("second_view_enabled"):
-      required.add("second_view")
-  return {role: main for role in sorted(required) if role not in roles}

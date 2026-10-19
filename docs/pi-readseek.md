@@ -1,5 +1,11 @@
 # Pi ReadSeek integration
 
+> Historical reference for the retired Pi SDK/four-profile integration. Its commands, roles,
+> plugins and support claims do not apply to current Base/Pro and must not be used as current
+> operating instructions. The original body remains for historical scope only. See the
+> [current Pi guide](pi.md), [migration boundary](pi-migration.md) and [support matrix](pi-support.md).
+
+
 The derived ReadSeek sources, supervised controller, and fixed vision assets are declared for all four Pi profiles. Source/mock integration does not establish current Pi or ReadSeek native acceptance. The complete Pi lock has been rebuilt; feature-specific historical results remain limited to their recorded candidates in [testing](testing.md).
 
 ## Execution contract

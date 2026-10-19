@@ -1,0 +1,26 @@
+{
+  "provider": {
+    "id": "example",
+    "base_url": "https://example.invalid/v1",
+    "credential_ref": "secret:example_key"
+  },
+  "model": {
+    "id": "example-main",
+    "provider": "example",
+    "remote_id": "fictional-chat"
+  },
+  "secrets": {
+    "example_key": "SYNTHETIC_PI_REBOOT_SENTINEL"
+  },
+  "native": {
+    "theme": "user-theme",
+    "packages": [
+      "npm:unadmitted-example@1.0.0"
+    ]
+  },
+  "project": {
+    "package_drift": true,
+    "parent_context": "synthetic AGENTS context",
+    "executable_resources_allowed": false
+  }
+}

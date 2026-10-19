@@ -1,71 +1,71 @@
-"""旧来源只生成提案，新实例显式采纳；默认不执行旧同步器或原生宿主。"""
+"""旧状态原位保留，新Base显式部署；不读历史正文或启动宿主。"""
 
 import json
-import pytest
 from pathlib import Path
 
-from agentcfg import cli, commands
+import pytest
+
+from agentcfg import cli, commands, run_owners
 from agentcfg.pi_inventory import build_inventory
+from agentcfg.pi_lifecycle import guard
+from agentcfg.storage import Conflict
 from test_pi_inventory import native_home
-from test_pi_pipeline import fixture_workspace
+from test_pi_reboot_pipeline import pipeline, prepare
+from test_pi_reboot_dependencies import fake_npm, recipe_repository
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_old_home_proposal_and_new_instance_never_share_a_writer(tmp_path, monkeypatch, capsys, sentinel_factory):
+def test_old_home_proposal_and_new_instance_never_share_a_writer(pipeline, tmp_path, sentinel_factory):
   old = native_home(tmp_path)
-  (old / "prompts/user-custom.md").write_text("keep custom source")
-  (old / ".starter-sync-manifest.json").write_text("old manager sentinel")
+  (old / ".starter-sync-manifest.json").write_text("opaque old manager sentinel")
   original = sentinel_factory(old)
   report = build_inventory(old, repository=ROOT)
-  assert any(row["reason"] == "unmanaged-preserved" for row in report["items"])
+  assert report["proposed_overrides"] == {}
   assert any(row["code"] == "legacy-manager-marker-preserved" for row in report["blockers"])
-  local, w = fixture_workspace(tmp_path / "new", monkeypatch)
-  args = ["--local", str(local)]
-  assert cli.main([*args, "apply"]) == 0
-  before = (w.state_root / "deployment.json").read_bytes()
-  assert cli.main([*args, "apply"]) == 0
-  assert json.loads(capsys.readouterr().out.splitlines()[-1])["changes"] == 0
-  assert (w.state_root / "deployment.json").read_bytes() == before
-  assert w.instance != old and not (w.instance / "pi-home/auth.json").exists()
-  assert not (w.instance / "pi-home/prompts/user-custom.md").exists()
-  original.assert_unchanged()
-  # 命令行不存在可以绕过来源审阅的自动导入/执行旧同步器入口。
-  with pytest.raises(SystemExit) as caught:
-    cli.main([*args, "apply-import", str(old)])
-  assert caught.value.code == 2
+  workspace, backend, lock, _, launched = pipeline
+  prepare(workspace, backend, lock)
+  before = (workspace.state_root / "deployment.json").read_bytes()
+  result = commands.apply_candidate(workspace, lock, workspace.candidate(lock.identity))
+  assert result["changes"] == 0
+  assert (workspace.state_root / "deployment.json").read_bytes() == before
+  assert workspace.instance != old and not (workspace.instance / "pi-home/auth.json").exists()
+  assert not (workspace.instance / "pi-home/prompts/private-name.md").exists()
+  assert not launched
   original.assert_unchanged()
 
 
-def test_unowned_native_file_and_symlink_refuse_takeover(tmp_path, monkeypatch, sentinel_factory):
-  local, w = fixture_workspace(tmp_path, monkeypatch)
-  home = w.instance / "pi-home"; home.mkdir(parents=True, mode=0o700)
-  settings = home / "settings.json"; settings.write_text('{"theme":"user-owned"}'); settings.chmod(0o600)
+def test_unowned_native_file_and_symlink_refuse_takeover(pipeline, tmp_path, sentinel_factory):
+  workspace, _, lock, _, launched = pipeline
+  home = workspace.instance / "pi-home"
+  home.mkdir(parents=True, mode=0o700)
+  settings = home / "settings.json"
+  settings.write_text('{"theme":"user-owned"}')
+  settings.chmod(0o600)
   marker = sentinel_factory(home)
-  assert cli.main(["--local", str(local), "apply"]) == 4
+  with pytest.raises(Conflict): commands.apply_candidate(workspace, lock, workspace.candidate(lock.identity))
   marker.assert_unchanged()
   settings.unlink()
-  outside = tmp_path / "outside.json"; outside.write_text('{"sentinel":true}')
+  outside = tmp_path / "outside.json"
+  outside.write_text('{"sentinel":true}')
   settings.symlink_to(outside)
-  assert cli.main(["--local", str(local), "apply"]) == 4
-  assert outside.read_text() == '{"sentinel":true}'
+  with pytest.raises(Conflict): commands.apply_candidate(workspace, lock, workspace.candidate(lock.identity))
+  assert outside.read_text() == '{"sentinel":true}' and not launched
 
 
-@pytest.mark.parametrize("kind", ["worker", "check", "codex", "external"])
-def test_all_mutations_reject_owned_child_activity_after_parent_exit(tmp_path, monkeypatch, kind):
-  from test_pi_activity import make_store, identity
-  local, w = fixture_workspace(tmp_path, monkeypatch)
-  args = ["--local", str(local)]
-  assert cli.main([*args, "apply"]) == 0
-  store, processes = make_store(tmp_path / "controller")
-  store.root = w.state_root
-  child = identity(201); processes.current[201] = child
-  lease = store.allocate(kind=kind, execution_id="child", task_id=None, attempt_id="attempt", lock_identity="a" * 64,
-    slice_identity="b" * 64, policy_digest="c" * 64, candidate_digest=None, planned_workspaces=[])
-  store.start(lease["lease_id"], store.owner, spawn=lambda _: child)
-  processes.current.pop(101)  # 父控制者消失不能使子活动消失。
-  before = (w.state_root / "deployment.json").read_bytes()
-  for command in ("apply", "sync", "rollback"):
-    assert cli.main([*args, command]) == 4
-  assert (w.state_root / "deployment.json").read_bytes() == before
-  assert processes.signals == []
+@pytest.mark.parametrize("unknown", [False, True])
+def test_active_or_unknown_main_blocks_configuration_and_dependency_maintenance(pipeline, unknown):
+  workspace, backend, lock, _, launched = pipeline
+  prepare(workspace, backend, lock)
+  identity = {"pid": 1234, "birth_id": "synthetic-boot:987"}
+  owners = run_owners.Registry(workspace.state_root / "run-owners", workspace.binding)
+  with guard(workspace, shared=True, create=False):
+    run = owners.register(identity)
+    if unknown: owners.mark_unknown(run, identity)
+  before = (workspace.state_root / "deployment.json").read_bytes()
+  with pytest.raises(Conflict): commands.apply_candidate(workspace, lock, workspace.candidate(lock.identity))
+  with pytest.raises(Conflict): backend.sync(workspace, lock)
+  assert (workspace.state_root / "deployment.json").read_bytes() == before
+  assert owners.snapshot()[run]["state"] == ("unknown" if unknown else "active")
+  assert not launched

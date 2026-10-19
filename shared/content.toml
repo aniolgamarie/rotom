@@ -20,6 +20,3 @@ path = "shared/skills/neovim-plugin-development"
 
 [skills.safe-linux-scripting]
 path = "shared/skills/safe-linux-scripting"
-
-[skills.model-delegate]
-path = "shared/skills/model-delegate"

@@ -17,6 +17,8 @@ FILES = {
   "dsh": frozenset(("package.json", "package-lock.json", "pnpm-lock.yaml", "manifest.json")),
   "omp": frozenset(("manifest.json", "upstream/bun.lock", "upstream/LICENSE",
                     "upstream/THIRD-PARTY-NOTICES.txt", "upstream/provenance.json", "upstream/NOTICE.md")),
+  "pi": frozenset(("manifest.json", "pi-base/package.json", "pi-base/package-lock.json",
+                   "pi-pro/package.json", "pi-pro/package-lock.json")),
 }
 
 

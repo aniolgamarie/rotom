@@ -10,6 +10,8 @@ def reference_guard(tokens):
     raise Conflict("原生引用保护声明无效")
   from .omp_env import is_generated_name
   kinds = ({"environment-reference"} if all(isinstance(token, str) and re.fullmatch(r"\$[A-Za-z_][A-Za-z0-9_]*", token) for token in tokens)
+           else {"environment-braced-reference"} if all(isinstance(token, str) and
+             re.fullmatch(r"\$\{AGENTCFG_PI_MCP_[A-F0-9]{16}\}", token) for token in tokens)
            else {"omp-env-name"} if all(is_generated_name(token) for token in tokens) else set())
   if (not tokens or not kinds
       or len(set(tokens)) != len(tokens)):
@@ -20,7 +22,8 @@ def reference_guard(tokens):
 def validate_guard(guard):
   if guard is None:
     return None
-  if not isinstance(guard, dict) or set(guard) != {"kind", "tokens"} or guard["kind"] not in ("environment-reference", "omp-env-name"):
+  if not isinstance(guard, dict) or set(guard) != {"kind", "tokens"} or guard["kind"] not in (
+      "environment-reference", "environment-braced-reference", "omp-env-name"):
     raise Conflict("原生引用保护声明无效")
   checked = reference_guard(guard["tokens"])
   if checked["kind"] != guard["kind"]:
@@ -67,26 +70,44 @@ def validate_change(change):
 
 def is_pi_credential(item):
   selector = item.get("selector")
-  return item.get("path") == "pi-home/models.json" and isinstance(selector, str) and selector.startswith("/providers/") and selector.endswith("/apiKey")
+  return is_pi_mcp_credential(item) or (item.get("path") == "pi-home/models.json" and isinstance(selector, str)
+    and selector.startswith("/providers/") and selector.endswith("/apiKey"))
+
+
+def is_pi_mcp_credential(item):
+  selector = item.get("selector")
+  return item.get("path") == "pi-home/mcp.json" and isinstance(selector, str) and (
+    re.fullmatch(r"/mcpServers/[^/]+/env/[^/]+", selector) is not None
+    or selector.endswith("/headers/Authorization") or selector.endswith("/oauth/clientSecret"))
 
 
 def is_omp_credential(item):
   selector = item.get("selector")
   path = item.get("path")
   return isinstance(selector, str) and ((isinstance(path, str) and path.endswith("/models.yml") and selector.endswith("/apiKey"))
-    or (isinstance(path, str) and path.endswith("/mcp.json") and
+    or (isinstance(path, str) and path != "pi-home/mcp.json" and path.endswith("/mcp.json") and
         (re.fullmatch(r"/mcpServers/[^/]+/env/[^/]+", selector) is not None or selector.endswith("/headers/Authorization"))))
 
 
 def validate_item_guard(item, value):
+  parents = item.get("created_parents", [])
+  selector = item.get("selector")
+  if (not isinstance(parents, list) or any(not isinstance(parent, str) or not parent.startswith("/")
+      or not isinstance(selector, str) or not selector.startswith(parent + "/") for parent in parents)
+      or len(parents) != len(set(parents))):
+    raise Conflict("受管原生空容器来源无效")
   guard = item.get("guard")
   checked = validate_guard(guard) if guard is not None else None
   if checked is not None and checked["kind"] == "omp-env-name" and not (is_omp_credential(item) or is_pi_credential(item)):
     raise Conflict("OMP环境引用只能保护登记的认证叶子")
   if is_omp_credential(item) and checked is not None and checked["kind"] != "omp-env-name":
     raise Conflict("OMP认证叶子必须使用omp-env-name保护")
-  if is_pi_credential(item) and checked is not None and checked["kind"] != "environment-reference":
+  if is_pi_mcp_credential(item) and checked is not None and checked["kind"] != "environment-braced-reference":
+    raise Conflict("Pi MCP认证叶子必须使用environment-braced-reference保护")
+  if is_pi_credential(item) and not is_pi_mcp_credential(item) and checked is not None and checked["kind"] != "environment-reference":
     raise Conflict("Pi认证叶子必须使用environment-reference保护")
+  if checked is not None and checked["kind"] == "environment-braced-reference" and not is_pi_mcp_credential(item):
+    raise Conflict("Pi MCP插值引用只能保护登记的认证叶子")
   # 无保护的旧记录不得通过回滚重新引入原生明文凭据。
   if (is_pi_credential(item) or is_omp_credential(item)) and value.get("present") and item.get("guard") is None:
     raise Conflict("历史认证引用缺少保护声明")

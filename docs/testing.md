@@ -144,24 +144,18 @@ defaults and does not replace caller variables.
 
 ### Concurrent-run validation
 
-The explicit DSH and Pi checks require a sealed runtime matching the selected
-repository lock. They create their own synthetic configuration and new HOME/XDG
-directories; never supply a real native account or session directory.
+The explicit DSH check requires a sealed runtime matching the selected repository lock.
+It creates synthetic configuration and a new HOME/XDG; never supply a real account or session directory.
 
 ```sh
 .venv/bin/python scripts/smoke-dsh-concurrency.py --allow-host --runtime <sealed-dsh-runtime> --evidence <new-private-directory>
-.venv/bin/python scripts/smoke-pi-concurrency.py --allow-host --runtime <sealed-pi-default-runtime> --evidence <new-private-directory>
-.venv/bin/python scripts/verify-pi.py --tier native --case host-resources --allow-host --runtime <sealed-pi-default-runtime> --output <new-private-report.json>
 ```
 
-The separate SDK boundary check uses a controlled interaction driver and a simulated
-supervisor with the real SDK. It sends no prompts and verifies resource drift,
-session preflight, the worker tool registry, and unchanged host methods. It does not
-replace the native TUI or OS sandbox checks:
-
-```sh
-node scripts/smoke-pi-public-api.mjs --allow-host <sealed-pi-default-runtime> <new-private-report.json>
-```
+Pi's retired SDK, supervisor and public-API smoke runners are no longer distributed.
+Use the current [Pi quickstart](../specs/005-rebuild-pi-toolkit/quickstart.md) for separate
+isolated, dependency-only, native and account gates. Native startup needs independent authorization.
+Without a production complete-release observer, Pi manager exit leaves its run unknown and blocks
+exclusive maintenance; historical concurrency checks do not close this limit.
 
 ### Development-environment validation
 
@@ -176,33 +170,19 @@ It makes no model requests and does not import accounts:
 .venv/bin/python scripts/smoke-dsh-environment.py --allow-host --runtime <sealed-dsh-runtime> --evidence <new-private-directory>
 ```
 
-Use the repository mock runner for the Pi TypeScript suites; raw `node --test`
-does not install the fixture module aliases and is not an equivalent entry point:
+The synthetic DSH execution test remains independent of native-host validation:
 
 ```sh
-node scripts/test-pi-mock.mjs \
-  agents/pi/runtime/tests/*.test.ts \
-  agents/pi/packages/task-keeper/tests/agentcfg-*.test.ts \
-  agents/pi/packages/task-keeper/tests/request-ledger.test.ts \
-  agents/pi/packages/task-keeper/tests/one-shot-schedule.test.ts \
-  agents/pi/packages/model-delegate/tests/bridge.test.ts \
-  agents/pi/packages/openai-proxy/routing.test.mjs \
-  agents/pi/packages/openai-proxy/diagnostics.test.mjs
 node --test tests/node/dsh_execution_environment.test.mjs
 ```
 
-Both commands use synthetic inputs. They establish protocol and boundary
-contracts, separately from actual native SDK, TUI and OS sandbox behavior.
-
-The concurrency checks require two live native TUIs, independent native session
-or supervisor identities, maintenance refusal while either run is active, clean
-exit and terminal restoration. DSH also verifies explicit refusal of a third TUI
-resuming an occupied session, then confirms that the original session still
-responds. It uses bounded loopback model responses. The Pi
-concurrency check sends no prompts; the separate resource test uses a synthetic
-model for its guarded-read round trip. Pi's CLI check exercises the native PID
-namespace; its resource check also uses the existing outer filesystem sandbox.
-Neither test establishes authenticated-provider or concurrent-login safety.
+The Pi Task Keeper/SDK mock runner and its dedicated fixtures were retired together with that
+execution platform. Current Pi isolation uses `tests/test_pi_reboot_configuration.py`,
+`tests/test_pi_reboot_dependencies.py`, `tests/test_pi_reboot_runtime.py`,
+`tests/test_pi_reboot_pipeline.py` and `tests/test_pi_retirement.py`.
+They use temporary state and fake processes; they do not establish authenticated-provider or
+native TUI safety. DSH concurrency still requires two live native TUIs, maintenance refusal,
+occupied-session refusal, clean exit and terminal restoration under its separate authorized scope.
 
 Large source/asset fixtures can consume substantial temporary storage. To remove
 passed pytest fixtures after each case while retaining failures, add
@@ -231,4 +211,4 @@ Raw dated machine reports were retired from the public tree during documentation
 
 Record the exact command and exit code, source commit/digest, configuration and lock identity, platform/architecture category, cache sharing, sanitized log location, and PASS/FAIL/BLOCKED/NOT RUN status. Avoid kernel hostnames, personal usernames, business paths, tokens, secret bodies, or authentication URLs. Keep raw output private or ignored and review it before publication.
 
-CI currently separates Python offline tests, synthetic OMP parser/plugin checks, and explicit Task Keeper mock tests. Mock success does not establish Task Keeper typecheck success; see REVIEW-F02 in [known issues](known-issues.md).
+CI separates Python offline tests from synthetic OMP parser/plugin checks. The retired Task Keeper mock job is absent; its historical results are not current Pi acceptance.

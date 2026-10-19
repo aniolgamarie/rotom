@@ -1,5 +1,11 @@
 # Pi terminal state notifications
 
+> Historical reference for the retired Pi SDK/four-profile integration. Its commands, roles,
+> plugins and support claims do not apply to current Base/Pro and must not be used as current
+> operating instructions. The original body remains for historical scope only. See the
+> [current Pi guide](pi.md), [migration boundary](pi-migration.md) and [support matrix](pi-support.md).
+
+
 `gentle-agent-state` runs only in the parent session and requires an explicit mode. Without configuration it refuses to load; it never discovers a global `~/.config/agent-state/scripts/agent-report.sh` automatically.
 
 ## Terminal-title mode

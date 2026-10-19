@@ -3,3 +3,6 @@ locks/dsh/vendor/*.patch -whitespace
 
 # 上游许可证通知按锁定原始字节保存，不改写其历史尾随空格。
 locks/omp/upstream/THIRD-PARTY-NOTICES.txt -whitespace -text
+
+# 上游 Apache 许可证原文使用 CRLF；保持锁定字节并按该换行格式检查。
+shared/skills/playwright-cli/LICENSE -text whitespace=cr-at-eol

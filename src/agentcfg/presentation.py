@@ -163,16 +163,6 @@ _BLOCKER_LABELS = {
   "lock-missing-or-invalid": "依赖锁缺失或无效",
 }
 
-_CAPABILITY_BLOCKERS = {
-  "PI_MODEL_UNBOUND": "主模型尚未绑定",
-  "PI_DEPLOYMENT_MISSING": "能力尚未部署",
-  "PI_DEPENDENCIES_MISSING": "能力依赖缺失",
-  "PI_LOAD_FAILED": "原生加载验证失败",
-  "PI_AUTHENTICATION_FAILED": "认证验证失败",
-  "PI_EXECUTION_FAILED": "原生执行验证失败",
-  "PI_AUTHENTICATION_PENDING": "等待原生登录",
-}
-
 
 def _blocker_labels(blockers):
   if not isinstance(blockers, list):
@@ -188,48 +178,6 @@ def _blocker_labels(blockers):
     if label not in labels:
       labels.append(label)
   return labels
-
-
-def _capability_summary(capabilities):
-  """提炼 Pi 公共能力诊断；不展开 admission、时间或未知嵌套值。"""
-  if not isinstance(capabilities, list):
-    return [], False
-  rows = []
-  has_blockers = False
-  states = {"installed": "已安装", "sync-required": "需同步", "missing": "缺失",
-    "not-selected": "未选择", "not-run": "未运行", "verified": "已验证", "stale": "已过期",
-    "not-inspected": "未检查", "not-required": "无需检查", "observed-ready": "已观察就绪",
-    "pending-login": "等待登录"}
-  for row in capabilities:
-    if not isinstance(row, dict) or row.get("selected") is not True:
-      continue
-    identifier = row.get("id")
-    location = row.get("location_id")
-    if not isinstance(identifier, str) or not re.fullmatch(r"[a-z0-9][a-z0-9:._-]{0,79}", identifier):
-      identifier = "已选择能力"
-    if not isinstance(location, str) or not re.fullmatch(r"capability:[0-9a-f]{20}", location):
-      location = "—"
-    raw_blockers = row.get("blockers")
-    blocker_labels = []
-    if isinstance(raw_blockers, list):
-      for blocker in raw_blockers:
-        label = _CAPABILITY_BLOCKERS.get(blocker) if isinstance(blocker, str) else None
-        if label is None:
-          label = "存在其他能力阻塞（详情见 JSON）"
-        if label not in blocker_labels:
-          blocker_labels.append(label)
-    dependency_blocking = row.get("dependencies") != "installed"
-    if dependency_blocking and "能力依赖缺失" not in blocker_labels:
-      blocker_labels.append("能力依赖未安装")
-    has_blockers = has_blockers or bool(blocker_labels) or dependency_blocking
-    def state(key):
-      value = row.get(key)
-      return states.get(value, "未知")
-    rows.append((identifier, _text(row.get("configured")) if type(row.get("configured")) is bool else "未知",
-      _text(row.get("deployed")) if type(row.get("deployed")) is bool else "未知",
-      state("dependencies"), state("load_evidence"), state("execution_evidence"),
-      state("authentication"), "、".join(blocker_labels) if blocker_labels else "无", location))
-  return rows, has_blockers
 
 
 def _service_summary(service_checks):
@@ -264,43 +212,6 @@ def _service_summary(service_checks):
     rows.append((location, "HTTP 可达" if status == "reachable" else "未验证",
       http_status, reasons.get(check.get("reason"), "—" if status == "reachable" else "其他原因见 JSON")))
   return rows, counts
-
-
-def _count_summary(value):
-  """只输出数量和固定状态汇总，不展开身份、路径或未知结构。"""
-  if type(value) is int and value >= 0:
-    return value
-  if isinstance(value, (list, tuple, set)):
-    return len(value)
-  if not isinstance(value, dict):
-    return None
-  total = value.get("count", value.get("total"))
-  if type(total) is not int or total < 0:
-    total = None
-  statuses = {"active": "活动", "pending": "待处理", "terminated": "已终止",
-    "released": "已释放", "protected": "受保护", "unknown": "未知"}
-  status_values = [child for child in value.values() if isinstance(child, str)]
-  if total is None and status_values and len(status_values) == len(value) and all(
-      child in statuses for child in status_values):
-    total = len(value)
-  if total is None:
-    for key in ("items", "ids", "processes", "leases", "work"):
-      if isinstance(value.get(key), list):
-        total = len(value[key])
-        break
-  parts = [str(total)] if total is not None else []
-  for key, label in (("active", "活动"), ("pending", "待处理"), ("protected", "受保护")):
-    child = value.get(key)
-    if type(child) is int and child >= 0:
-      parts.append(f"{label} {child}")
-    elif key == "protected" and type(child) is bool:
-      parts.append(f"{label} {_text(child)}")
-  counts = {}
-  for child in value.values():
-    if isinstance(child, str) and child in statuses:
-      counts[child] = counts.get(child, 0) + 1
-  parts.extend(f"{statuses[key]} {counts[key]}" for key in statuses if counts.get(key))
-  return "；".join(parts) if parts else "结构化保护信息见 JSON"
 
 
 def _command_suggestions(payload, args, readiness=None, *, commands=None):
@@ -411,17 +322,16 @@ def _render_doctor(payload, args, stream):
   status = readiness.get("status", "unknown")
   pending, lock_bad = _doctor_conditions(payload, readiness)
   identity_fields, identity_blocked = _identity_summary(payload.get("identity"))
-  capability_rows, capability_blocked = _capability_summary(payload.get("capabilities"))
   live = payload.get("live") is True
   service_rows, service_counts = _service_summary(payload.get("service_checks")) if live else ([], {})
   if live:
-    if status != "offline-ready" or capability_blocked or pending or lock_bad or identity_blocked:
+    if status != "offline-ready" or pending or lock_bad or identity_blocked:
       title = "在线检查完成，仍需处理"
     elif service_counts.get("unverified"):
       title = "在线检查完成，部分未验证"
     else:
       title = "在线检查完成"
-  elif status != "offline-ready" or capability_blocked or pending or lock_bad or identity_blocked:
+  elif status != "offline-ready" or pending or lock_bad or identity_blocked:
     title = "需要处理"
   else:
     title = "离线就绪"
@@ -442,8 +352,6 @@ def _render_doctor(payload, args, stream):
   readiness_labels = ({"offline-ready": "基础部署检查通过", "action-required": "基础部署需要处理"}
     if live else {"offline-ready": "基础部署离线就绪", "action-required": "基础部署需要处理"})
   readiness_label = readiness_labels.get(status, "状态未知")
-  if capability_blocked:
-    readiness_label += "；能力项仍有阻塞"
   if identity_blocked:
     readiness_label += "；身份或计划环境仍有冲突"
   _write_fields((("就绪状态", readiness_label),
@@ -453,6 +361,24 @@ def _render_doctor(payload, args, stream):
     ("漂移", payload.get("drift")), ("冲突", payload.get("conflicts")),
     ("待变更", payload.get("changes_pending")), ("待恢复", payload.get("recovery_pending")),
     ("依赖锁", payload.get("lock")), ("诊断定位文件", payload.get("diagnostics"))), stream)
+  verification = payload.get("verification")
+  if isinstance(verification, dict):
+    labels = {"passed": "已验证", "failed": "验证失败", "blocked": "受阻",
+      "not_run": "未执行", "not_inspected": "未检查"}
+    _write_fields(((label, labels.get(verification.get(stage), "未知")) for stage, label in (
+      ("configuration", "配置声明"), ("dependencies", "依赖准备"), ("deployment", "配置部署"),
+      ("loading", "资源加载"), ("account", "账号验证"), ("runtime", "运行验证"))), stream)
+  features = payload.get("feature_readiness")
+  if isinstance(features, dict):
+    print("功能声明（不代表已加载）:", file=stream)
+    rows = []
+    for key, label in (("status_bar", "状态栏信息对齐"), ("collaboration", "Pro调查协作"), ("optional_modules", "按需模块")):
+      value = features.get(key)
+      value = value if isinstance(value, dict) else {}
+      status = {"not_ready": "未就绪", "not_selected": "未选择"}.get(value.get("status"), "未知")
+      decision = {"held": "暂停准入", "candidate": "候选"}.get(value.get("decision"), "未知")
+      rows.append((label, status + "；" + decision))
+    _write_fields(rows, stream)
   if live:
     _write_fields((("在线服务检查", service_counts.get("total")),
       ("HTTP 可达", service_counts.get("reachable")), ("未验证", service_counts.get("unverified")),
@@ -491,12 +417,6 @@ def _render_doctor(payload, args, stream):
       print(f"- {blocker}", file=stream)
   _doctor_actions(payload, args, readiness, stream, pending=pending, lock_bad=lock_bad,
     identity_blocked=identity_blocked)
-  if capability_rows:
-    blocked_rows = [(row[0], row[-2], row[-1]) for row in capability_rows if row[-2] != "无"]
-    print(f"已选择能力: {len(capability_rows)} 项；阻塞 {len(blocked_rows)} 项（加载与执行证据见 JSON）。", file=stream)
-    if blocked_rows:
-      print("能力阻塞（全部必需处理项）:", file=stream)
-      table(("能力", "原因", "位置 ID"), blocked_rows, stream=stream)
   if live and service_rows:
     print("在线服务检查:", file=stream)
     table(("位置 ID", "状态", "HTTP", "说明"), service_rows, stream=stream)
@@ -539,36 +459,12 @@ def _render_doctor(payload, args, stream):
         print("OMP 建议: 结合状态栏检查 Vim 输入状态；诊断不记录按键。", file=stream)
 
 
-def _render_recover(payload, stream):
-  blockers = payload.get("blockers")
-  if isinstance(blockers, list) and blockers:
-    title = "恢复受阻"
-  elif "plan_digest" in payload:
-    title = "停止恢复计划已生成（尚未执行）"
-  else:
-    title = f"恢复结果：{_text(payload.get('state', '已处理'))}"
-  print(f"recover：{title}", file=stream)
-  _write_fields((("目标", _target(payload)), ("执行记录", payload.get("lease_id")),
-    ("计划类型", payload.get("plan_kind")), ("计划摘要", payload.get("plan_digest")),
-    ("有效期", payload.get("expires_at")), ("目标进程", _count_summary(payload.get("target_processes"))),
-    ("外部工作", _count_summary(payload.get("external_work"))),
-    ("工作区租约", _count_summary(payload.get("workspace_leases"))),
-    ("状态", payload.get("state")), ("保护保持", payload.get("protected"))), stream)
-  blocker_labels = _blocker_labels(blockers)
-  if blocker_labels:
-    print("阻塞原因:", file=stream)
-    for blocker in blocker_labels:
-      print(f"- {blocker}", file=stream)
-
-
 def _render_human(payload, args, stream):
   command = payload.get("command")
   if command == "plan":
     _render_plan(payload, stream)
   elif command == "doctor":
     _render_doctor(payload, args, stream)
-  elif command == "recover":
-    _render_recover(payload, stream)
   else:
     titles = {
       "validate": "配置有效" if payload.get("valid") is True else "配置未通过校验",
@@ -579,7 +475,6 @@ def _render_human(payload, args, stream):
       "lock": "依赖锁已生成" if payload.get("locked") is True else "依赖锁未生成",
       "capture": "捕获提案已生成（尚未部署）",
       "inventory": "盘点提案已生成（尚未部署）",
-      "project": "项目集成已处理",
     }
     print(f"{_text(command or '结果')}：{titles.get(command, '命令已返回结果')}", file=stream)
     fields = {
@@ -597,12 +492,10 @@ def _render_human(payload, args, stream):
       "capture": (("目标", _target(payload)), ("捕获字段", payload.get("captured_fields")), ("提案文件", payload.get("proposal"))),
       "inventory": (("目标", _target(payload)), ("盘点条目", payload.get("items")),
         ("可直接部署", payload.get("ready_to_deploy")), ("提案目录", payload.get("proposal"))),
-      "project": (("目标", _target(payload)), ("集成", payload.get("integration")),
-        ("变更文件", payload.get("changed")),
-        ("产物数量", len(payload["artifacts"]) if isinstance(payload.get("artifacts"), list) else None)),
+
     }
     _write_fields(fields.get(command, (("目标", _target(payload)),)), stream)
-  if command in ("plan", "doctor", "recover"):
+  if command in ("plan", "doctor"):
     print("完整字段请使用 --format json。", file=stream)
 
 

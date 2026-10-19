@@ -25,11 +25,9 @@ For small bounded changes, execute directly.
 For substantial interface, behavior, format, or cross-module changes, use
 OpenSpec.
 
-For complex implementation requiring multiple independent stages, use the
-selected managed profile with kernel_task and kernel-orchestrate. Require
-explicit role models, candidate worktree, trusted checks, and a fresh required
-review. If these capabilities are unavailable, report the missing prerequisites;
-do not invent a workflow or bypass the managed boundary.
+For complex implementation, agree on bounded stages, explicit verification and one writer.
+Use only capabilities supported by the selected tool. Report missing prerequisites;
+do not invent execution, recovery or review guarantees.
 
 Do not combine correctness fixes with unrelated modernization.
 

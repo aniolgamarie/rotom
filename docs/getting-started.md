@@ -90,7 +90,7 @@ For another API service, `./agentcfg --machine workstation model add` interactiv
 
 Progress goes to stderr, including elapsed-time updates during long installations. Final summaries go to stdout. Installer logs, raw arguments, and keys are not printed. Authentication marked `not-inspected; use native auth status` means account data was not inspected.
 
-Structured commands accept `--format auto|human|json` **after** their subcommand. In `auto`, a terminal receives readable output and a pipe receives single-line JSON. This applies to validate, render, plan, lock, sync, apply, inventory, doctor, capture, rollback, recover, and project init.
+Structured commands accept `--format auto|human|json` **after** their subcommand. In `auto`, a terminal receives readable output and a pipe receives single-line JSON. This applies to validate, render, plan, lock, sync, apply, inventory, doctor, capture and rollback. Retired Pi recover/project routes are not available.
 
 ```sh
 ./agentcfg --machine workstation plan --format json
@@ -154,7 +154,7 @@ On conflicts, preserve the files and inspect plan/doctor. Do not delete backups 
 
 ## 6. Use your project's workflow
 
-DSH reads project AGENTS.md and Skills without installing OpenSpec, Spec Kit, or another specification tool. Existing `openspec/`, `.specify/`, `specs/`, and user skills remain in place. `project init openspec` is available only to a Pi recipe explicitly selecting that optional capability; see [Pi](pi.md).
+DSH reads project AGENTS.md and Skills without installing OpenSpec, Spec Kit, or another specification tool. Existing `openspec/`, `.specify/`, `specs/`, and user skills remain in place. The retired Pi `project init openspec` route is absent. Use your project's independently installed workflow tools; the current [Pi](pi.md) adapter does not install a workflow platform.
 
 ## Troubleshooting
 
@@ -170,3 +170,12 @@ DSH reads project AGENTS.md and Skills without installing OpenSpec, Spec Kit, or
 | Exit 5 or damaged runtime | Check the toolchain and installation network, then use sync to stage a repair while preserving the account home. |
 
 For help, share the command name, exit code, and redacted error. Never share complete machine files, environment dumps, or OAuth files. A `target-…` or `credential-…` ID maps to the private diagnostics file reported by plan/doctor. It contains no secret values but can contain private paths; inspect it locally. See [known issues](known-issues.md), [testing](testing.md), and [release status](releases.md) for current limitations and evidence.
+
+## Pi Base/Pro scope
+
+Pi has only `pi-base` and `pi-pro`, uses official `1.3.0` with Node >=22.19.0, and consumes complete
+profile npm locks. The [Pi guide](pi.md) separates lock/sync/deploy from native startup. Linux
+manager rebuilding and isolation evidence does not prove native loading or model access; macOS
+native behavior remains not run. Pro investigation is held, and native UI is a fallback with
+unverified information parity. After a main run ends, unknown ownership currently blocks maintenance
+because no production observer can prove complete descendant release. See [support](pi-support.md).

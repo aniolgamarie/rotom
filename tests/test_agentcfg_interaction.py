@@ -50,11 +50,10 @@ def test_bare_navigation_is_short_static_and_state_free(argv, monkeypatch, capsy
   (["setup"], ("联网", "重新校验", "漂移")),
   (["run"], ("--inherit-env", "--unset-env", "--profile omp-default", "不切换")),
   (["doctor"], ("--environment", "--input", "--live", "诊断文件")),
-  (["project"], ("仅 Pi", "OpenSpec")),
-  (["project", "init"], ("仅 Pi", "--path", "--profile pi-default")),
+  (["plan"], ("离线预览", "--from-pi-home", "提案")),
   (["model"], ("key", "url", "子命令")),
   (["capture"], ("提案", "不是恢复")),
-  (["recover"], ("默认只生成", "同时提供 --stop 与 --expect-plan")),
+  (["rollback"], ("恢复上一版", "仅恢复配置", "不自动终止原生进程或恢复账号")),
 ])
 def test_layered_help_keeps_current_capabilities(path, fragments, monkeypatch, capsys):
   with no_state(monkeypatch):
@@ -106,8 +105,8 @@ def test_every_registered_parser_has_scoped_help_and_parseable_examples(monkeypa
 @pytest.mark.parametrize("argv, help_command, registered", [
   (["model", "key"], "./agentcfg model key --help", "provider"),
   (["lock"], "./agentcfg lock --help", "--agent"),
-  (["recover", "pi"], "./agentcfg recover --help", "--lease"),
-  (["project", "init", "openspec"], "./agentcfg project init --help", "--path"),
+  (["plan", "--from-pi-home"], "./agentcfg plan --help", "--from-pi-home"),
+  (["rollback", "--synthetic-private-option", CANARY], "./agentcfg rollback --help", "公共选择"),
   (["model"], "./agentcfg model --help", "子命令"),
   (["model", CANARY], "./agentcfg model --help", "key"),
   (["doctor", "--synthetic-private-option", CANARY], "./agentcfg doctor --help", "--format"),
@@ -143,6 +142,7 @@ def test_reused_parser_does_not_leak_previous_help_context(capsys):
 
 @pytest.mark.parametrize("argv", [
   ["status"], ["doctor", "--verbose"], ["run", "--profile", "omp-default"],
+  ["recover", "pi"], ["project", "init", "openspec"], ["plan", "--from-starter", CANARY],
   ["--mach", "workstation", "doctor"], ["--profile", "dsh-default", "profiles"],
   ["--machine", "workstation", "model", "presets"],
 ])
@@ -163,8 +163,8 @@ def test_native_tail_remains_literal_and_uninspected(prefix, monkeypatch, capsys
 
 def test_existing_selector_defaults_repetition_and_equals_forms_are_unchanged():
   parser = cli.build_parser()
-  parsed = parser.parse_args(["init-local", "--profile", "dsh-default", "--profile", "pi-default"])
-  assert parsed.init_profile == "pi-default"
+  parsed = parser.parse_args(["init-local", "--profile", "dsh-default", "--profile", "pi-base"])
+  assert parsed.init_profile == "pi-base"
   assert parsed.machine is None and parsed.profile is None
   parsed = parser.parse_args(["--machine=workstation", "--profile=omp-default", "usage", "--help"])
   assert parsed.machine == "workstation" and parsed.profile == "omp-default"
@@ -287,11 +287,39 @@ def test_unknown_doctor_readiness_never_claims_ready(monkeypatch):
   assert "doctor：离线就绪" not in text
 
 
-def test_all_required_capability_blockers_keep_their_location_ids():
-  capabilities = [{"selected": True, "id": f"capability-{index}",
-    "location_id": "capability:" + f"{index:020x}", "dependencies": "missing",
-    "blockers": []} for index in range(12)]
-  text = render(doctor_payload(agent="pi", profile="pi-default", capabilities=capabilities))
-  for capability in capabilities:
-    assert capability["location_id"] in text
-  assert "最多 8 项" not in text
+def test_all_service_checks_keep_their_location_ids_without_state(monkeypatch):
+  services = [{"location_id": "service:" + f"{index:020x}", "status": "unverified",
+    "reason": "native-service-not-inspected", "url": CANARY} for index in range(12)]
+  payload = doctor_payload(agent="pi", profile="pi-base", live=True, service_checks=services)
+  original = deepcopy(payload)
+  with no_state(monkeypatch):
+    text = render(payload)
+  for service in services:
+    assert service["location_id"] in text
+  assert "原生服务未检查" in text and "最多 8 项" not in text
+  assert CANARY not in text and payload == original
+
+
+def test_pi_verification_and_feature_declarations_remain_visible_during_recovery(monkeypatch):
+  payload = doctor_payload(agent="pi", profile="pi-base", recovery_pending=True,
+    readiness={"status": "action-required", "blockers": ["recovery-pending"],
+      "next_commands": ["apply-or-rollback"]},
+    verification={"configuration": "passed", "dependencies": "passed", "deployment": "passed",
+      "loading": "not_run", "account": "not_inspected", "runtime": "not_run",
+      "unknown": {"value": CANARY}},
+    feature_readiness={
+      "status_bar": {"status": "not_ready", "decision": "candidate", "unknown": {"value": CANARY}},
+      "collaboration": {"status": "not_ready", "decision": "held", "unknown": {"value": CANARY}},
+      "optional_modules": {"status": "not_selected", "decision": "candidate", "unknown": {"value": CANARY}}})
+  original = deepcopy(payload)
+  with no_state(monkeypatch):
+    text = render(payload)
+  assert "恢复前置" in text
+  for label, status in (("配置声明", "已验证"), ("依赖准备", "已验证"), ("配置部署", "已验证"),
+      ("资源加载", "未执行"), ("账号验证", "未检查"), ("运行验证", "未执行")):
+    assert any(line.startswith(label) and line.endswith(status) for line in text.splitlines())
+  assert "功能声明（不代表已加载）" in text
+  for label, status in (("状态栏信息对齐", "未就绪；候选"), ("Pro调查协作", "未就绪；暂停准入"),
+      ("按需模块", "未选择；候选")):
+    assert any(line.startswith(label) and line.endswith(status) for line in text.splitlines())
+  assert CANARY not in text and payload == original

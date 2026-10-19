@@ -16,6 +16,12 @@ BINDING = {"machine": "test", "local": "/synthetic/local.toml", "profile": "test
 LAUNCH = {"lock_identity": "fixture", "secrets": ["secret:key"]}
 
 
+def write_identity(info):
+  # 读取可能推进atime；无变化部署仍必须保持inode、正文形状、权限与写入时间。
+  return tuple(getattr(info, name) for name in (
+    "st_dev", "st_ino", "st_mode", "st_size", "st_mtime_ns", "st_ctime_ns"))
+
+
 def candidate(value="A", *, field=False, extra=True):
   artifacts = []
   if value is not None:
@@ -43,6 +49,158 @@ def state(instance):
     return dep.read_state(tree)
 
 
+def test_retired_field_prunes_only_owned_empty_parents_across_generations(instance):
+  apply(instance, "A", field=True)
+  apply(instance, "B", field=True)
+  apply(instance, "C", field=True)
+  root, _ = instance
+  native = root / "dsh-home/settings.yaml"
+  document = dep.parse_native(native.read_bytes(), "yaml")
+  document["unmanaged"] = {"keep": "SYNTHETIC"}
+  native.write_bytes(dep.encode_native(document, "yaml"))
+  apply(instance, None, field=True)
+  assert dep.parse_native(native.read_bytes(), "yaml") == {"unmanaged": {"keep": "SYNTHETIC"}}
+  dep.rollback(*instance, BINDING)
+  assert dep.parse_native(native.read_bytes(), "yaml") == {"unmanaged": {"keep": "SYNTHETIC"}, "ui": {"theme": "C"}}
+
+
+def test_retired_field_keeps_user_created_empty_parent(instance):
+  launch = {**LAUNCH, "shared_files": ["dsh-home/settings.yaml"]}
+  dep.apply(*instance, candidate(), BINDING, launch)
+  native = instance[0] / "dsh-home/settings.yaml"
+  native.parent.mkdir()
+  native.write_text("ui: {}\n")
+  native.chmod(0o600)
+  dep.apply(*instance, candidate("A", field=True), BINDING, launch)
+  dep.apply(*instance, candidate(None, field=True), BINDING, launch)
+  assert dep.parse_native(native.read_bytes(), "yaml") == {"ui": {}}
+
+
+def test_retired_field_keeps_new_native_children_in_owned_parent(instance):
+  apply(instance, "A", field=True)
+  native = instance[0] / "dsh-home/settings.yaml"
+  document = dep.parse_native(native.read_bytes(), "yaml")
+  document["ui"]["userPreference"] = False
+  native.write_bytes(dep.encode_native(document, "yaml"))
+  apply(instance, None, field=True)
+  assert dep.parse_native(native.read_bytes(), "yaml") == {"ui": {"userPreference": False}}
+
+
+def test_dynamic_shared_file_reselection_keeps_native_values_and_owner(instance):
+  apply(instance, extra=False)
+  apply(instance, field=True, extra=False)
+  native = instance[0] / "dsh-home/settings.yaml"
+  native.write_text(native.read_text() + "runtime: SYNTHETIC_NATIVE_VALUE\n")
+  apply(instance, None, field=True, extra=False)
+  apply(instance, None, field=True, extra=False)
+  assert not state(instance)["current"]["items"]
+  assert dep.parse_native(native.read_bytes(), "yaml") == {"runtime": "SYNTHETIC_NATIVE_VALUE"}
+  apply(instance, field=True, extra=False)
+  assert dep.parse_native(native.read_bytes(), "yaml") == {
+    "runtime": "SYNTHETIC_NATIVE_VALUE", "ui": {"theme": "A"}}
+  assert state(instance)["owner"]["shared_files"] == ["dsh-home/settings.yaml"]
+  assert b"SYNTHETIC_NATIVE_VALUE" not in (instance[1] / "deployment.json").read_bytes()
+  dep.rollback(*instance, BINDING)
+  assert state(instance)["owner"]["shared_files"] == ["dsh-home/settings.yaml"]
+  apply(instance, field=True, extra=False)
+
+
+def test_unselected_shared_file_does_not_preclaim_existing_native_file(instance, sentinel_factory):
+  apply(instance, extra=False)
+  native = instance[0] / "dsh-home/settings.yaml"
+  native.parent.mkdir()
+  native.write_text("runtime: SYNTHETIC_UNOWNED\n")
+  assert state(instance)["owner"]["shared_files"] == []
+  target_before, state_before = sentinel_factory(instance[0]), sentinel_factory(instance[1])
+  with pytest.raises(Conflict):
+    apply(instance, field=True, extra=False)
+  target_before.assert_unchanged()
+  state_before.assert_unchanged()
+
+
+def test_retired_shared_path_still_rejects_existing_managed_field(instance, sentinel_factory):
+  apply(instance, field=True, extra=False)
+  apply(instance, None, field=True, extra=False)
+  apply(instance, None, field=True, extra=False)
+  assert not state(instance)["current"]["items"]
+  native = instance[0] / "dsh-home/settings.yaml"
+  native.write_text("ui: {theme: native}\n")
+  target_before, state_before = sentinel_factory(instance[0]), sentinel_factory(instance[1])
+  with pytest.raises(Conflict):
+    apply(instance, field=True, extra=False)
+  target_before.assert_unchanged()
+  state_before.assert_unchanged()
+
+
+@pytest.mark.parametrize("fail_commit", [False, True])
+def test_shared_file_provenance_backfill_is_atomic_and_preserves_backup(instance, monkeypatch, fail_commit):
+  apply(instance, field=True, extra=False)
+  # 模拟旧版本已部署字段但尚未登记动态共享文件来源。
+  with Tree(instance[1]) as store:
+    old = dep.read_state(store)
+    old["owner"]["shared_files"] = []
+    store.write_state("deployment.json", dep.json_bytes(old))
+  before_state = (instance[1] / "deployment.json").read_bytes()
+  native = instance[0] / "dsh-home/settings.yaml"
+  before_native = native.read_bytes(), write_identity(native.stat())
+  if fail_commit:
+    original = Tree.write_state
+    def fail_once(self, name, data):
+      if name == "deployment.json":
+        monkeypatch.setattr(Tree, "write_state", original)
+        raise OSError("synthetic provenance commit failure")
+      return original(self, name, data)
+    monkeypatch.setattr(Tree, "write_state", fail_once)
+    with pytest.raises(OSError):
+      apply(instance, field=True, extra=False)
+    assert (instance[1] / "deployment.json").read_bytes() == before_state
+    assert not (instance[1] / "pending.json").exists()
+  assert apply(instance, field=True, extra=False)["changes"] == 0
+  saved = state(instance)
+  assert saved["owner"]["shared_files"] == ["dsh-home/settings.yaml"]
+  assert saved["current"] == old["current"] and saved["previous"] == old["previous"]
+  assert (native.read_bytes(), write_identity(native.stat())) == before_native
+  committed = write_identity((instance[1] / "deployment.json").stat())
+  assert apply(instance, field=True, extra=False)["changes"] == 0
+  assert write_identity((instance[1] / "deployment.json").stat()) == committed
+
+
+def test_saved_parent_ownership_cannot_target_an_unrelated_container(instance):
+  apply(instance, "A", field=True)
+  saved = state(instance)
+  item = next(i for i in saved["current"]["items"].values() if i["selector"])
+  item["created_parents"] = ["/unmanaged"]
+  with pytest.raises(Conflict): dep.validate_saved_state(saved)
+
+
+@pytest.mark.parametrize("operation", ["recover", "rollback"])
+def test_pending_recovery_checks_all_native_references_before_restoring_any_file(instance, operation):
+  def protected_candidate(value):
+    return RenderCandidate(value, (
+      Artifact(ManagedTarget("aaa-managed.txt", Ownership.FILE, "text"), value.encode()),
+      Artifact(ManagedTarget("pi-home/models.json", Ownership.FIELDS, "json", "/providers/demo/apiKey", ("$DEMO_KEY",)),
+        json.dumps("$DEMO_KEY").encode()),
+    ))
+  dep.apply(*instance, protected_candidate("A"), BINDING, LAUNCH)
+  root, store = instance
+  with Tree(store) as saved, Tree(root) as target:
+    old = dep.read_state(saved)
+    planned = dep.plan(target, old, protected_candidate("B"), BINDING, LAUNCH)
+    after = {**old, "current": planned.current, "previous": {"current": old["current"], "changes": planned.changes}}
+    saved.write_state("pending.json", dep.json_bytes({"after_state": after, "changes": planned.changes}))
+  # 模拟中断已改首文件，但未提交state；后面的认证字段独立漂移成明文。
+  first = root / "aaa-managed.txt"
+  first.write_text("B")
+  native = root / "pi-home/models.json"
+  native.write_text(json.dumps({"providers": {"demo": {"apiKey": "SYNTHETIC_LITERAL_NEVER_LOGGED"}}}))
+  before = {p: (p.read_bytes(), p.stat().st_ino) for p in (first, native, store / "pending.json", store / "deployment.json")}
+  with pytest.raises(Conflict):
+    if operation == "rollback": dep.rollback(root, store, BINDING)
+    else:
+      with Tree(store) as saved, Tree(root) as target: dep.recover(target, saved)
+  assert before == {p: (p.read_bytes(), p.stat().st_ino) for p in before}
+
+
 def test_optional_state_guard_runs_under_lock_before_target_creation_or_recovery(tmp_path):
   root, store = tmp_path / "instance", tmp_path / "state"
   def reject(saved):
@@ -64,7 +222,7 @@ def test_apply_noop_rotates_only_previous_and_rollback(instance):
   before = (root / "rules.md").stat()
   manifest = (store / "deployment.json").read_bytes()
   assert apply(instance)["changes"] == 0
-  assert (root / "rules.md").stat() == before
+  assert write_identity((root / "rules.md").stat()) == write_identity(before)
   assert (store / "deployment.json").read_bytes() == manifest
   apply(instance, "B")
   apply(instance, "C")
@@ -103,7 +261,7 @@ def test_shared_file_keeps_unknown_oauth_and_drift_baseline(instance):
   path.write_text(path.read_text().replace("theme: local", "theme: B"))
   before = path.stat()
   assert apply(instance, "B", field=True)["changes"] == 0
-  assert path.stat() == before
+  assert write_identity(path.stat()) == write_identity(before)
   apply(instance, "C", field=True)
   dep.rollback(*instance, BINDING)
   current = yaml.safe_load(path.read_text())

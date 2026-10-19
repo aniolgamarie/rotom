@@ -1,151 +1,220 @@
 # Manage Pi with agentcfg
 
-The Pi adapter implements isolated instances, configuration deployment, Task Keeper, and model-delegate. **The Pi 0.84.4 full lock has been rebuilt through the real resolver for this change.** Source/lock closure and an isolated pi-default sync/apply succeeded; matching native and platform evidence is recorded separately. Existing deployments are not automatically migrated. Do not bypass lock checks or regenerate a lock as an incidental setup step.
+The rebuilt adapter uses the unchanged official `@earendil-works/pi-coding-agent@1.3.0` Node CLI.
+Node must be at least 22.19.0. Base and Pro share the static `catppuccin-pi-theme@0.1.6` source,
+public rules and complete selected Skill directories, with independent profile lock slices and instance state.
+Implementation, dependency preparation and native/account acceptance remain separate:
+see the [implementation status](../specs/005-rebuild-pi-toolkit/implementation-status.md)
+and [module admission record](../specs/005-rebuild-pi-toolkit/module-admission.md).
+Historical four-recipe results do not certify this combination.
 
-Historical candidate `9d6a9270…` passed the agreed Linux x86_64 mock/native and two-path rebuild checks for four recipes. Those results belong to that candidate and do not certify this checkout. Other platforms, actual accounts, and real services retain their unverified status. See [known issues](known-issues.md), [testing](testing.md), and [releases](releases.md).
+The official 1.3.0 npm tarball omits its LICENSE. A separately pinned upstream MIT notice is
+verified from repository bytes and installed under the runtime's independent `licenses/` directory;
+the npm host files remain unchanged. This legal-source commit does not establish the npm package's
+gitHead: `host.source_commit` remains null. The notice declaration and hash enter recipe, closure
+and profile identities; missing or changed legal material cannot be silently accepted.
 
-## Configuration ownership
+## Choose and prepare
 
-| Content | Location |
-| --- | --- |
-| Reusable skills and rules | `shared/skills/`, `shared/content.toml` |
-| Pi roles, prompts, themes, plugin declarations | `agents/pi/` |
-| Machine-independent capabilities | `profiles/pi-*.toml` |
-| Paths, exact model bindings, services, check programs | Private machine TOML `overrides` |
-| API keys | Private shared SecretStore; legacy inline `secrets` remains supported |
-| Native OAuth, sessions, task data | Isolated instance; no automatic import of an old HOME |
-| Rebuildable dependencies and source identities | `locks/pi/`; fixed sources, integrity and per-profile complete npm locks |
+`pi-base` is the daily configuration. `pi-pro` currently shares that foundation; investigation
+collaboration is **not ready**, and `collaboration.enabled=true` is rejected. Defaults select no
+external plugin or MCP service. The fixed optional selections below have separate admission and
+runtime evidence. No Task Keeper, model-delegate,
+custom execution loop, Todo or automatic planning platform is loaded.
 
-Private files require mode 0600. Most arrays replace the complete selection, so retain all plugins you need when editing a list. See [local configuration](local-config.md) for the provider/model selection exception and secret storage.
-
-## Choose a recipe
-
-| Recipe | Host | Purpose |
-| --- | --- | --- |
-| `pi-default` | Node | Parent-session implementation, read-only scout/reviewer cooperation, Pi-backend delegation |
-| `pi-managed` | Node | Task Keeper candidate worktrees, checks, reviews, and budgets |
-| `pi-codex` | Node | Ordinary cooperation and official Codex CLI delegation through model-delegate |
-| `pi-cursor` | Bun | Separate Cursor-provider sessions; Cursor model delegation unavailable |
-
-Ordinary recipes select Todo, loop protection, and a status bar. Todo is separate from Task Keeper tasks and budgets. `agent_options.todo` can explicitly set `locale`, `maxWidgetLines`, `collapseKey`, and guidance without scanning old Todo settings.
-
-The declared baseline is Pi 0.84.4, Node 24.14.0, npm 11.19.1, Bun 1.4.0, Codex 0.154.0, and pi-cursor 1.4.29. These declarations do not prove installation or platform support. Cursor/Bun and Task Keeper are mutually exclusive. The Cursor main-session route requires explicit direct connectivity and rejects proxy configuration. Cursor read-only model delegation is unavailable: pi-cursor 1.4.29 exposes no public transport audit injection API. The adapter rejects this branch before reading credentials or spawning a delegate; it does not replace Node HTTP/2 methods to manufacture an audit boundary. Other explicitly supported Pi model-delegate routes remain available.
-
-On Linux, all four recipes use the locked bwrap helper in a separate PID namespace. Host exit causes the kernel to terminate descendants; the supervisor verifies collection before releasing protection. The helper comes from the fixed Codex distribution with source/license metadata. Installing it does not enable Codex delegation. Host gating preserves original stdin, and file authorization remains governed by instance policy.
-
-## Preparation and deployment sequence
-
-The current full lock has been rebuilt through the real resolver. Earlier Linux pi-default sync/apply, concurrent TUI and sandboxed host-resource results belong to their recorded candidates; matching results for this repair are recorded separately. Use the preparation sequence below for a reviewed deployment. Other profiles, Bun, platforms and real accounts require their own validation; see the [acceptance record](design/project-refactoring.md#implementation-and-acceptance-record).
-
-1. Prepare Python 3.11+, uv, and the exact Node/npm/Bun required by the recipe. The manager does not alter the system toolchain.
-2. Run `uv sync --locked` in `/path/to/rotom`. Use `./agentcfg` directly afterward.
-3. Prepare a private machine file from [pi-workstation.toml](../examples/pi-workstation.toml) or [pi-managed.toml](../examples/pi-managed.toml). Replace fictional providers, exact remote IDs, and workspace paths; keep real keys private.
-4. Validate and preview before explicitly synchronizing and deploying the reviewed lock.
+Start from [Base](../examples/pi-base.local.toml) or [Pro](../examples/pi-pro.local.toml)
+using fictional examples as a shape reference. Keep the actual machine file and credentials
+private (0600 files, 0700 directories). Use your own provider/model/editor binding; an example
+model or empty key does not establish account readiness. Existing shared model defaults still
+apply through the common catalog; inspect the resolved selection before using it.
 
 ```sh
-./agentcfg --machine workstation --profile pi-default validate
-./agentcfg --machine workstation --profile pi-default plan
-./agentcfg --machine workstation --profile pi-default sync
-./agentcfg --machine workstation --profile pi-default apply
-./agentcfg --machine workstation --profile pi-default doctor
-./agentcfg --machine workstation --profile pi-default run pi --cwd /path/to/workspace
+./agentcfg init-local --machine workstation --profile pi-base
+./agentcfg --machine workstation --profile pi-base lock --agent pi
+./agentcfg --machine workstation --profile pi-base validate
+./agentcfg --machine workstation --profile pi-base sync
+./agentcfg --machine workstation --profile pi-base plan
+./agentcfg --machine workstation --profile pi-base apply
+./agentcfg --machine workstation --profile pi-base doctor
 ```
 
-Only sync downloads dependencies and performs approved preparation/build steps. npm lifecycle scripts are disabled by default. Official Codex native assets are checked for SHA256, entry points, and architecture. Failed installation preserves the prior runtime. Downloads accept standard lower/uppercase HTTP proxy variables without embedded credentials and retain CA validation; those download proxies are not injected into the model host. Model routes use explicit machine configuration. Validate, render, plan, and apply do not install missing dependencies.
+These are explicit user operations; actual maintenance/rebuild outcomes are recorded separately in
+the [acceptance record](../specs/005-rebuild-pi-toolkit/acceptance.md).
+`lock` resolves dependencies; `sync` consumes the existing complete lock; `apply` deploys
+configuration; `run` does none of those implicitly. Missing/stale locks fail with exit 2,
+missing/damaged runtime packages with exit 5. Unknown installation scripts cannot be activated.
+The sequence above stops before native startup; `run` needs separate native authorization.
+Real native loading, terminal interaction, account login and model calls require their own authorization
+and evidence. Default tests use temporary homes, blocked network and fake processes.
 
-A fresh checkout does not contain the ignored large binary/model asset cache.
-Offline lock validation accepts an absent cache; sync downloads only the assets
-selected for the profile and current platform, verifies their locked digest, size
-and executable format, then publishes them inside the staged runtime. An existing
-unsafe or corrupted cache is an error and is never silently overwritten or treated
-as a cache miss. `scripts/fetch-pi-assets.py` remains an optional explicit cache
-preparation tool. A build using verified cached assets is a warm build, not a cold
-download test.
+## Dependency selections and explicit relocking
 
-## Models and accounts
+Rules, complete Skills, prompt templates, theme sources and builtin extension choices are dependency
+inputs. A local selection change requires an explicit lock using that same effective binding:
 
-Roles such as main, scout, reviewer, and managed roles reference logical model IDs selected by the recipe. Every `remote_id` must be exact. An ordinary configuration that truly resolves without main may open bootstrap login but cannot dispatch tasks. Current recipes inherit public Kimi Code main when no role overrides it. Selecting the Cursor plugin alone does not bind the main model to Cursor; configure that role explicitly.
+```sh
+./agentcfg --local /private/config/pi-base.toml --profile pi-base lock --agent pi
+```
 
-Ordinary main sessions preserve caller HOME/XDG while PI_CODING_AGENT_DIR, session directories and explicit SDK auth/model paths remain instance-bound. Restricted workers use their own temporary HOME and a fixed minimal PATH; they do not inherit ordinary overrides, library paths or SSH sockets. See [environment controls](local-config.md).
+The path is illustrative; use your private machine file. `validate`, `render`, `plan`, `apply` and
+`sync` check the selected profile against current dependency inputs. `run` consumes its saved deployed
+contract and checks configuration selections, guarded resources and the sealed runtime package; it
+does not re-read the repository lock as a substitute for that saved contract. No command relocks implicitly. Model,
+editor and UI changes do not enter the npm recipe, though they still change configuration or launch
+validation and need the corresponding review. A source/backend semantic change still needs review
+and verification even when the dependency digest stays unchanged.
 
-Keys use `secret:<name>` and become runtime environment references. Native OAuth is established inside the target instance. The manager does not read system Cursor accounts, old Pi auth.json, or global CODEX_HOME. Codex login and explicit control are covered by [model-delegate usage](../shared/skills/model-delegate/USAGE.md).
+Current profile consumption is independent: changing an unselected profile's resources does not
+invalidate the selected slice. Explicit `lock` publishes both slices: the selected profile uses its
+effective local selection, while the other profile is rebuilt from public defaults. It does not retain
+the other profile's previous local overrides. Review both slices before publication/use. Selecting
+`resources.themes=[]` excludes the theme package from that profile's closure.
 
-## Task Keeper and delegation
+Only `roles.main` is supported. The optional builtin extensions are `builtin:codemode` and
+`builtin:tool-search`; neither is selected by default. MCP and external plugins accept only
+registered, fixed module IDs. Unknown packages, arbitrary entries and held candidates fail validation.
 
-The [managed example](../examples/pi-managed.toml) binds reader, writer, and reviewer, plus `second_view` when enabled; it declares project roots, permission policy, routes, trusted foreground check programs, fixed argv, parsers, and minimum test counts. Writes occur in a separate candidate worktree and are not automatically merged into the original checkout. A skill or purpose template does not grant a read-only role write permission.
+## Ownership and resources
 
-All execution shares one AgentManager and supervisor. Accepted cancellation does not prove the physical process has stopped. Ordinary mode keeps implementation in the parent session with a fresh reviewer; use `kernel_task` for managed work rather than creating a hidden managed writer.
+Each profile owns a stable `pi-home` and `pi-home/sessions` inside its isolated instance.
+The official CLI receives both explicit session-directory settings, `--no-approve`, the four
+resource-discovery disabling flags, and explicit local Skill/prompt/theme entries. Project
+AGENTS.md context remains available; these flags are not an operating-system sandbox.
+Global `settings.json.packages` must be empty: even object-form declarations are refused
+before managed startup. Loading drift is reported without deleting user content or installing packages.
 
-`model_delegate` is the unified entry point and requires an explicit backend. The old codex-delegate is not retained. The general/context/challenge/plan/research/review/scout purpose templates add task requirements, not another permission layer. Codex uses the official CLI and native tools with execution-bound grants, sandbox, workspace, and supervision; Pi-backend delegation is read-only. Advanced Codex writes require an explicitly authorized separate worktree. See the [skill](../shared/skills/model-delegate/SKILL.md) and [API](../shared/skills/model-delegate/API.md).
+UI fields initialize only eligible new/missing preferences. Later native theme changes are preserved;
+the runtime accepts `catppuccin-latte`, `catppuccin-frappe`, `catppuccin-macchiato` or
+`catppuccin-mocha` from that single locked source. Unknown themes fail rather than silently falling back.
+Managed model/settings fields use common selector ownership. Unknown unmanaged native fields remain
+untouched, and capture produces only a validated nonsecret proposal. Successfully managed shared-file
+paths remain recorded across module disable/reselection; existing unmanaged fields are not adopted.
+Older state that already lost a retired path is not silently repaired: the recorded native test used a
+normal saved rollback followed by apply to recover provenance, then revalidated disable/reselection.
 
-Codex file operations require a projectable policy such as `agent_options.permissions.policy_ref = "delegate-worktree"`. Read-only grants and mounts still prohibit writes; writes additionally require `explicit-write`, `implement`, and user CLI worktree authorization. The default `project-default` denies operations. Selecting Codex does not open access. Linux rejects project roots broad enough to contain private instances and runtimes; use the actual business project root.
+API model keys are guarded environment references, resolved only for the deployed launch contract.
+OAuth, trust, sessions and history remain native instance state; no old or other-profile accounts
+are imported. Ordinary native model/session/thinking arguments are supported within the selected
+routes and stable session directory; resource/trust/installation overrides are refused.
 
-Codex admission checks require absent/empty system configuration, absent managed preferences on macOS, and a recognized personal OAuth or explicit API-key identity. Organization, mixed, unknown, or unverifiable sources fail without rewriting account/admin state. These checks assume a trusted machine/account and are not an atomic configuration guarantee. See [Codex admission](pi-codex-admission.md).
+## Run ownership and descendant release
 
-## Daily maintenance
+Same-profile main runs have independent owner records. Active or unknown runs block exclusive
+maintenance; one run ending never clears another. On Linux, a successfully established kernel child
+subreaper tracks descendants of this one launch, including detached children. Only a complete
+observation that all related children have exited releases that run. Parent exit alone leaves live
+or unobservable descendants **unknown**. Manager crashes, unsupported platforms and failed coverage
+retain protection; a later launch cannot clear an older unknown run. Timeouts and manual assurances
+do not clear ownership. Do not delete owner records or kill processes to bypass it.
+The kernel mechanism has isolated tests and an own-code double-fork probe. Linux native acceptance
+also verified two simultaneous main runs: maintenance returned 4 with two active runs and again
+with one remaining run, then returned 0 after both exited. All recorded A/B/C owners reached
+idle_confirmed; this does not release older unknown records or prove every future descendant path.
 
-- **Add a skill:** copy its complete directory, relative resources, scripts, and license into `shared/skills/`; register it in `shared/content.toml` and select the ID in the recipe. External skills require explicit paths. Validate/plan/apply.
-- **Adjust roles:** edit role sources in `agents/pi/roles/` or logical model bindings. Managed name collisions fail; ordinary scout/reviewer stay read-only. Generated `pi-home/agents/` is not the source.
-- **Switch models:** register the provider and exact remote ID, select the logical model, and update roles. Prior route evidence becomes stale and needs applicable revalidation.
-- **Disable a plugin:** remove its selection from plugins or `agent_options.resources.extensions` and resolve dependent plugins/options. Stop or recover active hosts/children/unknown leases before deploying.
+For old IDs and retained data see [migration](pi-migration.md). Configuration rollback covers managed
+configuration only; it does not downgrade software or restore databases or executed tasks.
 
-## Optional capabilities
+## Verification boundaries
 
-| Capability | Scope |
-| --- | --- |
-| [Agent state](pi-agent-state.md) | OSC titles or explicitly bound agent-report service |
-| pi-rules | Explicit `root_refs`; no HOME scanning |
-| OpenSpec | Optional fixed 1.11.0 CLI and 12 complete skills; explicit project target with conflict checks. See [OpenSpec](openspec.md). |
-| Superpowers | Fixed-commit 14 skills and Pi bootstrap, loaded only when selected; helper services need explicit bindings. |
-| [Review/editor](pi-review.md) | Diff/annotation UI with supervised Git/file/editor access; interactive editor uses a bound private PTY. Real terminal behavior remains separately unverified. |
-| [MCP](pi-mcp.md) | Supervised stdio, explicit HTTP/SSE routes, Bearer/OAuth, sampling, input, scripts, Apps, direct tools; historical synthetic Linux results do not establish real service/account access. |
-| [ReadSeek](pi-readseek.md) | Nine-tool contract, supervision, Git/rg selection, submission, visual assets. Historical Linux native evidence applies to pi-default/codex/cursor; managed uses Task Keeper. macOS x86_64 source-build support lacks machine verification. |
-| [Web](pi-web.md) | Explicit providers, routes, credentials, and tools; historical synthetic SearXNG evidence is separate from real service validation. |
+Current isolated entry points are
+[test_pi_reboot_configuration.py](../tests/test_pi_reboot_configuration.py),
+[test_pi_reboot_dependencies.py](../tests/test_pi_reboot_dependencies.py),
+[test_pi_reboot_runtime.py](../tests/test_pi_reboot_runtime.py) and
+[test_pi_reboot_pipeline.py](../tests/test_pi_reboot_pipeline.py). Their fake processes do not
+prove native loading or model access. Offline `doctor` distinguishes configuration, dependencies,
+deployment, loading, account and runtime evidence; installed dependencies do not imply later stages
+passed. `doctor --live` reports reachability only.
 
-Selected but unverified Codex, Cursor, MCP, web, proxy, and terminal services remain selected and unverified. Historical spec closure did not turn those into passes or remove them from scope.
+The [quickstart](../specs/005-rebuild-pi-toolkit/quickstart.md) describes T036 dependency-only
+rebuilding. Its command examples are not execution results. Authorized Linux local no-account
+A/B/C native checks passed for official Pi 1.3.0/theme 0.1.6, footer 0.5.1 with the revised observer,
+and cache-hit-monitor 0.1.1 separately. All three passed version/help and real tmux 3.5a TUI checks
+at 60/90/130 columns with Chinese multiline bracketed paste, Ctrl+C clearing, reload and Ctrl+D exit.
+The default combination also passed a bare PTY check and preserved a native Frappe theme choice
+after apply. Exact candidates, locks, commands and results are in the
+[acceptance record](../specs/005-rebuild-pi-toolkit/acceptance.md).
 
-## Concurrent runs
+Those initial runs used isolated temporary instances, fictional bindings and synthetic placeholder keys;
+each host launch entered a fresh network namespace with loopback only and no routes. There were
+zero real logins or model requests at that checkpoint. Later authorized shared-default requests passed
+continue/fork/compaction/model switch with all model tools disabled; footer input/output values matched
+SDK usage while unconfirmed billing remained unknown. Context7 native connection and separate service
+queries, fixed Chromium synthetic-page operations and no-account Brave/Cursor loading have bounded
+evidence in [supplementary acceptance](../specs/005-rebuild-pi-toolkit/remaining-native-acceptance.md).
+The [current delivery acceptance](../specs/005-rebuild-pi-toolkit/current-delivery-acceptance.md)
+adds one explicitly authorized bounded real-tool task, running cancellation/recovery, branch statistics
+through compaction, positive cache usage, and the user's acceptance of three display differences.
+T037/T038/T058/T059 are complete for the recorded Linux scope. Loopback SSH is actual SSH transport
+and PTY evidence; the non-root server's exit255 limitation is retained. Other platforms are unverified.
 
-New protocol-2 deployments admit independent supervisors in the same instance.
-Each run retains a unique activation/nonce and control endpoint; execution IDs and
-recovery evidence remain in the existing global store. Child/service capacity is
-per run. The default recipes disable project-resource discovery. Explicit
-`discovery.project_resources=true` retains exclusive physical admission because
-the current native role projections depend on cwd and are shared within an instance.
-The saved launch binding includes this policy; changing it requires apply before
-another run can start. Stop, cancellation, delegation and status use the exact saved owner and
-cannot borrow another run's endpoint. Managed workspace writers still conflict across
-runs using canonical worktree leases; parallel readers remain allowed.
+Explicit `pi-footer@0.5.1` uses a public-event observer. The accepted differences are branch-average
+output speed, some statistics in details on narrow screens, and a clear permission explanation:
+the host exposes no queryable permission state, so this display does not indicate protection.
+Actual billing remains unknown where rates or upstream confirmation are missing. See the
+[status guide](pi-status.md).
+`pi-powerline-footer@0.20.2` and `@mjakl/pi-subagent@3.1.0` remain held. The future collaboration
+contract permits at most two read-only investigations per main run; two independent main runs
+would have independent quotas. This is a future admission requirement, not a supported worker
+command or scheduler. The user retained the community-only route and deferred Pro until upstream
+satisfies the full boundary; no custom investigation executor is introduced. See
+[support and source evidence](pi-support.md).
 
-Old saved launch contracts fail with a migration instruction. Stop/recover old runs,
-rebuild through the complete lock workflow, then sync and apply before using the new
-shared contract. Do not overwrite a frozen supervisor or update only a recipe hash.
-Native UI preferences remain instance-wide; concurrent preference editing has no
-new cross-process transaction guarantee. Avoid simultaneous settings edits.
-Legacy or unknown protected owners block admission/maintenance until explicit
-recovery establishes their outcome. A temporary busy activity snapshot is retried by
-the host loop; it does not authorize abandoning live work or deleting evidence.
+The [optional module recipes](../specs/005-rebuild-pi-toolkit/optional-module-recipes.md) and
+[all-off services example](../examples/pi-services.toml) distinguish implemented choices from
+research candidates. Explicit `pi-footer`, `cache-hit-monitor`, `pi-context7` and `pi-brave` selections bind
+the complete lock and launch configuration. Defaults remain empty; changing a selection requires
+explicit lock, sync and apply. Selecting the `playwright-cli` Skill also binds its exact CLI package
+and complete upstream support directory. Other candidates remain unavailable. Footer and cache
+diagnostics have real usage evidence. Context7 connection and separate service queries and synthetic
+Chromium operations passed; selected combinations, disable/restore and measurements are recorded
+in current delivery acceptance. The user deferred Brave/Cursor real-account acceptance; their existing
+implementation and no-account evidence do not prove authentication, entitlement, search or billing.
 
-On Linux, the supervisor verifies its private control directory before entering a
-PID namespace. Runtime clients receive that directory's exact device/inode/UID
-binding as an opaque string. This permits a fixed, read-only `control.json` lookup
-when namespace UID mapping hides root ancestry. Wrong or malformed bindings fail
-without fallback; file, socket, peer-UID and capability checks still apply. Ordinary
-CLI requests retain the original strict ancestor checks. This mechanism grants no
-general filesystem access and changes no upstream host or sandbox implementation.
+`pi-cursor@1.4.39` is an optional, unofficial subscription bridge. Select plugin `pi-cursor` together
+with provider ID `cursor`, protocol `oauth-dynamic` and auth kind `oauth`; the declared native route
+and authentication owner are `cursor` and `pi-cursor`. The provider accepts no API-key reference or
+base URL. Use an exact selected remote model ID; an unknown or unentitled model does not fall back
+to another provider. The adapter does not claim the bridge has authenticated or discovered that model.
 
-## Recovery and diagnostics
+The bridge can use only this instance's native Pi OAuth store. Managed launch fixes
+`PI_CURSOR_SYSTEM_CREDENTIALS=0`, clears inherited Cursor tokens and route overrides, and fixes its
+cache/journal directory inside the instance. It does not import Keychain, IDE or another instance's
+credentials. Offline management never opens the native auth file. Native login, catalog refresh,
+model requests and usage queries need separate authorized execution. Model/context data can leave
+the machine, and the private journal may retain recovery material; entitlement, actual models,
+retention and billing remain unverified. Disable stops subsequent loading while preserving auth,
+cache and journal; cleanup belongs to their owner. This choice is shared by Base/Pro sources and
+does not enable Pro investigations.
 
-Plan reports dependency, role, policy, route, resource, and configuration changes plus historical runtime locations. Pi sessions and Task Keeper stores accept only declared v3 data; incompatible state is rejected without downgrade or rewrite.
+The [managed browser Skill](../shared/skills/playwright-cli/SKILL.md) adds one guarded CLI entry to
+the current main run's PATH, with its own session and private cwd, HOME, XDG and browser cache.
+It refuses personal-browser attachment, persistent profiles, arbitrary configuration, session
+overrides, installation commands and global session shutdown. An unexpected automatic config file
+is refused without reading it. Browser binaries are a separately prepared prerequisite; none are
+downloaded by selection or npm installation. Managed `open` fixes the public `--browser=chromium`
+option and requires full Chromium; headless-shell alone does not satisfy that option. One explicitly
+prepared Chromium 1247 synthetic-page test confirmed normal browser/daemon exit. `open` can leave a daemon,
+so page closure, daemon
+exit and descendant release require separate evidence. Disable preserves native state and does
+not terminate running processes. Browser scripting, uploads and storage changes remain actions
+for an explicitly authorized main-session task; the wrapper does not constrain arbitrary Bash.
 
-Rollback restores managed configuration and saved runtime references, preserving accounts, sessions, and task databases. Changing HOME cannot bypass active write leases on a shared worktree. See [migration and explicit recovery](pi-migration.md) for stop/recovery commands, 300-second plan validity, and unknown activity handling.
+## Optional investigation and long-command methods
 
-Doctor diagnostics and release acceptance are distinct. `report-only` success means a report was generated; `check-release` requires all applicable evidence in its fixed scope to match and pass. See [diagnostics](pi-diagnostics.md) and [testing](testing.md). Neither historical reports nor a working old deployment substitutes for current native/cold evidence.
+The `cpp-bounded-investigation` and `long-command-handoff` Skills are shared method resources,
+registered for Pi and omitted from defaults. Select them through the common `skills` array and
+explicitly lock, sync and apply. Complete directories are copied and hashed; choosing these Skills
+does not add npm dependencies, tools or background processes.
 
-## SDK integration boundaries
+The [C++ method](../shared/skills/cpp-bounded-investigation/SKILL.md) starts with bounded file search.
+It uses ast-grep only when the project already supplies a verified binary and supported flags;
+it does not install the unverified 0.3.1 extension. AST matches establish syntax, while overload,
+template and type conclusions require the project's compiler conditions or existing clangd.
+No global index or new semantic server starts with the Skill.
 
-The launcher uses the unmodified 0.84.4 SDK. Empty native package lists, explicit local resource paths, and the official `no*` discovery options control resource loading. `PI_OFFLINE=1` and `PI_SKIP_VERSION_CHECK=1` suppress the documented startup checks; these flags are not network isolation. A Rotom-owned `ResourceLoader` delegates public methods and validates dynamic resource additions. Stable request facades delegate public model/session/runtime methods without replacing SDK methods or prototypes. They are adapter code verified against this lock, not an upstream request-interceptor API. Exposed model routes are immutable snapshots for each runtime.
-
-Public pre-switch and pre-fork events reject incompatible headers and active managed work before session restoration. The managed TUI also checks activity before invoking session reload. Native `/import` is unavailable because the SDK event supplies the destination, not the source before copying; it cannot provide the same migration preflight. Existing current-format sessions can still be resumed and forked. Direct SDK calls by trusted JavaScript extensions are not a process or credential isolation boundary.
-
-Read-only delegates and managed workers use an empty resource loader, disabled built-in tools, and a registry containing only their grant's custom tools. Each tool reauthorizes its grant. Dynamic tool selection cannot activate an unregistered tool; the adapter does not overwrite an invented SDK tool setter. Request facades for these workers enforce their explicit transport and budgets and become unusable after close.
+The [long-command method](../shared/skills/long-command-handoff/SKILL.md) hands explicitly requested
+work to an existing tmux session owned by the project/user, with its cwd, logs and next action.
+Stop requests, acknowledgements, process/descendant exit, result completeness and observed effects
+remain distinct. Pi does not install tmux or take over termcfg. `pi-processes@0.13.2` and a PTY owner
+remain research candidates; neither is loaded. Session memory or a shutdown signal does not promise
+recovery after a restart. Configuration rollback does not restore command effects.

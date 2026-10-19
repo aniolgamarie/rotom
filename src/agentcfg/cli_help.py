@@ -11,7 +11,7 @@ agentcfg：选择目标 → 检查/预览 → 明确部署 → 启动
 诊断预览: doctor 查看原因，plan 查看拟变更；离线检查可写诊断文件。
 模型配置: model --help；key/URL 使用已有隐藏输入，不写在命令行。
 依赖维护: sync 消费现有锁；lock 仅用于有意重新解析依赖。
-恢复处理: rollback 恢复配置；recover pi 处理已归属的 Pi 执行。
+恢复处理: rollback 恢复配置；不自动停止进程或恢复账号。
 公共选择参数在命令前；init-local 的 --machine/--profile 在子命令后。
 完整帮助: ./agentcfg --help；局部帮助: ./agentcfg COMMAND --help
 原生帮助: usage --help 和 run -- --help 属于原生参数，不是管理器帮助。"""
@@ -28,7 +28,7 @@ _SELECTION_HELP = (
 DESCRIPTIONS = {
   (): "个人 Agent 配置与运行包管理器。\n"
     "首次: profiles → init-local → model status → setup → run。\n"
-    "日常: run；诊断/预览: doctor / plan；依赖维护: sync / lock；恢复: rollback / recover。\n"
+    "日常: run；诊断/预览: doctor / plan；依赖维护: sync / lock；恢复: rollback。\n"
     "先明确目标与前置条件；这些入口不是自动执行的命令序列。",
   ("init-local",): "创建或补齐私人机器配置与共享空占位，不部署、不验证账号。\n"
     "--machine/--profile 仅放在本子命令后；新机器默认 dsh-default。\n"
@@ -55,7 +55,7 @@ DESCRIPTIONS = {
   ("validate",): "离线校验配置、引用、适配映射和依赖锁；不部署、不验证在线账号。",
   ("render",): "离线生成配置产物并写入缓存；不部署受管实例。离线不等于零文件写入。",
   ("plan",): "离线预览拟变更、漂移和冲突；会写私人诊断文件，不部署。\n"
-    "--from-pi-home 只读盘点显式旧 Pi home 并写迁移提案；--from-starter 配合使用。\n"
+    "--from-pi-home 只读盘点显式旧 Pi home 并写迁移提案。\n"
     "提案和计划不是接管授权；先审阅后再决定后续操作。",
   ("lock",): "有意重新解析并写入公共依赖锁，可能联网；用于依赖版本维护。\n"
     "普通使用由 sync 消费现有锁。锁缺失或无效时先核对/恢复仓库锁，不直接重建。",
@@ -79,13 +79,8 @@ DESCRIPTIONS = {
   ("capture",): "捕获允许的原生字段并生成脱敏提案，不直接改写公共来源。\n"
     "这是审阅提案入口，不是恢复或绕过所有权检查。",
   ("rollback",): "恢复上一版受管配置，保留活动实例、所有权和恢复检查。\n"
-    "与 Pi 执行 recover 不同；不自动终止原生进程或恢复账号。",
-  ("recover",): "核对指定 lease 对应的旧 Pi 执行；这是执行恢复，不是配置回滚。\n"
-    "默认只生成停止恢复计划；实际停止须同时提供 --stop 与 --expect-plan 匹配该计划。\n"
-    "不自动解除租约、猜测归属或停止其它实例。",
-  ("project",): "项目集成子命令，仅 Pi 提供可选 OpenSpec；不是 DSH 项目能力。",
-  ("project", "init"): "仅 Pi：在显式 --path 项目内初始化可选 OpenSpec 集成。\n"
-    "这是项目文件写入；先选择已准备的 Pi 配方，不为 DSH 安装 OpenSpec。",
+    "仅恢复配置；不自动终止原生进程或恢复账号。",
+
 }
 
 
@@ -104,20 +99,18 @@ EXAMPLES = {
   ("model", "enable"): (("model", "enable", "deepseek"),),
   ("validate",): (("validate",),),
   ("render",): (("render",),),
-  ("plan",): (("plan",), ("--profile", "pi-default", "plan", "--from-pi-home", "/path/to/old-pi-home")),
+  ("plan",): (("plan",), ("--profile", "pi-base", "plan", "--from-pi-home", "/path/to/old-pi-home")),
   ("lock",): (("--profile", "dsh-default", "lock", "--agent", "dsh"),),
   ("sync",): (("--machine", "workstation", "sync"),),
   ("apply",): (("--machine", "workstation", "apply"),),
   ("run",): (("run",), ("--profile", "omp-default", "run", "--cwd", "/path/to/workspace"),
-    ("--profile", "pi-default", "run", "--", "--help")),
+    ("--profile", "pi-base", "run", "--", "--help")),
   ("usage",): (("usage", "--help"),),
   ("inventory",): (("inventory", "omp", "--source", "/path/to/old-omp-agent"),),
   ("doctor",): (("--machine", "workstation", "doctor", "--environment", "--input", "--format", "human"),),
   ("capture",): (("capture",),),
   ("rollback",): (("--machine", "workstation", "rollback"),),
-  ("recover",): (("--profile", "pi-default", "recover", "pi", "--lease", "LEASE_ID"),),
-  ("project",): (("--profile", "pi-default", "project", "init", "openspec", "--path", "/path/to/workspace"),),
-  ("project", "init"): (("--profile", "pi-default", "project", "init", "openspec", "--path", "/path/to/workspace"),),
+
 }
 
 

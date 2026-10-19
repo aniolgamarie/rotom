@@ -279,7 +279,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="离线展示脱敏差异/来源/漂移/冲突",
     )
     plan.add_argument("--from-pi-home", type=Path, help="只读盘点显式旧 Pi home，生成迁移提案")
-    plan.add_argument("--from-starter", type=Path, help="与 --from-pi-home 一起比较显式 starter 来源")
 
     # lock: 依赖锁定
     lock = subparsers.add_parser(
@@ -361,41 +360,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="恢复上一版受管配置",
     )
 
-    recover = subparsers.add_parser("recover", help="核对旧Pi执行，或按明确计划停止已归属的执行")
-    recover.add_argument("agent", choices=["pi"])
-    recover.add_argument("--lease", required=True, type=selection_id)
-    recover.add_argument("--stop", action="store_true")
-    recover.add_argument("--expect-plan", metavar="DIGEST")
-
-    # project: 所选配方的项目能力；DSH 不提供 Spec 安装。
-    project = subparsers.add_parser(
-        "project",
-        help="项目集成（Pi 可选 OpenSpec）",
-    )
-    project_sub = project.add_subparsers(dest="project_command", required=True)
-    project_init = project_sub.add_parser(
-        "init",
-        help="初始化所选 Pi 配方的可选 OpenSpec 集成",
-    )
-    project_init.add_argument(
-        "integration",
-        choices=["openspec"],
-        help="集成类型",
-    )
-    project_init.add_argument(
-        "--path",
-        type=Path,
-        required=True,
-        help="项目路径",
-    )
-
     # 原有结构化命令在管道中保持 JSON，终端可读摘要可显式选择。
     for name in ("validate", "render", "plan", "lock", "sync", "apply", "inventory",
-                 "doctor", "capture", "rollback", "recover"):
+                 "doctor", "capture", "rollback"):
         subparsers.choices[name].add_argument("--format", choices=("auto", "human", "json"),
             default="auto", help="结果格式：auto 在终端显示摘要、重定向时输出 JSON")
-    project_init.add_argument("--format", choices=("auto", "human", "json"), default="auto",
-        help="结果格式：auto 在终端显示摘要、重定向时输出 JSON")
+
 
     configure_help(parser)
     return parser

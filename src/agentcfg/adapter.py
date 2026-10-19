@@ -75,6 +75,7 @@ class ManagedTarget:
       from .omp_env import is_generated_name
       if (self.selector is None or not isinstance(self.reference_tokens, tuple)
           or any(not isinstance(token, str) or not (re.fullmatch(r"\$[A-Za-z_][A-Za-z0-9_]*", token)
+                 or re.fullmatch(r"\$\{AGENTCFG_PI_MCP_[A-F0-9]{16}\}", token)
                  or is_generated_name(token))
                  for token in self.reference_tokens)
           or len(set(self.reference_tokens)) != len(self.reference_tokens)):

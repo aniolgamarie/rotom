@@ -27,6 +27,23 @@ class LockBusy(Conflict):
   """暂时的锁竞争，不能被当作损坏或宿主退出。"""
 
 
+@contextmanager
+def advisory_lock(fd, *, shared=False, unlock=True, busy_message="实例仍被运行或其他操作保护",
+    unavailable_message=None):
+  """共用非阻塞租约；继承型租约用 unlock=False，由最后一个 FD 关闭释放。"""
+  try:
+    fcntl.flock(fd, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+  except OSError as error:
+    message = (busy_message if error.errno in (errno.EACCES, errno.EAGAIN)
+      else unavailable_message or busy_message)
+    raise Conflict(message) from None
+  try:
+    yield fd
+  finally:
+    if unlock:
+      fcntl.flock(fd, fcntl.LOCK_UN)
+
+
 def identity(info):
   return (info.st_dev, info.st_ino, info.st_mode, info.st_size,
           info.st_mtime_ns, info.st_ctime_ns)

@@ -21,8 +21,8 @@ For changes to a private machine override, use the selected profile's commands:
 ```
 
 Public sources have adapter-specific lock boundaries. OMP locks its public profiles,
-catalogs, rules, Skills and local packages; Pi also locks its runtime, frozen
-supervisor inputs and selected resources. Changing these inputs requires an explicit
+catalogs, rules, Skills and local packages; Pi locks its official host/module sources,
+selected resources and required build/toolchain conditions. Changing these inputs requires an explicit
 lock rebuild even when no external package version changes. Rebuild the affected
 adapter lock with its exact declared toolchain, review the complete diff, then
 validate, plan, sync and apply. For example, an OMP public-resource change uses:
@@ -35,7 +35,9 @@ validate, plan, sync and apply. For example, an OMP public-resource change uses:
 ./agentcfg --machine workstation --profile omp-kernel apply
 ```
 
-Pi uses `./agentcfg --machine workstation --profile pi-default lock --agent pi`.
+Pi uses `./agentcfg --machine workstation --profile pi-base lock --agent pi`. Effective local
+resource choices require relocking with that same binding; model/editor/UI are outside the npm recipe.
+Profile consumption is independent, while explicit lock rebuilds the other profile from public defaults.
 Shared source changes may affect both adapters, so check each affected lock. DSH
 configuration-only edits normally use validate/plan/apply; dependency or packaged
 extension changes require its explicit lock/sync workflow. Ordinary sync/run never
@@ -147,18 +149,23 @@ Generate locks explicitly, for example `./agentcfg lock --agent dsh`, with the r
 
 ## Pi maintenance boundaries
 
-The Pi lock has been rebuilt through the complete resolver. Source/lock consistency,
-installation and native feature acceptance remain separate checks; historical
-`9d6a9270…` results do not validate a later candidate. See [Pi](pi.md), the
-[current acceptance record](design/project-refactoring.md), and
-[migration](pi-migration.md) for adoption, drift, credentials, rollback and recovery.
+The new Base/Pro adapter launches the unmodified official CLI through declared resources.
+See [Pi](pi.md), [migration](pi-migration.md) and the
+[current implementation record](../specs/005-rebuild-pi-toolkit/implementation-status.md).
+Source/lock consistency, dependency installation, deployment, native loading and account/model
+acceptance remain separate; historical SDK/supervisor results do not transfer.
 
-Pi project policy denies by default. `permissions.policy_ref = "task-keeper-candidate"` explicitly allows the candidate's tk_* reads/write while retaining role roots, task grants, secret exclusions, and supervisor write leases.
+The retired task/permission/delegate platform, workspace-lease recovery routes and project OpenSpec
+CLI route are absent. No old task policy, supervisor command binding or custom tool registry is
+supported by the new adapter. Do not use old role, service or external-tool options.
 
-Ordinary read/write/edit/rename/ls/find/grep use the instance supervisor. Writes and renames acquire a common workspace lease immediately before action. Interactive approval binds the session, directory, and input; unused authorization expires after five minutes. Rename authorizes both endpoints without replacing the destination, using Linux `renameat2(RENAME_NOREPLACE)` or macOS `renameatx_np(RENAME_EXCL)`; unsupported platforms/filesystems fail. See the [Linux](https://github.com/torvalds/linux/blob/master/include/uapi/linux/fs.h) and [Apple](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/stdio.h) headers. Directory search excludes Git metadata and links; basic ignore handling does not claim complete Git parity.
+Each main run keeps its own ownership record. Active or unknown records block exclusive maintenance;
+manager exit currently leaves unknown because production has no complete-release observer. Do not
+clear markers or kill processes to force a sync/apply. Opaque old activity/worktree owners also remain
+protected. Configuration apply/rollback recovery remains available for managed configuration only;
+it does not resume tasks, migrate accounts, downgrade software or undo tool effects.
 
-Commands/editors need an exact binding such as `agent_options.external_tools.build`, with executable, version, fixed args, project/read/write roots, and timeout. Select it as `agentcfg:build`; the policy must separately allow bash execute with command_ref=build. Raw shell fragments, added arguments, excessive timeouts, and read-only-role execution fail. Foreground commands use private temporary storage and a network-disabled sandbox; native platform/editor behavior still needs its own evidence.
-
-Session switch/fork/reload/handoff is blocked while protected children or unconsumed controlled results remain. Consume results or explicitly cancel/recover and establish termination first; clearing UI does not release workspace protection.
-
-`agent_options.ui.notifications` accepts auto/osc99/osc777/bell/off. Auto selects OSC 99 for Kitty, bell for Windows Terminal, and OSC 777 otherwise. Sending bytes does not prove desktop delivery; no detached PowerShell toast is launched. See [agent state](pi-agent-state.md), [testing](testing.md), and [known issues](known-issues.md).
+`plan --from-pi-home` produces a private metadata/count proposal with no automatic adoption, model
+copy or authentication/session-body reading. Starter comparison is unsupported. Preserve old native
+homes, databases, reports, backups and ownership metadata in place; explicit private archival is a
+separate owner action. Native and account/model checks need their independent authorization.

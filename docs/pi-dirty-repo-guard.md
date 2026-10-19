@@ -1,5 +1,11 @@
 # Pi Git status checks before session changes
 
+> Historical reference for the retired Pi SDK/four-profile integration. Its commands, roles,
+> plugins and support claims do not apply to current Base/Pro and must not be used as current
+> operating instructions. The original body remains for historical scope only. See the
+> [current Pi guide](pi.md), [migration boundary](pi-migration.md) and [support matrix](pi-support.md).
+
+
 `dirty-repo-guard` checks an explicitly declared Git worktree before creating, switching, or forking a session. Fixed Git queries run through the existing `pi-subagents` manager and agentcfg supervisor rather than direct `pi.exec`.
 
 ## Configuration

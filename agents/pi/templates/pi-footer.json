@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "enabled": true,
+  "preset": "default",
+  "terminal": {
+    "widthMode": "full",
+    "colorLevel": "ansi256"
+  },
+  "iconMode": "text",
+  "minimalist": true,
+  "separator": "pipe",
+  "separatorFg": "default",
+  "separatorBg": "default",
+  "extensionStatusRow": {
+    "hiddenKeys": [],
+    "knownKeys": []
+  },
+  "lines": [
+    [
+      {
+        "id": "agentcfg-selection",
+        "type": "event",
+        "enabled": true,
+        "options": {
+          "widgetId": "agentcfg-selection",
+          "hideWhenEmpty": true
+        }
+      },
+      {
+        "id": "agentcfg-activity",
+        "type": "event",
+        "enabled": true,
+        "options": {
+          "widgetId": "agentcfg-activity",
+          "hideWhenEmpty": true
+        }
+      },
+      {
+        "id": "agentcfg-context",
+        "type": "event",
+        "enabled": true,
+        "options": {
+          "widgetId": "agentcfg-context",
+          "hideWhenEmpty": true
+        }
+      }
+    ],
+    [
+      {
+        "id": "agentcfg-statistics",
+        "type": "event",
+        "enabled": true,
+        "options": {
+          "widgetId": "agentcfg-statistics",
+          "hideWhenEmpty": true
+        }
+      },
+      {
+        "id": "agentcfg-cwd-basename",
+        "type": "cwd-basename",
+        "enabled": true,
+        "options": {}
+      },
+      {
+        "id": "agentcfg-git-branch",
+        "type": "git-branch",
+        "enabled": true,
+        "options": {}
+      }
+    ]
+  ]
+}

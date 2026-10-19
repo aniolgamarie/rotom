@@ -2,8 +2,6 @@
 
 from contextlib import contextmanager
 from dataclasses import dataclass
-import errno
-import fcntl
 import hashlib
 import json
 import os
@@ -12,7 +10,7 @@ import secrets
 import stat
 
 from .deployment import json_bytes
-from .storage import Conflict, Tree, ensure_private
+from .storage import Conflict, Tree, advisory_lock, ensure_private
 
 
 @dataclass(frozen=True)
@@ -121,13 +119,8 @@ def lifecycle_guard(workspace, *, create=False, shared=False):
     if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid()
         or stat.S_IMODE(info.st_mode) != 0o600 or info.st_nlink != 1):
       raise Conflict("OMP物理实例锁身份或权限无效")
-    try:
-      try:
-        fcntl.flock(fd, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
-      except OSError as error:
-        if error.errno in (errno.EACCES, errno.EAGAIN):
-          raise Conflict("OMP实例已有活动进程") from None
-        raise Conflict("当前文件系统无法提供OMP物理实例锁") from None
+    with advisory_lock(fd, shared=shared, unlock=False, busy_message="OMP实例已有活动进程",
+        unavailable_message="当前文件系统无法提供OMP物理实例锁"):
       with Tree(workspace.instance) as tree:
         raw = tree.read(".agentcfg-omp-owner.json")
         if raw is not None:
@@ -139,12 +132,5 @@ def lifecycle_guard(workspace, *, create=False, shared=False):
             raise Conflict("OMP实例非空且没有可核验所有者")
           tree.write_state(".agentcfg-omp-owner.json", json_bytes({**expected, "owner_nonce": secrets.token_hex(16)}))
         yield fd
-    finally:
-      os.close(fd)
-  except BaseException:
-    if fd >= 0:
-      try:
-        os.close(fd)
-      except OSError:
-        pass
-    raise
+  finally:
+    os.close(fd)

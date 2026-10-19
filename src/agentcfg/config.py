@@ -10,7 +10,7 @@ from urllib.parse import parse_qsl, urlsplit
 
 from .local_values import validate_local_url
 from .merge import Provenance, merge_layers
-from .model_defaults import (complete_pi_roles, merge_model_selections,
+from .model_defaults import (merge_model_selections,
                              model_default_selection, validate_model_defaults)
 from .paths import PathError, UnsupportedRootOwner, configured_path, relative_path, safe_id
 from .schema import (AdapterPolicy, AdapterSchemas, AuthenticationClaim, ConfigError,
@@ -326,14 +326,17 @@ def _callback(callback, *args):
   try:
     result = callback(*(deepcopy(arg) for arg in args))
   except ConfigError as error:
-    if error.code == "oauth-provider-options-not-supported":
-      result = "oauth-provider-options-not-supported"
+    if error.code in {"oauth-provider-options-not-supported", "pi-collaboration-not-ready",
+        "pi-plugin-module-not-admitted", "pi-mcp-module-not-admitted"}:
+      result = error.code
     failed = True
   except Exception:
     failed = True
   if failed:
     if result == "oauth-provider-options-not-supported":
       raise ConfigError("oauth-provider-options-not-supported", ("profile", "agent_options", "provider_options"))
+    if result in {"pi-collaboration-not-ready", "pi-plugin-module-not-admitted", "pi-mcp-module-not-admitted"}:
+      raise ConfigError(result, ("profile", "agent_options"))
     raise ConfigError("adapter", ("adapter",))
   return result
 
@@ -482,10 +485,6 @@ def resolve_config(catalog: Catalog, local: LocalConfig, *, profile_id: str | No
       providers, models = merged_profile["providers"], merged_profile["models"]
       selection_sources = {kind: next((layer for layer, value in reversed(profile_layers)
         if kind in value), "defaults") for kind in ("providers", "models")}
-    role_defaults = complete_pi_roles(merged_profile,
-      catalog.adapter_documents[profile["agent"]]["agent"]) if catalog.model_defaults else {}
-    if role_defaults:
-      merged_profile["roles"] = {**role_defaults, **merged_profile["roles"]}
     # 必须调用原始完整 schema；partial 投影丢掉的逻辑/完整性谓词在此执行。
     validate_document("profile", merged_profile, adapter_schemas=context)
     if merged_profile["id"] != key:
@@ -497,7 +496,6 @@ def resolve_config(catalog: Catalog, local: LocalConfig, *, profile_id: str | No
       *((layer, {"profile": value}) for layer, value in profile_layers),
       (selection_sources["providers"], {"profile": {"providers": providers}}),
       (selection_sources["models"], {"profile": {"models": models}}),
-      ("defaults", {"profile": {"roles": role_defaults}}),
       registry_layers[1], ("local", {"machine": machine}),
     ])
     data = _selected(combined.data, merged_profile)

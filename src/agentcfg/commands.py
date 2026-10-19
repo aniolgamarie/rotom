@@ -78,6 +78,8 @@ def cmd_model(args):
 def prepared(args):
   w = workspace(args)
   lock = w.backend.read_lock(w.repository)
+  # 消费所选 profile 的完整依赖身份，再进行任何渲染或部署。
+  runtime.runtime_identity(w, lock)
   return w, lock, w.candidate(lock.identity)
 
 
@@ -113,9 +115,6 @@ def current_plan(w, lock, candidate):
 
 def cmd_plan(args):
   Progress("plan", args).stage("检查配置与部署差异", hint="doctor")
-  if getattr(args, "from_starter", None) is not None and getattr(args, "from_pi_home", None) is None:
-    from .schema import ConfigError
-    raise ConfigError("pi-source-requires-home")
   if getattr(args, "from_pi_home", None) is not None:
     return migration_plan(args)
   w, lock, candidate = prepared(args)
@@ -139,13 +138,10 @@ def migration_plan(args):
   """提案使用有效机器的私人缓存，不依赖尚未安装的 Pi 或虚构适配器。"""
   from .pi_inventory import build_inventory
   from .paths import safe_id
-  w = load_workspace(args.local)
-  target_profile = args.profile if args.profile.startswith("pi-") else "pi-default"
+  w = load_workspace(args.local, args.profile)
+  target_profile = args.profile
   safe_id(target_profile)
-  report = build_inventory(args.from_pi_home, getattr(args, "from_starter", None), repository=w.repository)
-  overrides = report["proposed_overrides"]
-  if "pi-default" in overrides.get("profiles", {}) and target_profile != "pi-default":
-    overrides["profiles"][target_profile] = overrides["profiles"].pop("pi-default")
+  report = build_inventory(args.from_pi_home, repository=w.repository, profile=target_profile)
   cache = Path(w.resolved.data["machine"]["paths"]["cache_root"]) / "migration" / target_profile
   with Tree(cache, create=True) as output_tree:
     output_tree.write_state("inventory.json", deployment.json_bytes(report))
@@ -238,7 +234,11 @@ def cmd_lock(args):
     emit_result({"command": "lock", "agent": "omp", "locked": True}, args=args)
     return 0
   w = workspace(args)
-  w.backend.resolve_lock(w.repository)
+  resolve_for = getattr(w.backend, "resolve_lock_for", None)
+  if resolve_for is not None:
+    resolve_for(w)
+  else:
+    w.backend.resolve_lock(w.repository)
   return output(w, "lock", {"locked": True}, args=args)
 
 
@@ -275,10 +275,21 @@ def cmd_inventory(args):
   return output(w, "inventory", write_inventory(w, args.source), args=args)
 
 
-def cmd_recover(args):
-  from .pi_recovery import recover
-  w, result = recover(args)
-  return output(w, "recover", result, args=args)
+def doctor_verification(report):
+  """只描述本次doctor实际完成的管理检查，不推断原生或账号证据。"""
+  dependencies = {"installed": "passed", "damaged": "failed"}.get(report["dependencies"], "not_run")
+  if report.get("lock") == "missing-or-invalid":
+    dependencies = "blocked"
+  if not report["deployed"]:
+    deployed = "not_run"
+  elif (report.get("lock") == "missing-or-invalid" or report["recovery_pending"]
+      or report.get("drift") or report.get("conflicts") or report.get("changes_pending")
+      or report.get("deployed_runtime_matches_current") is False):
+    deployed = "blocked"
+  else:
+    deployed = "passed"
+  return {"configuration": "passed", "dependencies": dependencies, "deployment": deployed,
+    "loading": "not_run", "account": "not_inspected", "runtime": "not_run"}
 
 
 def cmd_doctor(args):
@@ -300,6 +311,10 @@ def cmd_doctor(args):
       result["input_diagnostics"] = {"diagnostic_terminal": terminal_state(),
         "readiness": result["readiness"], "host_events": {"status": "not-checked", "reason": "先修复依赖锁"},
         "note": "终端标志只描述诊断进程；不记录按键"}
+    result["verification"] = doctor_verification(result)
+    features = getattr(w.adapter, "feature_readiness", None)
+    if features is not None:
+      result["feature_readiness"] = features(w.resolved.data)
     output(w, "doctor", result, args=args)
     print("doctor: 依赖锁缺失或校验失败（退出码 2）；请核对仓库锁文件。", file=sys.stderr)
     print("仅在需要重新解析依赖版本时执行：\n  " + command_line(args, "lock", "--agent", w.agent), file=sys.stderr)
@@ -312,6 +327,9 @@ def cmd_doctor(args):
       "authentication": "not-inspected; use native auth status", "live": False,
       "notes": list(w.adapter.doctor({}))}
   result["required_toolchain"] = w.backend.toolchain(lock)
+  features = getattr(w.adapter, "feature_readiness", None)
+  if features is not None:
+    result["feature_readiness"] = features(w.resolved.data)
   if getattr(args, "environment", False):
     result["environment"] = runtime.environment_diagnostics(w, saved["current"])
   identity_report = getattr(w.adapter, "identity_diagnostics", None)
@@ -328,9 +346,6 @@ def cmd_doctor(args):
     drift = current_plan(w, lock, w.candidate(lock.identity))
     result.update(drift=bool(drift.drift), conflicts=bool(drift.conflicts), changes_pending=len(drift.changes))
   result["diagnostics"] = write_diagnostics(w, lock, drift)
-  capabilities = getattr(w.adapter, "capability_diagnostics", lambda _: None)({"data": w.resolved.data, "repository": w.repository, "deployed": result["deployed"] and not result["recovery_pending"] and not result.get("changes_pending") and not result.get("conflicts") and not result.get("drift"),
-    "dependencies": result["dependencies"], "lock_identity": lock.identity, "runtime_identity": runtime.runtime_identity(w, lock)})
-  if capabilities is not None: result["capabilities"] = capabilities
   if args.live:
     checks = getattr(w.adapter, "live_diagnostics", lambda _: None)(w.resolved.data)
     if checks is None:
@@ -350,8 +365,9 @@ def cmd_doctor(args):
   else:
     from .interaction_diagnostics import readiness
     result["readiness"] = readiness(result)
+  result["verification"] = doctor_verification(result)
   output(w, "doctor", result, args=args)
-  return getattr(w.adapter, "diagnostic_exit_code", lambda _: 0)(capabilities)
+  return 0
 
 
 def cmd_capture(args):
@@ -383,12 +399,6 @@ def cmd_capture(args):
   with Tree(w.cache / "proposals", create=True) as cache:
     cache.write_state("capture.json", deployment.json_bytes(proposal))
   return output(w, "capture", {"captured_fields": len(projection), "proposal": str(w.cache / "proposals/capture.json")}, args=args)
-
-
-def cmd_project(args):
-  from .project import initialize_openspec
-  w = workspace(args)
-  return output(w, "project", initialize_openspec(w, w.backend.read_lock(w.repository), args.path.absolute()), args=args)
 
 
 def dependency_status(w, lock):

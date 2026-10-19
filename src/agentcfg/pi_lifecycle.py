@@ -1,37 +1,48 @@
 """Pi 稳定实例准入：锁绑定实例目录，不能通过换 state_root 绕过运行保护。"""
 
 from contextlib import contextmanager
+import os
 from pathlib import Path
+import stat
 
-from .deployment import json_bytes
 from .storage import Conflict, Tree
 
 
 def assert_inactive(state_root):
-  from .activity import ExecutionStore, OWNER_KEYS, protected
-  from .pi_catalog import validate
-  import json
+  # 旧记录只作为不透明的所有权阻断；不继续分发旧任务协议来解释或清除它。
   directory = Path(state_root) / "activity/leases"
-  if not directory.exists() and not directory.is_symlink():
-    return
   with Tree(directory) as tree:
-    import os
-    for name in os.listdir(tree.fd):
-      if not name.endswith(".json"):
-        raise Conflict("实例存在未知执行记录，不能修改")
-      raw = tree.read(name)
-      try:
-        lease = json.loads(raw[0])
-        validate("execution-lease", lease)
-        owner = {key: lease[key] for key in OWNER_KEYS}
-        checker = ExecutionStore(state_root, owner, None)
-        checker._validate(lease)
-        if raw[1] != 0o600 or name != lease["lease_id"] + ".json":
-          raise ValueError()
-      except Exception:
-        raise Conflict("实例执行记录损坏，保护保持生效") from None
-      if protected(lease):
-        raise Conflict("实例仍有活动或未知执行；不能修改其配置和运行包")
+    if tree.fd is not None and os.listdir(tree.fd):
+      raise Conflict("实例保留旧执行归属，须先人工核实；不会清除或继续旧任务")
+
+
+def assert_no_legacy_workspace_owner(cwd):
+  """旧 Git 所有权仍阻止新启动；不解析任务正文、认领标记或建立新工作区协议。"""
+  root = Path(cwd).absolute()
+  while True:
+    marker = root / ".git"
+    try:
+      info = marker.lstat()
+      break
+    except FileNotFoundError:
+      if root == root.parent: return
+      root = root.parent
+  if stat.S_ISDIR(info.st_mode):
+    git_dir = marker
+  elif stat.S_ISREG(info.st_mode) and info.st_nlink == 1:
+    try:
+      with Tree(root, private=False) as tree:
+        raw = tree.read(".git", max_bytes=4096)
+      line = raw[0].decode().strip()
+      if not line.startswith("gitdir: ") or "\n" in line or "\r" in line: raise ValueError()
+      git_dir = (root / line[8:]).resolve(strict=True)
+    except (OSError, ValueError, UnicodeError):
+      raise Conflict("Git所有权目录无法核实，拒绝启动") from None
+  else:
+    raise Conflict("Git所有权目录无法核实，拒绝启动")
+  with Tree(git_dir / "agentcfg") as tree:
+    if tree.fd is not None and os.listdir(tree.fd):
+      raise Conflict("工作区保留旧Pi写入归属，须先人工核实；不会自动删除或接管")
 
 
 @contextmanager
@@ -40,4 +51,7 @@ def guard(workspace, *, allow_active=False, create=True, shared=False):
   with physical_guard(workspace, shared=shared, create=create) as fd:
     if not allow_active:
       assert_inactive(workspace.state_root)
+      from .run_owners import Registry
+      Registry(workspace.state_root / "run-owners",
+        getattr(workspace, "binding", {"profile": workspace.profile})).assert_inactive()
     yield fd

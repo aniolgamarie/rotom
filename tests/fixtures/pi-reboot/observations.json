@@ -1,0 +1,9 @@
+{
+  "empty_result": "",
+  "truncated_result": "{",
+  "usage": null,
+  "cost": null,
+  "model_window": null,
+  "requested_model": "example-main",
+  "observed_model": null
+}

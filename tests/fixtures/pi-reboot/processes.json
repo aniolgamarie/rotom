@@ -1,0 +1,21 @@
+{
+  "runs": [
+    {
+      "run_id": "main-a",
+      "pid": 101,
+      "start_ticks": 1001,
+      "descendants": "active"
+    },
+    {
+      "run_id": "main-b",
+      "pid": 102,
+      "start_ticks": 1002,
+      "descendants": "unknown"
+    }
+  ],
+  "pid_reuse": {
+    "pid": 101,
+    "start_ticks": 9999
+  },
+  "malformed_owner": "truncated synthetic record"
+}

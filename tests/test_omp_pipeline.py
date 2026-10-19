@@ -32,6 +32,8 @@ def full_workspace(tmp_path):
       shutil.copy2(REPO / "agents" / agent / name, target / name)
     if (REPO / "agents" / agent / "content.toml").exists():
       shutil.copy2(REPO / "agents" / agent / "content.toml", target / "content.toml")
+  # 全catalog会读取未选adapter的公开schema；保留Pi严格来源校验。
+  shutil.copytree(REPO / "agents/pi/schemas", repository / "agents/pi/schemas")
   shutil.copytree(REPO / "locks/omp", repository / "locks/omp")
   shutil.copytree(REPO / "tests/fixtures/omp", repository / "tests/fixtures/omp")
   shutil.copy2(repository / "tests/fixtures/omp/registry.toml", repository / "shared/omp-validation.toml")

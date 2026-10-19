@@ -1,5 +1,11 @@
 # Pi diagnostics and verification
 
+> Historical reference for the retired Pi SDK/four-profile integration. Its commands, roles,
+> plugins and support claims do not apply to current Base/Pro and must not be used as current
+> operating instructions. The original body remains for historical scope only. See the
+> [current Pi guide](pi.md), [migration boundary](pi-migration.md) and [support matrix](pi-support.md).
+
+
 ## Layered doctor results
 
 `agentcfg doctor` reports Pi `capabilities` separately for selection, configuration, deployment, dependencies, load evidence, authentication observations, and execution evidence. Installation does not prove loading/execution. An unbound bootstrap model reports `PI_MODEL_UNBOUND`.

@@ -1,5 +1,11 @@
 # Pi Web integration
 
+> Historical reference for the retired Pi SDK/four-profile integration. Its commands, roles,
+> plugins and support claims do not apply to current Base/Pro and must not be used as current
+> operating instructions. The original body remains for historical scope only. See the
+> [current Pi guide](pi.md), [migration boundary](pi-migration.md) and [support matrix](pi-support.md).
+
+
 The derived Web package is declared for four Pi profiles. This page describes implemented configuration and execution boundaries. It does not establish native loading, real accounts, or live services. The complete Pi lock has been rebuilt; historical Web native/cold results still belong to their recorded candidates. See [testing](testing.md) and [known issues](known-issues.md).
 
 ## Configuration, requests, and models

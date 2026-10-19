@@ -1,5 +1,11 @@
 # Pi MCP configuration and boundaries
 
+> Historical reference for the retired Pi SDK/four-profile integration. Its commands, roles,
+> plugins and support claims do not apply to current Base/Pro and must not be used as current
+> operating instructions. The original body remains for historical scope only. See the
+> [current Pi guide](pi.md), [migration boundary](pi-migration.md) and [support matrix](pi-support.md).
+
+
 MCP support is declared for the four Pi profiles. Source integration, isolated tests, and historical temporary installation are separate from native loading, OAuth, browser UI, and live-service acceptance. The complete Pi lock has been rebuilt; consult [testing](testing.md) and [known issues](known-issues.md) for the current feature-specific evidence.
 
 ## Service selection

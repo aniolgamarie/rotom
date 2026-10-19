@@ -13,7 +13,7 @@ from .adapter import EnvironmentBinding, LaunchSpec, SecretRef
 from .deployment import read_state, recover
 from .presentation import command_line
 from .process import DependencyError, checked
-from .toolchain import ensure_compatible_toolchain
+from .toolchain import ensure_compatible_toolchain, ensure_minimum_toolchain
 from .storage import Conflict, Tree, ensure_private, instance_lock
 from . import execution_environment as execution_env
 
@@ -178,6 +178,8 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
         if check.get("match") == "exact":
           if actual != check["version"]:
             raise DependencyError("运行时工具链不匹配所选Pi切片的精确版本")
+        elif check.get("match") == "minimum":
+          ensure_minimum_toolchain(tool, check["version"], actual)
         elif tool in ("Node", "npm"):
           ensure_compatible_toolchain(tool, check["version"], actual)
         elif actual != check["version"]:
@@ -207,18 +209,20 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
         validate_environment(workspace, spec=spec, env=env)
       if before_spawn is not None:
         before_spawn(workspace, effective_cwd, arguments, env)
-      # 不打印 argv/env，原生子进程继承终端用于正常 TUI 交互。
-      try:
-        if launch_operation is not None:
-          return launch_operation(workspace, spec, env, lease, contract, lifecycle_fd=lifecycle_fd)
-        executor = getattr(workspace.adapter, "launch_executor", None)
-        if executor is not None:
-          execute = executor()
-          if execute is not None:
-            return execute(workspace, spec, env, lease, contract, lifecycle_fd=lifecycle_fd)
-        # 原生宿主继承三层租约：物理实例、状态和运行包均持有至退出。
-        pass_fds = tuple(fd for fd in (lifecycle_fd, lease, package_fd) if isinstance(fd, int))
-        child = subprocess.run(list(spec.argv), cwd=spec.cwd, env=env, pass_fds=pass_fds)
-      except OSError:
-        raise DependencyError("原生启动失败；检查 Node 与锁定运行包") from None
-      return child.returncode if child.returncode >= 0 else 128 - child.returncode
+      owner_guard = getattr(workspace.adapter, "run_owner_guard", None)
+      with (owner_guard(workspace) if owner_guard else nullcontext()):
+        # 不打印 argv/env，原生子进程继承终端用于正常 TUI 交互。
+        try:
+          if launch_operation is not None:
+            return launch_operation(workspace, spec, env, lease, contract, lifecycle_fd=lifecycle_fd)
+          executor = getattr(workspace.adapter, "launch_executor", None)
+          if executor is not None:
+            execute = executor()
+            if execute is not None:
+              return execute(workspace, spec, env, lease, contract, lifecycle_fd=lifecycle_fd)
+          # 原生宿主继承三层租约：物理实例、状态和运行包均持有至退出。
+          pass_fds = tuple(fd for fd in (lifecycle_fd, lease, package_fd) if isinstance(fd, int))
+          child = subprocess.run(list(spec.argv), cwd=spec.cwd, env=env, pass_fds=pass_fds)
+        except OSError:
+          raise DependencyError("原生启动失败；检查 Node 与锁定运行包") from None
+        return child.returncode if child.returncode >= 0 else 128 - child.returncode

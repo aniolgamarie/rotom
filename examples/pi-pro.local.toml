@@ -1,0 +1,23 @@
+# 私人0600机器文件示例；模型与地址均为虚构，需自行绑定。
+schema_version = 1
+[machine]
+id = "workstation"
+default_profile = "pi-pro"
+[overrides.providers.example]
+protocol = "openai-compatible"
+base_url = "https://example.invalid/v1"
+auth_kind = "api-key"
+credential_ref = "secret:example_key"
+[overrides.models.example-main]
+provider = "example"
+remote_id = "fictional-chat"
+input = ["text"]
+[overrides.profiles.pi-pro]
+providers = ["example"]
+models = ["example-main"]
+[overrides.profiles.pi-pro.roles]
+main = "example-main"
+[overrides.profiles.pi-pro.agent_options.collaboration]
+enabled = false
+[secrets]
+example_key = ""

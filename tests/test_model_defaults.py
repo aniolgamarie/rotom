@@ -143,7 +143,7 @@ def test_synthetic_catalog_without_global_defaults_keeps_empty_local_selection_p
 
 @pytest.mark.parametrize("profile,protocol,model", [
   ("dsh-default", "openai-compatible", "kimi_code_openai"),
-  ("pi-default", "openai-compatible", "kimi_code_openai"),
+  ("pi-base", "openai-compatible", "kimi_code_openai"),
   ("omp-default", "anthropic-messages", "kimi_code_anthropic"),
 ])
 def test_each_adapter_resolves_and_renders_defaults_without_keys(tmp_path, profile, protocol, model):
@@ -185,40 +185,17 @@ def test_each_adapter_resolves_and_renders_defaults_without_keys(tmp_path, profi
   assert {binding.value.reference for binding in optional} == {"secret:kimi_code_key", "secret:glm_coding_key", "secret:deepseek_key"}
 
 
-def test_pi_default_fills_selected_resource_roles_from_main(tmp_path):
-  workspace = load_workspace(local_file(tmp_path), "pi-default", repository=REPO)
-  roles = workspace.resolved.data["profile"]["roles"]
-  assert roles == {"main": "kimi_code_openai", "reviewer": "kimi_code_openai",
-                   "scout": "kimi_code_openai"}
-  workspace.adapter.validate_selected(workspace.resolved.data)
-
-
-@pytest.mark.parametrize("profile", ["pi-codex", "pi-cursor"])
-def test_unbound_pi_profile_inherits_subscription_main(tmp_path, profile):
+@pytest.mark.parametrize("profile", ["pi-base", "pi-pro"])
+def test_pi_profiles_use_only_the_main_model_role(tmp_path, profile):
   workspace = load_workspace(local_file(tmp_path), profile, repository=REPO)
-  assert workspace.resolved.data["profile"]["roles"]["main"] == "kimi_code_openai"
-
-
-def test_pi_managed_still_requires_explicit_project_checks(tmp_path):
-  # 订阅默认不解除 managed 配方已有的项目和检查绑定要求。
-  with pytest.raises(ConfigError):
-    load_workspace(local_file(tmp_path), "pi-managed", repository=REPO)
-
-
-def test_explicit_cursor_model_binding_wins_over_subscription_default(tmp_path):
-  workspace = load_workspace(local_file(tmp_path, '''
-[overrides.models.fixture_cursor]
-provider = "cursor"
-remote_id = "fixture-cursor"
-input = ["text"]
-[overrides.profiles.pi-cursor]
-models = ["fixture_cursor"]
-[overrides.profiles.pi-cursor.roles]
-main = "fixture_cursor"
-'''), "pi-cursor", repository=REPO)
-  assert workspace.resolved.data["profile"]["roles"]["main"] == "fixture_cursor"
+  assert workspace.resolved.data["profile"]["roles"] == {"main": "kimi_code_openai"}
   workspace.adapter.validate_selected(workspace.resolved.data)
-  assert workspace.adapter.render(workspace.resolved.data)
+
+
+@pytest.mark.parametrize("profile", ["pi-default", "pi-managed", "pi-cursor", "pi-codex"])
+def test_retired_pi_profiles_do_not_inherit_or_redirect_defaults(tmp_path, profile):
+  with pytest.raises(ConfigError):
+    load_workspace(local_file(tmp_path), profile, repository=REPO)
 
 
 def test_omp_kernel_keeps_profile_roles_and_adds_global_catalog(tmp_path):
@@ -231,7 +208,7 @@ def test_omp_kernel_keeps_profile_roles_and_adds_global_catalog(tmp_path):
   assert profile["providers"][:2] == ["kimi_code_anthropic", "glm_coding_anthropic"]
 
 
-@pytest.mark.parametrize("profile", ["dsh-default", "pi-default", "omp-default"])
+@pytest.mark.parametrize("profile", ["dsh-default", "pi-base", "omp-default"])
 def test_subscription_defaults_do_not_reuse_legacy_keys(tmp_path, profile):
   workspace = load_workspace(local_file(tmp_path, '\n[secrets]\nkimi_key = "OLD-KIMI-CANARY"\nglm_key = "OLD-GLM-CANARY"\n'),
     profile, repository=REPO)
@@ -243,7 +220,7 @@ def test_subscription_defaults_do_not_reuse_legacy_keys(tmp_path, profile):
 
 def test_pi_subscription_models_render_explicit_wire_compatibility(tmp_path):
   import json
-  workspace = load_workspace(local_file(tmp_path), "pi-default", repository=REPO)
+  workspace = load_workspace(local_file(tmp_path), "pi-base", repository=REPO)
   artifacts = workspace.adapter.render(workspace.resolved.data)
   groups = [json.loads(artifact.content) for artifact in artifacts
     if artifact.target.path == "pi-home/models.json" and artifact.target.selector.endswith("/models")]
@@ -308,7 +285,7 @@ def test_public_pool_removes_obsolete_routes_and_keeps_deepseek_specifications()
 
 def test_glm_mandatory_reasoning_controls_render_as_public_sdk_metadata(tmp_path):
   import json
-  workspace = load_workspace(local_file(tmp_path), "pi-default", repository=REPO)
+  workspace = load_workspace(local_file(tmp_path), "pi-base", repository=REPO)
   artifacts = workspace.adapter.render(workspace.resolved.data)
   groups = [json.loads(artifact.content) for artifact in artifacts
     if artifact.target.path == "pi-home/models.json" and artifact.target.selector.endswith("/models")]
