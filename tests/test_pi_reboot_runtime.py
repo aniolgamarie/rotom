@@ -1,6 +1,7 @@
 """官方Pi CLI薄适配边界；不启动CLI、不解析npm、不访问网络或真实状态。"""
 
 from copy import deepcopy
+from dataclasses import replace
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -36,11 +37,34 @@ def test_launch_uses_official_cli_stable_home_and_explicit_resource_flags(select
   themes = [spec.argv[index + 1] for index, value in enumerate(spec.argv) if value == "--theme"]
   assert str(tmp_path / "locked-runtime/node_modules/catppuccin-pi-theme/themes/catppuccin-mocha.json") in themes
   env = {item.name: item.value for item in spec.environment}
+  assert env["PI_OFFLINE"] == "1"
   assert env["PI_CODING_AGENT_DIR"] == str(selected.instance / "pi-home")
   assert env["PI_CODING_AGENT_SESSION_DIR"] == str(selected.instance / "pi-home/sessions")
   assert any(isinstance(item.value, SecretRef) for item in spec.environment)
   assert not any(name in env for name in ("CODEX_HOME", "AGENTCFG_PI_EXECUTION_HOME", "BUN_OPTIONS"))
   assert not hasattr(selected.adapter, "launch_executor")
+
+
+@pytest.mark.parametrize("inherited", [None, "", "0"])
+def test_old_deployment_cannot_reenable_implicit_host_downloads(selected, tmp_path, monkeypatch, inherited):
+  from agentcfg.runtime import prepare_environment
+  if inherited is None:
+    monkeypatch.delenv("PI_OFFLINE", raising=False)
+  else:
+    monkeypatch.setenv("PI_OFFLINE", inherited)
+  spec = launch(selected, tmp_path)
+  # 模拟尚未重新apply、不含新字面量声明的旧部署；不运行任何第三方宿主。
+  previous = replace(spec, environment=tuple(item for item in spec.environment if item.name != "PI_OFFLINE"))
+  env, _ = prepare_environment(selected, {"machine": selected.resolved.data["machine"]}, previous)
+  assert env["PI_OFFLINE"] == "1"
+
+
+@pytest.mark.parametrize("setting", ["inherit", "unset"])
+def test_runtime_override_cannot_remove_official_startup_download_policy(selected, tmp_path, setting):
+  from agentcfg.runtime import prepare_environment
+  with pytest.raises(ConfigError):
+    prepare_environment(selected, {"machine": selected.resolved.data["machine"]}, launch(selected, tmp_path),
+      **{setting: ("PI_OFFLINE",)})
 
 
 def test_api_key_is_a_guarded_environment_reference_and_secret_is_not_rendered(selected):

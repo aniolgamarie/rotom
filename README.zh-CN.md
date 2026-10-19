@@ -10,7 +10,7 @@ Rotom 使用 `agentcfg` 管理 DSH、Pi 和 OMP 的配置、完整依赖、部�
 
 - DSH：一套 `dsh-default` 配方，Core `0.2.0-rc.2`（预发布）、TUI `0.15.0`、Cursor `0.6.12`、Perry auto-review `0.12.17`。自动审批默认开启，但存在已接受且尚未解决的上游限制；详见[已知问题](docs/known-issues.md)。
 - OMP：未修改的官方 `18.8.6`，通过独立插件实现 Rotom 的权限功能。
-- Pi：`pi-base` / `pi-pro` 使用未修改的官方 `1.3.0` CLI 和完整 npm 锁；Linux 证据仅限管理器重建与隔离契约。原生/账号验收尚未运行，Pro 调查协作和状态栏信息对齐仍未交付；见[支持边界](docs/pi-support.md)。
+- Pi：`pi-base` / `pi-pro` 使用未修改的官方 `1.3.0` CLI 和完整 npm 锁；Linux 界面、模型/会话及所选模块的有界证据按源码快照分列。状态信息已按三处获接受的显示差异交付；Pro 调查协作等待上游，Brave/Cursor 账号验收延后。见[支持边界](docs/pi-support.md)及[集成检查](specs/005-rebuild-pi-toolkit/integration-candidate.md)。
 - 项目正在准备首次公开发布，尚不以包版本号代替正式发布标签。
 
 ## 开始使用

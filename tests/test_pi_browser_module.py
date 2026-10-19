@@ -82,7 +82,7 @@ def test_unselected_browser_has_no_loading_support_path_or_environment(tmp_path)
   assert not any(target.path.startswith("pi-home/bin") for target in workspace.adapter.managed_targets(workspace.resolved.data))
   env = {"PATH": "/synthetic/bin", "AGENTCFG_PI_BROWSER_SESSION": "a" * 32, "PLAYWRIGHT_CLI_SESSION": "foreign"}
   result = workspace.adapter.adjust_launch_environment(workspace, None, env, None)
-  assert result == {"PATH": "/synthetic/bin"}
+  assert result == {"PATH": "/synthetic/bin", "PI_OFFLINE": "1"}
   assert not workspace.instance.exists()
 
 

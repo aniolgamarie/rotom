@@ -9,8 +9,9 @@ preparation, native loading and account/model use are separate evidence levels. 
 
 The `review/pi-toolkit-reboot-main` integration candidate has a separate
 [source and verification record](../specs/005-rebuild-pi-toolkit/integration-candidate.md).
-Native results below retain the original reboot source and lock identities; native, model,
-service and performance checks for the replayed candidate are not run in this preparation step.
+Native results below retain the original reboot source and lock identities. The integration record
+separately tracks bounded native checks and the startup-policy correction on the replayed source;
+new model/tool requests, real service queries and performance measurements remain unexecuted there.
 
 ## Platform and verification scope
 
@@ -53,6 +54,7 @@ platform, three SSH widths, or a clean server-exit claim.
 | Area | Current decision and behavior | Outstanding evidence or gate |
 | --- | --- | --- |
 | Host | Unmodified official `@earendil-works/pi-coding-agent@1.3.0`, Node >=22.19.0; complete npm lock per profile | Linux local UI, shared-default sessions and one explicitly authorized synthetic-file tool task passed; other platforms remain unverified |
+| Startup dependencies | Managed official `PI_OFFLINE=1` applies to new and existing deployments; it prevents the host's implicit tool/package installation and startup updates | External `fd`/`rg` are machine prerequisites outside the npm closure. UI startup can succeed without them; related tool behavior needs separate verification. The flag also suppresses catalog refresh, but does not block model requests or MCP connections and is not a network sandbox |
 | Base/Pro | `pi-base` and `pi-pro`, same shared foundation and isolated instances; only main role | Pro investigation remains unavailable |
 | Theme/UI | `catppuccin-pi-theme@0.1.6`, four declared flavors; Mocha initializes missing preference, later valid native choice preserved | Local bare PTY/tmux, Chinese paste, resize/reload/exit, Frappe retention and loopback SSH90 passed; real remote SSH/macOS remain unverified; three display differences explicitly accepted |
 | Status information | Native UI by default; explicit `pi-footer@0.5.1` with public-event observer and initialized preferences; Powerline 0.20.2 remains held | Rendering/preferences/reload, branch usage through compaction, running cancellation/recovery and positive cache passed; user accepted permission explanation, branch-average speed and narrow-screen details; actual billing remains unknown |

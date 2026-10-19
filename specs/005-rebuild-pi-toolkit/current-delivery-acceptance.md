@@ -20,7 +20,7 @@
   准备相对合成文件名版本后，用户明确回答“授权这一次有界真实工具测试”；仅执行该次有界任务。
 - Pro按用户决定继续社区路线；不引入自有调查执行插件，不降低每主2/两主4、只读、禁后台/递归要求。
 
-候选HEAD与目标main均未移动，见[实施记录](implementation-status.md)。当前305个生产文件摘要为
+原工作树验收期间HEAD与目标main均未移动，见[实施记录](implementation-status.md)。该快照305个生产文件摘要为
 `f1c83e6a2dc4a16b32c82de832df75a791d7f9beab5f8ea461560d581a934dad`，算法为相对路径排序的
 `[path,mode,sha256(body)]`紧凑JSON再SHA256。范围为src、agents、shared、schemas、profiles，
 不含Python缓存。状态栏验收阶段摘要为`361a853d…`，相对先前`44be2fa6…`只新增中文权限说明；
@@ -52,13 +52,17 @@ A/B/C的回环SSH实际经过SSH传输和PTY，90列粘贴/清除/reload/正常�
 | 用量 | SDK合计input2881/output257/cacheRead5120/cacheWrite0/total8258 |
 | 归属 | R owner9→10，全部complete/idle，active/unknown=0 |
 
-该次沿用正常`load_workspace`、`runtime.run`和物理/状态/包租约及后代观察，通过显式
+该次沿用正常`load_workspace`、`runtime.run`和物理/状态租约及后代观察，通过显式
 `launch_operation`测试回调追加官方公开`-e`和`--tools read,write,grep,bash`。
 基线argv与实际argv分别完整记录，生产参数白名单未放宽。保护器只使用公开`tool_call`事件，
 不注册替代工具；精确合成路径/参数/长度/固定命令之外一律拒绝，异常也拒绝。
 保护器SHA256为`5a9215efc015302576f9f90868eae6d02b973c1b87d21972582233d7b1fead3c`。
 17项Node stub检查通过；官方扩展加载故障的无账号RPC预验在模型交互前exit1。
 首次`--help`早退未加载扩展，不作该故障预验的通过证据。
+
+租约说明经本次集成核对更正：公共 runtime 仅在后端提供 `runtime_guard` 时另持包租约，
+当前 Pi 后端没有该 hook；其运行包在实例目录内，维护受物理/状态排他保护。这里不声称
+该次 Pi 运行持有独立的第三个包 FD，原始运行记录不改写。
 
 这是显式验收保护器下的官方工具行为，不是生产默认权限隔离、Pro执行器或通用安全沙箱。
 没有读取模型key正文、其他真实项目、用户文件或个人认证；实际服务端模型与账单仍unknown。
@@ -270,5 +274,6 @@ E/G回收前doctor均exit0，分别1/3条owner完整空闲；全部source/lock/r
 保留，未来重跑须显式sync，回收后不能沿用旧doctor声称当前依赖已安装。
 旧B的非current依赖树也按相同保护回收，当前运行包未动。
 
-本轮未提交、合并、推送或发布；工作仍在reboot工作树。Pro T064–T071与完整feature T096
+上述原工作树验收结束时尚未提交、合并、推送或发布；其工作树和快照证据继续保留。
+后续重放候选的提交与集成状态见[集成审阅记录](integration-candidate.md)。Pro T064–T071与完整feature T096
 继续保持开放，延后真实账号验收不等于完整feature通过。

@@ -1,7 +1,7 @@
 # Pi 重建实施记录
 
-集成准备说明：下文交付结果绑定原 reboot 的已验快照。当前从目标 `main` 准备的
-`review/pi-toolkit-reboot-main` 候选及其独立检查见[集成审阅记录](integration-candidate.md)。
+集成说明：下文交付结果绑定原 reboot 的已验快照。从目标 `main` 重放的
+`review/pi-toolkit-reboot-main` 候选、本地提交及其独立检查见[集成审阅记录](integration-candidate.md)。
 原 reboot 工作树及原生证据保留原身份。
 
 当前进度：87/96。本轮约定交付已完成：Base、状态信息、footer/cache/Context7/Playwright
@@ -10,10 +10,11 @@
 Brave/Cursor真实账号验收按用户决定延后；Pro继续社区-only等待上游，T064–T071与T096共9项
 保持开放。最新范围见[本轮交付验收](current-delivery-acceptance.md)，历史计数不代表当前值。
 
-分支：`design/pi-toolkit-reboot`。开始日期：2026-10-18。
-候选基点：`8ac50aaa8168b8a377c59736eaa1aebeb83a48c6`；目标 main：
-`93e4f7899725336c1180e53b4ec239eea5f984ce`。候选包含未提交修改，基点不代表已审阅的最终实现。
-保留已有宪章修改；八份设计草稿的有效修改按T090承接正式材料后退役。不提交、合并、推送或丢弃其他工作。
+原实施工作树：`design/pi-toolkit-reboot`，开始日期：2026-10-18。
+该工作树基点为 `8ac50aaa8168b8a377c59736eaa1aebeb83a48c6`，当时目标 main 为
+`93e4f7899725336c1180e53b4ec239eea5f984ce`；其已验实现以未提交快照记录，基点不代表最终源码。
+已有宪章修改保留，八份设计草稿的有效内容按T090承接正式材料后退役。以下执行记录保留各阶段
+当时的提交及授权状态；当前重放候选的本地提交、复验和集成状态以[集成审阅记录](integration-candidate.md)为准。
 
 ## 状态及证据规则
 

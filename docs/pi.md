@@ -14,6 +14,19 @@ the npm host files remain unchanged. This legal-source commit does not establish
 gitHead: `host.source_commit` remains null. The notice declaration and hash enter recipe, closure
 and profile identities; missing or changed legal material cannot be silently accepted.
 
+Rotom fixes the official `PI_OFFLINE=1` startup policy for both new deployments and existing saved
+launch contracts. This prevents Pi from installing or updating missing auxiliary tools and extension
+packages during startup. It also suppresses upstream catalog refresh, version checks and related startup
+updates. Model requests and configured MCP connections still follow their own declarations; this flag
+is not a network sandbox. Rotom environment inheritance and unset options cannot override it.
+
+Pi's `fd` and `rg` executables are external machine prerequisites, separate from the complete npm
+closure. The official host checks its own tool directory and then `PATH`; without the offline policy,
+missing Linux tools would be downloaded from the latest GitHub release. Prepare required tools explicitly
+from a reviewed source before using their features. Missing tools can leave the UI usable while related
+completion or search features remain unavailable; a successful UI check or offline doctor does not
+certify those executables. Rotom preserves existing native tool caches and does not silently replace them.
+
 ## Choose and prepare
 
 `pi-base` is the daily configuration. `pi-pro` currently shares that foundation; investigation

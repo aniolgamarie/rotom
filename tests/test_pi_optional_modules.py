@@ -323,7 +323,7 @@ def test_pi_host_environment_drops_raw_service_override_variables(tmp_path):
   workspace = load_workspace(local(tmp_path / "local.toml"), repository=REPOSITORY)
   env = {"PATH": "synthetic", "CONTEXT7_API_URL": "https://example.invalid", "CONTEXT7_API_KEY": "synthetic",
     "BRAVE_API_KEY_FILE": "synthetic", "BRAVE_API_KEY": "synthetic"}
-  assert workspace.adapter.adjust_launch_environment(workspace, None, env, None) == {"PATH": "synthetic"}
+  assert workspace.adapter.adjust_launch_environment(workspace, None, env, None) == {"PATH": "synthetic", "PI_OFFLINE": "1"}
 
 
 @pytest.mark.parametrize("operation", ["plan", "capture", "rollback", "doctor"])

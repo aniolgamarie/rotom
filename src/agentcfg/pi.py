@@ -397,7 +397,8 @@ class PiAdapter(Adapter):
       argv += ["-e", extension]
     if "pi-footer" in data["plugins"]:
       argv += ["-e", str(runtime_root / "support/status-observer.mjs")]
-    env = [EnvironmentBinding("PI_CODING_AGENT_DIR", str(instance_root / "pi-home")),
+    env = [EnvironmentBinding("PI_OFFLINE", "1"),
+      EnvironmentBinding("PI_CODING_AGENT_DIR", str(instance_root / "pi-home")),
       EnvironmentBinding("PI_CODING_AGENT_SESSION_DIR", str(instance_root / "pi-home/sessions"))]
     if "pi-footer" in data["plugins"]:
       env.append(EnvironmentBinding("PI_FOOTER_CONFIG", str(instance_root / "pi-home/extensions/pi-footer.json")))
@@ -438,6 +439,8 @@ class PiAdapter(Adapter):
         ensure_private(path)
 
   def adjust_launch_environment(self, workspace, spec, env, saved_binding):
+    # 旧部署也禁止宿主启动时自动下载安装；模型和MCP仍按各自声明联网。
+    env["PI_OFFLINE"] = "1"
     # 原生SDK会继承宿主环境；服务仍由密封launcher再次白名单过滤。
     for name in list(env):
       if name.startswith(("CURSOR_", "PI_CURSOR_", "USAGE_SESSION_TOKEN")):
@@ -675,7 +678,7 @@ class PiAdapter(Adapter):
         self._check("resources", value["resources"])
     return AdapterSchemas({"pi": AdapterSchemaBundle(self.declaration, documents, options, validate,
       policy=lambda docs: AdapterPolicy(deepcopy(docs["agent"]["defaults"]), deepcopy(docs["plugins"]["plugins"]),
-        frozenset(), frozenset({"PI_CODING_AGENT_DIR", "PI_CODING_AGENT_SESSION_DIR", "PI_FOOTER_CONFIG", "AGENTCFG_PI_BROWSER_SESSION", "PLAYWRIGHT_CLI_SESSION", "PI_CURSOR_SYSTEM_CREDENTIALS", "PI_CURSOR_CACHE_DIR"})),
+        frozenset(), frozenset({"PI_OFFLINE", "PI_CODING_AGENT_DIR", "PI_CODING_AGENT_SESSION_DIR", "PI_FOOTER_CONFIG", "AGENTCFG_PI_BROWSER_SESSION", "PLAYWRIGHT_CLI_SESSION", "PI_CURSOR_SYSTEM_CREDENTIALS", "PI_CURSOR_CACHE_DIR"})),
       authentication_claims=lambda data: tuple(AuthenticationClaim(key,
         ("pi-cursor" if key == "cursor" else "pi-native") if provider["auth_kind"] == "oauth" else "pi-environment") for key, provider in data["providers"].items()),
       validate_selected=self.validate_selected)})

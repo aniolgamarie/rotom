@@ -16,7 +16,7 @@ This repository is preparing its first public release. The manager package versi
 | --- | --- | --- |
 | DSH | Core `0.2.0-rc.2`, TUI `0.15.0` | One `dsh-default` recipe; Cursor Provider and Perry auto-review `0.12.17`. Core is a prerelease. Auto-review has accepted, unresolved upstream limitations. |
 | OMP | `18.8.6` | Unmodified official runtime with an independent Rotom permission plugin. Platform and operation coverage is recorded separately. |
-| Pi | Official `1.3.0` | `pi-base` / `pi-pro` use the official CLI and complete npm locks. Linux evidence is limited to manager rebuilding and isolated contracts; native/account acceptance remains not run. Pro collaboration and status-information parity remain unavailable. See [support and limits](docs/pi-support.md). |
+| Pi | Official `1.3.0` | `pi-base` / `pi-pro` use the official CLI and complete npm locks. Bounded Linux UI, model/session and selected-module evidence is recorded by source snapshot. Status information is delivered with three accepted display differences; Pro investigation waits for upstream, and Brave/Cursor account acceptance is deferred. See [support and limits](docs/pi-support.md) and the [integration checks](specs/005-rebuild-pi-toolkit/integration-candidate.md). |
 | termcfg | Component-specific locks | Explicit terminal configuration and plugin downloads; independent of agent profiles. Legacy metadata has an explicit migration path. |
 
 Read [known issues](docs/known-issues.md) before selecting an integration. Python tests, native smoke, and authenticated model calls provide different evidence; [testing and support](docs/testing.md) explains the distinction.

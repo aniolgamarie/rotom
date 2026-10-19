@@ -97,7 +97,7 @@ def test_inherited_cursor_credentials_and_routes_are_removed_and_constants_fixed
     "PI_CURSOR_PROVIDER_ROUTE", "PI_CURSOR_CACHE_DIR", "PI_CURSOR_SYSTEM_CREDENTIALS", "USAGE_SESSION_TOKEN", "USAGE_SESSION_TOKEN_OTHER"]}
   env["PATH"] = "/synthetic/bin"
   result = workspace.adapter.adjust_launch_environment(workspace, spec, env, None)
-  assert result == {"PATH": "/synthetic/bin", "PI_CURSOR_SYSTEM_CREDENTIALS": "0", "PI_CURSOR_CACHE_DIR": str(workspace.instance / "pi-cursor")}
+  assert result == {"PATH": "/synthetic/bin", "PI_OFFLINE": "1", "PI_CURSOR_SYSTEM_CREDENTIALS": "0", "PI_CURSOR_CACHE_DIR": str(workspace.instance / "pi-cursor")}
   workspace.adapter.validate_operation_environment(workspace, spec=spec, env=result)
   result["CURSOR_ACCESS_TOKEN"] = "SYNTHETIC_FORBIDDEN"
   from agentcfg.storage import Conflict
@@ -145,7 +145,7 @@ def test_unselected_cursor_sources_and_audits_do_not_stale_default_slice(fake_np
   assert backend.read_lock(root) == lock and backend.runtime_identity(workspace, lock) == before
   base = load_workspace(local(tmp_path / "local.toml"), repository=REPOSITORY)
   env = base.adapter.adjust_launch_environment(base, None, {"PATH": "/synthetic/bin", "CURSOR_ACCESS_TOKEN": "synthetic", "PI_CURSOR_CACHE_DIR": "foreign", "USAGE_SESSION_TOKEN": "synthetic"}, None)
-  assert env == {"PATH": "/synthetic/bin"}
+  assert env == {"PATH": "/synthetic/bin", "PI_OFFLINE": "1"}
   assert not (base.instance / "pi-cursor").exists()
 
 
