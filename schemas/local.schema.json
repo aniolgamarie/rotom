@@ -12,6 +12,17 @@
         "id": {"$ref": "#/$defs/id"},
         "default_profile": {"$ref": "#/$defs/id"},
         "editor": {"$ref": "#/$defs/text"},
+        "work": {
+          "type": "object", "additionalProperties": false, "required": ["herdr_binary", "session"],
+          "properties": {
+            "herdr_binary": {"$ref": "#/$defs/text"},
+            "session": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"},
+            "pi_profile": {"$ref": "#/$defs/id"},
+            "dsh_profile": {"$ref": "#/$defs/id"},
+            "codex_binary": {"$ref": "#/$defs/text"},
+            "codex_daemon": {"type": "boolean"}
+          }
+        },
         "paths": {
           "type": "object", "additionalProperties": false,
           "properties": {

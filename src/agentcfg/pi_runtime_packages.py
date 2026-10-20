@@ -18,42 +18,141 @@ MARKERS = {".agentcfg-ready", ".agentcfg-receipt.json"}
 def inventory(root):
   result = {}
   root = root.absolute()
-  if root.is_symlink() or not root.is_dir():
-    raise Conflict("Pi运行包根目录无效")
 
-  def walk(directory):
-    for entry in sorted(os.scandir(directory), key=lambda item: os.fsencode(item.name)):
-      path = Path(entry.path)
-      relative = path.relative_to(root).as_posix()
+  def identity(info):
+    return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid,
+      info.st_nlink, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+  def unchanged(before, after):
+    if identity(before) != identity(after):
+      raise Conflict("Pi运行路径在校验期间发生变化")
+
+  def safe(info):
+    if info.st_uid != os.geteuid() or (not stat.S_ISLNK(info.st_mode) and info.st_mode & 0o6022):
+      raise Conflict("Pi运行文件的所有权或权限无效")
+
+  directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+
+  def link_target(root_fd, parent_parts, target):
+    # 不通过宿主路径解析链接；绝对目标也只能在固定根内逐段解析。
+    def parts(value, parent):
+      path = Path(value)
+      if path.is_absolute():
+        try:
+          return list(path.relative_to(root).parts)
+        except ValueError:
+          raise Conflict("Pi运行包链接越界") from None
+      return [*parent, *path.parts]
+    pending = parts(target, parent_parts)
+    resolved = []
+    links = 0
+    fd = os.dup(root_fd)
+    try:
+      while pending:
+        name = pending.pop(0)
+        if name == ".":
+          continue
+        if name == "..":
+          if not resolved:
+            raise Conflict("Pi运行包链接越界")
+          resolved.pop()
+          os.close(fd)
+          fd = os.dup(root_fd)
+          for part in resolved:
+            child = os.open(part, directory_flags, dir_fd=fd)
+            os.close(fd)
+            fd = child
+          continue
+        before = os.stat(name, dir_fd=fd, follow_symlinks=False)
+        if stat.S_ISLNK(before.st_mode):
+          links += 1
+          if links > 40:
+            raise Conflict("Pi运行包链接循环")
+          value = os.readlink(name, dir_fd=fd)
+          unchanged(before, os.stat(name, dir_fd=fd, follow_symlinks=False))
+          pending = parts(value, resolved) + pending
+          resolved = []
+          os.close(fd)
+          fd = os.dup(root_fd)
+        elif pending:
+          child = os.open(name, directory_flags, dir_fd=fd)
+          try:
+            unchanged(before, os.fstat(child))
+          except BaseException:
+            os.close(child)
+            raise
+          os.close(fd)
+          fd = child
+          resolved.append(name)
+        else:
+          unchanged(before, os.stat(name, dir_fd=fd, follow_symlinks=False))
+    finally:
+      os.close(fd)
+
+  def walk(root_fd, fd, prefix):
+    directory_before = os.fstat(fd)
+    safe(directory_before)
+    with os.scandir(fd) as scanned:
+      entries = sorted(scanned, key=lambda item: os.fsencode(item.name))
+    for entry in entries:
+      relative = "/".join((*prefix, entry.name))
       if relative in MARKERS:
         continue
       info = entry.stat(follow_symlinks=False)
-      if info.st_uid != os.geteuid() or (not stat.S_ISLNK(info.st_mode) and info.st_mode & 0o6022):
-        raise Conflict("Pi运行文件的所有权或权限无效")
+      unchanged(info, os.stat(entry.name, dir_fd=fd, follow_symlinks=False))
+      safe(info)
       if stat.S_ISLNK(info.st_mode):
-        # npm的bin链接只允许指向当前sealed树，记录字面目标用于后续复核。
-        target = os.readlink(path)
-        if not path.resolve(strict=True).is_relative_to(root):
-          raise Conflict("Pi运行包链接越界")
+        target = os.readlink(entry.name, dir_fd=fd)
+        link_target(root_fd, prefix, target)
+        unchanged(info, os.stat(entry.name, dir_fd=fd, follow_symlinks=False))
         result[relative] = {"kind": "link", "target": target}
       elif stat.S_ISDIR(info.st_mode):
-        result[relative] = {"kind": "directory"}
-        walk(path)
+        child = os.open(entry.name, directory_flags, dir_fd=fd)
+        try:
+          unchanged(info, os.fstat(child))
+          result[relative] = {"kind": "directory"}
+          walk(root_fd, child, (*prefix, entry.name))
+          unchanged(info, os.fstat(child))
+          unchanged(info, os.stat(entry.name, dir_fd=fd, follow_symlinks=False))
+        finally:
+          os.close(child)
       elif stat.S_ISREG(info.st_mode) and info.st_nlink == 1:
-        with Tree(root) as tree:
-          with tree.open_read(relative) as (stream, opened):
-            checksum, size = hashlib.sha256(), 0
-            while chunk := stream.read(1024 * 1024):
-              size += len(chunk)
-              if size > opened.st_size: raise Conflict("Pi运行文件在散列时发生变化")
-              checksum.update(chunk)
-            if size != opened.st_size: raise Conflict("Pi运行文件在散列时发生变化")
-        result[relative] = {"kind": "file", "sha256": checksum.hexdigest(), "mode": stat.S_IMODE(opened.st_mode)}
+        source = os.open(entry.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, dir_fd=fd)
+        try:
+          opened = os.fstat(source)
+          unchanged(info, opened)
+          safe(opened)
+          checksum, size = hashlib.sha256(), 0
+          while chunk := os.read(source, 1024 * 1024):
+            size += len(chunk)
+            if size > opened.st_size:
+              raise Conflict("Pi运行文件在散列时发生变化")
+            checksum.update(chunk)
+          if size != opened.st_size:
+            raise Conflict("Pi运行文件在散列时发生变化")
+          unchanged(opened, os.fstat(source))
+          unchanged(opened, os.stat(entry.name, dir_fd=fd, follow_symlinks=False))
+          result[relative] = {"kind": "file", "sha256": checksum.hexdigest(), "mode": stat.S_IMODE(opened.st_mode)}
+        finally:
+          os.close(source)
       else:
         raise Conflict("Pi运行包包含不支持的文件类型")
-  walk(root)
-  return result
+    unchanged(directory_before, os.fstat(fd))
 
+  try:
+    with Tree(root) as tree:
+      if tree.fd is None:
+        raise Conflict("Pi运行包根目录无效")
+      original = os.fstat(tree.fd)
+      walk(tree.fd, tree.fd, ())
+      # 重新逐段验证祖先及路径，不能把已移动的固定句柄当成当前运行根。
+      with Tree(root) as current:
+        if current.fd is None:
+          raise Conflict("Pi运行包根目录身份发生变化")
+        unchanged(original, os.fstat(current.fd))
+    return result
+  except (OSError, PathError):
+    raise Conflict("无法安全校验Pi运行包路径") from None
 
 def validate_installed(root, piece):
   from .pi_dependencies import _json, digest, validate_installed_packages, validate_package_lock

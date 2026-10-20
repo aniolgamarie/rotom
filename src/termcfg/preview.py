@@ -52,8 +52,11 @@ def _digest_object(value: object) -> str:
 
 def _lock_digest(components: tuple[str, ...]) -> str:
   from .packages import _read_lock_raw
-  lock, _ = _read_lock_raw(components[0])
-  return _digest_object({name: lock["assets"][name] for name in sorted(set(components))})
+  plugins = tuple(name for name in components if name in {"zsh", "tmux"})
+  if not plugins:
+    return _digest_object({})
+  lock, _ = _read_lock_raw(plugins[0])
+  return _digest_object({name: lock["assets"][name] for name in sorted(set(plugins))})
 
 
 def _old_starter_link(target_id: str, link: str) -> bool:
@@ -63,6 +66,9 @@ def _old_starter_link(target_id: str, link: str) -> bool:
 
 def build_preview(machine: MachineSelection, components: tuple[str, ...]) -> Preview:
   require_no_pending_recovery(machine)
+  if "herdr" in components:
+    from .work_config import check_config_location
+    check_config_location(machine.target_home)
   catalog = load_catalog()
   state = read_state(machine)
   known = {artifact.bytes() for artifact in catalog}

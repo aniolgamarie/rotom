@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "seed": 73421,
+  "projects": ["project-a", "project-b", "project-c"],
+  "checkouts_per_project": 3,
+  "terminals_per_checkout": 3,
+  "git_author": "Synthetic Fixture <fixture@example.invalid>",
+  "git_date": "2020-01-01T00:00:00Z",
+  "git_file": "synthetic fixture v1\n"
+}

@@ -16,6 +16,7 @@ English is the authoritative language for maintained user and developer document
 | DSH | [Daily use, authentication, UI, and permissions](dsh.md) |
 | OMP | [Overview](omp.md), [kernel recipe](omp-kernel.md), [profiles](omp-profiles.md), [models](omp-model-presets.md), [dependencies](omp-dependencies.md), [usage](omp-usage.md), [approval diagnostics](omp-approval-diagnostics.md), [support](omp-support.md) |
 | Pi | [Base/Pro guide](pi.md), [support and sources](pi-support.md), [migration](pi-migration.md), [current feature record](../specs/005-rebuild-pi-toolkit/implementation-status.md) |
+| Herdr | [Switching, daily commands, reconnecting, keys and rollback](herdr-workspaces.md), [upgrades](herdr-upgrades.md), [layered verification record](../specs/005-herdr-project-workspaces/quickstart.md) |
 | termcfg | [Configuration and commands](termcfg.md), [design](termcfg-design.md) |
 
 ## Understand and maintain

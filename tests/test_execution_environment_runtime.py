@@ -111,34 +111,41 @@ def test_environment_contract_apply_and_configuration_rollback_preserve_native_s
 def _pi_environment():
   adapter = PiAdapter(REPO)
   workspace = SimpleNamespace(adapter=adapter, schemas=adapter.schemas(), resolved=SimpleNamespace(data={
-    "profile": {"agent": "pi"},
+    "profile": {"id": "pi-base", "agent": "pi", "skills": [], "plugins": [], "mcp": [],
+      "roles": {}, "agent_options": {}},
+    "plugins": {}, "mcp": {}, "providers": {}, "models": {},
     "adapter_documents": {"agent": {"defaults": {}}, "plugins": {"plugins": {}}}}))
   contract = {"machine": {"environment": {"inherit": [], "values": {}}}, "lock_identity": "d" * 64}
   return workspace, contract
 
 
-@pytest.mark.parametrize("name", ["PI_CODING_AGENT_DIR", "PI_CODING_AGENT_SESSION_DIR", "CODEX_HOME", "BUN_OPTIONS", "BUN_RUNTIME_TRANSPILER_CACHE_PATH"])
+@pytest.mark.parametrize("name", ["PI_OFFLINE", "PI_CODING_AGENT_DIR", "PI_CODING_AGENT_SESSION_DIR",
+  "PI_FOOTER_CONFIG", "AGENTCFG_PI_BROWSER_SESSION", "PLAYWRIGHT_CLI_SESSION",
+  "PI_CURSOR_SYSTEM_CREDENTIALS", "PI_CURSOR_CACHE_DIR"])
 @pytest.mark.parametrize("operation", ["inherit", "unset"])
 def test_pi_one_shot_uses_adapter_reserved_policy(tmp_path, monkeypatch, name, operation):
   workspace, contract = _pi_environment()
+  policy = workspace.schemas.bundles["pi"].policy(workspace.resolved.data["adapter_documents"])
+  assert name in policy.reserved_environment
   monkeypatch.setenv(name, "synthetic-reserved-value")
   spec = LaunchSpec(("/synthetic/node",), tmp_path, contract["lock_identity"], (), environment_policy="caller")
-  with pytest.raises(ConfigError):
+  with pytest.raises(ConfigError) as caught:
     runtime.prepare_environment(workspace, contract, spec, **{operation: (name,)})
+  assert caught.value.code == "environment"
 
 
-def test_fixed_bun_options_clear_is_reported_without_value(tmp_path, monkeypatch, capsys):
+def test_fixed_pi_offline_binding_is_reported_without_value(tmp_path, monkeypatch, capsys):
   workspace, contract = _pi_environment()
-  marker = "synthetic-private-bun-option-marker"
-  monkeypatch.setenv("BUN_OPTIONS", marker)
-  spec = LaunchSpec(("/synthetic/bun",), tmp_path, contract["lock_identity"],
-    (EnvironmentBinding("BUN_OPTIONS", ""),), environment_policy="caller")
+  marker = "synthetic-private-offline-marker"
+  monkeypatch.setenv("PI_OFFLINE", marker)
+  spec = LaunchSpec(("/synthetic/node",), tmp_path, contract["lock_identity"],
+    (EnvironmentBinding("PI_OFFLINE", "1"),), environment_policy="caller")
   env, report = runtime.prepare_environment(workspace, contract, spec)
-  assert env["BUN_OPTIONS"] == ""
-  assert {"name": "BUN_OPTIONS", "status": "overridden", "source": "adapter-policy"} in report["variables"]
+  assert env["PI_OFFLINE"] == "1"
+  assert {"name": "PI_OFFLINE", "status": "overridden", "source": "adapter-policy"} in report["variables"]
   execution_environment.warn(report)
   output = capsys.readouterr().err
-  assert "BUN_OPTIONS: overridden" in output
+  assert "PI_OFFLINE: overridden" in output
   for text in (output, repr(report)):
     assert marker not in text
     assert hashlib.sha256(marker.encode()).hexdigest() not in text

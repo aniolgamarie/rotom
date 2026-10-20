@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "policy_id": "absolute-budgets-not-approved-v1",
+  "fixture_digest": "6fd245f716d9ee703746597c1207c839cc516a89a6520137820b990bba6bc3de",
+  "scope": "first-baseline",
+  "environment_class": "linux-local-synthetic",
+  "frozen_at": null,
+  "approval_ref": null,
+  "calibration_refs": [],
+  "metrics": [
+    {
+      "metric": "latency.warm_enter.p95",
+      "group": "all",
+      "unit": "ms",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "latency.warm_reuse.p95",
+      "group": "all",
+      "unit": "ms",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "latency.new_role.p95",
+      "group": "all",
+      "unit": "ms",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "latency.cold.median",
+      "group": "all",
+      "unit": "ms",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "latency.attach.p95",
+      "group": "all",
+      "unit": "ms",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "cpu.core_seconds",
+      "group": "server_group",
+      "unit": "core-seconds",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "cpu.cores",
+      "group": "server_group",
+      "unit": "cores",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "rss.peak",
+      "group": "server_group",
+      "unit": "bytes",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "rss.median",
+      "group": "server_group",
+      "unit": "bytes",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "rss.p95",
+      "group": "server_group",
+      "unit": "bytes",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "objects.count",
+      "group": "all",
+      "unit": "count",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "processes.count",
+      "group": "all",
+      "unit": "count",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "fd.count",
+      "group": "all",
+      "unit": "count",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "rss.slope",
+      "group": "server_group",
+      "unit": "bytes/second",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "pss",
+      "group": "server_group",
+      "unit": "bytes",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    },
+    {
+      "metric": "wakeup",
+      "group": "server_group",
+      "unit": "count/second",
+      "absolute_budget": null,
+      "budget_reason": "Acceptance owner must freeze budget before observing candidate.",
+      "regression": {
+        "relative": 0.1,
+        "absolute": 1,
+        "near_zero": 0.001
+      },
+      "noise_absolute": null,
+      "noise_reason": "No native same-identity A/A calibration has been executed."
+    }
+  ],
+  "batch_rule": "all-three-agree",
+  "retest": {
+    "method": "retain-first-and-repeat-all-three",
+    "max_repeats": 1,
+    "reason": "Preserve initial result and repeat all batches after investigation."
+  },
+  "calibration_method": "same-identity-three-batch-range",
+  "pending_reason": "Synthetic fixture; no budget or calibration approval.",
+  "digest": "ce0c6a92f5f6a8b10771e21f7ac01cad88f92997e7ca6be571eaa154e9a2267a"
+}

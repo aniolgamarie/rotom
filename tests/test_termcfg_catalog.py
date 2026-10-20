@@ -10,7 +10,7 @@ from termcfg.errors import TermcfgError
 
 def test_catalog_sources_are_fixed_and_public():
   entries = load_catalog()
-  assert {item.component for item in entries} == {"zsh", "tmux"}
+  assert {item.component for item in entries} == {"zsh", "tmux", "herdr"}
   assert all(item.bytes() for item in entries)
 
 

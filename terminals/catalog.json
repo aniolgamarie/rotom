@@ -32,6 +32,14 @@
       "destination": ".config/tmux/scripts/fzf-window.sh",
       "sha256": "ee2e4cdf5aa12e612a5f61ed3aa8589bc845c25df178cd8ece3db6ef91e5412b",
       "mode": "0700"
+    },
+    {
+      "id": "herdr.config",
+      "component": "herdr",
+      "source": "terminals/herdr/config.toml",
+      "destination": ".config/herdr/config.toml",
+      "sha256": "61945e24df6587cbfe525fdc8777167746f040e1d203f3de74c44c895f0f5c93",
+      "mode": "0600"
     }
   ]
 }

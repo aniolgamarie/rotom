@@ -15,7 +15,7 @@ def _components(values):
     values = (values,)
   if values is None:
     return ()
-  if not isinstance(values, (tuple, list)) or any(value not in ("zsh", "tmux") for value in values):
+  if not isinstance(values, (tuple, list)) or any(value not in ("zsh", "tmux", "herdr") for value in values):
     return None
   if len(set(values)) != len(values):
     return None
@@ -119,7 +119,7 @@ def resolve_hints(payload, context):
     if not isinstance(values, dict):
       continue
     result[field] = dict(values)
-    for component in ("zsh", "tmux"):
+    for component in ("zsh", "tmux", "herdr"):
       item = values.get(component)
       if isinstance(item, dict) and isinstance(item.get("next_command"), Hint):
         result[field][component] = {**item, "next_command": item["next_command"].render(context)}

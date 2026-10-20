@@ -136,7 +136,8 @@ def test_local_provider_endpoint_override_replaces_inherited_other_form():
 
 @pytest.mark.parametrize("profile,provider", [
   ("dsh-default", "kimi_code_openai"),
-  ("pi-default", "kimi_code_openai"),
+  ("pi-base", "kimi_code_openai"),
+  ("pi-pro", "kimi_code_openai"),
   ("omp-default", "kimi_code_anthropic"),
 ])
 def test_all_adapters_resolve_materialized_private_url(profile, provider):

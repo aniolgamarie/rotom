@@ -1,6 +1,6 @@
 """静态任务导航和参数说明；显示帮助不读取配置或检查宿主。"""
 
-ENTRY_GUIDE = """termcfg：独立管理 zsh / tmux 公开配置
+ENTRY_GUIDE = """termcfg：独立管理 zsh / tmux 与可选 Herdr 公开配置
 
 首次配置：components → init-local → doctor / plan → apply → status
 日常查看：status 看受管目标；doctor 查环境；plan 看将要发生的变化。
@@ -24,7 +24,7 @@ ROOT_HELP = """按任务使用：
 --machine NAME 与 --json 可放在命令前或命令后。
 默认 machine 是 default；默认输出人类摘要，管道不会自动切换 JSON。
 --json 保持一个结果对象；已有交互确认/进度在 stderr，JSON 不代表同意。
-只管理 zsh/tmux；不提供代理、core 或 service 管理。
+只管理 zsh/tmux 与显式 opt-in 的 Herdr 配置；不提供代理、core 或 service 管理。
 
 示例：
   ./termcfg components
@@ -37,16 +37,18 @@ COMMANDS = {
 示例：./termcfg components"""),
   "init-local": ("保存私人机器和组件选择，不部署目标文件", """写私人机器元数据；首次使用 --component（可重复）或 --none。
 TTY 可交互选择；非 TTY 必须显式选择。已有机器需 --edit 并确认保存。
+Herdr 不自动预选；使用 --component herdr 显式加入。
 没有选择组件不等于环境就绪；之后用 doctor / plan 检查。
 示例：
   ./termcfg init-local --component zsh --component tmux
   ./termcfg --machine workstation init-local --component zsh
   ./termcfg init-local --edit --none"""),
   "status": ("查看受管目标、漂移、备份和待恢复事务", """离线检查环境和目标文件；不是只看元数据的缓存状态。
-不启动 shell/tmux，不验证当前会话是否加载了新配置。
+不启动 shell/tmux/Herdr，不验证当前会话是否加载了新配置。
 --home 仅改变诊断视图，不授权写入；写入前对保存目标重新 plan。
 示例：./termcfg --machine workstation status --component zsh"""),
   "doctor": ("诊断必需程序、可选插件和目标安全状态", """默认离线；必需程序缺失需由用户准备，不自动安装。
+Herdr 只检查默认配置位置、PATH 中的程序及同仓库 launcher/.venv；原生加载与握手另验。
 可选插件/fzf 缺失是降级，不等于必需环境失败。
 默认报告可退出 0；--strict 在必需阻塞时返回 4（待恢复）或 5。
 --home 仅用于诊断；不能用其结果授权保存 HOME 上的写入。
@@ -73,6 +75,7 @@ zsh 未提供 --plugin 时使用 zinit；tmux 必须提供 --plugin。
 示例：./termcfg --machine workstation recover"""),
   "rollback": ("预览或恢复一个组件的上一版配置", """--plan-only 仅预览；执行回滚会写目标/私人事务状态。
 TTY 需确认；非 TTY 必须提供当前回滚 --plan-id。
+Herdr 配置回滚不等于软件或 state 降级；代码回退前先处理新增受管记录。
 必须先解决待恢复事务；漂移不自动覆盖。
 示例：./termcfg --machine workstation rollback --component zsh --plan-only"""),
   "migrate": ("显式退役旧 mihomo 所有权元数据", """必须提供 --drop-mihomo；机器级元数据变更，不管理代理文件或服务。

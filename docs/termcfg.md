@@ -1,6 +1,6 @@
 # Terminal configuration with termcfg
 
-`./termcfg` independently manages public zsh/tmux HOME files and pinned plugins. Prepare Python 3.11+ and the repository `.venv` with `uv sync --locked`.
+`./termcfg` independently manages public zsh/tmux HOME files, pinned plugins and an optional Herdr configuration. Prepare Python 3.11+ and the repository `.venv` with `uv sync --locked`.
 
 Without a command it prints static task guidance and exits 2, without inspecting machine state. `--help` shows the full index; `COMMAND --help` explains parameters, effects and examples. `status` describes managed targets and recovery, `doctor` explains environment blockers, and `plan` previews changes. None of these starts or reloads a shell/tmux session.
 
@@ -148,3 +148,56 @@ HOME before acquiring its operation lease, even when all XDG paths are explicit.
 absolute XDG config paths remain usable for diagnostics without a HOME default.
 XDG environment values are literal paths: `~/` is relative and rejected, while
 dollar characters in a valid absolute path are preserved without expansion.
+
+## Optional Herdr configuration
+
+Herdr is never added automatically to existing machines or the first interactive
+selection. Prepare the unmodified official Herdr executable on PATH, the executable
+`rotom-work-shell` from this same checkout on PATH, and its repository `.venv`.
+`doctor` checks these files without launching Herdr. For a machine using only Herdr:
+
+```sh
+./termcfg init-local --component herdr
+./termcfg doctor --component herdr --strict
+./termcfg plan --component herdr --json
+./termcfg apply --component herdr --plan-id <current-plan-id>
+```
+
+For an existing machine, use `init-local --edit` with the full intended component
+selection, including `--component herdr`. This does not deploy files. The only
+Herdr target is `herdr.config`, copied as static bytes to
+`TARGET_HOME/.config/herdr/config.toml` with mode 0600. It does not manage the
+containing directory, sockets, sessions, cache, manifests or private files. An
+identical existing public configuration still requires `--adopt-target herdr.config`.
+Unclassified or potentially private existing content is refused before backup.
+
+`HERDR_CONFIG_PATH` and `XDG_CONFIG_HOME` must select that default configuration
+location for the saved target HOME. Nondefault overrides fail with code 2; they
+are never redirected or overwritten. The diagnostic `--home` option uses its
+explicit target HOME, rather than the caller's HOME, and cannot authorize apply.
+A machine without the Herdr component has no Herdr executable requirement.
+
+The initial configuration uses `rotom-work-shell` with `non_login` mode,
+Ctrl+x as prefix, and native Goto on prefix+g. It disables sound, toast delivery,
+automatic Agent resume, background version/manifest checks and experimental pane
+history. Static intent checks do not prove that Herdr loaded the configuration or
+that the launcher handshake works in a running pane. Those remain separate,
+explicitly authorized native checks. Existing servers are never stopped or
+restarted to force configuration or PATH changes.
+
+No-change applies preserve file identity and previous backups. Drift, recovery
+and rollback use the same per-file transaction rules as zsh/tmux:
+
+```sh
+./termcfg status --component herdr
+./termcfg recover
+./termcfg rollback --component herdr --plan-only --json
+./termcfg rollback --component herdr --plan-id <rollback-plan-id>
+```
+
+State remains version 2; existing v2 state and journals are not migrated or
+rewritten merely by reading them. Older code cannot consume Herdr component
+records. Before reverting code, use the newer code to resolve pending transactions
+and handle managed Herdr state. Configuration rollback is separate from software
+or state downgrade. Preserve private directories and all unmanaged session data.
+`sync` and `lock` remain zsh/tmux plugin commands; they do not install Herdr.

@@ -1,0 +1,958 @@
+{
+  "schema_version": 1,
+  "manifest_id": "synthetic-unexecuted-v1",
+  "fixture_version": "v1",
+  "fixture_digest": "6fd245f716d9ee703746597c1207c839cc516a89a6520137820b990bba6bc3de",
+  "seed": 73421,
+  "source": {
+    "schema_digest": "62f19b70a3a51e3dfe236b740f87c094d188ae3392a7a483346f60829d204d81",
+    "candidate_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "target_main": "cccccccccccccccccccccccccccccccccccccccc",
+    "lock_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "runner_digest": "f0171d00c55bedf50131751433f5280eb757c86ba426cd8151466bda2d6b3215",
+    "measurement_tool_digest": "86b4ed730d432f1f166bb3dd5d78d90048e2a0c5b1a5b164ef8cdf6013179de4"
+  },
+  "subjects": {
+    "baseline": null,
+    "baseline_reason": "No accepted native baseline exists; fixture is not a measurement.",
+    "candidate": {
+      "release": "synthetic-unmeasured",
+      "tag": "v0.9.5",
+      "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "asset_url": "https://github.com/herdrdev/herdr/releases/download/v0.9.5/herdr-linux-x86_64",
+      "asset_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "binary": "candidate/herdr",
+      "client_version": "0.9.5",
+      "server_version": "0.9.5",
+      "acceptance_digest": null,
+      "acceptance_ref": "unverified-synthetic-fixture",
+      "inputs": {
+        "config_digest": "61945e24df6587cbfe525fdc8777167746f040e1d203f3de74c44c895f0f5c93",
+        "rules_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "integration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    }
+  },
+  "scope": "first-baseline",
+  "inputs": {
+    "config_digest": "61945e24df6587cbfe525fdc8777167746f040e1d203f3de74c44c895f0f5c93",
+    "rules_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "integration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "environment": {
+    "platform_class": "linux-local-synthetic",
+    "tool_class": "procfs-v1-visible-processes",
+    "measurement_definition": "proc-stat-starttime-cpu-and-1Hz-rss; short-lived CPU incomplete",
+    "dimensions": [
+      {
+        "cols": 120,
+        "rows": 40
+      },
+      {
+        "cols": 80,
+        "rows": 24
+      }
+    ]
+  },
+  "workloads": [
+    {
+      "id": "idle-1",
+      "modes": [
+        "idle"
+      ],
+      "terminals": 1,
+      "required": true
+    },
+    {
+      "id": "idle-10",
+      "modes": [
+        "idle"
+      ],
+      "terminals": 10,
+      "required": true
+    },
+    {
+      "id": "idle-30",
+      "modes": [
+        "idle"
+      ],
+      "terminals": 30,
+      "required": true
+    },
+    {
+      "id": "output-1",
+      "modes": [
+        "output"
+      ],
+      "terminals": 1,
+      "required": true
+    },
+    {
+      "id": "output-10",
+      "modes": [
+        "output"
+      ],
+      "terminals": 10,
+      "required": true
+    },
+    {
+      "id": "output-30",
+      "modes": [
+        "output"
+      ],
+      "terminals": 30,
+      "required": true
+    },
+    {
+      "id": "projects-27",
+      "modes": [
+        "record"
+      ],
+      "terminals": 27,
+      "required": true
+    },
+    {
+      "id": "detached-30",
+      "modes": [
+        "idle",
+        "output"
+      ],
+      "terminals": 30,
+      "required": true
+    },
+    {
+      "id": "clients-size",
+      "modes": [
+        "record"
+      ],
+      "terminals": 27,
+      "required": true
+    },
+    {
+      "id": "churn-leak",
+      "modes": [
+        "record"
+      ],
+      "terminals": 27,
+      "required": true
+    }
+  ],
+  "steps": [
+    {
+      "id": "native-server",
+      "argv": [
+        "<HERDR>",
+        "--session",
+        "<SESSION>",
+        "server"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "native-client",
+      "argv": [
+        "<HERDR>",
+        "--session",
+        "<SESSION>"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "native-agent-manifests",
+      "argv": [
+        "<HERDR>",
+        "server",
+        "agent-manifests",
+        "--json"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "native-integration-status",
+      "argv": [
+        "<HERDR>",
+        "integration",
+        "status"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "native-client-version",
+      "argv": [
+        "<HERDR>",
+        "--version"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "native-config-check",
+      "argv": [
+        "<HERDR>",
+        "config",
+        "check"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "git-init",
+      "argv": [
+        "git",
+        "init",
+        "<CHECKOUT>"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "git-worktree",
+      "argv": [
+        "git",
+        "-C",
+        "<CHECKOUT>",
+        "worktree",
+        "add",
+        "--detach",
+        "<CHECKOUT>",
+        "HEAD"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "git-add",
+      "argv": [
+        "git",
+        "-C",
+        "<CHECKOUT>",
+        "add",
+        "fixture.txt"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "git-commit",
+      "argv": [
+        "git",
+        "-C",
+        "<CHECKOUT>",
+        "-c",
+        "user.name=Synthetic Fixture",
+        "-c",
+        "user.email=fixture@example.invalid",
+        "commit",
+        "-m",
+        "Synthetic fixture"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "owned-pane-close",
+      "argv": [
+        "<HERDR>",
+        "pane",
+        "close",
+        "<PANE>"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "latency.warm_enter.p95",
+      "argv": [
+        "<ROTOM>/work",
+        "--local",
+        "<LOCAL>",
+        "enter",
+        "<CHECKOUT>"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "latency.warm_reuse.p95",
+      "argv": [
+        "<ROTOM>/work",
+        "--local",
+        "<LOCAL>",
+        "open",
+        "edit"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "owned-cold-server-stop",
+      "argv": [
+        "<HERDR>",
+        "server",
+        "stop"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "role-worktree",
+      "argv": [
+        "git",
+        "-C",
+        "<CHECKOUT>",
+        "worktree",
+        "add",
+        "--detach",
+        "<CHECKOUT>",
+        "HEAD"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "new-role",
+      "argv": [
+        "<ROTOM>/work",
+        "--local",
+        "<LOCAL>",
+        "open",
+        "edit",
+        "--new"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "record-process-identity",
+      "argv": [
+        "<HERDR>",
+        "pane",
+        "process-info",
+        "--pane",
+        "<PANE>"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "owned-known-server-stop",
+      "argv": [
+        "<HERDR>",
+        "server",
+        "stop"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "unique canonical synthetic checkout",
+      "ready": "verified native workspace and role metadata",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    },
+    {
+      "id": "native-pane-layout",
+      "argv": [
+        "<HERDR>",
+        "pane",
+        "layout",
+        "--pane",
+        "<PANE>"
+      ],
+      "cwd_label": "synthetic-checkout",
+      "env_allowlist": [
+        "HOME",
+        "XDG_CONFIG_HOME",
+        "HERDR_PANE_ID",
+        "HERDR_SOCKET_PATH",
+        "HERDR_SESSION"
+      ],
+      "expected_exit": 0,
+      "expected_effect": "read-only owned single-pane geometry",
+      "ready": "matches fixed record receipt and exact outer dimensions",
+      "timeout_seconds": 30,
+      "cleanup_labels": [
+        "owned-synthetic-pane"
+      ]
+    }
+  ],
+  "sampling": {
+    "batches": 3,
+    "warmup_seconds": 60,
+    "measure_seconds": 300,
+    "warm_samples_per_batch": 200,
+    "cold_samples_per_batch": 30,
+    "rss_interval_seconds": 1,
+    "order_seed": 73421
+  },
+  "measure_specs": [
+    {
+      "metric": "latency.warm_enter.p95",
+      "group": "all",
+      "unit": "ms",
+      "required": true,
+      "workloads": [
+        "projects-27"
+      ]
+    },
+    {
+      "metric": "latency.warm_reuse.p95",
+      "group": "all",
+      "unit": "ms",
+      "required": true,
+      "workloads": [
+        "projects-27"
+      ]
+    },
+    {
+      "metric": "latency.new_role.p95",
+      "group": "all",
+      "unit": "ms",
+      "required": true,
+      "workloads": [
+        "clients-size"
+      ]
+    },
+    {
+      "metric": "latency.cold.median",
+      "group": "all",
+      "unit": "ms",
+      "required": true,
+      "workloads": [
+        "clients-size"
+      ]
+    },
+    {
+      "metric": "latency.attach.p95",
+      "group": "all",
+      "unit": "ms",
+      "required": true,
+      "workloads": [
+        "clients-size"
+      ]
+    },
+    {
+      "metric": "cpu.core_seconds",
+      "group": "server_group",
+      "unit": "core-seconds",
+      "required": true
+    },
+    {
+      "metric": "cpu.cores",
+      "group": "server_group",
+      "unit": "cores",
+      "required": true
+    },
+    {
+      "metric": "rss.peak",
+      "group": "server_group",
+      "unit": "bytes",
+      "required": true
+    },
+    {
+      "metric": "rss.median",
+      "group": "server_group",
+      "unit": "bytes",
+      "required": true
+    },
+    {
+      "metric": "rss.p95",
+      "group": "server_group",
+      "unit": "bytes",
+      "required": true
+    },
+    {
+      "metric": "objects.count",
+      "group": "all",
+      "unit": "count",
+      "required": true
+    },
+    {
+      "metric": "processes.count",
+      "group": "all",
+      "unit": "count",
+      "required": true
+    },
+    {
+      "metric": "fd.count",
+      "group": "all",
+      "unit": "count",
+      "required": true
+    },
+    {
+      "metric": "rss.slope",
+      "group": "server_group",
+      "unit": "bytes/second",
+      "required": true,
+      "workloads": [
+        "churn-leak"
+      ]
+    },
+    {
+      "metric": "pss",
+      "group": "server_group",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "wakeup",
+      "group": "server_group",
+      "unit": "count/second",
+      "required": false
+    },
+    {
+      "metric": "cpu.core_seconds",
+      "group": "server",
+      "unit": "core-seconds",
+      "required": false
+    },
+    {
+      "metric": "cpu.cores",
+      "group": "server",
+      "unit": "cores",
+      "required": false
+    },
+    {
+      "metric": "rss.peak",
+      "group": "server",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "rss.median",
+      "group": "server",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "rss.p95",
+      "group": "server",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "cpu.core_seconds",
+      "group": "helpers",
+      "unit": "core-seconds",
+      "required": false
+    },
+    {
+      "metric": "cpu.cores",
+      "group": "helpers",
+      "unit": "cores",
+      "required": false
+    },
+    {
+      "metric": "rss.peak",
+      "group": "helpers",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "rss.median",
+      "group": "helpers",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "rss.p95",
+      "group": "helpers",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "cpu.core_seconds",
+      "group": "client",
+      "unit": "core-seconds",
+      "required": false
+    },
+    {
+      "metric": "cpu.cores",
+      "group": "client",
+      "unit": "cores",
+      "required": false
+    },
+    {
+      "metric": "rss.peak",
+      "group": "client",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "rss.median",
+      "group": "client",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "rss.p95",
+      "group": "client",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "cpu.core_seconds",
+      "group": "producer",
+      "unit": "core-seconds",
+      "required": false
+    },
+    {
+      "metric": "cpu.cores",
+      "group": "producer",
+      "unit": "cores",
+      "required": false
+    },
+    {
+      "metric": "rss.peak",
+      "group": "producer",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "rss.median",
+      "group": "producer",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "rss.p95",
+      "group": "producer",
+      "unit": "bytes",
+      "required": false
+    },
+    {
+      "metric": "cpu.per_mib",
+      "group": "server",
+      "unit": "core-seconds/MiB",
+      "required": false,
+      "workloads": [
+        "output-1",
+        "output-10",
+        "output-30",
+        "detached-30"
+      ]
+    },
+    {
+      "metric": "cpu.per_mib",
+      "group": "helpers",
+      "unit": "core-seconds/MiB",
+      "required": false,
+      "workloads": [
+        "output-1",
+        "output-10",
+        "output-30",
+        "detached-30"
+      ]
+    },
+    {
+      "metric": "cpu.per_mib",
+      "group": "server_group",
+      "unit": "core-seconds/MiB",
+      "required": false,
+      "workloads": [
+        "output-1",
+        "output-10",
+        "output-30",
+        "detached-30"
+      ]
+    },
+    {
+      "metric": "cpu.per_mib",
+      "group": "client",
+      "unit": "core-seconds/MiB",
+      "required": false,
+      "workloads": [
+        "output-1",
+        "output-10",
+        "output-30",
+        "detached-30"
+      ]
+    },
+    {
+      "metric": "cpu.per_mib",
+      "group": "producer",
+      "unit": "core-seconds/MiB",
+      "required": false,
+      "workloads": [
+        "output-1",
+        "output-10",
+        "output-30",
+        "detached-30"
+      ]
+    }
+  ],
+  "paths": [
+    {
+      "label": "ROTOM",
+      "path": "/opt/example/rotom"
+    },
+    {
+      "label": "ISOLATION",
+      "path": "/tmp/example-bench-new"
+    }
+  ],
+  "isolation": {
+    "root": "isolation/new-run",
+    "private_record_root": "private-records",
+    "session_prefix": "bench-synthetic",
+    "network": "blocked",
+    "network_evidence_ref": "requires-preexisting-loopback-only-namespace",
+    "sentinels": [
+      {
+        "path": "sentinel.txt",
+        "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "ownership_ref": "requires-dedicated-private-root"
+  },
+  "authorization_ref": null,
+  "correctness_cases": [
+    "checkout",
+    "caller-context",
+    "cold-recovery",
+    "concurrency2",
+    "concurrency10",
+    "lost-response",
+    "move-close",
+    "id-reuse",
+    "new-server",
+    "injection-path",
+    "disconnect",
+    "isolation",
+    "zero-input"
+  ],
+  "digest": "4e08406d9494d4e62e6c943e4e7aae20341a0641d65df22948ffd96a2d341712"
+}

@@ -7,14 +7,14 @@
     "version": {"const": 2},
     "machine_id": {"type": "string"},
     "targets": {"type": "object", "additionalProperties": {"$ref": "#/$defs/record"}},
-    "previous": {"type": "object", "propertyNames": {"enum": ["zsh", "tmux"]}, "additionalProperties": {"type": "object", "additionalProperties": {"$ref": "#/$defs/backup"}}}
+    "previous": {"type": "object", "propertyNames": {"enum": ["zsh", "tmux", "herdr"]}, "additionalProperties": {"type": "object", "additionalProperties": {"$ref": "#/$defs/backup"}}}
   },
   "$defs": {
     "identity": {"type": "object", "additionalProperties": false, "required": ["kind"], "properties": {
       "kind": {"enum": ["absent", "file", "symlink"]}, "uid": {"type": "integer"}, "dev": {"type": "integer"}, "ino": {"type": "integer"}, "mode": {"type": "integer"}, "mtime_ns": {"type": "integer"}, "size": {"type": "integer"}, "digest": {"type": "string"}, "link": {"type": "string"}
     }},
     "record": {"type": "object", "additionalProperties": false, "required": ["component", "after", "source_digest"], "properties": {
-      "component": {"enum": ["zsh", "tmux"]}, "after": {"$ref": "#/$defs/identity"}, "source_digest": {"type": "string"}
+      "component": {"enum": ["zsh", "tmux", "herdr"]}, "after": {"$ref": "#/$defs/identity"}, "source_digest": {"type": "string"}
     }},
     "journal": {"type": "object", "additionalProperties": false,
       "required": ["version", "kind", "transaction_id", "phase", "plan_id", "state_before", "items"],
@@ -28,7 +28,7 @@
         "items": {"type": "array", "items": {"type": "object", "additionalProperties": false,
           "required": ["target_id", "component", "relative", "before", "desired", "mode", "backup", "after", "stage"],
           "properties": {
-            "target_id": {"type": "string"}, "component": {"enum": ["zsh", "tmux"]},
+            "target_id": {"type": "string"}, "component": {"enum": ["zsh", "tmux", "herdr"]},
             "relative": {"type": "string"}, "before": {"$ref": "#/$defs/identity"},
             "desired": {"type": ["string", "null"]}, "mode": {"type": ["integer", "null"]},
             "backup": {"anyOf": [{"$ref": "#/$defs/backup"}, {"type": "null"}]},

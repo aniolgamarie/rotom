@@ -58,6 +58,11 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
       blockers.append("unsupported_platform")
     if component in {"zsh", "tmux"} and shutil.which(component) is None:
       blockers.append("required_program_missing")
+    if component == "herdr":
+      from .doctor import inspect_herdr
+      herdr = inspect_herdr(machine.target_home)
+      blockers.extend(herdr["required_blockers"])
+      unverified.extend(herdr["unverified"])
     if component == "tmux" and shutil.which("fzf") is None:
       degraded.append("optional_fzf_missing")
     if component in {"zsh", "tmux"} and xdg_paths["XDG_DATA_HOME"] in {"default", "absolute"}:
