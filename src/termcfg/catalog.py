@@ -53,6 +53,7 @@ def components(catalog: tuple[SourceArtifact, ...] | None = None) -> tuple[Compo
   return (
     Component("zsh", tuple(item for item in catalog if item.component == "zsh"), "zsh"),
     Component("tmux", tuple(item for item in catalog if item.component == "tmux"), "tmux", ("fzf",)),
+    Component("herdr", tuple(item for item in catalog if item.component == "herdr"), "herdr"),
   )
 
 

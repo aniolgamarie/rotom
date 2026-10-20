@@ -1,0 +1,34 @@
+onboarding = false
+
+[keys]
+prefix = "ctrl+x"
+detach = "prefix+d"
+
+[terminal]
+default_shell = "rotom-work-shell"
+shell_mode = "non_login"
+new_cwd = "follow"
+
+[ui]
+prompt_new_tab_name = false
+confirm_close = true
+agent_panel_sort = "spaces"
+sidebar_collapsed_mode = "hidden"
+window_title = "{hostname}: {workspace} / {tab}"
+
+[ui.sound]
+enabled = false
+
+[ui.toast]
+delivery = "off"
+
+[session]
+resume_agents_on_restore = false
+
+[update]
+channel = "stable"
+version_check = false
+manifest_check = false
+
+[experimental]
+pane_history = false

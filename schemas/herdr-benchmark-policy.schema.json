@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Herdr benchmark policy v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "policy_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "fixture_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "scope": {
+      "enum": [
+        "first-baseline",
+        "runtime",
+        "full-stack"
+      ]
+    },
+    "environment_class": {
+      "type": "string",
+      "minLength": 1
+    },
+    "frozen_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "approval_ref": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "calibration_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "report_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "subject_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policy_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "policy_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "report_digest",
+          "subject_digest",
+          "evidence_ref",
+          "policy_digest",
+          "policy_ref"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "enum": [
+              "latency.warm_enter.p95",
+              "latency.warm_reuse.p95",
+              "latency.new_role.p95",
+              "latency.cold.median",
+              "latency.attach.p95",
+              "cpu.core_seconds",
+              "cpu.cores",
+              "cpu.per_mib",
+              "rss.peak",
+              "rss.median",
+              "rss.p95",
+              "objects.count",
+              "processes.count",
+              "fd.count",
+              "rss.slope",
+              "pss",
+              "wakeup"
+            ]
+          },
+          "group": {
+            "enum": [
+              "server",
+              "helpers",
+              "server_group",
+              "client",
+              "producer",
+              "all"
+            ]
+          },
+          "unit": {
+            "enum": [
+              "ms",
+              "core-seconds",
+              "cores",
+              "core-seconds/MiB",
+              "bytes",
+              "bytes/second",
+              "count",
+              "count/second"
+            ]
+          },
+          "absolute_budget": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "budget_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "regression": {
+            "type": "object",
+            "properties": {
+              "relative": {
+                "type": "number",
+                "minimum": 0
+              },
+              "absolute": {
+                "type": "number",
+                "minimum": 0
+              },
+              "near_zero": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "relative",
+              "absolute",
+              "near_zero"
+            ],
+            "additionalProperties": false
+          },
+          "noise_absolute": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "noise_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "metric",
+          "group",
+          "unit",
+          "absolute_budget",
+          "budget_reason",
+          "regression",
+          "noise_absolute",
+          "noise_reason"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "batch_rule": {
+      "const": "all-three-agree"
+    },
+    "retest": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "const": "retain-first-and-repeat-all-three"
+        },
+        "max_repeats": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "method",
+        "max_repeats",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "calibration_method": {
+      "const": "same-identity-three-batch-range"
+    },
+    "pending_reason": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "policy_id",
+    "digest",
+    "fixture_digest",
+    "scope",
+    "environment_class",
+    "frozen_at",
+    "approval_ref",
+    "calibration_refs",
+    "metrics",
+    "batch_rule",
+    "retest",
+    "calibration_method",
+    "pending_reason"
+  ],
+  "additionalProperties": false
+}

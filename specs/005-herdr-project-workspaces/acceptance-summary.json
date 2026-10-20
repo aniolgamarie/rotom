@@ -1,0 +1,217 @@
+{
+  "summary_version": 1,
+  "kind": "public-first-baseline-acceptance-summary",
+  "description": "Derived public summary; not a rewritten native report. Raw reports and failed attempts remain private and unchanged.",
+  "candidate": {
+    "version": "0.9.5",
+    "protocol": 22,
+    "official_asset_sha256": "14d9e8bc8b4a9e0118d77c32266f76d461f09b40342eb23752960bd89f59929d"
+  },
+  "source": {
+    "candidate_commit": "93e4f7899725336c1180e53b4ec239eea5f984ce",
+    "lock_digest": "faf915d1bc6cf452fb0ecbc102996fecbbf2d33b9a3a844f7b2020eff81be3bc",
+    "measurement_tool_digest": "86b4ed730d432f1f166bb3dd5d78d90048e2a0c5b1a5b164ef8cdf6013179de4",
+    "runner_digest": "f0171d00c55bedf50131751433f5280eb757c86ba426cd8151466bda2d6b3215",
+    "schema_digest": "62f19b70a3a51e3dfe236b740f87c094d188ae3392a7a483346f60829d204d81",
+    "source_digest": "074f5246dd9790220f28ed5599b515e5e3b0d0d5951308dfc4e137817c05c760",
+    "target_main": "b18da6d1df885a81400d721cb46eafdd5c34bb1e"
+  },
+  "scope": "first-baseline",
+  "comparison_kind": "candidate-only absolute-budget acceptance",
+  "decision": "pass",
+  "validity": "valid",
+  "baseline_digest": null,
+  "run_exit_code": 0,
+  "elapsed_seconds_rounded": 20370,
+  "counts": {
+    "batches": 3,
+    "cpu_windows": 33,
+    "cpu_snapshots_per_window": 301,
+    "correctness_passed": 45,
+    "producer_records": 1338,
+    "output_phase_records_exact": 426,
+    "required_unverified": 0,
+    "optional_unverified": 267
+  },
+  "observations": [
+    {
+      "metric": "latency.warm_enter.p95",
+      "group": "all",
+      "unit": "ms",
+      "absolute_budget": 1000,
+      "observed_max_across_workloads_and_batches": 551.210061,
+      "noise_absolute": 81.38926900000001
+    },
+    {
+      "metric": "latency.warm_reuse.p95",
+      "group": "all",
+      "unit": "ms",
+      "absolute_budget": 1000,
+      "observed_max_across_workloads_and_batches": 565.398495,
+      "noise_absolute": 124.30520200000001
+    },
+    {
+      "metric": "latency.new_role.p95",
+      "group": "all",
+      "unit": "ms",
+      "absolute_budget": 3000,
+      "observed_max_across_workloads_and_batches": 1051.409842,
+      "noise_absolute": 172.88500499999998
+    },
+    {
+      "metric": "latency.cold.median",
+      "group": "all",
+      "unit": "ms",
+      "absolute_budget": 5000,
+      "observed_max_across_workloads_and_batches": 27.502027,
+      "noise_absolute": 0.1910505000000029
+    },
+    {
+      "metric": "latency.attach.p95",
+      "group": "all",
+      "unit": "ms",
+      "absolute_budget": 3000,
+      "observed_max_across_workloads_and_batches": 310.987354,
+      "noise_absolute": 3.140111999999988
+    },
+    {
+      "metric": "cpu.core_seconds",
+      "group": "server_group",
+      "unit": "core-seconds",
+      "absolute_budget": 300,
+      "observed_max_across_workloads_and_batches": 142.52269714,
+      "noise_absolute": 14.631774871999994
+    },
+    {
+      "metric": "cpu.cores",
+      "group": "server_group",
+      "unit": "cores",
+      "absolute_budget": 1,
+      "observed_max_across_workloads_and_batches": 0.4750746890530529,
+      "noise_absolute": 0.04877623201212822
+    },
+    {
+      "metric": "rss.peak",
+      "group": "server_group",
+      "unit": "bytes",
+      "absolute_budget": 536870912,
+      "observed_max_across_workloads_and_batches": 314839040,
+      "noise_absolute": 901120
+    },
+    {
+      "metric": "rss.median",
+      "group": "server_group",
+      "unit": "bytes",
+      "absolute_budget": 402653184,
+      "observed_max_across_workloads_and_batches": 314691584.0,
+      "noise_absolute": 884736.0
+    },
+    {
+      "metric": "rss.p95",
+      "group": "server_group",
+      "unit": "bytes",
+      "absolute_budget": 469762048,
+      "observed_max_across_workloads_and_batches": 314707968,
+      "noise_absolute": 958464
+    },
+    {
+      "metric": "objects.count",
+      "group": "all",
+      "unit": "count",
+      "absolute_budget": 30,
+      "observed_max_across_workloads_and_batches": 30,
+      "noise_absolute": 0
+    },
+    {
+      "metric": "processes.count",
+      "group": "all",
+      "unit": "count",
+      "absolute_budget": 96,
+      "observed_max_across_workloads_and_batches": 32,
+      "noise_absolute": 0
+    },
+    {
+      "metric": "fd.count",
+      "group": "all",
+      "unit": "count",
+      "absolute_budget": 4096,
+      "observed_max_across_workloads_and_batches": 209,
+      "noise_absolute": 2
+    },
+    {
+      "metric": "rss.slope",
+      "group": "server_group",
+      "unit": "bytes/second",
+      "absolute_budget": 1024,
+      "observed_max_across_workloads_and_batches": 84.51505749924857,
+      "noise_absolute": 46.80163148424678
+    },
+    {
+      "metric": "pss",
+      "group": "server_group",
+      "unit": "bytes",
+      "absolute_budget": null,
+      "observed_max_across_workloads_and_batches": null,
+      "noise_absolute": null
+    },
+    {
+      "metric": "wakeup",
+      "group": "server_group",
+      "unit": "count/second",
+      "absolute_budget": null,
+      "observed_max_across_workloads_and_batches": null,
+      "noise_absolute": null
+    }
+  ],
+  "raw_sha256": {
+    "report": "bb3159617dcb2230eb7139e5245b2b31e30aa75e3263797fde20e152a1de800f",
+    "decision": "405a15f4241f3a859d8651af787c730b1be2f216edb909893f3a058330b51888",
+    "finished": "6b5606a932949f8b5cf63e5f8b937f6e00c832ff64f6808ffa84f9ab3844e817",
+    "postflight": "73a644705ef3823b3b30f2dd525368db5cde70feaf252684e50d944e13d4f507"
+  },
+  "calibration": {
+    "original_validity": "invalid",
+    "accepted_for_calibration_under_explicit_owner_exception": true,
+    "only_deviation": "detached-30/output/batch1/warmup/producer-12 counted30719 of30720 lines,128bytes deficit",
+    "original_report_sha256": "c1b846a32c3064824f4ef320bc68cd86581bbe6133c66ccd50589167e661f7bc",
+    "exception_acceptance_sha256": "9f3dec114abac000a58af66ec3626e89e9b301dcbae8adeb0854a391ab2ca117",
+    "frozen_policy_sha256": "4113a5e3760edc21fb9b99d3f979110c429d4b25af4c12c094262ccb536405ec"
+  },
+  "canary": {
+    "accepted": true,
+    "acceptance_sha256": "633d6ca6497ffda14e9550fdb7905a5f92cad089b1cca1ebae44bc5993863acd",
+    "completed_native_evidence_sha256": "21177019fdc39ccf2e24d925522546778ed074ed98f9b56982a04483cb0b32ff",
+    "owned_panes": 4,
+    "cooperative_child_exits": 4,
+    "cli_records_all_exit_zero": 30,
+    "state_copy_verified": true,
+    "native_state_compatibility_verified": false,
+    "native_state_rollback_branch": "compatibility_unproven_stop",
+    "all_registered_servers_and_wrappers_stopped": true,
+    "retained_failed_attempt_sha256": [
+      "ba8b0da40ce245bf787d794b0f9f6de03fc2f86353216683e1ef6c205bf7c373",
+      "4c85474fedf115a9a68cdb310a0178320f2141ebe5d4568a8409846524937545",
+      "8e15162facbc5ddf9146016b8b1cb3f4072bda3d0a4f00f2c8164b5390371047"
+    ]
+  },
+  "administrative_cleanup": {
+    "empty_groups_removed": true,
+    "group_counts_before": {
+      "client": 0,
+      "driver": 0,
+      "producer": 0,
+      "server": 0
+    },
+    "exit_code": 0,
+    "receipt_sha256": "242b9f73a891e542c5c0ece06a206431fb246eca796f1c13468a61a91576b50d"
+  },
+  "limits": {
+    "optional_unverified_items_do_not_imply_pass": true,
+    "upgrade_AB_comparison_performed": false,
+    "merged_main_integration_verified": false,
+    "production_entry_changed": false,
+    "commit_or_merge_performed": false,
+    "supported_scope": "This frozen feature checkout on the sole tested Linux server; physical client acceptance is macOS26.6.2/Ghostty1.3.1."
+  },
+  "private_archive_inventory_sha256": "352e64d9f9194893fadfe1fe9266713f3a87fb91b271a23ece91012ff6c5c1c8"
+}

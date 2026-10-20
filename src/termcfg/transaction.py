@@ -370,6 +370,9 @@ def recover(machine: MachineSelection) -> dict:
 
 def rollback_preview(machine: MachineSelection, component: str) -> dict:
   require_no_pending_recovery(machine)
+  if component == "herdr":
+    from .work_config import check_config_location
+    check_config_location(machine.target_home)
   state = read_state(machine)
   previous = state["previous"].get(component)
   if not previous:

@@ -1,0 +1,743 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Herdr benchmark manifest v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "manifest_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "fixture_version": {
+      "const": "v1"
+    },
+    "fixture_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "candidate_commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "source_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "target_main": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "lock_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "runner_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "measurement_tool_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "schema_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "candidate_commit",
+        "source_digest",
+        "target_main",
+        "lock_digest",
+        "runner_digest",
+        "measurement_tool_digest",
+        "schema_digest"
+      ],
+      "additionalProperties": false
+    },
+    "subjects": {
+      "type": "object",
+      "properties": {
+        "baseline": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "release": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "tag": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "commit": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{40}$"
+                },
+                "asset_url": {
+                  "type": "string",
+                  "pattern": "^https://github\\.com/herdrdev/herdr/releases/download/[^/]+/[^/]+$"
+                },
+                "asset_digest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "binary": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "client_version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "server_version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "acceptance_ref": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "inputs": {
+                  "type": "object",
+                  "properties": {
+                    "config_digest": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "rules_digest": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "integration_digest": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "rules_identity_kind": {
+                      "enum": [
+                        "byte-digest",
+                        "builtin-origin-fingerprint"
+                      ]
+                    },
+                    "integration_identity_kind": {
+                      "enum": [
+                        "byte-digest",
+                        "disabled-origin-fingerprint"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "config_digest",
+                    "rules_digest",
+                    "integration_digest"
+                  ],
+                  "additionalProperties": false
+                },
+                "acceptance_digest": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "release",
+                "tag",
+                "commit",
+                "asset_url",
+                "asset_digest",
+                "binary",
+                "client_version",
+                "server_version",
+                "acceptance_ref",
+                "inputs",
+                "acceptance_digest"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "baseline_reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate": {
+          "type": "object",
+          "properties": {
+            "release": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commit": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "asset_url": {
+              "type": "string",
+              "pattern": "^https://github\\.com/herdrdev/herdr/releases/download/[^/]+/[^/]+$"
+            },
+            "asset_digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "binary": {
+              "type": "string",
+              "minLength": 1
+            },
+            "client_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "server_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "acceptance_ref": {
+              "type": "string",
+              "minLength": 1
+            },
+            "inputs": {
+              "type": "object",
+              "properties": {
+                "config_digest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "rules_digest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "integration_digest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "rules_identity_kind": {
+                  "enum": [
+                    "byte-digest",
+                    "builtin-origin-fingerprint"
+                  ]
+                },
+                "integration_identity_kind": {
+                  "enum": [
+                    "byte-digest",
+                    "disabled-origin-fingerprint"
+                  ]
+                }
+              },
+              "required": [
+                "config_digest",
+                "rules_digest",
+                "integration_digest"
+              ],
+              "additionalProperties": false
+            },
+            "acceptance_digest": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "release",
+            "tag",
+            "commit",
+            "asset_url",
+            "asset_digest",
+            "binary",
+            "client_version",
+            "server_version",
+            "acceptance_ref",
+            "inputs",
+            "acceptance_digest"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "baseline",
+        "baseline_reason",
+        "candidate"
+      ],
+      "additionalProperties": false
+    },
+    "scope": {
+      "enum": [
+        "first-baseline",
+        "runtime",
+        "full-stack"
+      ]
+    },
+    "inputs": {
+      "type": "object",
+      "properties": {
+        "config_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "rules_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "integration_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "rules_identity_kind": {
+          "enum": [
+            "byte-digest",
+            "builtin-origin-fingerprint"
+          ]
+        },
+        "integration_identity_kind": {
+          "enum": [
+            "byte-digest",
+            "disabled-origin-fingerprint"
+          ]
+        }
+      },
+      "required": [
+        "config_digest",
+        "rules_digest",
+        "integration_digest"
+      ],
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "platform_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tool_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "measurement_definition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cols": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "rows": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "cols",
+              "rows"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "platform_class",
+        "tool_class",
+        "measurement_definition",
+        "dimensions"
+      ],
+      "additionalProperties": false
+    },
+    "workloads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": [
+              "idle-1",
+              "idle-10",
+              "idle-30",
+              "output-1",
+              "output-10",
+              "output-30",
+              "projects-27",
+              "detached-30",
+              "clients-size",
+              "churn-leak"
+            ]
+          },
+          "modes": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "idle",
+                "output",
+                "record"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "terminals": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "modes",
+          "terminals",
+          "required"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "argv": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "cwd_label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "env_allowlist": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]*$"
+            },
+            "uniqueItems": true
+          },
+          "expected_exit": {
+            "type": "integer"
+          },
+          "expected_effect": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ready": {
+            "type": "string",
+            "minLength": 1
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "cleanup_labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "argv",
+          "cwd_label",
+          "env_allowlist",
+          "expected_exit",
+          "expected_effect",
+          "ready",
+          "timeout_seconds",
+          "cleanup_labels"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "sampling": {
+      "type": "object",
+      "properties": {
+        "batches": {
+          "const": 3
+        },
+        "warmup_seconds": {
+          "const": 60
+        },
+        "measure_seconds": {
+          "const": 300
+        },
+        "warm_samples_per_batch": {
+          "type": "integer",
+          "minimum": 200
+        },
+        "cold_samples_per_batch": {
+          "const": 30
+        },
+        "rss_interval_seconds": {
+          "const": 1
+        },
+        "order_seed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "batches",
+        "warmup_seconds",
+        "measure_seconds",
+        "warm_samples_per_batch",
+        "cold_samples_per_batch",
+        "rss_interval_seconds",
+        "order_seed"
+      ],
+      "additionalProperties": false
+    },
+    "measure_specs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "enum": [
+              "latency.warm_enter.p95",
+              "latency.warm_reuse.p95",
+              "latency.new_role.p95",
+              "latency.cold.median",
+              "latency.attach.p95",
+              "cpu.core_seconds",
+              "cpu.cores",
+              "cpu.per_mib",
+              "rss.peak",
+              "rss.median",
+              "rss.p95",
+              "objects.count",
+              "processes.count",
+              "fd.count",
+              "rss.slope",
+              "pss",
+              "wakeup"
+            ]
+          },
+          "group": {
+            "enum": [
+              "server",
+              "helpers",
+              "server_group",
+              "client",
+              "producer",
+              "all"
+            ]
+          },
+          "unit": {
+            "enum": [
+              "ms",
+              "core-seconds",
+              "cores",
+              "core-seconds/MiB",
+              "bytes",
+              "bytes/second",
+              "count",
+              "count/second"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "workloads": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "idle-1",
+                "idle-10",
+                "idle-30",
+                "output-1",
+                "output-10",
+                "output-30",
+                "projects-27",
+                "detached-30",
+                "clients-size",
+                "churn-leak"
+              ]
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "metric",
+          "group",
+          "unit",
+          "required"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "uniqueItems": true
+    },
+    "isolation": {
+      "type": "object",
+      "properties": {
+        "root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "private_record_root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "session_prefix": {
+          "type": "string",
+          "pattern": "^bench-[A-Za-z0-9_-]+$"
+        },
+        "network": {
+          "enum": [
+            "blocked",
+            "explicit-synthetic-only"
+          ]
+        },
+        "network_evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sentinels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "path",
+              "digest"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ownership_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "root",
+        "private_record_root",
+        "session_prefix",
+        "network",
+        "network_evidence_ref",
+        "sentinels",
+        "ownership_ref"
+      ],
+      "additionalProperties": false
+    },
+    "authorization_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+    },
+    "correctness_cases": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "digest",
+    "fixture_version",
+    "fixture_digest",
+    "seed",
+    "source",
+    "subjects",
+    "scope",
+    "inputs",
+    "environment",
+    "workloads",
+    "steps",
+    "sampling",
+    "measure_specs",
+    "paths",
+    "isolation",
+    "authorization_ref",
+    "correctness_cases"
+  ],
+  "additionalProperties": false
+}

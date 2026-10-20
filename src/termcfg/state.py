@@ -125,7 +125,7 @@ def read_journal(machine: MachineSelection) -> dict | None:
       target_id = item["target_id"]
       relative = _relative_path(item["relative"])
       if (not isinstance(target_id, str) or not target_id or len(target_id) > 64 or
-          any(character not in "abcdefghijklmnopqrstuvwxyz0123456789-_" for character in target_id) or
+          any(character not in "abcdefghijklmnopqrstuvwxyz0123456789-_." for character in target_id) or
           target_id in seen or str(relative) != item["relative"]):
         raise ValueError("journal target mismatch")
       seen.add(target_id)

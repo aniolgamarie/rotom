@@ -59,7 +59,7 @@ class Parser(argparse.ArgumentParser):
 
 
 def build_parser() -> Parser:
-  parser = Parser(prog="./termcfg", description="独立管理 zsh/tmux 公开配置",
+  parser = Parser(prog="./termcfg", description="独立管理 zsh/tmux 与可选 Herdr 公开配置",
                   epilog=ROOT_HELP, formatter_class=argparse.RawDescriptionHelpFormatter)
   parser.add_argument("--machine", default="default")
   parser.add_argument("--json", action="store_true")
@@ -94,14 +94,14 @@ def build_parser() -> Parser:
   apply_parser.add_argument("--confirm-zshenv")
   add_command("recover")
   lock_parser = add_command("lock")
-  lock_parser.add_argument("--component", required=True, choices=sorted(COMPONENTS))
+  lock_parser.add_argument("--component", required=True, choices=["tmux", "zsh"])
   lock_parser.add_argument("--version", required=True)
   lock_parser.add_argument("--plugin")
   lock_parser.add_argument("--repo", help="新增插件的 GitHub 仓库（owner/name，须在允许前缀内）")
   lock_parser.add_argument("--entry", help="新增插件的入口文件相对路径")
   lock_parser.add_argument("--timeout", type=int, default=300)
   sync_parser = add_command("sync")
-  sync_parser.add_argument("--component", required=True, choices=sorted(COMPONENTS))
+  sync_parser.add_argument("--component", required=True, choices=["tmux", "zsh"])
   sync_parser.add_argument("--timeout", type=int, default=300)
   migrate_parser = add_command("migrate")
   migrate_parser.add_argument("--drop-mihomo", action="store_true", required=True)
@@ -148,7 +148,7 @@ def _interactive_selection(previous: tuple[str, ...] | None) -> tuple[str, ...]:
     name for name in ("zsh", "tmux") if shutil.which(name)
   )
   print("选择组件（逗号分隔；留空保持默认；输入 none 清空）：", file=sys.stderr)
-  for name in ("zsh", "tmux"):
+  for name in ("zsh", "tmux", "herdr"):
     required = "就绪" if shutil.which(name) else "缺少本地程序"
     print(f"  {name}: {required}{' [预选]' if name in defaults else ''}", file=sys.stderr)
   print("组件> ", end="", file=sys.stderr, flush=True)

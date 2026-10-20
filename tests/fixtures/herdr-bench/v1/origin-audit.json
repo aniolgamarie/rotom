@@ -1,0 +1,44 @@
+{
+  "repository": "https://github.com/herdrdev/herdr",
+  "tag": "v0.9.5",
+  "git_tree_sha": "2ecf19a92fc3a7fff75b6ce3655ef04f4625ec01",
+  "license": "Apache-2.0",
+  "kind": "audited-origin-interface-subset-not-rule-bytes",
+  "sources": [
+    {
+      "path": "src/detect/manifest.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/detect/manifest.rs",
+      "sha256": "40323d77ef508376fac4bee840b987009a2e4305416ded37c6b570690895a1fc"
+    },
+    {
+      "path": "src/app/api.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/app/api.rs",
+      "sha256": "df85589520a370995e6950b3d3ddf3b74c7dbbaf65847c44fbb8ca9c7652e1c0"
+    },
+    {
+      "path": "src/cli/server.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/cli/server.rs",
+      "sha256": "d7a1d291b2d08b6366c236a727aaffe3e064ae98202bc5a5bb65b67ad6782d35"
+    },
+    {
+      "path": "src/cli/integration.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/cli/integration.rs",
+      "sha256": "41eb23a82e8ac5dc7c5cee1d952bf40a6fd91451d91e3deedfeeb6b4d6cc34c1"
+    },
+    {
+      "path": "src/integration/registry.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/integration/registry.rs",
+      "sha256": "5108d69cdd7db363ec74839aeffec9c746da3d7a440c1e05f5401a698e0e38b0"
+    },
+    {
+      "path": "src/integration/targets.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/integration/targets.rs",
+      "sha256": "b21c0571132e9f0bcd43644c5438d9ec2e2053ebd44429edbac290ec1c63b250"
+    },
+    {
+      "path": "src/api/schema/integrations.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/integrations.rs",
+      "sha256": "1efe37f7fa7c11d356ad72e92deefffb44de221658e313c3c27227181207f26a"
+    }
+  ]
+}

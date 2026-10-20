@@ -1,0 +1,258 @@
+{
+  "ping": {
+    "type": "pong",
+    "version": "0.9.5",
+    "protocol": 22,
+    "capabilities": {
+      "live_handoff": true,
+      "detached_server_daemon": true,
+      "endpoint_protocol_generation": 1,
+      "surface_interest": true,
+      "health_check": true,
+      "ssh_agent_registration": true
+    }
+  },
+  "worktree.list": {
+    "type": "worktree_list",
+    "source": {
+      "repo_key": "example-key",
+      "repo_name": "example",
+      "repo_root": "/tmp/example/project",
+      "source_checkout_path": "/tmp/example/project"
+    },
+    "worktrees": [
+      {
+        "path": "/tmp/example/project",
+        "label": "main",
+        "branch": "main",
+        "is_bare": false,
+        "is_detached": false,
+        "is_prunable": false,
+        "is_linked_worktree": false,
+        "open_workspace_id": "workspace-1"
+      }
+    ]
+  },
+  "worktree.open": {
+    "type": "worktree_opened",
+    "workspace": {
+      "workspace_id": "workspace-1",
+      "number": 1,
+      "label": "example",
+      "focused": true,
+      "pane_count": 1,
+      "tab_count": 1,
+      "active_tab_id": "tab-1",
+      "agent_status": "unknown",
+      "tokens": {},
+      "worktree": {
+        "repo_key": "example-key",
+        "repo_name": "example",
+        "repo_root": "/tmp/example/project",
+        "checkout_path": "/tmp/example/project",
+        "is_linked_worktree": false
+      }
+    },
+    "tab": {
+      "tab_id": "tab-1",
+      "workspace_id": "workspace-1",
+      "number": 1,
+      "label": "shell",
+      "focused": true,
+      "pane_count": 1,
+      "agent_status": "unknown"
+    },
+    "root_pane": {
+      "pane_id": "pane-1",
+      "terminal_id": "terminal-1",
+      "workspace_id": "workspace-1",
+      "tab_id": "tab-1",
+      "focused": true,
+      "agent_status": "unknown",
+      "revision": 0,
+      "tokens": {}
+    },
+    "worktree": {
+      "path": "/tmp/example/project",
+      "label": "main",
+      "branch": "main",
+      "is_bare": false,
+      "is_detached": false,
+      "is_prunable": false,
+      "is_linked_worktree": false,
+      "open_workspace_id": "workspace-1"
+    },
+    "already_open": false
+  },
+  "workspace.list": {
+    "type": "workspace_list",
+    "workspaces": [
+      {
+        "workspace_id": "workspace-1",
+        "number": 1,
+        "label": "example",
+        "focused": true,
+        "pane_count": 1,
+        "tab_count": 1,
+        "active_tab_id": "tab-1",
+        "agent_status": "unknown",
+        "tokens": {},
+        "worktree": {
+          "repo_key": "example-key",
+          "repo_name": "example",
+          "repo_root": "/tmp/example/project",
+          "checkout_path": "/tmp/example/project",
+          "is_linked_worktree": false
+        }
+      }
+    ]
+  },
+  "workspace.get": {
+    "type": "workspace_info",
+    "workspace": {
+      "workspace_id": "workspace-1",
+      "number": 1,
+      "label": "example",
+      "focused": true,
+      "pane_count": 1,
+      "tab_count": 1,
+      "active_tab_id": "tab-1",
+      "agent_status": "unknown",
+      "tokens": {},
+      "worktree": {
+        "repo_key": "example-key",
+        "repo_name": "example",
+        "repo_root": "/tmp/example/project",
+        "checkout_path": "/tmp/example/project",
+        "is_linked_worktree": false
+      }
+    }
+  },
+  "workspace.focus": {
+    "type": "workspace_info",
+    "workspace": {
+      "workspace_id": "workspace-1",
+      "number": 1,
+      "label": "example",
+      "focused": true,
+      "pane_count": 1,
+      "tab_count": 1,
+      "active_tab_id": "tab-1",
+      "agent_status": "unknown",
+      "tokens": {},
+      "worktree": {
+        "repo_key": "example-key",
+        "repo_name": "example",
+        "repo_root": "/tmp/example/project",
+        "checkout_path": "/tmp/example/project",
+        "is_linked_worktree": false
+      }
+    }
+  },
+  "pane.current": {
+    "type": "pane_current",
+    "pane": {
+      "pane_id": "pane-1",
+      "terminal_id": "terminal-1",
+      "workspace_id": "workspace-1",
+      "tab_id": "tab-1",
+      "focused": true,
+      "agent_status": "unknown",
+      "revision": 0,
+      "tokens": {}
+    }
+  },
+  "pane.list": {
+    "type": "pane_list",
+    "panes": [
+      {
+        "pane_id": "pane-1",
+        "terminal_id": "terminal-1",
+        "workspace_id": "workspace-1",
+        "tab_id": "tab-1",
+        "focused": true,
+        "agent_status": "unknown",
+        "revision": 0,
+        "tokens": {}
+      }
+    ]
+  },
+  "pane.get": {
+    "type": "pane_info",
+    "pane": {
+      "pane_id": "pane-1",
+      "terminal_id": "terminal-1",
+      "workspace_id": "workspace-1",
+      "tab_id": "tab-1",
+      "focused": true,
+      "agent_status": "unknown",
+      "revision": 0,
+      "tokens": {}
+    }
+  },
+  "pane.focus": {
+    "type": "pane_info",
+    "pane": {
+      "pane_id": "pane-1",
+      "terminal_id": "terminal-1",
+      "workspace_id": "workspace-1",
+      "tab_id": "tab-1",
+      "focused": true,
+      "agent_status": "unknown",
+      "revision": 0,
+      "tokens": {}
+    }
+  },
+  "tab.get": {
+    "type": "tab_info",
+    "tab": {
+      "tab_id": "tab-1",
+      "workspace_id": "workspace-1",
+      "number": 1,
+      "label": "shell",
+      "focused": true,
+      "pane_count": 1,
+      "agent_status": "unknown"
+    }
+  },
+  "tab.focus": {
+    "type": "tab_info",
+    "tab": {
+      "tab_id": "tab-1",
+      "workspace_id": "workspace-1",
+      "number": 1,
+      "label": "shell",
+      "focused": true,
+      "pane_count": 1,
+      "agent_status": "unknown"
+    }
+  },
+  "tab.create": {
+    "type": "tab_created",
+    "tab": {
+      "tab_id": "tab-1",
+      "workspace_id": "workspace-1",
+      "number": 1,
+      "label": "shell",
+      "focused": true,
+      "pane_count": 1,
+      "agent_status": "unknown"
+    },
+    "root_pane": {
+      "pane_id": "pane-1",
+      "terminal_id": "terminal-1",
+      "workspace_id": "workspace-1",
+      "tab_id": "tab-1",
+      "focused": true,
+      "agent_status": "unknown",
+      "revision": 0,
+      "tokens": {}
+    }
+  },
+  "workspace.report_metadata": {
+    "type": "ok"
+  },
+  "pane.report_metadata": {
+    "type": "ok"
+  }
+}

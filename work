@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+"""通过已准备的仓库环境运行项目入口；引导代码兼容Python 3.8。"""
+
+import os
+from pathlib import Path
+import sys
+
+
+ROOT = Path(__file__).resolve().parent
+PYTHON = ROOT / ".venv" / "bin" / "python"
+
+
+def main():
+  if not PYTHON.is_file() or not os.access(PYTHON, os.X_OK):
+    print("work_environment_not_prepared: uv sync --locked", file=sys.stderr)
+    return 5
+  if Path(sys.prefix).resolve() != (ROOT / ".venv").resolve():
+    try:
+      os.execv(str(PYTHON), [str(PYTHON), __file__] + sys.argv[1:])
+    except OSError:
+      print("work_environment_not_prepared: uv sync --locked", file=sys.stderr)
+      return 5
+  if sys.version_info < (3, 11):
+    print("work_python_requires_3_11", file=sys.stderr)
+    return 5
+  sys.path.insert(0, str(ROOT / "src"))
+  from termcfg.work import main as work_main
+  return work_main()
+
+
+if __name__ == "__main__":
+  raise SystemExit(main())

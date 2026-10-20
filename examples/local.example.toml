@@ -22,6 +22,16 @@ default_profile = "dsh-default"
 # 路径可含中文空格；不能写 nvim -f，不拆词、不执行、不检查是否已安装。
 editor = "nvim"
 
+# 可选项目终端入口；不安装Herdr，不改变默认Agent profile，路径均为虚构。
+# 对应工具须先显式准备；日常work不下载/部署。editor复用上面的单executable。
+[machine.work]
+herdr_binary = "/opt/herdr/current/herdr"
+session = "main"
+pi_profile = "pi-default"
+dsh_profile = "dsh-default"
+codex_binary = "/opt/codex/bin/codex"
+codex_daemon = false
+
 # paths 表及三项都可省略，只有缺失字段才使用默认；空字符串不是默认值。
 # instances_root 默认 $XDG_DATA_HOME/agentcfg/instances，未设置时 ~/.local/share/agentcfg/instances。
 # state_root 默认 $XDG_STATE_HOME/agentcfg，未设置时 ~/.local/state/agentcfg。

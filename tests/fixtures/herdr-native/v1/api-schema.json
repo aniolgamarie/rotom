@@ -1,0 +1,2106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Audited Herdr v0.9.5 Rotom subset; NOT the complete official schema",
+  "description": "Manually transcribed audited public response fields and restricted request surface. Synthetic responses contain no session data. Additional native response fields are allowed; local request fields fail closed.",
+  "request_params": {
+    "ping": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "workspace.list": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "workspace.get": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "workspace_id"
+      ],
+      "additionalProperties": false
+    },
+    "workspace.focus": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "workspace_id"
+      ],
+      "additionalProperties": false
+    },
+    "workspace.report_metadata": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tokens": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "pattern": "^[A-Za-z0-9_-]{1,32}$"
+          },
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "ttl_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400000
+        }
+      },
+      "required": [
+        "workspace_id",
+        "source",
+        "tokens"
+      ],
+      "additionalProperties": false
+    },
+    "worktree.list": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cwd": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trust_repository": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "worktree.open": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cwd": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "focus": {
+          "type": "boolean"
+        },
+        "trust_repository": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "tab.create": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cwd": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "focus": {
+          "type": "boolean"
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "tab.get": {
+      "type": "object",
+      "properties": {
+        "tab_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tab_id"
+      ],
+      "additionalProperties": false
+    },
+    "tab.focus": {
+      "type": "object",
+      "properties": {
+        "tab_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tab_id"
+      ],
+      "additionalProperties": false
+    },
+    "pane.current": {
+      "type": "object",
+      "properties": {
+        "caller_pane_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "caller_pane_id"
+      ],
+      "additionalProperties": false
+    },
+    "pane.list": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "pane.get": {
+      "type": "object",
+      "properties": {
+        "pane_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "pane_id"
+      ],
+      "additionalProperties": false
+    },
+    "pane.focus": {
+      "type": "object",
+      "properties": {
+        "pane_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "pane_id"
+      ],
+      "additionalProperties": false
+    },
+    "pane.report_metadata": {
+      "type": "object",
+      "properties": {
+        "pane_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tokens": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "pattern": "^[A-Za-z0-9_-]{1,32}$"
+          },
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "ttl_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400000
+        }
+      },
+      "required": [
+        "pane_id",
+        "source",
+        "tokens"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "response_results": {
+    "ping": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "pong"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "protocol": {
+          "enum": [
+            22
+          ]
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "live_handoff": {
+              "type": "boolean"
+            },
+            "detached_server_daemon": {
+              "type": "boolean"
+            },
+            "endpoint_protocol_generation": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "surface_interest": {
+              "type": "boolean"
+            },
+            "health_check": {
+              "type": "boolean"
+            },
+            "ssh_agent_registration": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "live_handoff"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "type",
+        "version",
+        "protocol",
+        "capabilities"
+      ],
+      "additionalProperties": true
+    },
+    "workspace.list": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "workspace_list"
+        },
+        "workspaces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "workspace_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "active_tab_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "number": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pane_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "tab_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "focused": {
+                "type": "boolean"
+              },
+              "agent_status": {
+                "enum": [
+                  "idle",
+                  "working",
+                  "blocked",
+                  "done",
+                  "unknown"
+                ]
+              },
+              "tokens": {
+                "type": "object",
+                "maxProperties": 32,
+                "propertyNames": {
+                  "pattern": "^[A-Za-z0-9_-]{1,32}$"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "worktree": {
+                "type": "object",
+                "properties": {
+                  "repo_key": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "repo_name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "repo_root": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "checkout_path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "is_linked_worktree": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "repo_key",
+                  "repo_name",
+                  "repo_root",
+                  "checkout_path",
+                  "is_linked_worktree"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "workspace_id",
+              "number",
+              "label",
+              "focused",
+              "pane_count",
+              "tab_count",
+              "active_tab_id",
+              "agent_status"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "type",
+        "workspaces"
+      ],
+      "additionalProperties": true
+    },
+    "workspace.get": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "workspace_info"
+        },
+        "workspace": {
+          "type": "object",
+          "properties": {
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "active_tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "number": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pane_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tab_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            },
+            "tokens": {
+              "type": "object",
+              "maxProperties": 32,
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9_-]{1,32}$"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "worktree": {
+              "type": "object",
+              "properties": {
+                "repo_key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "repo_name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "repo_root": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "checkout_path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "is_linked_worktree": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "repo_key",
+                "repo_name",
+                "repo_root",
+                "checkout_path",
+                "is_linked_worktree"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "workspace_id",
+            "number",
+            "label",
+            "focused",
+            "pane_count",
+            "tab_count",
+            "active_tab_id",
+            "agent_status"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "type",
+        "workspace"
+      ],
+      "additionalProperties": true
+    },
+    "workspace.focus": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "workspace_info"
+        },
+        "workspace": {
+          "type": "object",
+          "properties": {
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "active_tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "number": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pane_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tab_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            },
+            "tokens": {
+              "type": "object",
+              "maxProperties": 32,
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9_-]{1,32}$"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "worktree": {
+              "type": "object",
+              "properties": {
+                "repo_key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "repo_name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "repo_root": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "checkout_path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "is_linked_worktree": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "repo_key",
+                "repo_name",
+                "repo_root",
+                "checkout_path",
+                "is_linked_worktree"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "workspace_id",
+            "number",
+            "label",
+            "focused",
+            "pane_count",
+            "tab_count",
+            "active_tab_id",
+            "agent_status"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "type",
+        "workspace"
+      ],
+      "additionalProperties": true
+    },
+    "workspace.report_metadata": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "worktree.list": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "worktree_list"
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "repo_key": {
+              "type": "string",
+              "minLength": 1
+            },
+            "repo_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "repo_root": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_checkout_path": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "repo_key",
+            "repo_name",
+            "repo_root",
+            "source_checkout_path"
+          ],
+          "additionalProperties": true
+        },
+        "worktrees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "is_bare": {
+                "type": "boolean"
+              },
+              "is_detached": {
+                "type": "boolean"
+              },
+              "is_prunable": {
+                "type": "boolean"
+              },
+              "is_linked_worktree": {
+                "type": "boolean"
+              },
+              "open_workspace_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "branch": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "path",
+              "label",
+              "is_bare",
+              "is_detached",
+              "is_prunable",
+              "is_linked_worktree"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "type",
+        "source",
+        "worktrees"
+      ],
+      "additionalProperties": true
+    },
+    "worktree.open": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "worktree_opened"
+        },
+        "workspace": {
+          "type": "object",
+          "properties": {
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "active_tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "number": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pane_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tab_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            },
+            "tokens": {
+              "type": "object",
+              "maxProperties": 32,
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9_-]{1,32}$"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "worktree": {
+              "type": "object",
+              "properties": {
+                "repo_key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "repo_name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "repo_root": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "checkout_path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "is_linked_worktree": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "repo_key",
+                "repo_name",
+                "repo_root",
+                "checkout_path",
+                "is_linked_worktree"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "workspace_id",
+            "number",
+            "label",
+            "focused",
+            "pane_count",
+            "tab_count",
+            "active_tab_id",
+            "agent_status"
+          ],
+          "additionalProperties": true
+        },
+        "tab": {
+          "type": "object",
+          "properties": {
+            "tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "number": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "pane_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            }
+          },
+          "required": [
+            "tab_id",
+            "workspace_id",
+            "label",
+            "number",
+            "focused",
+            "pane_count",
+            "agent_status"
+          ],
+          "additionalProperties": true
+        },
+        "root_pane": {
+          "type": "object",
+          "properties": {
+            "pane_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "terminal_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tokens": {
+              "type": "object",
+              "maxProperties": 32,
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9_-]{1,32}$"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "pane_id",
+            "terminal_id",
+            "workspace_id",
+            "tab_id",
+            "focused",
+            "agent_status",
+            "revision"
+          ],
+          "additionalProperties": true
+        },
+        "worktree": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "is_bare": {
+              "type": "boolean"
+            },
+            "is_detached": {
+              "type": "boolean"
+            },
+            "is_prunable": {
+              "type": "boolean"
+            },
+            "is_linked_worktree": {
+              "type": "boolean"
+            },
+            "open_workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "branch": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "path",
+            "label",
+            "is_bare",
+            "is_detached",
+            "is_prunable",
+            "is_linked_worktree"
+          ],
+          "additionalProperties": true
+        },
+        "already_open": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "workspace",
+        "tab",
+        "root_pane",
+        "worktree",
+        "already_open"
+      ],
+      "additionalProperties": true
+    },
+    "tab.create": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "tab_created"
+        },
+        "tab": {
+          "type": "object",
+          "properties": {
+            "tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "number": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "pane_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            }
+          },
+          "required": [
+            "tab_id",
+            "workspace_id",
+            "label",
+            "number",
+            "focused",
+            "pane_count",
+            "agent_status"
+          ],
+          "additionalProperties": true
+        },
+        "root_pane": {
+          "type": "object",
+          "properties": {
+            "pane_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "terminal_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tokens": {
+              "type": "object",
+              "maxProperties": 32,
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9_-]{1,32}$"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "pane_id",
+            "terminal_id",
+            "workspace_id",
+            "tab_id",
+            "focused",
+            "agent_status",
+            "revision"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "type",
+        "tab",
+        "root_pane"
+      ],
+      "additionalProperties": true
+    },
+    "tab.get": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "tab_info"
+        },
+        "tab": {
+          "type": "object",
+          "properties": {
+            "tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "number": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "pane_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            }
+          },
+          "required": [
+            "tab_id",
+            "workspace_id",
+            "label",
+            "number",
+            "focused",
+            "pane_count",
+            "agent_status"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "type",
+        "tab"
+      ],
+      "additionalProperties": true
+    },
+    "tab.focus": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "tab_info"
+        },
+        "tab": {
+          "type": "object",
+          "properties": {
+            "tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "number": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "pane_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            }
+          },
+          "required": [
+            "tab_id",
+            "workspace_id",
+            "label",
+            "number",
+            "focused",
+            "pane_count",
+            "agent_status"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "type",
+        "tab"
+      ],
+      "additionalProperties": true
+    },
+    "pane.current": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "pane_current"
+        },
+        "pane": {
+          "type": "object",
+          "properties": {
+            "pane_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "terminal_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tokens": {
+              "type": "object",
+              "maxProperties": 32,
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9_-]{1,32}$"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "pane_id",
+            "terminal_id",
+            "workspace_id",
+            "tab_id",
+            "focused",
+            "agent_status",
+            "revision"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "type",
+        "pane"
+      ],
+      "additionalProperties": true
+    },
+    "pane.list": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "pane_list"
+        },
+        "panes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pane_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "terminal_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "workspace_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tab_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "focused": {
+                "type": "boolean"
+              },
+              "agent_status": {
+                "enum": [
+                  "idle",
+                  "working",
+                  "blocked",
+                  "done",
+                  "unknown"
+                ]
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "tokens": {
+                "type": "object",
+                "maxProperties": 32,
+                "propertyNames": {
+                  "pattern": "^[A-Za-z0-9_-]{1,32}$"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "pane_id",
+              "terminal_id",
+              "workspace_id",
+              "tab_id",
+              "focused",
+              "agent_status",
+              "revision"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "type",
+        "panes"
+      ],
+      "additionalProperties": true
+    },
+    "pane.get": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "pane_info"
+        },
+        "pane": {
+          "type": "object",
+          "properties": {
+            "pane_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "terminal_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tokens": {
+              "type": "object",
+              "maxProperties": 32,
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9_-]{1,32}$"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "pane_id",
+            "terminal_id",
+            "workspace_id",
+            "tab_id",
+            "focused",
+            "agent_status",
+            "revision"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "type",
+        "pane"
+      ],
+      "additionalProperties": true
+    },
+    "pane.focus": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "pane_info"
+        },
+        "pane": {
+          "type": "object",
+          "properties": {
+            "pane_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "terminal_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workspace_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tab_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "agent_status": {
+              "enum": [
+                "idle",
+                "working",
+                "blocked",
+                "done",
+                "unknown"
+              ]
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tokens": {
+              "type": "object",
+              "maxProperties": 32,
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9_-]{1,32}$"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "pane_id",
+            "terminal_id",
+            "workspace_id",
+            "tab_id",
+            "focused",
+            "agent_status",
+            "revision"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "type",
+        "pane"
+      ],
+      "additionalProperties": true
+    },
+    "pane.report_metadata": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "audited_official_request_schema": {
+    "protocol": 22,
+    "schema_version": 1,
+    "schemas": {
+      "request": {
+        "$defs": {
+          "EmptyParams": {
+            "type": "object"
+          },
+          "PaneCurrentParams": {
+            "properties": {
+              "caller_pane_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          },
+          "PaneListParams": {
+            "properties": {
+              "workspace_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          },
+          "PaneReportMetadataParams": {
+            "properties": {
+              "agent": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "applies_to_source": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "clear_display_agent": {
+                "default": false,
+                "type": "boolean"
+              },
+              "clear_state_labels": {
+                "default": false,
+                "type": "boolean"
+              },
+              "clear_title": {
+                "default": false,
+                "type": "boolean"
+              },
+              "display_agent": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "pane_id": {
+                "type": "string"
+              },
+              "seq": {
+                "format": "uint64",
+                "minimum": 0,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "source": {
+                "type": "string"
+              },
+              "state_labels": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "title": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tokens": {
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "maxProperties": 16,
+                "propertyNames": {
+                  "pattern": "^[A-Za-z0-9_-]{1,32}$"
+                },
+                "type": "object"
+              },
+              "ttl_ms": {
+                "format": "uint64",
+                "maximum": 86400000,
+                "minimum": 1,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "pane_id",
+              "source"
+            ],
+            "type": "object"
+          },
+          "PaneTarget": {
+            "properties": {
+              "pane_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "pane_id"
+            ],
+            "type": "object"
+          },
+          "PingParams": {
+            "type": "object"
+          },
+          "TabCreateParams": {
+            "properties": {
+              "cwd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "env": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "focus": {
+                "default": false,
+                "type": "boolean"
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "workspace_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          },
+          "TabTarget": {
+            "properties": {
+              "tab_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "tab_id"
+            ],
+            "type": "object"
+          },
+          "WorkspaceReportMetadataParams": {
+            "properties": {
+              "seq": {
+                "format": "uint64",
+                "minimum": 0,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "source": {
+                "type": "string"
+              },
+              "tokens": {
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "maxProperties": 16,
+                "propertyNames": {
+                  "pattern": "^[A-Za-z0-9_-]{1,32}$"
+                },
+                "type": "object"
+              },
+              "ttl_ms": {
+                "format": "uint64",
+                "maximum": 86400000,
+                "minimum": 1,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "workspace_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "workspace_id",
+              "source",
+              "tokens"
+            ],
+            "type": "object"
+          },
+          "WorkspaceTarget": {
+            "properties": {
+              "workspace_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "workspace_id"
+            ],
+            "type": "object"
+          },
+          "WorktreeListParams": {
+            "properties": {
+              "cwd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "trust_repository": {
+                "type": "boolean"
+              },
+              "workspace_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          },
+          "WorktreeOpenParams": {
+            "properties": {
+              "branch": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "cwd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "focus": {
+                "default": false,
+                "type": "boolean"
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "path": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "trust_repository": {
+                "type": "boolean"
+              },
+              "workspace_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "properties": {
+              "method": {
+                "const": "ping",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/PingParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "workspace.list",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/EmptyParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "workspace.get",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/WorkspaceTarget"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "workspace.focus",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/WorkspaceTarget"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "workspace.report_metadata",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/WorkspaceReportMetadataParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "worktree.list",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/WorktreeListParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "worktree.open",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/WorktreeOpenParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "tab.create",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/TabCreateParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "tab.get",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/TabTarget"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "tab.focus",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/TabTarget"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "pane.list",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/PaneListParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "pane.current",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/PaneCurrentParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "pane.get",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/PaneTarget"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "pane.focus",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/PaneTarget"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "pane.report_metadata",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/PaneReportMetadataParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ],
+            "type": "object"
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "Request",
+        "type": "object"
+      }
+    }
+  }
+}

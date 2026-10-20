@@ -1,0 +1,101 @@
+{
+  "repository": "https://github.com/herdrdev/herdr",
+  "tag": "v0.9.5",
+  "git_tree_sha": "2ecf19a92fc3a7fff75b6ce3655ef04f4625ec01",
+  "license": "Apache-2.0",
+  "retrieved_on": "2026-10-19",
+  "fixture_kind": "audited-subset-and-synthetic-responses",
+  "official_schema_complete": false,
+  "source_files": [
+    {
+      "path": "src/api/schema.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema.rs",
+      "sha256": "0e3015fd11e089b97586dfb786c31e7c232659c25ce35201b3ad50e1773e8e09"
+    },
+    {
+      "path": "src/api/schema/response.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/response.rs",
+      "sha256": "0b85658265923fcaa59b0233abc46820cd3fe97199bbc4a22a94c4036ca59226"
+    },
+    {
+      "path": "src/api/schema/server.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/server.rs",
+      "sha256": "f42d831e2a863a09bdd6e35a7f0fc217c97327eb5b8a8fe58b2ba862ca0c1ccf"
+    },
+    {
+      "path": "src/api/schema/panes.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/panes.rs",
+      "sha256": "272dbab0fa7e963cd18d529710a710b42a21c939dc5172bfc0e5095b53abf4c7"
+    },
+    {
+      "path": "src/api/schema/common.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/common.rs",
+      "sha256": "aacc11e403f5f73fe61260c97231aeffa635f65c64c3f31cc12ef1bb0f330984"
+    },
+    {
+      "path": "src/api/schema/workspaces.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/workspaces.rs",
+      "sha256": "80f326a0718875b496cd3b9305849a5142c82546eb13fe8b4435008258806654"
+    },
+    {
+      "path": "src/api/schema/worktrees.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/worktrees.rs",
+      "sha256": "1722e28a21330d8703a33b8f7280903681d7ec3463ab86b941439c3de6693c39"
+    },
+    {
+      "path": "src/api/schema/tabs.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/tabs.rs",
+      "sha256": "0b6bf6d2afe6419c835082e39fac3470b832a12a7ba22e5723d3702ac4e5d810"
+    },
+    {
+      "path": "src/api/server.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/server.rs",
+      "sha256": "3555e07db3dc9d6a1a08a198b3d9276ff2f1f8fb0d4c32d7d2c78a8c5310b3a6"
+    },
+    {
+      "path": "src/app/api/worktrees.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/app/api/worktrees.rs",
+      "sha256": "2e71d9683d7ddcdfe8fb833c81e20ae497eeeb83fe4618f0da3b08bc1a2f28bf"
+    },
+    {
+      "path": "src/session.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/session.rs",
+      "sha256": "4884c50f5782010f4a1e7b28f7d7d30580a996f839888c91ac3f29fd0ea5d977"
+    },
+    {
+      "path": "src/cli.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/cli.rs",
+      "sha256": "172a227f3f4a1c2f00455e8f829c1684dee1d053d956b2814cd74707a87ba815"
+    },
+    {
+      "path": "src/protocol/wire.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/protocol/wire.rs",
+      "sha256": "4c3226c314a6cb91f3d02742e135745722ec1ec381c6f65e6c2e5c0a68508800"
+    },
+    {
+      "path": "src/metadata_tokens.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/metadata_tokens.rs",
+      "sha256": "7a1253274c5cae1ff4987d78041c0e3595e763a52d3a11ce7eaebf06723e39bd"
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "path": "src/cli/api.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/cli/api.rs",
+      "sha256": "8e01cfd17c631019501b55f532bd6e37ba3a7b089e26281f6972ff23d13ac8b4"
+    },
+    {
+      "path": "docs/next/api/herdr-api.schema.json",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/docs/next/api/herdr-api.schema.json",
+      "sha256": "9e2af207e9aa8183d4aeca5fde9cc48e7909bb40cdbd7cf21608a6d3ea78075b"
+    }
+  ],
+  "fixture_sha256": {
+    "api-schema.json": "d8886924b83ce758b0420530867189dd39b2d3008138f6cb7dc348de24575161",
+    "responses.json": "624f58efd563772ae92435f3d0a74660693476911600432b5832536994416e26",
+    "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  }
+}
