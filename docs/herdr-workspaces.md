@@ -1,6 +1,81 @@
 # Herdr 项目工作区
 
-`work` 将明确选择的 Git checkout 对应到原生 Herdr 工作区，再按用途聚焦终端。布局、Goto、分屏和手工终端仍使用 Herdr。Agent 状态只供查看，不决定任务完成、重试或关闭。功能分支的实现、隔离检查和原生分项记录见 [实施证据](../specs/005-herdr-project-workspaces/implementation-evidence.md)，当前主线组合的检查见 [合入记录](../specs/005-herdr-project-workspaces/integration.md)。旧原生收据不自动覆盖本次集成后的配置、锁或会话；本次集成离线验证不能证明当前 `pi-base` / `pi-pro` 的真实会话已通过，也不表示生产已切换。
+在服务器上，Herdr 把同一个项目的终端放在一个工作区里。`work enter` 先进入项目工作区；`work open` 再按用途打开或切回终端。你可以让编辑器、编译、调试和 Agent 各用一个终端，之后按用途找回来。
+
+如果你在本机用 Ghostty 通过 SSH 连接服务器，Ghostty 提供本机终端窗口，SSH 负责连接服务器；下面的命令、Herdr 终端、编辑器和编译进程都运行在服务器上。先按后面的[准备和配置](#准备和配置)与[一次性切换步骤](#一次性切换步骤)准备好服务器，再使用日常流程。
+
+## 日常进入和用途
+
+下面的 `/opt/rotom`、`/projects/kernel` 和 `workstation` **都是占位示例**：分别换成服务器上已合入 `main` 的仓库路径、项目路径和你已准备的机器配置名。这里的“机器配置”选择服务器上的私人配置，不是 Ghostty 所在本机的名称。
+
+最短流程只有两步：
+
+1. 在普通 SSH shell、tmux 之外，先进入项目工作区：
+
+   ```sh
+   /opt/rotom/work --machine workstation enter /projects/kernel
+   ```
+
+2. 进入 Herdr 后，在这个项目的 shell 中打开编译终端；如果当前显示编辑器或运行中的程序，先用 **Ctrl+x，再 g** 切到项目的 shell：
+
+   ```sh
+   /opt/rotom/work --machine workstation open build
+   ```
+
+如果这个项目还没有 build 终端，会新建项目目录下的**普通交互终端**，由你输入项目实际使用的编译命令；已有时只切回原终端。`build` 只是用途名，不会替你运行编译；`debug` 也不会自动启动调试器。
+
+### 首次打开与再次切回
+
+以下 `open …` 都接在同一个 `/opt/rotom/work --machine workstation` 后面，按需选择即可，不必逐条全部执行。
+
+| 用途 | 尚无对应终端时 | 已有对应终端时再次执行 |
+| --- | --- | --- |
+| `open shell` | 打开普通交互终端；新工作区的初始 shell 已可复用 | 切回这个 shell |
+| `open build` | 打开供你输入编译或测试命令的普通交互终端 | 切回原来的 build 终端 |
+| `open debug` | 打开供你输入调试命令的普通交互终端 | 切回原来的 debug 终端 |
+| `open edit` | 启动 `machine.editor` 配置的编辑器，例如 Avalon | 切回原来的编辑器终端 |
+| `open pi` | 启动已准备并部署的 `machine.work.pi_profile` | 切回原来的 Pi 终端 |
+| `open dsh` / `open codex` | 启动已准备的 DSH profile / 所选独立 Codex CLI | 切回相应用途的原终端 |
+
+`shell`、`build`、`debug` 是用来稳定找回终端的用途名称，不是三个预设任务。普通 `open` 找到原终端后只切换焦点：当前程序继续运行，当前目录保持原样，不向里面输入命令，也不自动重新启动程序。即使你已经在 build 终端里切换了目录，再次 `open build` 也不会把它改回项目根目录。
+
+### 什么时候用 `--new`
+
+只有确实需要第二个同用途终端时才加 `--new`。例如：
+
+- 第一个 build 终端正在跑长编译，你想保留它继续运行。
+- 用 **Ctrl+x，再 g** 打开 Herdr 原生 Goto，切回这个项目的 shell；不要往正在编译的终端里输入管理命令。
+- 在 shell 中执行：
+
+  ```sh
+  /opt/rotom/work --machine workstation open build --new
+  ```
+
+- 在新终端里自己输入测试命令。现在可以一边编译、一边测试。
+
+额外终端不会替换默认的那个：以后普通 `open build` 仍切回第一个 build 终端。需要找到额外终端时使用 **Ctrl+x，再 g** 的原生 Goto。每次 `--new` 都是新增终端，不是重新运行当前编译，也不是切换到某个固定的第二终端。不要为了“回到编译界面”反复加 `--new`。
+
+每次 `enter` / `open` 保持同一 `--machine`。也可始终用 `--local FILE` 选择同一个私人 agentcfg 文件；两种选择互斥，且在子命令之前。`open` 要在所选项目内能输入命令的 Herdr shell 中执行。`enter` 不会自动启动编辑器或 Agent；它只进入工作区，并在新建工作区时提供初始 shell。
+
+通过 `work` 新启动的 Herdr server，其 PATH 已包含仓库根，终端内也可使用 `work --machine workstation open build`。本页保留绝对路径写法，方便确认调用的是哪个仓库。已有 server 不会被自动修改环境；入口找不到时使用完整路径，并按下文检查准备情况。
+
+布局、Goto、分屏和手工终端继续使用 Herdr 原生操作。手工新建的 tab/分屏不会自动登记为上述用途。断线重接见[恢复与未知结果](#恢复与未知结果)，回到旧入口见[回退](#回退)。
+
+## 常用键位与复制
+
+Herdr 前缀为 **Ctrl+x**：先按下并松开，再按后一个键。Avalon 内部窗口键位属于编辑器。
+
+| 键位或命令 | 用途 |
+| --- | --- |
+| `Ctrl+x`，再 `g` | 原生 Goto，选择工作区或终端 |
+| `Ctrl+x`，再 `d` | detach 当前客户端，保留 server 和运行任务 |
+| Avalon `Ctrl+w`，再 `v` | 编辑器内垂直分窗 |
+| Avalon `Ctrl+w`，再 `h` / `l` | 编辑器内切到左 / 右窗口 |
+| Avalon `:normal! "+2yy` | 从光标处显式将两行复制到 `+` 寄存器 |
+
+其他布局/分屏键位以所选 Herdr 版本的原生帮助为准，不占用无前缀 Ctrl+h/j/k/l。字面 Ctrl+x、Shift+Enter 仍须按实际客户端组合核对。
+
+Avalon 普通 yank 留在内部寄存器。远程复制到本机使用独立 profile 已准备的显式 `+` / OSC52 写入路径，再用本机终端或系统粘贴；先用已知非秘密文本检查结果。上述两行命令可避开直接输入双引号触发的寄存器提示。该路径不查询原剪贴板；终端的 OSC52 策略和 SSH/客户端支持仍会影响结果。
 
 ## 准备和配置
 
@@ -60,37 +135,15 @@ export PATH="/opt/rotom:/opt/herdr/current:$PATH"
 
 `ID` 必须换成刚返回的实际计划 ID。已有文件按 [termcfg 采用/冲突流程](termcfg.md)处理，不以覆盖绕过冲突。doctor 只证明静态准备，不证明真实启动或提示符正常。保留旧 tmux 长任务；下一步只让明确选择的新工作进入 Herdr，不迁移或停止旧进程。
 
-只管理 `.config/herdr/config.toml`（0600），不管理 session、socket、缓存、日志或集成生成文件。非默认 `HERDR_CONFIG_PATH` / `XDG_CONFIG_HOME` 目标被拒绝。原生新 tab 使用 `rotom-work-shell` 与 `non_login`，无启动意图时进入原 `SHELL`（空值 `/bin/sh`）。新 server 的 PATH 由 `work` 前置仓库根，既有 server 不被重启或改环境。
-
-`work` 要求配置文件存在、为当前用户的私有普通文件，并检查 launcher/non_login/禁用 Agent 自动恢复的意图。启动新 server 前用同一路径运行官方 `herdr config check`，非零诊断或期间文件改变立即失败。该命令只读配置，不连接 server；缺文件却会使用默认值，因此不能单独以退出 0 证明文件存在。依据：[0.9.5 CLI](https://github.com/herdrdev/herdr/blob/v0.9.5/src/cli.rs)、[配置加载](https://github.com/herdrdev/herdr/blob/v0.9.5/src/config/io.rs)。普通 `termcfg doctor` 只做静态准备检查，真实加载与 zsh 提示符仍须原生验证。
-
-## 日常进入和用途
-
-在普通 SSH 终端、tmux 之外先执行 `enter`：
-
-```sh
-/opt/rotom/work --machine workstation enter /projects/kernel
-```
+## 项目归属与启动边界
 
 `enter` 接受现存 Git checkout 或其子目录，按 realpath 归一；linked worktree 各有工作区，同名仓库不合并。新建linked工作区时先查询原生worktree列表，从返回的主仓库source发起open；归属仍取目标checkout。非 Git 目录退出 2；临时任务使用 Herdr 原生临时工作区。只在所选 session 确实不存在时启动独立 server，连接失败不会触发另建。Herdr 外部进入后原生 attach；内部只聚焦。旧 tmux 内的外部进入退出 4，先显式离开旧复用器。
 
 项目身份是所选固定 server 端点与 checkout 路径。branch、tab 标题、后续 `cd` 或外置构建目录不会改归属。内部 `enter` 聚焦到另一工作区，也不会把发起命令的旧 shell 移过去；在目标项目的实际 pane 内运行 `open`。
 
-```sh
-/opt/rotom/work --machine workstation open shell
-/opt/rotom/work --machine workstation open build
-/opt/rotom/work --machine workstation open debug
-/opt/rotom/work --machine workstation open edit
-/opt/rotom/work --machine workstation open pi
-/opt/rotom/work --machine workstation open dsh
-/opt/rotom/work --machine workstation open codex
-# 显式增加同用途实例：
-/opt/rotom/work --machine workstation open debug --new
-```
+只管理 `.config/herdr/config.toml`（0600），不管理 session、socket、缓存、日志或集成生成文件。非默认 `HERDR_CONFIG_PATH` / `XDG_CONFIG_HOME` 目标被拒绝。原生新 tab 使用 `rotom-work-shell` 与 `non_login`，无启动意图时进入原 `SHELL`（空值 `/bin/sh`）。新 server 的 PATH 由 `work` 前置仓库根，既有 server 不被重启或改环境。
 
-每次 `enter` / `open` 保持同一 `--machine`。也可始终用 `--local FILE` 选择同一个私人 agentcfg 文件；两种选择互斥，且在子命令之前。`open` 应在所选项目的实际 Herdr pane 中执行。
-
-用途严格为 shell/edit/build/debug/pi/codex/dsh。已有用途只聚焦，不发送输入、不改目录、不重跑。shell/build/debug 新建普通交互 shell，编译和调试命令由人输入；edit 打开所选 Avalon，pi/dsh 打开已准备的受管 profile，codex 打开所选独立 CLI。只有 `--new` 增加同用途实例，已有 primary 保持稳定。原生 tab/分屏留在当前工作区，不被自动登记为用途。
+`work` 要求配置文件存在、为当前用户的私有普通文件，并检查 launcher/non_login/禁用 Agent 自动恢复的意图。启动新 server 前用同一路径运行官方 `herdr config check`，非零诊断或期间文件改变立即失败。该命令只读配置，不连接 server；缺文件却会使用默认值，因此不能单独以退出 0 证明文件存在。依据：[0.9.5 CLI](https://github.com/herdrdev/herdr/blob/v0.9.5/src/cli.rs)、[配置加载](https://github.com/herdrdev/herdr/blob/v0.9.5/src/config/io.rs)。普通 `termcfg doctor` 只做静态准备检查，真实加载与 zsh 提示符仍须原生验证。
 
 `open` 必须从所选 Herdr 中能核验的项目 pane 发起。缺上下文、过期 ID、其他 session 或未确认项目均退出 4；`--new` 也不能绕过。环境变量仅用于定位，实际归属来自原生当前查询。新程序通过新 pane 的一次性 ready/commit/accepted 交接启动，意图绑定配置选择、代码来源、端点和期限，不进入历史 shell 命令，不在旧终端输入命令。
 
@@ -114,22 +167,6 @@ launcher 失败会尝试写不可逆 failed 标记、清本 pane commit，再回
 
 ## Avalon 和 Agent
 
-### 常用键位与复制
-
-Herdr 前缀为 **Ctrl+x**：先按下并松开，再按后一个键。Avalon 内部窗口键位属于编辑器。
-
-| 键位或命令 | 用途 |
-| --- | --- |
-| `Ctrl+x`，再 `g` | 原生 Goto，选择工作区或终端 |
-| `Ctrl+x`，再 `d` | detach 当前客户端，保留 server 和运行任务 |
-| Avalon `Ctrl+w`，再 `v` | 编辑器内垂直分窗 |
-| Avalon `Ctrl+w`，再 `h` / `l` | 编辑器内切到左 / 右窗口 |
-| Avalon `:normal! "+2yy` | 从光标处显式将两行复制到 `+` 寄存器 |
-
-其他布局/分屏键位以所选 Herdr 版本的原生帮助为准，不占用无前缀 Ctrl+h/j/k/l。字面 Ctrl+x、Shift+Enter 仍须按实际客户端组合核对。
-
-Avalon 普通 yank 留在内部寄存器。远程复制到本机使用独立 profile 已准备的显式 `+` / OSC52 写入路径，再用本机终端或系统粘贴；先用已知非秘密文本检查结果。上述两行命令可避开直接输入双引号触发的寄存器提示。该路径不查询原剪贴板；终端的 OSC52 策略和 SSH/客户端支持仍会影响结果。
-
 edit 直接调用已验收独立 Avalon profile 的 `bin/avalon`；无需新插件或 `NVIM_APPNAME` 替代。Agent 修改后，由人在同 checkout 的 Avalon 显式刷新冻结 Review，审查并导出选定修复要求，再交给明确目标 Agent，最后由 build/test 终端验证。work 不读取 Review 目录，不自动刷新/广播/删除导出；关闭 Review 保留已保存的 review.json/review.md/prompt.md 与清单。
 
 Pi/DSH 使用 `agentcfg [--local FILE] --profile ID run AGENT --cwd CHECKOUT`，保留已有实例 HOME、配置、凭据和状态，不在工作区层面设置隔离 HOME。准备不足先失败，不自动 sync/apply/login。独立 Codex 默认附 `--no-daemon`；`codex_daemon=true` 仅为该入口省略该参数，不改 alias、全局配置、Pi 委托或活动 daemon。共享 daemon 的 pane/会话关联限制见 [上游问题 #4649](https://github.com/herdrdev/herdr/issues/4649)，没有可靠身份时保持 unknown。
@@ -146,7 +183,19 @@ Pi/DSH 使用 `agentcfg [--local FILE] --profile ID run AGENT --cwd CHECKOUT`，
 
 `HERDR_ENV`、`HERDR_PANE_ID`、`HERDR_BIN_PATH`、`HERDR_SOCKET_PATH` 仅在后续选择集成时通过既有 `machine.environment.inherit` 逐项声明，不自动扩白名单。socket 能控制终端，继承变量不等于仅有状态上报权限；不安装控制其他终端的 skill、不扩 sandbox socket 权限、不改上游源码。启用前分别验证两个根实例、子 Agent、迟到事件与目标 pane；不能证明就继续关闭。
 
+### 更新后为什么提示集成，而没有 DSH
+
+`herdr update` 更新 Herdr 程序。若它提示必须停止某个运行会话，并且你确认了 `y`，该会话中的 shell、编辑器、编译和 Agent 进程也会结束；这与 `Ctrl+x`、再 `d` 的断开连接不同。重新启动可恢复的布局不等于恢复已经结束的进程。
+
+更新末尾列出的 `herdr integration install pi`、`codex` 等命令，是针对检测到的旧集成文件或配置的更新提示，不是全部可用 Agent 的清单。0.9.5 的更新器调用 `integration status --outdated-only` 生成该提示；可手动运行 `herdr integration status` 查看集成状态。依据：[0.9.5 更新实现](https://github.com/herdrdev/herdr/blob/v0.9.5/src/update.rs)、[集成 CLI](https://github.com/herdrdev/herdr/blob/v0.9.5/src/cli/integration.rs)。
+
+0.9.5 的内置 `integration install` 目标中没有 `dsh`。**DSH 仍可作为项目终端中的程序运行**：在已进入的项目 shell 中执行 `work --machine workstation open dsh`，Rotom 会使用已经准备好的 `dsh_profile`。侧栏中的 DSH 专用状态、事件和会话关联属于另一层增强；社区 [dsh-herdr](https://github.com/TheRealHaoLiu/dsh-herdr) 插件本轮保持关闭，先完成其依赖与真实实例验证再决定启用。使用 DSH 不需要先安装其他 Agent 的 Herdr 集成。
+
+受管 Pi/DSH 的扩展仍按 Rotom 的资源和实例目录配置。全局安装某个 Herdr 集成，不代表受管实例已经加载它；本轮也不执行提示中的安装或卸载命令。
+
 ## 原生输入与存活验收
+
+Agent 状态只供查看，不决定任务完成、重试或关闭。功能分支的实现、隔离检查和原生分项记录见 [实施证据](../specs/005-herdr-project-workspaces/implementation-evidence.md)，当前主线组合的检查见 [合入记录](../specs/005-herdr-project-workspaces/integration.md)。旧原生收据不自动覆盖本次集成后的配置、锁或会话；本次集成离线验证不能证明当前 `pi-base` / `pi-pro` 的真实会话已通过，也不表示生产已切换。
 
 默认 pytest 只用临时 HOME、fake API/子进程和秘密哨兵。真实 Herdr、SSH/终端、Avalon/Agent/账号及基准分别按授权范围执行。先在合成 checkout 和独立 server 验证，再考虑新工作 canary；任何代码/测试通过都不自动切换入口。
 

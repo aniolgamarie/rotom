@@ -1,5 +1,7 @@
 # Quickstart: Herdr 分层验证指南
 
+本文面向实施与验收。日常操作从[Herdr 使用说明](../../docs/herdr-workspaces.md)开始，先阅读进入项目、打开编辑器和编译终端的例子。
+
 日常切换、命令、重接、键位、Avalon复制与回退见[使用指南](../../docs/herdr-workspaces.md)。本文件保留旧功能分支的分层验证记录；其原生收据不自动覆盖本次集成后的配置、锁或会话。当前Pi显式选择已准备部署的`pi-base`或`pi-pro`，旧Pi实例通过不代表当前Base/Pro真实会话已验证。本次集成离线检查与旧原生验收须分列，均不表示生产已切换。
 
 这是已实现入口的分层验证指南；代码、隔离检查及原生分项状态见 [implementation-evidence.md](implementation-evidence.md)。冻结功能分支的客户端、工具入口、完整CPU计量、校准、首基线及canary最终结果见[验收摘要](acceptance-summary.json)。当前主线组合的检查和未覆盖范围见[合入记录](integration.md)，生产默认入口仍须显式切换。接口以[配置契约](contracts/configuration.md)与实际CLI为准。
