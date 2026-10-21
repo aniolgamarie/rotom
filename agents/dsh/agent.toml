@@ -1,7 +1,7 @@
 schema_version = 1
 adapter_version = "dsh-1"
 upstream_commit = "687f282e8625c6b8d11ff58211a90524be2e4317"
-tui_commit = "e709863019d56897e64495699c3a945cce194d00"
+tui_commit = "73ff99fbed56563bf154d719effd09f9f9725349"
 
 [defaults]
 providers = []
@@ -17,3 +17,7 @@ theme = "rotom-catppuccin"
 show_welcome = true
 auto_review = true
 terminal_images = false
+
+[defaults.agent_options.auto_review_options]
+sandbox_escalation = true
+reviewer_timeout_ms = 90000

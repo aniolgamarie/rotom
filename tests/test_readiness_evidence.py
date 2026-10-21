@@ -175,6 +175,20 @@ def test_feature_declarations_survive_doctor_without_promoting_verification(doct
   assert_unexecuted_layers(payload)
 
 
+@pytest.mark.parametrize("missing_lock", [False, True])
+def test_approval_preview_survives_doctor_without_native_inspection(doctor_context, capsys, missing_lock):
+  scenario, args, _ = doctor_context
+  scenario["lock_missing"] = missing_lock
+  workspace = commands.workspace(args)
+  preview = {"scope": "configuration-preview", "enabled": True, "sandbox_escalation": True,
+    "persistent_verdict_audit": "unsupported", "runtime_checked": False}
+  workspace.adapter.approval_diagnostics = lambda data: deepcopy(preview)
+  code, payload = doctor(doctor_context, capsys)
+  assert code == (2 if missing_lock else 0)
+  assert payload["approval_review"] == preview
+  assert_unexecuted_layers(payload)
+
+
 def test_human_feature_declarations_use_fixed_labels_without_candidate_echo(doctor_context, capsys, monkeypatch):
   _, payload = doctor(doctor_context, capsys)
   payload["feature_readiness"] = {"status_bar": {"status": "not_ready", "decision": "held",

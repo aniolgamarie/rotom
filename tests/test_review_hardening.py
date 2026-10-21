@@ -118,7 +118,7 @@ def test_profile_migrates_owned_runtime_link_to_isolated_directory(tmp_path):
   assert (profile / "node_modules").is_dir()
   assert not (profile / "node_modules").is_symlink()
   assert json.loads((profile / ".agentcfg-package-owner.json").read_text()) == {
-    "binding": w.binding, "modules": "isolated",
+    "binding": w.binding, "modules": "isolated", "bundles": profile_runtime.PROFILE_BUNDLES,
     "projections": {package: str(root / "node_modules" / package)
                     for package in profile_runtime.PROFILE_PROJECTIONS}}
 
@@ -179,6 +179,10 @@ def test_profile_owned_bundle_migration_preserves_native_files(tmp_path, monkeyp
   manifest = json.loads((profile / "package.json").read_bytes())
   manifest["dsh"]["profile"]["bundles"] = profile_runtime.LEGACY_BUNDLES
   (profile / "package.json").write_bytes(json_bytes(manifest))
+  owner_path = profile / ".agentcfg-package-owner.json"
+  owner = json.loads(owner_path.read_bytes())
+  owner.pop("bundles")
+  owner_path.write_bytes(json_bytes(owner))
   sentinel = profile / "synthetic-native-session.json"
   sentinel.write_text("synthetic native data")
   original = Tree.write_state

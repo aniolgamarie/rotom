@@ -6,6 +6,10 @@ Notable user-visible changes are recorded here. Unreleased entries describe repo
 
 ### Changed
 
+- Selected unmodified official npm TUI `0.16.1` (gitHead `73ff99fbed56563bf154d719effd09f9f9725349`); the former `0.15.0` source-build archive is historical. Cursor/SSH wrapper metadata now targets TUI `0.16.1` as versions `0.1.3`/`0.1.1`, preserving upstream Cursor `0.6.12` and Core `0.2.1-rc.2`.
+- Added explicit opt-in official rc2 Agent Teams with a deployed selection flag. It remains outside default plugins; isolated Linux member/task/restart and TUI/Perry combination acceptance passed. Instance maintenance protection remains unchanged, and native manifest-writing `/team on/off` is unsupported in managed profiles.
+- Isolated Linux TUI session-resume/settings-migration/CLI and matching Perry formal/manual/timeout scenarios passed for the selected ecosystem; real account and other-platform scope remains separate.
+- Selected official Perry `0.13.7`; the current Core combination uses inline review without tools. A Rotom-owned public reviewer preset is separately available and probed. Native single-operation sandbox escalation can be routed to AI behind a tool-name gate; unknown tools remain human. Review timeout defaults to 90 seconds with strict override options, and doctor remains configuration-only. Bounded native acceptance does not establish persistent verdict audit or repairs for historical OFF/late-approval failures.
 - Ordinary execution has a versioned caller-environment contract, persistent unset, name-only one-shot overrides and value-free default warnings. Native account/session ownership remains separate; restricted Pi workers retain a minimal environment.
 - DSH, Pi and OMP use shared ordinary-run admission with exclusive maintenance. DSH prepares shared launch resources during recoverable apply/rollback; Pi separates supervisor control by full run owner and retains cross-run workspace writer leases.
 - DSH/OMP lock resolution publishes recoverable generations under repository leases; sync protects its complete lock-consumption period. Pi publication remains single-publisher.
@@ -29,7 +33,7 @@ Notable user-visible changes are recorded here. Unreleased entries describe repo
 - Added publication privacy, explicit public commit identity, and pre-integration gates for every branch and worktree, including migration of retained old-lineage work.
 - Corrected stale OMP version statements and removed obsolete DSH OpenSpec installation guidance.
 
-### Existing integration baseline
+### Historical integration baseline
 
 - DSH Core `0.2.0-rc.2`, TUI `0.15.0`, Cursor subscription `0.6.12`, Perry auto-review `0.12.17`.
 - OMP official `18.8.6`, with an independent permission plugin and Catppuccin theme resources.

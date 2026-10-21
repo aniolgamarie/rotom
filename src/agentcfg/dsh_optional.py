@@ -1,7 +1,9 @@
 """DSH 官方可选插件的原生配置行；运行策略沿用宿主公开服务。"""
 
 
-OPTIONAL_PLUGINS = frozenset({"tmux-context", "git-worktrees"})
+OPTIONAL_PLUGINS = frozenset({"tmux-context", "git-worktrees", "agent-teams"})
+TEAM_BUNDLE = "@deepseek-ai/dsh-experimental-agent-team-profile"
+TEAM_SELECTION_FILE = "dsh-home/.agentcfg-agent-teams.json"
 
 
 def optional_plugin_rows(data):

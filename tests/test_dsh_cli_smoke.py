@@ -86,3 +86,12 @@ def test_cli_preparation_success_runs_apply_then_sync(tmp_path, monkeypatch):
   assert argv[-3:] == ["run", "--cwd", str(tmp_path)]
   assert [item["exit"] for item in result["cli_preparation"]] == [0, 0]
   assert result["checks"]["sealed_runtime_installed_before_sync"] == "PASS"
+
+
+def test_teams_fixture_is_explicit_and_preserves_default_plugins():
+  import tomllib
+  assert smoke.fixture_plugin_override(REPO) == ""
+  plugins = tomllib.loads(smoke.fixture_plugin_override(REPO, True))["plugins"]
+  defaults = tomllib.loads((REPO / "agents/dsh/agent.toml").read_text())["defaults"]["plugins"]
+  assert plugins == defaults + ["agent-teams"]
+  assert "auto-review" in plugins

@@ -52,7 +52,7 @@ def test_selected_plugins_render_exact_official_rows(selected, expected):
 
 
 def test_selection_is_the_only_input_and_each_call_has_fresh_rows():
-  assert OPTIONAL_PLUGINS == frozenset({"tmux-context", "git-worktrees"})
+  assert OPTIONAL_PLUGINS == frozenset({"tmux-context", "git-worktrees", "agent-teams"})
   fixture = {"plugins": {"git-worktrees": {}, "tmux-context": {}, "unrelated": {}}}
   first = optional_plugin_rows(fixture)
   first[1]["config"] = {"directory": "changed"}
@@ -64,7 +64,8 @@ def test_selection_is_the_only_input_and_each_call_has_fresh_rows():
 
 def test_optional_packages_are_already_locked_and_selected_for_local_default():
   defaults = tomllib.loads((ROOT / "agents/dsh/agent.toml").read_text())["defaults"]
-  assert OPTIONAL_PLUGINS.issubset(defaults["plugins"])
+  assert (OPTIONAL_PLUGINS - {"agent-teams"}).issubset(defaults["plugins"])
+  assert "agent-teams" not in defaults["plugins"]
   packages = yaml.safe_load((ROOT / "locks/dsh/pnpm-lock.yaml").read_text())["packages"]
   for row in [TMUX, *WORKTREE]:
     assert row["name"] + "@0.2.1-rc.2" in packages

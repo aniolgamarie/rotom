@@ -15,9 +15,10 @@ import uuid
 def run(argv, cwd, env, log):
   started = time.monotonic()
   with log.open("wb") as output:
+    log.chmod(0o600)
     child = subprocess.Popen(argv, cwd=cwd, env=env, stdout=output, stderr=subprocess.STDOUT)
     try:
-      code = child.wait(timeout=120)
+      code = child.wait(timeout=180)
     except subprocess.TimeoutExpired:
       child.terminate()
       try:
@@ -26,7 +27,8 @@ def run(argv, cwd, env, log):
         child.kill()
         child.wait()
       code = 124
-  return {"exit": code, "seconds": round(time.monotonic() - started, 3)}
+  return {"exit": code, "seconds": round(time.monotonic() - started, 3),
+    "argv": [argv[0], "<repository>/scripts/" + Path(argv[1]).name, "<runtime>"]}
 
 
 def main(argv=None):
@@ -34,6 +36,7 @@ def main(argv=None):
   parser.add_argument("--allow-host", action="store_true")
   parser.add_argument("--runtime", required=True, type=Path)
   parser.add_argument("--evidence", required=True, type=Path)
+  parser.add_argument("--diagnostic-allow-only", action="store_true")
   args = parser.parse_args(argv)
   if not args.allow_host:
     parser.error("需要 --allow-host；默认测试不启动第三方宿主")
@@ -52,6 +55,12 @@ def main(argv=None):
   evidence.mkdir(mode=0o700, parents=True, exist_ok=True)
   if any(evidence.iterdir()):
     parser.error("使用新的空证据目录")
+  filesystem = subprocess.run(["stat", "-f", "-c", "%T", str(evidence)],
+    env={"PATH": os.defpath, "LANG": "C"}, capture_output=True, text=True, check=True).stdout.strip()
+  if filesystem in ("tmpfs", "ramfs"):
+    parser.error("sandbox 哨兵需要持久文件系统证据目录；临时内存文件系统不适用")
+  sandbox_targets = evidence / "sandbox-targets"
+  sandbox_targets.mkdir(mode=0o700)
   outer_path = os.environ.get("PATH", "")
   with tempfile.TemporaryDirectory(prefix="rotom-formal-review-", dir="/dev/shm") as temporary:
     root = Path(temporary)
@@ -85,8 +94,12 @@ def main(argv=None):
     # 官方文件是 patch 列表，交给公开 runProfile.patchFiles，不作为 include entries。
     preset_source = package / "node_modules/@deepseek-ai/dsh-web-app/presets/standard.patch.yml"
     results = {}
-    for mode, enabled in (("formal", True), ("manual", False)):
-      machine.write_text(base + '[overrides.profiles.dsh-default.agent_options]\nauto_review=' + str(enabled).lower() + "\n")
+    modes = (("formal", True),) if args.diagnostic_allow_only else (("formal", True), ("manual", False), ("timeout", True))
+    for mode, enabled in modes:
+      options = '[overrides.profiles.dsh-default.agent_options]\nauto_review=' + str(enabled).lower() + "\n"
+      if mode == "timeout":
+        options += '[overrides.profiles.dsh-default.agent_options.auto_review_options]\nreviewer_timeout_ms=1000\n'
+      machine.write_text(base + options)
       machine.chmod(0o600)
       workspace = load_workspace(machine, repository=repo)
       candidate = workspace.candidate(lock.identity)
@@ -103,23 +116,29 @@ def main(argv=None):
         "AGENTCFG_SMOKE_ROOT": str(root), "AGENTCFG_SMOKE_RESULT": str(result_path), "AGENTCFG_SMOKE_NONCE": nonce,
         "AGENTCFG_SMOKE_PATCH": str(workspace.instance / "dsh-home/agentcfg.patch.yml"), "AGENTCFG_SMOKE_HEADLESS": str(headless),
         "AGENTCFG_SMOKE_PRESET": str(preset_source), "AGENTCFG_SMOKE_EXPECTED": str(expected_path), "AGENTCFG_SMOKE_OUTSIDE": str(outside), "AGENTCFG_SMOKE_MODE": mode}
+      child_env["AGENTCFG_SMOKE_DIAGNOSTIC_ALLOW_ONLY"] = "1" if args.diagnostic_allow_only else "0"
+      child_env["AGENTCFG_SMOKE_SANDBOX_TARGET_ROOT"] = str(sandbox_targets)
+      child_env["AGENTCFG_DEVELOPMENT_ENV"] = json.dumps({"version": 1, "values": {
+        key: child_env[key] for key in ("HOME", "PATH", "LANG", "TERM", "TMPDIR",
+          "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME")}, "unset": []})
       process = run(["node", str(repo / "scripts/smoke-dsh-formal-review.mjs"), str(package)], project, child_env, evidence / (mode + ".log"))
       result = json.loads(result_path.read_bytes()) if result_path.exists() else {"functional": "FAIL", "error": "RESULT_MISSING"}
       result.update(process=process, candidate_digest=candidate.generation, profile_bundles=json.loads((profile / "package.json").read_bytes())["dsh"]["profile"]["bundles"])
       if result.pop("nonce", None) != nonce or process["exit"] != 0:
         result["functional"] = "FAIL"
       results[mode] = result
-      if result["functional"] != "PASS":
-        break
     sources = {name: hashlib.sha256((repo / name).read_bytes()).hexdigest() for name in (
-      "scripts/smoke-dsh-formal-review.py", "scripts/smoke-dsh-formal-review.mjs", "src/agentcfg/dsh.py", "src/agentcfg/profile_runtime.py")}
+      "scripts/smoke-dsh-formal-review.py", "scripts/smoke-dsh-formal-review.mjs", "scripts/dsh-sandbox-review-cases.mjs", "src/agentcfg/dsh.py", "src/agentcfg/dsh_optional.py", "src/agentcfg/profile_runtime.py")}
     result = {"kind": "formal-config-native-file-tool-deterministic-no-account", "results": results,
-      "functional": "PASS" if len(results) == 2 and all(value["functional"] == "PASS" for value in results.values()) else "FAIL",
-      "known_lifecycle_gate": "FAIL (accepted)", "lifecycle_fixes_claimed": False, "os_sandbox_proven": False,
+      "diagnostic_allow_only": args.diagnostic_allow_only,
+      "functional": "PASS" if len(results) == len(modes) and all(value["functional"] == "PASS" for value in results.values()) else "FAIL",
+      "known_lifecycle_gate": "NOT REVALIDATED (historical 0.12.17 failures retained)", "lifecycle_fixes_claimed": False, "os_sandbox_proven": False,
       "lock_identity": lock.identity, "pnpm_lock_sha256": hashlib.sha256(lock.installer_resolution).hexdigest(),
       "source_files": sources, "node": node, "headless_preset_source": str(preset_source),
       "headless_preset_sha256": hashlib.sha256(preset_source.read_bytes()).hexdigest(), "real_accounts": "NOT RUN", "real_http_model": "NOT RUN"}
-    (evidence / "result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+    result_file = evidence / "result.json"
+    result_file.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+    result_file.chmod(0o600)
     print(json.dumps({"functional": result["functional"], "known_lifecycle_gate": result["known_lifecycle_gate"], "evidence": str(evidence)}))
     return 0 if result["functional"] == "PASS" else 1
 

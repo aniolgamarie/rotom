@@ -4,10 +4,10 @@
   "private": true,
   "dependencies": {
     "@deepseek-ai/dsh": "0.2.1-rc.2",
-    "@deepseek-harness-tui/dsh-tui": "file:vendor/dsh-tui-0.15.0-e709863.tgz",
+    "@deepseek-harness-tui/dsh-tui": "0.16.1",
     "@deepseek-ai/cordis": "4.0.5",
     "@deepseek-ai/schemastery": "3.18.5",
-    "rotom-dsh-cursor-terminal": "file:vendor/rotom-dsh-cursor-terminal-0.1.2.tgz",
+    "rotom-dsh-cursor-terminal": "file:vendor/rotom-dsh-cursor-terminal-0.1.3.tgz",
     "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
     "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
     "@deepseek-ai/dsh-scope": "0.2.1-rc.2",
@@ -39,6 +39,8 @@
     "@deepseek-ai/dsh-cordis-host-runner": "0.2.1-rc.2",
     "@deepseek-ai/dsh-tool-bash-persistent": "0.2.1-rc.2",
     "@deepseek-ai/dsh-agent-preset-registry": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-agent-preset": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-agent-tool-presentation": "0.2.1-rc.2",
     "@deepseek-ai/dsh-hmr": "0.2.1-rc.2",
     "@deepseek-ai/dsh-web": "0.2.1-rc.2",
     "@deepseek-ai/dsh-goal": "0.2.1-rc.2",
@@ -122,8 +124,8 @@
     "@deepseek-ai/dsh-client-connection": "0.2.1-rc.2",
     "@deepseek-ai/dsh-client-ui-settings": "0.2.1-rc.2",
     "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
-    "dsh-auto-review": "0.12.17",
-    "rotom-dsh-review-context": "file:vendor/rotom-dsh-review-context-0.1.1.tgz",
+    "dsh-auto-review": "0.13.7",
+    "rotom-dsh-review-context": "file:vendor/rotom-dsh-review-context-0.2.0.tgz",
     "@deepseek-ai/dsh-brand": "0.2.1-rc.2",
     "@deepseek-ai/dsh-compaction": "0.2.1-rc.2",
     "@deepseek-ai/dsh-fs": "0.2.1-rc.2",
@@ -151,6 +153,10 @@
     "@deepseek-ai/dsh-sandbox-ssh": "0.2.1-rc.2",
     "@deepseek-ai/dsh-headless": "0.2.1-rc.2",
     "rotom-dsh-ssh-shell-env": "file:vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz",
-    "rotom-dsh-ssh-subscription-auth": "file:vendor/rotom-dsh-ssh-subscription-auth-0.1.0.tgz"
+    "rotom-dsh-ssh-subscription-auth": "file:vendor/rotom-dsh-ssh-subscription-auth-0.1.1.tgz",
+    "@deepseek-ai/dsh-experimental-agent-team-profile": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-experimental-agent-team": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-experimental-tool-agent-team": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-experimental-client-ui-agent-team": "0.2.1-rc.2"
   }
 }

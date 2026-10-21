@@ -2,7 +2,7 @@
 
 Tests must distinguish implementation contracts from actual native behavior and authenticated service behavior. A configured CI workflow is not evidence that CI ran; a historical scope closure does not validate a different source or lock.
 
-The Core `0.2.1-rc.2` / fixed TUI main candidate has a separate [acceptance record](acceptance/dsh-rc21-tui-main-20261017.json). Its source build, frozen install and public module checks do not replace real TUI, account or platform smoke. Existing Perry safety limitations remain open. The later SSH/plugin worktree has its own [implementation record](acceptance/dsh-ssh-implementation-20261017.json); [SSH usage](dsh-ssh.md) describes its deliberately narrower headless boundary.
+The selected Core `0.2.1-rc.2` / official npm TUI `0.16.1` / Perry `0.13.7` candidate has a [2026-10-21 ecosystem record](acceptance/dsh-ecosystem-upgrade-20261021.md). Frozen install and public module identity checks passed. Explicit isolated Linux native runs passed TUI session-resume, settings-migration and agentcfg CLI scenarios, plus Perry formal/manual/timeout scenarios with fictional models. Teams OFF/ON, members, messaging, task revisions, clean restart and combined TUI/Perry fixtures also passed. Real account, external model service and other-platform behavior remain unverified. The former fixed-main source-build candidate has its own [historical record](acceptance/dsh-rc21-tui-main-20261017.json). Its results do not transfer to later candidates. Existing Perry lifecycle and persistent-audit limitations remain open. The later SSH/plugin worktree has its own [implementation record](acceptance/dsh-ssh-implementation-20261017.json); [SSH usage](dsh-ssh.md) describes its deliberately narrower headless boundary.
 
 ## Default offline suite
 
@@ -197,6 +197,14 @@ the single [refactoring record](design/project-refactoring.md).
 The baseline review of `66ad5e4` ran the full Linux x86_64 offline suite: **3602 passed, 1 failed, 9 skipped, 7 subtests passed**. The sole failure was the obsolete OMP artifact count. The narrow code fix then passed **136 tests** across dependency, OMP foundation, and project-role suites. Final results for the prepared snapshot are recorded in [release verification](release-verification.md).
 
 The checked-in DSH and OMP locks were readable at that baseline. Pi's lock was internally identifiable but stale against source at the time. The subsequent [refactoring record](design/project-refactoring.md) records its complete rebuild and matching validation separately. Default fixtures construct synthetic locks, so a passing suite does not by itself prove every checked-in runtime lock is current.
+
+## Current DSH native scope
+
+The current TUI evidence uses `scripts/smoke-dsh-ui.py --allow-host --runtime <sealed-runtime> --evidence <private-evidence>` with `--session-resume`, `--settings-migration`, and `--agentcfg-cli` in separate runs. All three outer exits were 0. The scenarios cover native model preference and recorded resume routes, file-tool history, settings first import and restart, native effort preferences, repeated apply preserving preferences, welcome/input/resize/truecolor, stream cancellation, clean exit, and terminal restoration. The settings fixture restores its external sealed-runtime projection after repeated apply; no upstream behavior was patched.
+
+Current Perry evidence uses the real parent Agent loop and deterministic fixture model on the new TUI combination. Formal/manual/timeout exits were all 0. Native Bash checked readonly denial, one approved escalation with one synthetic append, and denial on the same command's subsequent unprivileged call. Inline review exposed no tools. These are bounded action/fixture results; OFF persistence, late approval and complete persistent verdict audit were not revalidated or claimed fixed.
+
+Real-host smoke remains a separate explicitly authorized action. These runs used temporary HOME/XDG and synthetic state, with loopback-only fake model service where needed. They establish neither real account entitlement nor actual SSH/tmux/terminal-client behavior. The Teams record separately bounds its member/task/restart and combined TUI/Perry acceptance.
 
 ## Historical support summary
 

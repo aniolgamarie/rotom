@@ -181,6 +181,28 @@ def test_doctor_feature_declarations_use_fixed_labels_without_claiming_loaded(mo
   assert "SECRET_CANARY" not in output
 
 
+def test_doctor_approval_preview_preserves_unknown_runtime_and_audit_limits(monkeypatch):
+  payload = {"command": "doctor", "agent": "dsh", "profile": "dsh-default", "deployed": True,
+    "dependencies": "installed", "recovery_pending": False,
+    "readiness": {"status": "offline-ready", "blockers": [], "next_commands": []},
+    "approval_review": {"scope": "configuration-preview", "enabled": True,
+      "sandbox_escalation": True, "reviewer_timeout_ms": 90000, "max_reviews_per_turn": 3,
+      "max_failures_per_turn": 1, "fallback_policy": "delegate",
+      "persistent_verdict_audit": "unsupported", "runtime_checked": False,
+      "reason": "SECRET_CANARY"}}
+  output = emit(monkeypatch, payload, mode="human")
+  assert "审批配置预览（不代表当前会话状态）" in output
+  assert "待批沙箱提权" in output and "AI 审查" in output
+  assert "90000" in output and "每回合失败预算" in output and "转人工" in output
+  assert "完整 AI 判决持久审计" in output and "不支持" in output
+  assert "当前会话的实际分流与回退原因" in output and "未检查" in output
+  assert "SECRET_CANARY" not in output
+  payload["approval_review"]["reviewer_timeout_ms"] = "SECRET_CANARY"
+  payload["approval_review"]["enabled"] = False
+  output = emit(monkeypatch, payload, mode="human")
+  assert "人工处理" in output and "SECRET_CANARY" not in output
+
+
 def test_doctor_live_summarizes_real_service_checks_without_offline_claim(monkeypatch):
   payload = {"command": "doctor", "agent": "pi", "profile": "pi-base", "deployed": True,
     "dependencies": "installed", "deployed_dependencies": "installed", "recovery_pending": False,

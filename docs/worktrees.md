@@ -15,6 +15,14 @@ Review the final candidate for:
 
 Choose checks by scope. Documentation-only changes can use structure, links, public-content, and diff checks. Runtime or dependency changes require the relevant behavior and failure-path checks. A platform result applies only to the platform actually exercised.
 
+## Preserve daily launchers during worktree changes
+
+Creating a worktree isolates source edits; it does not redirect existing shell wrappers or isolate a shared machine configuration. Before moving changes, cleaning a checkout, or changing an entry point, inventory the checkout each daily launcher actually executes. Keep that checkout and its configuration usable until the replacement has passed compatibility checks. Preserve unrelated files and private backups; do not silently retarget a launcher to an unaccepted candidate.
+
+Validate the complete machine configuration against both the existing and proposed public catalogs, without resolving secret references, rendering credentials, starting hosts, or changing deployment state. Local schema validation covers all profile overrides before selecting one profile: an unsupported Pi option can therefore block a DSH command. A successful test with only a fictional DSH profile does not establish compatibility with a user's whole machine configuration. If either version rejects the configuration, record the exact field path and constraint without printing values and resolve the mismatch before changing the daily entry point.
+
+Recheck launcher targets and read-only schema compatibility after migration. Keep isolated acceptance HOME/XDG, instance/state/cache roots, and evidence directories separate from the daily deployment. A lock change, worktree migration, successful mock, or file-copy check does not authorize production sync/apply or a launcher change.
+
 ## Evidence and final review
 
 Record the candidate commit or source digest, target `main` identity, lock identity, platform/environment category, actual argument vector, exit code, result, and sanitized evidence reference. Keep raw logs private. A temporary source digest may identify an uncommitted candidate; bind the final evidence to the prepared commit before integration. Track work as completed, in progress, failed pending decision, or unverified because the environment is unavailable.

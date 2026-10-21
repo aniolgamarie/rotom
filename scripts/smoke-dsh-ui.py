@@ -21,6 +21,7 @@ import tempfile
 import termios
 import threading
 import time
+import tomllib
 import uuid
 
 
@@ -240,9 +241,10 @@ def session_resume_smoke(spec, env, project, instance, state, target, content, r
     resume_picker="NOT RUN", cursor_account="NOT RUN", compaction="NOT RUN", geometry=[[100, 24], [100, 24]])
 
 
-def settings_migration_smoke(spec, env, project, workspace, lock, state, result, transcript):
+def settings_migration_smoke(spec, env, project, workspace, lock, runtime, state, result, transcript):
   """真实首导与重启；仅编辑测试实例的原生用户偏好，不复制真实账号。"""
   from agentcfg import commands
+  from agentcfg.storage import Tree, instance_lock
   prefs = workspace.instance / "user-home/.dsh-tui"
   settings = prefs / "settings.json"
   effort = prefs / "effort.json"
@@ -344,6 +346,9 @@ def settings_migration_smoke(spec, env, project, workspace, lock, state, result,
       applied = commands.apply_candidate(workspace, lock, workspace.candidate(lock.identity))
       assert applied["changes"] == 0
       assert settings.read_bytes() == saved_settings and effort.read_bytes() == saved_effort
+      # apply 投影生产运行包路径；此测试显式使用外部封存包，重启前恢复其公开投影。
+      with Tree(workspace.state_root) as tree, instance_lock(tree):
+        workspace.adapter.prepare_runtime(workspace, runtime)
       result["checks"]["repeat_apply_preserves_native_preferences"] = "PASS"
   assert state["requests"] == 0
   result.update(overall="PASS", stage="complete", settings_shape="version/values/imported",
@@ -385,16 +390,26 @@ def prepare_agentcfg_cli(repo, workspace, machine, runtime, identity, project, e
   return agentcfg_cli_argv(repo, machine, "run", project)
 
 
+def fixture_plugin_override(repo, agent_teams=False):
+  if not agent_teams:
+    return ""
+  defaults = tomllib.loads((repo / "agents/dsh/agent.toml").read_text())["defaults"]["plugins"]
+  return "plugins=" + json.dumps([*defaults, "agent-teams"]) + "\n"
+
+
 def main():
   parser = argparse.ArgumentParser(description=__doc__)
   parser.add_argument("--allow-host", action="store_true")
   parser.add_argument("--runtime", required=True, type=Path)
   parser.add_argument("--evidence", required=True, type=Path)
   parser.add_argument("--agentcfg-cli", action="store_true", help="通过真实 agentcfg apply/sync/run 验收已封存包，不联网安装")
+  parser.add_argument("--agent-teams", action="store_true", help="显式选入 Teams，保留完整默认插件及 Perry；仅与 --agentcfg-cli 使用")
   parser.add_argument("--maid-portrait", action="store_true", help="验证原生女仆立绘及伙伴皮肤优先级，仍使用假模型")
   parser.add_argument("--session-resume", action="store_true", help="验证原生模型偏好、公开 --resume 路由和短工具正文历史")
   parser.add_argument("--settings-migration", action="store_true", help="验证原生设置首导、重启与手动 effort，不调用真实模型")
   args = parser.parse_args()
+  if args.agent_teams and not args.agentcfg_cli:
+    parser.error("--agent-teams 需要 --agentcfg-cli")
   if not args.allow_host:
     parser.error("需要 --allow-host；默认测试不启动第三方宿主")
   if args.agentcfg_cli and (args.session_resume or args.maid_portrait):
@@ -422,6 +437,7 @@ def main():
   cache.mkdir(mode=0o700, parents=True, exist_ok=True)
   result = {"kind": "native-pty-simulated-local-model", "stage": "prepare", "checks": {}, "lock_identity": lock.identity,
     "recipe": lock.metadata["recipe"], "platform": sys.platform, "agentcfg_cli": args.agentcfg_cli,
+    "fixture_flags": {"agent_teams": args.agent_teams, "session_resume": args.session_resume, "settings_migration": args.settings_migration},
     "lock_files": {name: hashlib.sha256(value).hexdigest() for name, value in (("package.json", lock.package),
       ("package-lock.json", lock.resolution), ("pnpm-lock.yaml", lock.installer_resolution)) if value}, "color_environment": "COLORTERM=truecolor",
     "ssh": "NOT RUN", "tmux": "NOT RUN", "real_accounts": "NOT RUN"}
@@ -451,7 +467,8 @@ def main():
       machine.write_text('schema_version=1\n[machine]\nid="native-ui"\n[overrides.providers.fixture]\nprotocol="openai-compatible"\n'
         f'base_url="http://127.0.0.1:{server.server_port}/v1"\nauth_kind="api-key"\ncredential_ref="secret:fixture"\n'
         '[overrides.models.fixture]\nprovider="fixture"\nremote_id="fixture-not-real"\ninput=["text"]\n'
-        '[overrides.profiles.dsh-default]\nproviders=["fixture"]\nmodels=["fixture"]\n[overrides.profiles.dsh-default.roles]\nmain="fixture"\n'
+        '[overrides.profiles.dsh-default]\n' + fixture_plugin_override(repo, args.agent_teams) +
+        'providers=["fixture"]\nmodels=["fixture"]\n[overrides.profiles.dsh-default.roles]\nmain="fixture"\n'
         f'[secrets]\nfixture={json.dumps(key)}\n')
       machine.chmod(0o600)
       if args.settings_migration:
@@ -489,7 +506,7 @@ def main():
       result.update(argv=launch_argv, native_argv=list(spec.argv), candidate_digest=candidate.generation)
       if args.settings_migration:
         result.update(candidate_digest=candidate.generation, node=node)
-        settings_migration_smoke(spec, child_env, project, workspace, lock, state, result, transcript)
+        settings_migration_smoke(spec, child_env, project, workspace, lock, native_runtime, state, result, transcript)
       elif args.session_resume:
         result.update(candidate_digest=candidate.generation, node=node)
         session_resume_smoke(spec, child_env, project, workspace.instance, state, target, content, result, transcript)
@@ -545,6 +562,30 @@ def main():
           result["checks"]["native_maid_chat_header"] = "PASS"
         result["checks"]["welcome_empty_enter_no_model_call"] = "PASS"
         result["checks"]["native_ui_ready"] = "PASS"
+        if args.agent_teams:
+          result["stage"] = "ui.team-status"
+          start = len(transcript)
+          os.write(master, b"/team status\r")
+          def team_status_visible():
+            text = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", transcript[start:].decode(errors="replace"))
+            return (("Team bundle: on" in text and re.search(r"Team service: run(?:n|\x1b\[1C)ing", transcript[start:].decode(errors="replace"))) or
+              ("团队 bundle：已开启" in text and "团队服务：运行中" in text))
+          wait(team_status_visible, 15)
+          result["team_status"] = {"bundle": "on", "service": "running", "command": "/team status"}
+          result["checks"]["team_bundle_and_service_running"] = "PASS"
+          os.write(master, b"\x1b")
+          for _ in range(5):
+            pump()
+          start = len(transcript)
+          os.write(master, b"/auto-review status\r")
+          wait(lambda: any(value in transcript[start:].decode(errors="replace") for value in
+            ("Auto-review is ON", "本会话的自动审查已开启")), 15)
+          result["checks"]["perry_status_on_with_teams"] = "PASS"
+          os.write(master, b"\x1b")
+          for _ in range(5):
+            pump()
+          if state["requests"]:
+            raise RuntimeError("STATUS_COMMAND_SENT_TO_MODEL")
         result["stage"] = "ui.paste-tool"
         os.write(master, "\x1b[200~中文第一行\n第二行 TASK_MARKER\x1b[201~".encode())
         wait(lambda: b"TASK_MARKER" in transcript, 5)

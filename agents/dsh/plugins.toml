@@ -2,7 +2,7 @@ schema_version = 1
 
 [plugins.tui]
 package = "@deepseek-harness-tui/dsh-tui"
-version = "0.15.0"
+version = "0.16.1"
 bundled = false
 enabled = true
 requires = []
@@ -10,7 +10,7 @@ conflicts = []
 
 [plugins.codex-auth]
 package = "@deepseek-harness-tui/dsh-tui"
-version = "0.15.0"
+version = "0.16.1"
 bundled = true
 enabled = true
 requires = ["tui"]
@@ -18,7 +18,7 @@ conflicts = []
 
 [plugins.cursor-auth]
 package = "rotom-dsh-cursor-terminal"
-version = "0.1.2"
+version = "0.1.3"
 commit = "936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8"
 bundled = false
 enabled = true
@@ -27,8 +27,8 @@ conflicts = []
 
 [plugins.auto-review]
 package = "dsh-auto-review"
-version = "0.12.17"
-commit = "2b931b8375f9ee9ebe20e80ef336c69804e1aac0"
+version = "0.13.7"
+commit = "c49f850aeb734f2f1f2f06de6546b22f3dc8f22f"
 bundled = false
 enabled = true
 requires = ["tui", "review-context"]
@@ -36,7 +36,7 @@ conflicts = []
 
 [plugins.review-context]
 package = "rotom-dsh-review-context"
-version = "0.1.1"
+version = "0.2.0"
 bundled = true
 enabled = true
 requires = ["tui"]
@@ -60,8 +60,16 @@ conflicts = []
 
 [plugins.ssh-subscription-auth]
 package = "rotom-dsh-ssh-subscription-auth"
-version = "0.1.0"
+version = "0.1.1"
 bundled = false
 enabled = true
 requires = []
+conflicts = []
+
+[plugins.agent-teams]
+package = "@deepseek-ai/dsh-experimental-agent-team-profile"
+version = "0.2.1-rc.2"
+bundled = false
+enabled = true
+requires = ["tui"]
 conflicts = []

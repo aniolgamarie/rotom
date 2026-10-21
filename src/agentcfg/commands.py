@@ -315,6 +315,9 @@ def cmd_doctor(args):
     features = getattr(w.adapter, "feature_readiness", None)
     if features is not None:
       result["feature_readiness"] = features(w.resolved.data)
+    approvals = getattr(w.adapter, "approval_diagnostics", None)
+    if approvals is not None:
+      result["approval_review"] = approvals(w.resolved.data)
     output(w, "doctor", result, args=args)
     print("doctor: 依赖锁缺失或校验失败（退出码 2）；请核对仓库锁文件。", file=sys.stderr)
     print("仅在需要重新解析依赖版本时执行：\n  " + command_line(args, "lock", "--agent", w.agent), file=sys.stderr)
@@ -330,6 +333,9 @@ def cmd_doctor(args):
   features = getattr(w.adapter, "feature_readiness", None)
   if features is not None:
     result["feature_readiness"] = features(w.resolved.data)
+  approvals = getattr(w.adapter, "approval_diagnostics", None)
+  if approvals is not None:
+    result["approval_review"] = approvals(w.resolved.data)
   if getattr(args, "environment", False):
     result["environment"] = runtime.environment_diagnostics(w, saved["current"])
   identity_report = getattr(w.adapter, "identity_diagnostics", None)

@@ -12,14 +12,14 @@ const manifest = (resolve, name) => JSON.parse(readFileSync(resolve.resolve(`${n
 const fail = () => { throw new Error("managed runtime package versions or module identities differ"); };
 for (const [name, version] of Object.entries(expected)) {
   const actual = manifest(require, name);
-  const localVersion = { "@deepseek-harness-tui/dsh-tui": "0.15.0", "rotom-dsh-cursor-terminal": "0.1.2", "rotom-dsh-review-context": "0.1.1",
+  const localVersion = { "rotom-dsh-cursor-terminal": "0.1.3", "rotom-dsh-review-context": "0.2.0",
     "rotom-dsh-execution-environment": "0.1.1", "rotom-dsh-ssh-shell-env": "0.1.0",
-    "rotom-dsh-ssh-subscription-auth": "0.1.0" }[name];
+    "rotom-dsh-ssh-subscription-auth": "0.1.1" }[name];
   if (actual.name !== name || actual.version !== (localVersion ?? version)) fail();
 }
 if (manifest(require, "@deepseek-ai/cordis").version !== "4.0.5"
     || manifest(require, "@deepseek-ai/schemastery").version !== "3.18.5"
-    || manifest(require, "@deepseek-harness-tui/dsh-tui").version !== "0.15.0") fail();
+    || manifest(require, "@deepseek-harness-tui/dsh-tui").version !== "0.16.1") fail();
 const tui = createRequire(require.resolve("@deepseek-harness-tui/dsh-tui/package.json"));
 const thin = createRequire(require.resolve("rotom-dsh-cursor-terminal"));
 const cursor = createRequire(thin.resolve("dsh-cursor-subscription"));
@@ -50,7 +50,14 @@ const { LlmAdapter } = await import(pathToFileURL(require.resolve("@deepseek-ai/
 const { CursorAdapter } = await import(pathToFileURL(cursor.resolve("dsh-cursor-subscription")));
 const { TerminalCursorAdapter } = await import(pathToFileURL(require.resolve("rotom-dsh-cursor-terminal")));
 const review = await import(pathToFileURL(require.resolve("dsh-auto-review")));
-if (manifest(perry, "dsh-auto-review").version !== "0.12.17" || typeof review.apply !== "function") fail();
+if (manifest(perry, "dsh-auto-review").version !== "0.13.7" || typeof review.apply !== "function") fail();
+const reviewerRestriction = await import(pathToFileURL(require.resolve("rotom-dsh-review-context/reviewer")));
+if (typeof reviewerRestriction.apply !== "function") fail();
+for (const name of ["dsh-agent-preset", "dsh-agent-tool-presentation", "dsh-tools"]) {
+  const packageName = "@deepseek-ai/" + name;
+  if (manifest(reviewContext, packageName).version !== "0.2.1-rc.2"
+      || realpathSync(reviewContext.resolve(packageName)) !== realpathSync(require.resolve(packageName))) fail();
+}
 // 原生 preset 的文件搜索/jobs 和 spill 路径也必须能导入，不能只验证顶层 SDK。
 for (const name of ["dsh-command-feedback", "dsh-spill-local", "dsh-spill-policy", "dsh-tool-fs-search", "dsh-tool-jobs"]) {
   await import(pathToFileURL(require.resolve("@deepseek-ai/" + name)));
@@ -58,6 +65,22 @@ for (const name of ["dsh-command-feedback", "dsh-spill-local", "dsh-spill-policy
 for (const name of ["dsh-tmux-context", "dsh-experimental-worktree", "dsh-experimental-tool-worktree",
   "dsh-headless", "dsh-ssh", "dsh-fs-ssh", "dsh-subprocess-ssh", "dsh-sandbox-ssh"]) {
   await import(pathToFileURL(require.resolve("@deepseek-ai/" + name)));
+}
+// Teams 只验证公开入口和共享服务身份；这里不挂载插件或启动成员。
+for (const [name, services] of [
+  ["dsh-experimental-agent-team-profile", ["cordis", "dsh-experimental-agent-team", "dsh-experimental-tool-agent-team", "dsh-experimental-client-ui-agent-team"]],
+  ["dsh-experimental-agent-team", ["cordis", "schemastery", "dsh-agent", "dsh-session", "dsh-subagent", "dsh-llm", "dsh-brand", "dsh-session-projection", "dsh-session-persistence"]],
+  ["dsh-experimental-tool-agent-team", ["cordis", "schemastery", "dsh-agent", "dsh-tools", "dsh-session", "dsh-system-prompt", "dsh-experimental-agent-team"]],
+  ["dsh-experimental-client-ui-agent-team", ["cordis"]],
+]) {
+  const packageName = "@deepseek-ai/" + name;
+  if (manifest(require, packageName).version !== "0.2.1-rc.2") fail();
+  await import(pathToFileURL(require.resolve(packageName)));
+  const team = createRequire(require.resolve(packageName));
+  for (const service of services) {
+    const dependency = "@deepseek-ai/" + service;
+    if (realpathSync(team.resolve(dependency)) !== realpathSync(require.resolve(dependency))) fail();
+  }
 }
 const { ShellEnvRegistry } = await import(pathToFileURL(require.resolve("@deepseek-ai/dsh-shell-env")));
 const { default: SshShellEnvRegistry } = await import(pathToFileURL(require.resolve("rotom-dsh-ssh-shell-env")));

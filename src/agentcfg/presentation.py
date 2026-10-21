@@ -379,6 +379,22 @@ def _render_doctor(payload, args, stream):
       decision = {"held": "暂停准入", "candidate": "候选"}.get(value.get("decision"), "未知")
       rows.append((label, status + "；" + decision))
     _write_fields(rows, stream)
+  approvals = payload.get("approval_review")
+  if isinstance(approvals, dict) and approvals.get("scope") == "configuration-preview":
+    print("审批配置预览（不代表当前会话状态）:", file=stream)
+    def approval_number(name):
+      value = approvals.get(name)
+      return value if type(value) is int and value >= 0 else "未知"
+    enabled = approvals.get("enabled") is True
+    escalation = approvals.get("sandbox_escalation") is True
+    _write_fields((("Perry 配置", "启用" if enabled else "停用"),
+      ("待批沙箱提权", "AI 审查" if enabled and escalation else "人工处理"),
+      ("审查超时（毫秒）", approval_number("reviewer_timeout_ms")),
+      ("每回合审查预算", approval_number("max_reviews_per_turn")),
+      ("每回合失败预算", approval_number("max_failures_per_turn")),
+      ("审查失败", "转人工" if approvals.get("fallback_policy") == "delegate" else "未知"),
+      ("完整 AI 判决持久审计", "不支持" if approvals.get("persistent_verdict_audit") == "unsupported" else "未验证"),
+      ("当前会话的实际分流与回退原因", "未检查")), stream)
   if live:
     _write_fields((("在线服务检查", service_counts.get("total")),
       ("HTTP 可达", service_counts.get("reachable")), ("未验证", service_counts.get("unverified")),

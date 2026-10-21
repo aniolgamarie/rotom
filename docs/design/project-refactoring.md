@@ -43,12 +43,13 @@ Confirmed means baseline code or locked-source behavior; completion is listed be
 | TERM-01 / High | [cli.py](../../src/termcfg/cli.py) dispatches mihomo operations and reads its lock for general operations; [preview.py](../../src/termcfg/preview.py) always includes its output. State and recovery also encode proxy effects. | Remove the full dependency and recovery coupling, with a migration path for existing machines. |
 | LEASE-01 / High | Existing [lease lifecycle issue](../known-issues.md): descendant processes can retain inherited descriptors after foreground exit. | Preserve active-host protection while defining descriptor/process lifetime; do not delete locks or kill unrelated holders. |
 
-### DSH native-source evidence
+### DSH native-source evidence (historical reviewed baseline)
 
-The [locked DSH recipe](../dsh.md#packages-and-reproducibility) and
-[manifest](../../locks/dsh/manifest.json) identify Core RC2, TUI `0.15.0`, and
-Perry `0.12.17`. The following package-relative source evidence is not a new native
-acceptance result; native concurrency results are recorded separately below.
+At the reviewed `6e9513a` baseline, the locked DSH recipe identified Core RC2,
+TUI `0.15.0`, and Perry `0.12.17`. The current recipe and manifest have since changed;
+see the [2026-10-21 ecosystem record](../acceptance/dsh-ecosystem-upgrade-20261021.md). The following
+package-relative source evidence is historical, not a new native acceptance result;
+native concurrency results for that baseline are recorded separately below.
 
 - TUI `lib/types/sessionMounts.js` (530–573, 614–631, 678–705) uses a cross-process
   mount ledger; Core RC2 `@deepseek-ai/dsh-session-persistence-jsonl/lib/index.js`
@@ -526,7 +527,7 @@ options can execute code. Retain existing preload, credential and identity guard
 Native shell functions and aliases are not promised by environment inheritance.
 Native state isolation is not general credential, network or same-user isolation.
 
-### Adapter feasibility and adoption order
+### Adapter feasibility and adoption order (historical baseline)
 
 | Adapter | Confirmed baseline | Implementation and gate |
 | --- | --- | --- |
@@ -816,8 +817,8 @@ other platforms and other Pi profile-native combinations remain unverified.
 
 ### Environment acceptance results
 
-The implementation is based on `93cac69`. Linux x86_64 acceptance uses Node
-24.14.0 and npm 11.19.1. Upstream pins remain DSH `0.2.0-rc.2`, TUI `0.15.0`,
+This historical 2026-10-16 implementation was based on `93cac69`. Its Linux
+x86_64 acceptance used Node 24.14.0 and npm 11.19.1. Its upstream pins were DSH `0.2.0-rc.2`, TUI `0.15.0`,
 Cursor subscription `0.6.12`, Perry auto-review `0.12.17`, Pi SDK `0.84.4` and
 official OMP `18.8.6`; DSH remains a prerelease host. The new repository-owned
 public extension is `rotom-dsh-execution-environment@0.1.0`.

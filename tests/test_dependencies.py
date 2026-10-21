@@ -8,6 +8,7 @@ import io
 import json
 import shutil
 import tarfile
+import tomllib
 import yaml
 
 import pytest
@@ -178,7 +179,7 @@ def test_pnpm_only_lock_rejects_unexpected_npm_lock_and_plugin_drift(tmp_path):
     dep.read_lock(repository)
   unexpected.unlink()
   document = yaml.safe_load(lock.installer_resolution)
-  document["packages"].pop("dsh-auto-review@0.12.17")
+  document["packages"].pop("dsh-auto-review@0.13.7")
   with pytest.raises(DependencyError):
     dep.validate_installer_plugin_versions(repository, yaml.safe_dump(document).encode())
 
@@ -437,3 +438,34 @@ def test_tui_source_archive_requires_matching_immutable_receipt(tmp_path, change
   receipt.write_text(json.dumps(document))
   with pytest.raises(DependencyError, match="来源收据"):
     dep.tui_source_receipt(tmp_path, policy)
+
+
+def test_current_recipe_uses_official_tui_and_opt_in_agent_teams():
+  policy = dep.lock_policy(REPO)
+  plugins = tomllib.loads((REPO / "agents/dsh/plugins.toml").read_text())["plugins"]
+  agent = tomllib.loads((REPO / "agents/dsh/agent.toml").read_text())
+  assert policy["packages"]["@deepseek-harness-tui/dsh-tui"] == "0.16.1"
+  assert policy["upstream"]["tui"] == agent["tui_commit"] == "73ff99fbed56563bf154d719effd09f9f9725349"
+  assert plugins["tui"]["version"] == plugins["codex-auth"]["version"] == "0.16.1"
+  assert dep.tui_source_receipt(REPO, policy) == b""
+  assert "agent-teams" not in agent["defaults"]["plugins"]
+  assert plugins["agent-teams"] == {"package": "@deepseek-ai/dsh-experimental-agent-team-profile",
+    "version": "0.2.1-rc.2", "bundled": False, "enabled": True, "requires": ["tui"], "conflicts": []}
+  for name in ("dsh-experimental-agent-team-profile", "dsh-experimental-agent-team",
+      "dsh-experimental-tool-agent-team", "dsh-experimental-client-ui-agent-team"):
+    assert policy["packages"]["@deepseek-ai/" + name] == "0.2.1-rc.2"
+    assert "@deepseek-ai/" + name + "@0.2.1-rc.2" in policy["minimum_release_age_exclude"]
+
+
+@pytest.mark.parametrize("directory, version", [("cursor-terminal", "0.1.3"), ("ssh-subscription-auth", "0.1.1")])
+def test_declared_wrapper_metadata_requires_matching_archive(tmp_path, directory, version):
+  repository = lock_repository(tmp_path)
+  path = repository / "agents/dsh/packages" / directory / "package.json"
+  metadata = json.loads(path.read_bytes())
+  assert metadata["version"] == version
+  assert metadata["peerDependencies"]["@deepseek-harness-tui/dsh-tui"] == "0.16.1"
+  dep.recipe_digest(repository)
+  metadata["peerDependencies"]["@deepseek-harness-tui/dsh-tui"] = "0.0.0"
+  path.write_text(json.dumps(metadata))
+  with pytest.raises(DependencyError, match="重新打包"):
+    dep.recipe_digest(repository)

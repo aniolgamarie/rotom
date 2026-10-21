@@ -1,6 +1,6 @@
 # DSH user guide
 
-rotom maintains the interactive **`dsh-default`** recipe and a separate **`dsh-ssh`** headless remote-workspace recipe, using unmodified upstream packages and small repository-owned public-API adapters. The interactive defaults are native **workspace-write + ask**, with Perry auto-review enabled for eligible pending write/edit requests. The selected upgrade candidate uses Core `0.2.1-rc.2` and a fixed TUI main commit built through the upstream publishing flow. Frozen installation and public module identity checks passed for the initial candidate; native host, account and platform acceptance remain pending. The user accepted lifecycle and audit limitations for the previous daily deployment on 2026-10-14; that acceptance does not establish acceptance of this candidate. See [known issues](known-issues.md), [testing](testing.md), and [releases](releases.md).
+rotom maintains the interactive **`dsh-default`** recipe and a separate **`dsh-ssh`** headless remote-workspace recipe, using unmodified upstream packages and small repository-owned public-API adapters. The interactive defaults are native **workspace-write + ask**, with Perry auto-review configured for eligible pending write/edit requests and targeted native single-operation sandbox escalation requests. The selected candidate uses Core `0.2.1-rc.2` and the official npm TUI `0.16.1` package. Frozen installation, public module identity checks, isolated Linux Perry file/Bash/manual/timeout cases, and the TUI session-resume, settings-migration, and agentcfg CLI scenarios passed with fictional models. Real accounts, external model services, and broader platform acceptance remain unverified. See the [ecosystem acceptance record](acceptance/dsh-ecosystem-upgrade-20261021.md). The user accepted lifecycle and audit limitations for the previous daily deployment on 2026-10-14; that acceptance does not establish a lifecycle or audit fix in this candidate. See [known issues](known-issues.md), [testing](testing.md), and [releases](releases.md).
 
 The [selected upgrade follow-up plan](acceptance/dsh-plugin-ssh-assessment-20261017.md#selected-upgrade-scope) is implemented in the candidate worktree: local TUI selects official tmux location context and experimental Git Worktrees, while [SSH remote work](dsh-ssh.md) uses a separate headless composition. These are repository changes, not deployed instances. Tmux notification changes and Web access remain deferred.
 
@@ -15,26 +15,27 @@ Legacy patched instances must not receive an in-place apply of this configuratio
 | Component | Pinned version | Source/boundary |
 | --- | --- | --- |
 | DSH Core | `0.2.1-rc.2` | `687f282e8625c6b8d11ff58211a90524be2e4317`; prerelease |
-| TUI | `0.15.0` source build | `e709863019d56897e64495699c3a945cce194d00`; fixed upstream main commit, not the npm `0.15.0` archive |
+| TUI | Official npm `0.16.1` | gitHead `73ff99fbed56563bf154d719effd09f9f9725349`; original published archive, pinned by the complete lock |
 | Cursor provider | `dsh-cursor-subscription@0.6.12` | `936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8`; original package |
-| Terminal adapter | `rotom-dsh-cursor-terminal@0.1.2` | `agents/dsh/packages/cursor-terminal`; public TUI QuestionBridge, no copied OAuth/wire implementation |
-| SSH subscription adapter | `rotom-dsh-ssh-subscription-auth@0.1.0` | Host-side Codex/Cursor authentication and providers for the headless SSH profile; [setup and manual helper installation](dsh-ssh.md) |
+| Terminal adapter | `rotom-dsh-cursor-terminal@0.1.3` | `agents/dsh/packages/cursor-terminal`; public TUI QuestionBridge, no copied OAuth/wire implementation |
+| SSH subscription adapter | `rotom-dsh-ssh-subscription-auth@0.1.1` | Host-side Codex/Cursor authentication and providers for the headless SSH profile; [setup and manual helper installation](dsh-ssh.md) |
 | Authentication | TUI `./oauth` | Only `openai-codex`; not the old standalone dsh-auth package |
-| AI approval | `dsh-auto-review@0.12.17` | Original [Perry package](https://github.com/PerryLink/dsh-auto-review/releases/tag/v0.12.17), SHA `2b931b8375f9ee9ebe20e80ef336c69804e1aac0` |
-| Review context | `rotom-dsh-review-context@0.1.1` | Constant configuration context; no file/environment/account reads or authority grants |
+| AI approval | `dsh-auto-review@0.13.7` | Official unmodified [Perry package metadata](https://registry.npmjs.org/dsh-auto-review/0.13.7), gitHead `c49f850aeb734f2f1f2f06de6546b22f3dc8f22f` |
+| Review context | `rotom-dsh-review-context@0.2.0` | Constant context tool and public reviewer preset; current Perry/Core combination reviews inline without tools |
 | Execution environment | `rotom-dsh-execution-environment@0.1.1` | Public subprocess provider API; peer aligned to Core RC |
+| Optional Agent Teams | Official four-package `0.2.1-rc.2` bundle | Explicit `agent-teams` selection; bounded isolated Linux native acceptance passed |
 | Shared runtime | Cordis `4.0.5`, Schemastery `3.18.5` | Stable versions satisfying Perry's peer floor; public module identities checked |
 | Toolchain | Node `24.14.0`, npm `11.19.1`, pnpm `11.19.0` | pnpm original archive pinned by integrity; no global install |
 
-`locks/dsh/pnpm-lock.yaml` is the sole complete installation lock; manifest v2 declares `resolution_kind=pnpm`. No force, legacy-peer-deps, overrides, or deleted peer declaration is used. There is no npm-ci path for this recipe. Published Cursor peers still name the older DSH prerelease line, and optional plugin peer warnings remain; successful installation and public module imports do not establish whole-tree peer agreement or account behavior.
+`locks/dsh/pnpm-lock.yaml` is the sole complete installation lock; manifest v2 declares `resolution_kind=pnpm`. No force, legacy-peer-deps, overrides, or deleted peer declaration is used. There is no npm-ci path for this recipe. Some published peer ranges still name older DSH prereleases; successful installation and public module imports do not establish whole-tree peer agreement or account behavior.
 
-The TUI source build retains upstream version `0.15.0`, so version text alone cannot distinguish it from the older npm release. The declared `file:vendor` archive, immutable commit, integrity and [build receipt](../locks/dsh/vendor/tui-main-provenance.json) enter the recipe identity. The source and fixed submodule were unchanged; the official publishing wrapper prepared the package manifest and restored it afterward. Repeated packing produced identical bytes, without a second independent clean build. The receipt records the separate source-build toolchain, commands and limitations.
+The former TUI `0.15.0` source-build archive at `e709863019d56897e64495699c3a945cce194d00` and its [build receipt](../locks/dsh/vendor/tui-main-provenance.json) remain historical evidence. They are not inputs to the current recipe. The selected TUI is the unmodified official npm `0.16.1` archive; its exact resolution and integrity are in the complete pnpm lock.
 
 Sync verifies the pnpm archive's SHA-512 and uses the fixed installer with `--frozen-lockfile --ignore-scripts --node-linker=hoisted --package-import-method=copy`. The reviewed native preparation step is official `ensure-spawn-helper.mjs`, setting the packaged helper executable. Apply/run do not install or follow latest.
 
-pnpm's release-age policy records 301 exact package/version exceptions for the selected Core `0.2.1-rc.2` cohort in lock-policy/manifest and lock identity. Each must occur in the complete lock; wildcards, other releases and unrelated packages are rejected. `minimumReleaseAgeStrict` prevents automatic expansion during resolution, and a changed installer policy rejects publication. The temporary public pnpm-workspace.yaml is removed after installation; global pnpm settings are unchanged.
+pnpm's release-age policy records exact package/version exceptions for the selected Core `0.2.1-rc.2` cohort and official TUI `0.16.1` in lock-policy/manifest and lock identity. Each must occur in the complete lock; wildcards, other releases and unrelated packages are rejected. `minimumReleaseAgeStrict` prevents automatic expansion during resolution, and a changed installer policy rejects publication. The temporary public pnpm-workspace.yaml is removed after installation; global pnpm settings are unchanged.
 
-Peer checks still warn about disabled working-activity and experimental Web UI. Working-activity dynamically changes Session event tables and is disabled; TUI supplies its own spinner, chat, cards, and status. Experimental Agent Teams and voice are not enabled. Runtime identity/native loading evidence is narrower than a clean whole-tree peer check.
+Working-activity remains disabled; TUI supplies its own spinner, chat, cards, and status. Experimental Agent Teams is available only by explicit selection below; voice is not enabled. Runtime identity/native loading evidence is narrower than a clean whole-tree peer check.
 
 ## Setup and startup
 
@@ -129,17 +130,44 @@ admission does not alter sandbox or Perry approval coverage and accepted limitat
 
 Only one Cursor login should be pending per instance. The private link file is
 published exclusively and a collision is reported rather than replacing another
-attempt. TUI 0.15 inject discovery can lose concurrent registration updates because
-upstream rewrites a shared discovery file without a lock. Session persistence uses a
+attempt. Historical TUI 0.15 source review found that inject discovery could lose
+concurrent registration updates through an unlocked shared-file rewrite. Concurrent
+discovery behavior has not been revalidated for 0.16.1. Session persistence uses a
 different native writer lease; do not equate discovery loss with corrupted sessions.
 Use the foreground TUI for the affected session instead of assuming external inject
 discovery is reliable across simultaneous launches. See [known issues](known-issues.md).
+
+## Optional Agent Teams
+
+`agent-teams` selects the official `@deepseek-ai/dsh-experimental-agent-team-profile` bundle. Its service, tool, and client UI packages are fixed to `0.2.1-rc.2`. It is installed by the complete lock but omitted from the default plugin selection. Isolated Linux acceptance passed OFF/ON, fresh/fork members, messaging, task revisions, clean restart persistence, and the combined TUI/Perry flow. See the [ecosystem acceptance record](acceptance/dsh-ecosystem-upgrade-20261021.md) for exact scope and remaining limits.
+
+Edit the existing machine profile table rather than creating a duplicate TOML table. `plugins` replaces the whole selection: retain the default plugins from `agents/dsh/agent.toml` and add `agent-teams`:
+
+```toml
+[overrides.profiles.dsh-default]
+plugins = ["tui", "codex-auth", "cursor-auth", "auto-review", "review-context", "tmux-context", "git-worktrees", "agent-teams"]
+```
+
+Do not replace the list with only `agent-teams`. Preserve any other explicitly selected plugins that the machine needs. Stop all runs of the selected instance before maintenance, then use the normal workflow:
+
+```sh
+./agentcfg --machine workstation --profile dsh-default plan
+./agentcfg --machine workstation --profile dsh-default sync
+./agentcfg --machine workstation --profile dsh-default apply
+./agentcfg --machine workstation --profile dsh-default run --cwd /path/to/workspace
+```
+
+The selection is stored in a managed deployment file; future launches read the deployed flag. To disable it, remove `agent-teams` from the same complete list and repeat maintenance after all runs stop. Existing shared-run admission and maintenance leases remain in force; selecting Teams does not terminate or reconfigure an active process.
+
+With the bundle selected, `/team status` reports native state. Native `/team on` and `/team off` are unsupported in a managed instance because they write the profile manifest and cause drift. Use Rotom maintenance to change selection.
+
+Teams provides named durable teammates, a shared workspace, task updates guarded by version checks (CAS), and inbox messages. Task claims are not file locks, cross-process exclusion, or exactly-once execution. They do not automatically release a task after a teammate fails. Coordinate workspace writers and explicitly resolve abandoned tasks; Teams does not replace the instance's lifecycle protections.
 
 ## Settings and preference ownership
 
 Defaults use the native DSH kernel, standard preset, Catppuccin Mocha, the native welcome screen, and whale branding. `agent_options.show_welcome=false` skips the launchpad through public `DSH_TUI_NO_LAUNCHPAD`. Visual minimal mode is separate from the tools preset; the recipe retains file tools, compaction, and native subagents.
 
-TUI 0.15 uses isolated HOME `.dsh-tui/settings.json` with `version/values/imported`. First launch imports editable defaults from `dsh-home/profiles/agentcfg/cordis.patch.yml`; native user settings take precedence afterward. Rotom does not adopt/reset/delete settings.json or provide bidirectional synchronization. Packaged `lib/settings.json` is a field catalog, not the active file.
+TUI 0.16.1 uses isolated HOME `.dsh-tui/settings.json` with `version/values/imported`. First launch imports editable defaults from `dsh-home/profiles/agentcfg/cordis.patch.yml`; native user settings take precedence afterward. Rotom does not adopt/reset/delete settings.json or provide bidirectional synchronization. Packaged `lib/settings.json` is a field catalog, not the active file.
 
 | Setting group | Ownership |
 | --- | --- |
@@ -179,27 +207,52 @@ Ctrl+T opens trajectory: arrows, PgUp/PgDn, g/G, Enter for detail, q to exit. It
 
 ## AI approval and persistent manual mode
 
-Only a real pending native approval request enters the reviewer. Ordinary sandbox-allowed operations run directly. Hard denies precede AI. Production/external writes, destructive deletion, permission changes, dynamic scripts, unknown tools, or unclear targets require human approval or denial. A single approval is not a general bash/python/make allowlist.
+Only a real pending native approval request enters the reviewer. Ordinary sandbox-allowed commands run directly without an AI review. Hard denies precede AI. The reviewer may assess a single native sandbox escalation for a local build, test, or diagnostic explicitly authorized by the current user, after checking the actual command, targets, and side effects. A “build” or “test” label alone does not establish authorization. External service writes, destructive deletion, system permission changes, unconfirmed script effects, unknown tools, or unclear scope require human approval or denial. AI routing does not mean allow, and a single approval is not a general bash/python/make allowlist.
 
-`agent_options.auto_review=true` loads base → constant review context → Perry → TUI. Perry handles eligible native approval/request events before the human responder. The official Full-access Auto review is not loaded.
+`agent_options.auto_review=true` loads base → constant review context → Perry → TUI. Perry handles eligible native approval/request events before the human responder. Official Full-access Auto review is disabled. Its same-named `auto-review` row must not be stacked with Perry; the managed row selects Perry only. Workspace-write + ask remains the default, and a single approved sandbox escalation does not grant unrestricted bash execution.
 
 | Setting | Effective configuration |
 | --- | --- |
 | enableByDefault | true; new sessions start ON |
-| toolsPolicy | default human; only pending write/edit use AI |
-| reviewerProvider/model | spawn; no fixed reviewerModel, inheriting the current session route without switching paid sources |
-| reviewerTools | `rotom_review_context`, constant explanation only; no read/glob/grep/Shell |
+| toolsPolicy | default human; write/edit overrides use AI; no bash override |
+| riskRules | With sandbox escalation routing enabled, native single-operation escalation reasons use AI; other pending bash and unknown tools remain human |
+| Actual reviewer path | Inline model request without tools or a child Agent; current Perry/Core feature detection selects this path |
+| reviewerProvider/model | Configured spawn; current inline path inherits the most recent real parent request route, with no fixed reviewerModel |
+| reviewerPreset | Configured `rotom-auto-review`; unused by the currently selected inline path |
+| reviewerTools | Configured constant tool list; inline review exposes no tools |
 | contextBudget | Most recent turn, at most 6000 characters; tool/file text saying “approved” does not create user authorization |
-| Timeout/budgets | 30 seconds; up to three reviews and one failure per turn; verdictCacheTtlMs=0 |
+| Timeout/budgets | 90 seconds by default; up to three reviews and one failure per turn; verdictCacheTtlMs=0 |
 | riskPolicy | Only low-risk allow can execute automatically; higher-risk allow delegates to a human |
 | fallbackPolicy | Delegate on timeout, malformed/model errors, or exhausted budget; no execution if human approval is unavailable/fails |
-| allowUnmarkedAudit | false; native asked/decided events persist, but complete Perry verdict/reason remains in memory on this RC |
+| allowUnmarkedAudit | false; complete persistent Perry verdict/fallback audit remains unsupported |
 
-Native file tests observed one write after AI allow; deny, never, high risk, review errors/human failure, and budget exhaustion did not write. Unknown tools used human approval; ordinary workspace writes did not call the reviewer. Manual mode was checked using false → apply → full restart, leaving workspace-write + ask and no registered Perry service/command.
+Perry `0.13.7` checks for the legacy public `subagents.start` method before selecting structured review. Core `0.2.1-rc.2` exposes `startActivation` instead, so the selected combination falls back to inline review. That request has no tools and creates no reviewer child. It needs the latest real `request/header` in the parent session to select a model route; invoking a tool directly in a fresh session without that header falls back to human handling.
 
-The reviewer's native catalog still exposes subagent. At the tested depth=1/maxDepth=1, another valid delegation was rejected and created no child; read attacks were denied and no write/Shell/run_code was presented. That evidence applies to the tested standard/spawn/native presentation only. Changed depth/provider/PTC needs separate verification. Tool allowlists do not prove OS read-root confinement or same-user credential isolation. General normalized read/context-source boundaries remain unproved.
+The repository also registers `rotom-auto-review` through public Agent Preset APIs. Its only plugins are the repository-owned `/reviewer` helper and native tool presentation; the helper restricts tools to `rotom_review_context`. An independent public activation probe exposed only that constant tool and `structured_output`. This verifies the preset separately, not its use by Perry's current approval chain. The preset does not load filesystem, bash, delegation, MCP, or PTC bundles. Neither the probe nor an inline model request establishes OS confinement or same-user credential isolation. See the [integration acceptance record](acceptance/dsh-perry-public-integration-20261021.md).
 
-**Unresolved upstream failures:** OFF can return to ON on the next turn; an in-flight approval may still execute after off or unload; complete Perry verdicts cannot be reconstructed from cold persistent audit. Configuration risk text is not a deterministic Shell/path analyzer. These remain failures despite acceptance for daily use.
+The managed `riskRules` field first routes tool names matching `^(?!(?:bash|write|edit)$)` to human. The next rule matches the native reason with `^escalate sandbox to (?:workspace-write|danger-full-access): .+$` and routes it to AI. Thus only bash, write, and edit reach the reason rule; other tools stay human even with a matching reason. Write/edit retain their AI tool overrides when neither rule matches. Disabling this option writes an empty rule list. It does not change the workspace-write default or grant a general Shell policy.
+
+The first matching risk rule takes precedence over tool overrides. The ordered tool-name gate protects unknown tools, but the subsequent reason rule still matches text rather than a structured request kind; there is no single tool-and-reason condition. A changed native reason can leave bash on the human route. A matching reason is not authorization, and unclear command effects still require delegation under the reviewer policy.
+
+Adjust the existing private machine override tables without duplicating TOML tables:
+
+```toml
+[overrides.profiles.dsh-default.agent_options.auto_review_options]
+sandbox_escalation = true
+reviewer_timeout_ms = 90000
+```
+
+Both fields are optional: omitted values retain the defaults above. `sandbox_escalation` must be a boolean; `reviewer_timeout_ms` must be an integer from 1000 through 300000 milliseconds. Unknown fields fail validation. The separate `agent_options.auto_review` boolean remains the plugin-wide switch; false requires apply and a full restart for persistent manual mode.
+
+Doctor's `approval_review` summary is a configuration preview (`scope=configuration-preview`, `runtime_checked=false`), including whether the plugin is selected and enabled, the configured routing, timeout, budgets, and fallback. It does not establish current-session routing, whether a failure budget was hit, or complete persistent AI verdicts. The public API does not provide complete persistent verdict/fallback auditing; `persistent_verdict_audit=unsupported` preserves that limitation without reading private session internals.
+
+Historical native file tests for Perry `0.12.17`, covered by the previous daily deployment acceptance on 2026-10-14, observed one write after AI allow; deny, never, high risk, review errors/human failure, and budget exhaustion did not write. Unknown tools used human approval; ordinary workspace writes did not call the reviewer. Manual mode was checked using false → apply → full restart, leaving workspace-write + ask and no registered Perry service/command. These results do not validate the new candidate. Current explicitly authorized native acceptance is recorded separately in the integration record.
+
+The current `0.13.7` native fixture passed file allow/deny, high-risk/error fallback, budgets, unknown-tool handling, manual mode, and finite cancellation. For the same outside-workspace Bash command, ordinary execution was denied, explicit AI-approved escalation appended one marker, and a subsequent ordinary attempt was denied with the marker count unchanged. The session stayed `workspace-write + ask`. This used a real host and deterministic fictional model verdicts; real model judgment and account round trips remain separate acceptance. See the [current ecosystem acceptance record](acceptance/dsh-ecosystem-upgrade-20261021.md); the [Perry integration record](acceptance/dsh-perry-public-integration-20261021.md) preserves the earlier integration evidence and limits.
+
+In the historical Perry `0.12.17` real-host tests, the reviewer's native catalog exposed subagent. At the tested depth=1/maxDepth=1, another valid delegation was rejected and created no child; read attacks were denied and no write/Shell/run_code was presented. That evidence applies to the tested standard/spawn/native presentation only. Changed depth/provider/PTC needs separate verification. Tool allowlists do not prove OS read-root confinement or same-user credential isolation. General normalized read/context-source boundaries remain unproved.
+
+**Unresolved historical upstream failures:** Perry `0.12.17` could reset OFF to ON on the next turn and execute an in-flight approval after off or unload; complete verdicts could not be reconstructed from cold persistent audit. The `0.13.7` candidate has not received native revalidation of these cases, and this integration claims no lifecycle or persistent-audit fix. Configuration risk text is not a deterministic Shell/path analyzer. Retain these limitations pending evidence.
 
 ```text
 /auto-review status
@@ -238,7 +291,7 @@ Cursor internal POST retry and provider recovery are both zero: one attempt avoi
 | Channel | Boundary |
 | --- | --- |
 | File tools | Native ToolRuntime/file policy; only pending write/edit can use AI review. |
-| Shell | Pending approvals are human; native sandbox-allowed actions can execute directly. External/link sentinel denial does not prove every command is AI-reviewed. |
+| Shell | Only pending native single-operation sandbox escalation reasons matching riskRules are routed to AI when enabled; other pending bash requests remain human. Native sandbox-allowed commands execute without AI. External/link sentinel denial does not prove every command is AI-reviewed. |
 | MCP | Pending approval defaults human; local file sandbox does not confine remote effects. Real service interactions remain separately unverified. |
 | Native subagents | Native tool filters/inheritance; parent approval does not audit every child action. Independent read roots are not established. |
 | External kernels | Their own native authentication/permissions; DSH plugin coverage is not implied. |
