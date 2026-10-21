@@ -12,7 +12,7 @@
 
 从仓库根使用已准备的Python >=3.11 `.venv`，不使用隐式安装入口。Linux端点固定依赖procfs/O_PATH，应先用自有临时Unix socket验证能力，缺失退出5，不降级到按路径重连。支持声明仍须绑定实际服务器平台与客户端组合；已验macOS客户端不代表macOS服务器支持，其他组合不能外推。
 
-先核对 [spec.md](spec.md)、[data-model.md](data-model.md)、[work-cli](contracts/work-cli.md)、[configuration](contracts/configuration.md) 和 [benchmark](contracts/benchmark.md)。准备虚构Git项目、linked worktree、空格/中文/引号路径、非Git目录和状态哨兵；不能复制真实账号、会话或业务checkout到fixture。
+先核对 [spec.md](spec.md)、[data-model.md](data-model.md)、[work-cli](contracts/work-cli.md)、[configuration](contracts/configuration.md) 和 [benchmark](contracts/benchmark.md)。准备虚构Git项目、同一Git仓库的多个项目检出目录、空格/中文/引号路径、非Git目录和状态哨兵；不能复制真实账号、会话或业务项目检出目录到fixture。
 
 默认隔离检查：
 
@@ -24,7 +24,7 @@
 
 至少验证：
 
-- Git子目录/symlink归一，linked worktree分离；非Git在server副作用前退出2；空格/中文/元字符按字面处理。
+- Git子目录/符号链接路径归一，同一仓库的不同项目检出目录各有工作区；非Git在server副作用前退出2；空格/中文/元字符按字面处理。
 - 重复100次及并发2/10调用无重复项目、无错归属；普通用途复用100次新增输入为零，显式新增10次不替换已知primary。
 - 外部或未知上下文普通open与`--new`各10次均退出4，无创建/启动/接管/自动连接；冷恢复unknown默认退出4、显式新增只建立该用途新primary。
 - 移动/关闭/ID复用/换server、超时与创建响应丢失先只读对账，不盲目重试。未决pending阻止新建（包括--new），不覆盖/自动超时回收；已确认primary可只聚焦。冷恢复无pending时unknown的--new规则不变。
@@ -34,7 +34,7 @@
 
 ## 2. 显式选择与预览配置
 
-以下命令为显式部署入口，本次文档集成没有在真实HOME执行。`/opt/rotom`是虚构的仓库绝对路径，运行时替换为实际入口，避免业务cwd中误用`./work`。为示例机器准备独立私人配置，按使用指南准备官方Herdr binary与`machine.editor` / `machine.work`；本指南不公开私人文件正文或位置。已有termcfg选择使用`init-local --edit`并列出全部保留组件及Herdr；`--component`替换完整选择而非追加，不得重新初始化覆盖。按[配置契约](contracts/configuration.md)处理。
+以下命令为显式部署入口，本次文档集成没有在真实HOME执行。`/opt/rotom`是示例 Rotom 安装目录，运行时替换为服务器上的实际安装目录，避免在业务项目目录中误用`./work`。为示例机器准备独立私人配置，按使用指南准备官方Herdr binary与`machine.editor` / `machine.work`；本指南不公开私人文件正文或位置。已有termcfg选择使用`init-local --edit`并列出全部保留组件及Herdr；`--component`替换完整选择而非追加，不得重新初始化覆盖。按[配置契约](contracts/configuration.md)处理。
 
 ```sh
 /opt/rotom/termcfg --machine test-machine init-local --component zsh --component herdr
@@ -49,7 +49,7 @@
 
 `ID`在此表示上一条实际返回的计划标识，不是可直接复制的固定值。部署不得安装binary、停止活动实例或接管整个配置目录。已有私人Herdr文件需要显式采用；不以覆盖解决冲突。未选择Herdr的机器继续原有zsh/tmux行为。
 
-只拥有声明的Herdr配置文件。默认静态配置设 `terminal.default_shell="rotom-work-shell"`、`terminal.shell_mode="non_login"`；新server的PATH必须包含仓库根且launcher来源通过检查。`work`启动新server时提供这一PATH，不修改全局shell。已有server未继承PATH时须明确准备/验证，不能假定写了文件即生效。异常HERDR_CONFIG_PATH/XDG指向、旧pending或目标漂移先按配置契约报告/恢复。
+只拥有声明的Herdr配置文件。默认静态配置设 `terminal.default_shell="rotom-work-shell"`、`terminal.shell_mode="non_login"`；新server的PATH必须包含 Rotom 安装目录且launcher来源通过检查。`work`启动新server时提供这一PATH，不修改全局shell。已有server未继承PATH时须明确准备/验证，不能假定写了文件即生效。异常HERDR_CONFIG_PATH/XDG指向、旧pending或目标漂移先按配置契约报告/恢复。
 
 编辑器复用 `machine.editor` 的单一executable；`machine.work`只选择binary/session及已准备的Pi/DSH配方、独立Codex策略。不得另建编辑器配置体系，shell/edit不解析SecretStore。此阶段不运行Avalon/Agent。
 
@@ -57,7 +57,7 @@
 
 仅在用户明确授权原生Herdr测试后，准备未修改官方发行的独立版本化资产、隔离HOME/XDG/socket与专用server，核对资产摘要、磁盘client、实际server、有效配置和公开能力。核对最新stable属于显式选版，不是日常启动联网。当前研究候选不是永久版本限制或通过证据。
 
-在普通SSH终端、旧tmux之外先运行enter，再在所选项目的实际Herdr pane中运行open。每次保持同一`--machine`或同一私人`--local`选择；两者互斥并位于子命令之前。使用合成Git项目演练以下接口，路径按字面传入；`"fixtures/项目 space"`代表事先创建的虚构Git checkout：
+在普通SSH终端、旧tmux之外先运行enter，再在所选项目的实际Herdr pane中运行open。每次保持同一`--machine`或同一私人`--local`选择；两者互斥并位于子命令之前。使用合成Git项目演练以下接口，路径按字面传入；`"fixtures/项目 space"`代表事先创建的虚构Git项目检出目录：
 
 ```sh
 /opt/rotom/work --machine test-machine enter "fixtures/项目 space"
@@ -97,7 +97,7 @@ shell/build/debug只打开人工交互终端，任务由人输入。已有用途
 
 启动仅能发生在新建且提交握手成功的pane，经 `rotom-work-shell` 重建固定argv并exec；已有用途仍只聚焦。底层复用现有入口，参数顺序是 `./agentcfg [selectors] --profile PROFILE run pi|dsh --cwd ROOT`，selectors必须在`run`之前，不新增Codex配置适配器。独立Codex默认不共享daemon，不改变Pi委托或已有daemon。
 
-逐项核对实际checkout、配置/账号/state身份，无额外安装或迁移。Avalon审查只在用户显式刷新后交接选定文件到同checkout的明确目标，关闭审查保留已保存导出。关闭所有状态增强后重跑核心流程；状态提示不得判定任务完成、发送操作或清理终端。某项无法在现有权限内接入则保持关闭，不扩socket/终端控制权限。
+逐项核对实际项目检出目录、配置/账号/state身份，无额外安装或迁移。Avalon审查只在用户显式刷新后交接选定文件到同一项目检出目录的明确目标，关闭审查保留已保存导出。关闭所有状态增强后重跑核心流程；状态提示不得判定任务完成、发送操作或清理终端。某项无法在现有权限内接入则保持关闭，不扩socket/终端控制权限。
 
 ## 5. 显式基准与首轮校准
 
@@ -122,7 +122,7 @@ shell/build/debug只打开人工交互终端，任务由人输入。已有用途
 
 首轮只评价正确性、必需数据、已校准绝对预算；实际通过对应范围验收后才能形成首基线，不声称A/B升级回归通过。后续有已验收A时，冻结分别用于runtime与full-stack的manifest，按同机预注册顺序一次配对采集：`run --subject candidate --scope runtime --output bench/candidate.json --paired-output bench/baseline.json`（其余manifest/policy/授权参数同上），full-stack另建对应manifest与报告。compare增加`--baseline bench/baseline.json`；不能先跑完整A再跑完整B冒充交替采样。两种范围分别输出报告，不把配置/规则/集成变化归因到程序本体。
 
-合成终端负载通过专用测试machine.editor指向固定fixture executable，再在确认项目内open edit --new启动；不扩大生产work接口、不代表Avalon验收。fixture从checkout根 `.rotom-bench-v1.json`读取本轮严格mode/seed/runID/control_dir配置，实例按已确认pane映射；文件在启动前固定，不同mode/batch/run使用新checkout。ready/start barrier对齐单调窗口，detached在测量start前全部断开；runner stdout输出不是Herdr终端负载。
+合成终端负载通过专用测试machine.editor指向固定fixture executable，再在确认项目内open edit --new启动；不扩大生产work接口、不代表Avalon验收。fixture从项目检出目录根 `.rotom-bench-v1.json`读取本轮严格mode/seed/runID/control_dir配置，实例按已确认pane映射；文件在启动前固定，不同mode/batch/run使用新项目检出目录。ready/start barrier对齐单调窗口，detached在测量start前全部断开；runner stdout输出不是Herdr终端负载。
 
 完整首轮包括idle/output 1/10/30、3×3×3=27项目终端、detached-30、clients-size和churn-leak。每workload三个batch，每batch预热60秒、测量300秒；每暖路径每batch>=200样本，合计>=600。输出每终端128 bytes（含LF）×512lines/s×300s=19,660,800bytes，producer不足整run无效，不可换低CPU成绩。
 

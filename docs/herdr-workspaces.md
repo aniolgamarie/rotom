@@ -6,7 +6,7 @@
 
 ## 日常进入和用途
 
-下面的 `/opt/rotom`、`/projects/kernel` 和 `workstation` **都是占位示例**：分别换成服务器上已合入 `main` 的仓库路径、项目路径和你已准备的机器配置名。这里的“机器配置”选择服务器上的私人配置，不是 Ghostty 所在本机的名称。
+下面的 `/opt/rotom`、`/projects/kernel` 和 `workstation` **都是占位示例**：分别换成服务器上的 Rotom 安装目录、项目路径和你已准备的机器配置名。这里的“机器配置”选择服务器上的私人配置，不是 Ghostty 所在本机的名称。
 
 最短流程只有两步：
 
@@ -57,7 +57,7 @@
 
 每次 `enter` / `open` 保持同一 `--machine`。也可始终用 `--local FILE` 选择同一个私人 agentcfg 文件；两种选择互斥，且在子命令之前。`open` 要在所选项目内能输入命令的 Herdr shell 中执行。`enter` 不会自动启动编辑器或 Agent；它只进入工作区，并在新建工作区时提供初始 shell。
 
-通过 `work` 新启动的 Herdr server，其 PATH 已包含仓库根，终端内也可使用 `work --machine workstation open build`。本页保留绝对路径写法，方便确认调用的是哪个仓库。已有 server 不会被自动修改环境；入口找不到时使用完整路径，并按下文检查准备情况。
+通过 `work` 新启动的 Herdr server，其 PATH 已包含 Rotom 安装目录，终端内也可使用 `work --machine workstation open build`。本页保留绝对路径写法，方便确认调用的是哪个 Rotom 入口。已有 server 不会被自动修改环境；入口找不到时使用完整路径，并按下文检查准备情况。
 
 布局、Goto、分屏和手工终端继续使用 Herdr 原生操作。手工新建的 tab/分屏不会自动登记为上述用途。断线重接见[恢复与未知结果](#恢复与未知结果)，回到旧入口见[回退](#回退)。
 
@@ -105,7 +105,7 @@ codex_daemon = false
 
 先准备上面的官方 Herdr binary、仓库 Python >=3.11 环境，以及所需的独立 Avalon executable 和 Agent 配方/运行包，再修改私人 agentcfg 文件的 `machine.editor` / `machine.work`。准备步骤见 [首次安装](getting-started.md)、[Pi](pi.md) 和 [DSH](dsh.md)；`work` 不自动安装、部署或登录。
 
-Herdr 配置是 [termcfg](termcfg.md) 的可选组件。以下 `/opt/rotom` 是虚构的仓库绝对路径，须替换为已合入 `main` 的 checkout 入口；这样在业务 checkout 内也不会误用 `./work`，也不会调用仍停留在其他分支的仓库副本。示例始终选择 `workstation`。agentcfg 的私人机器配置与 termcfg 的私人组件选择是两个文件，须分别准备。
+Herdr 配置是 [termcfg](termcfg.md) 的可选组件。以下 `/opt/rotom` 是示例 Rotom 安装目录，须替换为服务器上的实际安装目录；使用绝对入口可以在任意项目目录中执行，避免误用 `./work`。示例始终选择 `workstation`。agentcfg 的私人机器配置与 termcfg 的私人组件选择是两个文件，须分别准备。
 
 新 termcfg 机器选择可用：
 
@@ -119,7 +119,7 @@ Herdr 配置是 [termcfg](termcfg.md) 的可选组件。以下 `/opt/rotom` 是�
 /opt/rotom/termcfg --machine workstation init-local --edit --component zsh --component tmux --component herdr
 ```
 
-在当前 SSH shell 中将仓库根与选定 Herdr 版本的目录加入 PATH，供静态 doctor 定位 `rotom-work-shell` 和 `herdr`。下面的目录仍须替换为实际路径，并与 `machine.work.herdr_binary` 对应；无需为此修改全局 shell 配置。
+在当前 SSH shell 中将 Rotom 安装目录与选定 Herdr 版本的目录加入 PATH，供静态 doctor 定位 `rotom-work-shell` 和 `herdr`。下面的目录仍须替换为实际路径，并与 `machine.work.herdr_binary` 对应；无需为此修改全局 shell 配置。
 
 ```sh
 export PATH="/opt/rotom:/opt/herdr/current:$PATH"
@@ -137,11 +137,11 @@ export PATH="/opt/rotom:/opt/herdr/current:$PATH"
 
 ## 项目归属与启动边界
 
-`enter` 接受现存 Git checkout 或其子目录，按 realpath 归一；linked worktree 各有工作区，同名仓库不合并。新建linked工作区时先查询原生worktree列表，从返回的主仓库source发起open；归属仍取目标checkout。非 Git 目录退出 2；临时任务使用 Herdr 原生临时工作区。只在所选 session 确实不存在时启动独立 server，连接失败不会触发另建。Herdr 外部进入后原生 attach；内部只聚焦。旧 tmux 内的外部进入退出 4，先显式离开旧复用器。
+`enter` 接受现存 Git 项目检出目录或其子目录，按真实路径归一。同一仓库的不同项目检出目录各有工作区，同名仓库也不合并。为额外检出目录新建工作区时，先查询原生 Git 检出目录列表，从返回的主仓库来源发起打开；归属仍取目标检出目录。非 Git 目录退出 2；临时任务使用 Herdr 原生临时工作区。只在所选 session 确实不存在时启动独立 server，连接失败不会触发另建。Herdr 外部进入后原生 attach；内部只聚焦。旧 tmux 内的外部进入退出 4，先显式离开旧复用器。
 
-项目身份是所选固定 server 端点与 checkout 路径。branch、tab 标题、后续 `cd` 或外置构建目录不会改归属。内部 `enter` 聚焦到另一工作区，也不会把发起命令的旧 shell 移过去；在目标项目的实际 pane 内运行 `open`。
+项目身份是所选固定 server 端点与项目检出目录路径。分支名、tab 标题、后续 `cd` 或外置构建目录不会改归属。内部 `enter` 聚焦到另一工作区，也不会把发起命令的旧 shell 移过去；在目标项目的实际 pane 内运行 `open`。
 
-只管理 `.config/herdr/config.toml`（0600），不管理 session、socket、缓存、日志或集成生成文件。非默认 `HERDR_CONFIG_PATH` / `XDG_CONFIG_HOME` 目标被拒绝。原生新 tab 使用 `rotom-work-shell` 与 `non_login`，无启动意图时进入原 `SHELL`（空值 `/bin/sh`）。新 server 的 PATH 由 `work` 前置仓库根，既有 server 不被重启或改环境。
+只管理 `.config/herdr/config.toml`（0600），不管理 session、socket、缓存、日志或集成生成文件。非默认 `HERDR_CONFIG_PATH` / `XDG_CONFIG_HOME` 目标被拒绝。原生新 tab 使用 `rotom-work-shell` 与 `non_login`，无启动意图时进入原 `SHELL`（空值 `/bin/sh`）。新 server 的 PATH 由 `work` 前置 Rotom 安装目录，既有 server 不被重启或改环境。
 
 `work` 要求配置文件存在、为当前用户的私有普通文件，并检查 launcher/non_login/禁用 Agent 自动恢复的意图。启动新 server 前用同一路径运行官方 `herdr config check`，非零诊断或期间文件改变立即失败。该命令只读配置，不连接 server；缺文件却会使用默认值，因此不能单独以退出 0 证明文件存在。依据：[0.9.5 CLI](https://github.com/herdrdev/herdr/blob/v0.9.5/src/cli.rs)、[配置加载](https://github.com/herdrdev/herdr/blob/v0.9.5/src/config/io.rs)。普通 `termcfg doctor` 只做静态准备检查，真实加载与 zsh 提示符仍须原生验证。
 
@@ -167,19 +167,35 @@ launcher 失败会尝试写不可逆 failed 标记、清本 pane commit，再回
 
 ## Avalon 和 Agent
 
-edit 直接调用已验收独立 Avalon profile 的 `bin/avalon`；无需新插件或 `NVIM_APPNAME` 替代。Agent 修改后，由人在同 checkout 的 Avalon 显式刷新冻结 Review，审查并导出选定修复要求，再交给明确目标 Agent，最后由 build/test 终端验证。work 不读取 Review 目录，不自动刷新/广播/删除导出；关闭 Review 保留已保存的 review.json/review.md/prompt.md 与清单。
+edit 直接调用已验收独立 Avalon profile 的 `bin/avalon`；无需新插件或 `NVIM_APPNAME` 替代。Agent 修改后，由人在同一项目检出目录的 Avalon 显式刷新冻结 Review，审查并导出选定修复要求，再交给明确目标 Agent，最后由 build/test 终端验证。work 不读取 Review 目录，不自动刷新/广播/删除导出；关闭 Review 保留已保存的 review.json/review.md/prompt.md 与清单。
 
 Pi/DSH 使用 `agentcfg [--local FILE] --profile ID run AGENT --cwd CHECKOUT`，保留已有实例 HOME、配置、凭据和状态，不在工作区层面设置隔离 HOME。准备不足先失败，不自动 sync/apply/login。独立 Codex 默认附 `--no-daemon`；`codex_daemon=true` 仅为该入口省略该参数，不改 alias、全局配置、Pi 委托或活动 daemon。共享 daemon 的 pane/会话关联限制见 [上游问题 #4649](https://github.com/herdrdev/herdr/issues/4649)，没有可靠身份时保持 unknown。
 
 `enter`和普通用途操作的管理总期限为30秒；受管Pi/DSH的`open`为60秒，包含父调用和新pane各自的完整运行包校验。等锁最多10秒、connect2秒、单request5秒，均受剩余总期限限制；launcher继承父调用的绝对期限，不重新计时。交互程序成功exec后不受该管理期限终止。
 
-状态扩展本轮全部保持关闭：
+### Herdr、DSH 的插件与两者之间的桥接
+
+**Herdr 和 DSH 都有插件扩展能力。** 它们的插件负责不同层面的功能：
+
+| 扩展层 | 能做什么 | 本方案如何使用 |
+| --- | --- | --- |
+| Herdr 自身插件 | 扩展工作流动作、事件响应、终端面板和链接处理；可从 GitHub 安装 | 先使用原生项目工作区和导航，按实际需求选择插件。见 [Herdr 0.9.5 插件文档](https://github.com/herdrdev/herdr/blob/v0.9.5/docs/next/website/src/content/docs/plugins.mdx) |
+| DSH 自身插件 | 通过 Cordis 插件和 bundle 扩展宿主；插件管理器支持安装、移除、启用与配置 | Rotom 已通过受管配方使用 TUI、认证和审查等扩展，仍按原有配置与依赖锁管理。见 [DSH 插件管理器](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.2/packages/boot/plugin-manager/README.md) |
+| DSH 与 Herdr 的桥接 | 把 DSH 的 Agent 生命周期状态报告给对应的 Herdr pane | 社区 [dsh-herdr](https://github.com/TheRealHaoLiu/dsh-herdr) 提供这一能力，须单独验证依赖、实例和目标 pane |
+
+DSH 另有可选的[插件市场组件](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.2/packages/boot/plugin-market/README.md)，支持配置索引和发现插件；该版本默认 profile 未启用此组件，也没有默认索引来源。当前 Rotom 锁没有纳入这一市场组件，不能据此宣称已提供可直接浏览的商店。
+
+### 本次迁移的状态集成范围
+
+以下记录 Rotom 本次迁移的集成范围；机器上已有的全局集成需用 `herdr integration status` 单独查询。DSH 原有插件继续按原配方使用。
 
 | 工具 | 已有接缝 | 本轮决定与启用条件 |
 | --- | --- | --- |
 | Pi | 官方扩展 + Rotom 受管资源/实例目录 | 未取得当前实例加载、依赖身份和双实例事件证据，暂不纳入资源锁 |
-| DSH | 社区 dsh-herdr 插件 | 依赖声明与当前锁兼容性及真实生命周期尚未验证，不强制 peer，不新建 profile |
+| DSH | 社区 dsh-herdr 插件 | 本轮未启用；声明的 DSH peer 范围不覆盖当前锁，真实生命周期仍须验证，不强制 peer，不新建 profile |
 | Codex | 屏幕识别、原生会话信息 | 提示可看，未证明关联不接管会话、不自动恢复 |
+
+截至 2026-10-21，`dsh-herdr` 0.1.0 的[依赖声明](https://github.com/TheRealHaoLiu/dsh-herdr/blob/1843455eded74721b0582b102d864af16a1e90bd/package.json)要求 DSH agent/session `^0.1.1-rc.2`，不包含 Rotom 当前锁定的 `0.2.1-rc.2`；Cordis `^4.0.1` 则包含当前锁定的 `4.0.5`。这说明需要验证和适配依赖范围，尚不能判定桥接运行时是否可用。其[文档](https://github.com/TheRealHaoLiu/dsh-herdr/blob/1843455eded74721b0582b102d864af16a1e90bd/README.md)限定单个根 Agent，忽略并发根与子 Agent；状态提示也不能承担任务调度或完成判定。
 
 `HERDR_ENV`、`HERDR_PANE_ID`、`HERDR_BIN_PATH`、`HERDR_SOCKET_PATH` 仅在后续选择集成时通过既有 `machine.environment.inherit` 逐项声明，不自动扩白名单。socket 能控制终端，继承变量不等于仅有状态上报权限；不安装控制其他终端的 skill、不扩 sandbox socket 权限、不改上游源码。启用前分别验证两个根实例、子 Agent、迟到事件与目标 pane；不能证明就继续关闭。
 
@@ -197,7 +213,7 @@ Pi/DSH 使用 `agentcfg [--local FILE] --profile ID run AGENT --cwd CHECKOUT`，
 
 Agent 状态只供查看，不决定任务完成、重试或关闭。功能分支的实现、隔离检查和原生分项记录见 [实施证据](../specs/005-herdr-project-workspaces/implementation-evidence.md)，当前主线组合的检查见 [合入记录](../specs/005-herdr-project-workspaces/integration.md)。旧原生收据不自动覆盖本次集成后的配置、锁或会话；本次集成离线验证不能证明当前 `pi-base` / `pi-pro` 的真实会话已通过，也不表示生产已切换。
 
-默认 pytest 只用临时 HOME、fake API/子进程和秘密哨兵。真实 Herdr、SSH/终端、Avalon/Agent/账号及基准分别按授权范围执行。先在合成 checkout 和独立 server 验证，再考虑新工作 canary；任何代码/测试通过都不自动切换入口。
+默认 pytest 只用临时 HOME、fake API/子进程和秘密哨兵。真实 Herdr、SSH/终端、Avalon/Agent/账号及基准分别按授权范围执行。先在合成项目检出目录和独立 server 验证，再考虑新工作 canary；任何代码/测试通过都不自动切换入口。
 
 每个拟支持组合登记服务端系统/架构、client 版本、SSH 路径、提示符、资产及配置/规则身份。用固定合成文本记录器，在两个尺寸 120×40 和 80×24 客户端逐项核对：
 
@@ -226,8 +242,8 @@ Agent 状态只供查看，不决定任务完成、重试或关闭。功能分�
 
 下列收据描述旧功能分支的候选、配置和依赖身份；本次集成离线检查须独立记录。尤其旧 Pi 双实例结果不覆盖当前 `pi-base` / `pi-pro` 的真实启动、账号或模型会话，不应据此更新当前支持或生产切换声明。
 
-2026-10-19续验收以本机为唯一测试环境，使用官方0.9.5资产，未替换PATH中既有0.8.0安装或现有server。9个checkout/27个普通终端、enter重复100次及2/10并发、用途复用100次和额外10终端通过；实际37个shell均存活于正确checkout。新server显式umask077，不要求用户修改全局umask。隔离zsh使用现有锁定公共插件及公开示例中的bash兼容shim，不读取私人hook。大体积准备和回归临时文件使用本机安全HOME下的专用0700目录，避免共享临时分区空间不足；不放宽共享祖先保护。
+2026-10-19续验收以本机为唯一测试环境，使用官方0.9.5资产，未替换PATH中既有0.8.0安装或现有server。9个项目检出目录/27个普通终端、enter重复100次及2/10并发、用途复用100次和额外10终端通过；实际37个shell均存活于正确项目检出目录。新server显式umask077，不要求用户修改全局umask。隔离zsh使用现有锁定公共插件及公开示例中的bash兼容shim，不读取私人hook。大体积准备和回归临时文件使用本机安全HOME下的专用0700目录，避免共享临时分区空间不足；不放宽共享祖先保护。
 
-已有独立Avalon profile经work启动并返回正确cwd、独立目录与Review命令；新合成checkout验证冻结、显式刷新、三个导出包manifest及Close保留。其ready/release_qualified标记未提升。独立Codex0.163.0在新pane确认实际--no-daemon及cwd；另由官方CLI使用已有认证、临时会话及只读沙箱，完成明确选定的合成prompt.md模型交接，未复制凭据或整个Review状态。受管DSH复用现有dsh-default及公共锁，隔离准备和实际Node启动通过，cwd、独立HOME/DSH_HOME、运行包身份正确。Pi已通过官方入口重新生成五个锁文件并准备隔离实例，直接来源保持不变、四套slice的传递typebox更新单列。首次30秒期限失败保留；按上述受管预算修订后，primary及extra实际Node双实例分别29.263秒/25.094秒返回0，cwd/profile/HOME与独立租约持续存活通过，最后只清理这两个闲置测试实例和专用server。最新分项与未完成范围见实施证据。
+已有独立Avalon profile经work启动并返回正确cwd、独立目录与Review命令；新合成项目检出目录验证冻结、显式刷新、三个导出包manifest及Close保留。其ready/release_qualified标记未提升。独立Codex0.163.0在新pane确认实际--no-daemon及cwd；另由官方CLI使用已有认证、临时会话及只读沙箱，完成明确选定的合成prompt.md模型交接，未复制凭据或整个Review状态。受管DSH复用现有dsh-default及公共锁，隔离准备和实际Node启动通过，cwd、独立HOME/DSH_HOME、运行包身份正确。Pi已通过官方入口重新生成五个锁文件并准备隔离实例，直接来源保持不变、四套slice的传递typebox更新单列。首次30秒期限失败保留；按上述受管预算修订后，primary及extra实际Node双实例分别29.263秒/25.094秒返回0，cwd/profile/HOME与独立租约持续存活通过，最后只清理这两个闲置测试实例和专用server。最新分项与未完成范围见实施证据。
 
 状态增强最终选择全部关闭；关闭路径是本轮交付，未安装或宣称任何实例级状态集成通过。冻结功能分支的严格完整首基线、独立 canary 及回退门禁已完成，见[验收摘要](../specs/005-herdr-project-workspaces/acceptance-summary.json)和[最终实施证据](../specs/005-herdr-project-workspaces/implementation-evidence.md)；这些结果适用于其冻结来源与已声明组合，本次集成离线检查另记，不表示当前 Pi Base/Pro 真实会话或生产入口已切换，也不因合入本身要求重跑已完成的长时基线。
