@@ -40,6 +40,10 @@ def readiness(report):
       actions.append("sync")
     else:
       actions.extend(("plan", "setup"))
+  if (report.get("deployed_runtime_matches_current") is False
+      and report.get("deployed_dependencies") == "installed"):
+    blockers.append("deployed-runtime-mismatch")
+    actions.extend(("plan", "apply"))
   if report.get("deployed_binding_matches_current") is False:
     blockers.append("deployed-binding-mismatch")
     actions.extend(("plan", "apply"))

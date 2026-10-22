@@ -159,6 +159,7 @@ _BLOCKER_LABELS = {
   "not-deployed": "尚未部署配置",
   "deployed-dependencies-unavailable": "已部署版本所需依赖不可用",
   "deployed-binding-mismatch": "当前运行选择与已部署契约不匹配",
+  "deployed-runtime-mismatch": "当前运行包与已部署版本不匹配",
   "deployment-conflict-or-drift": "部署目标存在冲突或漂移",
   "changes-pending": "配置有待部署变更",
   "lock-missing-or-invalid": "依赖锁缺失或无效",

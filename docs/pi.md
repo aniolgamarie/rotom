@@ -83,7 +83,9 @@ contract with the current provider, model, role, settings and resource selection
 those selections, review `plan` and explicitly `apply` each affected profile. If a dependency selection
 changed, first resolve its lock and run `sync`; `apply` cannot repair a stale dependency lock.
 `doctor` checks the deployed selection binding and reports a mismatch as requiring deployment, even
-when the native files and runtime package have not changed. This check does not start Pi, inspect
+when the native files and runtime package have not changed. If the selected locked runtime differs
+from the saved deployed runtime, it also recommends `plan` and `apply` when the previous package is
+still installed. This includes source updates that produce no managed native-file changes. This check does not start Pi, inspect
 accounts or verify model requests.
 
 Current profile consumption is independent: changing an unselected profile's resources does not

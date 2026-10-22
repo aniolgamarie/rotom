@@ -136,6 +136,49 @@ def test_doctor_blocks_changed_selection_without_projection_or_dependency_change
   assert calls == npm_calls and not launched
 
 
+@pytest.mark.parametrize("input", [False, True])
+def test_doctor_requires_apply_for_new_runtime_without_native_or_binding_changes(
+    pipeline, monkeypatch, capsys, input):
+  workspace, backend, lock, calls, launched = pipeline
+  prepare(workspace, backend, lock)
+  candidate = workspace.candidate(lock.identity)
+  binding = workspace.adapter.runtime_binding(workspace.resolved.data, workspace.instance)
+  native_files = {path: path.read_bytes() for path in (workspace.instance / "pi-home").rglob("*") if path.is_file()}
+  before = doctor_report(workspace, monkeypatch, capsys, input=input)
+  assert before["verification"]["deployment"] == "passed"
+
+  # 自有支持资源变化只更换密封运行包；原生配置和选择契约保持一致。
+  source = workspace.repository / "agents/pi/support/status-observer.mjs"
+  source.write_bytes(source.read_bytes() + b"\n// synthetic support revision\n")
+  current = backend.resolve_lock_for(workspace)
+  backend.sync(workspace, current)
+  assert workspace.candidate(current.identity).artifacts == candidate.artifacts
+  assert workspace.adapter.runtime_binding(workspace.resolved.data, workspace.instance) == binding
+  npm_calls = list(calls)
+  monkeypatch.setattr(type(workspace.secret_store), "resolve", lambda *args, **kwargs: pytest.fail("doctor resolved secret"))
+  report = doctor_report(workspace, monkeypatch, capsys, input=input)
+  readiness = report["input_diagnostics"]["readiness"] if input else report["readiness"]
+  assert report["deployed_binding_matches_current"] is True
+  assert report["deployed_runtime_matches_current"] is False
+  assert report["dependencies"] == report["deployed_dependencies"] == "installed"
+  assert not report["drift"] and not report["conflicts"] and report["changes_pending"] == 0
+  assert readiness["status"] == "action-required"
+  assert readiness["blockers"] == ["deployed-runtime-mismatch"]
+  assert readiness["next_commands"] == ["plan", "apply"]
+  assert report["verification"]["deployment"] == "blocked"
+  assert {path: path.read_bytes() for path in native_files} == native_files
+  assert calls == npm_calls and not launched
+
+  commands.apply_candidate(workspace, current, workspace.candidate(current.identity))
+  restored = doctor_report(workspace, monkeypatch, capsys, input=input)
+  readiness = restored["input_diagnostics"]["readiness"] if input else restored["readiness"]
+  assert restored["deployed_runtime_matches_current"] is True
+  assert readiness["status"] == "offline-ready"
+  assert restored["deployed_binding_matches_current"] is True
+  assert restored["verification"]["deployment"] == "passed"
+  assert calls == npm_calls and not launched
+
+
 def test_doctor_does_not_claim_binding_validation_without_deployment_or_validator(pipeline, monkeypatch, capsys):
   workspace, backend, lock, _, launched = pipeline
   report = doctor_report(workspace, monkeypatch, capsys)

@@ -141,6 +141,21 @@ def test_doctor_binding_mismatch_explains_contract_and_explicit_apply(monkeypatc
   assert "deployed-binding-mismatch" not in output
 
 
+def test_doctor_runtime_mismatch_explains_explicit_plan_and_apply(monkeypatch):
+  payload = {"command": "doctor", "agent": "pi", "profile": "pi-base", "deployed": True,
+    "dependencies": "installed", "deployed_dependencies": "installed", "recovery_pending": False,
+    "deployed_runtime_matches_current": False, "deployed_binding_matches_current": True,
+    "readiness": {"status": "action-required", "blockers": ["deployed-runtime-mismatch"],
+      "next_commands": ["plan", "apply"]}}
+  args = SimpleNamespace(machine="test", local=None, profile="pi-base")
+  output = emit(monkeypatch, payload, mode="human", args=args)
+  assert "doctor：需要处理" in output
+  assert "当前运行包与已部署版本不匹配" in output
+  assert "./agentcfg --machine test --profile pi-base plan" in output
+  assert "./agentcfg --machine test --profile pi-base apply" in output
+  assert "deployed-runtime-mismatch" not in output
+
+
 def test_doctor_input_extracts_real_omp_event_shape_and_advice(monkeypatch):
   payload = {"command": "doctor", "agent": "omp", "profile": "omp-default", "deployed": False,
     "dependencies": "unknown", "recovery_pending": False,
