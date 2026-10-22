@@ -1,8 +1,8 @@
 # OMP dependency locks and maintenance
 
-OMP uses the unmodified official v18.8.6 standalone, pinned to upstream commit `f068751e2f1dbdbc195977776d47a26db8697495`. The manager does not install system Bun/Node or execute the upstream installer. `omp-kernel` uses the same official runtime with the repository-owned `omp-permission-control` plugin through public extension APIs. See [releases](releases.md), [testing](testing.md), and [approval design](design/approvals.md) for version and evidence boundaries.
+OMP uses the unmodified official v18.12.6 standalone, pinned to upstream commit `45c35e40c46166dc726ccc52f5d27f40f2449f99`. The manager does not install system Bun/Node or execute the upstream installer. `omp-kernel` uses the same official runtime with the repository-owned `omp-permission-control` plugin through public extension APIs. See [releases](releases.md), [testing](testing.md), and [approval design](design/approvals.md) for version and evidence boundaries.
 
-The v18.8.6 native Bash integration uses public Settings, `BashTool.approval()`, and same-name `ctx.invokeTool()` delegation. Its production plugin has been type-checked against that SDK. Upstream removed task's per-call `model` parameter in v18.8.2; the recipes use model roles and agent definitions instead.
+The v18.12.6 native Bash integration uses public Settings, `BashTool.approval()`, and same-name `ctx.invokeTool()` delegation. The current `write` approval mode passed 12 isolated tests importing the pinned official wrapper/runner and approval modules, alongside 487 independent plugin tests. Full type-checking against this SDK is unverified because the compiler/dependency closure is unavailable. The `always-ask-cached` mode is not selected or accepted by this integration. Upstream removed task's per-call `model` parameter in v18.8.2; the recipes use model roles and agent definitions instead.
 
 ## Lock contents
 

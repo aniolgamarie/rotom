@@ -1,6 +1,6 @@
 # OMP model presets
 
-The model pool provides candidates; presets combine models for ordinary work, lightweight tasks, planning, and deeper analysis. rotom maps `agent_options.model_presets` to official OMP `modelPresets`, using public OMP 18.8.6 configuration/commands without upstream patches.
+The model pool provides candidates; presets combine models for ordinary work, lightweight tasks, planning, and deeper analysis. rotom maps `agent_options.model_presets` to official OMP `modelPresets`, using public OMP 18.12.6 configuration/commands without upstream patches.
 
 `omp-default` provides basic and deepseek-payg, with basic initial roles. `omp-kernel` adds tf, cursor, and deepseek-tf-payg, for five presets. Kernel's global initial roles retain the existing TF choices; explicit private Cursor role overrides still win. Adding presets does not switch deployed roles or log in accounts automatically.
 

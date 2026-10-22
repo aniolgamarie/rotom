@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BUN_SHA256 = "33d56b070be6a9e3da0ab013038b43d1645d0534ca811ecdba4472599117eb4b"
 BUN = Path("/tmp/rotom-omp-build-inputs/tools/sha256") / BUN_SHA256
 PACKAGE = ROOT / "agents/omp/packages/omp-permission-control"
-SDK_RELATIVE = Path(".cache/omp-upgrade-1886-20261009/materials/source/oh-my-pi-f068751e2f1dbdbc195977776d47a26db8697495")
+SDK_RELATIVE = Path(".cache/omp-upgrade-18126-20261023/materials/source/oh-my-pi-45c35e40c46166dc726ccc52f5d27f40f2449f99")
 # 显式测试变量在autouse清空环境之前捕获；不继承或枚举其他调用者环境。
 SDK_OVERRIDE = os.environ.get("OMP_OFFICIAL_SDK_ROOT")
 

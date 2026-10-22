@@ -16,8 +16,8 @@ Rotom's Python project metadata currently declares `0.1.0`. This checkout is rel
 | Agent Teams | Four official `0.2.1-rc.2` packages | Selected by `dsh-default`; explicitly disable through a complete machine plugin override; isolated Linux member/task/restart and TUI/Perry combination passed |
 | SSH workspace | Official SSH provider family and headless `0.2.1-rc.2` | Independent read-only-by-default profile; trusted helper and native endpoint acceptance pending |
 | SSH subscription authentication | `rotom-dsh-ssh-subscription-auth@0.1.1` | Public Codex/Cursor authentication APIs; own instance credentials; real terminal/account acceptance pending |
-| OMP | `18.8.6`, `f068751e2f1dbdbc195977776d47a26db8697495` | Official standalone runtime; independent Rotom permission plugin |
-| Pi | `0.84.4` in current manifest | Complete lock rebuilt through the resolver; Linux pi-default evidence is recorded separately. Other profiles, platforms and live services require their own acceptance. |
+| OMP | `18.12.6`, `45c35e40c46166dc726ccc52f5d27f40f2449f99` | Official standalone runtime; independent Rotom permission plugin; bounded offline SDK tests passed, full type-check/native acceptance unverified |
+| Pi | `1.3.0` in current manifest | Complete lock rebuilt through the resolver; Linux pi-default evidence is recorded separately. Other profiles, platforms and live services require their own acceptance. |
 | Herdr workspace review baseline | `0.9.5`, protocol `22` | Feature 006 public API/source review baseline, not a statement of the current machine deployment or latest upstream version. [Usage and limitations](herdr-workspaces.md) and [isolated evidence](../specs/006-configurable-workspaces/quickstart.md) keep native acceptance and deployment unverified; guarded close and existing-branch Git creation refuse before dispatch. |
 | Manager | Python 3.11+; `uv.lock` | Locked environment, loaded directly from `.venv` |
 

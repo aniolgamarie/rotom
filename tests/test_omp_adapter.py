@@ -8,6 +8,7 @@ from jsonschema import Draft202012Validator
 
 from agentcfg.adapter import RenderContext
 from agentcfg.omp import OmpAdapter
+from agentcfg.omp_dependencies import TAG
 from agentcfg.schema import ConfigError
 from agentcfg.skills import collect_skills
 from agentcfg.config import AdapterSources, SourceInputs, load_local, load_sources, resolve_config
@@ -53,7 +54,7 @@ def full_data():
       "app.model.cycleForward": "Ctrl+P", "app.history.search": []}})
   data["plugins"] = {"rotom-health": {"id": "rotom-health", "source": "agents/omp/packages/rotom-health",
     "entrypoints": ["index.ts"], "tree_digest": "a382040f693dc402fdca39134a02e4c6ca158b8f23f6a8d495de486b840067ca", "license": "MIT",
-    "compatibility": {"omp": "v18.8.6"}}}
+    "compatibility": {"omp": TAG}}}
   data["mcp"] = {"echo-stdio": {"transport": "stdio", "command": "omp-package:echo-mcp", "args": []},
     "echo-http": {"transport": "streamable-http", "url": "https://omp-validation.invalid/mcp"}}
   data["adapter_documents"] = {"agent": {"resources": {
@@ -62,7 +63,7 @@ def full_data():
     "plugins": {"plugins": {"rotom-health": data["plugins"]["rotom-health"], "echo-mcp": {
       "id": "echo-mcp", "source": "agents/omp/packages/echo-mcp", "entrypoints": ["server.py"],
       "tree_digest": "c10617b101717ec6ce399da846e165d7a6f1cfb5c2aad02d2f6c405cd187faf4",
-      "license": "MIT", "compatibility": {"omp": "v18.8.6"}}}}}
+      "license": "MIT", "compatibility": {"omp": TAG}}}}}
   return data
 
 

@@ -14,7 +14,7 @@ The recipe sets `display.hideToolActivity=false`. UI visibility changes persist 
 
 ## Permission plugin and review models
 
-The runtime is unmodified official OMP v18.8.6. The repository-owned permission plugin uses public extension APIs. It provides `permission_bash` and, with `native_bash=true`, a same-name native Bash wrapper that delegates through `ctx.invokeTool()`. Native `bash=prompt` remains the protection when the plugin is absent. Explicit deny/prompt rules retain their effect. See [approval design](design/approvals.md) and [diagnostics](omp-approval-diagnostics.md).
+The runtime is unmodified official OMP v18.12.6. The repository-owned permission plugin uses public extension APIs. It provides `permission_bash` and, with `native_bash=true`, a same-name native Bash wrapper that delegates through `ctx.invokeTool()`. Native `bash=prompt` remains the protection when the plugin is absent. Explicit deny/prompt rules retain their effect. See [approval design](design/approvals.md) and [diagnostics](omp-approval-diagnostics.md).
 
 Choose the execution model inside OMP. Permission review is configured separately: explicit `reviewer_model` wins; omission follows the session model, and `reviewer_model="session"` explicitly requests that behavior. The public kernel reviewer is `omp-zhipu_tf-glm-5.3-flash`, with `omp-kimi_tf-kimi-for-coding` as remote fallback. Private overrides take precedence.
 

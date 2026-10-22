@@ -39,7 +39,7 @@ current("official adapter/wrapper/runner dispatch ten fake Cursor Bash operation
   for (const input of inputs) expect(harness.nativeCalls.some(call => call[1] === input)).toBe(true);
   expect(harness.h.auditEntries.filter(row => row.data.outcome === "executed")).toHaveLength(10);
   if (process.env.OMP_OFFICIAL_WRAPPER_EVIDENCE) writeFileSync(process.env.OMP_OFFICIAL_WRAPPER_EVIDENCE,
-    JSON.stringify({ sourceCommit: "f068751e2f1dbdbc195977776d47a26db8697495", sourceHashes: modules!.hashes,
+    JSON.stringify({ sourceCommit: "45c35e40c46166dc726ccc52f5d27f40f2449f99", sourceHashes: modules!.hashes,
       realModules: ["RegisteredToolAdapter", "ExtensionToolWrapper", "ExtensionRunner"], calls: 10,
       reviewerCalls: 10, nativeDelegates: 10, hostHookBudgetMs: 30, reviewerDelayMs: 45, humanDelayMs: 60,
       maxReviewerConcurrency: peak, realShellCommands: 0, realHost: false, realCursorTransport: false }) + "\n");

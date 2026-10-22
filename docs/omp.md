@@ -1,6 +1,6 @@
 # Manage OMP with agentcfg
 
-The OMP adapter uses the **unmodified official OMP 18.8.6** runtime and repository-owned plugins, including the permission plugin. Integration uses public configuration and extension APIs. Historical host patches are not a supported deployment path. See [release status](releases.md), [known issues](known-issues.md), and [testing](testing.md) for current evidence and unverified platforms or account routes.
+The OMP adapter uses the **unmodified official OMP 18.12.6** runtime and repository-owned plugins, including the permission plugin. Integration uses public configuration and extension APIs. Historical host patches are not a supported deployment path. See [release status](releases.md), [known issues](known-issues.md), and [testing](testing.md) for current evidence and unverified platforms or account routes.
 
 ## Recipes and native profiles
 
