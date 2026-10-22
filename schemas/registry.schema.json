@@ -213,6 +213,7 @@
             "max": {"type": "string", "enum": ["low", "high", "max"]}
           }},
           "compat": {"type": "object", "additionalProperties": false, "properties": {
+            "forceAdaptiveThinking": {"type": "boolean"},
             "supportsDeveloperRole": {"type": "boolean"},
             "supportsReasoningEffort": {"type": "boolean"},
             "maxTokensField": {"type": "string", "enum": ["max_tokens"]},

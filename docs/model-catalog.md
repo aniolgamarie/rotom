@@ -2,7 +2,7 @@
 
 Catalog verification date: **2026-10-06**. This is a checked-in specification/pricing snapshot, not live availability. The pool lists optional models; roles determine which models are used. [OMP model presets](omp-model-presets.md) separately define role combinations, execution fallback chains, and permission-review choices.
 
-`shared/model-templates.toml` centralizes model IDs, inputs, capacities, output budgets, and reasoning capabilities. `shared/models.toml` and `agents/omp/content.toml` bind templates to providers, protocol compatibility, and prices. Sharing a core specification across official OpenAI, official Anthropic, and TF bindings does not transfer gateway availability, plan entitlement, or billing guarantees.
+`shared/model-templates.toml` centralizes model IDs, inputs, capacities, output budgets, and reasoning capabilities. `shared/models.toml`, `agents/omp/content.toml` and `agents/pi/content.toml` bind templates to providers, protocol compatibility, and prices. Sharing a core specification across official OpenAI, official Anthropic, and TF bindings does not transfer gateway availability, plan entitlement, or billing guarantees.
 
 ## Official optional pool
 
@@ -29,7 +29,7 @@ DSH currently projects capacities without the complete reasoning-mode constraint
 
 ## Additional TF bindings
 
-TF providers are enabled only by recipes selecting them. `omp-kernel` adds eleven bindings to the eight official defaults, for nineteen static selections:
+TF providers are enabled only by explicit selection. Pi Base/Pro retain eight official defaults; the [Pi TF machine example](../examples/pi-tf.local.toml) appends eleven `pi-` bindings and three existing TF providers to either profile, yielding nineteen selections without changing `roles.main`. Merely registering the bindings does not enable them. `omp-kernel` adds eleven bindings to the eight official defaults, for nineteen static selections:
 
 | Provider | Protocol / address reference | Credential reference | Remote IDs |
 | --- | --- | --- | --- |
@@ -37,9 +37,9 @@ TF providers are enabled only by recipes selecting them. `omp-kernel` adds eleve
 | `zhipu_tf` | Anthropic / `local:tf_anthropic_url` | `secret:omp_zhipu_tf_key` | `glm-5.3`, `glm-5.3-flash`, `glm-5.2`, `glm-5.1`, `glm-5-turbo` |
 | `deepseek_tf` | OpenAI / `local:tf_openai_url` | `secret:omp_deepseek_tf_key` | `deepseek-flash`, `deepseek-v4-pro` |
 
-Three older GLM TF IDs remain separate candidates. Official-plan alias/upgrade behavior does not prove equivalent TF routing. Unverified multilevel reasoning mappings are not added to those old IDs. DeepSeek TF uses a separate key, entered through `model key deepseek_tf`; sharing a URL does not share a credential. Actual TF IDs, capabilities, routing, and billing have not been verified with real requests.
+Pi GLM-5.3/Flash use the public Pi 1.3.0 Anthropic `compat.forceAdaptiveThinking` field, a low/high/max `thinkingLevelMap`, and disabled off. The field is documented in the [official compatibility schema](https://github.com/earendil-works/pi/blob/v1.3.0/packages/ai/src/providers/compat-schema.ts); its [Anthropic transport](https://github.com/earendil-works/pi/blob/v1.3.0/packages/ai/src/api/anthropic-messages.ts) projects adaptive thinking and `output_config.effort`. This checks the client API shape, not TF gateway support. Three older GLM TF IDs remain separate candidates. Official-plan alias/upgrade behavior does not prove equivalent TF routing. Unverified multilevel reasoning mappings are not added to those old IDs. DeepSeek TF uses a separate key, entered through `model key deepseek_tf`; sharing a URL does not share a credential. Actual TF IDs, capabilities, routing, and billing have not been verified with real requests.
 
-The official/OMP catalog contains eleven core templates and twenty-seven static bindings: sixteen official protocol bindings and eleven TF bindings. Its eleven providers comprise six official protocol endpoints, three TF endpoints, and two dynamic OAuth entries (Cursor/Codex). Dynamically discovered OAuth models are not static bindings. DSH separately supplies its tool-specific TF bindings as described in the [DSH guide](dsh.md).
+The official/OMP catalog contains eleven core templates and twenty-seven static bindings: sixteen official protocol bindings and eleven TF bindings. Its eleven providers comprise six official protocol endpoints, three TF endpoints, and two dynamic OAuth entries (Cursor/Codex). Dynamically discovered OAuth models are not static bindings. Pi and DSH each add eleven tool-specific TF bindings outside that twenty-seven-binding count; see the [Pi guide](pi.md) and [DSH guide](dsh.md).
 
 ```sh
 ./agentcfg model presets --verbose

@@ -252,11 +252,12 @@ def test_enable_preset_rejects_unsupported_protocol_without_edit(monkeypatch):
   assert local_file().read_bytes() == before
 
 
-def test_enable_pi_projects_deepseek_native_compat(monkeypatch, capsys):
-  assert cli.main(["init-local", "--profile", "pi-default"]) == 0
+@pytest.mark.parametrize("profile", ["pi-base", "pi-pro"])
+def test_enable_pi_projects_deepseek_native_compat(monkeypatch, capsys, profile):
+  assert cli.main(["init-local", "--profile", profile]) == 0
   interactive(monkeypatch, ["yes"], secret="pi-key-canary")
   assert cli.main(["model", "enable", "deepseek"]) == 0
-  w = model_wizard.load_workspace(local_file(), "pi-default")
+  w = model_wizard.load_workspace(local_file(), profile)
   models = [value for target, value in w.adapter._fields(w.resolved.data)
     if target.path == "pi-home/models.json" and target.selector.endswith("/models")]
   deepseek = next(model for group in models for model in group if model["id"] == "deepseek-flash")
@@ -264,7 +265,7 @@ def test_enable_pi_projects_deepseek_native_compat(monkeypatch, capsys):
   assert deepseek["thinkingLevelMap"] == {"minimal": "low", "low": "low", "medium": "high",
     "high": "high", "xhigh": "high", "max": "max"}
   assert "reasoningEffortMap" not in deepseek["compat"]
-  assert w.candidate("offline-candidate").artifacts
+  assert w.candidate(w.backend.read_lock(w.repository).identity).artifacts
   assert "pi-key-canary" not in capsys.readouterr().err
 
 

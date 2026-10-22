@@ -1,0 +1,46 @@
+# 私人机器配置示例；显式追加 TF 目录，保留八个官方默认模型和 main。
+# 地址为虚构占位值；不证明网关模型、能力、登录或计费可用。
+schema_version = 1
+[machine]
+id = "workstation"
+default_profile = "pi-base"
+
+[local_values]
+tf_openai_url = "https://tf-gateway.example.invalid/v1"
+tf_anthropic_url = "https://tf-gateway.example.invalid/anthropic"
+
+[overrides.profiles.pi-base]
+providers = ["kimi_tf", "zhipu_tf", "deepseek_tf"]
+models = [
+  "pi-kimi_tf-kimi-for-coding",
+  "pi-kimi_tf-k3",
+  "pi-kimi_tf-k3-256k",
+  "pi-kimi_tf-kimi-for-coding-highspeed",
+  "pi-zhipu_tf-glm-5.3",
+  "pi-zhipu_tf-glm-5.3-flash",
+  "pi-zhipu_tf-glm-5.2",
+  "pi-zhipu_tf-glm-5.1",
+  "pi-zhipu_tf-glm-5-turbo",
+  "pi-deepseek_tf-deepseek-flash",
+  "pi-deepseek_tf-deepseek-v4-pro",
+]
+
+[overrides.profiles.pi-pro]
+providers = ["kimi_tf", "zhipu_tf", "deepseek_tf"]
+models = [
+  "pi-kimi_tf-kimi-for-coding",
+  "pi-kimi_tf-k3",
+  "pi-kimi_tf-k3-256k",
+  "pi-kimi_tf-kimi-for-coding-highspeed",
+  "pi-zhipu_tf-glm-5.3",
+  "pi-zhipu_tf-glm-5.3-flash",
+  "pi-zhipu_tf-glm-5.2",
+  "pi-zhipu_tf-glm-5.1",
+  "pi-zhipu_tf-glm-5-turbo",
+  "pi-deepseek_tf-deepseek-flash",
+  "pi-deepseek_tf-deepseek-v4-pro",
+]
+
+# 沿用现有秘密引用名称；不设置 roles.main，不把密钥写入公共示例。
+# secret:omp_kimi_tf_key / secret:omp_zhipu_tf_key / secret:omp_deepseek_tf_key
+# 未配置密钥时仍可检查配置与启动结构；实际请求需自行准备相应凭据。

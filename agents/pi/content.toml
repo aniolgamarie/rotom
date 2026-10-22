@@ -19,3 +19,57 @@ path = "shared/skills/cpp-bounded-investigation"
 
 [skills.long-command-handoff]
 path = "shared/skills/long-command-handoff"
+
+# 可选 TF 绑定；须由机器配置显式追加，不继承官方计价。
+
+[models."pi-kimi_tf-kimi-for-coding"]
+template = "kimi_code"
+provider = "kimi_tf"
+native = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "zai"}, "thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}
+
+[models."pi-kimi_tf-k3"]
+template = "kimi_k3"
+provider = "kimi_tf"
+native = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "openai"}, "thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}
+
+[models."pi-kimi_tf-k3-256k"]
+template = "kimi_k3_256k"
+provider = "kimi_tf"
+native = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "openai"}, "thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}
+
+[models."pi-kimi_tf-kimi-for-coding-highspeed"]
+template = "kimi_code_highspeed"
+provider = "kimi_tf"
+native = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = false, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "zai"}}}
+
+[models."pi-zhipu_tf-glm-5.3"]
+template = "glm_53"
+provider = "zhipu_tf"
+native = {pi = {compat = {forceAdaptiveThinking = true}, thinkingLevelMap = {minimal = "low", low = "low", medium = "high", high = "high", xhigh = "max", max = "max"}, disabled_thinking_levels = ["off"]}}
+
+[models."pi-zhipu_tf-glm-5.3-flash"]
+template = "glm_53_flash"
+provider = "zhipu_tf"
+native = {pi = {compat = {forceAdaptiveThinking = true}, thinkingLevelMap = {minimal = "low", low = "low", medium = "high", high = "high", xhigh = "max", max = "max"}, disabled_thinking_levels = ["off"]}}
+
+[models."pi-zhipu_tf-glm-5.2"]
+template = "glm_52"
+provider = "zhipu_tf"
+
+[models."pi-zhipu_tf-glm-5.1"]
+template = "glm_51"
+provider = "zhipu_tf"
+
+[models."pi-zhipu_tf-glm-5-turbo"]
+template = "glm_5_turbo"
+provider = "zhipu_tf"
+
+[models."pi-deepseek_tf-deepseek-flash"]
+template = "deepseek_flash"
+provider = "deepseek_tf"
+native = {"pi" = {"thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "high", "max" = "max"}, "compat" = {"requiresReasoningContentOnAssistantMessages" = true, "thinkingFormat" = "deepseek", "supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens"}}}
+
+[models."pi-deepseek_tf-deepseek-v4-pro"]
+template = "deepseek_pro"
+provider = "deepseek_tf"
+native = {"pi" = {"thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "high", "max" = "max"}, "compat" = {"requiresReasoningContentOnAssistantMessages" = true, "thinkingFormat" = "deepseek", "supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens"}}}

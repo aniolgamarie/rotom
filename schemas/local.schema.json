@@ -189,6 +189,7 @@
       "properties": {
         "pi": {"type": "object", "additionalProperties": false, "properties": {
           "compat": {"type": "object", "additionalProperties": false, "properties": {
+            "forceAdaptiveThinking": {"type": "boolean"},
             "requiresReasoningContentOnAssistantMessages": {"type": "boolean"},
             "thinkingFormat": {"type": "string", "enum": ["deepseek"]},
             "reasoningEffortMap": {"type": "object", "additionalProperties": false, "properties": {
