@@ -1,0 +1,6 @@
+[terminal]
+default_shell = "rotom-work-shell"
+shell_mode = "non_login"
+
+[session]
+resume_agents_on_restore = false

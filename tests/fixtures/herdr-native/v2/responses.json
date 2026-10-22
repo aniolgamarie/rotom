@@ -1,0 +1,63 @@
+{
+  "workspace.create": {
+    "type": "workspace_created",
+    "workspace": {
+      "workspace_id": "workspace-2",
+      "number": 2,
+      "label": "example-copy",
+      "focused": false,
+      "pane_count": 1,
+      "tab_count": 1,
+      "active_tab_id": "tab-2",
+      "agent_status": "unknown"
+    },
+    "tab": {
+      "tab_id": "tab-2",
+      "workspace_id": "workspace-2",
+      "number": 1,
+      "label": "shell",
+      "focused": false,
+      "pane_count": 1,
+      "agent_status": "unknown"
+    },
+    "root_pane": {
+      "pane_id": "pane-2",
+      "terminal_id": "terminal-2",
+      "workspace_id": "workspace-2",
+      "tab_id": "tab-2",
+      "focused": false,
+      "agent_status": "unknown",
+      "revision": 0,
+      "tokens": {}
+    }
+  },
+  "workspace.rename": {
+    "type": "workspace_info",
+    "workspace": {
+      "workspace_id": "workspace-2",
+      "number": 2,
+      "label": "renamed-example",
+      "focused": false,
+      "pane_count": 1,
+      "tab_count": 1,
+      "active_tab_id": "tab-2",
+      "agent_status": "unknown"
+    }
+  },
+  "workspace.close": {
+    "capability": "unsupported",
+    "reason": "request has no exact-membership condition; no successful response is admitted"
+  },
+  "tab.rename": {
+    "type": "tab_info",
+    "tab": {
+      "tab_id": "tab-2",
+      "workspace_id": "workspace-2",
+      "number": 1,
+      "label": "Problem",
+      "focused": false,
+      "pane_count": 1,
+      "agent_status": "unknown"
+    }
+  }
+}

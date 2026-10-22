@@ -1,0 +1,96 @@
+# Structured workspace example; replace all fixture paths before use.
+schema_version = 1
+
+[machine]
+id = "workstation"
+editor = "fixture-editor"
+
+[machine.work]
+model = "structured-v1"
+herdr_binary = "fixture-herdr"
+session = "structured-trial"
+pi_profile = "pi-base"
+dsh_profile = "dsh-default"
+codex_binary = "fixture-codex"
+codex_daemon = false
+include_rotom = true
+rotom_template = "development"
+
+[[machine.work.sources]]
+id = "projects"
+path = "/projects"
+mode = "git"
+depth = 1
+template = "development"
+exclude_hidden = true
+exclude = ["cache", ".cache"]
+follow_symlinks = false
+
+[[machine.work.sources]]
+id = "cases"
+path = "/cases"
+mode = "directory"
+depth = 1
+template = "investigation"
+exclude_hidden = true
+exclude = ["cache"]
+follow_symlinks = false
+
+[machine.work.templates.development]
+order = ["shell", "edit", "build", "test", "agent"]
+initial = "shell"
+
+[machine.work.templates.development.tab_types.shell]
+label = "Shell"
+launcher = "shell"
+
+[machine.work.templates.development.tab_types.edit]
+label = "Editor"
+launcher = "editor"
+cwd = { from = "workspace_start" }
+
+[machine.work.templates.development.tab_types.build]
+label = "Build"
+launcher = "shell"
+
+[machine.work.templates.development.tab_types.test]
+label = "Test"
+launcher = "shell"
+
+[machine.work.templates.development.tab_types.agent]
+label = "Agent"
+launcher = "pi"
+
+[machine.work.templates.investigation]
+order = ["code", "agent", "problem"]
+initial = "problem"
+
+[machine.work.templates.investigation.tab_types.code]
+label = "Code"
+launcher = "editor"
+
+[machine.work.templates.investigation.tab_types.agent]
+label = "Agent"
+launcher = "dsh"
+
+[machine.work.templates.investigation.tab_types.problem]
+label = "Problem"
+launcher = "shell"
+
+[[machine.work.workspaces]]
+kind = "project"
+path = "/cases/current"
+mode = "directory"
+template = "investigation"
+
+[[machine.work.workspaces]]
+kind = "named"
+id = "investigation-main"
+title = "Investigation"
+template = "investigation"
+
+[[machine.work.workspaces]]
+kind = "named"
+id = "investigation-secondary"
+title = "Second investigation"
+template = "investigation"

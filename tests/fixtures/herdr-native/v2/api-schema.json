@@ -1,0 +1,163 @@
+{
+  "audited_official_request_schema": {
+    "protocol": 22,
+    "schema_version": 1,
+    "schemas": {
+      "request": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Request",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "method": {
+                "const": "workspace.create",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/WorkspaceCreateParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "method": {
+                "const": "workspace.rename",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/WorkspaceRenameParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "method": {
+                "const": "workspace.close",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/WorkspaceCloseParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "method": {
+                "const": "tab.rename",
+                "type": "string"
+              },
+              "params": {
+                "$ref": "#/schemas/request/$defs/TabRenameParams"
+              }
+            },
+            "required": [
+              "method",
+              "params"
+            ]
+          }
+        ],
+        "$defs": {
+          "WorkspaceCreateParams": {
+            "type": "object",
+            "properties": {
+              "source_workspace_id": {
+                "type": "string"
+              },
+              "cwd": {
+                "type": "string"
+              },
+              "focus": {
+                "type": "boolean",
+                "default": false
+              },
+              "label": {
+                "type": "string"
+              },
+              "env": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "WorkspaceRenameParams": {
+            "type": "object",
+            "properties": {
+              "workspace_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "workspace_id",
+              "label"
+            ],
+            "additionalProperties": false
+          },
+          "WorkspaceCloseParams": {
+            "type": "object",
+            "properties": {
+              "workspace_id": {
+                "type": "string"
+              },
+              "close_group": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "required": [
+              "workspace_id"
+            ],
+            "additionalProperties": false
+          },
+          "TabRenameParams": {
+            "type": "object",
+            "properties": {
+              "tab_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "tab_id",
+              "label"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  }
+}

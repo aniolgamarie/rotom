@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import socket
 import stat
 import subprocess
+import struct
 import time
 import uuid
 
@@ -57,6 +59,12 @@ RESULT_SCHEMAS = {
   "pane.focus": _result("pane_info", pane=_PANE),
   "pane.report_metadata": _result("ok"),
 }
+LEGACY_METHODS = frozenset(RESULT_SCHEMAS)
+RESULT_SCHEMAS.update({
+  "workspace.create": _result("workspace_created", workspace=_WORKSPACE, tab=_TAB, root_pane=_PANE),
+  "workspace.rename": _result("workspace_info", workspace=_WORKSPACE),
+  "tab.rename": _result("tab_info", tab=_TAB),
+})
 ALLOWED_METHODS = frozenset(RESULT_SCHEMAS)
 READ_METHODS = frozenset({"ping", "workspace.list", "workspace.get", "worktree.list", "tab.get", "pane.current", "pane.list", "pane.get"})
 
@@ -75,6 +83,11 @@ PARAM_SCHEMAS = {
   "pane.list": _object({"workspace_id": _STRING}, [], extra=False),
   **{method: _object({"pane_id": _STRING}, extra=False) for method in ("pane.get", "pane.focus")},
   "pane.report_metadata": _object({"pane_id": _STRING, **_METADATA}, ["pane_id", "source", "tokens"], extra=False),
+  "workspace.create": _object({"cwd": _STRING, "label": _STRING,
+    "focus": {"const": False, "type": "boolean"},
+    "env": {"type": "object", "additionalProperties": {"type": "string"}}}, extra=False),
+  "workspace.rename": _object({"workspace_id": _STRING, "label": _STRING}, extra=False),
+  "tab.rename": _object({"tab_id": _STRING, "label": _STRING}, extra=False),
 }
 
 
@@ -153,6 +166,8 @@ class HerdrClient:
   def __init__(self, socket_path, deadline, expected_identity=None):
     self.socket_path = str(socket_path)
     self.deadline = deadline
+    self.expected_peer_pid = None
+    self.peer_pid = None
     self._fd, self.identity = _pin_endpoint(socket_path)
     if expected_identity is not None and self.identity != tuple(expected_identity):
       self.close()
@@ -204,6 +219,11 @@ class HerdrClient:
       connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
       connection.settimeout(remaining(2))
       connection.connect(f"/proc/self/fd/{self._fd}")
+      if self.expected_peer_pid is not None:
+        observed = peer_pid(connection)
+        if observed != self.expected_peer_pid:
+          raise TermcfgError(4, "Herdr server process identity changed")
+        self.peer_pid = observed
       connection.settimeout(remaining())
       attempted = True
       connection.sendall(wire)
@@ -277,7 +297,7 @@ def start_headless(binary, session, deadline, repo_root):
   # 新 server 不继承旧 pane 的一次性交接或调用上下文。
   for name in ("ROTOM_WORK_LAUNCH_V1", "HERDR_PANE_ID", "HERDR_WORKSPACE_ID",
                "HERDR_TAB_ID", "HERDR_TERMINAL_ID", "HERDR_SOCKET_PATH",
-               "HERDR_SESSION", "HERDR_ENV"):
+               "HERDR_SESSION", "HERDR_ENV", "ROTOM_WORK_LAUNCH_V2"):
     environment.pop(name, None)
   environment["PATH"] = str(Path(repo_root)) + os.pathsep + environment.get("PATH", "")
   try:
@@ -287,7 +307,7 @@ def start_headless(binary, session, deadline, repo_root):
     raise TermcfgError(5, "Cannot start Herdr headless server") from None
 
 
-def verify_schema(binary, deadline):
+def verify_schema(binary, deadline, *, structured=False):
   """核对安装包公开 schema 的能力；不把产品版本字符串作为门禁。"""
   schema = _cli_json([str(binary), "api", "schema", "--json"], deadline)
   try:
@@ -304,6 +324,8 @@ def verify_schema(binary, deadline):
         raise ValueError("invalid method definition")
       methods[name] = definitions[reference.rsplit("/", 1)[1]]
     for method, local in PARAM_SCHEMAS.items():
+      if not structured and method not in LEGACY_METHODS:
+        continue
       params = methods[method]
       if params.get("type") != "object":
         raise ValueError("invalid parameters")
@@ -330,3 +352,151 @@ def verify_schema(binary, deadline):
     return schema
   except (KeyError, TypeError, ValueError, AttributeError):
     raise TermcfgError(5, "Herdr public schema lacks required capabilities") from None
+
+
+def peer_pid(connection):
+  """Linux socket 凭据证明进程；不从终端环境推测服务端 PID。"""
+  try:
+    pid, uid, _ = struct.unpack("3i", connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
+    if pid <= 0 or uid != os.geteuid():
+      raise ValueError()
+    return pid
+  except (OSError, ValueError, AttributeError, struct.error):
+    raise TermcfgError(5, "Herdr peer identity is unavailable") from None
+
+
+def observe_process(pid):
+  try:
+    if type(pid) is not int or pid <= 0:
+      raise ValueError()
+    root = Path("/proc") / str(pid)
+    with (root / "stat").open("rb") as stream:
+      data = stream.read(4097)
+    if len(data) > 4096:
+      raise ValueError()
+    start = data.rsplit(b")", 1)[1].split()[19].decode("ascii")
+    if not start.isdigit():
+      raise ValueError()
+    executable = (root / "exe").stat()
+    return {"pid": pid, "start": start, "executable": [executable.st_dev, executable.st_ino]}
+  except (OSError, ValueError, IndexError, UnicodeError):
+    raise TermcfgError(5, "Herdr owned server process cannot be verified") from None
+
+
+def native_inputs(settings, binary, deadline):
+  """分别记录磁盘身份；这些字段并不声称读取了运行中有效配置。"""
+  from .work import source_digest
+  from .work_config import prepared_config
+  try:
+    deadline.remaining()
+    path = Path(binary).resolve(strict=True)
+    before = path.stat()
+    hasher = hashlib.sha256()
+    with path.open("rb") as stream:
+      for block in iter(lambda: stream.read(1024 * 1024), b""):
+        hasher.update(block)
+    after = path.stat()
+    identity = lambda value: [value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns]
+    if identity(before) != identity(after):
+      raise ValueError()
+    result = subprocess.run([str(path), "--version"], stdin=subprocess.DEVNULL,
+      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True,
+      timeout=deadline.remaining(5), check=False)
+    import re
+    if result.returncode or not re.fullmatch(r"herdr ([A-Za-z0-9.+_-]{1,80})\n?", result.stdout):
+      raise ValueError()
+    config_path, config_digest = prepared_config()
+    value = {"binary": str(path), "binary_digest": hasher.hexdigest(),
+      "binary_identity": identity(after), "disk_version": result.stdout.strip().split(" ", 1)[1],
+      "config_path": str(config_path), "config_digest": config_digest,
+      "source_digest": source_digest(settings.repo_root), "repo_root": str(settings.repo_root),
+      "session": settings.session, "detection": "not-used-for-lifecycle",
+      "integrations": "not-used-for-lifecycle"}
+    deadline.remaining()
+    return value
+  except TermcfgError:
+    raise
+  except (OSError, ValueError, TypeError, UnicodeError, subprocess.SubprocessError):
+    raise TermcfgError(5, "Herdr disk inputs cannot be verified") from None
+
+
+_HEX = {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+_PROCESS_EVIDENCE = _object({"pid": {"type": "integer", "minimum": 1},
+  "start": {"type": "string", "pattern": "^[0-9]+$"}, "executable": {
+    "type": "array", "items": _UINT, "minItems": 2, "maxItems": 2}}, extra=False)
+_INPUT_EVIDENCE = _object({**{key: _STRING for key in
+    ("binary", "disk_version", "config_path", "repo_root", "session")},
+  **{key: _HEX for key in ("binary_digest", "config_digest", "source_digest")},
+  "binary_identity": {"type": "array", "items": _UINT, "minItems": 4, "maxItems": 4},
+  "detection": {"const": "not-used-for-lifecycle"},
+  "integrations": {"const": "not-used-for-lifecycle"}}, extra=False)
+_STARTUP_EVIDENCE = _object({"version": {"const": 2, "type": "integer"},
+  "endpoint": _STRING, "generation": {"type": "array", "items": _UINT,
+    "minItems": 2, "maxItems": 2}, "inputs": _INPUT_EVIDENCE,
+  "process": _PROCESS_EVIDENCE, "server_version": _STRING,
+  "protocol": {"type": "integer", "enum": sorted(SUPPORTED_PROTOCOLS)},
+  "config_observation": {"const": "startup-file-and-wrapper"}}, extra=False)
+
+
+def _read_startup_record(state):
+  from .work_state import _io, _validate_strings
+  with _io():
+    raw = state.tree.read("server.json", max_bytes=65536)
+  if raw is None:
+    return None
+  try:
+    record = _json(raw[0])
+    if raw[1] != 0o600 or not Draft202012Validator(_STARTUP_EVIDENCE).is_valid(record):
+      raise ValueError()
+    _validate_strings(record)
+    return record
+  except (ValueError, TypeError, UnicodeError, RecursionError):
+    raise TermcfgError(4, "work_server_startup_record_invalid", "work status") from None
+
+
+def record_startup_evidence(client, settings, binary, process, inputs):
+  """仅刚启动的自有进程可登记；证据失败保留 server，不发修复命令。"""
+  from .work_state import WorkState, json_bytes, _io
+  from .work_config import validate_native_config
+  if not Draft202012Validator(_PROCESS_EVIDENCE).is_valid(process):
+    raise TermcfgError(5, "Herdr startup process evidence is invalid")
+  client.expected_peer_pid = process["pid"]
+  pong = client.request("ping", {})
+  validate_native_config(binary, client.deadline)
+  current = native_inputs(settings, binary, client.deadline)
+  if (current != inputs or client.peer_pid != process["pid"]
+      or observe_process(process["pid"]) != process
+      or process["executable"] != inputs["binary_identity"][:2]):
+    raise TermcfgError(5, "Herdr startup inputs or process changed")
+  with WorkState(client.socket_path, client.identity, create=True) as state:
+    _read_startup_record(state)
+    record = {"version": 2, "endpoint": state.socket_path, "generation": list(client.identity),
+      "inputs": inputs, "process": process, "server_version": pong["version"],
+      "protocol": pong["protocol"], "config_observation": "startup-file-and-wrapper"}
+    if not Draft202012Validator(_STARTUP_EVIDENCE).is_valid(record):
+      raise TermcfgError(5, "Herdr startup evidence is invalid")
+    with _io():
+      state.tree.write_state("server.json", json_bytes(record))
+    return record
+
+
+def require_startup_evidence(client, settings, binary):
+  """只读核对启动观察；没有证据不接管，也不自动重启现有 server。"""
+  from .work_state import WorkState
+  with WorkState(client.socket_path, client.identity) as state:
+    record = _read_startup_record(state)
+    if record is None:
+      raise TermcfgError(5, "work_server_startup_not_verified", "work --help")
+    try:
+      if (record["endpoint"] != state.socket_path or record["generation"] != list(client.identity)
+          or observe_process(record["process"]["pid"]) != record["process"]
+          or native_inputs(settings, binary, client.deadline) != record["inputs"]):
+        raise ValueError()
+      client.expected_peer_pid = record["process"]["pid"]
+      pong = client.request("ping", {})
+      if (client.peer_pid != record["process"]["pid"] or pong["version"] != record["server_version"]
+          or pong["protocol"] != record["protocol"]):
+        raise ValueError()
+      return record
+    except (ValueError, TypeError, KeyError, UnicodeError, RecursionError):
+      raise TermcfgError(5, "work_server_startup_evidence_changed", "work status") from None

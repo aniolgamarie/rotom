@@ -1,0 +1,78 @@
+{
+  "repository": "https://github.com/herdrdev/herdr",
+  "tag": "v0.9.5",
+  "commit": "2ecf19a92fc3a7fff75b6ce3655ef04f4625ec01",
+  "protocol": 22,
+  "license": "Apache-2.0",
+  "retrieved_on": "2026-10-22",
+  "fixture_kind": "audited-subset-and-synthetic-responses",
+  "official_schema_complete": false,
+  "coverage": {
+    "request_methods": [
+      "workspace.create",
+      "workspace.rename",
+      "workspace.close",
+      "tab.rename"
+    ],
+    "wire_result_methods": [
+      "workspace.create",
+      "workspace.rename",
+      "tab.rename"
+    ],
+    "unsupported_capability": [
+      "workspace.close"
+    ],
+    "notes": "workspace.close request fields are audited; no success result is admitted because exact membership compare-and-set is unavailable. Synthetic workspace.create, workspace.rename and tab.rename responses contain fictional IDs and paths only."
+  },
+  "source_files": [
+    {
+      "path": "src/api/schema.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema.rs",
+      "sha256": "0e3015fd11e089b97586dfb786c31e7c232659c25ce35201b3ad50e1773e8e09",
+      "evidence": "Method enum names and parameter bindings: workspace.create, workspace.rename, workspace.close. TabRename method binding at lines 100-111."
+    },
+    {
+      "path": "src/api/schema/workspaces.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/workspaces.rs",
+      "sha256": "80f326a0718875b496cd3b9305849a5142c82546eb13fe8b4435008258806654",
+      "evidence": "WorkspaceCreateParams, WorkspaceRenameParams, WorkspaceCloseParams fields and serde defaults."
+    },
+    {
+      "path": "src/api/schema/response.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/response.rs",
+      "sha256": "0b85658265923fcaa59b0233abc46820cd3fe97199bbc4a22a94c4036ca59226",
+      "evidence": "ResponseResult::WorkspaceCreated, WorkspaceInfo, and Ok variants. TabInfo variant at lines 83-85."
+    },
+    {
+      "path": "src/api/server.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/server.rs",
+      "sha256": "3555e07db3dc9d6a1a08a198b3d9276ff2f1f8fb0d4c32d7d2c78a8c5310b3a6",
+      "evidence": "Public method name mapping."
+    },
+    {
+      "path": "src/api/schema/tabs.rs",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/src/api/schema/tabs.rs",
+      "sha256": "0b6bf6d2afe6419c835082e39fac3470b832a12a7ba22e5723d3702ac4e5d810",
+      "evidence": "TabRenameParams lines 24-28: required tab_id and label; exact source hash reused from the v1 audit of the same v0.9.5 commit."
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/herdrdev/herdr/v0.9.5/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  ],
+  "fixture_sha256": {
+    "api-schema.json": "986ba69d5dcf7c7e79e6c72e847e8319cf6e23c5fec99020470d88512218de6b",
+    "responses.json": "c9a4de9ea0f9c693d98aed82c9082e9d399bedc445339c3a1793f9af66053f71",
+    "config.toml": "2160d7fb7f820e46acd6041ed9c727ed67bb67b411f248307311947943eb8b8d",
+    "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  "tab_rename_handler_review": {
+    "url": "https://raw.githubusercontent.com/herdrdev/herdr/2ecf19a92fc3a7fff75b6ce3655ef04f4625ec01/src/app/api/tabs.rs",
+    "lines": [
+      136,
+      164
+    ],
+    "scope": "Updates the selected tab custom name, persists session state and emits the rename event; no process or layout replacement. Commit-pinned source review only; no handler file hash recorded."
+  }
+}

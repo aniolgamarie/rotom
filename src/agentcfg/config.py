@@ -114,9 +114,17 @@ def load_local(path: Path, *, adapter_schemas: AdapterSchemas | None = None,
     raise ConfigError("read")
   ordinary, _ = separate_local(document)
   validate_document("local", ordinary, adapter_schemas=adapter_schemas)
+  validate_work_input(ordinary)
   store = (load_secrets(document, path) if load_credentials else
     SecretStore._deferred(lambda: load_secrets(document, path)))
   return LocalConfig(ordinary), store
+
+
+def validate_work_input(ordinary):
+  """TOML depth 只接受实际整数；不改变其它配置的 JSON 数值语义。"""
+  for source in ordinary.get("machine", {}).get("work", {}).get("sources", []):
+    if "depth" in source and type(source["depth"]) is not int:
+      raise ConfigError("schema", ("local", "machine", "work", "sources", "<item>", "depth"))
 
 
 def read_local_document(path):

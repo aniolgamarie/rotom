@@ -1,6 +1,8 @@
 """work仅消费已校验的普通选择，不解析凭据或安装工具。"""
 
 from dataclasses import dataclass, field
+from copy import deepcopy
+from contextlib import contextmanager
 import os
 import hashlib
 import json
@@ -14,6 +16,9 @@ from .errors import TermcfgError
 ROOT = Path(__file__).resolve().parents[2]
 ROLES = ("shell", "edit", "build", "debug", "pi", "codex", "dsh")
 PAYLOAD_ENV = "ROTOM_WORK_LAUNCH_V1"
+PAYLOAD_ENV_V2 = "ROTOM_WORK_LAUNCH_V2"
+PATH_NAMES = ("HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME",
+  "XDG_CACHE_HOME", "XDG_RUNTIME_DIR")
 
 
 def operation_timeout(role=None):
@@ -31,6 +36,8 @@ class WorkSettings:
   codex_binary: str | None = None
   codex_daemon: bool = False
   repo_root: Path = field(default=ROOT)
+  model: str | None = None
+  structured: dict | None = None
 
   def __repr__(self):
     return "WorkSettings()"
@@ -45,13 +52,19 @@ class WorkSettings:
     value = {key: getattr(self, key) for key in ("herdr_binary", "session", "editor",
       "pi_profile", "dsh_profile", "codex_binary", "codex_daemon")}
     value["local"] = str(self.local_path)
+    if self.model is not None:
+      value.update(model=self.model, structured=self.structured)
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False,
       separators=(",", ":")).encode()).hexdigest()
 
 
 def literal(value):
-  if not isinstance(value, str) or not value or any(ord(c) < 32 or ord(c) == 127 for c in value):
+  if not isinstance(value, str) or not value or any(ord(c) < 32 or 127 <= ord(c) <= 159 for c in value):
     raise TermcfgError(2, "work_invalid_literal", "work --help")
+  try:
+    value.encode("utf-8")
+  except UnicodeError:
+    raise TermcfgError(2, "work_invalid_literal", "work --help") from None
   return value
 
 
@@ -131,6 +144,37 @@ def validate_native_config(binary, deadline):
     raise TermcfgError(5, "work_native_config_diagnostics_failed", "termcfg doctor --component herdr") from None
 
 
+def settings_from_document(document, *, local, repo_root=ROOT, adapter_schemas=None):
+  """校验普通文档；编辑与文件读取复用，不解析秘密或归一运行路径。"""
+  from agentcfg.config import validate_work_input
+  from agentcfg.schema import ConfigError, validate_document
+  try:
+    validate_document("local", document, adapter_schemas=adapter_schemas)
+    validate_work_input(document)
+    data = document["machine"]
+    work = data.get("work")
+    if not work:
+      raise TermcfgError(2, "work_configuration_required", "work --help")
+    session = work["session"]
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", session):
+      raise TermcfgError(2, "work_invalid_session", "work --help")
+    model = work.get("model")
+    structured = None
+    if model == "structured-v1":
+      from .work_projects import normalize_work
+      structured = normalize_work(work, local_path=local)
+    return WorkSettings(Path(local).absolute(), executable_name(work["herdr_binary"]), session,
+      executable_name(data["editor"]) if "editor" in data else None,
+      work.get("pi_profile"), work.get("dsh_profile"),
+      executable_name(work["codex_binary"]) if "codex_binary" in work else None,
+      work.get("codex_daemon", False), Path(repo_root), model,
+      structured)
+  except TermcfgError:
+    raise
+  except (ConfigError, OSError, ValueError, KeyError, TypeError):
+    raise TermcfgError(2, "work_invalid_configuration", "work --help") from None
+
+
 def read_settings(*, machine=None, local=None, repo_root=ROOT):
   from agentcfg.cli import local_path
   from agentcfg.config import load_local
@@ -146,6 +190,7 @@ def read_settings(*, machine=None, local=None, repo_root=ROOT):
       path = xdg_config_home() / "agentcfg" / "machines" / (identifier + ".toml")
     else:
       path = local_path(local)
+    adapter_schemas = None
     try:
       config, _ = load_local(path, load_credentials=False)
     except ConfigError as error:
@@ -154,19 +199,9 @@ def read_settings(*, machine=None, local=None, repo_root=ROOT):
       # 只有原生覆盖确需上下文时才加载完整公共目录，再走同一严格校验。
       from agentcfg.workspace import load_public_catalog
       catalog, _ = load_public_catalog(repository=repo_root)
-      config, _ = load_local(path, adapter_schemas=catalog.adapter_schemas, load_credentials=False)
-    data = config.data["machine"]
-    work = data.get("work")
-    if not work:
-      raise TermcfgError(2, "work_configuration_required", "work --help")
-    session = work["session"]
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", session):
-      raise TermcfgError(2, "work_invalid_session", "work --help")
-    return WorkSettings(path.absolute(), executable_name(work["herdr_binary"]), session,
-      executable_name(data["editor"]) if "editor" in data else None,
-      work.get("pi_profile"), work.get("dsh_profile"),
-      executable_name(work["codex_binary"]) if "codex_binary" in work else None,
-      work.get("codex_daemon", False), Path(repo_root))
+      adapter_schemas = catalog.adapter_schemas
+      config, _ = load_local(path, adapter_schemas=adapter_schemas, load_credentials=False)
+    return settings_from_document(config.data, local=path, repo_root=repo_root, adapter_schemas=adapter_schemas)
   except TermcfgError:
     raise
   except Conflict:
@@ -211,6 +246,9 @@ def _prepared_agent(settings, role, profile):
     identity = contract.get("runtime_identity", contract["lock_identity"])
     if workspace.backend.status(workspace, identity) != "installed":
       raise TermcfgError(5, "work_agent_runtime_not_prepared", "agentcfg sync")
+    # 旧入口忽略返回值；结构化入口另行校验完整性，不保存原始 launch 正文。
+    return {"generation": current.get("generation"), "identity": identity,
+      "policy": contract.get("environment_policy", "legacy")}
   except TermcfgError:
     raise
   except ConfigError:
@@ -246,3 +284,142 @@ def prepare_tool(settings, role, root):
       raise TermcfgError(2, "work_codex_choice_required", "work --help")
     return [resolve_executable(settings.codex_binary), *([] if settings.codex_daemon else ["--no-daemon"])]
   raise TermcfgError(2, "work_invalid_role", "work --help")
+
+
+def _existing_directory(value):
+  try:
+    path = Path(literal(os.fspath(value)))
+    if not path.is_absolute():
+      raise ValueError()
+    path = path.resolve(strict=True)
+    if not path.is_dir():
+      raise ValueError()
+    return path
+  except TermcfgError:
+    raise
+  except (OSError, ValueError, TypeError, RuntimeError):
+    raise TermcfgError(2, "work_start_directory_invalid", "work --help") from None
+
+
+def resolve_type_start(definition, workspace_start, caller_home):
+  """类型目录只从固定工作区与捕获 HOME 解析，不求值或创建目录。"""
+  if (not isinstance(definition, dict) or set(definition) - {"label", "launcher", "cwd"}
+      or not {"label", "launcher"} <= set(definition)
+      or definition["launcher"] not in ("shell", "editor", "pi", "dsh", "codex")):
+    raise TermcfgError(2, "work_invalid_type_definition", "work --help")
+  literal(definition["label"])
+  start = _existing_directory(workspace_start)
+  home = _existing_directory(caller_home)
+  cwd = definition.get("cwd", {"from": "workspace_start"})
+  if not isinstance(cwd, dict):
+    raise TermcfgError(2, "work_invalid_type_cwd", "work --help")
+  if cwd == {"from": "workspace_start"}:
+    return start
+  if set(cwd) != {"path"}:
+    raise TermcfgError(2, "work_invalid_type_cwd", "work --help")
+  value = literal(cwd["path"])
+  target = home / value[2:] if value.startswith("~/") else Path(value)
+  return _existing_directory(target if target.is_absolute() else start / target)
+
+
+def _checked_paths(paths):
+  if not isinstance(paths, dict) or set(paths) - set(PATH_NAMES) or "HOME" not in paths:
+    raise TermcfgError(2, "work_invalid_launch_paths", "work --help")
+  result = {}
+  for name in PATH_NAMES:
+    value = paths.get(name)
+    if value is None and name != "HOME":
+      result[name] = None
+      continue
+    if value is None:
+      raise TermcfgError(2, "work_invalid_launch_paths", "work --help")
+    value = literal(value)
+    path = Path(value)
+    if not path.is_absolute() or ".." in path.parts:
+      raise TermcfgError(2, "work_invalid_launch_paths", "work --help")
+    if name == "HOME":
+      _existing_directory(value)
+    # 不 resolve：已部署的 caller_paths 使用原始环境字面值。
+    result[name] = value
+  return result
+
+
+def capture_paths(home=None):
+  paths = {name: os.environ.get(name) for name in PATH_NAMES}
+  if home is not None:
+    try:
+      paths["HOME"] = os.fspath(home)
+    except TypeError:
+      raise TermcfgError(2, "work_invalid_launch_paths", "work --help") from None
+  return _checked_paths(paths)
+
+
+@contextmanager
+def bound_paths(paths):
+  """仅临时恢复标准路径边界；其它变量与原生 HERDR 身份保持原状。"""
+  selected = _checked_paths(paths)
+  before = {name: os.environ.get(name) for name in PATH_NAMES}
+  try:
+    for name, value in selected.items():
+      if value is None:
+        os.environ.pop(name, None)
+      else:
+        os.environ[name] = value
+    yield
+  finally:
+    for name, value in before.items():
+      if value is None:
+        os.environ.pop(name, None)
+      else:
+        os.environ[name] = value
+
+
+def prepare_launch(settings, definition, workspace_start, *, home=None, fixed=None):
+  """返回当前请求的安全启动契约；固定绑定的漂移由父流程比较。"""
+  from jsonschema import Draft202012Validator
+  from .work_state import TYPE_SCHEMA, launch_digest
+  if fixed is None:
+    paths = capture_paths(home)
+  else:
+    if not Draft202012Validator(TYPE_SCHEMA).is_valid(fixed):
+      raise TermcfgError(4, "work_type_binding_invalid", "work status")
+    paths = _checked_paths(fixed["launch"]["paths"])
+    if (fixed["captured_home"] != paths["HOME"] or
+        fixed["digest"] != launch_digest(fixed["cwd"], fixed["captured_home"], fixed["launch"])):
+      raise TermcfgError(4, "work_type_binding_invalid", "work status")
+  captured_home = paths["HOME"]
+  cwd = resolve_type_start(definition, workspace_start, captured_home)
+  launcher = definition["launcher"]
+  runtime = None
+  with bound_paths(paths):
+    if launcher in ("pi", "dsh"):
+      profile = getattr(settings, launcher + "_profile")
+      if not profile:
+        raise TermcfgError(2, "work_agent_profile_required", "work --help")
+      runtime = _prepared_agent(settings, launcher, profile)
+      if (not isinstance(runtime, dict) or set(runtime) != {"generation", "identity", "policy"}
+          or not isinstance(runtime["generation"], str)
+          or re.fullmatch(r"[a-f0-9]{64}", runtime["generation"]) is None
+          or runtime["policy"] not in ("legacy", "caller", "isolated")
+          or not isinstance(runtime["identity"], str) or not runtime["identity"]):
+        raise TermcfgError(5, "work_agent_runtime_receipt_invalid", "agentcfg plan")
+      try:
+        literal(runtime["identity"])
+      except TermcfgError:
+        raise TermcfgError(5, "work_agent_runtime_receipt_invalid", "agentcfg plan") from None
+      entry = resolve_executable(str(settings.repo_root / "agentcfg"))
+      argv = [entry, *settings.selectors, "--profile", profile, "run", launcher, "--cwd", str(cwd)]
+    elif launcher == "shell" and fixed is not None and fixed["launch"]["launcher"] == "shell":
+      argv = [resolve_executable(fixed["launch"]["argv"][0])]
+      if Path(argv[0]) == (ROOT / "rotom-work-shell").resolve():
+        raise TermcfgError(2, "work_recursive_shell", "work --help")
+    else:
+      argv = prepare_tool(settings, "edit" if launcher == "editor" else launcher, cwd)
+  launch = {"launcher": launcher, "argv": argv, "runtime": deepcopy(runtime), "paths": paths}
+  for item in argv:
+    literal(item)
+  result = {"cwd": str(cwd), "captured_home": captured_home, "launch": launch,
+    "digest": launch_digest(cwd, captured_home, launch), "default": None, "sequence": 0, "instances": {}}
+  if not Draft202012Validator(TYPE_SCHEMA).is_valid(result):
+    raise TermcfgError(2, "work_invalid_launch_contract", "work --help")
+  return result

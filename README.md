@@ -56,7 +56,7 @@ Files that mix native and managed settings use field-level ownership. Initializa
 | --- | --- |
 | Install and launch | [Getting started](docs/getting-started.md) |
 | Configure shared keys and models | [Local configuration](docs/local-config.md), [model catalog](docs/model-catalog.md) |
-| Use a specific integration | [DSH](docs/dsh.md), [OMP](docs/omp.md), [Pi](docs/pi.md), [termcfg](docs/termcfg.md) |
+| Use a specific integration | [DSH](docs/dsh.md), [OMP](docs/omp.md), [Pi](docs/pi.md), [Herdr workspaces](docs/herdr-workspaces.md), [termcfg](docs/termcfg.md) |
 | Diagnose, update, or recover | [Operations](docs/operations.md), [known issues](docs/known-issues.md) |
 | Understand the design | [Architecture](docs/architecture.md), [approval boundaries](docs/design/approvals.md) |
 | Contribute or report a security issue | [Contributing](CONTRIBUTING.md), [security policy](SECURITY.md) |

@@ -12,17 +12,7 @@
         "id": {"$ref": "#/$defs/id"},
         "default_profile": {"$ref": "#/$defs/id"},
         "editor": {"$ref": "#/$defs/text"},
-        "work": {
-          "type": "object", "additionalProperties": false, "required": ["herdr_binary", "session"],
-          "properties": {
-            "herdr_binary": {"$ref": "#/$defs/text"},
-            "session": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"},
-            "pi_profile": {"$ref": "#/$defs/id"},
-            "dsh_profile": {"$ref": "#/$defs/id"},
-            "codex_binary": {"$ref": "#/$defs/text"},
-            "codex_daemon": {"type": "boolean"}
-          }
-        },
+        "work": {"$ref": "#/$defs/work"},
         "paths": {
           "type": "object", "additionalProperties": false,
           "properties": {
@@ -57,6 +47,85 @@
     "secrets": {"type": "object", "propertyNames": {"$ref": "#/$defs/id"}, "additionalProperties": {"type": "string"}}
   },
   "$defs": {
+    "work_id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}(?![\\s\\S])"},
+    "work_literal": {"type": "string", "minLength": 1, "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f\\ud800-\\udfff]+(?![\\s\\S])"},
+    "work": {
+      "type": "object", "additionalProperties": false, "required": ["herdr_binary", "session"],
+      "properties": {
+        "model": {"type": "string", "const": "structured-v1"},
+        "herdr_binary": {"$ref": "#/$defs/work_literal"},
+        "session": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}(?![\\s\\S])"},
+        "pi_profile": {"$ref": "#/$defs/id"},
+        "dsh_profile": {"$ref": "#/$defs/id"},
+        "codex_binary": {"$ref": "#/$defs/work_literal"},
+        "codex_daemon": {"type": "boolean"},
+        "include_rotom": {"type": "boolean"},
+        "rotom_template": {"$ref": "#/$defs/work_id"},
+        "sources": {"type": "array", "items": {"$ref": "#/$defs/work_source"}},
+        "templates": {
+          "type": "object", "additionalProperties": false,
+          "patternProperties": {"^[A-Za-z][A-Za-z0-9_-]{0,63}(?![\\s\\S])": {"$ref": "#/$defs/work_template"}}
+        },
+        "workspaces": {"type": "array", "items": {"$ref": "#/$defs/work_workspace"}}
+      },
+      "dependentRequired": {
+        "include_rotom": ["model"], "rotom_template": ["model"], "sources": ["model"],
+        "templates": ["model"], "workspaces": ["model"]
+      }
+    },
+    "work_source": {
+      "type": "object", "additionalProperties": false, "required": ["id", "path", "mode", "template"],
+      "properties": {
+        "id": {"$ref": "#/$defs/work_id"}, "path": {"$ref": "#/$defs/work_literal"},
+        "mode": {"type": "string", "enum": ["git", "directory"]}, "template": {"$ref": "#/$defs/work_id"},
+        "depth": {"type": "integer", "minimum": 1, "maximum": 32},
+        "exclude_hidden": {"type": "boolean"}, "follow_symlinks": {"type": "boolean"},
+        "exclude": {"type": "array", "items": {"allOf": [
+          {"$ref": "#/$defs/work_literal"}, {"type": "string", "pattern": "^[^/\\\\]+(?![\\s\\S])"}
+        ]}}
+      }
+    },
+    "work_template": {
+      "type": "object", "additionalProperties": false, "required": ["order", "initial", "tab_types"],
+      "properties": {
+        "order": {"type": "array", "items": {"$ref": "#/$defs/work_id"}},
+        "initial": {"$ref": "#/$defs/work_id"},
+        "tab_types": {
+          "type": "object", "additionalProperties": false,
+          "patternProperties": {"^[A-Za-z][A-Za-z0-9_-]{0,63}(?![\\s\\S])": {"$ref": "#/$defs/work_type"}}
+        }
+      }
+    },
+    "work_type": {
+      "type": "object", "additionalProperties": false, "required": ["label", "launcher"],
+      "properties": {
+        "label": {"$ref": "#/$defs/work_literal"},
+        "launcher": {"type": "string", "enum": ["shell", "editor", "pi", "dsh", "codex"]},
+        "cwd": {"oneOf": [
+          {"type": "object", "additionalProperties": false, "required": ["from"],
+            "properties": {"from": {"type": "string", "const": "workspace_start"}}},
+          {"type": "object", "additionalProperties": false, "required": ["path"],
+            "properties": {"path": {"$ref": "#/$defs/work_literal"}}}
+        ]}
+      }
+    },
+    "work_workspace": {"oneOf": [
+      {
+        "type": "object", "additionalProperties": false, "required": ["kind", "path", "mode", "template"],
+        "properties": {
+          "kind": {"type": "string", "const": "project"}, "path": {"$ref": "#/$defs/work_literal"},
+          "mode": {"type": "string", "enum": ["git", "directory"]}, "template": {"$ref": "#/$defs/work_id"}
+        }
+      },
+      {
+        "type": "object", "additionalProperties": false, "required": ["kind", "id", "title", "template"],
+        "properties": {
+          "kind": {"type": "string", "const": "named"}, "id": {"$ref": "#/$defs/work_id"},
+          "title": {"$ref": "#/$defs/work_literal"}, "template": {"$ref": "#/$defs/work_id"},
+          "start_path": {"$ref": "#/$defs/work_literal"}
+        }
+      }
+    ]},
     "id": {"type": "string", "minLength": 1, "pattern": "^(?!\\.{1,2}$)[^/\\\\\\u0000-\\u001f\\u007f]+(?![\\s\\S])"},
     "text": {"type": "string", "minLength": 1, "pattern": "^[^\\u0000]+(?![\\s\\S])"},
     "secret": {"type": "string", "pattern": "^secret:(?!\\.{1,2}$)[^/\\\\\\u0000-\\u001f\\u007f]+(?![\\s\\S])"},

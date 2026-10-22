@@ -18,6 +18,7 @@ Rotom's Python project metadata currently declares `0.1.0`. This checkout is rel
 | SSH subscription authentication | `rotom-dsh-ssh-subscription-auth@0.1.1` | Public Codex/Cursor authentication APIs; own instance credentials; real terminal/account acceptance pending |
 | OMP | `18.8.6`, `f068751e2f1dbdbc195977776d47a26db8697495` | Official standalone runtime; independent Rotom permission plugin |
 | Pi | `0.84.4` in current manifest | Complete lock rebuilt through the resolver; Linux pi-default evidence is recorded separately. Other profiles, platforms and live services require their own acceptance. |
+| Herdr workspace review baseline | `0.9.5`, protocol `22` | Feature 006 public API/source review baseline, not a statement of the current machine deployment or latest upstream version. [Usage and limitations](herdr-workspaces.md) and [isolated evidence](../specs/006-configurable-workspaces/quickstart.md) keep native acceptance and deployment unverified; guarded close and existing-branch Git creation refuse before dispatch. |
 | Manager | Python 3.11+; `uv.lock` | Locked environment, loaded directly from `.venv` |
 
 Lock manifests and complete installer lock files under `locks/` are the authoritative dependency records, including resolved sources, integrity, resources, and transitive dependencies. Do not copy a displayed digest into a lock to bypass validation. DSH's tested toolchain is Node `24.14.0` / npm `11.19.1` with frozen pnpm `11.19.0`; other accepted toolchain versions need their own native evidence.

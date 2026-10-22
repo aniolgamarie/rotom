@@ -6,6 +6,7 @@ Notable user-visible changes are recorded here. Unreleased entries describe repo
 
 ### Changed
 
+- Added explicit `structured-v1` workspace configuration with shared selector/CLI/manual registration, bounded discovery, independent directory/named contexts, fixed default/extra terminal bindings and reviewed new-branch Git worktree creation. Isolated verification is recorded for [feature 006](specs/006-configurable-workspaces/quickstart.md); native acceptance and deployment remain unverified. Guarded workspace close and existing-branch Git creation return 5 before dispatch.
 - Selected unmodified official npm TUI `0.16.1` (gitHead `73ff99fbed56563bf154d719effd09f9f9725349`); the former `0.15.0` source-build archive is historical. Cursor/SSH wrapper metadata now targets TUI `0.16.1` as versions `0.1.3`/`0.1.1`, preserving upstream Cursor `0.6.12` and Core `0.2.1-rc.2`.
 - Added explicit opt-in official rc2 Agent Teams with a deployed selection flag. It remains outside default plugins; isolated Linux member/task/restart and TUI/Perry combination acceptance passed. Instance maintenance protection remains unchanged, and native manifest-writing `/team on/off` is unsupported in managed profiles.
 - Isolated Linux TUI session-resume/settings-migration/CLI and matching Perry formal/manual/timeout scenarios passed for the selected ecosystem; real account and other-platform scope remains separate.
@@ -15,7 +16,7 @@ Notable user-visible changes are recorded here. Unreleased entries describe repo
 - DSH/OMP lock resolution publishes recoverable generations under repository leases; sync protects its complete lock-consumption period. Pi publication remains single-publisher.
 - Rebuilt the complete Pi 0.84.4 lock against the current adapter/runtime sources and exact toolchains. Direct pins remain unchanged; transitive resolution changes and limited Linux native acceptance are recorded separately.
 - Workspace configuration loading defers shared credential-file reads until a selected operation resolves a secret reference.
-- termcfg now manages zsh/tmux only. Explicit `migrate --drop-mihomo` retires legacy metadata while preserving running proxy services, private data, targets and backups.
+- termcfg manages zsh/tmux and optional Herdr configuration. Explicit `migrate --drop-mihomo` retires legacy metadata while preserving running proxy services, private data, targets and backups.
 
 ### Fixed
 
