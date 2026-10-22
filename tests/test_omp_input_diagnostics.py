@@ -73,7 +73,7 @@ def test_doctor_input_reports_only_managed_omp_events(capsys):
   assert json.loads(output)["input_diagnostics"]["host_events"]["loop_blocks"][0]["blocked_ms"] == 429
 
 
-@pytest.mark.parametrize("profile,agent", [("dsh-default", "dsh"), ("pi-default", "pi")])
+@pytest.mark.parametrize("profile,agent", [("dsh-default", "dsh"), ("pi-base", "pi"), ("pi-pro", "pi")])
 def test_doctor_input_reports_generic_state_for_other_agents(profile, agent, capsys):
   assert cli.main(["init-local", "--profile", profile]) == 0
   capsys.readouterr()

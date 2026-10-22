@@ -20,6 +20,7 @@ MCP = {
 SUPPORT = {"kind": "module-support", "id": "pi-mcp-launch", "path": "agents/pi/support/mcp-launch.py", "target": "support/mcp-launch.py"}
 
 SUPPORTS = {
+  "pi-command-aliases": {"kind": "module-support", "id": "pi-command-aliases", "path": "agents/pi/support/command-aliases.mjs", "target": "support/command-aliases.mjs"},
   "pi-browser-launch": {"kind": "module-support", "id": "pi-browser-launch", "path": "agents/pi/support/browser-launch.py", "target": "support/browser-launch.py"},
   "pi-mcp-launch": SUPPORT,
   "pi-status-observer": {"kind": "module-support", "id": "pi-status-observer", "path": "agents/pi/support/status-observer.mjs", "target": "support/status-observer.mjs"},
@@ -28,7 +29,7 @@ SUPPORTS = {
 
 
 def selected_supports(selection):
-  names = (["pi-mcp-launch"] if selection["mcp"] else [])
+  names = ["pi-command-aliases"] + (["pi-mcp-launch"] if selection["mcp"] else [])
   if "pi-footer" in selection["plugins"]:
     names += ["pi-status-observer", "pi-footer-config"]
   if "playwright-cli" in selection["skills"]:

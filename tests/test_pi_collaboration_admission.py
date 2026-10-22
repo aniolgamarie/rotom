@@ -15,7 +15,7 @@ def test_pro_reports_not_ready_and_does_not_enable_a_delegator(tmp_path):
   assert feature["status"] == "not_ready" and feature["decision"] == "held"
   assert feature["candidate"] == "@mjakl/pi-subagent@3.1.0"
   assert workspace.resolved.data["profile"]["agent_options"]["collaboration"]["enabled"] is False
-  assert workspace.resolved.data["profile"]["plugins"] == []
+  assert workspace.resolved.data["profile"]["plugins"] == ["pi-footer"]
 
 
 def test_enabling_unadmitted_collaboration_is_exit_two(tmp_path):

@@ -30,9 +30,10 @@ certify those executables. Rotom preserves existing native tool caches and does 
 ## Choose and prepare
 
 `pi-base` is the daily configuration. `pi-pro` currently shares that foundation; investigation
-collaboration is **not ready**, and `collaboration.enabled=true` is rejected. Defaults select no
-external plugin or MCP service. The fixed optional selections below have separate admission and
-runtime evidence. No Task Keeper, model-delegate,
+collaboration is **not ready**, and `collaboration.enabled=true` is rejected. Both profiles select
+`builtin:codemode`, the three-row `pi-footer` status display and native project trust. MCP services
+and other external plugins remain explicit choices with separate admission and runtime evidence.
+No Task Keeper, model-delegate,
 custom execution loop, Todo or automatic planning platform is loaded.
 
 Start from [Base](../examples/pi-base.local.toml) or [Pro](../examples/pi-pro.local.toml)
@@ -77,22 +78,45 @@ editor and UI changes do not enter the npm recipe, though they still change conf
 validation and need the corresponding review. A source/backend semantic change still needs review
 and verification even when the dependency digest stays unchanged.
 
-Current profile consumption is independent: changing an unselected profile's resources does not
-invalidate the selected slice. Explicit `lock` publishes both slices: the selected profile uses its
-effective local selection, while the other profile is rebuilt from public defaults. It does not retain
-the other profile's previous local overrides. Review both slices before publication/use. Selecting
-`resources.themes=[]` excludes the theme package from that profile's closure.
+An installed runtime alone does not establish startup readiness. Pi also compares the saved launch
+contract with the current provider, model, role, settings and resource selections. After changing
+those selections, review `plan` and explicitly `apply` each affected profile. If a dependency selection
+changed, first resolve its lock and run `sync`; `apply` cannot repair a stale dependency lock.
+`doctor` checks the deployed selection binding and reports a mismatch as requiring deployment, even
+when the native files and runtime package have not changed. This check does not start Pi, inspect
+accounts or verify model requests.
 
-Only `roles.main` is supported. The optional builtin extensions are `builtin:codemode` and
-`builtin:tool-search`; neither is selected by default. MCP and external plugins accept only
+Current profile consumption is independent: changing an unselected profile's resources does not
+invalidate the selected slice. Explicit `lock` using a machine configuration publishes both slices
+from that same machine's effective Base and Pro selections. It does not replace the other profile's
+local choices with public defaults. Public-only lock resolution still uses public defaults. Review
+both slices before publication/use. Selecting `resources.themes=[]` excludes the theme package
+from that profile's closure.
+
+Only `roles.main` is supported. The admitted builtin extensions are `builtin:codemode` and
+`builtin:tool-search`; Codemode is selected by default. MCP and external plugins accept only
 registered, fixed module IDs. Unknown packages, arbitrary entries and held candidates fail validation.
+
+Startup repairs must preserve the existing functional choices rather than replace them with public
+defaults. Record the deployed resource and tool selections before applying a changed launch contract,
+and keep those choices explicit in the machine overrides. `settings.defaultTools` preserves the
+native tool selection, including Codemode when its builtin is selected. When it is omitted, the
+adapter derives the standard tools and the tools of selected builtins. An explicit tool list takes
+precedence. The fixed repository-owned
+`/exit` alias uses Pi's public command/shutdown APIs and is included in the complete runtime lock.
+Dependency integrity and a matching launch contract do not by themselves prove that a previous
+configuration has been preserved.
 
 ## Ownership and resources
 
 Each profile owns a stable `pi-home` and `pi-home/sessions` inside its isolated instance.
-The official CLI receives both explicit session-directory settings, `--no-approve`, the four
-resource-discovery disabling flags, and explicit local Skill/prompt/theme entries. Project
-AGENTS.md context remains available; these flags are not an operating-system sandbox.
+The official CLI receives both explicit session-directory settings, the four resource-discovery
+disabling flags, and explicit local Skill/prompt/theme entries. Both profiles select
+`agent_options.discovery.project_trust="native"`, retaining Pi's own saved decision or interactive
+trust prompt. An explicit `project_trust="deny"` adds `--no-approve`. Native trust does not add
+`--approve` or grant
+trust automatically. The trust choice is part of the deployed launch contract. Project AGENTS.md
+context remains available; these flags are not an operating-system sandbox.
 Global `settings.json.packages` must be empty: even object-form declarations are refused
 before managed startup. Loading drift is reported without deleting user content or installing packages.
 
@@ -175,7 +199,8 @@ satisfies the full boundary; no custom investigation executor is introduced. See
 The [optional module recipes](../specs/005-rebuild-pi-toolkit/optional-module-recipes.md) and
 [all-off services example](../examples/pi-services.toml) distinguish implemented choices from
 research candidates. Explicit `pi-footer`, `cache-hit-monitor`, `pi-context7` and `pi-brave` selections bind
-the complete lock and launch configuration. Defaults remain empty; changing a selection requires
+the complete lock and launch configuration. Only the footer is selected among these plugins and
+services by default; changing a selection requires
 explicit lock, sync and apply. Selecting the `playwright-cli` Skill also binds its exact CLI package
 and complete upstream support directory. Other candidates remain unavailable. Footer and cache
 diagnostics have real usage evidence. Context7 connection and separate service queries and synthetic

@@ -284,7 +284,8 @@ def doctor_verification(report):
     deployed = "not_run"
   elif (report.get("lock") == "missing-or-invalid" or report["recovery_pending"]
       or report.get("drift") or report.get("conflicts") or report.get("changes_pending")
-      or report.get("deployed_runtime_matches_current") is False):
+      or report.get("deployed_runtime_matches_current") is False
+      or report.get("deployed_binding_matches_current") is False):
     deployed = "blocked"
   else:
     deployed = "passed"
@@ -345,6 +346,14 @@ def cmd_doctor(args):
   result["platform_evidence"] = platforms.get(sys.platform, "not-recorded") if isinstance(platforms, dict) else "not-recorded"
   if saved["current"] is not None:
     launch = saved["current"]["launch"]
+    validate_binding = getattr(w.adapter, "validate_runtime_binding", None)
+    if validate_binding is not None:
+      try:
+        validate_binding(w, launch.get("adapter_binding"))
+      except Conflict:
+        result["deployed_binding_matches_current"] = False
+      else:
+        result["deployed_binding_matches_current"] = True
     result["deployed_runtime_matches_current"] = launch.get("runtime_identity", launch["lock_identity"]) == runtime.runtime_identity(w, lock)
     result["deployed_dependencies"] = w.backend.status(w, launch.get("runtime_identity", launch["lock_identity"]))
   drift = None

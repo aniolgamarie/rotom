@@ -24,6 +24,8 @@ from .pi_modules import MCP, MODULES, PLUGINS, SUPPORT
 
 FLAVORS = tuple("catppuccin-" + name for name in ("latte", "frappe", "macchiato", "mocha"))
 BUILTINS = ("builtin:codemode", "builtin:tool-search")
+BUILTIN_TOOLS = {"builtin:codemode": "codemode", "builtin:tool-search": "tool_search"}
+DEFAULT_TOOLS = ("read", "bash", "edit", "write")
 OFFICIAL_ENTRY = "node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
 THEME_ROOT = "node_modules/catppuccin-pi-theme/themes"
 LOAD_ARRAYS = ("packages", "skills", "extensions", "prompts", "promptTemplates", "themes")
@@ -168,7 +170,11 @@ class PiAdapter(Adapter):
   def _fields(self, data):
     options = data["profile"]["agent_options"]
     settings = deepcopy(options.get("settings", {}))
-    if "builtin:codemode" not in options.get("resources", {}).get("extensions", []):
+    extensions = options.get("resources", {}).get("extensions", [])
+    # 显式工具选择优先；仅缺省时按已选官方扩展派生工具。
+    settings.setdefault("defaultTools", [*DEFAULT_TOOLS,
+      *(BUILTIN_TOOLS[name] for name in BUILTINS if name in extensions)])
+    if "builtin:codemode" not in extensions:
       settings.pop("codemode", None)
     settings.update({name: [] for name in LOAD_ARRAYS})
     main = data["profile"]["roles"].get("main")
@@ -367,7 +373,8 @@ class PiAdapter(Adapter):
       "providers": data["providers"], "models": data["models"], "roles": data["profile"]["roles"],
       "settings": data["profile"]["agent_options"].get("settings", {})}
     return {"cli_contract": "official-pi-1.3", "selection_digest": hashlib.sha256(encode(selected)).hexdigest(),
-      "agent_home": str(instance / "pi-home"), "project_resources": False}
+      "agent_home": str(instance / "pi-home"), "project_resources": False,
+      "project_trust": data["profile"]["agent_options"].get("discovery", {}).get("project_trust", "deny")}
 
   def validate_runtime_binding(self, workspace, saved):
     if saved != self.runtime_binding(workspace.resolved.data, workspace.instance):
@@ -377,11 +384,14 @@ class PiAdapter(Adapter):
     self.validate_selected(data)
     options = data["profile"]["agent_options"]
     argv = ["node", str(runtime_root / OFFICIAL_ENTRY), "--session-dir", str(instance_root / "pi-home/sessions"),
-      "--no-approve", "--no-extensions", "--no-skills", "--no-prompt-templates", "--no-themes"]
+      "--no-extensions", "--no-skills", "--no-prompt-templates", "--no-themes"]
+    if options.get("discovery", {}).get("project_trust", "deny") == "deny":
+      argv.insert(4, "--no-approve")
     if data["mcp"]:
       argv += ["-e", "builtin:mcp"]
     else:
       argv += ["--no-mcp"]
+    argv += ["-e", str(runtime_root / "support/command-aliases.mjs")]
     for name in data["profile"]["plugins"]:
       plugin = PLUGINS[name]
       argv += ["-e", str(runtime_root / "node_modules" / plugin["package"] / plugin["entry"])]

@@ -1,7 +1,7 @@
 """公开依赖锁的目录租约与小型可恢复发布；日志仅保存白名单锁文件。"""
 
 import base64
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 import errno
 import fcntl
 import hashlib
@@ -10,7 +10,8 @@ import os
 from pathlib import Path
 
 from .deployment import json_bytes
-from .storage import Conflict, Tree, ensure_private
+from .paths import PathError, _check_private
+from .storage import Conflict, Tree
 
 
 FILES = {
@@ -35,9 +36,44 @@ def _adapter(adapter):
     raise Conflict("不支持的依赖锁发布类型")
 
 
+@contextmanager
+def _journal_tree(repository, adapter, *, create=False):
+  """从显式信任的仓库句柄检查私人日志，不要求共享挂载祖先为私人目录。"""
+  _adapter(adapter)
+  with ExitStack() as stack:
+    try:
+      checkout = stack.enter_context(Tree(Path(repository), private=False))
+      cache, _ = stack.enter_context(checkout.parent(".cache/.probe", create=create))
+      # sticky 共享目录也不能成为日志容器的直接祖先。
+      if os.fstat(cache).st_mode & 0o022:
+        raise Conflict("依赖锁发布缓存目录允许其他用户写入")
+      container, _ = stack.enter_context(checkout.parent(".cache/agentcfg-publication/.probe", create=create))
+      _check_private(container)
+      leaf, _ = stack.enter_context(checkout.parent(
+        f".cache/agentcfg-publication/{adapter}/pending.json", create=create))
+      _check_private(leaf)
+      journal = stack.enter_context(Tree(_journal_root(repository, adapter), private=False))
+      if journal.fd is None:
+        raise Conflict("依赖锁发布日志目录身份发生变化")
+      anchored, opened = os.fstat(leaf), os.fstat(journal.fd)
+      if (anchored.st_dev, anchored.st_ino) != (opened.st_dev, opened.st_ino):
+        raise Conflict("依赖锁发布日志目录身份发生变化")
+      if create:
+        # 新容器目录项先于恢复日志持久化；所有句柄均从仓库相对打开。
+        for fd in (container, cache, checkout.fd):
+          os.fsync(fd)
+    except FileNotFoundError:
+      if create:
+        raise
+      journal = None
+    except (PathError, OSError):
+      raise Conflict("无法安全打开依赖锁发布日志目录") from None
+    yield journal
+
+
 def _pending(repository, adapter):
-  with Tree(_journal_root(repository, adapter)) as journal:
-    raw = journal.read("pending.json", max_bytes=64 * 1024 * 1024)
+  with _journal_tree(repository, adapter) as journal:
+    raw = journal.read("pending.json", max_bytes=64 * 1024 * 1024) if journal else None
     if raw is not None and raw[1] != 0o600:
       raise Conflict("依赖锁发布日志权限无效")
     return raw
@@ -138,8 +174,8 @@ class Publisher:
     self.tree = tree
 
   def recover(self):
-    with Tree(_journal_root(self.repository, self.adapter)) as journal:
-      pending = journal.read("pending.json", max_bytes=64 * 1024 * 1024)
+    with _journal_tree(self.repository, self.adapter) as journal:
+      pending = journal.read("pending.json", max_bytes=64 * 1024 * 1024) if journal else None
       if pending is None:
         return
       if pending[1] != 0o600:
@@ -166,14 +202,7 @@ class Publisher:
     if len(encoded) > 64 * 1024 * 1024:
       raise Conflict("依赖锁发布日志超过大小边界")
     _decode_journal(encoded, self.adapter)
-    root = _journal_root(self.repository, self.adapter)
-    ensure_private(root.parent)
-    ensure_private(root)
-    # 首次创建容器也必须先持久化父目录项，再发布恢复日志。
-    for directory in (root.parent, root.parent.parent, self.repository):
-      with Tree(directory, private=False) as parent:
-        os.fsync(parent.fd)
-    with Tree(root) as journal:
+    with _journal_tree(self.repository, self.adapter, create=True) as journal:
       journal.write_new("pending.json", encoded)
       try:
         for item in entries:

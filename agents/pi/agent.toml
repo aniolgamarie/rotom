@@ -14,9 +14,10 @@ engine = "node"
 [defaults.agent_options.resources]
 prompts = ["daily-implement", "daily-review"]
 themes = ["catppuccin"]
-extensions = []
+extensions = ["builtin:codemode"]
 [defaults.agent_options.discovery]
 project_resources = false
+project_trust = "native"
 [defaults.agent_options.collaboration]
 enabled = false
 [defaults.agent_options.ui]

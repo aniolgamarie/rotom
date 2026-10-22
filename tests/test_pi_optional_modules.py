@@ -23,7 +23,10 @@ from test_pi_reboot_configuration import local, REPOSITORY
 
 @pytest.mark.parametrize("profile", ["pi-base", "pi-pro"])
 def test_unselected_modules_have_no_extensions_connections_or_background(tmp_path, monkeypatch, profile):
-  workspace = load_workspace(local(tmp_path / "local.toml", profile=profile), repository=REPOSITORY)
+  path = local(tmp_path / "local.toml", profile=profile,
+    extra=f"[overrides.profiles.{profile}.agent_options.resources]\nextensions=[]\n")
+  path.write_text(path.read_text().replace('models=["example-main"]\n', 'models=["example-main"]\nplugins=[]\n', 1))
+  workspace = load_workspace(path, repository=REPOSITORY)
   monkeypatch.setattr("subprocess.Popen", lambda *a, **k: pytest.fail("preview不得启动子进程"))
   monkeypatch.setattr(type(workspace.backend), "sync", lambda *a, **k: pytest.fail("preview不得安装"))
   before = set(tmp_path.rglob("*"))
@@ -32,7 +35,8 @@ def test_unselected_modules_have_no_extensions_connections_or_background(tmp_pat
     runtime_root=tmp_path / "synthetic-runtime", instance_root=workspace.instance,
     lock_identity="synthetic-offline-candidate").argv
   assert "--no-mcp" in argv and "--no-extensions" in argv
-  assert "-e" not in argv and "--extension" not in argv
+  assert [argv[i + 1] for i, arg in enumerate(argv) if arg == "-e"] == [str(tmp_path / "synthetic-runtime/support/command-aliases.mjs")]
+  assert "--extension" not in argv
   assert workspace.resolved.data["profile"]["plugins"] == []
   assert workspace.resolved.data["profile"]["mcp"] == []
   assert workspace.adapter.feature_readiness(workspace.resolved.data)["optional_modules"]["selected"] == []
@@ -71,13 +75,15 @@ def test_candidate_probes_preserve_other_instance_auth_cache_and_history_sentine
   assert before == {p: (p.read_bytes(), p.stat().st_ino, p.stat().st_mtime_ns) for p in paths}
 
 
-def test_only_selected_theme_and_host_are_in_both_current_closures():
+def test_only_selected_modules_and_host_are_in_both_current_closures():
   from agentcfg.pi_dependencies import PiBackend
+  from agentcfg.pi_modules import MODULES, selected_modules
   lock = PiBackend().read_lock(REPOSITORY)
   for profile in ("pi-base", "pi-pro"):
     root = json.loads(lock.pairs[profile][0])
+    selection = lock.metadata["profiles"][profile]["recipe_inputs"]["selection"]
     assert root["dependencies"] == {"@earendil-works/pi-coding-agent": "1.3.0",
-      "catppuccin-pi-theme": "0.1.6"}
+      **{MODULES[name][0]: MODULES[name][1] for name in selected_modules(selection)}}
 
 
 def selected_local(path, *, plugins=(), mcp=(), skills=None, context_key=False, brave_key=True):
@@ -107,7 +113,7 @@ def test_admitted_module_ids_resolve_through_strict_public_catalog(tmp_path, plu
 def module_workspace(fake_npm, tmp_path, monkeypatch):
   root, backend, calls = fake_npm
   for directory in ("schemas", "templates"):
-    shutil.copytree(REPOSITORY / "agents/pi" / directory, root / "agents/pi" / directory)
+    shutil.copytree(REPOSITORY / "agents/pi" / directory, root / "agents/pi" / directory, dirs_exist_ok=True)
   monkeypatch.setattr(run_owners, "current_process_identity", lambda: {"pid": 65432, "birth_id": "synthetic-boot:456"})
   monkeypatch.setattr(runtime, "checked", lambda *a, **kw: "v24.14.0")
   launched = []
@@ -134,7 +140,7 @@ def test_selected_modules_lock_install_project_and_fake_native_exit(module_works
   Draft202012Validator(schema).validate(lock.metadata)
   piece = lock.metadata["profiles"]["pi-base"]
   assert set(piece["recipe_inputs"]["modules"]) == {"catppuccin", *plugins, *mcp}
-  assert set(lock.metadata["profiles"]["pi-pro"]["recipe_inputs"]["modules"]) == {"catppuccin"}
+  assert set(lock.metadata["profiles"]["pi-pro"]["recipe_inputs"]["modules"]) == {"catppuccin", "pi-footer"}
   npm_calls = list(calls)
   assert runtime.run(workspace, cwd=tmp_path) == 19
   assert len(launched) == 1 and calls == npm_calls

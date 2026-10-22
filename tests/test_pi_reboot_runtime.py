@@ -29,8 +29,9 @@ def launch(workspace, tmp_path):
 def test_launch_uses_official_cli_stable_home_and_explicit_resource_flags(selected, tmp_path):
   spec = launch(selected, tmp_path)
   assert spec.argv[:2] == ("node", str(tmp_path / "locked-runtime/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"))
-  for flag in ("--no-approve", "--no-extensions", "--no-skills", "--no-prompt-templates", "--no-themes", "--no-mcp"):
+  for flag in ("--no-extensions", "--no-skills", "--no-prompt-templates", "--no-themes", "--no-mcp"):
     assert flag in spec.argv
+  assert "--approve" not in spec.argv and "--no-approve" not in spec.argv
   assert "--no-context-files" not in spec.argv
   assert spec.argv[spec.argv.index("--session-dir") + 1] == str(selected.instance / "pi-home/sessions")
   assert spec.argv[spec.argv.index("--use-theme") + 1] == "catppuccin-mocha"
@@ -159,7 +160,9 @@ def test_builtin_selection_is_explicit_and_does_not_enable_external_plugins(sele
   spec = selected.adapter.launch_spec(data, cwd=tmp_path, runtime_root=tmp_path / "runtime",
     instance_root=selected.instance, lock_identity="synthetic-lock")
   extensions = [spec.argv[index + 1] for index, arg in enumerate(spec.argv) if arg == "-e"]
-  assert extensions == ["builtin:codemode", "builtin:tool-search"]
+  assert extensions == [str(tmp_path / "runtime/support/command-aliases.mjs"),
+    str(tmp_path / "runtime/node_modules/pi-footer/src/index.ts"), "builtin:codemode", "builtin:tool-search",
+    str(tmp_path / "runtime/support/status-observer.mjs")]
   assert "--no-mcp" in spec.argv and "builtin:mcp" not in extensions
 
 

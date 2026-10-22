@@ -158,6 +158,7 @@ _BLOCKER_LABELS = {
   "dependencies-unknown": "当前依赖状态未知",
   "not-deployed": "尚未部署配置",
   "deployed-dependencies-unavailable": "已部署版本所需依赖不可用",
+  "deployed-binding-mismatch": "当前运行选择与已部署契约不匹配",
   "deployment-conflict-or-drift": "部署目标存在冲突或漂移",
   "changes-pending": "配置有待部署变更",
   "lock-missing-or-invalid": "依赖锁缺失或无效",
@@ -358,6 +359,7 @@ def _render_doctor(payload, args, stream):
     ("已部署", payload.get("deployed")), ("前版备份", payload.get("previous_backup")),
     ("依赖", _dependency(payload.get("dependencies"))),
     ("已部署依赖", _dependency(payload.get("deployed_dependencies"))),
+    ("部署契约匹配", payload.get("deployed_binding_matches_current")),
     ("漂移", payload.get("drift")), ("冲突", payload.get("conflicts")),
     ("待变更", payload.get("changes_pending")), ("待恢复", payload.get("recovery_pending")),
     ("依赖锁", payload.get("lock")), ("诊断定位文件", payload.get("diagnostics"))), stream)

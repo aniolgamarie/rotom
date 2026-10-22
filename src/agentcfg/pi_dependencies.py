@@ -628,7 +628,16 @@ class PiBackend:
   def resolve_lock_for(self, workspace):
     if workspace.profile not in PROFILES:
       raise ConfigError("pi-lock-profile")
-    return self._resolve_lock(Path(workspace.repository), {workspace.profile: dependency_selection(workspace.resolved.data)})
+    selections = {workspace.profile: dependency_selection(workspace.resolved.data)}
+    local = getattr(workspace, "local_path", None)
+    if local is not None:
+      from .workspace import load_workspace
+      for profile in PROFILES:
+        if profile != workspace.profile:
+          other = load_workspace(local, profile, repository=workspace.repository,
+            allow_missing_local_values=True)
+          selections[profile] = dependency_selection(other.resolved.data)
+    return self._resolve_lock(Path(workspace.repository), selections)
 
   def _resolve_lock(self, repository, selections):
     from .publication import publisher_lease

@@ -215,12 +215,17 @@ def recipe_repository(tmp_path):
   import shutil
   source = Path(__file__).resolve().parents[1]
   root = tmp_path / "recipe"
-  for name in ("agents/pi/agent.toml", "agents/pi/content.toml", "agents/pi/dependencies.json", "shared/content.toml",
-      "profiles/pi-base.toml", "profiles/pi-pro.toml"):
+  # 机器锁会解析同一local的两个profile，假仓库也需完整的公开catalog元数据。
+  metadata = [Path("agents/pi/dependencies.json"),
+    Path("agents/omp/resources/themes/dark-catppuccin.json"),
+    Path("agents/omp/resources/themes/light-catppuccin.json")]
+  for directory in ("shared", "shared/defaults", "profiles", "agents/dsh", "agents/pi", "agents/omp"):
+    metadata.extend(path.relative_to(source) for path in sorted((source / directory).glob("*.toml")))
+  for name in metadata:
     target = root / name
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source / name, target)
-  for name in ("agents/pi/prompts", "agents/pi/licenses", "agents/pi/support", "shared/rules", "shared/skills/repo-navigation", "shared/skills/safe-linux-scripting", "shared/skills/playwright-cli"):
+  for name in ("schemas", "agents/pi/schemas", "agents/pi/templates", "agents/pi/prompts", "agents/pi/licenses", "agents/pi/support", "shared/rules", "shared/skills/repo-navigation", "shared/skills/safe-linux-scripting", "shared/skills/playwright-cli"):
     shutil.copytree(source / name, root / name)
   return root
 

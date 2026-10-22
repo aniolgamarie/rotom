@@ -19,6 +19,25 @@ from agentcfg.workspace import load_workspace
 FOOTER = "pi-home/extensions/pi-footer.json"
 
 
+@pytest.mark.parametrize("invalid", [
+  "unknown-root", "unknown-widget", "unknown-option", "widget-id", "widget-type", "missing-widget-id",
+])
+def test_footer_template_schema_rejects_unknown_fields_and_unapproved_widgets(invalid):
+  from jsonschema import Draft202012Validator, ValidationError
+  value = json.loads((REPOSITORY / "agents/pi/templates/pi-footer.json").read_text())
+  schema = json.loads((REPOSITORY / "agents/pi/schemas/footer.schema.json").read_text())
+  validator = Draft202012Validator(schema)
+  validator.validate(value)
+  widget = value["lines"][0][0]
+  if invalid == "unknown-root": value["script"] = "synthetic-command"
+  elif invalid == "unknown-widget": widget["script"] = "synthetic-command"
+  elif invalid == "unknown-option": widget["options"]["script"] = "synthetic-command"
+  elif invalid == "widget-id": widget["options"]["widgetId"] = "unapproved-widget"
+  elif invalid == "widget-type": widget["type"] = "script"
+  else: del widget["options"]["widgetId"]
+  with pytest.raises(ValidationError): validator.validate(value)
+
+
 def test_explicit_footer_candidate_has_two_ordered_entries_and_preserves_preferences(module_workspace, tmp_path):
   make, backend, calls, launched = module_workspace
   workspace, lock = make(plugins=["pi-footer"])
@@ -27,16 +46,22 @@ def test_explicit_footer_candidate_has_two_ordered_entries_and_preserves_prefere
   piece = lock.metadata["profiles"]["pi-base"]
   assert piece["dependencies"]["pi-footer"] == "0.5.1"
   supports = [item for item in piece["recipe_inputs"]["resources"] if item["kind"] == "module-support"]
-  assert {item["id"] for item in supports} == {"pi-status-observer", "pi-footer-config"}
+  assert {item["id"] for item in supports} == {"pi-command-aliases", "pi-status-observer", "pi-footer-config"}
   root = backend.root(workspace, backend.runtime_identity(workspace, lock))
   for item in supports:
     assert (root / item["target"]).read_bytes() == (workspace.repository / item["path"]).read_bytes()
     assert (root / item["target"]).stat().st_mode & 0o777 == 0o600
   native = workspace.instance / FOOTER
   value = json.loads(native.read_text())
-  assert value["separator"] == "pipe" and value["iconMode"] == "text" and value["terminal"]["widthMode"] == "full"
+  assert value["separator"] == "none" and value["iconMode"] == "text" and value["terminal"]["widthMode"] == "full"
+  assert value["minimalist"] is False
+  assert len(value["lines"]) == 3
   assert [item["options"]["widgetId"] for row in value["lines"] for item in row if item["type"] == "event"] == [
-    "agentcfg-selection", "agentcfg-activity", "agentcfg-context", "agentcfg-statistics"]
+    "agentcfg-selection", "agentcfg-provider", "agentcfg-activity", "agentcfg-context", "agentcfg-meter",
+    "agentcfg-tools", "agentcfg-statistics", "agentcfg-timing"]
+  assert [[item["type"] for item in row if item["type"] not in ("separator", "flex-separator")] for row in value["lines"]] == [
+    ["event", "thinking-level", "event", "event", "cwd-basename", "git-branch"],
+    ["event", "event", "event"], ["event", "event"]]
   value["separator"] = "dot"
   value["enabled"] = False
   native.write_text(json.dumps(value))
@@ -46,15 +71,16 @@ def test_explicit_footer_candidate_has_two_ordered_entries_and_preserves_prefere
   assert runtime.run(workspace, cwd=tmp_path) == 19
   argv, kwargs = launched[0]
   extensions = [argv[i + 1] for i, arg in enumerate(argv) if arg == "-e"]
-  assert extensions[-2:] == [str(root / "node_modules/pi-footer/src/index.ts"), str(root / "support/status-observer.mjs")]
+  assert extensions[:2] == [str(root / "support/command-aliases.mjs"), str(root / "node_modules/pi-footer/src/index.ts")]
+  assert extensions[-2:] == ["builtin:codemode", str(root / "support/status-observer.mjs")]
   assert kwargs["env"]["PI_FOOTER_CONFIG"] == str(native)
   assert workspace.adapter.feature_readiness(workspace.resolved.data)["status_bar"]["information_parity"] == "not_verified"
   target = next(target for target in workspace.adapter.managed_targets(workspace.resolved.data) if target.path == FOOTER)
   assert target.ownership == Ownership.INITIALIZE
 
 
-def test_default_footer_has_no_template_binding_loading_or_external_override(tmp_path):
-  workspace = load_workspace(local(tmp_path / "local.toml"), repository=REPOSITORY)
+def test_explicitly_unselected_footer_has_no_template_binding_loading_or_external_override(tmp_path):
+  workspace = load_workspace(selected_local(tmp_path / "local.toml", plugins=[]), repository=REPOSITORY)
   inputs = recipe_inputs(REPOSITORY, "pi-base", dependency_selection(workspace.resolved.data))
   assert "pi-footer" not in inputs["modules"]
   assert not any(item.get("id") in ("pi-status-observer", "pi-footer-config") for item in inputs["resources"])
@@ -75,7 +101,7 @@ def test_footer_sources_are_selected_only_dependency_inputs(module_workspace, tm
   path = workspace.repository / source
   path.write_bytes(path.read_bytes() + b"\n")
   assert backend.read_lock(workspace.repository) == lock
-  assert backend.runtime_identity(pro, lock) == before
+  with pytest.raises(ConfigError): backend.runtime_identity(pro, lock)
   with pytest.raises(ConfigError): backend.runtime_identity(workspace, lock)
 
 

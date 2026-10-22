@@ -109,14 +109,18 @@ def test_inventory_rejects_link_replacement_during_resolution(tmp_path, monkeypa
   link = root / "alias"
   link.symlink_to("sub/data")
   original = os.readlink
+  replaced = []
   def replace(name, *args, **kwargs):
     target = original(name, *args, **kwargs)
-    if name == "alias":
-      link.unlink()
+    if name == "alias" and not replaced:
+      # 保留旧 inode，避免立即重建复用 inode 和时间戳而使置换不可观测。
+      link.rename(tmp_path / "retained-link")
       link.symlink_to("sub/data")
+      replaced.append(True)
     return target
   monkeypatch.setattr(runtime.os, "readlink", replace)
   before = len(os.listdir("/proc/self/fd"))
   with pytest.raises(Conflict):
     runtime.inventory(root)
+  assert replaced == [True]
   assert len(os.listdir("/proc/self/fd")) == before

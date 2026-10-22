@@ -19,20 +19,17 @@
       "const": "text"
     },
     "minimalist": {
-      "type": "boolean",
-      "const": true
+      "type": "boolean"
     },
     "separator": {
       "type": "string",
-      "const": "pipe"
+      "const": "none"
     },
     "separatorFg": {
-      "type": "string",
-      "const": "default"
+      "$ref": "#/$defs/foreground"
     },
     "separatorBg": {
-      "type": "string",
-      "const": "default"
+      "$ref": "#/$defs/color"
     },
     "terminal": {
       "type": "object",
@@ -90,7 +87,11 @@
               "enum": [
                 "event",
                 "cwd-basename",
-                "git-branch"
+                "git-branch",
+                "context-bar",
+                "separator",
+                "flex-separator",
+                "thinking-level"
               ]
             },
             "enabled": {
@@ -105,11 +106,51 @@
                     "agentcfg-selection",
                     "agentcfg-activity",
                     "agentcfg-context",
-                    "agentcfg-statistics"
+                    "agentcfg-statistics",
+                    "agentcfg-provider",
+                    "agentcfg-timing",
+                    "agentcfg-tools",
+                    "agentcfg-meter"
                   ]
                 },
                 "hideWhenEmpty": {
                   "type": "boolean"
+                },
+                "fg": {
+                  "$ref": "#/$defs/foreground"
+                },
+                "bg": {
+                  "$ref": "#/$defs/color"
+                },
+                "bold": {
+                  "type": "boolean"
+                },
+                "raw": {
+                  "type": "boolean"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "contextBarMode": {
+                  "type": "string",
+                  "enum": [
+                    "short-only"
+                  ]
+                },
+                "contextConditionalColors": {
+                  "type": "boolean"
+                },
+                "separator": {
+                  "type": "string",
+                  "enum": [
+                    "powerline-right-spaced",
+                    "powerline-right",
+                    "space",
+                    "custom"
+                  ]
                 }
               },
               "additionalProperties": false
@@ -121,7 +162,128 @@
             "enabled",
             "options"
           ],
-          "additionalProperties": false
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "event"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "options": {
+                    "required": [
+                      "widgetId"
+                    ],
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "contextBarMode"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "contextConditionalColors"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "options": {
+                    "not": {
+                      "required": [
+                        "widgetId"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "not": {
+                      "const": "context-bar"
+                    }
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "options": {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "contextBarMode"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "contextConditionalColors"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "separator"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "options": {
+                    "required": [
+                      "separator"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "options": {
+                    "not": {
+                      "required": [
+                        "separator"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "flex-separator"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "options": {
+                    "const": {}
+                  }
+                }
+              }
+            }
+          ]
         }
       }
     }
@@ -139,5 +301,53 @@
     "extensionStatusRow",
     "lines"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "color": {
+      "type": "string",
+      "anyOf": [
+        {
+          "enum": [
+            "default",
+            "black",
+            "red",
+            "green",
+            "yellow",
+            "blue",
+            "magenta",
+            "cyan",
+            "white",
+            "brightBlack",
+            "brightRed",
+            "brightGreen",
+            "brightYellow",
+            "brightBlue",
+            "brightMagenta",
+            "brightCyan",
+            "brightWhite"
+          ]
+        },
+        {
+          "pattern": "^ansi256:(?:0|[1-9][0-9]?|1[0-9]{2}|2[0-4][0-9]|25[0-5])(?![\\s\\S])"
+        }
+      ]
+    },
+    "foreground": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/color"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "pi:text",
+            "pi:accent",
+            "pi:warning",
+            "pi:muted",
+            "pi:dim"
+          ]
+        }
+      ]
+    }
+  }
 }

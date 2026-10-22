@@ -131,6 +131,13 @@
             "discovery": {
               "type": "object",
               "properties": {
+                "project_trust": {
+                  "type": "string",
+                  "enum": [
+                    "deny",
+                    "native"
+                  ]
+                },
                 "project_resources": {
                   "type": "boolean",
                   "const": false
@@ -165,17 +172,17 @@
                 "editorPaddingX": {
                   "type": "integer",
                   "minimum": 0,
-                  "maximum": 10
+                  "maximum": 3
                 },
                 "outputPad": {
                   "type": "integer",
                   "minimum": 0,
-                  "maximum": 10
+                  "maximum": 1
                 },
                 "autocompleteMaxVisible": {
                   "type": "integer",
-                  "minimum": 1,
-                  "maximum": 30
+                  "minimum": 3,
+                  "maximum": 20
                 },
                 "terminal": {
                   "type": "object",
@@ -211,6 +218,14 @@
             "settings": {
               "type": "object",
               "properties": {
+                "defaultTools": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
                 "defaultThinkingLevel": {
                   "type": "string",
                   "enum": [
@@ -288,7 +303,7 @@
                       "type": "string",
                       "enum": [
                         "on",
-                        "off"
+                        "only"
                       ]
                     },
                     "inlineBudget": {

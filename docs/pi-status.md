@@ -1,6 +1,6 @@
 # Pi 状态信息与验收口径
 
-当前默认仍为原生UI。可显式选择`pi-footer@0.5.1`及仓库公开事件观察器；来源、按选锁、
+Base和Pro默认选择`pi-footer@0.5.1`及仓库公开事件观察器；来源、按选锁、
 配置初始化和隔离统计契约已实现。Powerline0.20.2仍held，不能选择或入锁。
 Linux本地三宽度/回环SSH、共享默认模型多轮/取消恢复/压缩统计已通过；用户已明确接受三处显示差异，十类信息交付门关闭。实际账单仍unknown，其他平台不外推。
 以下区分需求口径、已实现数据与实际验证范围。
@@ -54,17 +54,20 @@ Powerline 0.20.2 当前暂停准入：没有已核实可关闭所有不允许路
 
 T051仅完成十类映射、统计和布局意图。T053/T054审阅精确候选与公开API，T055–T057实现和隔离验证，T058分别取得原生UI与账号用量授权后验收，T059仅在覆盖全部承诺或用户明确接受差异后关闭。未确认费用、窗口、活动或权限绝不填0、idle或已保护。
 
-## 当前可选组合：pi-footer 0.5.1
+## 当前默认组合：pi-footer 0.5.1
 
-使用`plugins=["pi-footer"]`显式选择，然后lock/sync/apply；默认不加载。社区包独占setFooter
+两份profile均声明`plugins=["pi-footer"]`，按选择执行lock/sync/apply。社区包独占setFooter
 和终端布局，仓库观察器仅消费公开sessionManager.getBranch/getHeader、模型/context和生命周期
-并发布`pi-footer:update-widget`；没有编辑器替换、私有状态访问或自有footer渲染。
+并发布`pi-footer:update-widget`，其中meter段只格式化公开context比例；没有编辑器替换、
+私有状态访问，整个footer布局与终端渲染仍由社区包负责。
 `PI_FOOTER_CONFIG`固定到本实例extensions/pi-footer.json，配置只初始化，之后`/footer`偏好修改保留。
 真正禁用须从选择中移除并显式维护，`/footer off`只隐藏显示，包的hooks仍在。
 
-两行初始布局：第一行限长provider/model/effort、agent活动和context风险；第二行当前分支
-用量/cache/估算费用后跟项目简称/Git分支。完整模型名、统计范围、时长、速度、权限和更新时间
-可用`/agentcfg-status`查看；窄屏会截短第二行，用户可以`/footer`调整布局。
+三行初始布局：第一行显示模型、独立的thinking级别、provider和主会话活动，项目简称与Git
+分支靠右；第二行显示context tokens/window、比例、40格context meter与当前宿主活动工具数；
+第三行显示当前分支用量/cache/估算费用、会话时长与可确认的分支输出均速。selection事件
+只含模型名，避免与thinking控件重复。完整统计范围、权限和更新时间可用`/agentcfg-status`
+查看；窄屏由社区包截短，用户可以`/footer`调整布局。已初始化的偏好保留，不自动替换成模板。
 
 - 当前分支assistant使用量去重统计，不把toolResult/压缩摘要/cache_warm/子任务再相加；
   这些排除范围在完整信息中明确展示，不能把它称为整份会话的全部费用。
@@ -76,13 +79,17 @@ T051仅完成十类映射、统计和布局意图。T053/T054审阅精确候选�
   显示queued/idle，否则unknown。紧凑provider仅省略开头agentcfg-，完整详情保留原始路由身份。
 - 会话时长仅用header起点；速度为当前分支assistant输出总量/首末assistant时间间隔的每分钟均值，
   不是实时输出token/s，单条或缺时间戳保持unknown。无公开权限来源，permission明确unknown；详情写明“宿主未提供可查询的权限状态；此项不代表权限保护。”
-- 观察器无定时器、网络、文件写或进程；退出清空四个事件值。社区包自己的Git和配置UI
+- 工具数只统计公开tool_execution_start/end对应的当前宿主调用，不表示后台或子代理总数；
+  忙时重载无法确认基线则保持未知。用量全部未知显示`USAGE n/a`，个别未知值用`--`，
+  已上报的零值显示为0，完整详情保留缺失字段说明。
+- 观察器无定时器、网络、文件写或进程；退出清空全部八个事件值。社区包自己的Git和配置UI
   仍有实际执行成本。实测启动与上下文按精确组合记录，不作性能收益或真实账单主张；其provider
   payload verbosity只读hook不被默认widgets使用。
 
 隔离证据：`tests/test_pi_status_contract.py`/`test_pi_status_admission.py`加
-`node tests/pi_status_observer.test.mjs`。Node测试只加载仓库观察代码和合成API，当前7/7通过；两份Python状态测试13项通过（11.30s）。
-合成宽度检查本身只证明布局意图。
+`node tests/pi_status_observer.test.mjs`。Node测试只加载仓库观察代码和合成API，恢复的三行
+布局额外校验每个启用event控件都有数据发布者；历史原生检查的范围不能替代此次恢复后的
+交互验证。合成宽度检查本身只证明布局意图。
 
 Linux本地B组以官方Pi1.3.0、theme0.1.6及footer0.5.1和修订观察器实际通过tmux3.5a
 的60/90/130列中文多行bracketed粘贴、Ctrl+C清除、reload及Ctrl+D正常退出。

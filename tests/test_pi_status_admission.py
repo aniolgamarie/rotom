@@ -9,10 +9,14 @@ from agentcfg.workspace import load_workspace
 from test_pi_reboot_configuration import local, REPOSITORY
 
 
-def test_native_fallback_is_explicitly_not_information_parity(tmp_path):
-  workspace = load_workspace(local(tmp_path / "local.toml"), repository=REPOSITORY)
+@pytest.mark.parametrize("selected,expected", [(True, "not_verified"), (False, "not_selected")])
+def test_footer_readiness_keeps_information_parity_explicitly_unverified(tmp_path, selected, expected):
+  path = local(tmp_path / "local.toml")
+  if not selected:
+    path.write_text(path.read_text().replace('models=["example-main"]\n', 'models=["example-main"]\nplugins=[]\n', 1))
+  workspace = load_workspace(path, repository=REPOSITORY)
   status = workspace.adapter.feature_readiness(workspace.resolved.data)["status_bar"]
-  assert status == {"status": "not_selected", "decision": "admitted", "candidate": "pi-footer@0.5.1",
+  assert status == {"status": expected, "decision": "admitted", "candidate": "pi-footer@0.5.1",
     "fallback": "native", "information_parity": "not_verified"}
 
 

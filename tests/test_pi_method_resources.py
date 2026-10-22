@@ -23,7 +23,8 @@ def test_method_binds_only_selected_sources_without_installing_tools(fake_npm, t
   workspace = synthetic_workspace(root, tmp_path, selection={"skills": [skill]})
   lock = backend.resolve_lock_for(workspace)
   piece = lock.metadata["profiles"]["pi-base"]
-  assert piece["dependencies"] == {"@earendil-works/pi-coding-agent": "1.3.0", "catppuccin-pi-theme": "0.1.6"}
+  assert piece["dependencies"] == {"@earendil-works/pi-coding-agent": "1.3.0", "catppuccin-pi-theme": "0.1.6",
+    "pi-footer": "0.5.1"}
   resources = [item for item in piece["recipe_inputs"]["resources"] if item["kind"] == "skill-file"]
   assert {item["path"] for item in resources} == {f"skills/{skill}/{path}" for path in files}
   assert all(item["mode"] == 0o600 for item in resources)

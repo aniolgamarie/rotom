@@ -2,3 +2,4 @@
 schema_version = 1
 id = "pi-base"
 agent = "pi"
+plugins = ["pi-footer"]

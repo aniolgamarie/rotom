@@ -430,3 +430,81 @@ def test_exception_with_external_edit_retains_journal_and_does_not_partially_res
       publisher.publish(after, validate=lambda: None)
   assert observed and _snapshot(root, before) == observed[0]
   assert _pending(repository, adapter).exists()
+
+
+def test_shared_mount_ancestor_allows_publish_read_and_pending_recovery(public_lock, monkeypatch):
+  repository, adapter, root, before, after = public_lock
+  shared = repository.parent / "shared"
+  shared.mkdir(mode=0o777)
+  shared.chmod(0o777)
+  moved = shared / "repository"
+  repository.rename(moved)
+  root = moved / "locks" / adapter
+  state = moved, adapter, root, before, after
+  # 既有公共缓存可为 0755；两层日志容器仍须私有。
+  (moved / ".cache").mkdir(mode=0o755)
+  (moved / ".cache").chmod(0o755)
+  with publication.reader_lease(moved, adapter):
+    pass
+  assert not (moved / ".cache/agentcfg-publication").exists()
+  with publication.publisher_lease(moved, adapter) as publisher:
+    publisher.publish(after, validate=lambda: "validated")
+  with publication.reader_lease(moved, adapter) as tree:
+    assert tree.read("manifest.json")[0] == after["manifest.json"]
+  _interrupt(state, monkeypatch)
+  with pytest.raises(Conflict, match="待恢复"):
+    with publication.reader_lease(moved, adapter):
+      pytest.fail("pending generation admitted")
+  with publication.publisher_lease(moved, adapter):
+    pass
+  assert not _pending(moved, adapter).exists()
+  assert (moved / ".cache").stat().st_mode & 0o777 == 0o755
+
+
+@pytest.mark.parametrize("layer", ["cache", "container", "leaf"])
+@pytest.mark.parametrize("damage", ["symlink", "writable", "public"])
+def test_unsafe_journal_directories_are_rejected_without_repair(public_lock, layer, damage):
+  repository, adapter, root, before, after = public_lock
+  marker = _pending(repository, adapter)
+  marker.parent.mkdir(parents=True, mode=0o700)
+  marker.parent.parent.chmod(0o700)
+  cache = repository / ".cache"
+  cache.chmod(0o755)
+  target = {"cache": cache, "container": marker.parent.parent, "leaf": marker.parent}[layer]
+  if damage == "public" and layer == "cache":
+    # 公共缓存本身允许 0755，sticky 的共享写入仍须拒绝。
+    mode = 0o1777
+  else:
+    mode = 0o777 if damage == "writable" else 0o755
+  marker.write_bytes(b"preserve synthetic pending")
+  marker.chmod(0o600)
+  if damage == "symlink":
+    saved = target.with_name(target.name + "-saved")
+    target.rename(saved)
+    target.symlink_to(saved, target_is_directory=True)
+  else:
+    target.chmod(mode)
+  for lease in (publication.reader_lease, publication.publisher_lease):
+    with pytest.raises(Conflict):
+      with lease(repository, adapter):
+        pytest.fail("unsafe journal directory admitted")
+  assert marker.read_bytes() == b"preserve synthetic pending"
+  assert _snapshot(root, before) == before
+  if damage == "symlink":
+    assert target.is_symlink()
+  else:
+    assert target.stat().st_mode & 0o7777 == mode
+
+
+@pytest.mark.parametrize("present", [0, 1, 2, 3])
+def test_reader_and_recovery_never_create_missing_journal_directories(public_lock, present):
+  repository, adapter, root, before, after = public_lock
+  directories = [repository / ".cache", repository / ".cache/agentcfg-publication",
+                 _pending(repository, adapter).parent]
+  for directory in directories[:present]:
+    directory.mkdir(mode=0o700)
+  with publication.reader_lease(repository, adapter):
+    pass
+  with publication.publisher_lease(repository, adapter):
+    pass
+  assert [directory.exists() for directory in directories] == [index < present for index in range(3)]

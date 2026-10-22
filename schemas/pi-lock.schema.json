@@ -626,6 +626,39 @@
                     "type": "string"
                   },
                   "id": {
+                    "const": "pi-command-aliases",
+                    "type": "string"
+                  },
+                  "path": {
+                    "const": "agents/pi/support/command-aliases.mjs",
+                    "type": "string"
+                  },
+                  "target": {
+                    "const": "support/command-aliases.mjs",
+                    "type": "string"
+                  },
+                  "content_identity": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "id",
+                  "path",
+                  "target",
+                  "content_identity"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "const": "module-support",
+                    "type": "string"
+                  },
+                  "id": {
                     "const": "pi-mcp-launch",
                     "type": "string"
                   },

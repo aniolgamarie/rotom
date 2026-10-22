@@ -33,7 +33,7 @@ def cursor_local(path, *, selected=True):
 def cursor_workspace(fake_npm, tmp_path, monkeypatch):
   root, backend, calls = fake_npm
   for directory in ("schemas", "templates"):
-    shutil.copytree(REPOSITORY / "agents/pi" / directory, root / "agents/pi" / directory)
+    shutil.copytree(REPOSITORY / "agents/pi" / directory, root / "agents/pi" / directory, dirs_exist_ok=True)
   workspace = load_workspace(cursor_local(tmp_path / "local.toml"), repository=REPOSITORY)
   workspace.repository, workspace.adapter = root, PiAdapter(root)
   monkeypatch.setattr(run_owners, "current_process_identity", lambda: {"pid": 76543, "birth_id": "synthetic-boot:567"})

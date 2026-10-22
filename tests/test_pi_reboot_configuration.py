@@ -111,7 +111,7 @@ def test_empty_selection_and_false_settings_are_not_replaced_by_defaults(tmp_pat
   assert fields["/compaction/enabled"][1] is False
   assert fields["/retry/enabled"][1] is False
   assert workspace.resolved.data["profile"]["agent_options"]["resources"]["prompts"] == []
-  assert workspace.resolved.data["plugins"] == {}
+  assert set(workspace.resolved.data["plugins"]) == {"pi-footer"}
   assert workspace.resolved.data["mcp"] == {}
 
 
