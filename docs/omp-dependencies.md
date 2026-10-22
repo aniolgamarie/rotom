@@ -4,6 +4,8 @@ OMP uses the unmodified official v18.12.6 standalone, pinned to upstream commit 
 
 The v18.12.6 native Bash integration uses public Settings, `BashTool.approval()`, and same-name `ctx.invokeTool()` delegation. The current `write` approval mode passed 12 isolated tests importing the pinned official wrapper/runner and approval modules, alongside 487 independent plugin tests. Full type-checking against this SDK is unverified because the compiler/dependency closure is unavailable. The `always-ask-cached` mode is not selected or accepted by this integration. Upstream removed task's per-call `model` parameter in v18.8.2; the recipes use model roles and agent definitions instead.
 
+The authorized Linux glibc x64 native smoke passed version/help, isolated RPC configuration loading, explicit permission extension registration, and normal exit. It did not execute tools, reviewers, or model requests. See the [candidate acceptance record](acceptance/omp-18.12.6-20261023.md) for exact inputs, commands, and plugin coverage.
+
 ## Lock contents
 
 `locks/omp/manifest.json` records the immutable source archive, official assets for four platforms, URLs and SHA-256 digests, upstream material digests, local resources, package entries, licenses, compatibility versions, tree identities, and required interpreters. `locks/omp/upstream/` preserves the complete `bun.lock`, provenance, MIT license, third-party notices, and NOTICE.
