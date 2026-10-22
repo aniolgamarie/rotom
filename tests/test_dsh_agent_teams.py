@@ -1,4 +1,4 @@
-"""显式 Teams 组合与受管开关恢复；全部使用虚构运行包，不启动宿主。"""
+"""默认/显式 Teams 组合与受管开关恢复；全部使用虚构运行包，不启动宿主。"""
 
 import json
 from pathlib import Path
@@ -21,8 +21,8 @@ def local(tmp_path, enabled=False):
   defaults = tomllib.loads((ROOT / "agents/dsh/agent.toml").read_text())["defaults"]
   plugins = [*defaults["plugins"], *(["agent-teams"] if enabled else [])]
   path = tmp_path / "local.toml"
-  path.write_text('schema_version=1\n[machine]\nid="team-fixture"\n'
-    '[overrides.profiles.dsh-default]\nplugins=' + json.dumps(plugins) + "\n")
+  path.write_text('schema_version=1\n[machine]\nid="team-fixture"\n' +
+    ('[overrides.profiles.dsh-default]\nplugins=' + json.dumps(plugins) + "\n" if enabled is not None else ""))
   path.chmod(0o600)
   return path
 
@@ -40,9 +40,10 @@ def applied(tmp_path, prepared_runtime):
   return path, workspace, lock, runtime
 
 
-@pytest.mark.parametrize("enabled", [False, True])
-def test_team_selection_is_explicit_and_managed(tmp_path, enabled):
+@pytest.mark.parametrize("enabled", [None, False, True])
+def test_default_and_explicit_team_selection_are_managed(tmp_path, enabled):
   workspace = load_workspace(local(tmp_path, enabled))
+  enabled = enabled is not False
   data = workspace.resolved.data
   assert ("agent-teams" in data["plugins"]) is enabled
   projections, selected = profile_runtime.profile_layout(workspace)

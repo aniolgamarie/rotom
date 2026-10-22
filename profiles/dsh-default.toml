@@ -3,3 +3,4 @@ schema_version = 1
 id = "dsh-default"
 agent = "dsh"
 providers = ["codex", "cursor"]
+plugins = ["tui", "codex-auth", "cursor-auth", "auto-review", "review-context", "tmux-context", "git-worktrees", "agent-teams"]

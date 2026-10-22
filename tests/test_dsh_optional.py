@@ -66,6 +66,8 @@ def test_optional_packages_are_already_locked_and_selected_for_local_default():
   defaults = tomllib.loads((ROOT / "agents/dsh/agent.toml").read_text())["defaults"]
   assert (OPTIONAL_PLUGINS - {"agent-teams"}).issubset(defaults["plugins"])
   assert "agent-teams" not in defaults["plugins"]
+  profile = tomllib.loads((ROOT / "profiles/dsh-default.toml").read_text())
+  assert profile["plugins"] == defaults["plugins"] + ["agent-teams"]
   packages = yaml.safe_load((ROOT / "locks/dsh/pnpm-lock.yaml").read_text())["packages"]
   for row in [TMUX, *WORKTREE]:
     assert row["name"] + "@0.2.1-rc.2" in packages

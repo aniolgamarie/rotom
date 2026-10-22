@@ -50,7 +50,7 @@ def test_key_command_shares_across_machines_profiles_and_protocols(monkeypatch, 
   assert shared().parent.stat().st_mode & 0o777 == 0o700
   for path, original in before.items():
     assert path.read_bytes() == original
-    for profile in ("dsh-default", "pi-default", "omp-default", "omp-kernel"):
+    for profile in ("dsh-default", "pi-base", "pi-pro", "omp-default", "omp-kernel"):
       workspace = load_workspace(path, profile, proposal={"local_values": {
         "tf_openai_url": "https://tf-gateway.example.invalid/v1",
         "tf_anthropic_url": "https://tf-gateway.example.invalid/anthropic"}})

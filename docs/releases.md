@@ -13,7 +13,7 @@ Rotom's Python project metadata currently declares `0.1.0`. This checkout is rel
 | Perry auto-review | Official `0.13.7`, gitHead `c49f850aeb734f2f1f2f06de6546b22f3dc8f22f` | Current Core selects inline review without tools; deterministic native file/Bash/manual/timeout passed; lifecycle/audit fixes remain unproved |
 | Review context / reviewer preset | `rotom-dsh-review-context@0.2.0`, preset `rotom-auto-review` | Independent public activation probe exposed constant context and structured output only; not selected by current Perry |
 | Tmux context / Git Worktrees | Official `0.2.1-rc.2` packages | Selected in local TUI; experimental Worktrees follows existing repository gates |
-| Optional Agent Teams | Four official `0.2.1-rc.2` packages | Explicit selection; omitted from defaults; isolated Linux member/task/restart and TUI/Perry combination passed |
+| Agent Teams | Four official `0.2.1-rc.2` packages | Selected by `dsh-default`; explicitly disable through a complete machine plugin override; isolated Linux member/task/restart and TUI/Perry combination passed |
 | SSH workspace | Official SSH provider family and headless `0.2.1-rc.2` | Independent read-only-by-default profile; trusted helper and native endpoint acceptance pending |
 | SSH subscription authentication | `rotom-dsh-ssh-subscription-auth@0.1.1` | Public Codex/Cursor authentication APIs; own instance credentials; real terminal/account acceptance pending |
 | OMP | `18.8.6`, `f068751e2f1dbdbc195977776d47a26db8697495` | Official standalone runtime; independent Rotom permission plugin |

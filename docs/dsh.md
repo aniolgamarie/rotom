@@ -23,7 +23,7 @@ Legacy patched instances must not receive an in-place apply of this configuratio
 | AI approval | `dsh-auto-review@0.13.7` | Official unmodified [Perry package metadata](https://registry.npmjs.org/dsh-auto-review/0.13.7), gitHead `c49f850aeb734f2f1f2f06de6546b22f3dc8f22f` |
 | Review context | `rotom-dsh-review-context@0.2.0` | Constant context tool and public reviewer preset; current Perry/Core combination reviews inline without tools |
 | Execution environment | `rotom-dsh-execution-environment@0.1.1` | Public subprocess provider API; peer aligned to Core RC |
-| Optional Agent Teams | Official four-package `0.2.1-rc.2` bundle | Explicit `agent-teams` selection; bounded isolated Linux native acceptance passed |
+| Agent Teams | Official four-package `0.2.1-rc.2` bundle | `dsh-default` selects `agent-teams`; bounded isolated Linux native acceptance passed |
 | Shared runtime | Cordis `4.0.5`, Schemastery `3.18.5` | Stable versions satisfying Perry's peer floor; public module identities checked |
 | Toolchain | Node `24.14.0`, npm `11.19.1`, pnpm `11.19.0` | pnpm original archive pinned by integrity; no global install |
 
@@ -35,7 +35,7 @@ Sync verifies the pnpm archive's SHA-512 and uses the fixed installer with `--fr
 
 pnpm's release-age policy records exact package/version exceptions for the selected Core `0.2.1-rc.2` cohort and official TUI `0.16.1` in lock-policy/manifest and lock identity. Each must occur in the complete lock; wildcards, other releases and unrelated packages are rejected. `minimumReleaseAgeStrict` prevents automatic expansion during resolution, and a changed installer policy rejects publication. The temporary public pnpm-workspace.yaml is removed after installation; global pnpm settings are unchanged.
 
-Working-activity remains disabled; TUI supplies its own spinner, chat, cards, and status. Experimental Agent Teams is available only by explicit selection below; voice is not enabled. Runtime identity/native loading evidence is narrower than a clean whole-tree peer check.
+Working-activity remains disabled; TUI supplies its own spinner, chat, cards, and status. Experimental Agent Teams is selected by `dsh-default` and can be explicitly disabled below; voice is not enabled. Runtime identity/native loading evidence is narrower than a clean whole-tree peer check.
 
 ## Setup and startup
 
@@ -137,18 +137,18 @@ different native writer lease; do not equate discovery loss with corrupted sessi
 Use the foreground TUI for the affected session instead of assuming external inject
 discovery is reliable across simultaneous launches. See [known issues](known-issues.md).
 
-## Optional Agent Teams
+## Agent Teams
 
-`agent-teams` selects the official `@deepseek-ai/dsh-experimental-agent-team-profile` bundle. Its service, tool, and client UI packages are fixed to `0.2.1-rc.2`. It is installed by the complete lock but omitted from the default plugin selection. Isolated Linux acceptance passed OFF/ON, fresh/fork members, messaging, task revisions, clean restart persistence, and the combined TUI/Perry flow. See the [ecosystem acceptance record](acceptance/dsh-ecosystem-upgrade-20261021.md) for exact scope and remaining limits.
+`agent-teams` selects the official `@deepseek-ai/dsh-experimental-agent-team-profile` bundle. Its service, tool, and client UI packages are fixed to `0.2.1-rc.2`. The public `dsh-default` profile selects it by default; the generic DSH adapter baseline and `dsh-ssh` remain unchanged. This repository selection changes an existing deployment only after a later explicit apply; running instances continue to read their deployed selection. Isolated Linux acceptance passed OFF/ON, fresh/fork members, messaging, task revisions, clean restart persistence, and the combined TUI/Perry flow. See the [ecosystem acceptance record](acceptance/dsh-ecosystem-upgrade-20261021.md) for exact scope and remaining limits.
 
-Edit the existing machine profile table rather than creating a duplicate TOML table. `plugins` replaces the whole selection: retain the default plugins from `agents/dsh/agent.toml` and add `agent-teams`:
+To disable Teams explicitly, edit the existing machine profile table rather than creating a duplicate TOML table. `plugins` replaces the whole selection: use the complete list below, preserving any additional selections your machine needs:
 
 ```toml
 [overrides.profiles.dsh-default]
-plugins = ["tui", "codex-auth", "cursor-auth", "auto-review", "review-context", "tmux-context", "git-worktrees", "agent-teams"]
+plugins = ["tui", "codex-auth", "cursor-auth", "auto-review", "review-context", "tmux-context", "git-worktrees"]
 ```
 
-Do not replace the list with only `agent-teams`. Preserve any other explicitly selected plugins that the machine needs. Stop all runs of the selected instance before maintenance, then use the normal workflow:
+To restore Teams, remove this machine-level list override to inherit the public profile, or append `agent-teams` to your complete list. A list containing only `agent-teams` would discard the other plugins. Stop all runs of the selected instance before maintenance, then use the normal workflow:
 
 ```sh
 ./agentcfg --machine workstation --profile dsh-default plan
@@ -157,9 +157,11 @@ Do not replace the list with only `agent-teams`. Preserve any other explicitly s
 ./agentcfg --machine workstation --profile dsh-default run --cwd /path/to/workspace
 ```
 
-The selection is stored in a managed deployment file; future launches read the deployed flag. To disable it, remove `agent-teams` from the same complete list and repeat maintenance after all runs stop. Existing shared-run admission and maintenance leases remain in force; selecting Teams does not terminate or reconfigure an active process.
+The selection is stored in a managed deployment file; future launches read the deployed flag. Editing the profile or machine override without apply does not change that flag. Existing shared-run admission and maintenance leases remain in force; selecting Teams does not terminate or reconfigure an active process.
 
 With the bundle selected, `/team status` reports native state. Native `/team on` and `/team off` are unsupported in a managed instance because they write the profile manifest and cause drift. Use Rotom maintenance to change selection.
+
+Startup does not create a teammate or request a team model. The root session is the implicit Lead. When enabled, the official bundle replaces ordinary `subagent`/`subagent_fork` direct delegation with named teammates created through `spawn_teammate`. The parent model can choose delegation when needed; there is no enforced “only after explicit user creation” switch and no `/team create` command.
 
 Teams provides named durable teammates, a shared workspace, task updates guarded by version checks (CAS), and inbox messages. Task claims are not file locks, cross-process exclusion, or exactly-once execution. They do not automatically release a task after a teammate fails. Coordinate workspace writers and explicitly resolve abandoned tasks; Teams does not replace the instance's lifecycle protections.
 
