@@ -2,6 +2,22 @@
 
 Every branch and worktree must satisfy these gates before integration into `main`, including private branches retained during a publication cleanup. A worktree being old, previously tested, or already based on `main` does not exempt it. Preserve other agents' edits and user work throughout preparation.
 
+## Required development workflow
+
+Keep the primary checkout on `main` as the stable daily entry point. All development edits, including code, documentation, configuration, and locks, must use a task branch and a separate worktree created from the latest `main`. Do not switch the primary checkout to a feature branch or develop by editing it directly. Writes there are limited to accepted integration and other explicitly scoped maintenance.
+
+Before editing, inventory local `main`, the primary checkout, existing worktrees, and their status. Confirm the latest applicable `main` baseline without assuming a stale task branch is current; remote updates require separate authorization. Create the task branch and worktree from that baseline. Record the baseline commit, task branch, worktree location, responsible owner, and file ownership in the task record. Use portable paths in public records. Preserve unrelated staged, unstaged, untracked, and ignored files and keep shared files under one writer.
+
+For example, after confirming that local `main` is the intended latest baseline, create a task checkout from the primary checkout:
+
+```sh
+git worktree add -b fix/example-task /path/to/rotom-example-task main
+```
+
+Develop and run scope-appropriate checks in the task worktree. Preserve daily launchers and whole-machine configuration compatibility as described below; do not point the daily entry at an unaccepted candidate. Prepare and review the final candidate using the integration and evidence gates in this document.
+
+After acceptance, promptly integrate into `main` within the user's authorization and verify the integrated result. Implementation on a task branch alone is not task completion. If integration is unauthorized, a gate is unmet, or a check remains unverified, record that outstanding state and its reason explicitly; do not silently abandon it or report the task complete. A changed target `main` requires re-evaluation before integration.
+
 ## Prepare an integration candidate
 
 Inventory the target `main` commit, candidate HEAD, branch, worktree status, staged and untracked files, and file ownership before writing. Distinguish task-owned changes from other work and coordinate a single writer for shared files. Do not discard, reset, or absorb unrelated work to make the candidate clean. Prepare focused, clean commits for the intended integration.
@@ -32,6 +48,23 @@ Unexecuted or unavailable checks are not passes. Record their reason and limits;
 Perform final review after all writes finish, against a stable diff or commit. If later edits affect checked behavior, rerun the affected checks and review the resulting candidate. If target `main` advances, re-evaluate the diff, ancestry, conflicts, and affected evidence against the new target before integration. Do not repeatedly rerun unrelated checks without new evidence.
 
 Integrate only within the user's authorization, using a fast-forward or an explicitly reviewed merge. A merge commit must not introduce unreviewed parent history. Do not force-update refs or discard user work to bypass these gates. Report the integrated candidate, actual checks, failures, and unvalidated scope.
+
+## Clean up an accepted task
+
+Once the task is integrated into `main` and integration acceptance passes, its worktree and local development branch may be removed within the authorized task scope. Before removal, confirm:
+
+- The exact task branch, worktree, integrated commit, and current `main`; all task commits are integrated and no commits need to be retained separately.
+- No active task, agent, launcher, or other reference still needs that worktree or branch.
+- No staged, unstaged, untracked, or ignored files need preservation. Inspect ignored-file status explicitly; an apparently clean ordinary status is insufficient. Preserve necessary files before proceeding without reading account, credential, or session contents.
+
+Run cleanup from outside the task worktree. For the example above, after these checks pass:
+
+```sh
+git worktree remove /path/to/rotom-example-task
+git branch -d fix/example-task
+```
+
+Use normal removal and safe branch deletion only. If either command refuses, preserve the work and record the reason for resolution; do not bypass it with force. Do not bulk-prune worktrees, remove other branches, update remotes, or alter accounts, sessions, or native instances as part of task cleanup. Recheck worktree and branch inventory and record the actual cleanup result. Pending integration, failed acceptance, or unverified checks remain explicit task states rather than cleanup eligibility.
 
 ## History cutover
 
