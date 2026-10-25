@@ -66,7 +66,7 @@ Use model status to find missing values and model key to update only the selecte
 
 ### Network proxy considerations
 
-If needed, explicitly allow nonsecret HTTP_PROXY, HTTPS_PROXY, NO_PROXY, and NODE_USE_ENV_PROXY through `machine.environment.inherit`; set actual values only in your local launch environment. A local helper may set them and exec the normal entry point. It does not create a new HOME/profile or change models/permissions. The proxy must support HTTP or mixed traffic, and loopback refers to the machine running DSH.
+Select a named proxy from `[machine.proxies.<name>]` via `machine.environment.proxy` or `run --proxy <name>` (see [local-config](local-config.md)); nothing passes through implicitly. `NODE_USE_ENV_PROXY` still needs an explicit `machine.environment.inherit` entry. The proxy must support HTTP or mixed traffic, and loopback refers to the machine running DSH.
 
 Node 24.14.0 supports environment proxying for its native HTTP(S)/fetch path. Cursor 0.6.12's AgentRun model stream uses HTTP/2 directly with no public proxy hook; **do not assume all Cursor traffic follows an environment proxy**. Local proxy wrappers are not a remedy for every provider transport.
 

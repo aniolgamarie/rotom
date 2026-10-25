@@ -58,7 +58,7 @@ def decode(value, cwd, arguments):
     value.get("environment_policy", "legacy"))
 
 
-def prepare_environment(workspace, contract, spec, *, inherit=(), unset=()):
+def prepare_environment(workspace, contract, spec, *, inherit=(), unset=(), proxy=None):
   from .config import validate_environment_settings
   schemas = getattr(workspace, "schemas", None)
   data = workspace.resolved.data
@@ -70,7 +70,8 @@ def prepare_environment(workspace, contract, spec, *, inherit=(), unset=()):
   extra = getattr(workspace.adapter, "tool_environment_names", ())
   observed = tuple(item.name for item in spec.environment if isinstance(item.value, str))
   names, caller = execution_env.capture_caller(contract["machine"], inherit, (*extra, *observed))
-  result = execution_env.prepare(spec, contract["machine"], caller=caller, inherit=inherit, unset=unset, extra_names=extra)
+  result = execution_env.prepare(spec, contract["machine"], caller=caller, inherit=inherit, unset=unset,
+    proxy=proxy, extra_names=extra)
   env = execution_env.apply_bindings(result, spec)
   adjust = getattr(workspace.adapter, "adjust_launch_environment", None)
   if adjust is not None:
@@ -97,9 +98,9 @@ def environment_diagnostics(workspace, current):
     "downstream": "requires per-channel native evidence"}
 
 
-def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environment=None, inherit_env=(), unset_env=()):
+def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environment=None, inherit_env=(), unset_env=(), proxy=None):
   override_supported = getattr(workspace.adapter, "environment_override_supported", None)
-  if (inherit_env or unset_env) and override_supported is not None and not override_supported(arguments):
+  if (inherit_env or unset_env or proxy is not None) and override_supported is not None and not override_supported(arguments):
     from .schema import ConfigError
     raise ConfigError("environment-overrides-operation")
   validate_arguments = getattr(workspace.adapter, "validate_arguments", None)
@@ -127,7 +128,7 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
     if "environment_version" in contract:
       if contract["environment_version"] != 1 or contract.get("caller_paths") != execution_env.caller_paths():
         raise Conflict("调用者HOME/XDG或环境契约已变化；请先 plan/apply")
-    if (inherit_env or unset_env) and (launch_operation is not None or select_environment is not None):
+    if (inherit_env or unset_env or proxy is not None) and (launch_operation is not None or select_environment is not None):
       from .schema import ConfigError
       raise ConfigError("environment-overrides-operation")
     validate_binding = getattr(workspace.adapter, "validate_runtime_binding", None)
@@ -164,7 +165,8 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, select_environme
       if select_environment is not None:
         # 受信操作可缩小环境绑定；复用同一部署/运行包/实例准入，不另建启动路径。
         spec = replace(spec, environment=tuple(item for item in spec.environment if select_environment(item)))
-      preflight_env, environment_report = prepare_environment(workspace, contract, spec, inherit=inherit_env, unset=unset_env)
+      preflight_env, environment_report = prepare_environment(workspace, contract, spec,
+        inherit=inherit_env, unset=unset_env, proxy=proxy)
       validate_environment = getattr(workspace.adapter, "validate_operation_environment", None)
       if validate_environment is not None:
         validate_environment(workspace, spec=spec, env=preflight_env)

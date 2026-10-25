@@ -58,6 +58,15 @@ inherit = []
 [machine.environment.values]
 LANG = "zh_CN.UTF-8"
 
+# proxies 声明命名代理；调用者代理变量不默认透传，必须显式选择。
+# url 必填，仅 http/https，禁止 userinfo/query/fragment（三家宿主均不支持 SOCKS）；
+# all_proxy 省略时同 url；no_proxy 可省略。environment.proxy 选持久默认，
+# agentcfg run --proxy <name> 一次性覆盖；选中即注入 HTTP(S)_PROXY/ALL_PROXY/NO_PROXY
+# 大小写共八个变量，与 inherit/values/unset 同名冲突即拒绝。
+[machine.proxies.work]
+url = "http://proxy.example.invalid:8080"
+no_proxy = "localhost,127.0.0.1"
+
 # 合并顺序：registry/工具默认 → profile → local；本次参数仅限已明确定义的字段，
 # 当前 resolver 不接受非空 request_overrides。对象递归合并，标量替换，数组整体替换。
 # 省略字段意味着继承；[] 清空选择，false 明确关闭，不按真假回落；{} 不删除继承键。

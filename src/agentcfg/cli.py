@@ -325,6 +325,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="仅本次普通启动继承调用者的非秘密变量；只接受名称")
     run.add_argument("--unset-env", action="append", default=[], metavar="NAME",
         help="仅本次普通启动删除非秘密变量，区别于空字符串")
+    run.add_argument("--proxy", metavar="NAME", default=None,
+        help="仅本次普通启动使用本地配置 [machine.proxies.NAME] 的命名代理；优先于 environment.proxy 持久默认")
 
     subparsers.add_parser("usage", help="透传OMP原生usage；前置显式profile时使用受管身份")
     inventory = subparsers.add_parser("inventory", help="只读盘点旧OMP配置，生成私人审阅提案")
