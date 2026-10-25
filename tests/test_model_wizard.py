@@ -186,6 +186,7 @@ def test_public_presets_list_without_local_file(capsys):
   assert cli.main(["model", "presets", "--verbose"]) == 0
   output = capsys.readouterr().out
   for name in ("deepseek-flash", "deepseek-v4-pro", "kimi-for-coding", "k3", "k3-256k",
+               "k3.1-pro", "k3.1-pro-highspeed",
                "kimi-for-coding-highspeed", "glm-5.3", "glm-5.3-flash"):
     assert name in output
   assert "api.moonshot.cn" not in output
@@ -237,7 +238,8 @@ def test_enable_omp_uses_anthropic_and_keeps_existing_roles(monkeypatch):
   profile = data["overrides"]["profiles"]["omp-default"]
   assert set(profile["providers"]) == {"kimi_code_anthropic", "glm_coding_anthropic", "deepseek_anthropic"}
   assert set(profile["models"]) == {"kimi_code_anthropic", "kimi_code_k3_anthropic",
-    "kimi_code_k3_256k_anthropic", "kimi_code_highspeed_anthropic", "glm_coding_53_anthropic",
+    "kimi_code_k3_256k_anthropic", "kimi_code_k31_pro_anthropic", "kimi_code_k31_pro_highspeed_anthropic",
+    "kimi_code_highspeed_anthropic", "glm_coding_53_anthropic",
     "glm_coding_53_flash_anthropic", "deepseek_flash_anthropic", "deepseek_pro_anthropic"}
   assert "roles" not in profile
   assert model_wizard.load_workspace(local_file()).resolved.data["profile"]["roles"]["main"] == "kimi_code_anthropic"

@@ -13,5 +13,5 @@ tf_anthropic_url = ""
 
 [overrides.profiles.dsh-default]
 providers = ["kimi_tf", "zhipu_tf", "deepseek_tf"]
-models = ["dsh-kimi_tf-kimi-for-coding", "dsh-kimi_tf-k3", "dsh-kimi_tf-k3-256k", "dsh-kimi_tf-kimi-for-coding-highspeed", "dsh-zhipu_tf-glm-5.3", "dsh-zhipu_tf-glm-5.3-flash", "dsh-zhipu_tf-glm-5.2", "dsh-zhipu_tf-glm-5.1", "dsh-zhipu_tf-glm-5-turbo", "dsh-deepseek_tf-deepseek-flash", "dsh-deepseek_tf-deepseek-v4-pro"]
+models = ["dsh-kimi_tf-kimi-for-coding", "dsh-kimi_tf-k3", "dsh-kimi_tf-k3-256k", "dsh-kimi_tf-k3.1-pro", "dsh-kimi_tf-k3.1-pro-highspeed", "dsh-kimi_tf-kimi-for-coding-highspeed", "dsh-zhipu_tf-glm-5.3", "dsh-zhipu_tf-glm-5.3-flash", "dsh-zhipu_tf-glm-5.2", "dsh-zhipu_tf-glm-5.1", "dsh-zhipu_tf-glm-5-turbo", "dsh-deepseek_tf-deepseek-flash", "dsh-deepseek_tf-deepseek-v4-pro"]
 # 不覆盖 main 角色；需要时通过 /model 选择 TF，保留当前默认模型。

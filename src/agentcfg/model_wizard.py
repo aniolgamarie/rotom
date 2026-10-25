@@ -24,7 +24,7 @@ _HEADER = re.compile(r"^\s*\[.*\]\s*(?:#.*)?$")
 _KEY = re.compile(r"^\s*([A-Za-z0-9_-]+|\"(?:[^\"\\]|\\.)*\"|'[^']*')\s*=")
 _MARKER = "__agentcfg_table_marker__"
 _PRESETS = {
-  "kimi-code": ("kimi_code", "kimi_code_k3", "kimi_code_k3_256k", "kimi_code_highspeed"),
+  "kimi-code": ("kimi_code", "kimi_code_k3", "kimi_code_k3_256k", "kimi_code_k31_pro", "kimi_code_k31_pro_highspeed", "kimi_code_highspeed"),
   "glm-code": ("glm_coding_53", "glm_coding_53_flash"),
   "deepseek": ("deepseek_flash", "deepseek_pro"),
 }

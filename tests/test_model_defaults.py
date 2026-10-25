@@ -90,7 +90,8 @@ def test_defaults_apply_to_future_profile_and_profile_local_roles_win():
   profile = resolved.data["profile"]
   # 本例重设了 future 配方自身的 providers；OAuth 不再从 adapter 默认层追加。
   assert profile["providers"] == ["kimi_code_openai", "glm_coding_openai", "deepseek_openai"]
-  assert profile["models"] == ["kimi_code_openai", "kimi_code_k3_openai", "kimi_code_k3_256k_openai", "kimi_code_highspeed_openai",
+  assert profile["models"] == ["kimi_code_openai", "kimi_code_k3_openai", "kimi_code_k3_256k_openai", "kimi_code_k31_pro_openai",
+    "kimi_code_k31_pro_highspeed_openai", "kimi_code_highspeed_openai",
     "glm_coding_53_openai", "glm_coding_53_flash_openai", "deepseek_flash_openai", "deepseek_pro_openai"]
   assert profile["roles"]["main"] == "glm_coding_53_openai"
   assert resolved.provenance[("profile", "providers")] == "local"
@@ -153,7 +154,7 @@ def test_each_adapter_resolves_and_renders_defaults_without_keys(tmp_path, profi
   suffix = "anthropic" if workspace.agent == "omp" else "openai"
   assert set(workspace.default_providers) == {"kimi_code_" + suffix, "glm_coding_" + suffix, "deepseek_" + suffix}
   assert {data["models"][mid]["remote_id"] for mid in workspace.default_models} == {
-    "kimi-for-coding", "k3", "k3-256k", "kimi-for-coding-highspeed",
+    "kimi-for-coding", "k3", "k3-256k", "k3.1-pro", "k3.1-pro-highspeed", "kimi-for-coding-highspeed",
     "glm-5.3", "glm-5.3-flash", "deepseek-flash", "deepseek-v4-pro"}
   assert all("pricing" not in data["models"][mid] for mid in workspace.default_models if not mid.startswith("deepseek"))
   assert data["providers"][data["models"][model]["provider"]]["protocol"] == protocol
@@ -225,7 +226,7 @@ def test_pi_subscription_models_render_explicit_wire_compatibility(tmp_path):
   groups = [json.loads(artifact.content) for artifact in artifacts
     if artifact.target.path == "pi-home/models.json" and artifact.target.selector.endswith("/models")]
   models = {model["id"]: model for group in groups for model in group}
-  assert set(models) == {"kimi-for-coding", "k3", "k3-256k", "kimi-for-coding-highspeed",
+  assert set(models) == {"kimi-for-coding", "k3", "k3-256k", "k3.1-pro", "k3.1-pro-highspeed", "kimi-for-coding-highspeed",
     "glm-5.3", "glm-5.3-flash", "deepseek-flash", "deepseek-v4-pro"}
   for model_id in ("kimi-for-coding", "glm-5.3", "glm-5.3-flash"):
     assert models[model_id]["compat"] == {

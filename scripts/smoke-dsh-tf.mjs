@@ -24,7 +24,7 @@ try {
     await new Promise(resolve => setTimeout(resolve, 10));
   }
   const llm = booted.ctx.get("llm");
-  const cases = [["kimi_tf", "k3", 4], ["zhipu_tf", "glm-5.3", 5], ["deepseek_tf", "deepseek-flash", 2]];
+  const cases = [["kimi_tf", "k3", 6], ["zhipu_tf", "glm-5.3", 5], ["deepseek_tf", "deepseek-flash", 2]];
   report.catalogs = {};
   for (const [key, model, count] of cases) {
     report.stage = key;

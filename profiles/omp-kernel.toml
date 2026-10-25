@@ -2,7 +2,7 @@
 "id" = "omp-kernel"
 "agent" = "omp"
 "providers" = ["kimi_tf", "zhipu_tf", "deepseek_tf", "cursor"]
-"models" = ["omp-kimi_tf-kimi-for-coding", "omp-kimi_tf-k3", "omp-kimi_tf-k3-256k", "omp-kimi_tf-kimi-for-coding-highspeed", "omp-zhipu_tf-glm-5.3", "omp-zhipu_tf-glm-5.3-flash", "omp-zhipu_tf-glm-5.2", "omp-zhipu_tf-glm-5.1", "omp-zhipu_tf-glm-5-turbo", "omp-deepseek_tf-deepseek-flash", "omp-deepseek_tf-deepseek-v4-pro"]
+"models" = ["omp-kimi_tf-kimi-for-coding", "omp-kimi_tf-k3", "omp-kimi_tf-k3-256k", "omp-kimi_tf-k3.1-pro", "omp-kimi_tf-k3.1-pro-highspeed", "omp-kimi_tf-kimi-for-coding-highspeed", "omp-zhipu_tf-glm-5.3", "omp-zhipu_tf-glm-5.3-flash", "omp-zhipu_tf-glm-5.2", "omp-zhipu_tf-glm-5.1", "omp-zhipu_tf-glm-5-turbo", "omp-deepseek_tf-deepseek-flash", "omp-deepseek_tf-deepseek-v4-pro"]
 "rules" = ["omp-kernel-confirmation"]
 "skills" = ["omp-kernel-codex-delegate", "omp-kernel-cpp-database-kernel", "omp-kernel-neovim-plugin-development", "omp-kernel-safe-linux-scripting"]
 "plugins" = ["omp-permission-control"]
@@ -196,6 +196,15 @@
 "output" = 15.0
 "cacheRead" = 0.3
 "cacheWrite" = 3.0
+
+# K3.1 TF 网关费率未知，不声明 cost；确认后可按既有条目补登。
+["agent_options"."model_options"."omp-kimi_tf-k3.1-pro"]
+"name" = "Kimi K3.1 Pro"
+"reasoning" = true
+
+["agent_options"."model_options"."omp-kimi_tf-k3.1-pro-highspeed"]
+"name" = "Kimi K3.1 Pro Highspeed"
+"reasoning" = true
 
 ["agent_options"."model_options"."omp-kimi_tf-kimi-for-coding-highspeed"]
 "name" = "Kimi For Coding Highspeed"

@@ -6,20 +6,22 @@ Catalog verification date: **2026-10-06**. This is a checked-in specification/pr
 
 ## Official optional pool
 
-Each tool selects eight official IDs from three API-key service providers. DSH/Pi default to OpenAI-compatible bindings; OMP defaults to Anthropic-compatible bindings. Other protocol definitions remain available for explicit selection. Unspecified main remains Kimi Code `kimi-for-coding`; explicit roles take precedence.
+Each tool selects ten official IDs from three API-key service providers. DSH/Pi default to OpenAI-compatible bindings; OMP defaults to Anthropic-compatible bindings. Other protocol definitions remain available for explicit selection. Unspecified main remains Kimi Code `kimi-for-coding`; explicit roles take precedence.
 
 | Service | Provider IDs | Remote model ID | Context / client output budget | Configured inputs |
 | --- | --- | --- | --- | --- |
 | Kimi Code subscription | `kimi_code_openai` / `kimi_code_anthropic` | `kimi-for-coding` (K2.8 Preview) | 1048576 / 32768 | Text, image |
 | Kimi Code subscription | Same | `k3` | 1048576 / 131072 | Text, image |
 | Kimi Code subscription | Same | `k3-256k` | 262144 / 131072 | Text, image |
+| Kimi Code subscription | Same | `k3.1-pro` | 1048576 / 131072 | Text, image |
+| Kimi Code subscription | Same | `k3.1-pro-highspeed` | 1048576 / 131072 | Text, image |
 | Kimi Code subscription | Same | `kimi-for-coding-highspeed` | 262144 / 32768 | Text, image |
 | GLM Coding Plan subscription | `glm_coding_openai` / `glm_coding_anthropic` | `glm-5.3` | 1000000 / 131072 | Text |
 | GLM Coding Plan subscription | Same | `glm-5.3-flash` | 1000000 / 131072 | Text, image |
 | Official metered DeepSeek API | `deepseek_openai` / `deepseek_anthropic` | `deepseek-flash` (V4.1 Flash) | 1048576 / 393216 | Text, image |
 | Official metered DeepSeek API | Same | `deepseek-v4-pro` (V4 Pro 0813) | 1048576 / 393216 | Text |
 
-Kimi IDs, membership requirements, and capabilities come from the [official model guide](https://www.kimi.com/code/docs/en/kimi-code/models.html). K3's 1M context requires a higher membership tier; use k3-256k or a verified account-specific context override where appropriate. K3/K2.8 Preview declare low/high/max; HighSpeed declares Thinking ON without invented effort levels. Output figures are the repository's fixed official OMP v18.4.5 SDK client budgets, not verified server maxima. Some service models support video, but these agent bindings declare text/image only.
+Kimi IDs, membership requirements, and capabilities come from the [official model guide](https://www.kimi.com/code/docs/en/kimi-code/models.html); the K3.1 Pro rows were checked against that guide on 2026-10-24. K3/K3.1 1M context requires a higher membership tier; use k3-256k or a verified account-specific context override where appropriate. K3.1 Pro models only support thinking mode—disabling thinking is rejected with HTTP 400—so their bindings declare Pi `disabled_thinking_levels = ["off"]` and OMP `thinking.requiresEffort`, and K3.1 output budgets reuse the K3 client cap rather than a verified server maximum. The guide also recommends starting a new session for K3.1 instead of switching within K3/K2.8 sessions, and prefers the plan's native APIs over protocol-translating proxies. K3/K2.8 Preview declare low/high/max; HighSpeed declares Thinking ON without invented effort levels. Output figures are the repository's fixed official OMP v18.4.5 SDK client budgets, not verified server maxima. Some service models support video, but these agent bindings declare text/image only.
 
 Both GLM-5.3 variants belong to [Coding Plan](https://docs.z.ai/devpack/overview); the [Flash guide](https://docs.z.ai/guides/vlm/glm-5.3-flash) documents native images. Thinking cannot be disabled and low/high/max are declared. Pi disables off; OMP uses public `thinking.requiresEffort`. Context uses a conservative 1000000-token client budget. FlashX is a different route and is absent from this pool. International Z.AI and Chinese BigModel access constraints are not interchangeable; bindings retain the [Chinese Coding Plan endpoints](https://docs.bigmodel.cn/cn/coding-plan/tool/others). Video/files are outside the current agent input enum.
 
@@ -29,17 +31,17 @@ DSH currently projects capacities without the complete reasoning-mode constraint
 
 ## Additional TF bindings
 
-TF providers are enabled only by explicit selection. Pi Base/Pro retain eight official defaults; the [Pi TF machine example](../examples/pi-tf.local.toml) appends eleven `pi-` bindings and three existing TF providers to either profile, yielding nineteen selections without changing `roles.main`. Merely registering the bindings does not enable them. `omp-kernel` adds eleven bindings to the eight official defaults, for nineteen static selections:
+TF providers are enabled only by explicit selection. Pi Base/Pro retain ten official defaults; the [Pi TF machine example](../examples/pi-tf.local.toml) appends thirteen `pi-` bindings and three existing TF providers to either profile, yielding twenty-three selections without changing `roles.main`. Merely registering the bindings does not enable them. `omp-kernel` adds thirteen bindings to the ten official defaults, for twenty-three static selections:
 
 | Provider | Protocol / address reference | Credential reference | Remote IDs |
 | --- | --- | --- | --- |
-| `kimi_tf` | OpenAI / `local:tf_openai_url` | `secret:omp_kimi_tf_key` | `kimi-for-coding`, `k3`, `k3-256k`, `kimi-for-coding-highspeed` |
+| `kimi_tf` | OpenAI / `local:tf_openai_url` | `secret:omp_kimi_tf_key` | `kimi-for-coding`, `k3`, `k3-256k`, `k3.1-pro`, `k3.1-pro-highspeed`, `kimi-for-coding-highspeed` |
 | `zhipu_tf` | Anthropic / `local:tf_anthropic_url` | `secret:omp_zhipu_tf_key` | `glm-5.3`, `glm-5.3-flash`, `glm-5.2`, `glm-5.1`, `glm-5-turbo` |
 | `deepseek_tf` | OpenAI / `local:tf_openai_url` | `secret:omp_deepseek_tf_key` | `deepseek-flash`, `deepseek-v4-pro` |
 
 Pi GLM-5.3/Flash use the public Pi 1.3.0 Anthropic `compat.forceAdaptiveThinking` field, a low/high/max `thinkingLevelMap`, and disabled off. The field is documented in the [official compatibility schema](https://github.com/earendil-works/pi/blob/v1.3.0/packages/ai/src/providers/compat-schema.ts); its [Anthropic transport](https://github.com/earendil-works/pi/blob/v1.3.0/packages/ai/src/api/anthropic-messages.ts) projects adaptive thinking and `output_config.effort`. This checks the client API shape, not TF gateway support. Three older GLM TF IDs remain separate candidates. Official-plan alias/upgrade behavior does not prove equivalent TF routing. Unverified multilevel reasoning mappings are not added to those old IDs. DeepSeek TF uses a separate key, entered through `model key deepseek_tf`; sharing a URL does not share a credential. Actual TF IDs, capabilities, routing, and billing have not been verified with real requests.
 
-The official/OMP catalog contains eleven core templates and twenty-seven static bindings: sixteen official protocol bindings and eleven TF bindings. Its eleven providers comprise six official protocol endpoints, three TF endpoints, and two dynamic OAuth entries (Cursor/Codex). Dynamically discovered OAuth models are not static bindings. Pi and DSH each add eleven tool-specific TF bindings outside that twenty-seven-binding count; see the [Pi guide](pi.md) and [DSH guide](dsh.md).
+The official/OMP catalog contains thirteen core templates and thirty-three static bindings: twenty official protocol bindings and thirteen TF bindings. Its eleven providers comprise six official protocol endpoints, three TF endpoints, and two dynamic OAuth entries (Cursor/Codex). Dynamically discovered OAuth models are not static bindings. Pi and DSH each add thirteen tool-specific TF bindings outside that thirty-three-binding count; see the [Pi guide](pi.md) and [DSH guide](dsh.md). The K3.1 TF bindings reuse the official specifications, but actual gateway support, behavior through protocol translation, and pricing remain unverified—the kernel profile deliberately declares no TF cost for them.
 
 ```sh
 ./agentcfg model presets --verbose

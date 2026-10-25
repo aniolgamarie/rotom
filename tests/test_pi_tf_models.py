@@ -13,7 +13,7 @@ from agentcfg.workspace import load_workspace
 
 REPO = Path(__file__).resolve().parents[1]
 REMOTE_IDS = {
-  "kimi_tf": ("kimi-for-coding", "k3", "k3-256k", "kimi-for-coding-highspeed"),
+  "kimi_tf": ("kimi-for-coding", "k3", "k3-256k", "k3.1-pro", "k3.1-pro-highspeed", "kimi-for-coding-highspeed"),
   "zhipu_tf": ("glm-5.3", "glm-5.3-flash", "glm-5.2", "glm-5.1", "glm-5-turbo"),
   "deepseek_tf": ("deepseek-flash", "deepseek-v4-pro"),
 }
@@ -37,12 +37,12 @@ def rendered(workspace):
 
 
 @pytest.mark.parametrize("profile", ["pi-base", "pi-pro"])
-def test_tf_selection_adds_eleven_routes_without_changing_existing_choices(tmp_path, profile):
+def test_tf_selection_adds_thirteen_routes_without_changing_existing_choices(tmp_path, profile):
   baseline = load_workspace(machine_file(tmp_path, tf=False), profile, repository=REPO)
   selected = load_workspace(machine_file(tmp_path), profile, repository=REPO)
   before, data = baseline.resolved.data, selected.resolved.data
-  assert len(before["models"]) == 8
-  assert len(data["models"]) == 19
+  assert len(before["models"]) == 10
+  assert len(data["models"]) == 23
   assert set(data["models"]) - set(before["models"]) == TF_IDS
   assert data["profile"]["roles"] == before["profile"]["roles"] == {"main": "kimi_code_openai"}
   for field in ("plugins", "mcp", "skills", "rules", "agent_options"):
@@ -55,7 +55,7 @@ def test_tf_selection_adds_eleven_routes_without_changing_existing_choices(tmp_p
     if key != ("pi-home/settings.json", "/enabledModels"):
       assert artifacts[key] == value
   enabled = artifacts[("pi-home/settings.json", "/enabledModels")]
-  assert len(enabled) == 19
+  assert len(enabled) == 23
   assert set(enabled) - set(baseline_artifacts[("pi-home/settings.json", "/enabledModels")]) == {
     f"agentcfg-{provider}/{remote}" for provider, remotes in REMOTE_IDS.items() for remote in remotes}
   spec = selected.adapter.launch_spec(data, cwd=tmp_path.absolute(),
@@ -92,6 +92,8 @@ def test_tf_routes_render_protocols_and_references_without_inheriting_prices(tmp
       assert models["kimi-for-coding"]["compat"]["thinkingFormat"] == "zai"
       assert models["k3"]["compat"]["thinkingFormat"] == "openai"
       assert models["k3-256k"]["thinkingLevelMap"]["xhigh"] == "max"
+      assert models["k3.1-pro"]["thinkingLevelMap"]["off"] is None
+      assert models["k3.1-pro-highspeed"]["thinkingLevelMap"]["off"] is None
       assert models["kimi-for-coding-highspeed"]["compat"]["supportsReasoningEffort"] is False
       assert "thinkingLevelMap" not in models["kimi-for-coding-highspeed"]
     elif provider == "deepseek_tf":

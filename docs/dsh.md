@@ -58,7 +58,7 @@ The default main route remains the public Kimi Code configuration unless explici
 
 ### Optional TF gateway models
 
-`agents/dsh/content.toml` supplies eleven `dsh-…` bindings: four Kimi, five GLM, and two DeepSeek models. Providers reuse `kimi_tf`, `zhipu_tf`, and `deepseek_tf`; keys remain `secret:omp_kimi_tf_key`, `secret:omp_zhipu_tf_key`, and `secret:omp_deepseek_tf_key`. Kimi/DeepSeek use OpenAI Completions and GLM uses native Anthropic Messages through the locked llm-pi-ai, without an added runtime dependency.
+`agents/dsh/content.toml` supplies thirteen `dsh-…` bindings: six Kimi, five GLM, and two DeepSeek models. Providers reuse `kimi_tf`, `zhipu_tf`, and `deepseek_tf`; keys remain `secret:omp_kimi_tf_key`, `secret:omp_zhipu_tf_key`, and `secret:omp_deepseek_tf_key`. Kimi/DeepSeek use OpenAI Completions and GLM uses native Anthropic Messages through the locked llm-pi-ai, without an added runtime dependency.
 
 Select them explicitly in `overrides.profiles.dsh-default` and provide private `tf_openai_url` and `tf_anthropic_url`; see [dsh-tf.local.toml](../examples/dsh-tf.local.toml). Machines without a gateway are not forced to enable it. Core specifications reuse shared templates; DSH reasoning/compat uses public DSH fields and does not receive OMP native fields. Gateway IDs, quotas, and tool round trips require actual service evidence. Native loading or a local fake service is not TF account validation.
 

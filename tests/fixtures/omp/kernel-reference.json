@@ -690,6 +690,68 @@
             }
           },
           {
+            "id": "k3.1-pro",
+            "name": "Kimi K3.1 Pro",
+            "reasoning": true,
+            "contextWindow": 1048576,
+            "maxTokens": 131072,
+            "input": [
+              "text",
+              "image"
+            ],
+            "thinking": {
+              "minLevel": "low",
+              "maxLevel": "max",
+              "mode": "effort",
+              "requiresEffort": true
+            },
+            "compat": {
+              "supportsDeveloperRole": false,
+              "supportsReasoningEffort": true,
+              "maxTokensField": "max_tokens",
+              "thinkingFormat": "openai",
+              "reasoningEffortMap": {
+                "minimal": "low",
+                "low": "low",
+                "medium": "high",
+                "high": "high",
+                "xhigh": "max",
+                "max": "max"
+              }
+            }
+          },
+          {
+            "id": "k3.1-pro-highspeed",
+            "name": "Kimi K3.1 Pro Highspeed",
+            "reasoning": true,
+            "contextWindow": 1048576,
+            "maxTokens": 131072,
+            "input": [
+              "text",
+              "image"
+            ],
+            "thinking": {
+              "minLevel": "low",
+              "maxLevel": "max",
+              "mode": "effort",
+              "requiresEffort": true
+            },
+            "compat": {
+              "supportsDeveloperRole": false,
+              "supportsReasoningEffort": true,
+              "maxTokensField": "max_tokens",
+              "thinkingFormat": "openai",
+              "reasoningEffortMap": {
+                "minimal": "low",
+                "low": "low",
+                "medium": "high",
+                "high": "high",
+                "xhigh": "max",
+                "max": "max"
+              }
+            }
+          },
+          {
             "id": "kimi-for-coding-highspeed",
             "name": "Kimi For Coding Highspeed",
             "reasoning": true,

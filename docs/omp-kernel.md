@@ -1,10 +1,10 @@
 # The omp-kernel recipe
 
-`omp-kernel` is the daily-use OMP recipe. It extends `omp-default`, whose public pool contains eight official model bindings: four Kimi Code, two GLM Coding Plan, and two DeepSeek. The initial public main model is Kimi Code. This guide covers private machine configuration, deployment, and managed launch. Linux glibc x64 evidence does not establish WSL validation; see [testing](testing.md) and the [support matrix](omp-support.md).
+`omp-kernel` is the daily-use OMP recipe. It extends `omp-default`, whose public pool contains ten official model bindings: six Kimi Code, two GLM Coding Plan, and two DeepSeek. The initial public main model is Kimi Code. This guide covers private machine configuration, deployment, and managed launch. Linux glibc x64 evidence does not establish WSL validation; see [testing](testing.md) and the [support matrix](omp-support.md).
 
 ## Included configuration
 
-The public [recipe](../profiles/omp-kernel.toml) adds three gateway providers and eleven model bindings, including native Anthropic Messages, compatibility settings, costs, thinking levels, and execution fallback mappings. Together with the base pool, it declares nineteen static model bindings. Provider-specific transport and pricing stay attached to each binding; shared model specifications reuse catalog templates.
+The public [recipe](../profiles/omp-kernel.toml) adds three gateway providers and thirteen model bindings, including native Anthropic Messages, compatibility settings, costs, thinking levels, and execution fallback mappings. Together with the base pool, it declares twenty-three static model bindings. The two K3.1 TF bindings declare no cost because gateway pricing is unverified. Provider-specific transport and pricing stay attached to each binding; shared model specifications reuse catalog templates.
 
 The recipe includes Bash approval patterns, five configured interceptors disabled by default, five agents, four complete skills, managed `RULES.md`, dark/light Catppuccin themes, a status line, and `default/smol/slow/plan/task` model roles. `agent_options.tiny_model = "local/lfm2.5-230m"` maps to native `modelRoles.tiny`. It is not a verified main model. Catppuccin resources come from fixed upstream sources.
 

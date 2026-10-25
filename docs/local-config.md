@@ -19,7 +19,7 @@ Files must be owned by the current user, regular, single-link, mode 0600; privat
 
 ## Model pool and service credentials
 
-[`shared/defaults/models.toml`](../shared/defaults/models.toml) adds Kimi Code, GLM Coding Plan, and metered DeepSeek to DSH/Pi/OMP. Each tool's default selection contains eight official model IDs. DSH/Pi use OpenAI-compatible routes; OMP uses Anthropic-compatible routes. Each service's two protocols share its matching `kimi_code_key`, `glm_coding_key`, or `deepseek_key` reference.
+[`shared/defaults/models.toml`](../shared/defaults/models.toml) adds Kimi Code, GLM Coding Plan, and metered DeepSeek to DSH/Pi/OMP. Each tool's default selection contains ten official model IDs. DSH/Pi use OpenAI-compatible routes; OMP uses Anthropic-compatible routes. Each service's two protocols share its matching `kimi_code_key`, `glm_coding_key`, or `deepseek_key` reference.
 
 Unless explicitly overridden, main remains Kimi Code `kimi-for-coding`. Pool membership does not assign a role or authorize an automatic paid fallback. Existing explicit TF/Cursor roles take precedence. Unbound Pi resource roles inherit main. Provider/model selections append with deduplication across layers; rules, skills, plugins, and MCP arrays still replace. See the [model catalog](model-catalog.md) and [OMP presets](omp-model-presets.md).
 
@@ -72,7 +72,7 @@ Legacy inline machine `[secrets]` remains supported. Empty inline placeholders d
 
 `./agentcfg model presets` requires no machine file. It distinguishes subscription and metered routes; verbose adds public addresses, specifications, dated pricing, and sources. Subscription entries do not invent per-token prices. DeepSeek pricing remains a dated snapshot rather than a live quote. To add the other supported protocol explicitly, use `model enable kimi-code|glm-code|deepseek`; for example, OMP can select `--protocol openai`. Enabling a route does not replace main.
 
-OMP TF definitions are in `agents/omp/content.toml`; omp-kernel selects three TF providers and eleven bindings. They are not global defaults. DSH has its own explicit bindings described in [DSH](dsh.md). DeepSeek TF shares `local:tf_openai_url` with Kimi TF but has the independent `secret:omp_deepseek_tf_key`, fillable with `model key deepseek_tf`. Shared templates do not guarantee gateway IDs, capability, billing, or official-plan entitlement.
+OMP TF definitions are in `agents/omp/content.toml`; omp-kernel selects three TF providers and thirteen bindings. They are not global defaults. DSH has its own explicit bindings described in [DSH](dsh.md). DeepSeek TF shares `local:tf_openai_url` with Kimi TF but has the independent `secret:omp_deepseek_tf_key`, fillable with `model key deepseek_tf`. Shared templates do not guarantee gateway IDs, capability, billing, or official-plan entitlement.
 
 Private URLs belong in machine local_values. Public provider definitions use `base_url_ref = "local:<name>"` instead of literal base_url:
 

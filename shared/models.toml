@@ -16,6 +16,16 @@ schema_version = 1
 "provider" = "kimi_code_openai"
 "native" = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "openai"}, "thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}, "omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "openai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
 
+["models"."kimi_code_k31_pro_openai"]
+"template" = "kimi_k31_pro"
+"provider" = "kimi_code_openai"
+"native" = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "openai"}, "thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}, "disabled_thinking_levels" = ["off"]}, "omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "openai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
+
+["models"."kimi_code_k31_pro_highspeed_openai"]
+"template" = "kimi_k31_pro_highspeed"
+"provider" = "kimi_code_openai"
+"native" = {"pi" = {"compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "supportsStrictMode" = false, "thinkingFormat" = "openai"}, "thinkingLevelMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}, "disabled_thinking_levels" = ["off"]}, "omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "openai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
+
 ["models"."kimi_code_highspeed_openai"]
 "template" = "kimi_code_highspeed"
 "provider" = "kimi_code_openai"
@@ -54,6 +64,16 @@ schema_version = 1
 ["models"."kimi_code_k3_256k_anthropic"]
 "template" = "kimi_k3_256k"
 "provider" = "kimi_code_anthropic"
+
+["models"."kimi_code_k31_pro_anthropic"]
+"template" = "kimi_k31_pro"
+"provider" = "kimi_code_anthropic"
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}}}
+
+["models"."kimi_code_k31_pro_highspeed_anthropic"]
+"template" = "kimi_k31_pro_highspeed"
+"provider" = "kimi_code_anthropic"
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}}}
 
 ["models"."kimi_code_highspeed_anthropic"]
 "template" = "kimi_code_highspeed"

@@ -42,6 +42,16 @@ schema_version = 1
 "provider" = "kimi_tf"
 "native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort"}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "openai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
 
+["models"."omp-kimi_tf-k3.1-pro"]
+"template" = "kimi_k31_pro"
+"provider" = "kimi_tf"
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "openai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
+
+["models"."omp-kimi_tf-k3.1-pro-highspeed"]
+"template" = "kimi_k31_pro_highspeed"
+"provider" = "kimi_tf"
+"native" = {"omp" = {"thinking" = {"minLevel" = "low", "maxLevel" = "max", "mode" = "effort", "requiresEffort" = true}, "compat" = {"supportsDeveloperRole" = false, "supportsReasoningEffort" = true, "maxTokensField" = "max_tokens", "thinkingFormat" = "openai", "reasoningEffortMap" = {"minimal" = "low", "low" = "low", "medium" = "high", "high" = "high", "xhigh" = "max", "max" = "max"}}}}
+
 ["models"."omp-kimi_tf-kimi-for-coding-highspeed"]
 "template" = "kimi_code_highspeed"
 "provider" = "kimi_tf"

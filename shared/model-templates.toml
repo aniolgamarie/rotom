@@ -34,6 +34,28 @@ schema_version = 1
 "reasoning_efforts" = ["low", "high", "max"]
 "notes" = "输出为已核对官方 OMP 18.4.5 / SDK 的安全客户端 cap，非已验证服务端最大值；无真实账号核验。"
 
+["model_templates"."kimi_k31_pro"]
+"remote_id" = "k3.1-pro"
+"name" = "Kimi K3.1 Pro"
+"input" = ["text", "image"]
+"reasoning" = true
+"context_window" = 1048576
+"max_output_tokens" = 131072
+"source" = "https://www.kimi.com/code/docs/en/kimi-code/models.html"
+"reasoning_efforts" = ["low", "high", "max"]
+"notes" = "输出沿用 K3 客户端保守预算，非已验证服务端最大值；无真实账号核验。 仅支持 thinking 模式，禁用 thinking 返回 HTTP 400；1M 依赖更高套餐。"
+
+["model_templates"."kimi_k31_pro_highspeed"]
+"remote_id" = "k3.1-pro-highspeed"
+"name" = "Kimi K3.1 Pro Highspeed"
+"input" = ["text", "image"]
+"reasoning" = true
+"context_window" = 1048576
+"max_output_tokens" = 131072
+"source" = "https://www.kimi.com/code/docs/en/kimi-code/models.html"
+"reasoning_efforts" = ["low", "high", "max"]
+"notes" = "输出沿用 K3 客户端保守预算，非已验证服务端最大值；无真实账号核验。 仅支持 thinking 模式，禁用 thinking 返回 HTTP 400；速度约 2–3×、配额约 2×；1M 依赖更高套餐。"
+
 ["model_templates"."kimi_code_highspeed"]
 "remote_id" = "kimi-for-coding-highspeed"
 "name" = "Kimi Code (K2.7 Code High Speed)"

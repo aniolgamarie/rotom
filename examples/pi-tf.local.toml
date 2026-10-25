@@ -1,4 +1,4 @@
-# 私人机器配置示例；显式追加 TF 目录，保留八个官方默认模型和 main。
+# 私人机器配置示例；显式追加 TF 目录，保留十个官方默认模型和 main。
 # 地址为虚构占位值；不证明网关模型、能力、登录或计费可用。
 schema_version = 1
 [machine]
@@ -15,6 +15,8 @@ models = [
   "pi-kimi_tf-kimi-for-coding",
   "pi-kimi_tf-k3",
   "pi-kimi_tf-k3-256k",
+  "pi-kimi_tf-k3.1-pro",
+  "pi-kimi_tf-k3.1-pro-highspeed",
   "pi-kimi_tf-kimi-for-coding-highspeed",
   "pi-zhipu_tf-glm-5.3",
   "pi-zhipu_tf-glm-5.3-flash",
@@ -31,6 +33,8 @@ models = [
   "pi-kimi_tf-kimi-for-coding",
   "pi-kimi_tf-k3",
   "pi-kimi_tf-k3-256k",
+  "pi-kimi_tf-k3.1-pro",
+  "pi-kimi_tf-k3.1-pro-highspeed",
   "pi-kimi_tf-kimi-for-coding-highspeed",
   "pi-zhipu_tf-glm-5.3",
   "pi-zhipu_tf-glm-5.3-flash",

@@ -17,6 +17,16 @@ template = "kimi_k3_256k"
 provider = "kimi_tf"
 native.dsh.compat = {supportsDeveloperRole = false, supportsReasoningEffort = true, maxTokensField = "max_tokens", thinkingFormat = "openai"}
 
+[models."dsh-kimi_tf-k3.1-pro"]
+template = "kimi_k31_pro"
+provider = "kimi_tf"
+native.dsh.compat = {supportsDeveloperRole = false, supportsReasoningEffort = true, maxTokensField = "max_tokens", thinkingFormat = "openai"}
+
+[models."dsh-kimi_tf-k3.1-pro-highspeed"]
+template = "kimi_k31_pro_highspeed"
+provider = "kimi_tf"
+native.dsh.compat = {supportsDeveloperRole = false, supportsReasoningEffort = true, maxTokensField = "max_tokens", thinkingFormat = "openai"}
+
 [models."dsh-kimi_tf-kimi-for-coding-highspeed"]
 template = "kimi_code_highspeed"
 provider = "kimi_tf"

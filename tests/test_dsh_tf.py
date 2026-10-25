@@ -36,7 +36,7 @@ def test_tf_catalog_uses_existing_provider_key_and_url_refs_without_changing_mai
   data = workspace.resolved.data
   assert data["profile"]["roles"]["main"] == "kimi_code_openai"
   ids = {key for key in data["models"] if key.startswith("dsh-")}
-  assert len(ids) == 11
+  assert len(ids) == 13
   omp = tomllib.loads((ROOT / "agents/omp/content.toml").read_text())
   dsh = tomllib.loads((ROOT / "agents/dsh/content.toml").read_text())
   for key in ids:
@@ -54,8 +54,9 @@ def test_tf_catalog_uses_existing_provider_key_and_url_refs_without_changing_mai
     assert fields[root + "/retryPolicy"]["maxRetries"] == 0
     assert fields[root + "/apiKeyEnv"].startswith("AGENTCFG_KEY_")
   models = fields["/llm-pi-ai/config/providers/agentcfg-kimi_tf/models"]
-  assert {m["id"] for m in models} == {"kimi-for-coding", "k3", "k3-256k", "kimi-for-coding-highspeed"}
+  assert {m["id"] for m in models} == {"kimi-for-coding", "k3", "k3-256k", "k3.1-pro", "k3.1-pro-highspeed", "kimi-for-coding-highspeed"}
   assert next(m for m in models if m["id"] == "k3")["reasoningEfforts"] == {"low": "low", "high": "high", "max": "max"}
+  assert next(m for m in models if m["id"] == "k3.1-pro")["reasoningEfforts"] == {"low": "low", "high": "high", "max": "max"}
   assert next(m for m in models if m["id"] == "kimi-for-coding-highspeed")["reasoningEfforts"] == {"high": "high"}
   assert all("native" not in m and "thinking" not in m for m in models)
   deepseek = fields["/llm-pi-ai/config/providers/agentcfg-deepseek_tf/models"]
