@@ -19,6 +19,18 @@ DEVELOPER_NAMES = frozenset({"GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONF
 PATH_NAMES = ("HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME", "XDG_RUNTIME_DIR")
 CONTROL_NAMES = frozenset({"BASH_ENV", "ENV", "LD_PRELOAD", "DYLD_INSERT_LIBRARIES",
   "PYTHONSTARTUP", "PYTHONINSPECT"})
+# 命名代理一次注入的标准变量（大小写全集）；不默认透传调用者代理，须显式选择配置。
+PROXY_NAMES = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
+  "http_proxy", "https_proxy", "all_proxy", "no_proxy")
+
+
+def proxy_variables(profile):
+  url = profile["url"]
+  values = {"HTTP_PROXY": url, "HTTPS_PROXY": url, "http_proxy": url, "https_proxy": url,
+    "ALL_PROXY": profile.get("all_proxy", url), "all_proxy": profile.get("all_proxy", url)}
+  if profile.get("no_proxy"):
+    values["NO_PROXY"] = values["no_proxy"] = profile["no_proxy"]
+  return values
 
 
 @dataclass
@@ -31,7 +43,8 @@ class EnvironmentResult:
 def declarations(machine):
   settings = machine.get("environment", {})
   return {"inherit": list(settings.get("inherit", [])), "values": dict(settings.get("values", {})),
-    "unset": list(settings.get("unset", [])), "editor": machine.get("editor")}
+    "unset": list(settings.get("unset", [])), "editor": machine.get("editor"),
+    "proxy": settings.get("proxy"), "proxies": dict(machine.get("proxies", {}))}
 
 
 def caller_paths(caller=None):
@@ -45,7 +58,19 @@ def caller_paths(caller=None):
   return result
 
 
-def validate_overrides(spec, machine, inherit=(), unset=()):
+def selected_proxy(machine, proxy=None):
+  """一次性选择优先于机器持久默认；未选择返回 None。"""
+  settings = machine.get("environment", {})
+  selected = proxy if proxy is not None else settings.get("proxy")
+  if selected is None:
+    return None, None
+  profile = machine.get("proxies", {}).get(selected)
+  if profile is None:
+    raise ConfigError("environment-proxy-unknown")
+  return selected, profile
+
+
+def validate_overrides(spec, machine, inherit=(), unset=(), proxy=None):
   from .config import validate_environment_settings
   if len(set(inherit)) != len(inherit) or len(set(unset)) != len(unset) or set(inherit) & set(unset):
     raise ConfigError("environment-override-conflict")
@@ -53,27 +78,42 @@ def validate_overrides(spec, machine, inherit=(), unset=()):
   if any(not isinstance(name, str) or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) is None for name in names):
     raise ConfigError("environment-override-name")
   validate_environment_settings({"inherit": list(inherit), "unset": list(unset)})
-  if spec.environment_policy == "legacy" and names:
+  if spec.environment_policy == "legacy" and (names or proxy is not None):
     raise Conflict("旧环境契约不支持单次覆盖；请先 plan/apply")
   for name in names:
     if name in CONTROL_NAMES:
       raise ConfigError("environment-protected-control")
+  selected, _ = selected_proxy(machine, proxy)
+  settings = machine.get("environment", {})
+  if selected is not None:
+    declared = set(settings.get("inherit", [])) | set(settings.get("values", {})) | set(settings.get("unset", [])) | set(names)
+    if declared & set(PROXY_NAMES):
+      raise ConfigError("environment-proxy-conflict")
   # 适配器的绑定在最后应用；不能让显式用户请求在此被静默撤销。
-  explicit = set(machine.get("environment", {}).get("inherit", [])) | set(machine.get("environment", {}).get("values", {}))
-  explicit |= set(machine.get("environment", {}).get("unset", [])) | set(names)
+  explicit = set(settings.get("inherit", [])) | set(settings.get("values", {}))
+  explicit |= set(settings.get("unset", [])) | set(names)
+  if selected is not None:
+    explicit |= set(PROXY_NAMES)
   for binding in spec.environment:
     if binding.name in explicit and isinstance(binding.value, SecretRef):
       raise ConfigError("environment-credential-target")
 
 
-def prepare(spec, machine, *, caller=None, inherit=(), unset=(), extra_names=()):
+def prepare(spec, machine, *, caller=None, inherit=(), unset=(), proxy=None, extra_names=()):
   from .process import BASE_ENV, environment
   caller = os.environ if caller is None else caller
-  validate_overrides(spec, machine, inherit, unset)
+  validate_overrides(spec, machine, inherit, unset, proxy)
+  selected, profile = selected_proxy(machine, proxy)
+  source = "one-shot-proxy" if proxy is not None else "machine-proxy"
   if spec.environment_policy == "legacy":
     home = next((item.value for item in spec.environment if item.name == "HOME"), None)
-    return EnvironmentResult(environment(machine, home=Path(home) if home else None))
-  names = BASE_ENV | DEVELOPER_NAMES | set(extra_names) | {name for name in caller if name.startswith("LC_")}
+    result = EnvironmentResult(environment(machine, home=Path(home) if home else None))
+    if selected is not None:
+      result.values.update(proxy_variables(profile))
+      result.sources.update({name: source for name in proxy_variables(profile)})
+    return result
+  names = (BASE_ENV | DEVELOPER_NAMES | set(extra_names)
+    | {name for name in caller if name.startswith("LC_")})
   values = {name: caller[name] for name in names if name in caller and name not in CONTROL_NAMES}
   sources = {name: "caller" for name in values}
   settings = machine.get("environment", {})
@@ -89,6 +129,9 @@ def prepare(spec, machine, *, caller=None, inherit=(), unset=(), extra_names=())
   for name in removed:
     values.pop(name, None)
     sources[name] = "machine-unset"
+  if selected is not None:
+    for name, value in proxy_variables(profile).items():
+      values[name], sources[name] = value, source
   for name in inherit:
     if name not in caller:
       raise ConfigError("environment-explicit-inherit-missing")
@@ -99,6 +142,8 @@ def prepare(spec, machine, *, caller=None, inherit=(), unset=(), extra_names=())
     removed.add(name)
     sources[name] = "one-shot-unset"
   explicit = set(settings.get("inherit", [])) | set(settings.get("values", {})) | set(settings.get("unset", [])) | set(inherit) | set(unset)
+  if selected is not None:
+    explicit |= set(PROXY_NAMES)
   for binding in spec.environment:
     if isinstance(binding.value, SecretRef):
       continue
@@ -135,7 +180,9 @@ def apply_bindings(result, spec, store=None, *, secrets=False):
 def capture_caller(machine, inherit=(), extra_names=()):
   from .process import BASE_ENV
   settings = machine.get("environment", {})
-  names = BASE_ENV | DEVELOPER_NAMES | set(extra_names) | set(settings.get("inherit", [])) | set(settings.get("values", {})) | set(inherit)
+  # 代理变量只进入诊断（报告"已移除/未继承"），不因此被会话继承；继承由 prepare 的白名单决定。
+  names = (BASE_ENV | DEVELOPER_NAMES | set(PROXY_NAMES) | set(extra_names)
+    | set(settings.get("inherit", [])) | set(settings.get("values", {})) | set(inherit))
   names |= {name for name in os.environ if name.startswith("LC_")}
   from .config import _credential_name
   return tuple(os.environ), {name: os.environ[name] for name in names

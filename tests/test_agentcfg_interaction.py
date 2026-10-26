@@ -48,7 +48,7 @@ def test_bare_navigation_is_short_static_and_state_free(argv, monkeypatch, capsy
   ([], ("首次", "公共选择", "命令")),
   (["init-local"], ("--profile", "默认", "子命令后")),
   (["setup"], ("联网", "重新校验", "漂移")),
-  (["run"], ("--inherit-env", "--unset-env", "--profile omp-default", "不切换")),
+  (["run"], ("--inherit-env", "--unset-env", "--proxy", "--profile omp-default", "不切换")),
   (["doctor"], ("--environment", "--input", "--live", "诊断文件")),
   (["plan"], ("离线预览", "--from-pi-home", "提案")),
   (["model"], ("key", "url", "子命令")),

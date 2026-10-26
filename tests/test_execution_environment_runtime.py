@@ -151,6 +151,34 @@ def test_fixed_pi_offline_binding_is_reported_without_value(tmp_path, monkeypatc
     assert hashlib.sha256(marker.encode()).hexdigest() not in text
 
 
+def test_named_proxy_flows_end_to_end(contract_workspace, fake_subprocess, monkeypatch):
+  fixture = contract_workspace
+  machine = fixture.workspace.resolved.data["machine"]
+  machine["proxies"] = {"fixture": {"url": "http://fixture-proxy:8080", "no_proxy": "localhost,127.0.0.1"},
+    "other": {"url": "http://fixture-other:9090"}}
+  machine["environment"]["proxy"] = "fixture"
+  monkeypatch.setenv("HTTPS_PROXY", "http://fixture-caller:1")
+  _apply(fixture)
+  fake_subprocess.queue(returncode=0)
+  assert runtime.run(fixture.workspace, cwd=fixture.cwd) == 0
+  env = fake_subprocess.calls[-1]["env"]
+  assert env["HTTPS_PROXY"] == "http://fixture-proxy:8080" and env["no_proxy"] == "localhost,127.0.0.1"
+  # 一次性选择只取契约内已声明的命名代理，不要求重新部署
+  fake_subprocess.queue(returncode=0)
+  assert runtime.run(fixture.workspace, cwd=fixture.cwd, proxy="other") == 0
+  assert fake_subprocess.calls[-1]["env"]["HTTPS_PROXY"] == "http://fixture-other:9090"
+  assert "no_proxy" not in fake_subprocess.calls[-1]["env"]
+
+
+def test_unknown_one_shot_proxy_fails_before_secrets(contract_workspace, fake_subprocess, monkeypatch):
+  fixture = contract_workspace
+  _apply(fixture)
+  _forbid_secrets(monkeypatch, fixture.workspace)
+  with pytest.raises(ConfigError, match="environment-proxy-unknown"):
+    runtime.run(fixture.workspace, cwd=fixture.cwd, proxy="missing")
+  assert not fake_subprocess.calls
+
+
 def test_caller_path_is_not_prefixed_with_runtime_bin(contract_workspace, fake_subprocess, monkeypatch):
   fixture = contract_workspace
   _apply(fixture)

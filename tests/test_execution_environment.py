@@ -25,12 +25,63 @@ def test_schema_accepts_unset_and_rejects_unknown_environment_field():
     validate_document("local", base)
 
 
+def test_schema_accepts_named_proxies_and_rejects_unknown_proxy_field():
+  base = {"schema_version": 1, "machine": {"id": "fixture", "environment": {"proxy": "fixture"},
+    "proxies": {"fixture": {"url": "http://fixture-proxy:8080", "all_proxy": "http://fixture-proxy:8080",
+      "no_proxy": "localhost,127.0.0.1"}}}}
+  validate_document("local", base)
+  base["machine"]["proxies"]["fixture"]["unknown"] = "x"
+  with pytest.raises(ConfigError):
+    validate_document("local", base)
+  broken = {"schema_version": 1, "machine": {"id": "fixture", "proxies": {"fixture": {"no_proxy": "localhost"}}}}
+  with pytest.raises(ConfigError):
+    validate_document("local", broken)
+
+
 def test_persistent_unset_renders_through_real_dsh_workspace(tmp_path):
   from agentcfg.workspace import load_workspace
   local = tmp_path / "machine.toml"
   local.write_text('schema_version=1\n[machine]\nid="fixture"\n[machine.environment]\nunset=["VIRTUAL_ENV"]\n')
   workspace = load_workspace(local, "dsh-default")
   assert workspace.candidate("fixture-lock").artifacts
+
+
+def test_named_proxy_renders_through_real_dsh_workspace(tmp_path):
+  from agentcfg.workspace import load_workspace
+  local = tmp_path / "machine.toml"
+  local.write_text('schema_version=1\n[machine]\nid="fixture"\n[machine.environment]\nproxy="fixture"\n'
+    '[machine.proxies.fixture]\nurl="http://fixture-proxy:8080"\nno_proxy="localhost,127.0.0.1"\n')
+  workspace = load_workspace(local, "dsh-default")
+  machine = workspace.resolved.data["machine"]
+  assert machine["proxies"]["fixture"]["url"] == "http://fixture-proxy:8080"
+  assert machine["environment"]["proxy"] == "fixture"
+
+
+@pytest.mark.parametrize("proxy_lines", [
+  'url="http://user:pass@fixture-proxy:8080"\n',
+  'url="socks5://fixture-proxy:8080"\n',
+  'url="http://fixture-proxy:8080/path"\n',
+  'url="http://fixture-proxy:8080/?x=1"\n',
+])
+def test_proxy_url_validation_rejects_credentials_and_non_http(tmp_path, proxy_lines):
+  from agentcfg.workspace import load_workspace
+  local = tmp_path / "machine.toml"
+  local.write_text('schema_version=1\n[machine]\nid="fixture"\n[machine.proxies.fixture]\n' + proxy_lines)
+  with pytest.raises(ConfigError):
+    load_workspace(local, "dsh-default")
+
+
+@pytest.mark.parametrize("environment_lines", [
+  'proxy="missing"\n',
+  'proxy="fixture"\nunset=["NO_PROXY"]\n',
+])
+def test_proxy_selection_validation_through_real_workspace(tmp_path, environment_lines):
+  from agentcfg.workspace import load_workspace
+  local = tmp_path / "machine.toml"
+  local.write_text('schema_version=1\n[machine]\nid="fixture"\n[machine.environment]\n' + environment_lines
+    + '[machine.proxies.fixture]\nurl="http://fixture-proxy:8080"\n')
+  with pytest.raises(ConfigError):
+    load_workspace(local, "dsh-default")
 
 
 @pytest.mark.parametrize("path", ["PATH", "CUSTOM_PATH"])
@@ -51,6 +102,74 @@ def test_overrides_and_deletions_have_one_order():
   assert "EMPTY" in result.values and result.values["EMPTY"] == ""
   assert "EDITOR" not in result.values and result.values["VISUAL"] == "machine-editor"
   assert "PATH" not in result.values and result.removed == {"EDITOR", "PATH"}
+
+
+PROXY_CALLER = {"HTTP_PROXY": "http://fixture-proxy:8080", "HTTPS_PROXY": "http://fixture-proxy:8080",
+  "ALL_PROXY": "http://fixture-proxy:8080", "NO_PROXY": "localhost,127.0.0.1",
+  "http_proxy": "http://fixture-proxy:8080", "https_proxy": "http://fixture-proxy:8080",
+  "all_proxy": "http://fixture-proxy:8080", "no_proxy": "localhost,127.0.0.1"}
+PROXY_MACHINE = {"environment": {"proxy": "fixture"},
+  "proxies": {"fixture": {"url": "http://fixture-proxy:8080", "no_proxy": "localhost,127.0.0.1"},
+    "other": {"url": "http://fixture-other:9090"}}}
+
+
+def test_caller_proxy_variables_do_not_pass_by_default():
+  result = prepare(spec(), {}, caller={**PROXY_CALLER, "HOME": "/fixture/home"})
+  assert not set(PROXY_CALLER) & set(result.values)
+
+
+def test_named_proxy_injects_standard_variables_with_persistent_default():
+  result = prepare(spec(), PROXY_MACHINE, caller={"HOME": "/fixture/home"})
+  expected = {"HTTP_PROXY": "http://fixture-proxy:8080", "HTTPS_PROXY": "http://fixture-proxy:8080",
+    "ALL_PROXY": "http://fixture-proxy:8080", "NO_PROXY": "localhost,127.0.0.1",
+    "http_proxy": "http://fixture-proxy:8080", "https_proxy": "http://fixture-proxy:8080",
+    "all_proxy": "http://fixture-proxy:8080", "no_proxy": "localhost,127.0.0.1"}
+  for name, value in expected.items():
+    assert result.values[name] == value and result.sources[name] == "machine-proxy"
+
+
+def test_one_shot_proxy_overrides_persistent_default():
+  result = prepare(spec(), PROXY_MACHINE, caller={"HOME": "/fixture/home"}, proxy="other")
+  assert result.values["HTTPS_PROXY"] == "http://fixture-other:9090"
+  assert result.sources["HTTPS_PROXY"] == "one-shot-proxy"
+  assert "NO_PROXY" not in result.values
+  bare = prepare(spec(), {"proxies": PROXY_MACHINE["proxies"]}, caller={"HOME": "/fixture/home"}, proxy="other")
+  assert bare.values["HTTPS_PROXY"] == "http://fixture-other:9090"
+
+
+@pytest.mark.parametrize("machine,kwargs", [
+  (PROXY_MACHINE, {"unset": ("HTTP_PROXY",)}),
+  (PROXY_MACHINE, {"inherit": ("no_proxy",)}),
+  ({"environment": {"values": {"HTTPS_PROXY": "http://fixture-x:1"}}, "proxies": PROXY_MACHINE["proxies"]}, {"proxy": "fixture"}),
+])
+def test_proxy_selection_conflicts_with_explicit_channels(machine, kwargs):
+  with pytest.raises(ConfigError, match="environment-proxy-conflict"):
+    prepare(spec(), machine, caller={"HOME": "/fixture/home", "no_proxy": "x"}, **kwargs)
+
+
+def test_unknown_or_legacy_proxy_selection_fails():
+  with pytest.raises(ConfigError, match="environment-proxy-unknown"):
+    prepare(spec(), PROXY_MACHINE, caller={"HOME": "/fixture/home"}, proxy="missing")
+  with pytest.raises(ConfigError, match="environment-proxy-unknown"):
+    prepare(spec(), {"environment": {"proxy": "missing"}}, caller={"HOME": "/fixture/home"})
+  with pytest.raises(Conflict):
+    prepare(spec(policy="legacy"), PROXY_MACHINE, caller={}, proxy="fixture")
+
+
+def test_legacy_environment_applies_only_persistent_named_proxy(monkeypatch):
+  from agentcfg.process import environment
+  monkeypatch.setattr(os, "environ", dict(PROXY_CALLER))
+  assert not set(PROXY_CALLER) & set(environment({}))
+  legacy = prepare(spec(policy="legacy"), PROXY_MACHINE, caller={})
+  assert legacy.values["HTTPS_PROXY"] == "http://fixture-proxy:8080"
+  assert legacy.sources["HTTPS_PROXY"] == "machine-proxy"
+
+
+def test_capture_caller_keeps_proxy_names_for_diagnostics(monkeypatch):
+  monkeypatch.setattr(os, "environ", dict(PROXY_CALLER))
+  _, caller = capture_caller({})
+  for name, value in PROXY_CALLER.items():
+    assert caller[name] == value
 
 
 def test_one_shot_inherit_clears_persistent_tombstone():

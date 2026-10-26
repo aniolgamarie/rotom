@@ -174,20 +174,38 @@ Replace the address/model with verified service values and confirm adapter proto
 
 Ordinary sessions use a declared development environment. OMP and Pi preserve the caller's HOME/XDG; DSH preserves its native TUI HOME and forwards the development environment through its public subprocess provider and a separate stdio MCP exec configuration. Native account and session paths remain instance-owned. This is environment selection, not filesystem or credential isolation.
 
+Caller proxy variables are never inherited implicitly. Declare named proxies once in the local machine file and select one per session, avoiding repeated variable lists:
+
+```toml
+[machine.proxies.work]
+url = "http://proxy.example:8080"
+no_proxy = "localhost,127.0.0.1"
+
+[machine.proxies.office]
+url = "http://proxy-office.example.invalid:3128"
+
+# Optional persistent default; `run --proxy <name>` overrides it for one launch.
+[machine.environment]
+proxy = "work"
+```
+
+A selection injects `HTTP_PROXY`/`HTTPS_PROXY`/`http_proxy`/`https_proxy` from `url`, `ALL_PROXY`/`all_proxy` from `all_proxy` (defaulting to `url`), and `NO_PROXY`/`no_proxy` when `no_proxy` is set. URLs must be http/https without userinfo, query, or fragment; only an HTTP CONNECT proxy works and no host supports SOCKS. A selection conflicts with `inherit`/`values`/`unset` entries naming the same variables — adjust the profile instead. Pi reads these through its global undici proxy dispatcher, OMP through its own `PI_PROXY`-aware resolver plus the runtime fetch, and DSH through its startup dispatcher. Declare host-specific overrides such as OMP `PI_PROXY`/`PI_PROXY_<PROVIDER>` explicitly via values. Raw non-HTTP transports (Cursor subscription HTTP/2 model streams, Codex WebSocket) bypass environment proxies entirely; see the per-host notes.
+
 ```toml
 [machine.environment]
-inherit = ["CUSTOM_BUILD_ROOT", "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"]
+inherit = ["CUSTOM_BUILD_ROOT"]
 unset = ["VIRTUAL_ENV"]
 
 [machine.environment.values]
 BUILD_MODE = "debug"
 ```
 
-The precedence is caller defaults, machine inherit/values/editor, machine unset, then one-shot changes. An empty value is present; unset removes it. Machine inherit is optional when absent. A changed declaration requires `plan` and `apply`; inherited values are resolved anew on each run. Shell expansion and command substitution are not performed.
+The precedence is caller defaults, machine inherit/values/editor, machine unset, named proxy selection, then one-shot changes. An empty value is present; unset removes it. Machine inherit is optional when absent. A changed declaration requires `plan` and `apply`; inherited values are resolved anew on each run. Shell expansion and command substitution are not performed.
 
 ```sh
 ./agentcfg --machine workstation --profile dsh-default run --inherit-env CUSTOM_BUILD_ROOT
 ./agentcfg --machine workstation --profile pi-default run --unset-env VIRTUAL_ENV
+./agentcfg --machine workstation --profile omp-default run --proxy office
 ./agentcfg --machine workstation --profile omp-default doctor --environment
 ```
 

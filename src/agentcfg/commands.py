@@ -257,7 +257,8 @@ def cmd_run(args):
   Progress("run", args).stage("检查部署、依赖与启动条件", hint="doctor")
   w = workspace(args)
   code = runtime.run(w, cwd=args.cwd.absolute(), arguments=args.passthrough,
-    inherit_env=getattr(args, "inherit_env", ()), unset_env=getattr(args, "unset_env", ()))
+    inherit_env=getattr(args, "inherit_env", ()), unset_env=getattr(args, "unset_env", ()),
+    proxy=getattr(args, "proxy", None))
   if code:
     print(f"run: 原生进程已退出（退出码 {code}）", file=sys.stderr)
     print("检查离线状态：\n  " + command_line(args, "doctor"), file=sys.stderr)

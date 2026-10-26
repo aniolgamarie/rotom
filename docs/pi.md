@@ -228,6 +228,14 @@ retention and billing remain unverified. Disable stops subsequent loading while 
 cache and journal; cleanup belongs to their owner. This choice is shared by Base/Pro sources and
 does not enable Pro investigations.
 
+Bridge networking is proxy-capable without extra configuration: OAuth, usage and catalog requests
+use the global fetch covered by Pi's process-wide proxy dispatcher, and the HTTP/2 model stream
+builds its own HTTP CONNECT tunnel reading `PI_PROXY_CURSOR`, then `PI_PROXY`, then
+`HTTPS_PROXY`/`https_proxy` (first set wins; HTTP CONNECT only, no SOCKS, no `NO_PROXY`
+exemption, no `ALL_PROXY`). Nothing is inherited implicitly: select a named proxy (see
+[local-config](local-config.md)) for the standard variables, and declare
+`PI_PROXY_CURSOR`/`PI_PROXY` per-route overrides as machine environment values.
+
 The [managed browser Skill](../shared/skills/playwright-cli/SKILL.md) adds one guarded CLI entry to
 the current main run's PATH, with its own session and private cwd, HOME, XDG and browser cache.
 It refuses personal-browser attachment, persistent profiles, arbitrary configuration, session

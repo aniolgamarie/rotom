@@ -26,8 +26,13 @@
           "properties": {
             "inherit": {"type": "array", "items": {"$ref": "#/$defs/environment_name"}, "uniqueItems": true},
             "unset": {"type": "array", "items": {"$ref": "#/$defs/environment_name"}, "uniqueItems": true},
-            "values": {"type": "object", "propertyNames": {"$ref": "#/$defs/environment_name"}, "additionalProperties": {"type": "string"}}
+            "values": {"type": "object", "propertyNames": {"$ref": "#/$defs/environment_name"}, "additionalProperties": {"type": "string"}},
+            "proxy": {"$ref": "#/$defs/id"}
           }
+        },
+        "proxies": {
+          "type": "object", "propertyNames": {"$ref": "#/$defs/id"},
+          "additionalProperties": {"$ref": "#/$defs/proxy"}
         }
       }
     },
@@ -130,6 +135,14 @@
     "text": {"type": "string", "minLength": 1, "pattern": "^[^\\u0000]+(?![\\s\\S])"},
     "secret": {"type": "string", "pattern": "^secret:(?!\\.{1,2}$)[^/\\\\\\u0000-\\u001f\\u007f]+(?![\\s\\S])"},
     "environment_name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?![\\s\\S])"},
+    "proxy": {
+      "type": "object", "additionalProperties": false, "required": ["url"],
+      "properties": {
+        "url": {"$ref": "#/$defs/text"},
+        "all_proxy": {"$ref": "#/$defs/text"},
+        "no_proxy": {"$ref": "#/$defs/text"}
+      }
+    },
     "selection": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
     "provider": {
       "type": "object", "additionalProperties": false,

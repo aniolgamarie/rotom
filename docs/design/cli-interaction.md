@@ -43,7 +43,7 @@ Source references below refer to the baseline, not a future implementation.
 | Hidden model key/URL input, model status, presets, and model addition | [`commands.py`](../../src/agentcfg/commands.py), `cmd_model` | Do not replace working input flows or inspect native account stores. |
 | Human/JSON selection, selector-preserving suggestions, stderr progress | [`presentation.py`](../../src/agentcfg/presentation.py), `command_line`, `emit_result`; [`progress.py`](../../src/agentcfg/progress.py) | Reuse the agent-side behavior instead of redesigning output formats. |
 | Terminal-only ownership, explicit legacy migration, and recoverable writes | [`termcfg/cli.py`](../../src/termcfg/cli.py), `build_parser`, `main`; [terminal guide](../termcfg.md) | zsh/tmux only; mihomo appears only in retirement/migration explanations. |
-| Caller-environment controls and diagnostic provenance without values | [`agentcfg/cli.py`](../../src/agentcfg/cli.py), `run` and `doctor` options | Preserve `--inherit-env`, `--unset-env`, and `doctor --environment`. |
+| Caller-environment controls and diagnostic provenance without values | [`agentcfg/cli.py`](../../src/agentcfg/cli.py), `run` and `doctor` options | Preserve `--inherit-env`, `--unset-env`, `--proxy`, and `doctor --environment`. |
 | Plugin source declarations and optional Pi project integration | [`termcfg/cli.py`](../../src/termcfg/cli.py), `lock`; [`agentcfg/cli.py`](../../src/agentcfg/cli.py), `project` | Keep `--repo`/`--entry`; do not advertise OpenSpec installation for DSH. |
 
 The maintained [getting-started guide](../getting-started.md) already explains the

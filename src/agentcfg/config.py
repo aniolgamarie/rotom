@@ -287,6 +287,35 @@ def _path(value: str, location: tuple[str, ...]) -> str:
   return result
 
 
+def validate_proxy_settings(machine):
+  """命名代理：仅 http/https、无 userinfo/query/fragment；选择必须与显式环境通道不冲突。"""
+  from .execution_environment import PROXY_NAMES
+  proxies = machine.get("proxies", {})
+  for name, profile in proxies.items():
+    for field_name in ("url", "all_proxy"):
+      value = profile.get(field_name)
+      if value is None:
+        continue
+      location = ("machine", "proxies", name, field_name)
+      try:
+        parsed = urlsplit(value)
+      except ValueError:
+        raise ConfigError("proxy", location) from None
+      if (parsed.scheme not in ("http", "https") or not parsed.hostname
+          or parsed.username is not None or parsed.password is not None
+          or parsed.query or parsed.fragment or parsed.path not in ("", "/")):
+        raise ConfigError("proxy", location)
+  settings = machine.get("environment", {})
+  selected = settings.get("proxy")
+  if selected is None:
+    return
+  if selected not in proxies:
+    raise ConfigError("environment-proxy-unknown", ("machine", "environment", "proxy"))
+  declared = set(settings.get("inherit", [])) | set(settings.get("values", {})) | set(settings.get("unset", []))
+  if declared & set(PROXY_NAMES):
+    raise ConfigError("environment-proxy-conflict", ("machine", "environment", "proxy"))
+
+
 def validate_environment_settings(environment, credential_targets=frozenset(), *, reserved_environment=frozenset()):
   from .execution_environment import CONTROL_NAMES
   reserved = _RESERVED_ENVIRONMENT | credential_targets | reserved_environment | CONTROL_NAMES
@@ -325,6 +354,7 @@ def _machine_layers(machine: dict, credential_targets: set[str], *, reserved_env
     elif not re.fullmatch(r"[\w.+-]+", editor) or editor in (".", ".."):
       raise ConfigError("editor", ("machine", "editor"))
   validate_environment_settings(local.get("environment", {}), credential_targets, reserved_environment=reserved_environment)
+  validate_proxy_settings(local)
   return defaults, local
 
 
