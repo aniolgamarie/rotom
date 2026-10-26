@@ -9,6 +9,7 @@
 - [完整 setup 预览绑定](#69-真实-setup-预览绑定)。
 - [实际维护预览与批准连接](#70-实际维护预览与独立批准连接)。
 - [原门禁中的维护执行与结果记账](#71-原门禁中的维护执行与结果记账)。
+- [目标部署绑定与只读现场观察](#72-目标部署绑定与只读现场观察)。
 
 各节记录当时基线、验证和限制；历史通过不自动转记为新候选验证，内部前置也不等于完整维护 runner 已开放。
 
@@ -2085,3 +2086,39 @@ executor（gpt-6.1-sol / medium）负责参数传递及测试，主代理负责�
 scout（gpt-6-luna / high）审查稳定差异。原 executor 在真实成功路径通过后遇模型容量错误；替换 executor
 承接已有 fixture 完成故障测试，未将容量失败记作通过。文档同时修正 plan/quickstart 中已过期的“尚未合入 main”状态，
 历史各阶段证据仍保留，不扩大当前完成任务数。
+
+
+## 72. 目标部署绑定与只读现场观察
+
+第 71 节以 `45f575b` 快进合入 main，整合后执行/参数传递 68 passed，35.09s、退出 0，三个入口检查通过。
+本节从该 main 建立独立工作树，补齐首次副作用前的目标契约绑定和只读现场观察。任务仍为 86/117；
+未开放完整维护 CLI、持久结果对账、journal 恢复、批量恢复、原 pane 或自动继续。
+
+旧 setup_plan_digest 和结果摘要不足以单独核实部署后的目标。新增 target_deployment_digest 对完整
+Plan.current 加版本封套后规范摘要，覆盖未知嵌套字段；不读文件或秘密、不输出预像。首次同步前已重读完整
+计划和现场，消费原 BatchPermit 后在同一 running 事务保存目标摘要；不改变被消费许可所绑定的原批次。
+schema 仅在 dispatched/confirmed/unknown 且存在计划摘要时接受此字段。历史缺字段保留可读，不推断或回填。
+
+apply 正常返回后、原实例 EX/状态 EX/包 SH 仍持有时，先短核验完整 released owner/receipt、原实例/HOME/包
+命名身份、共享引用和 CAS，再检查命名状态锁、pending 缺失、实际 current 摘要与受保护投影；最后再检查
+状态锁与完整释放事实，才可记录成功。独立审查发现首版只重核状态锁，会漏掉实例锁被替换；新增读取前后
+各五种身份/metadata 竞态先全部复现失败，再补上述两次完整复核。内容读取期间不持 Domain/owner 锁。
+
+内部 observe_setup 只接受本次明确 local/profile 的同 scope 完整批次和精确 revision。缺目标摘要直接报告
+target-unavailable，不打开历史物理路径；有目标时取得原实例/状态/包 EX，在内容读取前后短核验批次和全部
+资源/owner。pending 只报告 journal-pending，不解析或恢复；其它现场报告 target-matches、target-differs 或
+unconfirmed。匹配只证明观察时的 current 与受保护投影，不证明完整官方运行包或历史执行成功。
+即使维护结果仍 running/partial/unknown，也不会改写结果、解除意图、签发许可或自动重试。
+
+| 验证 | 实际结果 | 证据边界 |
+| --- | --- | --- |
+| 初版目标绑定与既有六套 | 489 passed，54.83s、退出 0 | 对应审查补强前源码；后续 helper/schema/codec 未改，不能称最终 execution 也跑了此完整组合 |
+| 审查补强的新增竞态 RED | 10 failed | 旧实现对实例/包/HOME 替换及 owner/resource 变化未拒绝；读取前后各五例 |
+| 最终目标绑定与执行 | 83 passed，66.02s、退出 0 | 52 个目标用例及 31 个既有执行用例，源摘要稳定 |
+| 只读观察首轮 | 35 passed、2 failed | 一项测试引用不存在的 Tree.mkdir，另一项误将无 manifest 的 target-differs 期待为 unconfirmed；修正测试，生产不变 |
+| 最终只读观察 | 37 passed，51.48s、退出 0 | 真实临时物理锁/协调/owner；覆盖无写入、结果不升级、pending、共享 unknown、锁竞争与读取中变化 |
+
+各组有重叠，不相加为全库结果。全部使用隔离 HOME、合成配置/载荷和网络/宿主阻断，没有原生宿主或模型调用。
+executor（gpt-6.1-sol / medium）负责目标绑定和故障验证，scout（gpt-6-luna / high）独立审阅并发现身份复核缺口，
+主代理裁决锁/事务顺序、实现只读观察并完成验收；修复后稳定审查无阻断问题。原失败、实际 argv、源摘要和
+最终提交/整合核验保留在私人任务记录，不将内部接缝写成完整维护已开放。

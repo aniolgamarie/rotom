@@ -287,7 +287,21 @@ observe 前拒绝；全部已记录时也检查原绝对 deadline，到期或时
 同步后明确非零结果保留原 code，保守记 partial；已明确进入 running 后的业务异常记 unknown，并原样抛出。
 partial/unknown 与原 intent.phase=unknown 同笔更新，所有原资源/预留/owner 保留。结果记账失败不掩盖
 原业务异常。若首次消费后的提交响应不明，没有可信新 CAS，保留可能的 dispatch_intent/running 和已消费许可，
-给固定提示，不读回升级、不再写 unknown 或重试同步。完成响应丢失也不重跑；崩溃后的只读对账及恢复仍待实现。
+给固定提示，不读回升级、不再写 unknown 或重试同步。完成响应丢失也不重跑。
+
+`maintenance_dispatch.target_deployment_digest` 可选且为严格 SHA-256，只能与 setup_plan_digest 一起出现在
+dispatched/confirmed/unknown；旧记录缺字段继续可读，不回填。新执行在首次同步前，从当时完整复核的
+Plan.current 计算含版本封套的摘要，在消费原许可后与 running 同事务保存。它绑定目标部署契约，
+不是批准、执行成功证明或可重放凭证。apply 正常返回后仍持原物理锁，先核验全部释放事实，再核对
+命名状态锁、无 pending、实际 current 摘要及受保护投影，随后再次核对状态锁和全部释放事实，才可记录成功。
+
+内部 `observe_setup` 返回 `SetupObservation(batch, target_state, resources_checked, pending_journal, reason)`，
+只按本次明确 local/profile 解析同 scope 工作区，不渲染候选或按历史路径打开其它实例。缺目标摘要报告
+target-unavailable；有摘要时持原实例/状态/包 EX，在内容读取前后短核对完整批次 CAS、owner/receipt 和共享引用。
+pending 存在只报告 journal-pending；无 pending 时核对 current 及受保护投影，报告 target-matches/target-differs；
+现场无法确认报告 unconfirmed。结果返回前释放锁；匹配只描述当时部署契约和受保护投影，不证明整个运行包、
+历史执行成功或恢复安全，不改结果/意图、不清 unknown、不发行许可、不重试或恢复 journal。
+历史未知结果的持久对账、journal 恢复、批量恢复及 CLI 接线仍待实现。
 
 新预留增加 `generation`，取其成功提交后的域 revision；可信调用方可以用 `expected_revision`
 在同一短锁中拒绝过期快照。域 revision 是整个域的保守代际，任何协调写入均推进它；

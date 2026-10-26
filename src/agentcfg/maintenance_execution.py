@@ -9,10 +9,10 @@ import threading
 from types import SimpleNamespace
 
 from . import commands, maintenance, maintenance_dispatch, maintenance_permit, maintenance_progress
-from . import maintenance_release, maintenance_setup
+from . import deployment, maintenance_release, maintenance_setup, runtime
 from .maintenance_deployment import check_stop_deployment
-from .omp_lifecycle import _shared_file
-from .setup_preview import setup_plan_digest, _strict_json
+from .omp_lifecycle import _same_file, _shared_file
+from .setup_preview import setup_deployment_digest, setup_plan_digest, _strict_json
 from .storage import Conflict, Tree
 from .deployment import json_bytes
 
@@ -126,12 +126,13 @@ class _Execution:
     return self._plan(current, lock, candidate, commands.current_plan(current, lock, candidate))
 
   def _physical(self, domain, workspace, leases):
-    self._current_plan(workspace)
+    _, _, _, plan = self._current_plan(workspace)
     with domain._transaction() as state:
       saved, batch = self._load(domain, state)
     for run in batch["accepted_runs"]:
       check_stop_deployment(workspace, saved["acceptance"]["records"][run],
         instance_fd=leases[run]["instance_fd"], state_fd=leases[run]["state_fd"])
+    return setup_deployment_digest(plan.current)
 
   def begin_sync(self, domain, workspace, identity, *, instance_fd, state_fd, native_home_fd, package_fd):
     self.check_runtime(workspace, identity, stage="sync")
@@ -145,7 +146,7 @@ class _Execution:
       "runtime_fds": {runtime_ids[0]: package_fd}}
     leases = {run: lease for run in batch["accepted_runs"]}
     workspaces = {run: workspace for run in batch["accepted_runs"]}
-    self._physical(domain, workspace, leases)
+    target_digest = self._physical(domain, workspace, leases)
     # 原物理门禁内单次消费；owner NB 持续覆盖协调提交，不持协调锁执行同步。
     with ExitStack() as owners, domain._transaction(write=True) as state:
       saved, batch = self._load(domain, state)
@@ -155,6 +156,7 @@ class _Execution:
       batch["revision"] += 1
       batch["phase"] = "maintenance_running"
       batch["maintenance_dispatch"]["state"] = "dispatched"
+      batch["maintenance_dispatch"]["target_deployment_digest"] = target_digest
       normalized = maintenance.decode_batch(maintenance.encode_batch(batch))
       state["intents"][batch["batch_id"]]["progress"] = normalized
     self._batch, self._canonical = normalized, maintenance.encode_batch(normalized)
@@ -197,6 +199,24 @@ class _Execution:
       # 包 SH 与原实例/状态 EX 覆盖原 recover/prepare/transact；不重新获取已持 EX。
       self._stage = "apply_running"
       yield
+      try:
+        with ExitStack() as owners, self._domain._transaction() as state:
+          saved, batch = self._load(self._domain, state)
+          maintenance_release._hold_released(self._domain, state, saved, batch, workspaces, leases, owners)
+        with Tree(workspace.state_root) as state, Tree(workspace.instance) as target:
+          _same_file(state, "instance.lock", state_fd)
+          if state.read("pending.json") is not None:
+            raise Conflict(_ERROR)
+          current = deployment.read_state(state)["current"]
+          if setup_deployment_digest(current) != batch["maintenance_dispatch"]["target_deployment_digest"]:
+            raise Conflict(_ERROR)
+          runtime.check_deployed_resources(current, target)
+          _same_file(state, "instance.lock", state_fd)
+        with ExitStack() as owners, self._domain._transaction() as state:
+          saved, batch = self._load(self._domain, state)
+          maintenance_release._hold_released(self._domain, state, saved, batch, workspaces, leases, owners)
+      except Exception:
+        raise Conflict(_ERROR) from None
       self._stage = "apply_done"
 
   def finish(self, outcome):

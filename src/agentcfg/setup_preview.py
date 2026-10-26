@@ -19,6 +19,17 @@ def _strict_json(value):
     raise ValueError
 
 
+def setup_deployment_digest(current):
+  """只绑定完整内存部署契约；不读取文件，也不代表授权或当前现场证明。"""
+  try:
+    if type(current) is not dict:
+      raise ValueError
+    _strict_json(current)
+    return hashlib.sha256(json_bytes({"version": 1, "current": current})).hexdigest()
+  except Exception:
+    raise Conflict("setup 目标部署无法生成摘要；请重新运行 setup。") from None
+
+
 def setup_plan_digest(workspace, lock, candidate, plan):
   """摘要包含真实目标与完整部署计划；不读取文件、解析秘密或输出预像。"""
   try:

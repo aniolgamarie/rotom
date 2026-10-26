@@ -568,6 +568,9 @@
         },
         "setup_plan_digest": {
           "$ref": "#/$defs/sha"
+        },
+        "target_deployment_digest": {
+          "$ref": "#/$defs/sha"
         }
       },
       "required": [

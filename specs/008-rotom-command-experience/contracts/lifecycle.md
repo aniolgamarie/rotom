@@ -265,7 +265,19 @@ BatchPermit 是由已接受批次派生的有限内存凭证，绑定 batch/revi
 原结果与退出码返回，批次只保存规范结果摘要；同步后非零结果记 partial，明确 running 后业务异常记 unknown
 且原样传播。partial/unknown 同事务将原 intent 阶段置 unknown，保留资源和 owner；记账失败不掩盖原异常。
 首次消费后提交响应不明时，保留可能的 dispatch_intent/running 与已消费许可，提示核验而不读回升级或二次写入；
-完成响应丢失不重跑。这里只接受 manual 恢复；完整 CLI、崩溃后的 journal/事实对账和恢复仍待完成，不代表 T074/T075 全部完成。
+完成响应丢失不重跑。这里只接受 manual 恢复；完整 CLI、历史未知结果的持久对账和恢复仍待完成，不代表 T074/T075 全部完成。
+
+首次同步前已完整复核的 Plan.current 以版本封套摘要绑定为 target_deployment_digest；消费原许可后，
+与 running 在同一事务保存，不能用新字段改变被消费许可绑定的原批次。旧记录缺字段继续只读，
+不会据当前配置回填。apply 返回后仍在原实例/状态/包物理锁内，内容检查前后分别短核验全部 released
+owner/receipt、命名资源与共享引用；其间核对状态锁、无 pending、实际 current 摘要和受保护投影。
+任一失败不能记成功，原 unknown/响应不明规则保持。
+
+只读 observe_setup 要求显式同 scope 的 local/profile 与精确 batch revision。保存目标缺失时报告不可核验，
+否则取得原物理 EX，读内容前后核验批次、资源和全部 owner，不持元数据锁读取部署内容。
+pending journal 只报告存在，不解析/修复；current 与受保护投影匹配也只报告当时现场匹配，不将 running/partial/unknown
+改成成功，不清意图/预留或签发恢复许可。竞争、损坏或身份变化报告 unconfirmed；控制中断和原配置错误原样传播。
+该观察不验证完整官方运行包，也不证明历史 dispatch 是否执行；后续持久对账与恢复必须独立处理。
 
 普通 setup 在展示/批准回调前冻结真实计划摘要，同步后从重新准备的工作区与计划复算。
 摘要包括完整 current/changes/drift/conflicts、目标 binding 和实例/状态/缓存根、锁与候选身份；
