@@ -52,7 +52,7 @@ def record_setup_dispatch(domain, batch_id, *, expected_revision, workspaces, re
   """单次持久提交后才发行许可；失败不读回重签、不清保护或重放。
 
   setup_plan_digest 必须由可信调用方从实际 setup 预览计算。当前为内部接缝，
-  尚未连接实际预览或业务 guard；JSON/历史批次不能重建本进程的批准和许可。
+  maintenance_setup 已连接实际预览；业务 guard 尚未准入，JSON/历史批次不能重建批准和许可。
   """
   try:
     if type(workspaces) is not dict or type(review) is not maintenance_permit.SetupReview:

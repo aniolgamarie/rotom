@@ -269,7 +269,12 @@ observe 前拒绝；全部已记录时也检查原绝对 deadline，到期或时
 只有协调事务明确成功退出后才发行绑定提交后完整批次的进程内 BatchPermit。提交响应丢失时不发行，
 许可发行失败时也不重写派发意图；重新审阅旧快照不能越过已有 dispatch phase。所有物理和 owner 锁
 在返回前释放，意图、预留及原 owner 保留；普通启动/写入仍被原 guard 阻断。当前只接收 manual 恢复路径，
-真实 setup 预览已有共用私有摘要：绑定完整 Plan、工作区目标、锁和候选身份，并在普通 setup 的 sync 前后比较。维护批准与该预览、原首个副作用 guard 消费及后续步骤仍待接线；此接缝不执行 setup 或恢复。
+真实 setup 预览已有共用私有摘要：绑定完整 Plan、工作区目标、锁和候选身份，并在普通 setup 的 sync 前后比较。
+`review_and_dispatch_setup` 复用只读 prepared/current_plan，核对 Linux OMP 同一显式 local/profile 的全部 run，
+原资源 key/ID、owner 引用、实例/HOME、runtime identity 和缓存路径均与当前 workspace 一致才展示脱敏预览。
+批准在锁外接受明确 True，取消/回调异常及普通准备错误保持原契约；完整摘要冻结于回调前，随后只调用一次
+原派发事务。新包/新缓存、多 profile 或无法匹配完整批次均拒绝，不按历史路径打开其它工作区。
+原首个副作用 guard 消费及后续步骤仍待接线；此接缝不执行 setup、sync、apply 或恢复，也不消费 BatchPermit。
 
 新预留增加 `generation`，取其成功提交后的域 revision；可信调用方可以用 `expected_revision`
 在同一短锁中拒绝过期快照。域 revision 是整个域的保守代际，任何协调写入均推进它；

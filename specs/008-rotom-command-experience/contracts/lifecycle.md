@@ -250,8 +250,12 @@ BatchPermit 是由已接受批次派生的有限内存凭证，绑定 batch/revi
 原意图 generation 与 setup 计划摘要；重新取得原物理 EX、核验原部署及全部相关 owner/receipt 后，
 在 Domain → owner NB 顺序下消费审阅并提交派发意图。新维护派发在原批次内保存严格
 `setup_plan_digest`；旧无摘要派发只读兼容，不能恢复内存批准。BatchPermit 仅在持久事务明确返回后发行，
-响应丢失不读回重签，重新批准旧快照不重放已派发批次。返回后锁已关闭；真实 setup 预览已有共用私有摘要并用于普通核心的同步后复核，但它与维护批准、首次副作用 guard、
-后续操作及结果对账尚未接线，普通 guard 继续拒绝活动意图。该内部原语不代表 T074/T075 全部完成。
+响应丢失不读回重签，重新批准旧快照不重放已派发批次。返回后锁已关闭；真实 setup 预览与独立维护批准
+已由内部 review_and_dispatch_setup 连接：复用普通 prepared/current_plan，冻结完整摘要与脱敏预览，
+只接受 Linux OMP 同一显式 local/profile、原实例/HOME/缓存/运行包以及完整批次，不隐式选择子集或登记新资源。
+回调不持物理/Domain/owner 锁，必须明确 True；普通准备错误、取消和批准异常保持原契约，批准后由原派发事务
+重核部署、owner 与 CAS。首次副作用 guard、后续操作及结果对账尚未接线，普通 guard 继续拒绝活动意图。
+此内部接缝不执行 setup 或消费 BatchPermit，不代表 T074/T075 全部完成。
 
 普通 setup 在展示/批准回调前冻结真实计划摘要，同步后从重新准备的工作区与计划复算。
 摘要包括完整 current/changes/drift/conflicts、目标 binding 和实例/状态/缓存根、锁与候选身份；
