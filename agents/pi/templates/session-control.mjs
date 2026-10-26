@@ -1,5 +1,6 @@
 /** Pi 公开扩展事件桥；会话租约和持久归属只由受信 Python helper 核验。 */
 import { spawn as nativeSpawn } from "node:child_process";
+import { writeSync } from "node:fs";
 import path from "node:path";
 
 const LIMIT = 16384;
@@ -154,11 +155,30 @@ export function createBridge(context, {
 export default function sessionControl(pi, options = {}) {
   const environment = options.environment ?? process.env;
   let bridge, current, stopped = false;
+  const exit = options.exit ?? (code => process.exit(code));
+  const terminate = () => {
+    try { writeSync(2, NOTICE + "\n"); } catch {}
+    exit(4);
+  };
   const stop = () => {
     if (stopped) return;
     stopped = true;
-    try { current?.ui.notify(NOTICE, "error"); } catch {}
-    try { current?.shutdown(); } catch {}
+    try { bridge?.close(); } catch {}
+    try { current?.abort()?.catch(() => {}); } catch {}
+    if (current?.mode === "tui") {
+      // 锁定官方版本同步调用公开 custom 工厂；公开 TUI.stop 恢复终端。
+      // 不等待异步 shutdown，以免清理期间继续处理提示词或扩展消息。
+      let entered = false;
+      try {
+        current.ui.custom(tui => {
+          entered = true;
+          try { tui.stop(); } finally { terminate(); }
+          return { render: () => [], invalidate() {} };
+        }).catch(() => {});
+      } catch {}
+      if (entered) return;
+    }
+    terminate();
   };
   pi.on("session_start", async (_event, ctx) => {
     current = ctx;

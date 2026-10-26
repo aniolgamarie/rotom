@@ -67,10 +67,21 @@ function host(options = {}) {
   state.events = new Map();
   state.notices = [];
   state.shutdowns = 0;
+  state.exits = [];
+  state.failureOrder = [];
   state.managerReads = [];
   state.current = { session: SESSION, file: "/synthetic/session.jsonl", cwd: "/synthetic/project" };
   state.ctx = {
-    ui: { notify: (...args) => state.notices.push(args) },
+    mode: "tui",
+    hasUI: true,
+    ui: {
+      notify: (...args) => state.notices.push(args),
+      custom: factory => {
+        state.failureOrder.push("custom");
+        return Promise.resolve(factory({ stop: () => { state.failureOrder.push("stop"); } }));
+      },
+    },
+    abort: () => { state.failureOrder.push("abort"); return Promise.resolve(); },
     shutdown: () => { state.shutdowns += 1; },
     sessionManager: {
       getSessionId: () => { state.managerReads.push("id"); return state.current.session; },
@@ -78,7 +89,10 @@ function host(options = {}) {
       getCwd: () => { state.managerReads.push("cwd"); return state.current.cwd; },
     },
   };
-  sessionControl({ on: (name, handler) => { assert.equal(state.events.has(name), false); state.events.set(name, handler); } }, state.options);
+  sessionControl({ on: (name, handler) => { assert.equal(state.events.has(name), false); state.events.set(name, handler); } }, {
+    ...state.options,
+    exit: code => { state.failureOrder.push("exit"); state.exits.push(code); },
+  });
   state.event = (name, value = {}) => state.events.get(name)({ type: name, ...value }, state.ctx);
   state.start = async () => {
     const started = state.event("session_start", { reason: "startup" });
@@ -87,6 +101,13 @@ function host(options = {}) {
     await started;
   };
   return state;
+}
+
+function terminated(state) {
+  assert.deepEqual(state.exits, [4]);
+  assert.deepEqual(state.failureOrder, ["abort", "custom", "stop", "exit"]);
+  assert.equal(state.shutdowns, 0);
+  assert.deepEqual(state.notices, []);
 }
 
 test("helper argv, minimal environment, shell=false and inherited lease fd mapping are exact", async () => {
@@ -122,6 +143,7 @@ test("initial claim waits for helper and only projects public session metadata",
   await started;
   assert.equal(interactive, true);
   assert.equal(state.shutdowns, 0);
+  assert.deepEqual(state.exits, []);
   await state.event("session_shutdown", { reason: "quit" });
 });
 
@@ -168,7 +190,7 @@ test("new and fork ping before allowing, and new unsaved session claims a null f
 });
 
 for (const operation of ["claim", "resume", "new", "fork"]) {
-  test(operation + " denial cancels or shuts down with one fixed private-safe notice", async () => {
+  test(operation + " denial cancels and synchronously stops the TUI before exiting once", async () => {
     const state = host();
     if (operation !== "claim") await state.start();
     const request = operation === "claim" ? state.event("session_start")
@@ -177,14 +199,12 @@ for (const operation of ["claim", "resume", "new", "fork"]) {
     await tick();
     state.reply(undefined, false);
     assert.deepEqual(await request, operation === "claim" ? undefined : { cancel: true });
-    assert.equal(state.shutdowns, 1);
-    assert.equal(state.notices.length, 1);
-    assert.equal(state.notices[0][1], "error");
+    terminated(state);
     const count = state.requests.length;
     assert.deepEqual(await state.event("session_before_switch", { reason: "new" }), { cancel: true });
     assert.equal(state.requests.length, count);
     assert.equal(state.spawns.length, 1);
-    assert.equal(state.shutdowns, 1);
+    terminated(state);
   });
 }
 
@@ -278,16 +298,14 @@ test("unsolicited output is refused before any request", async () => {
 });
 
 for (const event of ["exit", "close", "error", "stdout-end", "stdout-error", "stdin-error"]) {
-  test(event + " helper failure shuts down the public host context once", async () => {
+  test(event + " helper failure stops the TUI before exiting once", async () => {
     const state = host({ autoExit: false });
     await state.start();
     if (event === "stdout-end") state.child.stdout.emit("end");
     else if (event === "stdout-error") state.child.stdout.emit("error", Error("synthetic-private-error"));
     else if (event === "stdin-error") state.child.stdin.emit("error", Error("synthetic-private-error"));
     else state.child.emit(event, event === "error" ? Error("synthetic-private-error") : 1);
-    assert.equal(state.shutdowns, 1);
-    assert.equal(state.notices.length, 1);
-    assert.equal(JSON.stringify(state.notices).includes("private"), false);
+    terminated(state);
     assert.deepEqual(await state.event("session_before_fork"), { cancel: true });
     assert.equal(state.spawns.length, 1);
   });
@@ -334,6 +352,8 @@ test("normal public session_shutdown closes helper without a failure notice", as
   await state.event("session_shutdown", { reason: "quit" });
   assert.equal(state.ended, 1);
   assert.equal(state.shutdowns, 0);
+  assert.deepEqual(state.exits, []);
+  assert.deepEqual(state.failureOrder, []);
   assert.deepEqual(state.notices, []);
   assert.equal(state.timers.size, 0);
 });
@@ -341,17 +361,14 @@ test("normal public session_shutdown closes helper without a failure notice", as
 test("spawn failure and invalid configuration never expose environment or error body", async () => {
   const state = host({ spawnError: true });
   await state.event("session_start");
-  assert.equal(state.shutdowns, 1);
-  assert.equal(state.notices.length, 1);
-  assert.equal(JSON.stringify(state.notices).includes("private"), false);
+  terminated(state);
   await state.event("session_start");
   assert.equal(state.spawns.length, 1);
   const invalid = host();
   invalid.environment.ROTOM_PI_CONTROL_CONTEXT = "{synthetic-private-config}";
   await invalid.event("session_start");
   assert.equal(invalid.spawns.length, 0);
-  assert.equal(invalid.shutdowns, 1);
-  assert.deepEqual(invalid.notices, state.notices);
+  terminated(invalid);
 });
 
 for (const [name, change] of [
@@ -388,9 +405,7 @@ test("repeated child errors remain handled without printing exception bodies", a
   await state.start();
   state.child.emit("error", Error("synthetic-private-first"));
   state.child.emit("error", Error("synthetic-private-second"));
-  assert.equal(state.shutdowns, 1);
-  assert.equal(state.notices.length, 1);
-  assert.equal(JSON.stringify(state.notices).includes("private"), false);
+  terminated(state);
 });
 
 test("stdin write exception rejects the active and queued requests once", async () => {

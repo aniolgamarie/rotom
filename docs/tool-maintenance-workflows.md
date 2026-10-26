@@ -1,6 +1,6 @@
 # 按工具执行停止、更新与恢复
 
-状态：候选已提交；分支复审发现未解决的 Pi 打印模式保护问题，当前不满足合入条件，见[分支复审](../specs/008-rotom-command-experience/branch-review.md)。此前分组验证保留为阶段证据。基线 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main；合入须人工批准。本文说明候选接口，不能据此将日常入口切到候选工作树。
+状态：候选留在任务分支；复审发现的 Pi 保护失败阻断已修复，官方分项与受影响回归通过，见[分支复审](../specs/008-rotom-command-experience/branch-review.md)。此前分组验证保留为阶段证据，完整官方 CLI 维护链路等未验证范围仍单列。基线 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main；合入须人工批准。本文说明候选接口，不能据此将日常入口切到候选工作树。
 
 ## 分阶段操作
 
@@ -50,7 +50,7 @@ Pi 的辅助 guard 观察只产生有来源的历史会话线索，不读会话�
 | 工具 | 完整 runtime identity | observer identity |
 | --- | --- | --- |
 | DSH | `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` | `none` |
-| Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `1c2986e858b6f905b17f3af4cfe349ca4fdbd56b08df311fb2d984cfc309b430`（三来源控制锁） |
+| Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `e286d053f59613d94c8be14d89f3def12dafdc67ef54a9746d7d2229ce362d9a`（三来源控制锁） |
 | OMP | `490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab` | `none` |
 
 ## 错误、取消与历史批次
@@ -72,10 +72,12 @@ Pi 的辅助 guard 观察只产生有来源的历史会话线索，不读会话�
 
 ## 验收记录与剩余工作
 
-以下是分别执行、有重叠的范围证据，不相加，也不称为 full suite：tool workflow 162 passed；停止稳定组 165 passed；CLI 最终组 180 passed/4 skipped（较广阶段组 3451 passed/4 skipped）；Pi 观察组 250 passed；恢复组 21 passed。失败历史保留。UTF-8 header 最终组 78 passed；Pi 扩展 Node 最终组 43 passed。最终 workflow/resume/runtime/CLI 组为 353 passed / 4 skipped，旧 CLI/footer 组 99 passed，命令历史组 116 passed；最终集合对账为 13,561 passed / 12 skipped，未解决失败和未覆盖均为 0；分组覆盖与原失败复验见独立验收记录，main 合入另需人工批准。
+最新复审修正已通过 71 条 Node 测试、391 passed / 4 skipped 的受影响 Python 组，以及 11 项官方 Pi 分项。真实 helper 的 TUI 启动拒绝和运行中失联均退出 4，并恢复 PTY 终端属性。完整官方 CLI 维护链路仍未验证；当前来源、失败阻断与剩余边界见[分支复审](../specs/008-rotom-command-experience/branch-review.md)。
 
-原生检查均使用授权隔离环境、未经修改的官方宿主和合成会话，无网络/模型请求：Pi 1.3.0 已验证精确 ID/缺失目标行为、公开扩展初次 claim/重复租约拒绝/`switch_session`、原 pidfd SIGTERM（143）；OMP 18.12.6 已验证精确路径/缺失拒绝、同 ID 写入分叉、原 pidfd SIGTERM（三个进程均 143）及释放后恢复原 ID 写入。官方 TUI/PTY 补验分别观察到请求的精确 ID、原 cwd、零终端输入和 raw mode；原 pidfd SIGTERM 后 Pi 返回 0、OMP 返回 143，两者终端属性均恢复。生产 Pi guard 的原生验证采用 RPC，TTY 采用只读公开观察扩展，不能合称一次真实全 CLI 维护链路。DSH 沿用原 main 验收证据。本轮默认 pytest 不启动官方宿主，不读取真实账号或会话。
+以下是提交 `2cda58d` 阶段分别执行、有重叠的范围证据，不相加：tool workflow 162 passed；停止稳定组 165 passed；CLI 最终组 180 passed/4 skipped（较广阶段组 3451 passed/4 skipped）；Pi 观察组 250 passed；恢复组 21 passed。失败历史保留。UTF-8 header 最终组 78 passed；Pi 扩展 Node 最终组 43 passed。最终 workflow/resume/runtime/CLI 组为 353 passed / 4 skipped，旧 CLI/footer 组 99 passed，命令历史组 116 passed；最终集合对账为 13,561 passed / 12 skipped，未解决失败和未覆盖均为 0；分组覆盖与原失败复验见独立验收记录，main 合入另需人工批准。
 
-本轮具体来源、原生 argv 模板、失败历史与范围见[验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。
+提交 `2cda58d` 阶段的原生检查均使用授权隔离环境、未经修改的官方宿主和合成会话，无网络/模型请求：Pi 1.3.0 已验证精确 ID/缺失目标行为、公开扩展初次 claim/重复租约拒绝/`switch_session`、原 pidfd SIGTERM（143）；OMP 18.12.6 已验证精确路径/缺失拒绝、同 ID 写入分叉、原 pidfd SIGTERM（三个进程均 143）及释放后恢复原 ID 写入。官方 TUI/PTY 补验分别观察到请求的精确 ID、原 cwd、零终端输入和 raw mode；原 pidfd SIGTERM 后 Pi 返回 0、OMP 返回 143，两者终端属性均恢复。生产 Pi guard 的原生验证采用 RPC，TTY 采用只读公开观察扩展，不能合称一次真实全 CLI 维护链路。DSH 沿用原 main 验收证据。本轮默认 pytest 不启动官方宿主，不读取真实账号或会话。
+
+各阶段具体来源、原生 argv 模板、失败历史与范围见[验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。
 
 方案与规划见[按工具方案](../specs/008-rotom-command-experience/tool-workflows.md)、[任务清单](../specs/008-rotom-command-experience/tasks.md)；详细历史分别见[会话能力](rotom-session-capabilities.md)和[停止能力](rotom-stop-capabilities.md)。
