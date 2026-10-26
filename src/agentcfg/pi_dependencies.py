@@ -20,7 +20,7 @@ from .deployment import json_bytes
 from .merge import merge_layers
 from .pi_modules import MODULES, PLUGINS, SUPPORTS, selected_modules, selected_supports
 from .paths import PathError, relative_path, safe_id
-from .process import DependencyError, checked, environment
+from .process import DependencyError, checked, environment, npm_proxy_config
 from .schema import ConfigError
 from .storage import Conflict, Tree, ensure_private, instance_lock
 from .toolchain import ensure_exact_toolchain, ensure_minimum_toolchain
@@ -506,7 +506,7 @@ def validate_installed_packages(root, resolution, audits):
     raise ConfigError("pi-installed-packages-invalid") from None
 
 
-def npm_environment(home):
+def npm_environment(home, *, proxy=None):
   home = Path(home)
   ensure_private(home)
   with Tree(home) as tree:
@@ -516,6 +516,7 @@ def npm_environment(home):
   result.update(npm_config_registry="https://registry.npmjs.org/", npm_config_userconfig=str(home / "user.npmrc"),
     npm_config_globalconfig=str(home / "global.npmrc"), npm_config_cache=str(home / "npm-cache"),
     npm_config_ignore_scripts="true", npm_config_audit="false", npm_config_fund="false", npm_config_update_notifier="false")
+  result.update(npm_proxy_config(proxy))
   return result
 
 
@@ -622,10 +623,11 @@ class PiBackend:
   def toolchain(self, lock):
     return dict(lock.metadata["toolchains"])
 
-  def resolve_lock(self, repository):
-    return self._resolve_lock(Path(repository), {})
+  def resolve_lock(self, repository, *, proxy=None):
+    kwargs = {} if proxy is None else {"proxy": proxy}
+    return self._resolve_lock(Path(repository), {}, **kwargs)
 
-  def resolve_lock_for(self, workspace):
+  def resolve_lock_for(self, workspace, *, proxy=None):
     if workspace.profile not in PROFILES:
       raise ConfigError("pi-lock-profile")
     selections = {workspace.profile: dependency_selection(workspace.resolved.data)}
@@ -637,9 +639,10 @@ class PiBackend:
           other = load_workspace(local, profile, repository=workspace.repository,
             allow_missing_local_values=True)
           selections[profile] = dependency_selection(other.resolved.data)
-    return self._resolve_lock(Path(workspace.repository), selections)
+    kwargs = {} if proxy is None else {"proxy": proxy}
+    return self._resolve_lock(Path(workspace.repository), selections, **kwargs)
 
-  def _resolve_lock(self, repository, selections):
+  def _resolve_lock(self, repository, selections, *, proxy=None):
     from .publication import publisher_lease
     repository = Path(repository)
     with publisher_lease(repository, "pi") as publisher:
@@ -652,7 +655,7 @@ class PiBackend:
       with tempfile.TemporaryDirectory(prefix="agentcfg-pi-lock-") as directory:
         staging = Path(directory)
         home = staging / "home"
-        env = npm_environment(home)
+        env = npm_environment(home, proxy=proxy)
         ensure_minimum_toolchain("Node", recipe["toolchains"]["node"], checked(["node", "--version"], cwd=staging, env=env))
         ensure_exact_toolchain("npm", recipe["toolchains"]["npm"], checked(["npm", "--version"], cwd=staging, env=env))
         for profile, inputs in captured.items():
@@ -684,15 +687,16 @@ class PiBackend:
       files["manifest.json"] = json_bytes(metadata)
       return publisher.publish(files, validate=lambda: self._read_lock_unlocked(repository, lock_tree=publisher.tree))
 
-  def sync(self, workspace, lock, *, progress=None):
+  def sync(self, workspace, lock, *, progress=None, proxy=None):
     from .publication import reader_lease
     with reader_lease(workspace.repository, "pi") as tree:
       current = self._read_lock_unlocked(workspace.repository, lock_tree=tree)
       if current != lock:
         raise ConfigError("pi-lock-missing-or-stale")
-      return self._sync(workspace, lock, progress=progress)
+      kwargs = {} if proxy is None else {"proxy": proxy}
+      return self._sync(workspace, lock, progress=progress, **kwargs)
 
-  def _sync(self, workspace, lock, *, progress=None):
+  def _sync(self, workspace, lock, *, progress=None, proxy=None):
     from .pi_lifecycle import guard
     from .pi_runtime_packages import activate, recover_repair, seal
     announce = progress or (lambda stage: None)
@@ -715,7 +719,7 @@ class PiBackend:
           tree.write_new("package.json", lock.pairs[workspace.profile][0])
           tree.write_new("package-lock.json", lock.pairs[workspace.profile][1])
         home = stage / "install-home"
-        env = npm_environment(home)
+        env = npm_environment(home, proxy=proxy)
         ensure_minimum_toolchain("Node", lock.metadata["toolchains"]["node"], checked(["node", "--version"], cwd=stage, env=env))
         ensure_exact_toolchain("npm", lock.metadata["toolchains"]["npm"], checked(["npm", "--version"], cwd=stage, env=env))
         checked(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=stage, env=env)

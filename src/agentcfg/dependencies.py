@@ -17,7 +17,7 @@ import tarfile
 import yaml
 
 from .deployment import json_bytes
-from .process import DependencyError, checked, environment
+from .process import DependencyError, checked, environment, npm_proxy_config
 from .storage import Conflict, Tree, ensure_private, instance_lock
 from .toolchain import ensure_compatible_toolchain, ensure_exact_toolchain
 from . import runtime_packages
@@ -383,14 +383,14 @@ def prepare_pnpm_policy(destination, policy):
   }))
 
 
-def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_version=None):
+def resolve_lock(repository, *, npm="npm", adapter_id="dsh", expected_adapter_version=None, proxy=None):
   from .publication import publisher_lease
   with publisher_lease(repository, adapter_id) as publisher:
     return _resolve_lock_unlocked(repository, npm=npm, adapter_id=adapter_id,
-                                  expected_adapter_version=expected_adapter_version, publisher=publisher)
+                                  expected_adapter_version=expected_adapter_version, publisher=publisher, proxy=proxy)
 
 
-def _resolve_lock_unlocked(repository, *, npm="npm", adapter_id="dsh", expected_adapter_version=None, publisher):
+def _resolve_lock_unlocked(repository, *, npm="npm", adapter_id="dsh", expected_adapter_version=None, publisher, proxy=None):
   try:
     policy = lock_policy(repository, adapter_id, expected_adapter_version)
   except (OSError, ValueError, KeyError, TypeError):
@@ -408,6 +408,7 @@ def _resolve_lock_unlocked(repository, *, npm="npm", adapter_id="dsh", expected_
     (root / "home").mkdir(mode=0o700)
     env.update(npm_config_cache=str(root / "cache"), npm_config_userconfig=str(root / "user.npmrc"),
                npm_config_globalconfig=str(root / "global.npmrc"))
+    env.update(npm_proxy_config(proxy))
     (root / "package.json").write_bytes(package)
     copy_vendors(repository, root, package, adapter_id)
     node_version = checked(["node", "--version"], cwd=root, env=env)
@@ -454,27 +455,27 @@ def installed(workspace, lock):
   return runtime_packages.status(runtime_root(workspace, lock), lock.identity) == "installed"
 
 
-def sync(workspace, lock, adapter_id="dsh", *, progress=None):
+def sync(workspace, lock, adapter_id="dsh", *, progress=None, proxy=None):
   from .publication import reader_lease
   # 整段消费持有公开锁代租约，先于实例和运行包锁；拒绝过期内存快照。
   with reader_lease(workspace.repository, adapter_id):
     if read_lock(workspace.repository, adapter_id) != lock:
       from .schema import ConfigError
       raise ConfigError("依赖锁已变化；请重新执行 sync")
-    return _sync_guarded(workspace, lock, adapter_id, progress=progress)
+    return _sync_guarded(workspace, lock, adapter_id, progress=progress, proxy=proxy)
 
 
-def _sync_guarded(workspace, lock, adapter_id, *, progress=None):
+def _sync_guarded(workspace, lock, adapter_id, *, progress=None, proxy=None):
   from .lifecycle import guard
   # 已知恢复待处理时不初始化物理实例；排他状态锁内仍会再次复核。
   with Tree(workspace.state_root) as state:
     if state.read("pending.json"):
       raise Conflict("存在待恢复部署；请先 apply/rollback，恢复完成前不能 sync")
   with guard(workspace):
-    return _sync(workspace, lock, adapter_id, progress=progress)
+    return _sync(workspace, lock, adapter_id, progress=progress, proxy=proxy)
 
 
-def _sync(workspace, lock, adapter_id="dsh", *, progress=None):
+def _sync(workspace, lock, adapter_id="dsh", *, progress=None, proxy=None):
   announce = progress or (lambda stage: None)
   announce("检查运行包")
   with Tree(workspace.state_root, create=True) as state, instance_lock(state):
@@ -495,6 +496,7 @@ def _sync(workspace, lock, adapter_id="dsh", *, progress=None):
     env = environment(workspace.resolved.data["machine"], home=home)
     env.update(npm_config_cache=str(workspace.cache / "npm"), npm_config_userconfig=str(home / "user.npmrc"),
                npm_config_globalconfig=str(home / "global.npmrc"))
+    env.update(npm_proxy_config(proxy))
     try:
       announce("检查 Node/npm 工具链")
       ensure_compatible_toolchain("Node", lock.metadata["node"],
