@@ -97,11 +97,15 @@ def test_hidden_input_uses_existing_stdin_and_restores_echo(monkeypatch):
 
 
 @pytest.mark.parametrize("argv", [[], ["agent"], ["agent", "model"], ["term"], ["work"], ["work", "source"], ["config"]])
-def test_each_group_navigates_without_business_reads(argv, monkeypatch):
+def test_each_group_navigates_without_business_reads(argv, monkeypatch, capsys):
   current = gateway(answer="\n")
   monkeypatch.setattr(cli, "InputGateway", lambda: current)
   assert cli.main(argv) == 130
   assert current.stdin.reads == 1
+  assert current.stdout.getvalue() == ""
+  assert "参数或输入条件不满足" not in current.stderr.getvalue()
+  captured = capsys.readouterr()
+  assert captured.out == captured.err == ""
 
 
 def test_missing_enumerated_parameter_is_filled_without_changing_explicit_scope(monkeypatch):

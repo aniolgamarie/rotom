@@ -222,9 +222,21 @@ def test_native_exit_status_preserved(monkeypatch, code):
   assert cli.main(["agent", "usage", "--help"]) == code
 
 
-@pytest.mark.parametrize("argv", [["--no-input", "agent"], ["--no-input", "work"]])
-def test_missing_subcommand_returns_two(argv):
+@pytest.mark.parametrize("argv", [["--no-input", "agent"], ["--no-input", "work"],
+  ["--no-input", "agent", "--local", "synthetic-private-canary.toml"]])
+def test_missing_subcommand_returns_two(argv, monkeypatch, capsys):
+  from types import SimpleNamespace
+  from rotom import preferences
+  def forbidden(*args, **kwargs):
+    pytest.fail("missing input must not read stdin, configuration or dispatch")
+  monkeypatch.setattr("sys.stdin", SimpleNamespace(isatty=lambda: False, readline=forbidden))
+  monkeypatch.setattr(preferences, "load_preferences", forbidden)
+  monkeypatch.setattr(cli, "dispatch", forbidden)
   assert cli.main(argv) == 2
+  captured = capsys.readouterr()
+  assert captured.out == ""
+  assert captured.err == "rotom: 参数或输入条件不满足；请查看当前命令 --help，补齐必要参数；交互选择需要在终端中运行。\n"
+  assert "synthetic-private-canary" not in captured.err
 
 
 def test_entry_disables_bytecode_before_business_import(tmp_path, monkeypatch):

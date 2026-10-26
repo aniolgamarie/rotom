@@ -626,6 +626,8 @@ def main(argv=None, *, resume_candidate=None):
   except Exception as error:
     from .preferences import PreferenceError
     if isinstance(error, InputError):
+      if error.exit_code == 2:
+        print("rotom: 参数或输入条件不满足；请查看当前命令 --help，补齐必要参数；交互选择需要在终端中运行。", file=sys.stderr)
       return error.exit_code
     if isinstance(error, PreferenceError):
       print("rotom: " + str(error), file=sys.stderr)
