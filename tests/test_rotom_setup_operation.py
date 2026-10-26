@@ -1,22 +1,29 @@
 """setup等价操作接缝：假计划和后端，不使用宿主或真实配置。"""
 from contextlib import contextmanager
 from dataclasses import FrozenInstanceError
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from agentcfg import commands
+from agentcfg import commands, deployment
 
 
 @pytest.fixture
 def operation(monkeypatch):
   events = []
-  first = SimpleNamespace(agent="omp", profile="synthetic", adapter=SimpleNamespace())
-  second = SimpleNamespace(agent="omp", profile="synthetic", adapter=SimpleNamespace())
+  def workspace():
+    return SimpleNamespace(agent="omp", profile="synthetic", adapter=SimpleNamespace(),
+      binding={"machine": "synthetic"}, instance=Path("/synthetic/instance"),
+      state_root=Path("/synthetic/state"), cache=Path("/synthetic/cache"))
+  first, second = workspace(), workspace()
   lock, candidate = SimpleNamespace(identity="lock"), SimpleNamespace(generation="generation")
   summary = {"changes": 1, "drift": 0, "conflicts": 0}
   def plan(label):
-    value = SimpleNamespace(conflicts=[], drift=[])
+    value = deployment.Plan(current={"launch": {"runtime": "synthetic"}}, changes=[{
+      "item": {"path": "settings.json", "selector": []},
+      "before": {"present": True, "value": "old"},
+      "after": {"present": True, "value": "new"}}], conflicts=[], drift=[])
     def public(): events.append(label + "-public"); return dict(summary)
     value.public = public
     return value
@@ -146,3 +153,36 @@ def test_cli_delegates_same_core_preserving_preview_confirmation_and_result(oper
   assert len(confirmations) == 1
   assert ("部署完成" in captured.out) == (code == 0)
   assert len(failures) == (code == 4)
+
+
+@pytest.mark.parametrize("change", ["before", "after", "manifest", "binding", "instance", "state_root", "cache", "agent", "profile"])
+def test_private_plan_or_target_change_rejects_same_public_summary(operation, monkeypatch, change, capsys):
+  original = commands.sync_backend
+  def changed(*args):
+    original(*args)
+    if change in ("before", "after"):
+      operation.updated.changes[0][change]["value"] = "synthetic-private-canary"
+    elif change == "manifest":
+      operation.updated.current["launch"]["runtime"] = "synthetic-private-canary"
+    elif change == "binding":
+      operation.second.binding["machine"] = "other"
+    else:
+      setattr(operation.second, change, "other")
+  monkeypatch.setattr(commands, "sync_backend", changed)
+  result = invoke(operation)
+  assert result.code == 4 and result.hint == "setup"
+  assert "apply" not in operation.events
+  assert "synthetic-private-canary" not in str(result)
+  assert capsys.readouterr() == ("", "")
+
+
+@pytest.mark.parametrize("callback", ["preview", "approve"])
+def test_callbacks_cannot_mutate_approved_plan_baseline(operation, callback):
+  original = getattr(operation, callback)
+  def changed(*args):
+    original(*args)
+    operation.initial.changes[0]["after"]["value"] = "changed"
+    operation.updated.changes = operation.initial.changes
+  setattr(operation, callback, changed)
+  assert invoke(operation).code == 4
+  assert "apply" not in operation.events

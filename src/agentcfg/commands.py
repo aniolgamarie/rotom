@@ -10,6 +10,7 @@ from . import deployment, runtime
 from .config import public_diagnostics
 from .local import initialize_local
 from .progress import Progress, failure_context
+from .setup_preview import setup_plan_digest
 from .schema import ConfigError
 from .storage import Conflict, Tree
 from .workspace import load_workspace
@@ -209,6 +210,7 @@ def _setup_operation(args, *, progress, preview, approve) -> SetupResult:
   progress.stage("预览部署差异", hint="plan")
   plan = current_plan(w, lock, candidate)
   summary = plan.public()
+  initial_digest = setup_plan_digest(w, lock, candidate, plan) if not (plan.conflicts or plan.drift) else None
   preview(w, summary)
   if plan.conflicts or plan.drift:
     return SetupResult(w, 4, None, "存在冲突或漂移，部署已停止。", "plan")
@@ -227,7 +229,8 @@ def _setup_operation(args, *, progress, preview, approve) -> SetupResult:
   current, current_lock, current_candidate = prepared(args)
   updated = current_plan(current, current_lock, current_candidate)
   if (current_candidate.generation != candidate.generation or current_lock.identity != lock.identity
-      or updated.public() != summary):
+      or updated.public() != summary
+      or setup_plan_digest(current, current_lock, current_candidate, updated) != initial_digest):
     return SetupResult(current, 4, None, "同步期间配置或目标发生变化；请重新运行 setup。", "setup")
   progress.stage("写入部署", hint="plan")
   result = apply_candidate(current, current_lock, current_candidate, expected_plan=updated)
