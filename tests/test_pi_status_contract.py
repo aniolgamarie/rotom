@@ -71,6 +71,10 @@ def test_explicit_footer_candidate_has_two_ordered_entries_and_preserves_prefere
   assert runtime.run(workspace, cwd=tmp_path) == 19
   argv, kwargs = launched[0]
   extensions = [argv[i + 1] for i, arg in enumerate(argv) if arg == "-e"]
+  guard = str(REPOSITORY / "agents/pi/templates/session-control.mjs")
+  assert extensions.count(guard) == 1
+  # 控制扩展独立于 UI 链；保留原链全部相对顺序和 observer 的末位。
+  extensions = [entry for entry in extensions if entry != guard]
   assert extensions[:2] == [str(root / "support/command-aliases.mjs"), str(root / "node_modules/pi-footer/src/index.ts")]
   assert extensions[-2:] == ["builtin:codemode", str(root / "support/status-observer.mjs")]
   assert kwargs["env"]["PI_FOOTER_CONFIG"] == str(native)
@@ -130,6 +134,10 @@ def test_footer_observer_is_last_with_mcp_and_other_admitted_plugin(module_works
   assert runtime.run(workspace, cwd=tmp_path) == 19
   argv, kwargs = launched[0]
   extensions = [argv[i + 1] for i, arg in enumerate(argv) if arg == "-e"]
+  guard = str(REPOSITORY / "agents/pi/templates/session-control.mjs")
+  assert extensions.count(guard) == 1
+  # 控制扩展独立于 UI 链；保留原链全部相对顺序和 observer 的末位。
+  extensions = [entry for entry in extensions if entry != guard]
   assert extensions[0] == "builtin:mcp"
   assert extensions[-1].endswith("/support/status-observer.mjs")
   assert sum(entry.endswith("/node_modules/pi-footer/src/index.ts") for entry in extensions) == 1

@@ -17,10 +17,12 @@ class CooperativeRunLease:
   physical_fd: int
   package_guard: Callable
   owner_guard: Callable
+  observer_factory: Callable | None = None
 
   def __post_init__(self):
     if (type(self.physical_fd) is not int or self.physical_fd < 0
-        or not callable(self.package_guard) or not callable(self.owner_guard)):
+        or not callable(self.package_guard) or not callable(self.owner_guard)
+        or self.observer_factory is not None and not callable(self.observer_factory)):
       from .process import DependencyError
       raise DependencyError("可信运行租约上下文无效；不能启动原生宿主")
 
@@ -310,6 +312,8 @@ def omp_scope_write_guard(workspace, *, maintenance=None, stage=None):
         # 域 → owner NB；不在协调锁内等待 Registry，也不忽略未关联的活动旧记录。
         registry = Registry(workspace.state_root / "run-owners", workspace.binding)
         with registry._locked(nonblocking=True) as owners:
+          from .run_stop_fence import assert_unfenced
+          assert_unfenced(registry)
           records, _ = registry._records(owners)
           if any(record_state(record) != "idle_confirmed" for record in records.values()):
             raise ValueError()

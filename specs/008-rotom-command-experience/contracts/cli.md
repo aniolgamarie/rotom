@@ -1,6 +1,6 @@
 # CLI 公共契约
 
-日期：2026-10-23。状态：待实现的规划契约；命令示例不代表当前能力已开放。
+日期：2026-10-26。状态：本轮分阶段维护候选已通过分组与受影响复验，尚未合入 main；合入须人工批准。P-SESSION/P-EXIT/P-PANE/P-INPUT 仍分别准入。
 依据：[规格](../spec.md)、[007 入口设计](../../007-rotom-cli-entry/design.md)、
 [维护设计](../../007-rotom-cli-entry/maintenance.md)。部署产物见
 [入口部署契约](entry-deployment.md)，身份、停止和恢复门禁见
@@ -152,12 +152,12 @@ rotom --no-input term --machine workstation sync --component zsh
 | `work close` | D dry-run；A scope token + yes | 原单工作区精确关闭；不得默造 scope |
 | `agent instances list` | E 可选 agent；显式 profile 过滤；D scope/format | 阶段二只读观察，未知项保留 |
 | `agent instances stop` | E/T 显式 run 集合；D dry-run/wait；A plan-id | 阶段三：只读计划与实际停止共用精确输入 |
-| `agent maintenance plan` | E operation 或 T batch；E/T run 集合；D scope | 只读，不建批次/准入意图 |
-| `agent maintenance stop` | E operation；E/T run 集合；A plan-id；D wait | 复算目标/资源快照；接受后才持久化批次 |
-| `agent maintenance execute` | T batch；A 需要重审时的 plan-id/原操作批准 | 退出与资源释放门禁；只派发已审阅操作 |
-| `agent maintenance restore` | T batch；E 已接受位置；D wait | 同日常恢复身份/writer 门禁；多实例不共用 stdin |
-| `agent maintenance status` | T 现存 batch；D scope/format；OMP 须显式 profile | DSH 原查询；Linux OMP 仅按公开 profile 的工具声明进入只读查询 |
-| `agent maintenance cancel` | T batch；D scope | 保持 DSH 原收尾对账，不抹除已发生事实；未开放 OMP 取消 |
+| `agent maintenance plan` | D setup operation 或 T batch；E/T run/session 映射；D scope | 只读，不建批次/准入意图；先核验目标完整锁的恢复准入 |
+| `agent maintenance stop` | D setup operation；E/T run/session 映射；A 当前 plan-id；D wait | 复算目标/资源快照；接受后才持久化批次 |
+| `agent maintenance execute` | T batch；A 每次最新 setup plan-id 或独立交互批准 | 退出与资源释放门禁、恢复能力重核；普通 setup 重新检查当前状态 |
+| `agent maintenance restore` | T batch、run（TTY 可选）；当前终端 | 同日常恢复身份/writer 门禁；每次一项，不共用 stdin |
+| `agent maintenance status` | T 现存 batch；D scope/format；旧 OMP Domain 批次须显式 profile | 三工具 workflow 查询；旧停止/Domain 批次沿原查询路径 |
+| `agent maintenance cancel` | T batch；D scope | 三工具 workflow 先保存取消事实，再按原停止协议安全收尾；旧 OMP Domain 批次不迁移或开放新取消能力 |
 
 `instances`、`maintenance` 及全部嵌套命令组无子命令时有该层导航；能力未准入的项须标限制。
 `_complete` 是唯一内部叶子，亦须注册静态 help、参数 schema 与零副作用策略。
@@ -194,7 +194,7 @@ rotom --no-input term --machine workstation sync --component zsh
 阶段二首先真实验收 DSH 当前终端官方恢复交接、指定历史和 writer 冲突拒绝；
 缺严格加载回执不禁止已准入的交接，输出明确区分“请求 session”“已派发”“加载待确认”“未发送继续”。
 机器没有证据时不得显示“恢复成功”。用户在官方 TUI 自行确认和输入，不增加“强制标记已恢复”的开关。
-Pi/OMP、严格加载自动确认、原 pane 和自动继续逐项准入，不等待上游新增接口。
+Pi/OMP 当前终端交接按本轮工具方案验收；严格加载自动确认、原 pane 和自动继续继续独立准入。
 
 人工继续指引使用既有根 `--interactive`，不新增自动发送参数。默认完整参数和 `--no-input`
 不增加输入步骤；显式交互可跳过指引、选择固定“继续”示例或输入自定义单行文本。
@@ -205,28 +205,26 @@ Pi/OMP、严格加载自动确认、原 pane 和自动继续逐项准入，不�
 日常 resume 尚未准入时仍可查看这项人工指引，但成功展示不改变其退出码 5，也不成为加载或发送许可。
 
 当前终端的交接提示进入 stderr，保留原生 stdio 与最终退出码；原生退出码 0 不是加载确认。
-脚本/批次状态按恢复事实报告：加载待确认或结果未知返回 4 并保留运行引用，不自动重试。
+维护 restore 同样保留已知原生退出码，包括 0，同时保留加载待确认；退出结果未知才返回 4 并保留未完成意图，不自动重试。
+只读 status 的退出码反映阶段记录可否查询及停止/setup 是否未知，不把加载待确认或原生 0 升格为 restored。
 确认等待超时仅停止后续自动步骤，不终止已交接的交互会话；显式已知失败保留原错误及退出码。
 
 普通 stop 与维护复用同一精确目标计划：dry-run 不建批次，stop 重复原 scope、run 集合、
 operation（维护时）和 plan ID，复核后才能接受；不能仅拿摘要猜目标。
 首版维护 `operation` 仅准入 `setup`；普通实例停止的计划 operation 为 `stop_only`。
 
-当前候选已开放 DSH 的 `instances stop --dry-run` 和 `maintenance plan --operation setup --run ID`
-只读预览；ID 必须是完整 32 位小写十六进制 run ID，重复项拒绝。未显式指定 profile 时检查所选机器
-的 DSH 配方，要求全部 run 唯一属于同一实例，不按启动默认配方过滤。输出精确 scope、plan_id、
-所选目标、历史 manager/host/cwd/session 线索、共享引用和阻断原因，以及同 scope 的再次预览 argv。
-历史 confirmed session 只显示 historical，unknown 不升级；计划不证明当前进程存活或会话加载。
-实例列表和停止目标同时显示启动时保存的 deployment/runtime 完整摘要，旧记录版本未知；
-不从当前配置推造运行版本。人类计划列出资源 coverage 和 reference_runs；DSH stop_only
-不因其它覆盖未知而单独阻断，setup 仍要求完整覆盖，未准入控制通道仍阻断实际停止。
-非交互实际停止缺 plan-id 先返回 2；显式 plan-id 与当前计划不符返回 4；匹配后仍只展示计划并返回 5，
-不询问批准、不写停止意图或发送信号。只读预览成功返回 0，即使 readiness=blocked。
-`maintenance plan --batch` 和其它执行叶子仍未准入，返回 5；不能把计划可查视作维护已可执行。
+当前候选按工具的公开路径为 `maintenance plan --run ... --session RUN_ID=SESSION_ID` → `stop` → `plan --batch BATCH_ID` → `execute --batch BATCH_ID --plan-id SETUP_PLAN_ID` → `restore --batch BATCH_ID --run RUN_ID`。`--operation setup` 可省略；plan 的 `--batch` 与 `--operation` 互斥，batch 计划不混入新的 run/session 集合。run/batch 为完整 32 位小写十六进制，重复 run 或重复会话映射拒绝。
+
+TTY 可补选择并在锁外展示批准；非 TTY/根 `--no-input` 需完整 run/session 与 stop/setup 各自当前 plan-id，缺失 2、漂移 4。选择不等于批准；stop 前先保存清单及同 ID 快照/fence，单次请求原 host pidfd，等待未知保留事实为 4，不强杀或重发。DSH/Pi/OMP 精确 stop_only 不因未选共享引用覆盖未知单独拒绝，但必须披露；普通 setup 全资源门禁仍拒绝未选引用/unknown。
+
+停止确证并关本次 fence 后独立预览/批准普通 setup，不携带跨阶段写入许可；并发新 run 可阻挡但不加入停止集合。保存原维护结果与码，unknown 不重试。restore 只接一项当前终端，保存请求与实际加载的区别、加载待确认、`continue_status=not_sent`。Pi 仅 Rotom 合作 writer 租约，原生 --resume 是 picker，受管完整 ID 转精确路径；OMP 同 ID open 不取 writer 锁，竞争首次写入可能分叉。请在官方 TUI 核对 ID，不能宣称外部 writer 提前拒绝或自动 restored。
+
+cancel 只终止后续编排，不撤销已发生停止/配置，不强清已投递或 unknown 的保护。旧 stop 批次沿原 status/cancel；旧 OMP Domain 批次保留以下只读路径，不迁移/重放为新 workflow。详细示例与候选状态见[维护指南](../../../docs/tool-maintenance-workflows.md)。
+
 Linux OMP 的 `maintenance status` 已接通只读 setup 批次查询：必须提供现存 `--batch` 和显式
 `--profile`，由公开 profile 声明的工具为 `omp` 决定路由，不按名称前缀或 `scope.agent` 猜测。
 沿原 `--local` 或所选机器配置路径读取，不扫描其它机器、历史路径或自动发现批次/profile；
-没有显式 profile 时仍走原 DSH 查询。OMP 的 stop/execute/restore/cancel 均未开放，status 不调用它们。
+没有显式 profile 时仍走原 DSH 查询。对这些旧 Domain 批次 status 不调用 stop/execute/restore/cancel；新 workflow 批次独立分阶段处理。
 
 ```sh
 ./rotom --no-input agent --local /path/to/machine.toml --profile omp-default maintenance status --batch BATCH_ID --format json
@@ -244,7 +242,7 @@ completed 且当前目标/资源核验通过返回 0；unknown/pending 返回 4�
 控制等待 `--wait-seconds` 默认 30，范围 1–300；整个所选集合共享一个阶段的绝对单调 deadline，
 不按 run 重置。耗尽返回逐项事实和下一步，不强杀、不自动进入 execute/restore。
 该等待预算不限制整个 setup 安装耗时，也不限制明确交接到当前终端后的普通会话交互寿命。
-writer 排他和完整退出证明不足时不开放自动恢复/维护；原 pane、continue 各自独立门禁。
+维护仍要求原全资源释放证明；交接须核实各工具实际 writer 语义与精确目标。自动输入的完整排他/加载/接收证明不足时保持零发送；原 pane、continue 各自独立门禁。
 停止不具备自动恢复证据时只能明确说明人工恢复。详细批准及状态机见[生命周期契约](lifecycle.md)。
 
 ## `_complete` 协议

@@ -461,6 +461,12 @@ def main(argv: list[str] | None = None, *, context=None) -> int:
         from rotom.context import InputError
         if isinstance(error, InputError):
             return error.exit_code
+        from .sessions import SessionError
+        if isinstance(error, SessionError):
+            from .progress import failure_context
+            failure_context(args, error.code,
+                reason="会话选择或写入归属未能核实；请用 rotom resume 选择完整会话 ID 和原工作目录")
+            return error.code
         from .schema import ConfigError
         from .secrets import CredentialError
         from .storage import StateError

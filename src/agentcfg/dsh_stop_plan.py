@@ -16,7 +16,7 @@ _ERROR = "DSH 停止计划数据无效；不授予停止或维护权限"
 def _scope(value):
   maintenance._validate(value, "scope")
   maintenance._scope(value)
-  if set(value) != {"machine", "local", "agent", "profile"} or value["agent"] != "dsh":
+  if set(value) != {"machine", "local", "agent", "profile"} or value["agent"] not in ("dsh", "pi", "omp"):
     raise ValueError()
 
 
@@ -33,6 +33,8 @@ def normalize(value, *, verify=True):
     maintenance._dump(value)
     result = deepcopy(value)
     _scope(result["scope"])
+    if result["coordinator"]["kind"] != result["scope"]["agent"] + "-instance-registry":
+      raise ValueError()
     binding = {key: result["scope"][key] for key in ("machine", "local", "profile")}
     if result["coordinator"]["binding_digest"] != hashlib.sha256(run_owners._encode(binding)).hexdigest():
       raise ValueError()

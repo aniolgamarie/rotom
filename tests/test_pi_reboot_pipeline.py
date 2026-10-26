@@ -17,6 +17,12 @@ from test_pi_reboot_configuration import local, REPOSITORY
 from test_pi_reboot_dependencies import fake_npm, recipe_repository
 
 
+def fake_managed_child(spec, env, pass_fds, **options):
+  # 普通 Pi 测试沿既有显式假宿主；原句柄捕获由专属 Popen 集成测试覆盖。
+  child = runtime.subprocess.run(list(spec.argv), cwd=spec.cwd, env=env, pass_fds=pass_fds)
+  return child.returncode if child.returncode >= 0 else 128 - child.returncode
+
+
 @pytest.fixture
 def pipeline(fake_npm, tmp_path, monkeypatch):
   repository, backend, calls = fake_npm
@@ -34,6 +40,7 @@ def pipeline(fake_npm, tmp_path, monkeypatch):
     assert argv[0] == "node" and argv[1].endswith(PiAdapter.__module__.split(".")[-1] + "-coding-agent/dist/bundle/cli.js")
     return SimpleNamespace(returncode=17)
   monkeypatch.setattr(runtime.subprocess, "run", fake_cli)
+  monkeypatch.setattr(runtime, "_run_dsh_child", fake_managed_child)
   return workspace, backend, lock, calls, launched
 
 

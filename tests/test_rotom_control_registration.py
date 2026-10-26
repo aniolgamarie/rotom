@@ -73,7 +73,7 @@ def test_codec_keeps_null_and_historical_control_metadata_without_live_permissio
 
 @pytest.mark.parametrize("change", ["extra", "kind", "version-bool", "run", "binding", "manager", "host",
   "nonce", "nonce-upper", "physical-extra", "device-bool", "device-float", "device-negative", "inode-zero",
-  "pid-bool", "birth-long", "endpoint-path", "descriptor-extra", "same-pid", "source", "relationship", "pi", "omp", "ssh"])
+  "pid-bool", "birth-long", "endpoint-path", "descriptor-extra", "same-pid", "source", "relationship", "omp", "ssh"])
 def test_codec_rejects_unmatched_or_unreviewed_control_description(registered, change):
   store, *_ = registered
   record = control_record(registered)
@@ -103,25 +103,25 @@ def test_codec_rejects_unmatched_or_unreviewed_control_description(registered, c
   elif change in ("source", "relationship"):
     record["host_identity"][change] = "other"
     record["process_observation"]["host_identity"] = deepcopy(record["host_identity"])
-  elif change in ("pi", "omp"):
+  elif change == "omp":
     record["agent"] = change
-    record["native_home_ref"]["kind"] = "pi-home" if change == "pi" else "omp-managed-home"
+    record["native_home_ref"]["kind"] = "omp-managed-home"
   elif change == "ssh": record["backend"] = "ssh"
   with pytest.raises(Conflict) as caught:
     store.registry._validate_record(RUN_ID + ".json", record)
   assert "synthetic-private-canary" not in str(caught.value)
 
 
-@pytest.mark.parametrize("change", ["missing", "unknown", "idle", "pi", "omp", "ssh", "unbound-host", "current-manager"])
+@pytest.mark.parametrize("change", ["missing", "unknown", "idle", "omp", "ssh", "unbound-host", "current-manager"])
 def test_bind_requires_this_active_managed_dsh_owner(registered, monkeypatch, change):
   store, host, service, inbox, journal = registered
   record = store.registry.snapshot()[RUN_ID]
   run = RUN_ID
   if change == "missing": run = "b" * 32
   elif change in ("unknown", "idle"): owners._set_state(record, "unknown" if change == "unknown" else "idle_confirmed")
-  elif change in ("pi", "omp"):
+  elif change == "omp":
     record["agent"] = change
-    record["native_home_ref"]["kind"] = "pi-home" if change == "pi" else "omp-managed-home"
+    record["native_home_ref"]["kind"] = "omp-managed-home"
   elif change == "ssh": record["backend"] = "ssh"
   elif change == "unbound-host":
     record["host_identity"] = None

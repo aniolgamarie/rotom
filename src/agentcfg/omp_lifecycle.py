@@ -86,6 +86,8 @@ def cooperative_run(workspace, runtime_identity):
   current_package_fd = None
   owner_used = False
   owner_attempted = False
+  owner_active = False
+  current_state_fd = None
   physical_fd = None
   home_fd = None
   outer = ExitStack()
@@ -94,6 +96,33 @@ def cooperative_run(workspace, runtime_identity):
     if (not active or selected is not workspace or workspace.instance != instance
         or workspace.state_root != state_root or workspace.cache != cache):
       raise Conflict(_ERROR)
+
+  def observing(run_id):
+    unchanged(workspace)
+    if run_id != token.run_id or not owner_active or not package_active:
+      raise Conflict(_ERROR)
+    try:
+      for fd in (physical_fd, home_fd, current_package_fd, current_state_fd):
+        os.fstat(fd)
+      with Tree(state_root) as state:
+        _same_file(state, "instance.lock", current_state_fd)
+    except Exception:
+      raise Conflict(_ERROR) from None
+
+  class RunObserver:
+    def snapshot(self):
+      observing(token.run_id)
+      return run_owners.Registry(state_root / "run-owners", workspace.binding).snapshot()
+
+    def bind_current_host(self, run_id, host):
+      observing(run_id)
+      from .omp_run_observation import bind_current_host
+      return bind_current_host(domain, run_id, workspace=workspace, instance_fd=physical_fd,
+        native_home_fd=home_fd, runtime_fds={token.runtime_resource_id: current_package_fd}, host=host)
+
+  def observer_factory(run_id):
+    observing(run_id)
+    return RunObserver()
 
   @contextmanager
   def package_guard(selected, identity):
@@ -119,7 +148,7 @@ def cooperative_run(workspace, runtime_identity):
 
   @contextmanager
   def owner_guard(selected, *, metadata, lifecycle_fd, state_fd, package_fd):
-    nonlocal owner_used, owner_attempted
+    nonlocal owner_used, owner_attempted, owner_active, current_state_fd
     observer = None
     entered = False
     try:
@@ -156,8 +185,10 @@ def cooperative_run(workspace, runtime_identity):
         raise Conflict(_ERROR) from None
       raise
     try:
+      current_state_fd, owner_active = state_fd, True
       yield token.run_id
     finally:
+      owner_active, current_state_fd = False, None
       # 三 SH 与 HOME fd 仍由外层持有；记账失败不覆盖原生退出或异常。
       try:
         observation = observer.observe(token.run_id)
@@ -186,7 +217,7 @@ def cooperative_run(workspace, runtime_identity):
       home_fd = home.fd
     except Exception:
       raise Conflict(_ERROR) from None
-    yield CooperativeRunLease(physical_fd, package_guard, owner_guard)
+    yield CooperativeRunLease(physical_fd, package_guard, owner_guard, observer_factory)
   finally:
     active = False
     if not owner_attempted:

@@ -1,4 +1,4 @@
-"""DSH 共享启动生命周期；由受管入口为已准入组合提供可信停止服务工厂。"""
+"""DSH/Pi 共享直接 child 生命周期；只有受管入口提供已准入的停止服务工厂。"""
 import subprocess
 import sys
 

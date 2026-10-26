@@ -1,10 +1,13 @@
 # Implementation Plan: Rotom 命令与会话体验
 
-**Branch**: `feat/rotom-command-experience-main` | **Date**: 2026-10-25 | **Spec**: [spec.md](spec.md)
+**Branch**: `feat/tool-maintenance-workflows-20261026` | **Date**: 2026-10-26 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/008-rotom-command-experience/spec.md`
 
-**Status**: 实施中，当前 86/117。统一入口、交互/help/补全、受限会话视图和实例列表已有验收证据；DSH 官方恢复候选及待确认契约已完成隔离验证。T065/T066 的 OMP 资源协调和普通启动、T073 共用 setup 核心、T096/T101/T102 人工继续分支已独立完成。DSH 精确 stop_only 已完成默认入口原生单项与三选二验收，限 Linux managed、完整固定锁及新启动的有效 endpoint；T069/T070 的完整跨工具停止维护范围尚未完成。真实 zsh 入口/Tab 已在获授权的专用临时 HOME 和受信源码/工具链副本通过 T039 验收；T053 固定 Linux DSH 当前终端真实恢复交接已验收，T054 精确组合日常准入及普通 CLI 原生复验已完成；已验收的统一入口和限定 DSH 停止/恢复范围已合入 main；跨工具停止维护及原位置能力仍未验收。维护 setup 已推进到同一原 Linux OMP scope/cache/runtime 的内部批准、原门禁执行与结果记账，并绑定目标部署及提供只读现场观察；明确成功可在重新核验与独立批准后收尾并交接人工恢复，未知观察不升级历史结果或清保护，维护控制 CLI、持久对账和自动恢复仍未开放，详见 main-review 最新增量。
+**Status**: 候选实现、分组回归及稳定差异审查已完成；基于 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main。合入须另经人工批准。官方 Pi/OMP TUI/PTY、隔离回归及受影响复验见[验收记录](tool-workflow-validation.md)。
+
+历史任务完成记录 86/117 保留；本轮 T118–T124 已完成，当前 93/125，T125 的 main 人工整合仍待批准。原 pane 与自动继续仍按独立条件能力处理。
+
 Spec Kit 的逻辑功能标签为 `008-rotom-command-experience`，不表示 Git 分支发生切换。
 历史设计源码基线 `17bbacd6`；原实施工作树基于 `39a9389` 并完整保留，随后曾从 main `109e2e7` 建立独立承接工作树。已验收范围后来从新主线重放整合；成功人工交接增量基于 main `b55c9b9`，当前只读 status CLI 增量基于 main `18c342f`，各阶段候选与证据见 main-review，不把旧基线当作当前入口。
 历史承接记录保留了 `design/rotom-cli-entry` 及原候选，要求实施前核对共享绑定、Pi 启动契约与文件所有权。
@@ -15,6 +18,8 @@ Spec Kit 的逻辑功能标签为 `008-rotom-command-experience`，不表示 Git
 
 ## Summary
 
+本轮采用按工具的阶段编排，替代旧全工具 Domain 许可前提。Pi 公开扩展负责合作 session 租约及切换，OMP 原生竞争首次写入可能分叉；Pi/OMP 使用 HandoffResumeBackend，DSH 原 Host 不变。停止集合不扩大，并发新运行阻挡普通 setup；原操作结果保留，零继续。原 pane/自动继续继续作为独立条件任务。
+
 增加以项目名关联的统一门面，复用 agentcfg、termcfg 和 work 的业务执行路径。
 第一阶段交付三工具短启动、显式偏好、所有叶子缺参交互、help、补全及受管 zsh 入口。
 第二阶段尽早交付 DSH 的真实 session ID/当前终端官方恢复交接；之后在完整退出证明基础上交付停止维护。
@@ -23,24 +28,24 @@ Spec Kit 的逻辑功能标签为 `008-rotom-command-experience`，不表示 Git
 交付仍须真实验证目标、目录、历史和 writer 冲突行为，不能用静态命令或始终拒绝代替；
 不修改上游，也不将提交 issue 或等待上游增强纳入当前交付依赖。
 
-当前停止准入仅覆盖完整锁 `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` 的 Linux managed DSH 新运行，
+历史 main 停止准入仅覆盖完整锁 `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` 的 Linux managed DSH 新运行，
 使用启动时原 host 句柄及已登记 endpoint。非交互实际请求须匹配当前 plan-id；交互批准在锁外展示完整计划。
 先保存人工恢复快照与 fence，再单次投递；默认 30 秒、可选 1–300 秒，整组共用绝对截止点。
 未知或到期返回 4，保留 batch，不重发、不强杀、不自动恢复或继续。
 status 只读；cancel 只处理未投递项或已确证停止项的收尾对账。
 默认普通 runtime 三实例验收中，首轮只停前二且第三项原身份/owner/channel/共享租约保护不变，
 独立新 plan 再停第三项，最终三项 exit 0/idle_confirmed/termios 与原租约恢复、0 输入、源码未变。
-这不准入 setup/maintenance execute/restore、Pi/OMP 的停止与自动恢复、其它平台、旧 run 或 force；
+这份历史证据不单独准入 setup/maintenance execute/restore、Pi/OMP 的停止与恢复、其它平台、旧 run 或 force；
 也不替代 T054 已独立准入的当前终端恢复。[原生证据](main-review.md#62-dsh-默认入口的精确停止验收)。
 
 Linux OMP 的现存 setup batch 另有只读 status CLI：须显式 `--profile` 且公开 profile 声明的工具为 `omp`，
 沿所选 local/机器路径读取，不扫描历史或其它机器；无显式 profile 保持 DSH 原路由。
-只开放 status，不开放 OMP stop/execute/restore/cancel，不创建批次、完成交接或重发操作。
+对这些旧 Domain 批次只开放 status，不创建新 workflow、完成交接或重发操作；不限制新 workflow 的独立分阶段接口。
 JSON 保留原 `operation_result`，查询 `exit_code` 单列；`protected` 仅指本批资源意图，
 manual 不表示会话已恢复，continue 为 `not_sent`。成功但未交接仍为 4；completed 且当前目标/资源核验通过为 0，
 unknown/pending 为 4，原非零操作码保留；初始未派发即取消且正常观察为 0 仅说明取消，异常观察仍为 4。
 CLI 稳定代码回归 336 passed，fixture 拼写纠正后的新 suite 21 passed，重叠不累加；
-不冒充 backend 或宿主原生验收。T077/T078 仅部分推进，任务数仍为 86/117。
+不冒充 backend 或宿主原生验收。该历史阶段 T077/T078 仅部分推进，任务记录为 86/117。
 
 技术取舍及证据见 [research.md](research.md)。[数据模型](data-model.md) 定义严格持久格式；
 [CLI](contracts/cli.md)、[入口部署](contracts/entry-deployment.md)、
@@ -132,7 +137,7 @@ specs/008-rotom-command-experience/
     └── lifecycle.md
 ```
 
-`tasks.md` 已生成并随实施维护；当前维护 117 项任务；仅按实际实现及验收更新勾选，规划变化本身不结项。
+`tasks.md` 已生成并随实施维护；当前维护 125 项任务（原 117 项与新增 T118–T125）；仅按实际实现及验收更新勾选，规划变化本身不结项。
 
 ### Source Code (repository root)
 
@@ -179,7 +184,7 @@ agentcfg 仍拥有 Agent 运行/部署，termcfg 仍拥有终端文件事务与 
 | E 受管入口 | term catalog/preview/transaction、schema、shell 资源 | A/D 与 P-ENTRY；恢复前不切换日常绑定；主代理审查日志顺序 |
 | F 阶段一收口 | 用户文档、兼容矩阵与稳定差异 | A–E；原生终端验收按授权单列 |
 | S 日常恢复/实例 | sessions、runtime、run_owners、DSH 薄插件 | T044/T045 与 US5 保持现有范围；T042 核实安全官方交接，T117 补待确认/零输入契约；加载回执与自动继续分别准入，不要求上游新增接口 |
-| M 停止维护 | maintenance、lifecycle、共用 setup 核心接缝 | S + P-EXIT；T065/T066 建立完整资源归属后才启用 OMP 合作登记；部分结果、物理门禁、锁顺序和未知不重试 |
+| M 停止维护 | tool_maintenance、精确 stop、共用 setup 与工具恢复接缝 | T118–T125；三工具 stop_only、先保存清单，同 ID stop 快照，关本次 fence 后普通 setup 最新独立批准/原全门禁，逐项当前终端恢复；OMP 保留 Domain，DSH/Pi 不强套 Domain；未知不重试 |
 | P 原位置 | 可选管理容器、work 新版本接缝 | P-PANE；旧实例首次采用、管理代码兼容、单次 run 租约分离 |
 | I 可选继续 | 已准入后端输入接缝 | P-INPUT；确切会话与接收结果，不阻塞普通恢复 |
 
@@ -208,6 +213,8 @@ catalog/state 格式升级源于生成绑定的可恢复要求；保留旧读取
 运行、停止和会话恢复各有一个共享执行契约；不为 TUI、CLI 或维护编排再复制数据库和执行器。
 
 ### 历史实施阶段
+
+以下截至旧 DSH/OMP 内部增量的原始阶段记录保留；其中“未准入”“后续接线”等是当时状态，当前公开流程由上方 Summary 与 tool-workflows.md 取代。
 
 以下保留先后顺序和当时的未接线结论；当前精确 DSH stop_only 范围以上文及 main-review 第 62 节为准，不能将旧阶段限制当作当前入口状态。
 

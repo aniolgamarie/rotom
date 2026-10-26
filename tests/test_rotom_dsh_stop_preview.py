@@ -136,7 +136,7 @@ def test_history_is_shown_without_session_body_or_upgrading_confirmation(prepare
 def test_scope_selection_loads_machine_once_and_uses_actual_matching_profile(prepared, monkeypatch):
   from agentcfg import local, workspace
   ws, registry, args, runs = prepared; calls=[]
-  monkeypatch.setattr(local, "available_profiles", lambda: [(ws.profile, "dsh"), ("pi-base", "pi")])
+  monkeypatch.setattr(local, "available_profiles", lambda: [(ws.profile, "dsh"), ("unhandled-profile", "unsupported")])
   def load(path, profiles):
     assert str(path) == ws.binding["local"] and profiles == [ws.profile]
     calls.append(1)
@@ -151,9 +151,9 @@ def test_scope_selection_rejects_unsupported_or_ambiguous_without_profile_defaul
   from agentcfg import local, workspace
   from agentcfg.process import DependencyError
   ws, registry, args, runs = prepared
-  monkeypatch.setattr(local, "available_profiles", lambda: [(ws.profile, "dsh"), ("pi-base", "pi"), ("dsh-other", "dsh")])
+  monkeypatch.setattr(local, "available_profiles", lambda: [(ws.profile, "dsh"), ("unhandled-profile", "unsupported"), ("dsh-other", "dsh")])
   with pytest.raises(DependencyError):
-    dsh_stop.preview_for_scope(ws.local_path, selected_runs=runs[:2], profile="pi-base")
+    dsh_stop.preview_for_scope(ws.local_path, selected_runs=runs[:2], profile="unhandled-profile")
   with pytest.raises(ValueError):
     dsh_stop.preview_for_scope(ws.local_path, selected_runs=runs[:2], profile="missing")
   # 重复发现相同run也不能默认取第一个，显式范围才消除歧义。
@@ -175,7 +175,21 @@ def test_cli_uses_real_scope_and_deployment_without_writes(prepared, monkeypatch
   monkeypatch.setattr(dsh_stop_scope, "save_manual_snapshot", forbidden)
   tokens = ["--no-input", "agent", "--local", str(ws.local_path)]
   # 无显式 profile 时也不得将机器默认配方当成查询过滤器。
-  if command == "setup-plan": tokens += ["maintenance", "plan", "--operation", "setup", "--format", "json"]
+  if command == "setup-plan":
+    from agentcfg import tool_maintenance
+    from agentcfg.dsh_sessions import scope_key
+    from agentcfg.sessions import KnownSession, SessionRef
+    tokens += ["maintenance", "plan", "--operation", "setup", "--format", "json"]
+    targets = {}
+    for index, run in enumerate(runs[:2]):
+      identifier = "synthetic-session-" + str(index)
+      record = args["expected_records"][run]
+      targets[identifier] = KnownSession(SessionRef("dsh", "managed",
+        run_owners.native_home_key(record["native_home_ref"]), identifier), scope_key(ws.binding),
+        ws.profile, record["start_cwd"]["path"], "historical", "historical", 1, run)
+      tokens += ["--session", run + "=" + identifier]
+    # 本例验证 scope/部署/只读组合，显式会话选择的公开查询用合成结果；不授予 stop。
+    monkeypatch.setattr(tool_maintenance, "lookup_session", lambda selected, identifier: targets[identifier])
   else: tokens += ["instances", "stop"]
   for run in runs[:2]: tokens += ["--run", run]
   if command == "dry-run": tokens += ["--dry-run"]

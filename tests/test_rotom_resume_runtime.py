@@ -213,3 +213,67 @@ def test_ordinary_run_without_registered_identity_keeps_native_stdio_and_exit(ma
   assert native["argv"][-1] == "--opaque-native" and native["cwd"] == tmp_path
   assert len(native["pass_fds"]) == 3 and len(fake_subprocess.calls) == 2
   assert package["active"] is False and records(workspace) == {}
+
+
+@pytest.mark.parametrize("changed", [False, True])
+def test_approved_deployment_is_rechecked_under_original_locks(managed, tmp_path,
+    fake_subprocess, monkeypatch, changed):
+  from agentcfg.setup_preview import setup_deployment_digest
+  from agentcfg.storage import Tree
+  workspace, lock, package, observation = managed
+  observation["value"] = True
+  with Tree(workspace.state_root) as state:
+    approved = setup_deployment_digest(deployment.read_state(state)["current"])
+  original_guard = workspace.adapter.run_lifecycle_guard_for
+  original_read = runtime.read_state
+  reads, dispatched = [], []
+
+  @contextmanager
+  def competing_update(selected, arguments):
+    # 模拟上层审阅之后、原物理 SH 获取之前，另一部署已完整提交。
+    if changed:
+      candidate = workspace.candidate(lock.identity)
+      from dataclasses import replace
+      candidate = replace(candidate, generation="f" * 64)
+      deployment.apply(workspace.instance, workspace.state_root, candidate,
+        workspace.binding, runtime.record(workspace, lock))
+    with original_guard(selected, arguments) as fd:
+      yield fd
+
+  def locked_read(state):
+    assert_exclusive_busy(workspace.instance)
+    assert_exclusive_busy(workspace.state_root / "instance.lock")
+    reads.append(True)
+    return original_read(state)
+
+  def resume(*args, **kwargs):
+    dispatched.append(kwargs["run_id"])
+    return 0
+
+  monkeypatch.setattr(workspace.adapter, "run_lifecycle_guard_for", competing_update)
+  monkeypatch.setattr(runtime, "read_state", locked_read)
+  if changed:
+    with pytest.raises(Conflict):
+      runtime.run(workspace, cwd=tmp_path, resume_operation=resume, expected_deployment=approved)
+    assert not dispatched and records(workspace) == {} and fake_subprocess.calls == []
+  else:
+    fake_subprocess.queue(returncode=0, stdout="v24.2.0")
+    assert runtime.run(workspace, cwd=tmp_path, resume_operation=resume, expected_deployment=approved) == 0
+    assert len(dispatched) == 1
+  assert reads
+
+
+@pytest.mark.parametrize("digest", [True, "", "z" * 64, "a" * 63])
+def test_invalid_restore_binding_rejected_before_host_or_registration(managed, tmp_path, fake_subprocess, digest):
+  workspace, _, _, _ = managed
+  with pytest.raises(ConfigError):
+    runtime.run(workspace, cwd=tmp_path, resume_operation=lambda *a, **kw: pytest.fail("invalid binding"),
+      expected_deployment=digest)
+  assert fake_subprocess.calls == [] and records(workspace) == {}
+
+
+def test_restore_binding_cannot_authorize_an_ordinary_run(managed, tmp_path, fake_subprocess):
+  workspace, _, _, _ = managed
+  with pytest.raises(ConfigError):
+    runtime.run(workspace, cwd=tmp_path, expected_deployment="a" * 64)
+  assert fake_subprocess.calls == [] and records(workspace) == {}

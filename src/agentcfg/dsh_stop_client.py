@@ -31,8 +31,8 @@ def workspace_for_batch(local, *, batch_id, profile=None):
   profiles = dict(available_profiles())
   if profile is not None and profile not in profiles:
     raise ValueError("未知 profile")
-  names = [profile] if profile is not None else sorted(name for name, agent in profiles.items() if agent == "dsh")
-  if any(profiles[name] != "dsh" for name in names):
+  names = [profile] if profile is not None else sorted(name for name, agent in profiles.items() if agent in ("dsh", "pi", "omp"))
+  if any(profiles[name] not in ("dsh", "pi", "omp") for name in names):
     raise DependencyError("当前批次查询仅支持 DSH 普通停止")
   matches = []
   for workspace in load_instance_workspaces(local, names):
@@ -69,7 +69,8 @@ def publish_request(workspace, request, *, expected_record):
         raise ValueError()
       inbox = StopInbox(workspace.state_root / "stop-inboxes" / run, workspace.binding)
       registry._verify_root(owner)
-      inbox.submit(request, expected=expected_record["protocol"]["control"]["endpoint"], wait_for_lock=True)
+      endpoint = dsh_stop_control.channel_state(workspace, expected_record, deadline_ns=request["deadline_ns"])["endpoint"]
+      inbox.submit(request, expected=endpoint, wait_for_lock=True)
       registry._verify_root(owner)
   except Exception:
     raise Conflict(_ERROR) from None
@@ -126,16 +127,18 @@ def status_stop(workspace, *, batch_id):
     raise Conflict(_ERROR) from None
 
 
-def execute_stop(workspace, *, expected_plan, approve, wait_seconds=30):
+def execute_stop(workspace, *, expected_plan, approve, wait_seconds=30, batch_id=None):
   """明确审阅在锁外；每项使用同一截止点，失败保留 batch ID 和原始事实。"""
   if type(wait_seconds) is not int or not 1 <= wait_seconds <= 300:
     raise ValueError("停止等待时间须为 1..300 秒")
+  if batch_id is not None:
+    run_owners._run_id(batch_id)
   expected = maintenance.decode_stop_plan(maintenance.encode_stop_plan(expected_plan))
   observed, records, layout = dsh_stop.capture_stop(workspace, selected_runs=expected["selected_runs"])
   plan = observed["plan"]
   if plan != expected or plan["operation"] != "stop_only" or plan["readiness"] != "ready":
     raise Conflict(_ERROR)
-  batch_id = uuid.uuid4().hex
+  batch_id = uuid.uuid4().hex if batch_id is None else batch_id
   review = stop_review.review_stop_plan(plan, scope=plan["scope"], operation="stop_only",
     selected_runs=plan["selected_runs"], plan_id=plan["plan_id"], batch_id=batch_id, approve=approve)
   with ExitStack() as stack:

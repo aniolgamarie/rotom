@@ -84,17 +84,9 @@ def read_close(registry, batch_id):
 
 def unposted(workspace, record):
   """调用方持 owner 锁；规范 inbox 和 journal 读取完即释放，不跟随记录路径。"""
-  control = record["protocol"]["control"]
-  if control is None or control["kind"] != "linux-pidfd-stop-v1":
-    raise ValueError()
-  inbox = StopInbox(workspace.state_root / "stop-inboxes" / record["run_id"], workspace.binding)
-  with inbox._registry._locked(nonblocking=True) as tree:
-    endpoint, requests = inbox._load(tree)
-    inbox._expected(control["endpoint"], endpoint)
-    if requests:
-      return False
-  journal = StopDispatches(workspace.state_root / "stop-dispatches", workspace.binding)
-  return journal.read(record["run_id"]) is None
+  from .dsh_stop_control import channel_state
+  channel = channel_state(workspace, record)
+  return not channel["requests"] and channel["dispatch"] is None
 
 
 def close_stop(workspace, *, batch_id, plan_id, reason):
@@ -107,7 +99,7 @@ def close_stop(workspace, *, batch_id, plan_id, reason):
   try:
     run_owners._run_id(batch_id)
     run_stop_snapshot._hex64(plan_id)
-    if workspace.agent != "dsh" or reason not in ("stopped", "cancelled"):
+    if workspace.agent not in ("dsh", "pi", "omp") or reason not in ("stopped", "cancelled"):
       raise ValueError()
     registry = run_owners.Registry(workspace.state_root / "run-owners", workspace.binding)
     with lifecycle.observation_guard(workspace) as instance_fd, Tree(workspace.state_root) as parent:
@@ -126,7 +118,8 @@ def close_stop(workspace, *, batch_id, plan_id, reason):
         snapshot = _snapshot(registry, owner, parent, fence)
         expected_instance = next(item["key"] for item in snapshot["plan"]["resources"]
           if item["key"]["kind"] == "instance")
-        if resource_key("instance", workspace.instance, lease_fd=instance_fd).as_dict() != expected_instance:
+        instance_path = workspace.instance / ".agentcfg-omp.lock" if workspace.agent == "omp" else workspace.instance
+        if resource_key("instance", instance_path, lease_fd=instance_fd).as_dict() != expected_instance:
           raise ValueError()
         _same_file(parent, "instance.lock", state_fd)
         records, _ = registry._records(owner)

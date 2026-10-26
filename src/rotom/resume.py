@@ -45,6 +45,9 @@ def load_known(scope):
     with observation_guard(workspace):
       records = Registry(workspace.state_root / "run-owners", workspace.binding).snapshot()
     rows.extend(from_run_records(records, scope=key, machine_ref=machine_ref, profile=scope.profile))
+    if workspace.agent == "pi":
+      from agentcfg.pi_session_observation import from_records
+      rows.extend(from_records(workspace, records))
   if exact_scope is None:
     raise SessionError(2, "invalid_session_scope")
   return exact_scope, tuple(rows)
@@ -97,8 +100,8 @@ class CandidateResume:
           # 只列公开配方提供的工具；选择不改变 machine/local 或授予恢复能力。
           from agentcfg.local import available_profiles
           public_tools = {tool for _, tool in available_profiles()}
-          labels = {"dsh": "DSH（受完整运行组合约束）", "pi": "Pi（恢复尚未准入）",
-            "omp": "OMP（恢复尚未准入）"}
+          labels = {"dsh": "DSH（受完整运行组合约束）", "pi": "Pi（受完整运行组合约束；保护限 Rotom 合作实例）",
+            "omp": "OMP（受完整运行组合约束）"}
           choices = [(tool, labels[tool]) for tool in ("dsh", "pi", "omp") if tool in public_tools]
           if not choices:
             raise SessionError(5, "lookup_tool_unavailable")
@@ -106,7 +109,7 @@ class CandidateResume:
         if explicit_id is None:
           gateway.require_input(policy)
           if agent is None:
-            show("没有已知候选；请输入明确工具和会话 ID 后重试；能力尚未准入")
+            show("没有已知候选；请输入明确工具和会话 ID 后重试")
             return 5
           explicit_id = gateway.text("明确 session ID（需公开查询核验）", policy=policy)
           from agentcfg.cli import selection_id
@@ -141,6 +144,8 @@ class CandidateResume:
       if target.confirmation == "unknown" or target.cwd_status == "unknown" or target.cwd is None:
         show("会话归属或 cwd 未知，不可自动恢复；请在官方 TUI 人工检查")
         return 5
+      if target.ref.agent == "omp":
+        show("OMP 在原生写入冲突时可能生成分叉 session；请核对界面实际 ID 后手动继续。")
 
       from .manual_continue import offer
       offer(context, description(target))
@@ -169,15 +174,29 @@ class CandidateResume:
 
 
 
+def backend_for_workspace(workspace, target, *, expected_deployment=None):
+  options = {"expected_deployment": expected_deployment} if expected_deployment is not None else {}
+  if workspace.agent == "dsh" and target.ref.agent == "dsh":
+    from agentcfg.dsh_sessions import DshResumeCandidate
+    return DshResumeCandidate(workspace, **options)
+  if workspace.agent == "pi" and target.ref.agent == "pi":
+    from agentcfg.tool_sessions import PiResumeCandidate
+    return PiResumeCandidate(workspace, **options)
+  if workspace.agent == "omp" and target.ref.agent == "omp":
+    from agentcfg.tool_sessions import OmpResumeCandidate
+    return OmpResumeCandidate(workspace, **options)
+  raise SessionError(5, "candidate_tool_unavailable")
+
+
 def dsh_candidate():
-  """日常入口与可信 Python 共用工厂；实际仅准入精确 Linux DSH 组合。"""
-  from agentcfg.dsh_sessions import DshResumeCandidate, lookup_metadata, scope_key
+  """保留历史工厂名；三工具的精确组合与现场条件由各后端核验。"""
+  from agentcfg.dsh_sessions import scope_key
   from agentcfg.local import available_profiles
   from agentcfg.workspace import load_workspace
   bindings = {}
 
   def load(scope):
-    if scope.agent not in (None, "dsh"):
+    if scope.agent not in (None, "dsh", "pi", "omp"):
       raise SessionError(5, "candidate_tool_unavailable")
     key, rows = load_known(scope)
     local = _local_path(scope)
@@ -189,30 +208,32 @@ def dsh_candidate():
 
   def workspace(local, profile, key):
     selected = load_workspace(local, profile)
-    if (selected.agent != "dsh" or selected.profile != profile
+    if (selected.agent not in ("dsh", "pi", "omp") or selected.profile != profile
         or scope_key(selected.binding) != key):
       raise SessionError(4, "candidate_workspace_changed")
     return selected
 
   def backend(target):
-    if target.ref.agent != "dsh":
-      raise SessionError(5, "candidate_tool_unavailable")
     local = bindings.get(target.scope)
     if local is None:
       raise SessionError(4, "candidate_scope_unverified")
-    return DshResumeCandidate(workspace(local, target.profile, target.scope))
+    return backend_for_workspace(workspace(local, target.profile, target.scope), target)
 
   def lookup(scope, agent, identifier):
-    if agent != "dsh":
+    if agent not in ("dsh", "pi", "omp"):
       raise SessionError(5, "candidate_tool_unavailable")
     local = _local_path(scope)
     keys = [key for key, saved in bindings.items() if saved == local]
     if len(keys) != 1 or scope.profile is None:
       raise SessionError(4, "candidate_scope_unverified")
-    return lookup_metadata(workspace(local, scope.profile, keys[0]), identifier)
+    selected = workspace(local, scope.profile, keys[0])
+    if selected.agent != agent:
+      raise SessionError(2, "candidate_tool_profile_mismatch")
+    from agentcfg.tool_maintenance import lookup_session
+    return lookup_session(selected, identifier)
 
   def profiles(scope, agent):
-    if agent != "dsh":
+    if agent not in ("dsh", "pi", "omp"):
       raise SessionError(5, "candidate_tool_unavailable")
     return tuple(profile for profile, tool in available_profiles() if tool == agent)
 

@@ -73,7 +73,7 @@ def test_root_replaced_during_host_observation_cannot_receive_updated_record(sto
   assert record_bytes(store) == {} and (moved / path.name).read_bytes() == before
 
 
-@pytest.mark.parametrize("change", ["missing", "v1", "unknown", "idle", "bound", "pi", "ssh", "manager"])
+@pytest.mark.parametrize("change", ["missing", "v1", "unknown", "idle", "bound", "omp", "ssh", "manager"])
 def test_noneligible_owner_does_not_change(store, handle, change):
   record = v2_record(store)
   if change == "v1":
@@ -85,9 +85,9 @@ def test_noneligible_owner_does_not_change(store, handle, change):
     elif change == "bound":
       record["host_identity"] = deepcopy(HOST)
       record["process_observation"]["host_identity"] = deepcopy(HOST)
-    elif change == "pi":
-      record["agent"] = "pi"
-      record["native_home_ref"]["kind"] = "pi-home"
+    elif change == "omp":
+      record["agent"] = "omp"
+      record["native_home_ref"]["kind"] = "omp-managed-home"
     elif change == "ssh":
       record["backend"] = "ssh"
     elif change == "manager":

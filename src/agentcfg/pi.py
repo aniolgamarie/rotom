@@ -554,7 +554,7 @@ class PiAdapter(Adapter):
       raise ConfigError("pi-arguments")
     index = 0
     positional = []
-    no_value = {"--continue", "-c", "--print", "-p", "--help", "-h", "--version", "-v", "--verbose", "--no-tools"}
+    no_value = {"--continue", "-c", "--resume", "-r", "--print", "-p", "--help", "-h", "--version", "-v", "--verbose", "--no-tools"}
     values = {"--session", "--fork", "--model", "--provider", "--thinking"}
     while index < len(tokens):
       token = tokens[index]
@@ -568,7 +568,10 @@ class PiAdapter(Adapter):
       if option in no_value:
         if equal:
           raise ConfigError("pi-arguments")
-      elif option in values or option in ("--resume", "-r"):
+        # 官方 --resume 是无值选择器；其后的裸 ID 会成为提示词，必须拒绝歧义。
+        if option in ("--resume", "-r") and index + 1 < len(tokens) and not tokens[index + 1].startswith("-"):
+          raise ConfigError("pi-resume-is-picker-use-session")
+      elif option in values:
         # Pi 1.3 的 fork 必须显式接会话 ID，不支持等号形式。
         if option == "--fork" and equal:
           raise ConfigError("pi-arguments")
@@ -577,8 +580,6 @@ class PiAdapter(Adapter):
         elif index + 1 < len(tokens) and not tokens[index + 1].startswith("-"):
           index += 1
           value = tokens[index]
-        elif option in ("--resume", "-r"):
-          value = None
         else:
           raise ConfigError("pi-arguments")
         if value is not None:
@@ -587,7 +588,7 @@ class PiAdapter(Adapter):
           if option == "--thinking" and value not in ("off", "minimal", "low", "medium", "high", "xhigh", "max"):
             raise ConfigError("pi-arguments")
           # 原生 CLI 将相对 .jsonl 也视为路径，不能绕过实例会话目录。
-          if option in ("--session", "--fork", "--resume", "-r") and (
+          if option in ("--session", "--fork") and (
               "/" in value or "\\" in value or value in (".", "..") or value.lower().endswith(".jsonl")):
             raise ConfigError("pi-session-directory-boundary")
       elif token.startswith("-"):

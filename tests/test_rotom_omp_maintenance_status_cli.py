@@ -17,6 +17,8 @@ BATCH = "b" * 32
 
 @pytest.fixture
 def status(tmp_path, monkeypatch):
+  from rotom import maintenance
+  monkeypatch.setattr(maintenance, "_batch_workspace", lambda *args: None)
   backend = importlib.import_module("agentcfg.maintenance_status")
   streams = InputGateway(Stream(tty=False), Stream(tty=False), Stream(tty=False))
   monkeypatch.setattr(cli, "InputGateway", lambda: streams)
@@ -94,7 +96,7 @@ def test_new_route_never_opens_other_scope_or_operations(status, mode):
   elif mode == "stop":
     args = [*args[:7], "stop", "--operation", "setup", "--run", "a" * 32, "--plan-id", "d" * 64]
   else: args[7] = mode
-  assert cli.main(args) == (13 if mode in ("no-profile", "dsh-profile", "cancel") else 5)
+  assert cli.main(args) == (13 if mode in ("no-profile", "dsh-profile", "cancel") else 2)
   assert status.calls == [] and status.streams.stdin.reads == 0
 
 
@@ -120,7 +122,7 @@ def test_status_help_is_static_and_explicit_about_omp_readonly(monkeypatch, caps
   assert cli.main(["agent", "maintenance", "status", "--help"]) == 0
   text = capsys.readouterr().out
   assert "Linux OMP" in text and "显式 --profile" in text and "只读" in text
-  assert "已保存批次" in text and "DSH cancel" in text
+  assert "已保存批次" in text and "不自动迁移或重放" in text
   assert "无写入" in text
   effects = cli.command_effects(("agent", "maintenance", "status"))
-  assert "write:none" in effects and any("omp" in effect for effect in effects)
+  assert "write:none" in effects and "read:explicit-tool-workflow-or-legacy-batch" in effects

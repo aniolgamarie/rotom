@@ -76,6 +76,20 @@ def test_current_full_dsh_lock_identity_must_match_reviewed_candidate():
   assert query(runtime_identity=lock.identity).handoff == "admitted"
 
 
+@pytest.mark.parametrize("agent", ["pi", "omp"])
+def test_tool_handoff_requires_reviewed_complete_lock_and_control_sources(agent):
+  import json
+  from agentcfg.pi_session_guard import source_identity
+  root = Path(__file__).resolve().parents[1]
+  identity = json.loads((root / "locks" / agent / "manifest.json").read_text())["identity"]
+  observer = source_identity() if agent == "pi" else "none"
+  key = {**KEY, "agent": agent, "runtime_identity": identity, "observer_identity": observer}
+  result = sessions.session_capability(**key)
+  assert result.handoff == "admitted" and not result.load_confirmation and not result.automatic_continue
+  assert sessions.session_capability(**{**key, "runtime_identity": "0" * 64}).handoff == "unavailable"
+  assert sessions.session_capability(**{**key, "observer_identity": "other"}).handoff == "unavailable"
+
+
 def test_query_has_no_config_environment_or_subprocess_dependency(monkeypatch):
   import builtins
   import os

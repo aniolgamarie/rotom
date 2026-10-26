@@ -1,8 +1,22 @@
 # 会话、停止与恢复生命周期契约
 
-日期：2026-10-23。状态：设计；P-SESSION/P-EXIT/P-PANE/P-INPUT 分别通过才开放对应能力。
+日期：2026-10-26。状态：本轮分阶段维护候选已通过分组与受影响复验，尚未合入 main；合入须人工批准。P-SESSION/P-EXIT/P-PANE/P-INPUT 仍分别准入。
 依据：[规格](../spec.md)、[数据模型](../data-model.md)、[研究](../research.md)。
 所有状态为受管事实；收到请求、界面存在和原生退出码 0 不能替代成功证明。
+
+## 当前公开 workflow：按工具分阶段
+
+候选实现、分组回归及稳定差异审查已完成；基于 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main。合入须另经人工批准。官方 Pi/OMP TUI/PTY、隔离回归及受影响复验见[验收记录](../tool-workflow-validation.md)。
+
+本轮以[工具方案](../tool-workflows.md)替代所有工具统一 Domain 许可的前提。DSH/Pi/OMP stop_only 复用原快照/fence/CAS、一次原 host pidfd 请求及退出核验；恢复清单先于 stop 保存，与 stop 批次同 ID，不能覆盖。Pi/OMP endpoint 为 inbox sidecar，精确绑定 run/manager/host/部署，不改旧 RunRecord.control；新 OMP host 登记通过 owner_pending 与 Domain/owner 双向摘要。旧无通道运行保持人工停止，不从 PID 消失推导退出或释放。
+
+确认停止后按原协议关闭本 stop fence，再调用普通 setup 的最新计划与独立批准，原实例/HOME/包锁、owner、共享引用和 Domain 门禁全保留；新 run 可阻挡，不能扩大 stop 集合。本 workflow 不消费或重新发行旧 Domain batch permit，不把 stop_only 当资源维护许可。
+
+逐项 restore 在当前终端创建新 run，Pi/OMP 使用 HandoffResumeBackend，DSH 原 Host 不变。保留 setup 原结果和退出码；未知不重试，不回滚猜目标。restore-intent/请求派发与加载证据分开；缺回执显示待确认并请核对 TUI ID，始终 continue=not_sent。原 pane、新标签页和自动继续仍需各自准入。
+
+Pi 公开扩展/helper 在启动与切换前 claim 租约，旧 active/unknown 无 guard 或当前来源不符阻挡；只保证 Rotom 合作进程范围。三来源锁为 locks/pi/session-control.json。普通 --session 完整 ID 核实为精确路径，原生 --resume 是 picker；缺失文件原生会新建 ID，Rotom 先严格重核，外部事后变化仍 unknown。OMP 只读打开不持 writer 锁，固定 session-manager.ts:1103–1128 在竞争首次写入时分叉 sibling 新 ID；不承诺任意外部 writer 提前拒绝。自动输入所需 writer/加载/接收证据不因交接而放宽。
+
+旧 stop/OMP Domain batch 按原 reader 与查询/收尾保留，不升级/迁移/重放。以下共享 session/stop 原语继续适用；明确标为旧 Domain 的协议仅约束既有 OMP 内部路径，不能套作 DSH/Pi workflow 前置。完整命令与验证边界见[指南](../../../docs/tool-maintenance-workflows.md)。
 
 ## 共享接口与能力证据
 
@@ -15,7 +29,8 @@
 | resume executor | ResumeRequest、有效 writer 准入、可选一次性 ResumePermit | 复用 runtime.run；新 run；可交接为 launch_dispatched，加载证明后才 restored |
 | stop planner | 精确 Scope/run 集合、operation、已验证资源与恢复位置 | 只读 StopPlan/摘要；无批次与意图写入 |
 | stop executor | StopPlan、稳定身份、独立停止批准 | 逐项请求/退出观察；不扩大范围，不先停止 manager |
-| maintenance runner | BatchPermit、允许 operation、原操作批准 | 复用既有核心操作与原有物理门禁，返回原结果 |
+| 公开 workflow runner | 恢复清单、原 stop 快照、最新普通 setup 计划与独立批准 | 关本次 fence 后复用普通 setup 全门禁，保存原结果，不保留跨阶段许可 |
+| 旧 OMP Domain maintenance runner | BatchPermit、允许 operation、原操作批准 | 仅旧内部协议，复用既有核心操作与原有物理门禁，返回原结果 |
 | container control | container/generation、精确 op/run、已接受恢复引用 | 私人端点、核实调用者；无任意 argv/shell/文本执行 |
 
 能力记录绑定工具/后端、实际运行包与插件来源、平台和公开接口证据；不创建插件市场。
@@ -28,19 +43,19 @@
 2. 显式工具/profile 为硬约束；未给工具时只有唯一已知匹配可推断，歧义按 TTY 选择或返回 2。
 3. 未登记显式 ID 仅经所选后端公开元数据核实；无证明不启动，不改用最近/新会话。
 4. 核验受管存储归属与已知会话 cwd 约束；位置参数只选终端。预检时的无 writer 观察不是执行凭证。
-5. 复用已部署 runtime 的完整准入、环境与秘密解析、运行包和租约，创建新 run；调用官方显式目标恢复入口，由原生恢复事务取得 writer 排他，覆盖权威核验到实际加载。
+5. 复用已部署 runtime 的完整准入、环境与秘密解析、运行包和租约，创建新 run；调用官方显式目标恢复入口，按下述各工具已验证的 writer 行为交接，不统一声称启动时取得原生排他。
 6. 启动事实与加载确认分别处理：官方启动已派发即可交接当前终端，缺加载回执时显示加载待确认。
 7. 有公开实际加载证据且 SessionRef/cwd 相符才确认 restored；否则禁止自动继续，用户在官方 TUI 自行操作。人工确认不成为机器回执或额外输入许可。
 
-活动 writer 优先展示已有位置；身份不明返回 4，缺少必要公开能力返回 5。
+writer 语义按工具分别核验：DSH 沿用原冲突拒绝，Pi 只保护 Rotom 合作进程，OMP 竞争首次写入可分叉。身份不明返回 4，缺少必要公开能力返回 5。
 本地会话锁只能排除合作 Rotom，不能单独代表原生 writer 排他。
-检查和加载之间不能先释放排他；manager 退出也不能让仍存活的写入者失去保护。
-排他可以由官方宿主在恢复事务内部取得并持续持有，不要求 Rotom 父进程先争抢同一把原生锁。
-这条路线须证明严格打开、外部 writer 冲突及实际加载均由该原生机制覆盖；宿主启动或自报布尔值不足。
+已经取得的保护不得在检查与加载之间提前释放；manager 退出也不能让仍存活的写入者失去保护。
+DSH 排他由官方宿主在恢复事务内部取得并持续持有；Pi 合作租约覆盖受管恢复和切换；OMP 只读打开不取得 writer，首次写入时遵循官方锁与分叉行为。
+原生 writer 行为及严格目标须有独立证据，不能把本地合作锁冒充外部排他；OMP 交接允许原生分叉但必须明确展示可能改变 ID。自动输入仍须证明完整排他与实际加载，宿主启动或自报布尔值不足。
 加载证明不能只来自本次请求参数或历史索引，也不能以原生退出码 0 代替。
 官方交接、加载确认、继续输入分别准入。缺 writer/范围/目录等安全派发证据仍不开放交接；
 仅缺严格初始加载回执不阻塞已准入的交接，不以等待上游支持作为 DSH 阶段二前提。
-真实验收仍须验证官方恢复原历史、缺失目标及外部 writer 拒绝；人工验收不补造运行时加载回执。
+真实验收须验证原历史、缺失目标及该工具实际 writer 行为（拒绝/合作租约/写入分叉）；人工验收不补造运行时加载回执。
 派发后失联或确认超时保留已知事实和 unknown，不重试、不强杀、不向终端输入探测/继续文本。
 上述状态边界同时用于日常、维护后及原位置恢复；这些入口不能因调用位置不同把待确认改写为 restored。
 
@@ -48,13 +63,12 @@
 
 DSH 当前采用 StopPlan v2：单一实例 Registry coordinator、完整 owner 摘要和本地三资源引用，
 不借用 OMP Domain/代际。只读采集按实例 SH → 状态 SH → owner 非阻塞锁核实当前部署和全集，
-读前后比较记录，未选项不变且保留在引用中；旧 unknown 不自动采纳。当前覆盖与控制准入均未知，
-计划保持 blocked，CLI 仅可预览。纯 codec 的 supported/complete 声明不构成现场证明或许可。
+读前后比较记录，未选项不变且保留在引用中；旧 unknown 不自动采纳。Pi/OMP 复用精确目标原语并按工具核验布局/endpoint；无可信通道或身份仍 blocked，不能从纯 codec 的 supported/complete 声明取得现场证明或许可。
 
 内部已审阅保存复用原两 SH 和同一 owner 锁：完整 owner CAS、部署布局与计划三资源一致后，
 消费既有 StopReview，先持久化嵌入完整计划的 v2 人工快照，再发布带摘要的 fence。
 首写失败也不还原审阅；孤儿快照保留历史，已有文件不能重新签发批准或触发重试。
-默认 CLI/启动路径不调用该保存入口，仍不创建控制服务或意图。
+当前 CLI 精确停止在原审阅和现场复核后调用保存路径；静态 help/只读 plan 不创建控制服务或意图。
 
 plan 是无写入快照。停止调用须重复同一 scope、operation、显式 run 集合和 plan_id，
 重新计算资源闭包、会话观察及原/新位置能力；新增 run 或目标变化使旧接受无效。
@@ -64,7 +78,7 @@ plan 是无写入快照。停止调用须重复同一 scope、operation、显式
 纯 StopPlan/Batch codec 不采集现场身份、读取原生会话或获得租约；它们只检查调用方提供的有限
 快照、规范摘要和逐项事实一致性。反序列化不能产生控制资格或可消费的 Permit。
 未选 run 仍引用选中项的共享资源时，setup 计划应披露阻断；stop_only 仍只包含明确选择的项，
-不能扩大集合。DSH v2 的 stop_only 可在其它资源覆盖未知时精确停止已核实所选目标，
+不能扩大集合。三工具 v2 stop_only 可在其它资源覆盖未知时精确停止已核实所选目标，
 coverage/reference_runs 仍披露并进入摘要；setup 和 v1 计划继续要求完整覆盖。
 未知目标、缺失原句柄或未准入通道仍拒绝，实际接受必须重新核实部署、身份和批准；
 版本 hash 或停止请求结果都不能代替维护前的完整释放观察与排他租约。
@@ -93,7 +107,9 @@ manager 作为观察者保持运行，收集原生退出、相关后代、租约
 维护是否继续按其资源门禁和已接受的恢复方案判断。缺退出/资源证明才保持运行 unknown。
 强杀、丢事件或未登记活动不因 PID 消失变成 idle。既有 owner 的 unknown 只走可信物理 EX 核实路径。
 
-## 合作准入、锁顺序与物理门禁
+## 旧 OMP Domain 协作与持续适用的物理门禁
+
+本节的统一资源键/Domain 事务约束继续适用 OMP 内部路径；不是 DSH/Pi 公开 workflow 的采用前提。普通 setup 原物理锁与 owner 检查不因分阶段而放宽。
 
 规范 ResourceKey 及协调域必须与物理实例所有权锚点一致；无法归一的跨域共享资源拒绝自动维护。
 旧 checkout/外部入口可能不合作，不能声称意图已阻止所有系统启动；现有物理租约始终是最终门禁。
@@ -224,7 +240,9 @@ request/batch/run ID、plan 摘要、manager/host 的 pid 与 birth_id、正整�
 发送后期限已过仍保存 sent 事实；外层必须独立返回阶段超时，不能将 sent 当成停止成功。
 内存锁不等待竞争；verify/send 必须有界，此候选没有内置原生通道或生产准入。
 
-## 批次转换、派发与取消
+## 旧 OMP Domain 批次转换、派发与取消
+
+本节保存原内部批次/permit 协议；新公开 workflow 独立保存阶段事件，不把这套状态机自动迁移到所有工具。
 
 每个 run 保存独立停止/恢复状态；批次不能用一个总成功覆盖部分结果。
 
@@ -376,11 +394,11 @@ released 对应 active/unknown、错身份、错摘要/时间或资源替换仍�
 
 
 T116 内部新实例登记只接受尚不存在的目标；已有空目录或旧实例均拒绝，且不为其留下声明。
-可信调用方提供 Domain，根的生产选择/工作区校验仍未接通。登记先不可覆盖保存父容器中的独立声明，
+可信调用方提供 Domain，该历史容器方案的根生产选择/工作区校验仍未接通。登记先不可覆盖保存父容器中的独立声明，
 同步声明目录和祖先，才创建实例、物理锁和隔离 HOME。owner 与实例/HOME 锚点不可覆盖发布，
 同一锚点再写入仍未对外开放的锁 fd 并同步；最后持实例 EX 在短协调事务登记两个资源。
 不持协调锁等待物理锁或执行宿主。声明、任一锚点或非空锁都使普通入口拒绝旧格式回落；
-完整合作入口未开放前，即使域记录为 ready，普通 run/apply/sync 也不使用此实例。
+上述历史容器采用方案若未完成其合作入口，即使域记录为 ready 也不得据此启用；此限制不否定已接通的普通 OMP cooperative run/setup 路径。
 
 scope 验证固定原父容器、实例目录、锁 inode 与 HOME inode，校验 owner 全字节摘要和精确工作区归属。
 同域资源集合必须包括一个 runtime 与此 scope 的两个资源；runtime-only、缺项、错 scope 或多项均拒绝。

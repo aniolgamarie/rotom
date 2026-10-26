@@ -45,20 +45,78 @@ def test_static_help(argv):
   assert cli.main([*argv, "--help"]) == 0
 
 
-def test_resume_capability_gate():
+def test_resume_requires_explicit_target_and_valid_selected_configuration(capsys):
   assert cli.main(["--no-input", "resume"]) == 2
-  assert cli.main(["resume", "pi", "--session", "synthetic-session", "--machine", "fixture"]) == 5
+  assert cli.main(["resume", "pi", "--session", "synthetic-session", "--machine", "fixture"]) == 2
+  assert "所选范围配置无效或不可用" in capsys.readouterr().err
+
+
+@pytest.fixture(params=["pi", "omp"])
+def resume_candidate_target(request, tmp_path, monkeypatch):
+  from types import SimpleNamespace
+  from agentcfg import sessions, tool_sessions, workspace
+  from agentcfg.dsh_sessions import scope_key
+  from rotom import resume
+  tool = request.param
+  profile = "pi-base" if tool == "pi" else "omp-default"
+  binding = {"machine": "fixture", "local": str(tmp_path / "local.toml"), "profile": profile}
+  metadata = ({"host": {"package": "@earendil-works/pi-coding-agent", "version": "1.3.0"}}
+    if tool == "pi" else {"tag": "v18.12.6", "commit": "45c35e40c46166dc726ccc52f5d27f40f2449f99"})
+  lock = SimpleNamespace(identity="synthetic-unadmitted-runtime", metadata=metadata)
+  selected = SimpleNamespace(agent=tool, profile=profile, binding=binding,
+    backend=SimpleNamespace(read_lock=lambda repository: lock), repository=tmp_path)
+  target = sessions.KnownSession(sessions.SessionRef(tool, "managed", "synthetic-home",
+    "12345678-1234-4234-8234-123456789abc"), scope_key(binding), profile,
+    str(tmp_path), "historical", "historical", 1, None)
+  monkeypatch.setattr(resume, "load_known", lambda scope: (target.scope, (target,)))
+  monkeypatch.setattr(workspace, "load_workspace", lambda local, profile: selected)
+  monkeypatch.setattr(tool_sessions, "lookup", lambda ws, identifier: SimpleNamespace(known=target))
+  calls = []
+  def runtime(selected_workspace, *, cwd, arguments, resume_operation):
+    assert selected_workspace is selected and str(cwd) == target.cwd
+    calls.append((selected_workspace, arguments))
+    # 原候选的真实组合检查先拒绝未知 lock，不能到 owner/宿主操作。
+    spec = SimpleNamespace(argv=("synthetic-native",), cwd=cwd)
+    contract = {"argv": ["synthetic-native"], "lock_identity": lock.identity}
+    return resume_operation(selected, spec, {}, 11, contract, run_id="a" * 32,
+      lifecycle_fd=12, package_fd=13)
+  monkeypatch.setattr(tool_sessions.runtime, "run", runtime)
+  prefix = ["--no-input", "resume", tool, "--local", binding["local"], "--profile", profile,
+    "--session", target.ref.native_ref]
+  return SimpleNamespace(tool=tool, selected=selected, calls=calls, prefix=prefix)
 
 
 @pytest.mark.parametrize("location", [[], ["--here"]])
-@pytest.mark.parametrize("tool", ["pi", "omp"])
-def test_unsupported_tools_do_not_construct_a_resume_coordinator(monkeypatch, location, tool):
-  import agentcfg.sessions
+def test_here_selects_real_tool_candidate_and_preserves_capability_failure(resume_candidate_target,
+    monkeypatch, capsys, location):
+  from agentcfg import sessions, tool_sessions
+  from rotom import resume
+  state = resume_candidate_target
+  coordinator = sessions.ResumeCoordinator
+  selected = []
+  def capture(backend, **kwargs):
+    selected.append(backend)
+    return coordinator(backend, **kwargs)
+  monkeypatch.setattr(resume, "ResumeCoordinator", capture)
+  assert cli.main([*state.prefix, *location]) == 5
+  expected = tool_sessions.PiResumeCandidate if state.tool == "pi" else tool_sessions.OmpResumeCandidate
+  assert len(selected) == 1 and type(selected[0]) is expected
+  assert selected[0].workspace is state.selected and len(state.calls) == 1
+  assert "恢复请求未能确认；未发送继续" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("location", ["--original", "--new-tab"])
+def test_unsupported_locations_do_not_construct_a_resume_coordinator(resume_candidate_target,
+    monkeypatch, capsys, location):
+  from rotom import resume
   def forbidden(*args, **kwargs):
-    pytest.fail("未准入工具不得构造恢复协调器")
-  monkeypatch.setattr(agentcfg.sessions, "ResumeCoordinator", forbidden, raising=False)
-  assert cli.main(["--no-input", "resume", tool, "--session", "synthetic-session",
-    "--machine", "fixture", *location]) == 5
+    pytest.fail("未准入终端位置不得构造恢复协调器或后端")
+  monkeypatch.setattr(resume, "ResumeCoordinator", forbidden)
+  monkeypatch.setattr(resume, "backend_for_workspace", forbidden)
+  state = resume_candidate_target
+  assert cli.main([*state.prefix, location]) == 5
+  assert not state.calls
+  assert "所选终端位置能力尚未准入" in capsys.readouterr().err
 
 
 def test_registry_covers_parser_both_directions():

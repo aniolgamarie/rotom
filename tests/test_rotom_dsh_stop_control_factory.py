@@ -74,7 +74,7 @@ def test_supported_is_exact_static_combination(case, monkeypatch, change):
   assert control.supported(record) is True
   if change == "platform": monkeypatch.setattr(control.sys, "platform", "darwin")
   elif change == "runtime": record["deployed_identity"]["runtime"] = "c" * 64
-  elif change == "agent": record["agent"] = "pi"
+  elif change == "agent": record["agent"] = "unsupported"
   elif change == "backend": record["backend"] = "ssh"
   else: record["coordination_domain"] = {}
   assert control.supported(record) is False

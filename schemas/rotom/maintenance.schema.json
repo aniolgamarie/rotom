@@ -950,7 +950,11 @@
       "type": "object",
       "properties": {
         "kind": {
-          "const": "dsh-instance-registry"
+          "enum": [
+            "dsh-instance-registry",
+            "pi-instance-registry",
+            "omp-instance-registry"
+          ]
         },
         "binding_digest": {
           "$ref": "#/$defs/sha"
@@ -1003,7 +1007,11 @@
               "maxLength": 4096
             },
             "agent": {
-              "const": "dsh"
+              "enum": [
+                "dsh",
+                "pi",
+                "omp"
+              ]
             },
             "profile": {
               "type": "string",
@@ -1060,7 +1068,11 @@
                         "maxLength": 4096
                       },
                       "agent": {
-                        "const": "dsh"
+                        "enum": [
+                          "dsh",
+                          "pi",
+                          "omp"
+                        ]
                       },
                       "profile": {
                         "type": "string",

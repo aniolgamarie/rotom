@@ -167,17 +167,21 @@ def test_real_fake_setup_run_active_owner_deployment_is_supported_without_stop_a
   from agentcfg import commands
   from types import SimpleNamespace
   assert commands.cmd_setup(SimpleNamespace(command="setup")) == 0
-  import subprocess
-  original = subprocess.run
+  original = runtime._run_dsh_child
   calls = []
-  def child(*args, **kwargs):
-    record, = run_owners.Registry(fresh.ws.state_root / "run-owners", fresh.ws.binding).snapshot().values()
+  def child(spec, env, pass_fds, **kwargs):
+    registry = run_owners.Registry(fresh.ws.state_root / "run-owners", fresh.ws.binding)
+    record, = registry.snapshot().values()
     assert record["lifecycle_state"] == "active" and record["host_identity"] is None
-    fds = kwargs["pass_fds"]
-    assert check.check_stop_deployment(fresh.ws, record, instance_fd=fds[0], state_fd=fds[1]) is None
+    assert record["protocol"]["control"] is None
+    assert check.check_stop_deployment(fresh.ws, record,
+      instance_fd=pass_fds[0], state_fd=pass_fds[1]) is None
+    for fd in pass_fds:
+      os.fstat(fd)
     calls.append(True)
-    return original(*args, **kwargs)
-  monkeypatch.setattr(subprocess, "run", child)
+    return original(spec, env, pass_fds, **kwargs)
+  # 与普通 OMP 共用的假 child 边界；不换掉真实 owner、物理租约或部署核验。
+  monkeypatch.setattr(runtime, "_run_dsh_child", child)
   fake_subprocess.queue(returncode=17)
   assert runtime.run(fresh.ws, cwd=fresh.cwd) == 17
   assert calls == [True]

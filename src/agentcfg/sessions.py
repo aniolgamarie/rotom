@@ -43,9 +43,15 @@ class SessionCapability:
   final_seal: bool = field(default=False, init=False)
 
 
-# 完整运行锁涵盖其他插件；独立会话观察插件目前只有 none。
+# 完整运行锁与自有控制来源分别锁定；条目只描述交接，不证明实际加载。
 _SESSION_HANDOFF_ADMITTED = frozenset({(
   "dsh", "managed", "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d",
+  "none", "linux", "here",
+), (
+  "pi", "managed", "62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558",
+  "100331dd76bf2740304f7177ca1452660317484f674bb374a48fefae802f5817", "linux", "here",
+), (
+  "omp", "managed", "490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab",
   "none", "linux", "here",
 )})
 
@@ -58,7 +64,7 @@ def session_capability(*, agent, backend, runtime_identity, observer_identity, p
   admitted = key in _SESSION_HANDOFF_ADMITTED
   return SessionCapability(*key,
     handoff="admitted" if admitted else "unavailable",
-    reason="verified_linux_dsh_handoff" if admitted else "exact_combination_unavailable",
+    reason="verified_linux_" + agent + "_handoff" if admitted else "exact_combination_unavailable",
     manual_guidance=("恢复交接已准入；加载待确认，请在官方界面检查目标；不自动发送继续"
       if admitted else "请在所选工具的官方界面人工选择会话；不自动发送继续"))
 
@@ -272,6 +278,17 @@ class HostResumeBackend:
     raise SessionError(5, "resume_backend_unavailable")
 
 
+class HandoffResumeBackend:
+  """按工具公开接口交接，不宣称启动即取得写锁或已加载。
+
+  Pi 使用启动前的合作租约及公开切换扩展；OMP 保留原生首次写入锁。
+  回调顺序与宿主恢复接缝相同，但只能返回派发事实，不能据此声明加载完成。
+  """
+
+  def resume_session(self, target, *, location, before_dispatch, after_dispatch):
+    raise SessionError(5, "resume_backend_unavailable")
+
+
 def _writer_live(evidence, target):
   if (type(evidence) is not WriterEvidence or not _token(evidence.source)
       or evidence.coverage != "external-writers" or not callable(evidence.is_live)):
@@ -405,13 +422,15 @@ class ResumeCoordinator:
 
     try:
       backend = self._backend
-      if isinstance(backend, HostResumeBackend):
+      if isinstance(backend, (HostResumeBackend, HandoffResumeBackend)):
         receipt = backend.resume_session(target, location=location, before_dispatch=before_dispatch,
           after_dispatch=after_dispatch)
         if not dispatched:
           # 不符合事务接缝的返回也可能已执行，不能当作安全的未派发。
           dispatched = True
           raise SessionError(4, "dispatch_identity_unconfirmed")
+        if isinstance(backend, HandoffResumeBackend) and type(receipt) is not LaunchReceipt:
+          raise SessionError(4, "handoff_load_confirmation_unavailable")
         self._receipt(target, receipt, dispatched_run_id)
       elif backend is None or any(not callable(getattr(backend, method, None))
           for method in ("acquire_writer", "verify_session", "launch_session")):

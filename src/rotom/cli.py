@@ -74,37 +74,46 @@ def _selectors(parser, *, profile=False, local=True):
 
 
 def _future_agent(parser):
+  from agentcfg.cli import UniqueSelector
   groups = _subparsers(parser)
-  instances = groups.add_parser("instances", help="查询受管实例；精确停止已准入的 Linux DSH")
+  instances = groups.add_parser("instances", help="查询受管实例；精确停止有活跃控制通道的 Linux 运行")
   commands = instances.add_subparsers(dest="instances_command", required=True)
   listing = commands.add_parser("list", help="只读列出所选范围受管实例")
   listing.add_argument("--agent", choices=("dsh", "pi", "omp"))
   listing.add_argument("--format", choices=("auto", "human", "json"), default="auto")
-  stop = commands.add_parser("stop", help="预览或停止所选 Linux 受管 DSH 实例")
+  stop = commands.add_parser("stop", help="预览或停止所选 Linux 受管实例")
   stop.add_argument("--run", action="append", required=True)
   stop.add_argument("--dry-run", action="store_true")
   stop.add_argument("--plan-id")
   stop.add_argument("--wait-seconds", type=_wait_seconds, default=30)
-  maintenance = groups.add_parser("maintenance", help="查询普通停止或显式 Linux OMP 维护批次；完整维护与批量恢复尚未准入")
+  maintenance = groups.add_parser("maintenance", help="按工具编排停止、配置更新、逐项当前终端恢复；阶段分别批准")
   commands = maintenance.add_subparsers(dest="maintenance_command", required=True)
   for name in ("plan", "stop", "execute", "restore", "status", "cancel"):
-    child = commands.add_parser(name, help=("只读 setup 计划；实际维护尚未准入" if name == "plan"
-      else "只读查询普通停止或显式 --profile 的 Linux OMP 维护批次，无写入能力" if name == "status" else "取消尚未投递的普通停止项，或核对原收尾" if name == "cancel"
-      else "维护 " + name + "；当前能力待准入"))
+    descriptions = {"plan": "只读预览停止与恢复清单，或已停止批次的最新 setup 计划",
+      "stop": "保存明确会话清单并停止所选运行；不更新配置",
+      "execute": "对已停止批次执行普通 setup；独立批准，可能联网",
+      "restore": "选择批次中的一个会话在当前终端恢复；加载待确认，不发送继续",
+      "status": "只读查询阶段、原操作结果和待恢复项",
+      "cancel": "取消后续编排并保留事实；不撤销已发生的停止或配置修改"}
+    child = commands.add_parser(name, help=descriptions[name])
     if name == "plan":
-      targets = child.add_mutually_exclusive_group(required=True)
+      targets = child.add_mutually_exclusive_group()
       targets.add_argument("--operation", choices=("setup",))
-      targets.add_argument("--batch")
+      targets.add_argument("--batch", action=UniqueSelector)
       child.add_argument("--run", action="append")
     elif name == "stop":
-      child.add_argument("--operation", choices=("setup",), required=True)
-      child.add_argument("--run", action="append", required=True)
-      child.add_argument("--plan-id", required=True)
+      child.add_argument("--operation", choices=("setup",), default="setup")
+      child.add_argument("--run", action="append", help="明确运行；可重复，TTY 缺失时选择一项")
+      child.add_argument("--plan-id", action=UniqueSelector, help="当前维护计划摘要；无交互时必填")
     else:
-      child.add_argument("--batch", required=True)
+      child.add_argument("--batch", action=UniqueSelector, required=True)
+    if name in ("plan", "stop"):
+      child.add_argument("--session", action="append", metavar="RUN_ID=SESSION_ID", help="为所选运行指定精确恢复会话；可重复，TTY 缺失时提供选择")
+    if name == "restore":
+      child.add_argument("--run", action=UniqueSelector, help="本终端恢复的一个运行；缺失时交互选择，非TTY必填")
     if name == "execute":
-      child.add_argument("--plan-id")
-    if name in ("stop", "restore"):
+      child.add_argument("--plan-id", action=UniqueSelector, help="当前 setup 预览摘要；无交互时必填")
+    if name == "stop":
       child.add_argument("--wait-seconds", type=_wait_seconds, default=30)
     child.add_argument("--format", choices=("auto", "human", "json"), default="auto")
 
@@ -137,7 +146,7 @@ def build_parser():
   run.add_argument("--proxy", metavar="NAME", default=None,
     help="仅本次普通启动使用 [machine.proxies.NAME] 的命名代理，优先于持久默认")
   run.epilog = "原生参数放在 -- 后；不自动安装或部署。示例：rotom run pi -- --help"
-  resume = commands.add_parser("resume", help="锁定 Linux DSH 当前终端恢复交接；加载待确认")
+  resume = commands.add_parser("resume", help="DSH/Pi/OMP 精确会话在当前终端恢复交接；加载待确认")
   resume.add_argument("tool", nargs="?", choices=("dsh", "pi", "omp"), help="会话所属工具；能力分别验证")
   _selectors(resume, profile=True)
   from agentcfg.cli import selection_id
@@ -148,8 +157,9 @@ def build_parser():
       ("new-tab", "新标签页恢复；需独立验证的位置能力")):
     location.add_argument("--" + name, action="store_true", help=description)
   resume.epilog = ("默认 --here；不发送继续文本。请求 ID、启动派发与实际加载分别判断；"
-    "锁定完整运行包的 Linux managed DSH --here 已准入；无加载回执保持待确认，不自动重试或强杀。"
-    "Pi/OMP、其他平台或位置返回 5；参数或范围错误为 2，冲突为 4，保留原生退出码。上游默认可能生成自动回顾。"
+    "DSH/Pi/OMP 分别核验锁定运行包、原目录和原生保护；无加载回执保持待确认，不自动重试或强杀。"
+    "OMP 在原生写入冲突时可能生成分叉 session，请核对实际 ID。"
+    "Pi 写保护仅覆盖 Rotom 合作实例，不证明任意外部 writer 排他。未支持的平台或位置返回 5；参数或范围错误为 2，冲突为 4，保留原生退出码。上游默认可能生成自动回顾。"
     "rotom agent instances list 可查询独立的请求与进程观察。\n"
     "人工继续：在官方 TUI 核对会话 ID、原目录和历史后，自行聚焦输入框，"
     "手工输入或复制所需指令（例如：继续）。Rotom 不操作剪贴板或发送按键。")
@@ -265,9 +275,9 @@ _APPROVAL_PATHS = {
   ("work", "close"): "exact --scope token plus --yes; --dry-run only observes",
   ("work", "rebind"): "explicit --accept after binding review",
   ("work", "config", "edit"): "existing preview and save confirmation",
-  ("agent", "instances", "stop"): "exact --run set and current --plan-id, or interactive plan review; admitted Linux managed DSH only",
-  ("agent", "maintenance", "stop"): "exact --operation, --run set and --plan-id",
-  ("agent", "maintenance", "execute"): "accepted batch and original operation approval; renewed --plan-id on drift",
+  ("agent", "instances", "stop"): "exact --run set and current --plan-id, or interactive plan review; live managed control channel required",
+  ("agent", "maintenance", "stop"): "exact --run set and current --plan-id, or interactive plan review; setup is independently approved",
+  ("agent", "maintenance", "execute"): "stopped workflow batch and fresh independent setup --plan-id or interactive approval",
 }
 _READ_ONLY = {"profiles", "presets", "status", "plan", "validate", "doctor", "components", "list", "check", "show", "inventory", "_complete"}
 
@@ -338,14 +348,19 @@ def command_effects(path):
       "network:none", "write:reviewed-snapshot-request-and-close", "control:original-pidfd-once",
       "condition:--dry-run-is-read-only")
   if path == ("agent", "maintenance", "plan"):
-    return ("read:selected-owner-records-and-deployed-layout-for-plan", "capability:stop-maintenance-not-admitted",
-      "network:none", "write:none", "control:none")
+    return ("read:selected-owner-session-headers-and-current-setup-plan", "network:none", "write:none", "control:none")
   if path == ("agent", "maintenance", "status"):
-    return ("read:explicit-dsh-stop-or-linux-omp-setup-batch", "network:none", "write:none", "control:none")
+    return ("read:explicit-tool-workflow-or-legacy-batch", "network:none", "write:none", "control:none")
   if path == ("agent", "maintenance", "cancel"):
-    return ("read:explicit-dsh-stop-batch", "network:none", "write:verified-stop-close", "control:none")
+    return ("read:explicit-tool-workflow-or-stop-batch", "network:none", "write:verified-stop-close-and-cancel-fact", "control:none")
+  if path == ("agent", "maintenance", "stop"):
+    return ("read:reviewed-runs-and-session-targets", "write:workflow-and-stop-intent", "control:one-pidfd-sigterm-per-selected-run", "network:none")
+  if path == ("agent", "maintenance", "execute"):
+    return ("read:fresh-setup-plan", "network:locked-installers", "write:original-setup-guards-and-stage-result", "control:none")
+  if path == ("agent", "maintenance", "restore"):
+    return ("read:one-exact-session-and-deployment", "network:host-defined", "write:one-restore-intent-and-native-session", "control:current-terminal-handoff-no-continue")
   if path == ("resume",):
-    return ("capability:linux-dsh-here", "network:host-defined", "write:run-owner/resume-attempt/session", "control:handoff-only")
+    return ("capability:per-tool-current-terminal", "network:host-defined", "write:run-owner/resume-attempt/session", "control:handoff-only-no-continue")
   if path[:2] in (("agent", "instances"), ("agent", "maintenance")):
     return ("capability:not-admitted", "network:none", "write:none", "control:none")
   if path[0] == "config":
@@ -452,15 +467,19 @@ def _configure_static_help(parser):
       "副作用：" + "；".join(effects), "最短示例：" + examples[0], "显式范围示例：" + examples[1],
       "原生帮助：run --后的全部token和agent usage全部尾部含--help属于宿主；管理说明请看agent --help。"]
     if path == ("resume",):
-      lines.append("根 --interactive 可在启动前选择仅显示人工文本并独立确认；文本须为可打印单行，最多4096字符/16384 UTF-8字节；不发送、不操作剪贴板或聚焦。锁定 Linux DSH --here 可用；加载待确认，不会发送继续；上游默认可能生成自动回顾。")
-    if path in (("agent", "instances", "stop"), ("agent", "maintenance", "plan")):
-      lines.append("--run 为完整32位小写十六进制且不得重复。instances stop --dry-run 只读预览；Linux 受管 DSH 固定锁版本的新启动可停止，旧运行/Pi/OMP 尚不支持。非交互实际停止须显式 --plan-id（缺失返回2，漂移返回4）；交互先展示计划并确认。超时/结果未知返回4和batch查询命令，不重发或强杀；maintenance status/cancel --batch 查询或取消未投递项。setup维护尚未准入。")
+      lines.append("根 --interactive 可在启动前选择仅显示人工文本并独立确认；文本须为可打印单行，最多4096字符/16384 UTF-8字节；不发送、不操作剪贴板或聚焦。DSH/Pi/OMP 当前终端恢复分别核验；Pi 写保护仅覆盖 Rotom 合作实例；加载待确认，不会发送继续；上游默认可能生成自动回顾。")
+      lines.append("OMP 在原生写入冲突时可能生成分叉 session，请核对实际 ID。")
+    if path == ("agent", "instances", "stop"):
+      lines.append("--run 为完整32位小写十六进制且不得重复。--dry-run 只读预览；DSH/Pi/OMP 逐工具核验受管控制通道，旧运行无通道时需人工停止。非交互实际停止须显式 --plan-id（缺失返回2，漂移返回4）；交互展示计划并确认。超时/结果未知返回4和原 batch 查询命令，不重发或强杀。")
+    if path[:2] == ("agent", "maintenance"):
+      lines.append("DSH/Pi/OMP 分阶段完成：plan → stop → plan --batch → execute → restore --run。--operation setup 可省略。--run 为完整32位小写十六进制且不得重复；--session RUN_ID=SESSION_ID 可重复，但每个运行只能映射一次。TTY 缺失目标时选择，非TTY须明确目标；stop/execute 还须当前 --plan-id（缺失返回2，漂移返回4）。execute 重走普通 setup 批准与活动/共享资源门禁；restore 只交接一项当前终端。Pi 写保护仅覆盖 Rotom 合作实例；加载待确认、不发送继续。取消保留已发生事实，不自动撤销配置或恢复会话。")
+      lines.append("OMP 在原生写入冲突时可能生成分叉 session，请核对实际 ID。cancel 已保存但停止仍未知时返回4，保护保留。")
     if path in (("agent", "instances", "list"), ("agent", "instances", "stop"), ("agent", "maintenance", "plan")):
       lines.append("版本：deployment 是启动时配置/部署组合摘要，runtime 是锁定运行包身份；旧记录缺失时为 unknown，不按当前配置补填。版本相同不表示进程或资源已释放。")
     if path in (("agent", "maintenance", "status"), ("agent", "maintenance", "cancel")):
-      lines.append("--batch 使用已保存批次的完整32位小写十六进制ID。status只读；DSH cancel只解除已确认退出或尚未投递的活动项，已投递/unknown不强行清除。写入后响应丢失须按原收尾事实对账；不重发停止或自动恢复。")
+      lines.append("--batch 使用已保存批次的完整32位小写十六进制ID。status只读；停止 fence 仅在已确认退出或尚未投递时按原协议收尾，已投递/unknown不强行清除。写入后响应丢失须按原收尾事实对账；不重发停止或自动恢复。")
     if path == ("agent", "maintenance", "status"):
-      lines.append("Linux OMP 只读维护查询须显式 --profile 与 --batch；按公开 profile 声明识别工具，不自动发现批次或扫描机器。沿所选 --local/--machine 读取，无写入、完成、恢复、取消或执行能力；人工恢复状态不等于会话已恢复，未发送继续。")
+      lines.append("历史 Linux OMP 批次的只读查询仍须显式 --profile 与 --batch；按公开 profile 声明识别工具，不自动迁移或重放。沿所选 --local/--machine 读取，无写入；旧批次的人工恢复状态不等于会话已恢复，未发送继续。")
     if path == ("work", "worktree", "create"):
       lines.append("条件必填：--new-branch需要--base；--existing-branch禁止--base；创建与进入分别接受。")
     if path == ("_complete",):
@@ -643,6 +662,10 @@ def main(argv=None, *, resume_candidate=None):
     if isinstance(error, OSError):
       print("rotom: 文件系统操作失败", file=sys.stderr)
       return 6
+    from agentcfg.sessions import SessionError
+    if isinstance(error, SessionError):
+      print("rotom: 会话或恢复条件不能确认；请检查精确 ID、原目录和官方 TUI", file=sys.stderr)
+      return error.code
     from agentcfg.paths import InitializationError
     from agentcfg.cli import SelectionError
     from agentcfg.schema import ConfigError
@@ -665,14 +688,22 @@ def validate_explicit_conditions(args):
   if path == ("agent", "instances", "stop") or path is not None and path[:2] == ("agent", "maintenance"):
     runs = getattr(args, "run", None)
     plan_id = getattr(args, "plan_id", None)
+    if isinstance(runs, str):
+      runs = [runs]
     if runs is not None and (any(re.fullmatch(r"[0-9a-f]{32}", run) is None for run in runs)
         or len(runs) != len(set(runs))):
       raise InputError(2)
     if plan_id is not None and re.fullmatch(r"[0-9a-f]{64}", plan_id) is None:
       raise InputError(2)
-    if path in (("agent", "maintenance", "status"), ("agent", "maintenance", "cancel")):
+    if path[:2] == ("agent", "maintenance"):
       batch = getattr(args, "batch", None)
       if batch is not None and re.fullmatch(r"[0-9a-f]{32}", batch) is None:
+        raise InputError(2)
+      from .maintenance import _sessions
+      mapping = _sessions(getattr(args, "session", None))
+      if batch is not None and path[-1] == "plan" and (runs or mapping):
+        raise InputError(2)
+      if runs is not None and set(mapping) - set(runs):
         raise InputError(2)
   if path in (("run",), ("resume",), ("agent", "run")):
     profile = getattr(args, "profile", None)
@@ -869,6 +900,11 @@ def dispatch(invocation, args):
     return dispatch_instances(invocation, args)
   if path == ("agent", "instances", "stop"):
     return dispatch_stop_plan(invocation, args)
+  if path[:2] == ("agent", "maintenance"):
+    from .maintenance import dispatch as dispatch_workflow
+    result = dispatch_workflow(invocation, args)
+    if result is not None:
+      return result
   if path in (("agent", "maintenance", "status"), ("agent", "maintenance", "cancel")):
     scope = invocation.context.scope
     if (path[-1] == "status" and "profile" in invocation.context.explicit_fields
@@ -1063,7 +1099,7 @@ def dispatch_stop_plan(invocation, args):
     print(json.dumps(value, ensure_ascii=False, sort_keys=True))
   else:
     def line(text): print(_text(text))
-    line("DSH 只读停止计划；历史会话信息不证明加载或可恢复。实际停止须重新核验；setup维护尚未准入。")
+    line("只读停止计划；历史会话信息不证明加载或可恢复。配置更新须另行预览和批准。")
     line(f"scope: local={exact['local']} profile={exact['profile']} agent={exact['agent']}")
     line(f"plan_id={plan['plan_id']} readonly=true readiness={plan['readiness']}")
     line("selected_runs=" + ", ".join(plan["selected_runs"]))

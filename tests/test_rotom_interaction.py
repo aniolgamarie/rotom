@@ -223,6 +223,11 @@ def test_actual_parser_leaf_missing_input_and_complete_defaults(path, tty, polic
     monkeypatch.setattr(module, "main", lambda tokens, *, context=None: 0)
   # 列表已接通真实只读执行器；输入矩阵同其它业务路径一样使用 fake，行为另有实例套件。
   monkeypatch.setattr(cli, "dispatch_instances", lambda *args: 0)
+  if path in (("agent", "maintenance", "plan"), ("agent", "maintenance", "stop")):
+    # 运行缺失是条件输入；矩阵只验证输入门槛，受管实例查询另有集成测试。
+    from rotom import maintenance
+    monkeypatch.setattr(maintenance, "_choose_runs", lambda scope, context:
+      [context.input_gateway.text("明确运行", policy=context.input_policy)])
   if path == ("resume",):
     # 默认恢复已接真实查询；输入矩阵只模拟空候选，实际接线另有集成套件。
     from rotom import resume
@@ -239,7 +244,7 @@ def test_actual_parser_leaf_missing_input_and_complete_defaults(path, tty, polic
   monkeypatch.setattr(cli, "_candidate_rows", candidates)
   parser, actions = dict(cli.parser_leaves(cli.build_parser()))[path]
   missing = any(action.required for action in actions) or any(group.required for group in parser._mutually_exclusive_groups)
-  missing = missing or path in (("run",), ("resume",))
+  missing = missing or path in (("run",), ("resume",), ("agent", "maintenance", "plan"), ("agent", "maintenance", "stop"))
   hidden = path in (("agent", "model", "add"), ("agent", "model", "key"), ("agent", "model", "url"), ("agent", "model", "enable"))
   flags = ["--no-input"] if policy == InputPolicy.NO_INPUT else ["--interactive"] if policy == InputPolicy.INTERACTIVE else []
   code = cli.main([*flags, *path])
@@ -314,10 +319,14 @@ def test_navigation_setup_requires_separate_confirmation_after_preview(monkeypat
   from types import SimpleNamespace
   current = gateway(answer="no\n")
   context = InvocationContext(("agent", "setup"), input_gateway=current)
-  workspace = SimpleNamespace(agent="pi", profile="pi-base", adapter=SimpleNamespace())
-  lock = SimpleNamespace()
-  candidate = SimpleNamespace()
-  preview = SimpleNamespace(public=lambda: {"changes": 1, "drift": False, "conflicts": False}, conflicts=False, drift=False)
+  from pathlib import Path
+  from agentcfg.deployment import Plan
+  workspace = SimpleNamespace(agent="pi", profile="pi-base", adapter=SimpleNamespace(),
+    binding={"machine": "fixture", "local": "/synthetic/local.toml", "profile": "pi-base"},
+    instance=Path("/synthetic/instance"), state_root=Path("/synthetic/state"), cache=Path("/synthetic/cache"))
+  lock = SimpleNamespace(identity="fixture")
+  candidate = SimpleNamespace(generation="candidate")
+  preview = Plan(current={}, changes=[], conflicts=[], drift=[])
   monkeypatch.setattr(commands, "prepared", lambda args: (workspace, lock, candidate))
   monkeypatch.setattr(commands, "current_plan", lambda *args: preview)
   monkeypatch.setattr(commands, "sync_backend", lambda *a: pytest.fail("selection approved setup implicitly"))
@@ -337,18 +346,19 @@ def test_navigation_init_local_cancel_never_creates_configuration(monkeypatch):
   assert error.value.exit_code == 130
 
 
-def test_navigation_marks_unavailable_capabilities_in_stderr(monkeypatch):
+def test_navigation_describes_tool_handoffs_and_independent_maintenance(monkeypatch):
   current = gateway(answer="\n")
   monkeypatch.setattr(cli, "InputGateway", lambda: current)
   assert cli.main([]) == 130
-  assert "锁定 Linux DSH" in current.stderr.getvalue()
+  assert "DSH/Pi/OMP" in current.stderr.getvalue()
   assert "加载待确认" in current.stderr.getvalue()
   assert current.stdout.getvalue() == ""
 
   pending = gateway(answer="\n")
   monkeypatch.setattr(cli, "InputGateway", lambda: pending)
   assert cli.main(["agent", "maintenance"]) == 130
-  assert "当前能力待准入" in pending.stderr.getvalue()
+  assert "独立批准" in pending.stderr.getvalue()
+  assert "加载待确认" in pending.stderr.getvalue()
   assert pending.stdout.getvalue() == ""
 
 

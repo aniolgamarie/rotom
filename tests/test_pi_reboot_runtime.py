@@ -133,7 +133,7 @@ def test_passthrough_cannot_replace_managed_loading_or_install_boundaries(argume
     PiAdapter(REPOSITORY).validate_arguments(arguments)
 
 
-@pytest.mark.parametrize("arguments", [(), ("--continue",), ("--resume", "synthetic-session"),
+@pytest.mark.parametrize("arguments", [(), ("--continue",), ("--resume",), ("-r",),
   ("--session", "synthetic-session"), ("--fork", "synthetic-session"), ("--model", "synthetic-model"),
   ("--provider", "synthetic-provider"), ("--thinking", "high"), ("--print", "ordinary prompt"),
   ("--", "install", "--session-dir", "ordinary prompt"), ("--verbose",),
@@ -148,6 +148,7 @@ def test_passthrough_preserves_supported_native_session_model_and_effort_uses(ar
   ("--fork", "private/session"), ("--fork", "private\\session"),
   ("--fork", "external.jsonl"), ("--session", "external.jsonl"),
   ("--resume", "external.jsonl"), ("-r", "external.jsonl"),
+  ("--resume", "synthetic-session"), ("-r", "synthetic-session"), ("--resume=synthetic-session",),
 ])
 def test_native_session_operations_cannot_select_external_files(arguments):
   with pytest.raises(ConfigError):

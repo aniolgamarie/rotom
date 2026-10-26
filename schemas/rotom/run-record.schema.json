@@ -583,7 +583,10 @@
           "then": {
             "properties": {
               "agent": {
-                "const": "dsh"
+                "enum": [
+                  "dsh",
+                  "pi"
+                ]
               },
               "backend": {
                 "const": "managed"

@@ -21,6 +21,9 @@ _CONFIRM = InputGateway.confirm
 @pytest.fixture
 def ready(preview, monkeypatch):
   args, local, calls, streams, collect = preview
+  # 此套件专测历史 stop-only 批次；新工作流发现另有真实 Store 集成测试。
+  from rotom import maintenance
+  monkeypatch.setattr(maintenance, "_batch_workspace", lambda *args: None)
   workspace = object()
   state = SimpleNamespace(executions=[], workspaces=[], closes=[], batches=[], statuses=[], status="stopped",
     close_reason=None, approve_results=[], workspace=workspace)

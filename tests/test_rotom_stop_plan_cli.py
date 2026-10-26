@@ -83,7 +83,7 @@ def test_human_output_escapes_controls_and_marks_history(preview, monkeypatch, c
   monkeypatch.setattr(dsh_stop, "preview_for_scope", altered)
   assert cli.main(args + ["--run", RUNS[1], "--dry-run"]) == 0
   text = capsys.readouterr().out
-  assert "只读" in text and "未" in text and "historical" in text and "unknown" in text
+  assert "只读" in text and "不证明加载" in text and "historical" in text and "unknown" in text
   assert "\x1b" not in text and "/synthetic\x1b[31m\ncontrol" not in text
   assert "12345" in text and "12346" in text and "synthetic-session" in text
   assert "deployment=" + "b" * 64 in text and "runtime=" + "c" * 64 in text
@@ -134,30 +134,46 @@ def test_interactive_unadmitted_without_id_never_confirms(preview, monkeypatch, 
 
 
 @pytest.mark.parametrize("format", ["json", "human", "auto"])
-def test_maintenance_setup_plan_readonly(preview, capsys, format):
+def test_maintenance_setup_plan_readonly(preview, capsys, monkeypatch, format):
+  from agentcfg import workspace
+  from rotom import maintenance
   args, local, calls, streams, collect = preview
-  assert cli.main(["--no-input", *args[:3], "maintenance", "plan", "--operation", "setup", "--run", RUNS[0], "--format", format]) == 0
-  assert calls == [(local, RUNS[:1], None, "setup")]
+  selected = SimpleNamespace(local_path=local, profile="dsh-default", agent="dsh",
+    binding={"machine": "fixture", "local": str(local), "profile": "dsh-default"})
+  monkeypatch.setattr(dsh_stop, "workspace_for_scope", lambda *a, **kw: selected)
+  monkeypatch.setattr(workspace, "load_workspace", lambda *a, **kw: selected)
+  value = {"readiness": "ready", "blockers": [], "plan_id": "b" * 64,
+    "stop_plan": {"selected_runs": RUNS[:1]}, "targets": {}, "scope": {**selected.binding, "agent": "dsh"}}
+  def plan(ws, *, selected_runs, sessions):
+    assert ws is selected and selected_runs == RUNS[:1] and sessions == {RUNS[0]: "synthetic-session"}
+    calls.append((local, selected_runs, "setup-workflow"))
+    return deepcopy(value)
+  monkeypatch.setattr(maintenance.workflow, "plan", plan)
+  assert cli.main(["--no-input", *args[:3], "maintenance", "plan", "--operation", "setup", "--run", RUNS[0],
+    "--session", RUNS[0] + "=synthetic-session", "--format", format]) == 0
+  assert calls == [(local, RUNS[:1], "setup-workflow")]
   text = capsys.readouterr().out
-  if format != "human": assert json.loads(text)["readonly"] is True
-  else: assert "只读" in text
+  assert json.loads(text)["readonly"] is True
   assert streams.stdin.reads == 0
 
 
-def test_maintenance_batch_stays_unadmitted_without_queries(preview):
+def test_unknown_maintenance_batch_is_not_reconstructed(preview, monkeypatch):
+  from rotom import maintenance
   args, local, calls, streams, collect = preview
+  monkeypatch.setattr(maintenance, "_batch_workspace", lambda *args: None)
   assert cli.main([*args[:3], "maintenance", "plan", "--batch", "a" * 32]) == 5
   assert calls == []
 
 
 @pytest.mark.parametrize("command", [["instances", "stop"], ["maintenance", "plan"], ["maintenance", "stop"]])
-def test_static_help_no_scope_queries_and_no_admission(preview, command, monkeypatch, capsys):
+def test_static_help_no_scope_queries_and_explicit_guards(preview, command, monkeypatch, capsys):
   args, local, calls, streams, collect = preview
   from rotom import preferences
   monkeypatch.setattr(preferences, "load_preferences", lambda: pytest.fail("static help cannot read preferences"))
   assert cli.main(["agent", *command, "--help"]) == 0
   text = capsys.readouterr().out
-  assert "尚未准入" in text or "待准入" in text
+  assert "--run" in text and "DSH/Pi/OMP" in text
+  assert "不重发" in text or "不发送继续" in text
   assert calls == []
 
 

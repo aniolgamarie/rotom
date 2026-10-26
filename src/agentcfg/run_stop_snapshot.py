@@ -95,7 +95,8 @@ def _records(registry, records, *, selected):
     run_owners._run_id(run)
     registry._validate_record(run + ".json", record)
     if run in selected and (record["schema_version"] != 2 or record["lifecycle_state"] != "active"
-        or record["agent"] != "dsh" or record["backend"] != "managed" or record["coordination_domain"] is not None):
+        or record["agent"] not in ("dsh", "pi", "omp") or record["backend"] != "managed"
+        or (record["coordination_domain"] is not None) != (record["agent"] == "omp")):
       raise ValueError()
 
 
@@ -138,7 +139,9 @@ def _canonical_plan(value):
 def _bind_plan(value):
   # reader 只知道选中记录，不能把全集摘要和 reference_runs 当现场完整覆盖证明。
   plan = _canonical_plan(value["plan"])
-  if (plan["scope"] != {**value["binding"], "agent": "dsh"}
+  agent = value["records"][value["selected_runs"][0]]["agent"]
+  if (any(record["agent"] != agent for record in value["records"].values())
+      or plan["scope"] != {**value["binding"], "agent": agent}
       or plan["plan_id"] != value["plan_id"] or plan["selected_runs"] != value["selected_runs"]):
     raise ValueError()
   coordinator = plan["coordinator"]

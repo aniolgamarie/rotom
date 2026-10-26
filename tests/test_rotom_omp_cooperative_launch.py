@@ -295,7 +295,7 @@ def test_owner_error_does_not_replace_child_exception(case, monkeypatch):
     raise ValueError("synthetic-child-error")
   def observer_error(self, run_id):
     raise OSError("synthetic-private-observer-error")
-  monkeypatch.setattr(subprocess, "run", child)
+  monkeypatch.setattr(runtime, "_run_dsh_child", child)
   monkeypatch.setattr(case.module.DescendantScope, "observe", observer_error)
   with pytest.raises(ValueError, match="synthetic-child-error"):
     runtime.run(case.ws, cwd=case.cwd)
@@ -517,7 +517,7 @@ def test_cleanup_control_exception_cannot_replace_body_result_or_exception(case,
     import subprocess
     def child(*args, **kwargs):
       raise body_error
-    monkeypatch.setattr(subprocess, "run", child)
+    monkeypatch.setattr(runtime, "_run_dsh_child", child)
     with pytest.raises(type(body_error)) as caught:
       runtime.run(case.ws, cwd=case.cwd)
     assert caught.value is body_error
@@ -552,18 +552,18 @@ def test_cancel_cleanup_control_exception_preserves_original_lock_refusal(case, 
 def test_private_fd_close_control_exception_cannot_override_body_return(case, monkeypatch, fake_subprocess, exception_type):
   import subprocess
   install(case, monkeypatch)
-  original_child, original_close = subprocess.run, os.close
+  original_child, original_close = runtime._run_dsh_child, os.close
   target, calls = [], []
-  def child(*args, **kwargs):
-    target.append(kwargs["pass_fds"][0])
-    return original_child(*args, **kwargs)
+  def child(spec, env, pass_fds, **kwargs):
+    target.append(pass_fds[0])
+    return original_child(spec, env, pass_fds, **kwargs)
   def close(fd):
     result = original_close(fd)
     if target and fd == target[0] and not calls:
       calls.append(True)
       raise exception_type("synthetic-private-close-control")
     return result
-  monkeypatch.setattr(subprocess, "run", child)
+  monkeypatch.setattr(runtime, "_run_dsh_child", child)
   monkeypatch.setattr(case.module.os, "close", close)
   fake_subprocess.queue(returncode=43)
   assert runtime.run(case.ws, cwd=case.cwd) == 43 and calls == [True]

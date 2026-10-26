@@ -323,8 +323,24 @@ def instances(local, *, agent=None, profile=None):
     except (Conflict, PathError, OSError):
       request_rows = {run_id: {"status": "unknown", "source": "resume-request-unavailable"}
         for run_id in records}
+    auxiliary = {}
+    if workspace.agent == "pi":
+      from .pi_session_observation import from_records
+      from .sessions import SessionError
+      try:
+        auxiliary = {value.run_id: value for value in from_records(workspace, records)}
+      except SessionError:
+        incomplete = True
+        item["session_observation"] = "unavailable"
     for record in records.values():
       row = _instance_row(workspace, record, now)
+      if record["run_id"] in auxiliary:
+        from dataclasses import asdict
+        known = auxiliary[record["run_id"]]
+        row["session"].update(status="historical", ref=asdict(known.ref),
+          source="pi-public-session-selection", observed_at_ns=known.observed_at_ns,
+          saved_confirmation="historical")
+        row["session_cwd"] = {"path": known.cwd, "confirmation": "historical"}
       row["resume_request"] = request_rows[record["run_id"]]
       if row["resume_request"] is not None and row["resume_request"]["source"] == "resume-request-unavailable":
         # 辅助请求记录不可核实时保留独立进程/会话观察，不丢掉整个实例。
@@ -442,7 +458,7 @@ class Registry:
       if control is not None:
         endpoint = control["endpoint"]
         host = record["host_identity"]
-        if (record["agent"] != "dsh" or record["backend"] != "managed"
+        if (record["agent"] not in ("dsh", "pi") or record["backend"] != "managed"
             or record["coordination_domain"] is not None or host is None
             or host["source"] != "linux-spawn-pidfd" or host["relationship"] != "reported-by-current-run"
             or endpoint["binding_digest"] != record["binding_digest"] or endpoint["run_id"] != record["run_id"]
@@ -563,7 +579,7 @@ class Registry:
       tree.replace(run_id + ".json", _encode(record), expected=originals[run_id][2])
 
   def bind_current_host(self, run_id, host):
-    """本次受管 DSH 启动的只读进程观察；调用者仍持物理/状态/包 SH。
+    """本次受管 DSH/Pi 启动的只读进程观察；调用者仍持原物理/状态/包租约。
 
     不接受序列化身份，不更新合作 OMP 的双向摘要，也不启用控制协议。
     观察或写入结果不明时不重试；已运行的宿主继续由原等待路径处理。
@@ -577,7 +593,7 @@ class Registry:
       with self._locked(nonblocking=True) as tree:
         records, originals = self._records(tree)
         record = records.get(run_id)
-        if (record is None or record["schema_version"] != 2 or record["agent"] != "dsh"
+        if (record is None or record["schema_version"] != 2 or record["agent"] not in ("dsh", "pi")
             or record["backend"] != "managed" or record["coordination_domain"] is not None
             or record_state(record) != "active" or record["host_identity"] is not None):
           raise ValueError()
@@ -612,7 +628,7 @@ class Registry:
       with self._locked(nonblocking=True) as tree:
         records, originals = self._records(tree)
         record = records.get(run_id)
-        if (record is None or record["schema_version"] != 2 or record["agent"] != "dsh"
+        if (record is None or record["schema_version"] != 2 or record["agent"] not in ("dsh", "pi")
             or record["backend"] != "managed" or record["coordination_domain"] is not None
             or record_state(record) != "active" or record["host_identity"] is None
             or record["protocol"]["control"] is not None):

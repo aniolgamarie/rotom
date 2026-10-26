@@ -1,6 +1,14 @@
 # 验证指南
 
-## 当前恢复验收口径（2026-10-24）
+## 当前候选验证与操作
+
+候选实现、分组回归及稳定差异审查已完成；基于 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main。合入须另经人工批准。官方 Pi/OMP TUI/PTY、隔离回归及受影响复验见[验收记录](tool-workflow-validation.md)。
+
+逐阶段命令、TTY/非 TTY、取消及旧批次兼容见[维护流程指南](../../docs/tool-maintenance-workflows.md)。候选三工具 stop_only → 关本次 fence → 最新独立 setup 批准/原全门禁 → 逐项当前终端恢复。Pi Claims 仅合作进程；OMP 同 ID open 不取锁，竞争首次写入可能分叉新 ID；都显示加载待确认，零继续。
+
+最终集合按分组及受影响完整文件复验对账：13,561 passed / 12 skipped，未解决失败与未覆盖均为 0；这不是一次未中断的全绿运行。原始失败和精确范围见验收记录，不累加重叠组。当前 93/125，T125 的 main 人工整合仍待批准；历史勾选含义保留。
+
+## 历史恢复验收口径（2026-10-24）
 
 首版真实执行现有官方显式 session 恢复到用户选择的终端，沿用已部署 runtime、native HOME/scope、原目录与租约。分别验收请求目标、启动派发、实际加载确认、继续发送。缺严格初始回执不再阻塞启动实现；已发起而未确认时应显示“已发起恢复，加载待确认；请在 TUI 检查；未发送继续”，不得写 `restored` 或把未知写成 `failed`，不自动重试或超时强杀。
 
@@ -10,7 +18,7 @@ T042 改为现有官方入口、实际 HOME/scope、writer 和状态边界调查
 
 T117 已完成对应隔离契约更新：安全官方交接能力充分、但没有严格加载回执时，只派发一次，保持加载待确认、零继续、零自动重试，超时不强杀；保留范围/cwd/缺失目标/writer 冲突负例。当前总数 117，已完成 86，具体状态以 tasks.md 为准。T096/T101/T102 仅完成零发送与人工分支，T053 已完成固定组合的真实交接验证，T054 已独立核验实际准入接线；完整停止维护尚未完成。
 
-## 当前 DSH 精确停止（2026-10-26）
+## 历史 DSH 精确停止（main 基线阶段）
 
 工作树中的 `stop_only` 现仅准入 Linux managed DSH、完整锁
 `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` 和新启动后成功登记的原 host/control endpoint。
@@ -46,7 +54,7 @@ T054 的精确 Linux DSH `resume --here` 保持已有准入，加载仍待确认
 依据：[规格](spec.md)、[CLI 契约](contracts/cli.md)、[入口部署](contracts/entry-deployment.md)、
 [生命周期](contracts/lifecycle.md)、[数据模型](data-model.md)。
 
-## 当前 Linux OMP 只读维护状态（2026-10-26）
+## 旧 Linux OMP Domain 批次的只读维护状态
 
 基于 main `18c342f` 的增量只开放现存 setup batch 的 status。显式公开 profile 的工具声明必须为 `omp`，
 不按名称前缀识别，也不自动发现历史 batch/profile；local 或机器配置仍沿所选路径读取，不扫描其它机器。
@@ -61,7 +69,7 @@ T054 的精确 Linux DSH `resume --here` 保持已有准入，加载仍待确认
 原操作成功但未交接仍返回 4；completed 且当前目标/资源核验通过返回 0；unknown/pending 返回 4，
 既有非零操作结果保留原退出码。初始未派发即取消且观察正常返回 0 仅说明取消，异常观察仍为 4。
 逐项 manual 不等于会话已恢复，`continue_status=not_sent`。后续命令只有同一精确范围的 status；
-OMP maintenance stop/execute/restore/cancel 尚未准入，本命令也不创建批次或完成交接。
+这些旧 Domain 批次不支持新 workflow 的 stop/execute/restore/cancel；本命令不创建批次或完成交接。
 
 CLI/DSH 控制回归及静态 help/parser 的稳定代码验收为 **336 passed**；fixture 对齐真实
 `target-matches` 拼写后，新 CLI suite 为 **21 passed**。两轮有重叠，不累加，不作为宿主原生验证。
@@ -98,7 +106,7 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest -q -p no:cacheprovid
 网络阻断、假子进程和外部文件哨兵。新增测试不恢复通用进程/信号/网络权限；
 模拟 TTY 用可注入 `isatty` 和选择器，不分配真实 PTY。
 
-## 新增隔离套件与当前状态
+## 历史阶段隔离套件与当时状态
 
 下表区分原阶段证据与本轮承接后的隔离结果，实际 argv、源码摘要和原始日志保存在私人任务记录。
 所有新检查沿用临时 HOME/XDG、网络阻断、假子进程/事件和文件哨兵，不执行第三方宿主。
@@ -166,7 +174,7 @@ Node 接线检查使用空继承环境和专用临时 HOME/XDG；上述短命令
 
 ## 已注册命令与后续能力的验收场景
 
-下表混合已实现入口场景与未来能力目标；只读实例列表及 DSH 停止/setup 计划已接通；精确 Linux DSH 当前终端恢复已准入，精确 DSH stop_only 已准入，维护执行仍未开放。
+下表包含既有入口与当前候选分阶段场景；候选支持三工具精确 stop_only、独立普通 setup 与逐项当前终端交接。具体锁定组合与剩余验收以维护指南为准。
 以下命令在相应隔离 fixture 的临时目录中由测试调用；不要直接对日常机器执行。
 `workstation`、`session-example`、`11111111111111111111111111111111` 等均为虚构标识，`PLAN_ID/BATCH_ID`
 必须替换为同一 fixture 实际只读计划的结果，不能从示例构造批准。
@@ -185,12 +193,12 @@ Node 接线检查使用空继承环境和专用临时 HOME/XDG；上述短命令
 | `./rotom _complete --kind session --machine workstation --tool dsh` | 缺索引时 0 + 零字节，不创建索引或扫描原生会话 |
 | `./rotom --no-input resume dsh --machine workstation --session session-example --here` | 精确 Linux managed DSH 完整锁下核验范围后交接原生恢复；加载待确认、零自动输入，保留原生退出码；未准入组合为 5，缺参/歧义为 2 |
 | `./rotom agent --machine workstation instances list --agent dsh --format json` | 未指定 profile 时列该范围全部 DSH；未知占用不消失，进程/会话/位置分别标来源和时间 |
-| `./rotom agent --machine workstation instances stop --run 11111111111111111111111111111111 --dry-run` | 当前 DSH 只读精确目标计划；blocked 也返回 0，不建批次、不请求停止 |
+| `./rotom agent --machine workstation instances stop --run 11111111111111111111111111111111 --dry-run` | 三工具候选只读精确目标计划；blocked 也返回 0，不建批次、不请求停止 |
 | `./rotom --no-input agent --machine workstation --profile dsh-default instances stop --run 11111111111111111111111111111111 --plan-id PLAN_ID --wait-seconds 30` | 当前 plan-id 不匹配为 4、缺失为 2；精确已准入现场 ready 时先保存人工快照再逐项停止，确证停止为 0，待确认/到期为 4 并保留 batch；其它组合为 5 |
 | `./rotom agent --machine workstation --profile dsh-default maintenance plan --operation setup --run 11111111111111111111111111111111` | 当前只读资源引用与阻断原因；第三个未选引用仍保留并阻断 setup，无批次 |
-| `./rotom --no-input agent --machine workstation --profile dsh-default maintenance stop --operation setup --run 11111111111111111111111111111111 --plan-id PLAN_ID --wait-seconds 1` | 未来执行目标：漂移为 4，接受后先保留恢复清单再派发；当前完整请求仍返回 5 |
-| `./rotom --no-input agent --machine workstation --profile dsh-default maintenance execute --batch BATCH_ID` | 未准入，当前返回 5；停止完成不代替 setup 批准或维护物理门禁 |
-| `./rotom --no-input agent --machine workstation --profile dsh-default maintenance restore --batch BATCH_ID --wait-seconds 1` | 未准入，当前返回 5；不会自动恢复或发送继续 |
+| `./rotom --no-input agent --machine workstation --profile dsh-default maintenance stop --operation setup --run 11111111111111111111111111111111 --plan-id PLAN_ID --wait-seconds 1` | 候选当前流程：漂移为 4，接受后先保留恢复清单再逐项一次派发 |
+| `./rotom --no-input agent --machine workstation --profile dsh-default maintenance execute --batch BATCH_ID --plan-id SETUP_PLAN_ID` | 候选普通 setup 独立批准；须先 plan --batch，停止完成不替代原全门禁 |
+| `./rotom --no-input agent --machine workstation --profile dsh-default maintenance restore --batch BATCH_ID --run RUN_ID` | 候选逐项当前终端官方交接；加载待确认，不发送继续 |
 | `./rotom --no-input agent --machine workstation --profile dsh-default maintenance status --batch BATCH_ID --format json` | 只读保存的目标、版本、历史 session 和当前请求/派发状态，不重发；返回完整 batch 和后续命令 |
 | `./rotom --no-input agent --local /path/to/machine.toml --profile omp-default maintenance status --batch BATCH_ID --format json` | 现存 Linux OMP setup 批次只读查询；原操作结果与查询退出码分离，不创建批次、不清保护、不恢复 |
 | `./rotom --no-input agent --machine workstation --profile dsh-default maintenance cancel --batch BATCH_ID` | 只取消未投递活动项或对已确证停止的 close 收尾；unknown 保留保护，不重发 |

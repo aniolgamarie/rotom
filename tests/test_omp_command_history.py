@@ -120,10 +120,11 @@ def test_unsupported_malformed_noncommands_and_quarantine(tmp_path, capsys):
 
 def test_does_not_execute_commands(tmp_path, capsys, monkeypatch):
   sentinel = tmp_path / "executed"
+  monkeypatch.chdir(tmp_path)
   def fail(*args, **kwargs):
     pytest.fail("history command was executed")
   monkeypatch.setattr(history.os, "system", fail)
-  artifact, _, _ = run(tmp_path, {"pi": write_log(tmp_path / "pi.jsonl", [tool(f"touch '{sentinel}'")])}, capsys)
+  artifact, _, _ = run(tmp_path, {"pi": write_log(tmp_path / "pi.jsonl", [tool("touch 'executed'")])}, capsys)
   assert artifact["records"]
   assert not sentinel.exists()
 

@@ -166,6 +166,7 @@ def check_deployed_resources(current, target):
 
 
 def _run_dsh_child(spec, env, pass_fds, *, run_id, owner_registry, manager_identity, control_factory=None):
+  """DSH/Pi 共用直接 child 等待；保留历史函数名和现有测试接缝。"""
   from .dsh_process import WaitUnconfirmed, launch
   try:
     options = {"control_factory": control_factory} if control_factory is not None else {}
@@ -175,7 +176,11 @@ def _run_dsh_child(spec, env, pass_fds, *, run_id, owner_registry, manager_ident
     raise Conflict("原生宿主已启动，但退出结果尚未确认；保留运行记录，未自动终止或重试") from None
 
 
-def run(workspace, *, cwd, arguments=(), launch_operation=None, resume_operation=None, select_environment=None, inherit_env=(), unset_env=(), proxy=None, runtime_notice=None, observed_identity=None):
+def run(workspace, *, cwd, arguments=(), launch_operation=None, resume_operation=None, select_environment=None, inherit_env=(), unset_env=(), proxy=None, runtime_notice=None, observed_identity=None, expected_deployment=None):
+  if expected_deployment is not None and (resume_operation is None or type(expected_deployment) is not str
+      or re.fullmatch(r"[0-9a-f]{64}", expected_deployment) is None):
+    from .schema import ConfigError
+    raise ConfigError("invalid-resume-deployment-binding")
   if launch_operation is not None and resume_operation is not None:
     from .schema import ConfigError
     raise ConfigError("conflicting-runtime-operations")
@@ -206,6 +211,10 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, resume_operation
     current = read_state(state)["current"]
     if current is None:
       raise Conflict("实例尚未部署；请先 apply")
+    if expected_deployment is not None:
+      from .setup_preview import setup_deployment_digest
+      if setup_deployment_digest(current) != expected_deployment:
+        raise Conflict("维护恢复的目标部署已变化；保留恢复意图，不启动宿主")
     if current["binding"] != workspace.binding:
       raise Conflict("部署绑定与当前选择不兼容；请先 plan/apply")
     contract = current["launch"]
@@ -319,8 +328,11 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, resume_operation
             if type(run_id) is not str or re.fullmatch(r"[0-9a-f]{32}", run_id) is None:
               raise DependencyError("恢复操作缺少可核验的新运行登记；请使用已支持的受管运行路径")
             # 可信回调沿用部署、三层租约及 owner 生命周期；原生 writer 仍由宿主取得。
+            options = {}
+            if cooperative is not None and cooperative.observer_factory is not None:
+              options["owner_registry"] = cooperative.observer_factory(run_id)
             return resume_operation(workspace, spec, env, lease, contract, run_id=run_id,
-              lifecycle_fd=lifecycle_fd, package_fd=package_fd)
+              lifecycle_fd=lifecycle_fd, package_fd=package_fd, **options)
           if launch_operation is not None:
             return launch_operation(workspace, spec, env, lease, contract, lifecycle_fd=lifecycle_fd)
           executor = getattr(workspace.adapter, "launch_executor", None)
@@ -330,15 +342,27 @@ def run(workspace, *, cwd, arguments=(), launch_operation=None, resume_operation
               return execute(workspace, spec, env, lease, contract, lifecycle_fd=lifecycle_fd)
           # 原生宿主继承三层租约：物理实例、状态和运行包均持有至退出。
           pass_fds = tuple(fd for fd in (lifecycle_fd, lease, package_fd) if isinstance(fd, int))
-          if run_id is not None and workspace.agent == "dsh":
+          omp_observer = (run_id is not None and workspace.agent == "omp" and sys.platform == "linux"
+            and cooperative is not None and cooperative.observer_factory is not None)
+          if run_id is not None and (workspace.agent == "dsh"
+              or workspace.agent == "pi" and sys.platform == "linux" or omp_observer):
             from .run_owners import Registry
-            owner_registry = Registry(workspace.state_root / "run-owners", workspace.binding)
+            owner_registry = (cooperative.observer_factory(run_id) if omp_observer else
+              Registry(workspace.state_root / "run-owners", workspace.binding))
             owner = owner_registry.snapshot()[run_id]
             # SSH 的本地传输进程不代表远端 Agent；只登记受管宿主。
             if owner.get("backend") == "managed":
-              from .dsh_stop_control import default_factory
-              control = default_factory(workspace, owner, instance_fd=lifecycle_fd, state_fd=lease)
-              options = {"control_factory": control} if control is not None else {}
+              options = {}
+              if workspace.agent in ("dsh", "pi", "omp"):
+                from .dsh_stop_control import default_factory
+                control = default_factory(workspace, owner, instance_fd=lifecycle_fd, state_fd=lease)
+                options = {"control_factory": control} if control is not None else {}
+              if workspace.agent == "pi":
+                from .pi_session_guard import prepare
+                with prepare(workspace, spec, env, pass_fds, run_id=run_id, arguments=arguments) as prepared:
+                  guarded_spec, guarded_env, guarded_fds = prepared
+                  return _run_dsh_child(guarded_spec, guarded_env, guarded_fds, run_id=run_id,
+                    owner_registry=owner_registry, manager_identity=owner["manager_identity"], **options)
               return _run_dsh_child(spec, env, pass_fds, run_id=run_id,
                 owner_registry=owner_registry, manager_identity=owner["manager_identity"], **options)
           child = subprocess.run(list(spec.argv), cwd=spec.cwd, env=env, pass_fds=pass_fds)

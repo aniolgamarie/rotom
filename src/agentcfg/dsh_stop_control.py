@@ -31,8 +31,9 @@ def _record(workspace, record):
   if type(record) is not dict:
     raise ValueError()
   _registry(workspace)._validate_record(record["run_id"] + ".json", record)
-  if (record["schema_version"] != 2 or record["agent"] != "dsh"
-      or record["backend"] != "managed" or record["coordination_domain"] is not None):
+  if (record["schema_version"] != 2 or record["agent"] not in ("dsh", "pi", "omp")
+      or record["backend"] != "managed"
+      or (record["coordination_domain"] is not None) != (record["agent"] == "omp")):
     raise ValueError()
 
 
@@ -53,14 +54,19 @@ def channel_state(workspace, record, *, deadline_ns=None):
   try:
     _record(workspace, record)
     descriptor = record["protocol"]["control"]
-    if descriptor is None or descriptor["kind"] != "linux-pidfd-stop-v1":
+    if record["agent"] == "dsh" and (descriptor is None or descriptor["kind"] != "linux-pidfd-stop-v1"):
       raise ValueError()
     inbox, journal = _stores(workspace, record["run_id"])
     guard = (inbox._registry._locked(nonblocking=True) if deadline_ns is None
       else stop_locks.locked(inbox._registry, deadline_ns))
     with guard as tree:
       endpoint, requests = inbox._load(tree)
-      inbox._expected(descriptor["endpoint"], endpoint)
+      if descriptor is not None:
+        inbox._expected(descriptor["endpoint"], endpoint)
+      elif (endpoint is None or endpoint["run_id"] != record["run_id"]
+          or endpoint["manager_identity"] != record["manager_identity"]
+          or record["host_identity"] is None or endpoint["host_identity"] != record["host_identity"]["identity"]):
+        raise ValueError()
       inbox._registry._verify_root(tree)
     options = {} if deadline_ns is None else {"deadline_ns": deadline_ns}
     dispatch = journal.read(record["run_id"], **options)
@@ -75,9 +81,9 @@ def supported(record):
   try:
     return (sys.platform == "linux" and type(record) is dict
       and type(record.get("schema_version")) is int and record["schema_version"] == 2
-      and record["agent"] == "dsh" and record["backend"] == "managed"
-      and record["coordination_domain"] is None
-      and record["deployed_identity"]["runtime"] == _RUNTIME)
+      and record["agent"] in ("dsh", "pi", "omp") and record["backend"] == "managed"
+      and (record["coordination_domain"] is not None) == (record["agent"] == "omp")
+      and (record["agent"] != "dsh" or record["deployed_identity"]["runtime"] == _RUNTIME))
   except Exception:
     return False
 
@@ -154,10 +160,17 @@ def factory_for(workspace, *, instance_fd, state_fd):
 
       inbox, journal = _stores(workspace, run_id, wait_for_lock=True)
       service = StopService(run_id, host, inbox=inbox, journal=journal, verify=verify)
-      registry.bind_current_control(run_id, host, service)
+      if record["agent"] == "dsh":
+        registry.bind_current_control(run_id, host, service)
       registered = _current(registry, run_id)
       expected = deepcopy(record)
-      expected["protocol"]["control"] = {"kind": "linux-pidfd-stop-v1", "endpoint": service.describe()}
+      if record["agent"] == "dsh":
+        expected["protocol"]["control"] = {"kind": "linux-pidfd-stop-v1", "endpoint": service.describe()}
+      else:
+        # 独立 inbox 不改 owner；旧 manager 可继续读取同一 Registry/Domain 并收尾。
+        endpoint = channel_state(workspace, registered)["endpoint"]
+        if endpoint != service.describe():
+          raise ValueError()
       if (not _same(registered, expected) or not _same(registered["host_identity"], host.snapshot())
           or service.belongs_to(run_id, host) is not True):
         raise ValueError()

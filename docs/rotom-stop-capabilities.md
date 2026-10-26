@@ -1,10 +1,8 @@
 # Rotom 停止通道能力
 
-状态：已准入精确 Linux managed DSH 的 `stop_only`，仅限完整运行包锁
-`e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d`、由兼容版本新启动且成功登记原 host/control endpoint 的运行。
-任务进度为 86/117；完整停止维护编排没有因此完成。
-Pi、OMP、其它平台、旧 run、force、setup/maintenance execute/restore 均未准入。
-T054 已准入的同锁 Linux DSH `resume --here` 保持有效，加载待确认、零自动继续。
+候选实现与分组验收已完成：基于 main `45953f0`，分支 `feat/tool-maintenance-workflows-20261026`；保留在任务分支，尚未合入 main；合入须另经人工批准。官方 Pi/OMP TUI/PTY、分组隔离回归及受影响最终复验均已有结果，见验收记录。
+
+当前候选为 DSH/Pi/OMP 的 Linux managed 运行接通精确 `stop_only`，前提是核实原 host/control 通道与部署；旧运行无通道仍拒绝。Pi/OMP 使用 inbox sidecar，保留旧 RunRecord 和 OMP owner 摘要兼容。完整分阶段命令、writer 限制及本轮分项证据见[维护流程](tool-maintenance-workflows.md)。不准入 force、其它平台、原 pane 或自动继续。
 
 ## 当前用法与停止边界
 
@@ -28,12 +26,11 @@ T054 已准入的同锁 Linux DSH `resume --here` 保持有效，加载待确认
 
 `maintenance status` 只读；manager/host、目录、版本与 session 来自保存快照，
 confirmed session 也只显示 historical，unknown 不补造。它们不证明当前会话加载或可恢复。
-`maintenance cancel` 只取消尚未投递的活动项，或对已确证停止的收尾记录作明确对账；
-可能已发送或 unknown 的项目不取消、不重试，已完成批次不重复写入。
-setup 目前只有 `maintenance plan --operation setup --run ...` 只读计划；
-`maintenance plan --batch`、execute 和 restore 不因此开放。完整参数见各命令 `--help`。
+普通 stop 批次的 `maintenance cancel` 只取消尚未投递的活动项，或对已确证停止的收尾记录作明确对账；
+可能已发送或 unknown 的停止项目不取消、不重试，已完成批次不重复写入。新的 workflow 批次则先独立保存取消后续编排的事实；停止收尾不确定时保留保护并返回 4。
+setup 使用 `maintenance plan --batch BATCH_ID` 的最新独立计划和批准；execute 在关闭本次 stop fence 后重走普通 setup 全部门禁，并发新运行仍可阻挡。restore 每次只交接一个当前终端会话，加载待确认、零继续。完整命令见[维护流程](tool-maintenance-workflows.md)和各命令 `--help`。
 
-## 当前原生验收
+## 历史 DSH 原生验收（沿用，非本轮重跑）
 
 已授权的隔离验收使用未经修改的锁定官方包，经默认普通 runtime 启动三项，逐项登记后同时保持活动。
 真实 CLI 首轮只停前两项；第三项的 owner、manager/host 出生身份保持原样 active，inbox 无请求、

@@ -57,19 +57,33 @@ def test_cooperative_saved_records_display_separate_process_and_unknown_session(
 
 
 def test_running_manager_and_cwd_are_visible_without_implying_host_or_session(case, observed, monkeypatch, fake_subprocess):
-  import subprocess
-  original = subprocess.run
+  original = runtime._run_dsh_child
   reports = []
-  def child(*args, **kwargs):
+  def child(spec, env, pass_fds, **kwargs):
+    # 查询发生在新直接 child 边界；替身不伪造尚未捕获的原生 host。
+    assert kwargs["owner_registry"].snapshot()[kwargs["run_id"]]["manager_identity"] == run_owners.current_process_identity()
+    assert callable(kwargs["control_factory"]) and len(pass_fds) == 3
+    entry = case.domain.snapshot()["reservations"][kwargs["run_id"]]
+    assert entry["phase"] == "dispatched"
+    before = contents(case.ws.state_root.parent.parent), case.domain.snapshot()
     reports.append(query(observed))
-    return original(*args, **kwargs)
-  monkeypatch.setattr(subprocess, "run", child)
+    assert (contents(case.ws.state_root.parent.parent), case.domain.snapshot()) == before
+    with pytest.raises(Conflict):
+      with lifecycle.omp_scope_write_guard(case.ws):
+        pytest.fail("active OMP 的原运行租约仍须阻止写入")
+    return original(spec, env, pass_fds, **kwargs)
+  monkeypatch.setattr(runtime, "_run_dsh_child", child)
   fake_subprocess.queue(returncode=0)
   assert runtime.run(case.ws, cwd=case.cwd) == 0
+  assert len(reports) == len(fake_subprocess.calls) == 1
   row, = reports[0]["instances"]
   assert row["process"]["status"] == "active" and row["process"]["coverage"] == "manager-only"
+  assert row["process"]["manager_status"] == "active" and row["process"]["ownership_state"] == "active"
+  assert row["process"]["manager_identity"] == run_owners.current_process_identity()
   assert row["start_cwd"]["path"] == str(case.cwd)
+  assert row["process"]["host_identity"] is None and row["session_cwd"] is None
   assert row["process"]["host_status"] == "unknown" and row["session"]["status"] == "unknown"
+  assert row["session"]["resume_available"] is False and row["terminal"]["restore_available"] is False
   assert reports[0]["incomplete"] is False
 
 

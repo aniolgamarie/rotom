@@ -40,14 +40,14 @@ def workspace_for_scope(local, *, selected_runs, profile=None):
   if profile is not None:
     if profile not in available:
       raise ValueError("未知 profile")
-    if available[profile] != "dsh":
+    if available[profile] not in ("dsh", "pi", "omp"):
       raise DependencyError("当前只读停止计划仅支持 DSH")
-  profiles = [profile] if profile is not None else sorted(name for name, agent in available.items() if agent == "dsh")
+  profiles = [profile] if profile is not None else sorted(name for name, agent in available.items() if agent in ("dsh", "pi", "omp"))
   workspaces = load_instance_workspaces(local, profiles)
   try:
     if (len(workspaces) != len(profiles)
         or [ws.profile for ws in workspaces] != profiles
-        or any(ws.agent != "dsh" for ws in workspaces)):
+        or any(ws.agent not in ("dsh", "pi", "omp") for ws in workspaces)):
       raise ValueError()
     matches = []
     for ws in workspaces:
@@ -91,7 +91,7 @@ def capture_stop(workspace, *, selected_runs, operation="stop_only"):
   if operation not in ("stop_only", "setup"):
     raise ValueError("仅支持 stop_only/setup 计划")
   try:
-    if workspace.agent != "dsh":
+    if workspace.agent not in ("dsh", "pi", "omp"):
       raise ValueError()
     registry = run_owners.Registry(workspace.state_root / "run-owners", workspace.binding)
     with lifecycle.observation_guard(workspace) as instance_fd, Tree(workspace.state_root) as state:
@@ -113,7 +113,7 @@ def capture_stop(workspace, *, selected_runs, operation="stop_only"):
         references = sorted(run for run, record in records.items() if run_owners.record_state(record) != "idle_confirmed")
         resources = [{"resource_id": layout[name]["key_id"][:32], "key": layout[name],
           "reference_runs": references, "coverage": "unknown"} for name in ("instance", "native_home", "runtime")]
-        scope = {**workspace.binding, "agent": "dsh"}
+        scope = {**workspace.binding, "agent": workspace.agent}
         targets, runs = [], []
         for run in selected:
           record = records[run]; target = _target(record); targets.append(target)
@@ -126,7 +126,7 @@ def capture_stop(workspace, *, selected_runs, operation="stop_only"):
             "restore": {"mode": "manual", "capability": "unavailable", "target_digest": None,
               "session_status": "historical" if target["session_status"] in ("historical", "confirmed", "final") else "unknown"}})
         info = os.fstat(owner.fd)
-        coordinator = {"kind": "dsh-instance-registry", "binding_digest": registry.binding_digest,
+        coordinator = {"kind": workspace.agent + "-instance-registry", "binding_digest": registry.binding_digest,
           "registry_physical": {"device": info.st_dev, "inode": info.st_ino}, "records_digest": _digest(records)}
         # 当前活通道只授予精确停止候选；未知外部资源覆盖仍阻断 setup。
         control = "supported" if all(dsh_stop_control.available_locked(workspace, records[run])

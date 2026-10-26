@@ -1,0 +1,13 @@
+{
+  "official": {
+    "package": "@earendil-works/pi-coding-agent",
+    "version": "1.3.0"
+  },
+  "protocol": "rotom-pi-session-claims-v1",
+  "sources": {
+    "agents/pi/templates/session-control.mjs": "18c54ee89579c0813c3e68514c86710a758dcca59dcbcb4c3a9060b81bfd22e2",
+    "src/agentcfg/pi_session_guard.py": "fa47796d47db44146b0af47855b038c8d44a8b622a85d8a3e972e5cb24efcfdf",
+    "src/agentcfg/pi_session_helper.py": "9255eda9ccccfab6213a7de88dfa17bc0ee15d59ed0ab85b4acd29a4d74e75d8"
+  },
+  "version": 1
+}

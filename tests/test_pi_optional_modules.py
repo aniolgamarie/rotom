@@ -111,6 +111,8 @@ def test_admitted_module_ids_resolve_through_strict_public_catalog(tmp_path, plu
 
 @pytest.fixture
 def module_workspace(fake_npm, tmp_path, monkeypatch):
+  from test_pi_reboot_pipeline import fake_managed_child
+  monkeypatch.setattr(runtime, "_run_dsh_child", fake_managed_child)
   root, backend, calls = fake_npm
   for directory in ("schemas", "templates"):
     shutil.copytree(REPOSITORY / "agents/pi" / directory, root / "agents/pi" / directory, dirs_exist_ok=True)

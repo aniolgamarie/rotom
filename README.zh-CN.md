@@ -4,13 +4,14 @@
 
 [English（正式文档）](README.md) · [文档索引](docs/README.md) · [路线图](docs/roadmap.md) · [已知问题](docs/known-issues.md)
 
-Rotom 使用 `agentcfg` 管理 DSH、Pi 和 OMP 的配置、完整依赖、部署与启动。公共模型、规则、完整 Skills 和配方进入 Git；机器覆盖、密钥、原生登录与会话保留在私人目录。`termcfg` 独立管理 zsh/tmux 配置及锁定插件；代理服务不再由它管理，旧元数据通过显式命令迁移。
+Rotom 提供 `rotom` 统一入口，保留 `agentcfg` 管理 DSH、Pi 和 OMP 的配置、完整依赖、部署与启动。公共模型、规则、完整 Skills 和配方进入 Git；机器覆盖、密钥、原生登录与会话保留在私人目录。`termcfg` 独立管理 zsh/tmux 配置及锁定插件；代理服务不再由它管理，旧元数据通过显式命令迁移。
 
 ## 当前状态
 
-- DSH：一套 `dsh-default` 配方，Core `0.2.0-rc.2`（预发布）、TUI `0.15.0`、Cursor `0.6.12`、Perry auto-review `0.12.17`。自动审批默认开启，但存在已接受且尚未解决的上游限制；详见[已知问题](docs/known-issues.md)。
-- OMP：未修改的官方 `18.8.6`，通过独立插件实现 Rotom 的权限功能。
+- DSH：一套 `dsh-default` 配方，Core `0.2.1-rc.2`（预发布）、TUI `0.16.1`、Cursor `0.6.12`、Perry auto-review `0.13.7`。自动审批默认开启，但存在已接受且尚未解决的上游限制；详见[已知问题](docs/known-issues.md)。
+- OMP：未修改的官方 `18.12.6`，通过独立插件实现 Rotom 的权限功能。
 - Pi：`pi-base` / `pi-pro` 使用未修改的官方 `1.3.0` CLI 和完整 npm 锁；Linux 界面、模型/会话及所选模块的有界证据按源码快照分列。状态信息已按三处获接受的显示差异交付；Pro 调查协作等待上游，Brave/Cursor 账号验收延后。见[支持边界](docs/pi-support.md)及[集成检查](specs/005-rebuild-pi-toolkit/integration-candidate.md)。
+- 三工具维护候选提供“精确停止 → 独立批准 setup → 逐项当前终端恢复”，有交互选择、help 和补全。加载仍待人工核对，不发送继续；Pi 只保护 Rotom 合作实例，OMP 写入冲突可能分叉。候选仍在任务分支，合入 main 需人工批准；见[维护流程](docs/tool-maintenance-workflows.md)与[验收范围](specs/008-rotom-command-experience/tool-workflow-validation.md)。
 - 项目正在准备首次公开发布，尚不以包版本号代替正式发布标签。
 
 ## 开始使用

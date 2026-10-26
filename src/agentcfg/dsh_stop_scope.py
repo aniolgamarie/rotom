@@ -62,6 +62,9 @@ def _environment(contract, workspace):
 
 def inspect_deployment(workspace, record, *, instance_fd, state_fd) -> dict:
   """只打开可信 workspace 路径，不从 record/保存的任意路径选择资源。"""
+  if workspace.agent in ("pi", "omp"):
+    from .tool_stop_layout import inspect_deployment as inspect_tool
+    return inspect_tool(workspace, record, instance_fd=instance_fd, state_fd=state_fd)
   try:
     # 先核实借入编号仍开放，避免后续本函数打开目录时复用已关闭的编号。
     for fd in (instance_fd, state_fd):

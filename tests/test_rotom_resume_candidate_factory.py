@@ -6,9 +6,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from agentcfg import dsh_sessions, sessions
+from agentcfg import dsh_sessions, sessions, tool_sessions, tool_session_headers
 from rotom import cli, resume
 from rotom.context import InputGateway, Scope
+
+
+_PI_CANDIDATE = tool_sessions.PiResumeCandidate
+_OMP_CANDIDATE = tool_sessions.OmpResumeCandidate
 
 
 class Stream(io.StringIO):
@@ -40,9 +44,10 @@ def factory(tmp_path, monkeypatch):
     trace.append(("workspace", Path(path), profile))
     binding = {"machine": "synthetic", "local": str(path), "profile": profile}
     binding.update(damage.get("binding", {}))
-    return SimpleNamespace(agent=damage.get("agent", "dsh"), profile=damage.get("profile", profile), binding=binding)
+    return SimpleNamespace(agent=damage.get("agent", dict(profiles).get(profile, "dsh")),
+      profile=damage.get("profile", profile), binding=binding)
   def target(workspace, identifier):
-    return sessions.KnownSession(sessions.SessionRef("dsh", "managed", "home-a", identifier),
+    return sessions.KnownSession(sessions.SessionRef(workspace.agent, "managed", "home-a", identifier),
       dsh_sessions.scope_key(workspace.binding), workspace.profile, str(cwd), "historical", "historical", 1, None)
   def lookup(workspace, identifier):
     trace.append(("lookup", workspace, identifier))
@@ -62,6 +67,10 @@ def factory(tmp_path, monkeypatch):
   monkeypatch.setattr(agentcfg.workspace, "load_workspace", workspace)
   monkeypatch.setattr(dsh_sessions, "lookup_metadata", lookup)
   monkeypatch.setattr(dsh_sessions, "DshResumeCandidate", Backend)
+  monkeypatch.setattr(tool_sessions, "PiResumeCandidate", Backend)
+  monkeypatch.setattr(tool_sessions, "OmpResumeCandidate", Backend)
+  monkeypatch.setattr(tool_session_headers, "lookup", lambda workspace, identifier:
+    SimpleNamespace(known=lookup(workspace, identifier)))
   return SimpleNamespace(local=local, streams=streams, profiles=profiles, trace=trace,
     known=known, damage=damage, target=target, workspace=workspace)
 
@@ -114,11 +123,11 @@ def test_profile_menu_cancel_does_not_query(factory):
   assert [row[0] for row in factory.trace] == ["known"]
 
 
-@pytest.mark.parametrize("damage", [{"agent": "pi"}, {"profile": "dsh-ssh"},
-  {"binding": {"machine": "different"}}, {"binding": {"local": "/tmp/other-synthetic.toml"}}])
-def test_workspace_source_or_scope_change_refuses_before_metadata(factory, damage):
+@pytest.mark.parametrize("damage,expected", [({"agent": "pi"}, 2), ({"profile": "dsh-ssh"}, 4),
+  ({"binding": {"machine": "different"}}, 4), ({"binding": {"local": "/tmp/other-synthetic.toml"}}, 4)])
+def test_workspace_source_or_scope_change_refuses_before_metadata(factory, damage, expected):
   factory.damage.update(damage)
-  assert invoke(factory, "dsh", "--profile", "dsh-default", "--session", "native-only") == 4
+  assert invoke(factory, "dsh", "--profile", "dsh-default", "--session", "native-only") == expected
   assert [row[0] for row in factory.trace] == ["known", "workspace"]
 
 
@@ -136,13 +145,17 @@ def test_known_target_skips_metadata_and_loads_its_exact_workspace(factory):
   assert [row[0] for row in factory.trace] == ["known", "workspace", "backend", "launch"]
 
 
-def test_known_nondsh_target_remains_capability5(factory):
-  workspace = factory.workspace(factory.local, "dsh-default")
-  target = factory.target(workspace, "known-id")
-  factory.known.append(replace(target, ref=replace(target.ref, agent="pi"), profile="pi-base"))
+@pytest.mark.parametrize("tool,profile", [("pi", "pi-base"), ("omp", "omp-default")])
+def test_known_tool_target_uses_its_exact_workspace_without_metadata_fallback(factory, tool, profile):
+  factory.profiles.append((profile, tool))
+  workspace = factory.workspace(factory.local, profile)
+  factory.known.append(factory.target(workspace, "known-id"))
   factory.trace.clear()
-  assert invoke(factory, "--session", "known-id") == 5
-  assert [row[0] for row in factory.trace] == ["known"]
+  assert invoke(factory, "--session", "known-id") == 0
+  assert [row[0] for row in factory.trace] == ["known", "workspace", "backend", "launch"]
+  assert factory.trace[1] == ("workspace", factory.local, profile)
+  assert factory.trace[-1][1].ref.agent == tool
+  assert factory.trace[-1][2].agent == tool
 
 
 def test_scope_key_cannot_be_remapped_to_another_local(factory, monkeypatch):
@@ -154,10 +167,10 @@ def test_scope_key_cannot_be_remapped_to_another_local(factory, monkeypatch):
   assert factory.trace == []
 
 
-def test_nondsh_unknown_id_rejects_without_profile_menu_or_lookup(factory):
+def test_ambiguous_tool_profile_unknown_id_refuses_without_guessing_or_lookup(factory):
   factory.profiles.extend((("pi-base", "pi"), ("pi-pro", "pi")))
-  assert invoke(factory, "pi", "--session", "native-only") == 5
-  assert [row[0] for row in factory.trace] == []
+  assert invoke(factory, "pi", "--session", "native-only") == 2
+  assert [row[0] for row in factory.trace] == ["known"]
   assert factory.streams.stdin.tell() == 0
 
 
@@ -208,13 +221,16 @@ def test_default_empty_scope_offers_tool_then_id_without_scope_or_profile_fallba
 
 
 @pytest.mark.parametrize("choice", ["2", "3"])
-def test_default_tool_menu_lists_pi_omp_but_does_not_query_or_launch_them(factory, choice):
+def test_default_tool_menu_queries_and_launches_only_selected_tool_and_profile(factory, choice):
   factory.profiles.extend((("pi-base", "pi"), ("omp-default", "omp")))
   answer(factory, choice + "\nnative-only\n")
-  assert cli.main(["resume", "--local", str(factory.local)]) == 5
-  assert [row[0] for row in factory.trace] == ["known"]
+  assert cli.main(["resume", "--local", str(factory.local)]) == 0
+  assert [row[0] for row in factory.trace] == ["known", "workspace", "lookup", "workspace", "backend", "launch"]
+  profile, tool = ("pi-base", "pi") if choice == "2" else ("omp-default", "omp")
+  assert [row[2] for row in factory.trace if row[0] == "workspace"] == [profile, profile]
+  assert factory.trace[-1][1].ref.agent == factory.trace[-1][2].agent == tool
   text = factory.streams.stderr.getvalue()
-  assert "Pi" in text and "OMP" in text and "尚未准入" in text
+  assert "Pi" in text and "OMP" in text and "选择恢复工具" in text
 
 
 def test_default_empty_scope_cancellation_never_queries(factory):
@@ -234,3 +250,30 @@ def test_default_empty_scope_non_tty_never_reads_or_queries(factory):
   answer(factory, "1\nunused\n")
   assert cli.main(["resume", "--local", str(factory.local)]) == 2
   assert factory.trace == [] and factory.streams.stdin.tell() == 0
+
+
+@pytest.mark.parametrize("tool,profile", [("pi", "pi-base"), ("omp", "omp-default")])
+def test_missing_explicit_tool_session_never_falls_back_or_constructs_backend(factory, monkeypatch, tool, profile):
+  factory.profiles.append((profile, tool))
+  def missing(workspace, identifier):
+    factory.trace.append(("lookup", workspace, identifier))
+    raise sessions.SessionError(4, "synthetic-native-session-missing")
+  monkeypatch.setattr(tool_session_headers, "lookup", missing)
+  assert invoke(factory, tool, "--profile", profile, "--session", "missing-id") == 4
+  assert [row[0] for row in factory.trace] == ["known", "workspace", "lookup"]
+  assert factory.trace[-1][1].profile == profile and factory.trace[-1][2] == "missing-id"
+  assert factory.streams.stdin.tell() == 0
+
+
+@pytest.mark.parametrize("tool,profile,candidate", [
+  ("pi", "pi-base", _PI_CANDIDATE), ("omp", "omp-default", _OMP_CANDIDATE),
+])
+def test_real_tool_candidate_still_rejects_unverified_platform_before_native_lookup_or_launch(
+    factory, monkeypatch, tool, profile, candidate):
+  factory.profiles.append((profile, tool))
+  monkeypatch.setattr(tool_sessions, "PiResumeCandidate" if tool == "pi" else "OmpResumeCandidate", candidate)
+  monkeypatch.setattr(tool_sessions.sys, "platform", "unverified-platform")
+  monkeypatch.setattr(tool_sessions, "lookup", lambda *a: pytest.fail("unverified native lookup"))
+  monkeypatch.setattr(tool_sessions.runtime, "run", lambda *a, **kw: pytest.fail("unverified runtime"))
+  assert invoke(factory, tool, "--profile", profile, "--session", "native-only") == 5
+  assert [row[0] for row in factory.trace] == ["known", "workspace", "lookup", "workspace"]

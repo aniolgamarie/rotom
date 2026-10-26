@@ -266,8 +266,9 @@ def _launch(spec, env, pass_fds, *, run_id, before_dispatch, after_dispatch, att
 class DshResumeCandidate(HostResumeBackend):
   """固定完整组合的当前终端交接；每次仍须核验部署与原生 writer。"""
 
-  def __init__(self, workspace):
+  def __init__(self, workspace, *, expected_deployment=None):
     self.workspace = workspace
+    self.expected_deployment = expected_deployment
 
   def resume_session(self, target, *, location, before_dispatch, after_dispatch):
     workspace = self.workspace
@@ -306,8 +307,9 @@ class DshResumeCandidate(HostResumeBackend):
 
     try:
       _admitted(workspace)
+      options = {"expected_deployment": self.expected_deployment} if self.expected_deployment is not None else {}
       return runtime.run(workspace, cwd=Path(target.cwd), arguments=("--resume", target.ref.native_ref),
-        resume_operation=launch)
+        resume_operation=launch, **options)
     except Conflict:
       raise SessionError(4, "dsh_resume_preflight_conflict") from None
     except ConfigError:
