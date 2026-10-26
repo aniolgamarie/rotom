@@ -16,13 +16,31 @@ import pytest
 
 
 @pytest.fixture
-def fake_terminal_commands(isolated_environment):
+def fake_terminal_commands(isolated_environment, monkeypatch):
   """仅供 termcfg 隔离测试识别，不执行真实 zsh/tmux。"""
   directory = isolated_environment.root / "empty-bin"
   for name in ("zsh", "tmux", "fzf"):
     path = directory / name
     path.write_text("#!/bin/sh\nexit 99\n")
     path.chmod(0o700)
+  # 入口按真实协议核验来源；仅使用临时可信checkout和永不执行的合成解释器。
+  from rotom import entry
+  repository = Path(__file__).resolve().parents[1]
+  checkout = isolated_environment.root / "prepared-entry-checkout"
+  checkout.mkdir(mode=0o700)
+  for relative in entry.PROTOCOL_SOURCES:
+    target = checkout / relative
+    target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    target.write_bytes((repository / relative).read_bytes())
+    target.chmod(0o700 if relative == "rotom" else 0o600)
+  environment = checkout / ".venv"
+  (environment / "bin").mkdir(mode=0o700, parents=True)
+  (environment / "pyvenv.cfg").write_text("home = /opt/rotom-example-python\nversion = 3.11.11\n")
+  (environment / "pyvenv.cfg").chmod(0o600)
+  python = environment / "bin/python"
+  python.write_bytes(b"synthetic interpreter; never execute\n")
+  python.chmod(0o700)
+  monkeypatch.setattr(entry, "REPO_ROOT", checkout)
   return directory
 
 
@@ -221,6 +239,12 @@ class FakeSubprocess:
 def fake_subprocess(offline_guards, monkeypatch):
   fake = FakeSubprocess()
   monkeypatch.setattr(subprocess, "run", fake.run)
+  from agentcfg import runtime
+  def dsh_child(spec, env, pass_fds, **kwargs):
+    # 普通宿主边界与 resume 的 fake Popen 分开；不得恢复通用 Popen 权限。
+    result = fake.run(list(spec.argv), cwd=spec.cwd, env=env, pass_fds=pass_fds)
+    return result.returncode if result.returncode >= 0 else 128 - result.returncode
+  monkeypatch.setattr(runtime, "_run_dsh_child", dsh_child)
   return fake
 
 

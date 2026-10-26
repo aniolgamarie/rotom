@@ -167,7 +167,7 @@ def test_completed_migration_does_not_replay_after_terminal_apply(isolated_envir
   assert state_file(machine).read_bytes() == before
 
 
-def test_preview_hashes_only_selected_plugin_dependencies(isolated_environment, monkeypatch):
+def test_preview_hashes_only_selected_plugin_dependencies(isolated_environment, monkeypatch, fake_terminal_commands):
   from termcfg import packages
   from termcfg.preview import build_preview
   assert main(["init-local", "--component", "zsh"]) == 0
@@ -182,8 +182,14 @@ def test_preview_hashes_only_selected_plugin_dependencies(isolated_environment, 
 
 
 def test_legacy_recovery_restores_written_target_without_catalog(isolated_environment, fake_terminal_commands, monkeypatch):
+  from termcfg import preview
+  from termcfg.catalog import load_catalog
   from termcfg.preview import build_preview
   from termcfg.state import read_journal
+  # 先按旧纯静态catalog建立真实v2事务，不能把包含生成payload的v3日志伪降版。
+  legacy_catalog = tuple(item for item in load_catalog() if item.id in {"zshrc", "zshenv"})
+  monkeypatch.setattr(preview, "load_catalog", lambda: legacy_catalog)
+  monkeypatch.setattr(transaction, "load_catalog", lambda: legacy_catalog)
   assert main(["init-local", "--component", "zsh"]) == 0
   machine = read_machine("default")
   plan = build_preview(machine, ("zsh",))
@@ -195,12 +201,16 @@ def test_legacy_recovery_restores_written_target_without_catalog(isolated_enviro
   assert main(["apply", "--plan-id", plan.plan_id]) == 6
   assert (machine.target_home / ".zshrc").exists()
   journal = read_journal(machine)
+  assert journal["version"] == 2 and all("generated" not in item for item in journal["items"])
   journal["version"] = 1
   journal["state_before"].update(version=1, selected_core=None, public_config_identity=None,
                                  pending_core_effect=False, pending_config_effect=False)
   write_json(machine.private_state_root / "journal.json", journal)
   machine_path("default").write_bytes(encode_machine(machine).replace(b'["zsh"]', b'["zsh", "mihomo"]'))
-  monkeypatch.setattr(transaction, "load_catalog", lambda: (_ for _ in ()).throw(AssertionError("catalog read")))
+  def forbidden_catalog():
+    raise AssertionError("catalog read")
+  monkeypatch.setattr(transaction, "load_catalog", forbidden_catalog)
+  monkeypatch.setattr(preview, "load_catalog", forbidden_catalog)
   assert main(["recover"]) == 0
   assert not (machine.target_home / ".zshrc").exists()
   assert main(["migrate", "--drop-mihomo"]) == 0

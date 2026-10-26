@@ -52,7 +52,9 @@ def merge_layers(layers) -> MergeResult:
       return old
     if isinstance(new, Mapping):
       if not isinstance(old, Mapping):
-        discard(path)
+        # 尚不存在的键没有旧来源子树，避免首层大目录逐项扫描全部来源。
+        if old is not MISSING:
+          discard(path)
         old = {}
       result = dict(old)
       for key, value in new.items():
@@ -63,7 +65,8 @@ def merge_layers(layers) -> MergeResult:
       elif path:
         sources[path] = layer
       return result
-    discard(path)
+    if old is not MISSING:
+      discard(path)
     sources[path] = layer
     return deepcopy(new)
 

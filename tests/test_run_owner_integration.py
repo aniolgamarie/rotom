@@ -22,7 +22,7 @@ def owner_workspace(tmp_path, monkeypatch, prepared_runtime):
   monkeypatch.setattr(run_owners, "current_process_identity",
     lambda: {"pid": 101, "birth_id": "synthetic-boot-and-start"})
   monkeypatch.setattr(workspace.adapter, "run_owner_guard",
-    lambda selected: lifecycle.registered_run(selected), raising=False)
+    lambda selected, **kwargs: lifecycle.registered_run(selected, **kwargs), raising=False)
   return workspace
 
 
@@ -37,7 +37,7 @@ def test_native_exit_kept_and_unknown_descendants_block_maintenance(owner_worksp
   assert runtime.run(owner_workspace, cwd=tmp_path) == 19
   records = registry(owner_workspace).snapshot()
   assert len(records) == 1
-  assert next(iter(records.values()))["state"] == "unknown"
+  assert run_owners.record_state(next(iter(records.values()))) == "unknown"
   with lifecycle.guard(owner_workspace, create=False):
     with pytest.raises(Conflict):
       registry(owner_workspace).assert_inactive()
@@ -51,7 +51,7 @@ def test_bookkeeping_failure_does_not_replace_native_exit(owner_workspace, fake_
   fake_subprocess.queue(returncode=0, stdout="v24.2.0")
   fake_subprocess.queue(returncode=23)
   assert runtime.run(owner_workspace, cwd=tmp_path) == 23
-  assert next(iter(registry(owner_workspace).snapshot().values()))["state"] == "active"
+  assert run_owners.record_state(next(iter(registry(owner_workspace).snapshot().values()))) == "active"
   output = capsys.readouterr()
   assert "运行归属状态未能更新" in output.err
   assert CANARY not in output.err + output.out
@@ -79,7 +79,7 @@ def test_closed_diagnostic_stream_does_not_replace_native_exit(owner_workspace,
     fake_subprocess.queue(returncode=0, stdout="v24.2.0")
     fake_subprocess.queue(returncode=29)
     assert runtime.run(owner_workspace, cwd=tmp_path) == 29
-  assert next(iter(registry(owner_workspace).snapshot().values()))["state"] == "active"
+  assert run_owners.record_state(next(iter(registry(owner_workspace).snapshot().values()))) == "active"
 
 
 def test_two_shared_runs_only_update_their_own_record(owner_workspace, fake_subprocess, tmp_path):
@@ -88,14 +88,14 @@ def test_two_shared_runs_only_update_their_own_record(owner_workspace, fake_subp
   def second(*args, **kwargs):
     records = registry(owner_workspace).snapshot()
     assert len(records) == 2
-    assert all(record["state"] == "active" for record in records.values())
+    assert all(run_owners.record_state(record) == "active" for record in records.values())
     return 7
   def first(*args, **kwargs):
     assert len(registry(owner_workspace).snapshot()) == 1
     assert runtime.run(owner_workspace, cwd=tmp_path, launch_operation=second) == 7
-    assert sorted(record["state"] for record in registry(owner_workspace).snapshot().values()) == ["active", "unknown"]
+    assert sorted(run_owners.record_state(record) for record in registry(owner_workspace).snapshot().values()) == ["active", "unknown"]
     return 11
   assert runtime.run(owner_workspace, cwd=tmp_path, launch_operation=first) == 11
   records = registry(owner_workspace).snapshot()
   assert len(records) == 2
-  assert all(record["state"] == "unknown" for record in records.values())
+  assert all(run_owners.record_state(record) == "unknown" for record in records.values())

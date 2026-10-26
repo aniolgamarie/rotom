@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema_version"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agent_machine": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!\\.\\.?$)[^/\\\\\\u0000-\\u001f\\u007f]+$"
+        },
+        "term_machine": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+        },
+        "work_machine": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!\\.\\.?$)[^/\\\\\\u0000-\\u001f\\u007f]+$"
+        }
+      }
+    },
+    "run_profiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dsh": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!\\.\\.?$)[^/\\\\\\u0000-\\u001f\\u007f]+$"
+        },
+        "pi": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!\\.\\.?$)[^/\\\\\\u0000-\\u001f\\u007f]+$"
+        },
+        "omp": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!\\.\\.?$)[^/\\\\\\u0000-\\u001f\\u007f]+$"
+        }
+      }
+    }
+  }
+}

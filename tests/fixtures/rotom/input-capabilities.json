@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "status": "fake-only",
+  "tools": {
+    "dsh": {"automatic_continue": "unavailable", "reason": "native-evidence-not-admitted"},
+    "pi": {"automatic_continue": "unavailable", "reason": "native-evidence-not-admitted"},
+    "omp": {"automatic_continue": "unavailable", "reason": "native-evidence-not-admitted"}
+  },
+  "fake_assumptions": ["exact-new-run-and-loaded-session", "same-agent-object", "foreground-generation", "input-ready", "writer-coverage", "complete-observation"],
+  "acceptance": "single-live-inbox-admission-only",
+  "limitations": ["not-model-execution", "not-cross-restart-deduplication", "not-an-upstream-api-adapter", "no-event-sequence-assumption"]
+}

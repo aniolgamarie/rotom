@@ -363,9 +363,9 @@ class PiAdapter(Adapter):
     from .pi_lifecycle import guard
     return guard(workspace, shared=True, allow_active=True, create=False)
 
-  def run_owner_guard(self, workspace):
+  def run_owner_guard(self, workspace, *, metadata=None):
     from .lifecycle import registered_run
-    return registered_run(workspace)
+    return registered_run(workspace, metadata=metadata)
 
   def runtime_binding(self, data, instance):
     selected = {"profile": data["profile"]["id"], "resources": data["profile"]["agent_options"].get("resources", {}),

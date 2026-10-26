@@ -246,18 +246,26 @@ def save(proposal):
     raise
 
 
-def edit(settings, *, run=None):
+def edit(settings, *, run=None, context=None):
+  from rotom.context import require_input
+  require_input(context)
   try:
     # 先拒绝初始不安全输入，再创建协作锁；锁内仍重新读取最新内容。
     _read(settings)
-    return _edit(settings, run=run)
+    return _edit(settings, run=run, **({"context": context} if context is not None else {}))
   except TermcfgError as error:
     if not getattr(error, "fragment", None):
       error.fragment = manual_fragment(settings=settings)
     raise
 
 
-def _edit(settings, *, run=None):
+def _edit(settings, *, run=None, context=None):
+  def publish(proposal):
+    if context is not None and proposal.changed:
+      from .work_ui import present_proposal, confirm
+      present_proposal(proposal, context=context)
+      confirm("Save the reviewed workspace configuration", context=context)
+    return _publish(proposal)
   if settings.editor is None:
     raise TermcfgError(2, "work_editor_choice_required", "work --help")
   executable = resolve_executable(settings.editor)
@@ -277,9 +285,9 @@ def _edit(settings, *, run=None):
           if after is None or after[1] != 0o600:
             raise TermcfgError(4, "work_unsafe_edited_fragment", "work config edit")
           if after[0] == original_fragment.encode("utf-8"):
-            return _publish(_proposal(settings, before, doc["machine"]["work"].unwrap()))
+            return publish(_proposal(settings, before, doc["machine"]["work"].unwrap()))
           fragment = tomlkit.parse(after[0].decode("utf-8")).unwrap()
-          return _publish(_proposal(settings, before, fragment))
+          return publish(_proposal(settings, before, fragment))
         finally:
           # 清理只需要目录句柄与文件身份，拒绝超限时也不能无界读回正文。
           with tree.parent(name) as (parent, filename):

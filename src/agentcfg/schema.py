@@ -109,6 +109,24 @@ def _strict_schema_serialized(serialized: str) -> None:
                               format_checker=Draft202012Validator.FORMAT_CHECKER)
   # 元 schema 自身递归验证全部子节点，不需在每个节点重新验证整棵子树。
   meta.validate(schema)
+  meta_validated = set()
+
+  def mark_meta(node):
+    # 只登记元 schema 已覆盖的结构子树；default/examples 内容不在其中。
+    if not isinstance(node, dict) or id(node) in meta_validated:
+      return
+    meta_validated.add(id(node))
+    for key in _SCHEMA_MAPS:
+      for child in node.get(key, {}).values():
+        mark_meta(child)
+    for key in _SCHEMA_VALUES:
+      if key in node:
+        mark_meta(node[key])
+    for key in _SCHEMA_LISTS:
+      for child in node.get(key, []):
+        mark_meta(child)
+
+  mark_meta(schema)
   visited = set()
 
   def visit(node):
@@ -122,7 +140,9 @@ def _strict_schema_serialized(serialized: str) -> None:
     if "$ref" in node:
       target = _local_target(schema, node["$ref"])
       # 引用可指向 default 等注解内部；根元 schema 不会把该值当 schema 验证。
-      meta.validate(target)
+      if id(target) not in meta_validated:
+        meta.validate(target)
+        mark_meta(target)
       visit(target)
     elif "type" not in node and any(key in node for key in ("allOf", "anyOf", "oneOf")):
       pass
@@ -275,6 +295,41 @@ def separate_local(data: dict) -> tuple[dict, SecretStore]:
   return ordinary, store
 
 
+def _profile_source(schema, data, option_schema):
+  checked = deepcopy(data)
+  if "agent_options" in data:
+    checked["agent_options"] = {}
+  _validate(schema, checked, ("profile",))
+  if "agent_options" in data:
+    _validate(option_schema, data["agent_options"], ("profile", "agent_options"), private_schema=True)
+
+
+def validate_profile_sources(documents, *, adapter_schemas: AdapterSchemas) -> None:
+  """单次公开来源请求复用严格 schema；选项仍按待合并源的 partial 规则校验。"""
+  context = None
+  try:
+    # 私人快照不引用可变的调用方 schema；下一次请求重新读取并检查全部资料。
+    context = deepcopy(adapter_schemas)
+  except Exception:
+    pass
+  framework, bundles, partials = None, {}, {}
+  for data in documents:
+    _version(data, 1, "profile")
+    if framework is None:
+      framework = _read_schema("profile")
+    agent = data.get("agent")
+    if type(agent) is not str:
+      raise ConfigError("adapter-schema", ("adapter",))
+    if agent not in bundles:
+      bundles[agent] = _bundle(context, agent)
+    option_schema = None
+    if "agent_options" in data:
+      if agent not in partials:
+        partials[agent] = _partial(bundles[agent].agent_options)
+      option_schema = partials[agent]
+    _profile_source(framework, data, option_schema)
+
+
 def validate_document(kind: str, data: dict, *, adapter_schemas: AdapterSchemas | None = None,
                       adapter_id: str | None = None, partial_options: bool = False) -> None:
   """单一来源校验；partial_options 仅供待合并 profile 源，最终解析必须使用默认完整校验。"""
@@ -297,14 +352,16 @@ def validate_document(kind: str, data: dict, *, adapter_schemas: AdapterSchemas 
     data, _ = separate_local(data)
   _version(data, 1, kind)
   schema = _read_schema(kind)
-  checked = deepcopy(data)
-  options = []
   if kind == "profile":
     bundle = _bundle(adapter_schemas, data.get("agent"))
+    option_schema = None
     if "agent_options" in data:
-      options.append((data["agent_options"], bundle, (kind, "agent_options"), partial_options))
-      checked["agent_options"] = {}
-  elif kind == "local":
+      option_schema = _partial(bundle.agent_options) if partial_options else bundle.agent_options
+    _profile_source(schema, data, option_schema)
+    return
+  checked = deepcopy(data)
+  options = []
+  if kind == "local":
     overrides = data.get("overrides", {})
     profiles = overrides.get("profiles", {}) if isinstance(overrides, dict) else {}
     if isinstance(profiles, dict):

@@ -15,6 +15,10 @@ _SIMPLE_ZSH = re.compile(rb"^\s*(?:#.*|(?:export\s+)?(?:LANG|LC_[A-Z_]+)=[A-Za-z
 def admit_existing(target_id: str, data: bytes, *, known_public_contents: set[bytes], trusted_digest: str | None = None) -> str:
   if data in known_public_contents:
     return hashlib.sha256(data).hexdigest()
+  if target_id == "rotom-entry-binding":
+    from rotom.entry import known_binding
+    known_binding(data)
+    return hashlib.sha256(data).hexdigest()
   if len(data) > 1024 * 1024 or b"\0" in data or _SENSITIVE.search(data):
     raise TermcfgError(4, "possible_private_content", hint("plan"))
   if trusted_digest is not None:

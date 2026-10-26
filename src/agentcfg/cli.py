@@ -370,6 +370,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 
     configure_help(parser)
+    # 兼容入口只补静态说明；选择默认值仍由原有业务路径决定。
+    def static_contract(current):
+        current.epilog = (current.epilog or "") + (
+            "\n默认优先级：显式machine/local/profile → 本地default_profile → dsh-default；machine默认default。"
+            "\n输入条件：旧入口沿用各命令原有TTY与批准规则；统一输入策略见rotom agent --help。"
+            "\n静态帮助不读取机器、偏好、秘密或会话；联网、写入和启动影响见本命令用途。"
+        )
+        for action in current._actions:
+            if isinstance(action, argparse._SubParsersAction):
+                for child in action.choices.values():
+                    static_contract(child)
+    static_contract(parser)
     return parser
 
 
@@ -390,10 +402,12 @@ def check_venv() -> None:
         sys.exit(EXIT_USAGE)
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, *, context=None) -> int:
     """命令行主入口"""
     parser = build_parser()
     args = parser.parse_args(argv)
+    if context is not None:
+        args.invocation_context = context
 
     if args.command is None:
         print(ENTRY_GUIDE)
@@ -401,6 +415,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # 分发命令
     try:
+        if context is not None and args.command == "model" and args.model_command in ("add", "key", "url", "enable"):
+            from rotom.context import require_input
+            require_input(context)
         if args.command == "profiles":
             from . import commands
             return commands.cmd_profiles(args)
@@ -437,6 +454,9 @@ def main(argv: list[str] | None = None) -> int:
         failure_context(args, EXIT_INTERNAL, reason="文件系统操作失败；请检查所选文件及目录的访问权限")
         return EXIT_INTERNAL
     except Exception as error:
+        from rotom.context import InputError
+        if isinstance(error, InputError):
+            return error.exit_code
         from .schema import ConfigError
         from .secrets import CredentialError
         from .storage import StateError

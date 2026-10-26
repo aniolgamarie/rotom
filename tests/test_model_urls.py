@@ -112,7 +112,7 @@ def test_concurrent_machine_edit_is_preserved(monkeypatch):
 
 def test_unselected_missing_urls_do_not_block_default_profile():
   assert cli.main(["init-local", "--profile", "omp-kernel"]) == 0
-  for profile in ("omp-default", "dsh-default", "pi-default"):
+  for profile in ("omp-default", "dsh-default", "pi-base", "pi-pro"):
     workspace = load_workspace(machine(), profile)
     assert not workspace.resolved.missing_local_values
     assert "local_values" not in workspace.resolved.data

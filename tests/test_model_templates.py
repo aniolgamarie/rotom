@@ -91,12 +91,25 @@ def test_private_model_overrides_cannot_introduce_template_controls():
 def test_public_protocol_and_gateway_bindings_share_core_with_isolated_billing():
   raw = tomllib.loads((REPO / "shared/model-templates.toml").read_text())
   templates = raw["model_templates"]
-  assert len(templates) == 11
+  assert len(templates) == 13
   documents = [REPO / name for name in ("shared/model-templates.toml", "shared/providers.toml",
     "shared/models.toml", "agents/omp/content.toml")]
   catalog = load_sources(SourceInputs(registries=tuple(documents)), adapter_schemas=AdapterSchemas())
   models = catalog.registry["models"]
-  assert len(models) == 27
+  assert len(models) == 33
+  # 新增两种 K3.1 核心规格，分别绑定两种公开协议及独立网关路线。
+  for template_id, remote_id, suffix in (
+    ("kimi_k31_pro", "k3.1-pro", "k31_pro"),
+    ("kimi_k31_pro_highspeed", "k3.1-pro-highspeed", "k31_pro_highspeed"),
+  ):
+    assert templates[template_id]["remote_id"] == remote_id
+    for protocol in ("openai", "anthropic"):
+      model = models["kimi_code_" + suffix + "_" + protocol]
+      assert model["provider"] == "kimi_code_" + protocol
+      assert model["remote_id"] == remote_id
+    gateway = models["omp-kimi_tf-" + remote_id]
+    assert gateway["provider"] == "kimi_tf"
+    assert gateway["remote_id"] == remote_id
   for template_id, core in templates.items():
     matches = [item for item in models.values() if item["remote_id"] == core["remote_id"]]
     assert matches

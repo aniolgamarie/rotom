@@ -12,7 +12,7 @@ import re
 
 from .adapter import Adapter, AdapterDeclaration, Artifact, DependencyPlan, EnvironmentBinding, LaunchSpec, ManagedTarget, Ownership, SecretRef
 from .schema import AdapterPolicy, AdapterSchemaBundle, AdapterSchemas, AuthenticationClaim, ConfigError
-from .omp_identity import lifecycle_guard, native_identity
+from .omp_identity import native_identity
 from .omp_discovery import (DISABLED_PROVIDERS, SourcePolicy,
   assert_native_sources, inspect_project_sources, dotenv_names)
 from .omp_execution_environment import capture_execution_environment, validate_execution_environment, XDG_KEYS
@@ -662,19 +662,30 @@ class OmpAdapter(Adapter):
     return DependencyPlan(("oh-my-pi@" + TAG.removeprefix("v"),))
 
   def lifecycle_guard(self, workspace):
-    return lifecycle_guard(workspace, create=False)
+    from .omp_admission import write_guard
+    return write_guard(workspace, create=False)
 
   def run_lifecycle_guard(self, workspace):
-    return lifecycle_guard(workspace, shared=True)
+    from .omp_admission import run_guard
+    return run_guard(workspace)
 
   shared_run_lease = True
 
   def apply_lifecycle_guard(self, workspace):
-    return lifecycle_guard(workspace, create=True)
+    from .omp_admission import write_guard
+    return write_guard(workspace, create=True)
 
   def pre_sync_preflight(self, workspace):
-    from .omp_identity import preflight_setup
-    preflight_setup(workspace)
+    from .omp_admission import preflight
+    preflight(workspace)
+
+  def prepare_setup_resources(self, workspace, lock):
+    from .omp_admission import prepare
+    return prepare(workspace, lock)
+
+  def apply_lifecycle_guard_for(self, workspace, lock):
+    from .omp_admission import apply_for
+    return apply_for(workspace, lock)
 
   def validate_arguments(self, arguments):
     validate_managed_argv(arguments)

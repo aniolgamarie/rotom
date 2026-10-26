@@ -101,6 +101,15 @@ OPTION_HELP = {
   "plan_only": "只预览回滚目标和回滚计划 ID，不执行写入",
 }
 
+# 兼容入口保留原参数语法；这些说明不参与机器发现或默认值注入。
+_STATIC_CONTRACT = """\n默认优先级：显式--machine → default；不读取rotom偏好。
+输入条件：旧入口沿用各命令原有TTY与批准规则；统一输入策略见rotom term --help。
+--machine/--json在命令前后均可，重复选择按现有parser校验；必填与互斥参数见synopsis。
+静态帮助不读取机器、秘密或会话，不联网、不写文件、不启动原生程序。
+"""
+ROOT_HELP += _STATIC_CONTRACT
+COMMANDS = {name: (purpose, detail + _STATIC_CONTRACT) for name, (purpose, detail) in COMMANDS.items()}
+
 
 def describe_options(parser):
   for action in parser._actions:

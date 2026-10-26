@@ -1,0 +1,771 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rotom non-secret run ownership records; control remains unadmitted",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/v1"
+    },
+    {
+      "$ref": "#/$defs/v2"
+    }
+  ],
+  "$defs": {
+    "manager": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pid",
+        "birth_id"
+      ],
+      "properties": {
+        "pid": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "birth_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[^\\u0000]+$"
+        }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "manager_identity",
+        "source",
+        "relationship"
+      ],
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/manager"
+        },
+        "manager_identity": {
+          "$ref": "#/$defs/manager"
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "relationship": {
+          "const": "reported-by-current-run"
+        }
+      }
+    },
+    "cwd": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "source",
+        "confirmation",
+        "observed_at_ns"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192,
+          "pattern": "^/[^\\u0000]*$"
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "confirmation": {
+          "enum": [
+            "confirmed",
+            "historical",
+            "unknown"
+          ]
+        },
+        "observed_at_ns": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "session_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent",
+        "backend",
+        "native_home_ref",
+        "native_ref"
+      ],
+      "properties": {
+        "agent": {
+          "enum": [
+            "dsh",
+            "pi",
+            "omp"
+          ]
+        },
+        "backend": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "native_home_ref": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "native_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^[^\\u0000]+$"
+        }
+      }
+    },
+    "session_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session",
+        "run_id",
+        "emitter_epoch",
+        "sequence",
+        "confirmation",
+        "source",
+        "observed_at_ns"
+      ],
+      "properties": {
+        "session": {
+          "$ref": "#/$defs/session_ref"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "emitter_epoch": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "confirmation": {
+          "enum": [
+            "unknown",
+            "historical",
+            "confirmed",
+            "final"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "observed_at_ns": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "binding_digest",
+        "run_id",
+        "manager_identity",
+        "session_ref",
+        "state",
+        "affected_resources",
+        "observation"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "binding_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "manager_identity": {
+          "$ref": "#/$defs/legacy_manager"
+        },
+        "session_ref": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^\\u0000]+$"
+            }
+          ]
+        },
+        "state": {
+          "enum": [
+            "active",
+            "unknown",
+            "idle_confirmed"
+          ]
+        },
+        "affected_resources": {
+          "type": "array",
+          "const": [
+            "instance",
+            "runtime",
+            "native-home"
+          ]
+        },
+        "observation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "observed_at_ns",
+            "coverage"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "manager_registered",
+                "manager_scope_ended",
+                "complete_release"
+              ]
+            },
+            "observed_at_ns": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "coverage": {
+              "enum": [
+                "unknown",
+                "complete"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "v2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "binding_digest",
+        "run_id",
+        "manager_identity",
+        "host_identity",
+        "agent",
+        "backend",
+        "profile",
+        "machine_ref",
+        "start_cwd",
+        "session_cwd",
+        "native_home_ref",
+        "deployed_identity",
+        "lifecycle_state",
+        "affected_resources",
+        "process_observation",
+        "session_observation",
+        "terminal_ref",
+        "protocol",
+        "coordination_domain"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 2
+        },
+        "binding_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "manager_identity": {
+          "$ref": "#/$defs/manager"
+        },
+        "host_identity": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/host"
+            }
+          ]
+        },
+        "agent": {
+          "enum": [
+            "dsh",
+            "pi",
+            "omp"
+          ]
+        },
+        "backend": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "profile": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "machine_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "machine",
+            "local"
+          ],
+          "properties": {
+            "machine": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+            },
+            "local": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192,
+              "pattern": "^/[^\\u0000]*$"
+            }
+          }
+        },
+        "start_cwd": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "source",
+            "confirmation",
+            "observed_at_ns"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192,
+              "pattern": "^/[^\\u0000]*$"
+            },
+            "source": {
+              "const": "launch-spec"
+            },
+            "confirmation": {
+              "const": "confirmed"
+            },
+            "observed_at_ns": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "session_cwd": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/cwd"
+            }
+          ]
+        },
+        "native_home_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "path",
+            "source",
+            "confirmation"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "dsh-home",
+                "pi-home",
+                "omp-managed-home"
+              ]
+            },
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192,
+              "pattern": "^/[^\\u0000]*$"
+            },
+            "source": {
+              "const": "deployed-contract"
+            },
+            "confirmation": {
+              "const": "confirmed"
+            }
+          }
+        },
+        "deployed_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "deployment",
+            "runtime"
+          ],
+          "properties": {
+            "deployment": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "runtime": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "lifecycle_state": {
+          "enum": [
+            "active",
+            "unknown",
+            "idle_confirmed"
+          ]
+        },
+        "affected_resources": {
+          "type": "array",
+          "const": [
+            "instance",
+            "runtime",
+            "native-home"
+          ]
+        },
+        "process_observation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "coverage",
+            "source",
+            "observed_at_ns",
+            "manager_identity",
+            "host_identity"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "manager_registered",
+                "manager_scope_ended",
+                "complete_release"
+              ]
+            },
+            "coverage": {
+              "enum": [
+                "unknown",
+                "complete"
+              ]
+            },
+            "source": {
+              "enum": [
+                "manager-registration",
+                "manager-scope-end",
+                "kernel-release"
+              ]
+            },
+            "observed_at_ns": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "manager_identity": {
+              "$ref": "#/$defs/manager"
+            },
+            "host_identity": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/host"
+                }
+              ]
+            }
+          }
+        },
+        "session_observation": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/session_observation"
+            }
+          ]
+        },
+        "terminal_ref": {
+          "type": "null"
+        },
+        "protocol": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "registration",
+            "control"
+          ],
+          "properties": {
+            "registration": {
+              "type": "integer",
+              "const": 2
+            },
+            "control": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/stop_control"
+                }
+              ]
+            }
+          }
+        },
+        "coordination_domain": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/owner_coordination"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "session_observation": {
+                "type": "object",
+                "properties": {
+                  "confirmation": {
+                    "const": "final"
+                  }
+                },
+                "required": [
+                  "confirmation"
+                ]
+              }
+            },
+            "required": [
+              "session_observation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "lifecycle_state": {
+                "const": "idle_confirmed"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "protocol": {
+                "properties": {
+                  "control": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "agent": {
+                "const": "dsh"
+              },
+              "backend": {
+                "const": "managed"
+              },
+              "coordination_domain": {
+                "type": "null"
+              },
+              "host_identity": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/host"
+                  },
+                  {
+                    "properties": {
+                      "source": {
+                        "const": "linux-spawn-pidfd"
+                      },
+                      "relationship": {
+                        "const": "reported-by-current-run"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "legacy_manager": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "pid",
+        "birth_id"
+      ],
+      "properties": {
+        "pid": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "birth_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000]+$"
+        }
+      }
+    },
+    "owner_coordination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "domain_id",
+        "domain_physical",
+        "op_id",
+        "link_digest"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "rotom-owner-link-v1"
+        },
+        "domain_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "domain_physical": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "device",
+            "inode"
+          ],
+          "properties": {
+            "device": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "inode": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "op_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "link_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      }
+    },
+    "stop_endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "binding_digest",
+        "run_id",
+        "manager_identity",
+        "host_identity",
+        "nonce",
+        "physical"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "kind": {
+          "type": "string",
+          "const": "stop-inbox"
+        },
+        "binding_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "manager_identity": {
+          "$ref": "#/$defs/manager"
+        },
+        "host_identity": {
+          "$ref": "#/$defs/manager"
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "physical": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "device",
+            "inode"
+          ],
+          "properties": {
+            "device": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "inode": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "stop_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "endpoint"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "linux-pidfd-stop-v1"
+        },
+        "endpoint": {
+          "$ref": "#/$defs/stop_endpoint"
+        }
+      }
+    }
+  }
+}

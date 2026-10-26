@@ -3,22 +3,103 @@
   "title": "termcfg public source catalog",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "targets"],
+  "required": [
+    "version",
+    "targets"
+  ],
   "properties": {
-    "version": {"const": 1},
+    "version": {
+      "type": "integer",
+      "enum": [
+        1,
+        2
+      ]
+    },
     "targets": {
       "type": "array",
       "items": {
-        "type": "object", "additionalProperties": false,
-        "required": ["id", "component", "source", "destination", "sha256", "mode"],
-        "properties": {
-          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]*$"},
-          "component": {"enum": ["zsh", "tmux", "herdr"]},
-          "source": {"type": "string", "minLength": 1},
-          "destination": {"type": "string", "minLength": 1},
-          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-          "mode": {"enum": ["0600", "0700", "0644"]}
-        }
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "component",
+              "source",
+              "destination",
+              "sha256",
+              "mode"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+              },
+              "component": {
+                "enum": [
+                  "zsh",
+                  "tmux",
+                  "herdr"
+                ]
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1
+              },
+              "destination": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "mode": {
+                "enum": [
+                  "0600",
+                  "0700",
+                  "0644"
+                ]
+              },
+              "kind": {
+                "const": "static"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "component",
+              "kind",
+              "destination",
+              "mode",
+              "generator_version"
+            ],
+            "properties": {
+              "id": {
+                "const": "rotom-entry-binding"
+              },
+              "component": {
+                "const": "zsh"
+              },
+              "kind": {
+                "const": "rotom-entry-binding"
+              },
+              "destination": {
+                "const": ".local/share/rotom/entry.json"
+              },
+              "mode": {
+                "const": "0600"
+              },
+              "generator_version": {
+                "type": "integer",
+                "const": 1
+              }
+            }
+          }
+        ]
       }
     }
   }

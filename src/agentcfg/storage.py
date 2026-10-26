@@ -49,6 +49,23 @@ def identity(info):
           info.st_mtime_ns, info.st_ctime_ns)
 
 
+def sync_directory_ancestors(path):
+  """同步已有目录及祖先项；不创建路径、不授予所有权，调用方仍须复核根身份。"""
+  from .paths import _absolute_directory
+  try:
+    path = Path(path)
+    if not path.is_absolute() or ".." in path.parts or path.anchor != "/":
+      raise ValueError()
+    while True:
+      with _absolute_directory(path) as fd:
+        os.fsync(fd)
+      if path == path.parent:
+        break
+      path = path.parent
+  except (OSError, PathError, TypeError, ValueError):
+    raise Conflict("无法确认私人目录持久化；保留已有记录并停止后续操作") from None
+
+
 def ensure_private(path: Path):
   """创建缺失容器，已有的系统/用户祖先只检查，最后一层严格 0700。"""
   if not path.is_absolute() or ".." in path.parts or path == Path("/"):
@@ -252,12 +269,13 @@ class Tree:
 
 
 @contextmanager
-def instance_lock(state: Tree, *, shared=False, timeout=0):
+def instance_lock(state: Tree, *, shared=False, timeout=0, create=True):
   """运行可共享读租约；配置写入仍独占，不替换或删除锁文件。"""
   if type(timeout) not in (int, float) or not 0 <= timeout <= 5:
     raise ValueError("锁等待预算必须介于 0 与 5 秒")
   with state.parent("instance.lock") as (parent, name):
-    fd = os.open(name, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=parent)
+    flags = (os.O_RDWR | os.O_CREAT) if create else os.O_RDONLY | os.O_NONBLOCK
+    fd = os.open(name, flags | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=parent)
   try:
     info = os.fstat(fd)
     if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1

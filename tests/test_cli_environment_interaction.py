@@ -195,7 +195,7 @@ def test_saved_and_diagnostic_targets_do_not_replace_environment_home(home, comm
 @pytest.mark.parametrize("control", ["\t", "\n", "\r", "\x1b", "\x7f", "\u202e"])
 @pytest.mark.parametrize("command", ["doctor", "status", "plan"])
 def test_control_character_home_does_not_change_copyable_human_guidance(
-    control, command, isolated_environment, sentinel_factory, monkeypatch, capsys):
+    control, command, isolated_environment, sentinel_factory, monkeypatch, capsys, fake_terminal_commands):
   original = initialize(capsys)
   alternate = isolated_environment.root / ("diagnostic-A" + control + "B")
   alternate.mkdir(mode=0o700)
@@ -331,3 +331,14 @@ def test_synthetic_root_owner_error_keeps_marker_exit_and_redaction(argv, tty, m
   assert CANARY not in output.out + output.err
   assert not output.out
   before.assert_unchanged()
+
+
+def test_explicit_no_input_context_rejects_hidden_key_before_reading_configuration(monkeypatch):
+  from rotom.context import InvocationContext, InputPolicy
+  from agentcfg import model_keys
+  from types import SimpleNamespace
+  monkeypatch.setattr(model_keys, "load_workspace", forbidden)
+  context = InvocationContext(("agent", "model", "key"), input_policy=InputPolicy.NO_INPUT)
+  with pytest.raises(Exception) as error:
+    model_keys.set_model_key(SimpleNamespace(invocation_context=context))
+  assert error.value.exit_code == 2

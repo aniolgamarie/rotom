@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import json
 import errno
 import os
-import tomllib
 from pathlib import Path
 
 from .config import LocalConfig, _parse_toml, resolve_config
@@ -30,17 +29,17 @@ class InitializationResult:
 
 def available_profiles() -> list[tuple[str, str]]:
   """只读取仓库登记的公开 profile 元数据。"""
+  from .workspace import _public_profile_sources
   repository = Path(__file__).resolve().parents[2]
   profiles = []
-  for path in sorted((repository / "profiles").glob("*.toml")):
+  for stem, document in _public_profile_sources(repository):
     try:
-      document = tomllib.loads(path.read_text(encoding="utf-8"))
       profile_id, agent = document["id"], document["agent"]
       safe_id(profile_id)
-      if not isinstance(agent, str) or profile_id != path.stem or agent not in ("dsh", "pi", "omp"):
+      if not isinstance(agent, str) or profile_id != stem or agent not in ("dsh", "pi", "omp"):
         raise ValueError
       profiles.append((profile_id, agent))
-    except (OSError, UnicodeError, tomllib.TOMLDecodeError, KeyError, ValueError, PathError):
+    except (KeyError, ValueError, PathError):
       raise InitializationError(2) from None
   if not profiles:
     raise InitializationError(2)

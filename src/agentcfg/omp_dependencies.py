@@ -314,7 +314,22 @@ class OmpBackend:
 
   @contextmanager
   def runtime_guard(self, workspace, identity, *, exclusive=False):
+    from .resource_keys import resource_key
+    from .resource_coordination import Domain, read_runtime_anchor, runtime_claim_exists
+    from .resource_scopes import scope_claim_exists
     safe_id(identity)
+    # 单独 sync 也会走此门禁；已知实例的声明不能借旧包锁绕过，cache-only 不创建实例。
+    instance = getattr(workspace, "instance", None)
+    scoped = instance is not None and scope_claim_exists(instance)
+    claimed = runtime_claim_exists(workspace.cache, identity)
+    if scoped or claimed:
+      if exclusive is not True:
+        raise Conflict("OMP共享资源需要合作运行登记；不能从普通共享包租约启动")
+      if not claimed:
+        raise Conflict("OMP实例与运行包的协调归属不完整；未执行同步")
+      with self._coordinated_sync_guard(workspace, identity) as fd:
+        yield fd
+      return
     with Tree(workspace.cache / "leases", create=True) as tree:
       with tree.parent(identity + ".lock") as (parent, name):
         fd = os.open(name, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=parent)
@@ -328,9 +343,69 @@ class OmpBackend:
           if error.errno in (errno.EAGAIN, errno.EACCES):
             raise Conflict("OMP运行包正在使用或维护") from None
           raise
+        # 包目录会随激活替换；稳定锚点是命名租约文件，取得锁后仍须核对它没有换对象。
+        resource_key("runtime", tree.root / (identity + ".lock"), lease_fd=fd)
+        if instance is not None and scope_claim_exists(instance):
+          raise Conflict("OMP实例存在资源协调声明；当前合作入口尚未开放")
+        if runtime_claim_exists(workspace.cache, identity):
+          raise Conflict("OMP共享资源声明仍在；拒绝回退旧格式，当前合作入口尚未开放")
+        if read_runtime_anchor(fd) is not None:
+          # 只信当前配置指定的已有域；普通 sync 不创建实例、状态目录或首次采用记录。
+          root = Path(workspace.resolved.data["machine"]["paths"]["state_root"]) / "lifecycle"
+          Domain(root).check_runtime(workspace.cache, identity, lease_fd=fd, idle=exclusive)
+          # 未接通合作 owner 登记和维护事务前，空引用集合也不是准入凭证。
+          raise Conflict("OMP共享资源需要合作登记与维护协议；当前入口尚未开放")
         yield fd
       finally:
         os.close(fd)
+
+  @contextmanager
+  def _coordinated_sync_guard(self, workspace, identity):
+    """只消费已有可信新包归属；EX 后重核空闲，不创建实例、域或替代租约。"""
+    from contextlib import ExitStack
+    from .lifecycle import _omp_path, _omp_launch_context
+    from .omp_lifecycle import _shared_file
+    from .resource_coordination import Domain
+    from .resource_keys import resource_key
+    from .resource_scopes import scope_claim_exists, _verify
+    from .storage import advisory_lock
+    with ExitStack() as stack:
+      try:
+        raw = workspace.resolved.data["machine"]["paths"]["state_root"]
+        if type(raw) is not str:
+          raise ValueError()
+        root = _omp_path(raw) / "lifecycle"
+        cache = _omp_path(workspace.cache)
+        instance = getattr(workspace, "instance", None)
+        scoped = instance is not None and scope_claim_exists(instance)
+        if scoped:
+          if _omp_launch_context(workspace)[0] != root:
+            raise ValueError()
+          physical = stack.enter_context(_shared_file(instance, ".agentcfg-omp.lock"))
+          home = stack.enter_context(Tree(instance / "user-home"))
+          if home.fd is None:
+            raise ValueError()
+        tree = stack.enter_context(Tree(cache / "leases"))
+        if tree.fd is None:
+          raise ValueError()
+        with tree.parent(identity + ".lock") as (parent, name):
+          fd = os.open(name, os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, dir_fd=parent)
+        stack.callback(os.close, fd)
+        resource_key("runtime", tree.root / (identity + ".lock"), lease_fd=fd)
+        stack.enter_context(advisory_lock(fd, unlock=False))
+        if (instance is not None and scope_claim_exists(instance)) != scoped:
+          raise ValueError()
+        # 协调锁只覆盖核验；从此至激活结束持续持包 EX，不在协调锁内安装或等待。
+        domain = Domain(root)
+        with domain._transaction() as state:
+          if scoped:
+            resources = _verify(state, workspace, instance_fd=physical, native_home_fd=home.fd)
+            domain._unfenced(state, resources)
+          runtime = domain._runtime(state, cache, identity, fd)
+          domain._idle(state, {runtime})
+      except Exception:
+        raise Conflict("OMP共享包归属或空闲状态不能确认；保留保护，未执行同步") from None
+      yield fd
 
   def _receipt(self, workspace, lock, identity):
     self._permission_runtime(workspace, lock)

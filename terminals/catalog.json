@@ -1,12 +1,12 @@
 {
-  "version": 1,
+  "version": 2,
   "targets": [
     {
       "id": "zshrc",
       "component": "zsh",
       "source": "terminals/zsh/zshrc.zsh",
       "destination": ".zshrc",
-      "sha256": "292cac8a78b25d4b17589109d49e38bf793c7702a2b0b7491bed00f5cdbe3c3f",
+      "sha256": "dc3a4affc0d75f89d800bb29572591f9551d343a712874072224e6d167c7ecb4",
       "mode": "0644"
     },
     {
@@ -40,6 +40,30 @@
       "destination": ".config/herdr/config.toml",
       "sha256": "61945e24df6587cbfe525fdc8777167746f040e1d203f3de74c44c895f0f5c93",
       "mode": "0600"
+    },
+    {
+      "id": "rotom-launcher",
+      "component": "zsh",
+      "source": "terminals/zsh/rotom",
+      "destination": ".local/bin/rotom",
+      "sha256": "1e0e9fd546dbbc3a5a14f1df36c36c5a4984027eaaefb67f2ae8b8f71f12cba1",
+      "mode": "0700"
+    },
+    {
+      "id": "rotom-completion",
+      "component": "zsh",
+      "source": "terminals/zsh/_rotom",
+      "destination": ".local/share/rotom/zsh/site-functions/_rotom",
+      "sha256": "2b747fdb678863a34c9b1a58e959bfaaf866f03d663c100a4da9e61b10a755d8",
+      "mode": "0644"
+    },
+    {
+      "id": "rotom-entry-binding",
+      "component": "zsh",
+      "kind": "rotom-entry-binding",
+      "destination": ".local/share/rotom/entry.json",
+      "mode": "0600",
+      "generator_version": 1
     }
   ]
 }

@@ -389,8 +389,12 @@ class DshAdapter(Adapter):
     prepare(workspace, root)
 
   def lifecycle_guard(self, workspace):
-    from .lifecycle import guard
-    return guard(workspace)
+    from .lifecycle import inactive_guard
+    return inactive_guard(workspace)
+
+  def run_owner_guard(self, workspace, *, metadata=None):
+    from .lifecycle import registered_run
+    return registered_run(workspace, metadata=metadata)
 
   def run_lifecycle_guard(self, workspace):
     from .lifecycle import guard
@@ -400,7 +404,10 @@ class DshAdapter(Adapter):
     from .lifecycle import guard
     # 认证会写入或删除实例凭据，独占维护边界避免与活动任务交错。
     authentication = is_ssh(workspace.resolved.data) and arguments[:1] == ("--subscription-auth",)
-    return guard(workspace, shared=not authentication, create=False)
+    if authentication:
+      from .lifecycle import inactive_guard
+      return inactive_guard(workspace, physical=guard(workspace, create=False))
+    return guard(workspace, shared=True, create=False)
 
   shared_run_lease = True
 

@@ -15,8 +15,6 @@ import os
 from pathlib import Path
 import stat
 
-from jinja2 import StrictUndefined
-from jinja2.sandbox import ImmutableSandboxedEnvironment
 import yaml
 
 from .adapter import Adapter, AdapterDeclaration, Artifact, ManagedTarget, Ownership, RenderContext
@@ -95,14 +93,6 @@ def serialize_structured(value, *, format: str) -> bytes:
                         line_break="\n").encode("utf-8")
 
 
-class _TextEnvironment(ImmutableSandboxedEnvironment):
-  def is_safe_attribute(self, obj, attr, value):
-    return False
-
-  def is_safe_callable(self, obj):
-    return False
-
-
 def _template_bytes(trusted_root: Path, asset: str) -> bytes:
   relative = relative_path(asset)
   if not isinstance(trusted_root, Path) or not trusted_root.is_absolute() or ".." in trusted_root.parts:
@@ -133,6 +123,16 @@ def render_text(trusted_root: Path, asset: str, context: dict) -> bytes:
   Jinja 文本自身 CR/CRLF 规范为 LF、保留末尾换行，插值字符串逐字保留。
   无 loader/include、globals、filters、对象属性或函数调用；支持数据索引/循环/条件。
   """
+  from jinja2 import StrictUndefined
+  from jinja2.sandbox import ImmutableSandboxedEnvironment
+
+  class _TextEnvironment(ImmutableSandboxedEnvironment):
+    def is_safe_attribute(self, obj, attr, value):
+      return False
+
+    def is_safe_callable(self, obj):
+      return False
+
   if type(context) is not dict:
     raise ValueError()
   data = _data(context)

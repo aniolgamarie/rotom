@@ -1028,7 +1028,7 @@ def synchronize_named_title(settings, identifier, title):
     raise TermcfgError(4, "work_named_title_saved_native_presentation_pending", "work status") from None
 
 
-def structured_native_command(args, settings):
+def structured_native_command(args, settings, *, context=None):
   from .herdr import Deadline
   from .work_projects import discover, resolve_project
   from .work_state import WorkState
@@ -1041,10 +1041,13 @@ def structured_native_command(args, settings):
     if args.dry_run:
       return 0
     if args.scope is None:
-      if not sys.stdin.isatty():
+      if context is not None:
+        from rotom.context import require_input
+        require_input(context)
+      elif not sys.stdin.isatty():
         raise TermcfgError(2, "work_close_authorization_required", "work close --dry-run")
       from .work_ui import confirm
-      if not confirm("End every terminal in this workspace for all viewers"):
+      if not confirm("End every terminal in this workspace for all viewers", **({"context": context} if context is not None else {})):
         return 0
       scope = preview["scope"]
     else:
@@ -1065,22 +1068,26 @@ def structured_native_command(args, settings):
       with connected(settings, Deadline(), start=False) as (client, binary):
         with WorkState(client.socket_path, client.identity) as state:
           binding = current_binding_v2(client, state, _caller_scope(settings, client.socket_path))
-          selected = type_action(settings, binding, new=args.new)
+          selected = type_action(settings, binding, new=args.new, **({"context": context} if context is not None else {}))
       if selected is None:
         return 0
       if selected[0] == "!rebind":
-        return main([*settings.selectors, "rebind", selected[1]])
+        return main([*settings.selectors, "rebind", selected[1]], **({"context": context} if context is not None else {}))
       type_key, instance_id = selected
     if args.command == "rebind" and not args.accept:
-      if not sys.stdin.isatty():
+      if context is not None:
+        from rotom.context import require_input
+        require_input(context)
+      elif not sys.stdin.isatty():
         raise TermcfgError(2, "work_rebind_accept_required", "work rebind TYPE --accept")
       with connected(settings, Deadline(), start=False) as (client, binary):
         with WorkState(client.socket_path, client.identity) as state:
           preview = rebind_type_v2(client, settings, state, type_key,
             caller_id=_caller_scope(settings, client.socket_path))
-      print(json.dumps({"cwd": preview["cwd"], "launch": preview["launch"], "digest": preview["digest"]}, ensure_ascii=False))
+      print(json.dumps({"cwd": preview["cwd"], "launch": preview["launch"], "digest": preview["digest"]}, ensure_ascii=False),
+        file=context.input_gateway.stderr if context is not None else sys.stdout)
       from .work_ui import confirm
-      if not confirm("Rebind this inactive type"):
+      if not confirm("Rebind this inactive type", **({"context": context} if context is not None else {})):
         return 0
       reviewed = preview["digest"]
     else:
@@ -1153,7 +1160,7 @@ def structured_native_command(args, settings):
   return 0
 
 
-def execute_worktree_plan(settings, plan, *, enter=False, deadline=None):
+def execute_worktree_plan(settings, plan, *, enter=False, deadline=None, context=None):
   from . import work_git
   from .herdr import Deadline
   deadline = deadline or Deadline()
@@ -1161,7 +1168,7 @@ def execute_worktree_plan(settings, plan, *, enter=False, deadline=None):
     result = work_git.create(settings, plan, deadline=deadline)
   print(json.dumps(result, ensure_ascii=False))
   if enter:
-    code = main([*settings.selectors, "enter", result["path"]])
+    code = main([*settings.selectors, "enter", result["path"]], **({"context": context} if context is not None else {}))
     if code:
       print("work_git_checkout_retained: retry work enter PATH explicitly", file=sys.stderr)
     return code
@@ -1179,7 +1186,7 @@ def registration_input(args):
   return args.command + "-" + args.action, values
 
 
-def structured_command(args, settings):
+def structured_command(args, settings, *, context=None):
   from dataclasses import asdict
   from . import work_edit, work_projects, work_ui
   if args.command == "worktree":
@@ -1191,10 +1198,10 @@ def structured_command(args, settings):
     print(json.dumps(plan.as_dict(), ensure_ascii=False))
     if args.dry_run:
       return 0
-    return execute_worktree_plan(settings, plan, enter=args.enter, deadline=deadline)
+    return execute_worktree_plan(settings, plan, enter=args.enter, deadline=deadline, **({"context": context} if context is not None else {}))
   if args.command == "config":
     if args.action == "edit":
-      result = work_edit.edit(settings)
+      result = work_edit.edit(settings, **({"context": context} if context is not None else {}))
       print("work_config: saved" if result.changed else "work_config: unchanged")
     else:
       work_ui.present_discovery(work_projects.discover(settings), show_candidates=False)
@@ -1224,17 +1231,16 @@ def structured_command(args, settings):
       return synchronize_named_title(proposal.settings, args.id, args.title)
     return 0
   if args.command is None:
-    action = work_ui.selector(settings)
+    action = work_ui.selector(settings, **({"context": context} if context is not None else {}))
     if isinstance(action, work_ui.ReviewedWorktreeAction):
-      return execute_worktree_plan(action.settings, action.plan, enter=action.enter)
-    return 0 if action is None else main([*settings.selectors, *action])
-  return structured_native_command(args, settings)
+      return execute_worktree_plan(action.settings, action.plan, enter=action.enter, **({"context": context} if context is not None else {}))
+    return 0 if action is None else main([*settings.selectors, *action], **({"context": context} if context is not None else {}))
+  return structured_native_command(args, settings, **({"context": context} if context is not None else {}))
 
 
-def main(argv=None):
+def build_parser():
+  """只构建语法；不读取配置或连接原生程序。"""
   import argparse
-  from .herdr import Deadline
-  from .work_config import read_settings
   class Parser(argparse.ArgumentParser):
     def error(self, message):
       raise TermcfgError(2, "work_invalid_arguments", "work --help")
@@ -1295,19 +1301,40 @@ def main(argv=None):
   closing.add_argument("--dry-run", action="store_true")
   closing.add_argument("--scope")
   closing.add_argument("--yes", action="store_true")
+  return parser
+
+
+def main(argv=None, *, context=None):
+  from .herdr import Deadline
+  from .work_config import read_settings
+  from rotom.context import InputError, require_input, TypedInvocation
+  def next_hint(code):
+    import shlex
+    path = context.command_path if code == 2 else ("work", "status")
+    tokens = TypedInvocation(context, ()).advice_tokens(path)
+    return shlex.join((*tokens, "--help") if code == 2 else tokens)
+  parser = build_parser()
   args = None
   try:
     args = parser.parse_args(argv)
+    if context is not None:
+      args.invocation_context = context
     if args.command == "close" and ((args.dry_run and (args.scope is not None or args.yes))
         or ((args.scope is not None) != args.yes)):
       raise TermcfgError(2, "work_invalid_close_authorization", "work close --dry-run")
+    if context is not None and (args.command is None
+        or (args.command == "open" and args.role is None)
+        or (args.command == "rebind" and not args.accept)
+        or (args.command == "close" and not args.dry_run and args.scope is None)
+        or (args.command == "config" and args.action == "edit")):
+      require_input(context)
     if args.command == "open" and args.role in ROLES and (
         not os.environ.get("HERDR_PANE_ID") or not os.environ.get("HERDR_SOCKET_PATH")):
       raise conflict()
     deadline = Deadline(timeout=operation_timeout(args.role if args.command == "open" else None))
     settings = read_settings(machine=args.machine, local=args.local)
     if getattr(settings, "model", None) is not None:
-      return structured_command(args, settings)
+      return structured_command(args, settings, **({"context": context} if context is not None else {}))
     if args.command not in ("enter", "open") or (args.command == "open" and args.role not in ROLES):
       raise TermcfgError(2, "work_invalid_legacy_command", "work --help")
     if args.command == "open" and (not os.environ.get("HERDR_PANE_ID") or not os.environ.get("HERDR_SOCKET_PATH")):
@@ -1339,13 +1366,17 @@ def main(argv=None):
     return 0
   except SystemExit as error:
     return int(error.code)
+  except InputError as error:
+    print(("work_input_cancelled" if error.exit_code == 130 else "work_input_required")
+      + ": " + next_hint(2), file=sys.stderr)
+    return error.exit_code
   except TermcfgError as error:
     if args is not None and error.reason == "work_unsafe_local_configuration" and not getattr(error, "fragment", None):
       operation, values = registration_input(args)
       if operation is not None or (args.command == "config" and args.action == "edit"):
         from .work_edit import manual_fragment
         error.fragment = manual_fragment(operation, values)
-    print(error.reason + ": " + error.next_command, file=sys.stderr)
+    print(error.reason + ": " + (next_hint(error.code) if context is not None else error.next_command), file=sys.stderr)
     if getattr(error, "fragment", None):
       print("Manual machine.work fragment:\n" + error.fragment, file=sys.stderr)
     return error.code

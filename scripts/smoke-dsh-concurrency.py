@@ -2,11 +2,13 @@
 """显式双 agentcfg CLI / 原生 TUI 并发验收；仅使用隔离 HOME 和本地假模型。"""
 
 import argparse
+import copy
 from contextlib import ExitStack
 import fcntl
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import math
 import os
 from pathlib import Path
 import pty
@@ -28,6 +30,48 @@ class FixtureServer(ThreadingHTTPServer):
   daemon_threads = True
 
 
+def fixture_snapshot(state):
+  with state["gate"]:
+    result = {"requests": state["requests"], "responses": sorted(state["responses"]), "error": state["error"]}
+    if "request_observations" in state:
+      result["request_observations"] = sorted(copy.deepcopy(state["request_observations"]),
+        key=lambda item: item["sequence"])
+    return result
+
+
+def request_observation(body, sequence, category):
+  # 仅合成本地请求的有界摘要；正文仅在内存中用于哈希/固定短语判别。
+  messages = body.get("messages", [])
+  roles = [item.get("role") for item in messages]
+  system = json.dumps([item.get("content") for item in messages if item.get("role") == "system"],
+    ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
+  user = json.dumps([item.get("content") for item in messages if item.get("role") == "user"])
+
+  def number(name):
+    value = body.get(name)
+    if value is None:
+      return None
+    if type(value) is int and value.bit_length() <= 64:
+      return value
+    if type(value) is float and math.isfinite(value) and abs(value) <= 1_000_000_000:
+      return value
+    return "invalid-or-out-of-range"
+
+  tools = body.get("tools")
+  return {"sequence": sequence, "stream": bool(body.get("stream")),
+    "roles": [role if role in ("system", "developer", "user", "assistant", "tool", "function")
+      else "other" for role in roles[:64]], "message_count": len(messages), "roles_truncated": len(roles) > 64,
+    "tools_present": "tools" in body, "tool_count": len(tools) if isinstance(tools, list) else 0,
+    "tool_calls_present": any("tool_calls" in item or "function_call" in item for item in messages),
+    "tool_message_count": roles.count("tool"), "max_tokens": number("max_tokens"),
+    "max_completion_tokens": number("max_completion_tokens"), "temperature": number("temperature"),
+    "contains_one": "CONCURRENCY_ONE" in user, "contains_two": "CONCURRENCY_TWO" in user,
+    "system_prompt_sha256": hashlib.sha256(system.encode("utf-8")).hexdigest(),
+    "system_mentions_title": "title" in system.lower(),
+    "system_mentions_summary": "summar" in system.lower(),
+    "response_category": category, "response_written": False}
+
+
 def handler(state, key):
   class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_args):
@@ -38,7 +82,9 @@ def handler(state, key):
         self.connection.settimeout(3)
         with state["gate"]:
           state["requests"] += 1
-          if state["requests"] > 12:
+          sequence = state["requests"]
+          observe_request = "request_observations" in state
+          if sequence > 12:
             raise ValueError()
         size = int(self.headers.get("Content-Length", "0"))
         if not 0 < size <= 2 * 1024 * 1024 or self.headers.get("Authorization") != "Bearer " + key or self.path != "/v1/chat/completions":
@@ -52,6 +98,12 @@ def handler(state, key):
         if keep_alive and selected != ["ONE"]:
           raise ValueError()
         content = "KEPT_ONE_ALIVE" if keep_alive else "DONE_" + selected[0] if selected else "AUXILIARY"
+        observation = request_observation(body, sequence, content) if observe_request else None
+        if observation is not None:
+          with state["gate"]:
+            if len(state["request_observations"]) >= 12:
+              raise ValueError()
+            state["request_observations"].append(observation)
         packet = {"id": "chatcmpl-concurrency", "object": "chat.completion.chunk", "created": 1,
                   "model": body.get("model"), "choices": [{"index": 0, "delta": {"role": "assistant", "content": content}, "finish_reason": None}]}
         if not body.get("stream"):
@@ -69,10 +121,14 @@ def handler(state, key):
         self.end_headers()
         self.wfile.write(raw)
         self.wfile.flush()
-        if selected:
-          state["responses"].add("KEPT_ONE_ALIVE" if keep_alive else selected[0])
+        with state["gate"]:
+          if observation is not None:
+            observation["response_written"] = True
+          if selected:
+            state["responses"].add("KEPT_ONE_ALIVE" if keep_alive else selected[0])
       except Exception:
-        state["error"] = "FIXTURE_REQUEST_REJECTED"
+        with state["gate"]:
+          state["error"] = "FIXTURE_REQUEST_REJECTED"
         self.close_connection = True
   return Handler
 
@@ -124,7 +180,7 @@ def main():
         if predicate():
           break
         raise RuntimeError("FIXTURE_OR_PROCESS_FAILED")
-      if state["error"]:
+      if fixture_snapshot(state)["error"]:
         raise RuntimeError("FIXTURE_OR_PROCESS_FAILED")
       pump()
     if not predicate():
@@ -239,13 +295,14 @@ def main():
         if not record["termios_restored"]:
           raise RuntimeError("EXIT_TERMIOS")
       def stable_requests():
-        count, stable_until, until = state["requests"], time.monotonic() + 1, time.monotonic() + budget(5)
+        count, stable_until, until = fixture_snapshot(state)["requests"], time.monotonic() + 1, time.monotonic() + budget(5)
         while time.monotonic() < stable_until:
           pump()
-          if state["error"] or time.monotonic() > until:
+          if fixture_snapshot(state)["error"] or time.monotonic() > until:
             raise RuntimeError("PROVIDER_NOT_QUIET")
-          if state["requests"] != count:
-            count, stable_until = state["requests"], time.monotonic() + 1
+          observed_count = fixture_snapshot(state)["requests"]
+          if observed_count != count:
+            count, stable_until = observed_count, time.monotonic() + 1
         return count
       for label in ("ONE", "TWO"):
         result["stage"] = "launch_" + label
@@ -260,7 +317,7 @@ def main():
         os.write(master, ("\x1b[200~CONCURRENCY_" + label + "\x1b[201~").encode())
         wait(child, lambda: "CONCURRENCY_" + label in re.sub(r"\s+", "", visible(child)), 5)
         os.write(master, b"\r")
-        wait(child, lambda: label in state["responses"] and "DONE_" + label in re.sub(r"\s+", "", visible(child)))
+        wait(child, lambda: label in fixture_snapshot(state)["responses"] and "DONE_" + label in re.sub(r"\s+", "", visible(child)))
         wait(child, lambda: len(set(session_records()) - known) == 1, 10)
         record["session_id"] = (set(session_records()) - known).pop()
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", record["session_id"]):
@@ -284,12 +341,12 @@ def main():
       close_panel(collision, result["collision"])
       if set(session_records()) != expected_sessions or stable_requests() != before_collision:
         raise RuntimeError("COLLISION_EXIT_CHANGED_SESSION_OR_REQUEST")
-      result["collision"].update(occupied_notice_verified=True, canonical_sessions_unchanged=True, requests_after=state["requests"])
+      result["collision"].update(occupied_notice_verified=True, canonical_sessions_unchanged=True, requests_after=fixture_snapshot(state)["requests"])
       result["stage"] = "keep_alive_after_collision"
       os.write(hosts[0]["master"], b"\x1b[200~KEEP_ALIVE_AFTER_COLLISION\x1b[201~")
       wait(hosts[0], lambda: "KEEP_ALIVE_AFTER_COLLISION" in re.sub(r"\s+", "", visible(hosts[0])), 5)
       os.write(hosts[0]["master"], b"\r")
-      wait(hosts[0], lambda: "KEPT_ONE_ALIVE" in state["responses"] and "KEPT_ONE_ALIVE" in re.sub(r"\s+", "", visible(hosts[0])))
+      wait(hosts[0], lambda: "KEPT_ONE_ALIVE" in fixture_snapshot(state)["responses"] and "KEPT_ONE_ALIVE" in re.sub(r"\s+", "", visible(hosts[0])))
       if any(child["process"].poll() is not None for child in hosts) or set(session_records()) != expected_sessions:
         raise RuntimeError("ORIGINAL_HOSTS_NOT_PRESERVED")
       result["same_session_resume_refusal"] = "PASS"
@@ -333,8 +390,9 @@ def main():
     if server:
       server.shutdown()
       server.server_close()
-    result.update(fixture_requests=state["requests"], fixture_responses=sorted(state["responses"]), fixture_error=state["error"])
-    if state["error"]:
+    observed_fixture = fixture_snapshot(state)
+    result.update(fixture_requests=observed_fixture["requests"], fixture_responses=observed_fixture["responses"], fixture_error=observed_fixture["error"])
+    if fixture_snapshot(state)["error"]:
       result.update(overall="FAIL", error="FIXTURE_REQUEST_REJECTED")
     (evidence / "result.json").write_text(json.dumps(result, indent=2) + "\n")
   print(json.dumps({"overall": result["overall"], "evidence": str(evidence)}))

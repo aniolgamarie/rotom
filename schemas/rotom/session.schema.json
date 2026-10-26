@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rotom session reference; parent RunRecord supplies persistence version",
+  "$ref": "#/$defs/session_ref",
+  "$defs": {
+    "session_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent",
+        "backend",
+        "native_home_ref",
+        "native_ref"
+      ],
+      "properties": {
+        "agent": {
+          "enum": [
+            "dsh",
+            "pi",
+            "omp"
+          ]
+        },
+        "backend": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "native_home_ref": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "native_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^[^\\u0000]+$"
+        }
+      }
+    },
+    "session_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session",
+        "run_id",
+        "emitter_epoch",
+        "sequence",
+        "confirmation",
+        "source",
+        "observed_at_ns"
+      ],
+      "properties": {
+        "session": {
+          "$ref": "#/$defs/session_ref"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "emitter_epoch": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "confirmation": {
+          "enum": [
+            "unknown",
+            "historical",
+            "confirmed",
+            "final"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+        },
+        "observed_at_ns": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

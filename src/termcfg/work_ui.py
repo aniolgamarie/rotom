@@ -5,6 +5,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 
+from rotom.context import require_input
 from .errors import TermcfgError
 from .work_config import resolve_executable
 
@@ -18,11 +19,18 @@ def display(value):
     "\\u" + format(ord(char), "04x") for char in str(value))
 
 
-def select(rows, *, prompt="Choose > ", run=None):
+def _context_kwargs(context):
+  return {"context": context} if context is not None else {}
+
+
+def select(rows, *, prompt="Choose > ", run=None, context=None):
   rows = list(rows)
   if len(rows) > 20000 or len({key for key, _ in rows}) != len(rows) or any(
       not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", key) for key, _ in rows):
     raise TermcfgError(2, "work_invalid_selector_rows", "work --help")
+  if context is not None:
+    return context.input_gateway.choose(rows, policy=context.input_policy, label=prompt,
+      enhance=lambda: select(rows, prompt=prompt, run=run))
   binary = resolve_executable("fzf")
   environment = {key: value for key, value in os.environ.items() if not key.startswith("FZF_")}
   invoke = run or subprocess.run
@@ -55,7 +63,9 @@ def select(rows, *, prompt="Choose > ", run=None):
   raise TermcfgError(5, "work_selector_unknown_result", "work list")
 
 
-def _text(prompt, *, optional=False):
+def _text(prompt, *, optional=False, context=None):
+  if context is not None:
+    return context.input_gateway.text(prompt, policy=context.input_policy, optional=optional)
   if not sys.stdin.isatty():
     raise TermcfgError(2, "work_interactive_input_required", "work --help")
   try:
@@ -67,7 +77,9 @@ def _text(prompt, *, optional=False):
   return value
 
 
-def confirm(label):
+def confirm(label, *, context=None):
+  if context is not None:
+    return context.input_gateway.confirm(label, policy=context.input_policy)
   return select([("accept", "Confirm: " + label), ("cancel", "Cancel")], prompt="Review > ") == "accept"
 
 
@@ -76,44 +88,47 @@ def candidate_label(item):
     (item.title, item.kind, item.mode or "named", item.key, item.template, item.origin))
 
 
-def present_discovery(discovery, *, show_candidates=True):
+def present_discovery(discovery, *, show_candidates=True, context=None):
+  stream = context.input_gateway.stderr if context is not None else sys.stdout
   if show_candidates:
-    print("Candidates: " + str(len(discovery.candidates)))
+    print("Candidates: " + str(len(discovery.candidates)), file=stream)
     for item in discovery.candidates:
-      print(candidate_label(item))
+      print(candidate_label(item), file=stream)
   for diagnostic in discovery.diagnostics:
     print(" | ".join(display(diagnostic[key]) for key in ("reason", "source", "origin")
       if key in diagnostic), file=sys.stderr)
 
 
-def present_proposal(proposal):
-  print(proposal.fragment, end="" if proposal.fragment.endswith("\n") else "\n")
-  present_discovery(proposal.discovery)
+def present_proposal(proposal, *, context=None):
+  stream = context.input_gateway.stderr if context is not None else sys.stdout
+  print(proposal.fragment, end="" if proposal.fragment.endswith("\n") else "\n", file=stream)
+  present_discovery(proposal.discovery, **_context_kwargs(context))
 
 
-def registration(settings, kind):
+def registration(settings, kind, *, context=None):
+  require_input(context)
   from .work_edit import preview
   values = {}
   fields = ("id", "title", "start_path") if kind == "named" else (("id", "path") if kind == "source" else ("path",))
   for field in fields:
-    value = _text(field, optional=field == "start_path")
+    value = _text(field, optional=field == "start_path", **_context_kwargs(context))
     if value is None:
       return None
     if value:
       values[field] = value
   if kind != "named":
-    mode = select([("git", "Git checkout root"), ("directory", "Selected directory boundary")], prompt="Mode > ")
+    mode = select([("git", "Git checkout root"), ("directory", "Selected directory boundary")], prompt="Mode > ", **_context_kwargs(context))
     if mode is None:
       return None
     values["mode"] = mode
   templates = list(settings.structured["templates"])
-  choice = select([(str(index), name) for index, name in enumerate(templates)], prompt="Template > ")
+  choice = select([(str(index), name) for index, name in enumerate(templates)], prompt="Template > ", **_context_kwargs(context))
   if choice is None:
     return None
   values["template"] = templates[int(choice)]
   proposal = preview(settings, kind + "-add", values)
-  present_proposal(proposal)
-  if not confirm("Save configuration only"):
+  present_proposal(proposal, **_context_kwargs(context))
+  if not confirm("Save configuration only", **_context_kwargs(context)):
     return None
   args = [kind, "add"]
   for key, value in values.items():
@@ -121,11 +136,12 @@ def registration(settings, kind):
   return args
 
 
-def selector(settings):
+def selector(settings, *, context=None):
+  require_input(context)
   from .work_projects import discover
   while True:
     discovery = discover(settings)
-    present_discovery(discovery, show_candidates=False)
+    present_discovery(discovery, show_candidates=False, **_context_kwargs(context))
     candidates = list(discovery.candidates)
     rows = [(str(index), candidate_label(item))
       for index, item in enumerate(candidates)]
@@ -133,13 +149,13 @@ def selector(settings):
       ("named", "+ Named workspace"), ("worktree", "+ New Git worktree"), ("refresh", "Refresh"),
       ("config", "Edit workspace configuration"), ("status", "Read-only live status / unknown outcomes"),
       ("rename", "Rename named workspace"), ("close", "Review current workspace close scope (guard unavailable)")))
-    choice = select(rows, prompt="Project > ")
+    choice = select(rows, prompt="Project > ", **_context_kwargs(context))
     if choice is None:
       return None
     if choice == "refresh":
       continue
     if choice in ("source", "project", "named"):
-      return registration(settings, choice)
+      return registration(settings, choice, **_context_kwargs(context))
     if choice == "config":
       return ["config", "edit"]
     if choice == "status":
@@ -148,20 +164,21 @@ def selector(settings):
       return ["close", "--dry-run"]
     if choice == "rename":
       named = [item for item in candidates if item.kind == "named"]
-      selected = select([(str(i), item.title + " | " + item.key) for i, item in enumerate(named)], prompt="Named > ")
+      selected = select([(str(i), item.title + " | " + item.key) for i, item in enumerate(named)], prompt="Named > ", **_context_kwargs(context))
       if selected is None:
         return None
-      title = _text("New title")
-      if title is None or not confirm("Save title, then update verified native presentation"):
+      title = _text("New title", **_context_kwargs(context))
+      if title is None or not confirm("Save title, then update verified native presentation", **_context_kwargs(context)):
         return None
       return ["named", "rename", named[int(selected)].key, "--title", title]
     if choice == "worktree":
-      return worktree_form(settings)
+      return worktree_form(settings, **_context_kwargs(context))
     item = candidates[int(choice)]
     return ["named", "enter", item.key] if item.kind == "named" else ["enter", item.key]
 
 
-def type_action(settings, binding, *, new=False):
+def type_action(settings, binding, *, new=False, context=None):
+  require_input(context)
   template = settings.structured["templates"].get(binding["template"], {})
   definitions = template.get("tab_types", {})
   order = list(template.get("order", []))
@@ -185,7 +202,7 @@ def type_action(settings, binding, *, new=False):
         action = str(len(actions))
         actions[action] = ("!rebind", key)
         rows.append((action, label + " | Review explicit rebind (requires zero active instances)"))
-  selected = select(rows, prompt="Terminal type > ")
+  selected = select(rows, prompt="Terminal type > ", **_context_kwargs(context))
   return actions[selected] if selected is not None else None
 
 
@@ -196,7 +213,7 @@ class ReviewedWorktreeAction:
   enter: bool
 
 
-def present_worktree_plan(plan):
+def present_worktree_plan(plan, *, context=None):
   from .work_state import digest
   import json
   facts = plan.facts
@@ -207,36 +224,38 @@ def present_worktree_plan(plan):
     ("id", "path", "mode", "template", "depth", "exclude_hidden", "exclude", "follow_symlinks")}
   review["configuration"] = {"selection_digest": facts["selection_digest"],
     "git_config_paths": sorted(facts["config_files"]), "git_config_digest": digest(facts["config_files"])}
-  print(json.dumps(review, ensure_ascii=False))
-  print("Original dirty files stay in place. No hooks, bootstrap, installs or services. Executable checkout filters are refused.")
+  stream = context.input_gateway.stderr if context is not None else sys.stdout
+  print(json.dumps(review, ensure_ascii=False), file=stream)
+  print("Original dirty files stay in place. No hooks, bootstrap, installs or services. Executable checkout filters are refused.", file=stream)
 
 
-def worktree_form(settings):
+def worktree_form(settings, *, context=None):
+  require_input(context)
   from .work_projects import discover, directory
   from .work_edit import preview as config_preview, save
   from .work_config import read_settings
   from .work_git import preview
   from pathlib import Path
   candidates = [item for item in discover(settings).candidates if item.kind == "project" and item.mode == "git" and item.origin != "builtin"]
-  selected = select([(str(i), item.title + " | " + item.key) for i, item in enumerate(candidates)], prompt="Registered Git repository > ")
+  selected = select([(str(i), item.title + " | " + item.key) for i, item in enumerate(candidates)], prompt="Registered Git repository > ", **_context_kwargs(context))
   if selected is None:
     return None
   repo = candidates[int(selected)].key
   mode = select([("new", "New local branch from explicit local base"),
-    ("existing", "Existing branch (requires native atomic protection)")], prompt="Branch mode > ")
+    ("existing", "Existing branch (requires native atomic protection)")], prompt="Branch mode > ", **_context_kwargs(context))
   if mode is None:
     return None
-  branch = _text("Branch name")
+  branch = _text("Branch name", **_context_kwargs(context))
   if branch is None:
     return None
-  base = _text("Local base (for example HEAD or refs/heads/main)") if mode == "new" else None
+  base = _text("Local base (for example HEAD or refs/heads/main)", **_context_kwargs(context)) if mode == "new" else None
   if mode == "new" and base is None:
     return None
-  destination = _text("Destination (must not exist; parent must exist)")
+  destination = _text("Destination (must not exist; parent must exist)", **_context_kwargs(context))
   if destination is None:
     return None
   templates = list(settings.structured["templates"])
-  choice = select([(str(i), name) for i, name in enumerate(templates)], prompt="Template > ")
+  choice = select([(str(i), name) for i, name in enumerate(templates)], prompt="Template > ", **_context_kwargs(context))
   if choice is None:
     return None
   template = templates[int(choice)]
@@ -248,19 +267,26 @@ def worktree_form(settings):
     except TermcfgError as error:
       if error.reason != "work_git_destination_source_required":
         raise
-      if not confirm("Separately import destination parent as Git search path"):
+      if not confirm("Separately import destination parent as Git search path", **_context_kwargs(context)):
         return None
-      identifier = _text("New source ID (ASCII)")
+      identifier = _text("New source ID (ASCII)", **_context_kwargs(context))
       if identifier is None:
         return None
       parent = directory(Path(destination).expanduser().absolute().parent)
       proposal = config_preview(settings, "source-add", {"id": identifier, "path": str(parent),
         "mode": "git", "template": template})
-      present_proposal(proposal)
-      if not confirm("Save parent source only; checkout creation still requires review"):
+      present_proposal(proposal, **_context_kwargs(context))
+      if not confirm("Save parent source only; checkout creation still requires review", **_context_kwargs(context)):
         return None
       save(proposal)
+      if context is not None:
+        print("搜索路径配置已保存；尚未创建 checkout。", file=context.input_gateway.stderr)
       settings = read_settings(local=settings.local_path, repo_root=settings.repo_root)
-  present_worktree_plan(plan)
-  action = select([("create", "Create only"), ("enter", "Create, then enter workspace"), ("cancel", "Cancel")], prompt="Confirm > ")
+  present_worktree_plan(plan, **_context_kwargs(context))
+  action = select([("create", "Create only"), ("enter", "Create, then enter workspace"), ("cancel", "Cancel")], prompt="Confirm > ", **_context_kwargs(context))
+  if context is not None and action == "cancel":
+    from rotom.context import InputError
+    raise InputError(130)
+  if context is not None and action in ("create", "enter"):
+    confirm("Create this reviewed checkout" + (", then enter workspace" if action == "enter" else ""), **_context_kwargs(context))
   return ReviewedWorktreeAction(settings, plan, action == "enter") if action in ("create", "enter") else None

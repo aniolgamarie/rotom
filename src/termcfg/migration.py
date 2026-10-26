@@ -85,7 +85,7 @@ def migrate(machine_id: str) -> dict:
     _validate_marker(marker, machine_id, machine)
     if marker["phase"] == "complete":
       # 完成后正常 apply 可以推进状态；再次迁移不回放归档。
-      if "mihomo" in machine.components or read_state(machine, legacy=True)["version"] != 2:
+      if "mihomo" in machine.components or read_state(machine, legacy=True)["version"] not in (2, 3):
         raise TermcfgError(4, "migration_metadata_drift")
       return {"migrated": False, "reason": "already_migrated", "next_command": hint("plan")}
     current_machine = _contents(machine_path(machine_id))

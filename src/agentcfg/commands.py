@@ -1,5 +1,6 @@
 """统一命令入口：显式副作用边界，输出默认脱敏。"""
 
+from dataclasses import dataclass
 import inspect
 from contextlib import nullcontext
 from pathlib import Path
@@ -30,6 +31,9 @@ def output(w, command, result, *, args=None):
 
 
 def cmd_init_local(args):
+  context = getattr(args, "invocation_context", None)
+  if context is not None and "command" not in context.explicit_fields:
+    context.input_gateway.confirm("初始化所选机器配置与共享占位文件", policy=context.input_policy)
   result = initialize_local(args.machine, config_home=args.local.parent.parent.parent,
     profile_id=args.init_profile)
   actions = {"created": "已创建", "supplemented": "已补齐", "unchanged": "无需变化"}
@@ -159,7 +163,9 @@ def cmd_apply(args):
 
 def apply_candidate(w, lock, candidate, *, expected_plan=None):
   guard = getattr(w.adapter, "apply_lifecycle_guard", None) or getattr(w.adapter, "lifecycle_guard", None)
-  with guard(w) if guard else nullcontext():
+  guard_for = getattr(w.adapter, "apply_lifecycle_guard_for", None)
+  admission = guard_for(w, lock) if guard_for is not None else guard(w) if guard else nullcontext()
+  with admission:
     return deployment.apply(w.instance, w.state_root, candidate, w.binding, runtime.record(w, lock),
       expected_plan=expected_plan, state_guard=getattr(w.adapter, "validate_deployment_state", None),
       prepare=lambda launch: prepare_launch(w, launch))
@@ -184,21 +190,35 @@ def sync_backend(w, lock, progress):
   return action(w, lock)
 
 
-def cmd_setup(args):
-  progress = Progress("setup", args)
+@dataclass(frozen=True)
+class SetupResult:
+  workspace: object
+  code: int
+  result: object
+  reason: str | None = None
+  hint: str | None = None
+
+
+def _setup_operation(args, *, progress, preview, approve) -> SetupResult:
+  """可信内部复用接口，不授予维护权限；副作用仍通过原有 guard。
+
+  preview 只展示；approve 通过抛异常拒绝，不接受用户 JSON 或布尔许可。
+  """
   progress.stage("校验配置与锁", hint="validate")
   w, lock, candidate = prepared(args)
   progress.stage("预览部署差异", hint="plan")
-  preview = current_plan(w, lock, candidate)
-  summary = preview.public()
-  print(f"部署预览  {w.agent} / {w.profile}", flush=True)
-  print(f"  变更 {summary['changes']}  ·  漂移 {summary['drift']}  ·  冲突 {summary['conflicts']}", flush=True)
-  if preview.conflicts or preview.drift:
-    failure_context(args, 4, reason="存在冲突或漂移，部署已停止。", hint="plan")
-    return 4
+  plan = current_plan(w, lock, candidate)
+  summary = plan.public()
+  preview(w, summary)
+  if plan.conflicts or plan.drift:
+    return SetupResult(w, 4, None, "存在冲突或漂移，部署已停止。", "plan")
+  approve(w, lock, candidate, plan)
   pre_sync_preflight = getattr(w.adapter, "pre_sync_preflight", None)
   if pre_sync_preflight is not None:
     pre_sync_preflight(w)
+  prepare_resources = getattr(w.adapter, "prepare_setup_resources", None)
+  if prepare_resources is not None:
+    prepare_resources(w, lock)
   progress.stage("同步依赖（缺失时可能联网）", hint="doctor")
   with progress.heartbeat():
     sync_backend(w, lock, progress.sync_stage)
@@ -208,10 +228,28 @@ def cmd_setup(args):
   updated = current_plan(current, current_lock, current_candidate)
   if (current_candidate.generation != candidate.generation or current_lock.identity != lock.identity
       or updated.public() != summary):
-    failure_context(args, 4, reason="同步期间配置或目标发生变化；请重新运行 setup。", hint="setup")
-    return 4
+    return SetupResult(current, 4, None, "同步期间配置或目标发生变化；请重新运行 setup。", "setup")
   progress.stage("写入部署", hint="plan")
   result = apply_candidate(current, current_lock, current_candidate, expected_plan=updated)
+  return SetupResult(current, 0, result)
+
+
+def cmd_setup(args):
+  progress = Progress("setup", args)
+  def preview(w, summary):
+    context = getattr(args, "invocation_context", None)
+    preview_stream = sys.stderr if context is not None else sys.stdout
+    print(f"部署预览  {w.agent} / {w.profile}", file=preview_stream, flush=True)
+    print(f"  变更 {summary['changes']}  ·  漂移 {summary['drift']}  ·  冲突 {summary['conflicts']}", file=preview_stream, flush=True)
+  def approve(w, lock, candidate, plan):
+    context = getattr(args, "invocation_context", None)
+    if context is not None and "command" not in context.explicit_fields:
+      context.input_gateway.confirm("按此预览同步依赖并部署", policy=context.input_policy)
+  outcome = _setup_operation(args, progress=progress, preview=preview, approve=approve)
+  if outcome.code:
+    failure_context(args, outcome.code, reason=outcome.reason, hint=outcome.hint)
+    return outcome.code
+  current, result = outcome.workspace, outcome.result
   state = f"已应用 {result['changes']} 项变更" if result["changes"] else "配置已同步，无需修改"
   print(f"\n部署完成  {current.agent} / {current.profile}\n  {state}", flush=True)
   print("下一步:\n  " + command_line(args, "run"), flush=True)
@@ -253,12 +291,67 @@ def cmd_sync(args):
   return output(w, "sync", result, args=args)
 
 
+def _run_followup(args, context, original_code):
+  """失败后的查看/准备是独立动作，原启动结果不被覆盖。"""
+  from dataclasses import replace
+  import shlex
+  from rotom.context import InputError, TypedInvocation
+  scope = replace(context.scope, profile=args.profile)
+  invocation = TypedInvocation(replace(context, scope=scope), ())
+  print(f"run: 保留原启动结果（退出码 {original_code}）；可显式查看计划或准备部署：", file=sys.stderr)
+  for name in ("plan", "setup"):
+    print("  " + shlex.join(invocation.advice_tokens(("agent", name))), file=sys.stderr)
+  if not context.input_gateway.allows_input(context.input_policy):
+    return
+  try:
+    action = context.input_gateway.choose([("plan", "只读查看同范围计划"),
+      ("setup", "另行审阅并准备部署；准备后不自动启动"), ("return", "保留原启动结果并结束")],
+      policy=context.input_policy, label="失败后续")
+    if action == "return":
+      return
+    selected = replace(context, command_path=("agent", action), scope=scope,
+      explicit_fields=context.explicit_fields - {"command"})
+    from .cli import main
+    tokens = []
+    if scope.machine is not None:
+      tokens += ["--machine", scope.machine]
+    elif scope.local is not None:
+      tokens += ["--local", scope.local]
+    tokens += ["--profile", args.profile, action]
+    code = main(tokens, context=selected)
+    print(f"run: 独立后续 {action} 退出码 {code}；原启动结果仍为 {original_code}", file=sys.stderr)
+  except InputError:
+    print(f"run: 后续未接受，已取消；原启动结果仍为 {original_code}", file=sys.stderr)
+
+
 def cmd_run(args):
   Progress("run", args).stage("检查部署、依赖与启动条件", hint="doctor")
   w = workspace(args)
-  code = runtime.run(w, cwd=args.cwd.absolute(), arguments=args.passthrough,
-    inherit_env=getattr(args, "inherit_env", ()), unset_env=getattr(args, "unset_env", ()),
-    proxy=getattr(args, "proxy", None))
+  context = getattr(args, "invocation_context", None)
+  options = {}
+  if context is not None:
+    from dataclasses import replace
+    import shlex
+    from rotom.context import TypedInvocation
+    scope = replace(context.scope, profile=w.profile)
+    invocation = TypedInvocation(replace(context, scope=scope), ())
+    def notice(status):
+      if status == "current":
+        return
+      reason = "检查时观察到运行包声明有待更新；继续使用已部署运行包" if status == "pending" else "更新状态无法核实；继续使用已部署运行包"
+      print("run: " + reason, file=sys.stderr)
+      print("显式检查与部署：\n  " + shlex.join(invocation.advice_tokens(("agent", "plan")))
+        + "\n  " + shlex.join(invocation.advice_tokens(("agent", "apply"))), file=sys.stderr)
+    options["runtime_notice"] = notice
+    options["observed_identity"] = runtime.current_identity_snapshot(w)
+  try:
+    code = runtime.run(w, cwd=args.cwd.absolute(), arguments=args.passthrough,
+      inherit_env=getattr(args, "inherit_env", ()), unset_env=getattr(args, "unset_env", ()),
+      proxy=getattr(args, "proxy", None), **options)
+  except Conflict as error:
+    if context is not None:
+      _run_followup(args, context, error.exit_code)
+    raise
   if code:
     print(f"run: 原生进程已退出（退出码 {code}）", file=sys.stderr)
     print("检查离线状态：\n  " + command_line(args, "doctor"), file=sys.stderr)

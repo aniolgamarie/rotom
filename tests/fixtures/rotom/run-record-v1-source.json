@@ -1,0 +1,7 @@
+{
+  "format_version": 1,
+  "source": "src/agentcfg/run_owners.py",
+  "fixture": "tests/fixtures/rotom/run-record-v1.py",
+  "sha256": "e7c2cda50ef4a7b46849cffacf2c7bfeac975f8e5fa31424dabd691ea83e7b14",
+  "scope": "Frozen unmodified repository-owned v1 Registry reader; import only for temporary metadata compatibility tests. Never execute current_process_identity or hosts."
+}

@@ -5,6 +5,8 @@ import getpass
 import sys
 import warnings
 
+from rotom.context import require_input
+
 from .config import _parse_toml, read_local_document
 from .model_wizard import render_edit
 from .local_values import validate_local_url
@@ -15,7 +17,8 @@ from .workspace import load_workspace
 
 
 def set_model_url(args):
-  if not sys.stdin.isatty() or not sys.stdout.isatty():
+  context = require_input(args)
+  if context is None and (not sys.stdin.isatty() or not sys.stdout.isatty()):
     raise ConfigError("model-wizard-requires-terminal")
   original = read_local_document(args.local)
   with Tree(args.local.parent) as tree:
@@ -33,13 +36,19 @@ def set_model_url(args):
   print(f"Provider：{args.provider}\n保存到私人机器文件：{args.local}")
   print("配置位置：" + ".".join((*section, field)))
   print("填写与该 provider 协议匹配的完整服务地址；不要在 URL 中包含 key 或密码。")
-  try:
-    with warnings.catch_warnings():
-      warnings.simplefilter("error", getpass.GetPassWarning)
-      value = getpass.getpass("服务 URL（隐藏输入，留空取消）: ").strip()
-  except (EOFError, OSError, getpass.GetPassWarning):
-    raise ConfigError("model-url-input-unavailable") from None
+  if context is not None:
+    value = context.input_gateway.hidden("隐藏值（空输入取消）", policy=context.input_policy).strip()
+  else:
+    try:
+      with warnings.catch_warnings():
+        warnings.simplefilter("error", getpass.GetPassWarning)
+        value = getpass.getpass("服务 URL（隐藏输入，留空取消）: ").strip()
+    except (EOFError, OSError, getpass.GetPassWarning):
+      raise ConfigError("model-url-input-unavailable") from None
   if not value:
+    if context is not None:
+      from rotom.context import InputError
+      raise InputError(130)
     print("已取消；机器配置未修改。")
     return 0
   validate_local_url(value)

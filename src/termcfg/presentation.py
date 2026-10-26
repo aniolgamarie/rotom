@@ -176,6 +176,10 @@ def _scope(lines, payload, context, command):
 
 
 def _recovery_and_effects(lines, payload):
+  if payload.get("entry_activation") in {"activated", "possibly_activated"}:
+    lines.append("入口绑定：已激活或可能已激活；收尾未完成，先 recover，不要再次 apply。")
+  if payload.get("entry_transition") in {"possibly_removed", "possibly_restored", "removed", "restored"}:
+    lines.append("入口绑定：恢复或移除可能已生效；收尾未完成，先 recover，再核对当前绑定。")
   if payload.get("recovery_pending") is True or payload.get("side_effect") == "recovery_pending":
     lines.append("恢复：存在待恢复事务；优先处理，其他变更须等待。")
   elif payload.get("recovery_pending") is False:
@@ -260,6 +264,11 @@ def _targets(lines, payload):
     lines.append(f"  {_id(target.get('component'))}/{name}：{title}；{backup}")
     if target.get("reason"):
       lines.append("    " + _reason(target["reason"]))
+    binding = target.get("entry_binding")
+    if isinstance(binding, dict):
+      lines.append("    入口来源：" + _text(binding.get("repository")))
+      previous = binding.get("previous_repository")
+      lines.append("    之前来源：" + (_text(previous) if isinstance(previous, str) else "首次绑定"))
     if action == "adopt-required":
       lines.append(f"    同意接管时需显式 --adopt-target {name}；不会自动填入。")
     if name == "zshenv" and action != "unchanged":

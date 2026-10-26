@@ -1,5 +1,13 @@
 # 公开来源与迁移审查
 
+`zsh/_rotom` 是仓库自有静态补全来源，按 `0644` 部署到
+`.local/share/rotom/zsh/site-functions/_rotom`；由 zshrc 在插件和所有 compinit 前将固定目录加入去重的 fpath。
+命令、选项快照来自统一 CLI 注册 parser，并由静态测试双向核对。
+动态候选仅调用 `rotom _complete`，按 NUL 分隔的合法 ID 值消费，不执行返回内容。
+provider 仅在显式 machine/local 与 profile 完整时查询，work 仅使用显式 scope；原生 `--` 后和 usage 尾部停止补全。
+补全不读取凭据、认证或会话正文，不自动准备运行环境、部署配置或启动宿主。
+该文件是静态来源，不是 entry.json 的生成器；安装文件、生成绑定和恢复依据由同一受管事务审阅。
+
 调查基线：`/path/to/starter` 提交 `cc5b08bbdacd506192ef9ee08d7c64ef68274be9`。此绝对路径仅标识调查来源，不是部署依赖。shell 配置没有独立许可证声明，按本仓库自有配置迁移。以下 mihomo 来源行仅保留历史调查记录；对应代码、资产与当前部署入口已移除。
 
 | 旧文件 | 旧 SHA-256 | 决策 |

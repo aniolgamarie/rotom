@@ -1,3 +1,30 @@
+<!--
+Sync Impact Report — temporary review material; remove before committing the amendment.
+Version change: 2.4.0 → 3.0.0
+Rationale: Principle III previously prohibited terminating user processes to obtain write access
+without an exception. This amendment permits a separately reviewed stop of exact managed runs,
+while preserving deployment authorization, ownership and verified resource-release requirements.
+Modified principles:
+- III. 确定性部署与可恢复状态 → III. 确定性部署与可恢复状态
+  Replaces the blanket process-termination ban with an explicit, narrowly scoped stop contract.
+Added sections:
+- XII. 可发现入口与一致交互
+- XIII. 运行身份与可验证会话恢复
+- 开发与审查流程: checks for interactive entry points and lifecycle operations.
+- Governance: 3.0.0 amendment record.
+Removed sections: none; existing data, upstream-source and acceptance protections remain.
+Template impact: no template or command changes; consumers read the constitution at runtime.
+Follow-up TODOs:
+- TODO(RATIFICATION_DATE): original adoption date remains unrecorded; requires maintainer evidence.
+Workflow status:
+- Completed: amendment, scout governance evidence, independent text review and document checks.
+- In progress: none. Failed pending decision: none. Environment-blocked verification: none.
+- Functional and native validation: not executed; this amendment changes governance only.
+Validation: template resolution, Python 3.11 structure/public-content checks and git diff --check
+passed. Original principles other than the declared III amendment and prior feature documents
+were preserved. No implementation, deployment, process control, commit or merge performed.
+-->
+
 # rotom Constitution
 
 ## Core Principles
@@ -44,7 +71,11 @@
 - 当前值等于基线时允许更新；期望值等于基线时保留并报告原生漂移；当前值等于期望值
   时不重写；双方均修改且结果不同时必须报告冲突。保留漂移不得自动接纳为新基线。
 - 整文件或字段所有权冲突、重叠 selector、活动实例或恢复待处理必须阻止不安全写入。
-  管理器不得通过终止用户进程获取写入权限。
+  配置、部署与升级命令不得隐式停止用户进程来消除阻塞。停止仅允许作为单独审阅并明确
+  授权的操作，范围限定为身份与归属可验证的受管运行；维护流程可以编排已明确接受的步骤，
+  但不能从一次维护请求推导出停止所有相关进程的授权。
+  停止授权不转移文件所有权、不豁免部署批准，也不证明资源已释放；相关维护必须重新
+  核验真实退出、资源状态及自己的计划。未知状态继续阻止受影响的不安全写入。
 - 单文件写入必须使用同目录临时文件与原子替换；多文件变更必须提供 pending 恢复记录、
   失败恢复和冲突复查，不得宣称跨文件或外部进程的绝对原子性。
 - 每次成功且有实际变更的部署只保留上一轮受管配置备份。无变化或失败不得轮换备份；
@@ -222,6 +253,66 @@
 理由：项目入口必须让普通终端的归属和生命周期可预测，多入口不能产生不同规则，
 状态展示和便利默认值不能取代身份、授权与恢复证据。
 
+### XII. 可发现入口与一致交互
+
+- 项目统一入口必须复用既有配置、部署、运行与工作区执行契约；菜单、CLI 和补全不得
+  各自实现一套业务流程。兼容入口、已保存绑定和默认值的变更必须有明确迁移范围，
+  不能因入口更名或交互默认值变化静默改变现有实例。
+- 公开命令层级必须提供用途、参数、默认值与优先级、示例及副作用说明。
+  命令解析、help、合法候选与补全必须依据一致的元数据和作用域；业务 help 不得要求
+  凭据、读取业务配置或会话、联网、初始化或部署。已安装入口定位实现只允许读取声明的
+  最小非秘密绑定，定位失败必须明确诊断，不能猜测另一 checkout 或执行自动修复。
+- 必要参数缺失时，交互只能在声明的终端条件满足时提供范围内合法选项；取消不得接受
+  默认候选。非交互模式必须覆盖所有递归分发、确认和失败后续路径，在读取输入前拒绝
+  缺参或没有等价批准路径的操作，不能隐式确认、另开终端或降低校验。
+- 完整显式参数与交互选择必须对应相同的身份、范围、准入和批准语义。显式选择器与
+  已保存实例绑定优先于便利默认值；保存偏好必须明确执行并严格校验，不能自动记住最近
+  使用值来改变后续目标。菜单与进度不得混入结构化结果，原生退出状态必须保留。
+- 原生参数必须在已声明边界后原样交给相应适配器，门面不得再次解释、重排或抢占原生
+  help。分发必须使用已校验的参数和类型，不得求值显示文本或拼接 shell 指令。
+  补全必须限制候选来源与输出，不得为了列出选项启动宿主、联网或暴露秘密及会话正文。
+- shell 入口、补全与动态 checkout 绑定属于受管部署产物，必须遵守第三项原则。
+  生成内容的精确身份、来源、目标、权限与写前状态必须进入计划及恢复依据；已有日常
+  入口不能因从另一 worktree 执行部署而切换。恢复与回滚必须使用已记录事实，不能根据
+  当前调用位置重新猜测绑定，也不能把多文件激活声称为绝对原子切换。
+
+理由：便利入口必须让目标、批准和副作用更容易发现，同时保持脚本、旧入口和原生边界可预测。
+
+### XIII. 运行身份与可验证会话恢复
+
+- 实例观察与控制必须依据有来源、时间和作用域的受管身份；单个 PID、进程名、标题、
+  当前目录或 Agent 状态不能单独证明归属。进程状态、会话身份可信度和恢复位置能力必须
+  分别报告，缺失或过期证据保持未知；不得通过扫描全部进程参数或会话正文补齐列表。
+  私人恢复元数据仅保存必要的非秘密引用，不得复制凭据、环境快照或会话正文。
+- 停止前必须核实精确目标、归属、操作范围及恢复能力，并按第三项原则取得明确授权。
+  优雅停止和强制终止必须分别声明与批准，不能因超时自动升级。发出请求前复查稳定身份，
+  不得按名称批杀、清除活动标记或删除租约来伪造退出；相关后代进程及资源的释放必须有
+  正面证据，管理器退出或单个 PID 消失不足以证明可以维护。
+- 会话身份必须包含工具、后端、原生存储归属及确切引用，不能把裸 ID 当作全局唯一值。
+  恢复必须遵守显式范围，核验会话与 cwd 的关系、无冲突 writer 及实际加载结果；不得跨
+  原生 HOME 猜测归属、静默使用最近会话、替换为新会话或因默认 profile 变化重新绑定。
+  自动恢复和后续输入所需的 writer 排他必须覆盖检查到执行的竞争窗口，不能靠重复读取
+  “没有 writer”冒充排他；公开能力不足时必须明确限制范围或转人工。
+- 恢复表示新受管运行加载已确认的原生会话，不表示恢复进程内存、重放中断命令、撤销
+  外部副作用或任务成功。日常恢复与维护恢复必须共用会话解析及启动契约，普通停止与
+  维护停止必须共用精确目标和退出证明，不能建立竞争的会话数据库或通用执行平台。
+- 维护必须绑定已审阅的操作、资源和部署身份，目标或计划变化后重新接受。
+  不同批次与新运行的准入必须在同一资源所有权规则下防止越权并发；可能产生副作用的
+  操作在派发前持久化意图，部分失败或结果未知时先对账，不得盲目重试。
+  恢复须采用与已证明的维护结果一致且重新校验的部署契约；取消保留已发生事实及待恢复
+  清单，不能声称撤销已执行动作。脚本等待必须有界，逐项保留结果和范围明确的下一步。
+- 驻留或终端重启集成只能管理公开接口允许的启动、退出与位置恢复；等待容器必须与
+  单次运行租约及身份分离，恢复创建新运行并重新取得当前准入。
+  原位置能力必须核验容器、控制端及管理代码/协议兼容，现有单次实例不能被假定已具备
+  驻留能力；不兼容时必须拒绝或采用明确接受的新位置，禁止混用新旧管理代码或盲注终端。
+- 恢复会话与发送新的“继续”指令是分别授权的动作，默认恢复后等待用户输入。
+  自动输入必须证明目标运行、确切会话、可接收状态与批准文本，并有可核实的接收结果；
+  无幂等或确认能力的未知结果不得自动重发。每个后端及恢复位置分别取得能力证据，
+  不得因界面存在、其它工具通过或进程退出成功就宣称可恢复或已继续。
+
+理由：停止、维护、会话加载和继续执行具有不同结果；便捷操作必须保留可证明的身份、
+授权及失败边界，不能以关闭进程或恢复界面的表象替代实际证据。
+
 ## 技术与迁移约束
 
 - 管理器使用 Python 3.11+ 与 `uv`，依赖基线为 PyYAML、jsonschema、Jinja2、pytest。
@@ -288,6 +379,12 @@
    交互线框、拟议命令和配置示例必须标明实现状态；失败路径须覆盖并发修改、部分成功、
    未知结果及关闭范围。具体命令、字段、默认目录、组件及 UI 布局留在功能规格与设计中，
    不固化为宪章义务；文档审查不得替代隔离行为测试或原生验收。
+8. 统一入口与交互变更必须核对第十二项原则，覆盖各级 help、显式范围、无 UI 路径、
+   原生参数、结构化输出及受管入口绑定。生命周期与恢复变更必须核对第十三项原则，
+   覆盖身份复用、退出证明、会话与位置能力、部分结果及重复请求；相关默认测试只使用
+   临时 HOME、假进程和合成状态。真实停止、信号、PTY、Agent/终端启动及自动输入仍须
+   按第五项原则独立授权和验收。具体命令、字段、信号、时限、批次状态机和控制协议
+   留在功能规格与设计中，宪章修订不代表这些能力已经实现或通过验收。
 
 ## Governance
 
@@ -324,4 +421,10 @@
 此为新增治理要求的 MINOR 修订，保留既有原则与原始批准日期未知的事实；
 具体界面、CLI、默认候选及 worktree 流程继续由功能规格定义，不表示实现或验收已完成。
 
-**Version**: 2.4.0 | **Ratified**: TODO(RATIFICATION_DATE): 原始批准日期未记录，待维护者提供依据。 | **Last Amended**: 2026-10-22
+`3.0.0` 于 2026-10-22 修订第三项原则对终止进程的绝对禁令，仅允许单独审阅、明确授权
+并核实归属的受管停止；维护仍须独立满足计划、所有权、退出与资源释放门禁。
+由于新增例外与此前绝对禁令不兼容，此为 MAJOR 修订。新增第十二项可发现入口与一致
+交互、第十三项运行身份与可验证会话恢复原则；具体入口和生命周期设计仍由功能规格承载，
+不授权自动停止活动实例，不改变上游源码、隐私和真实验收边界，也不表示功能已实现。
+
+**Version**: 3.0.0 | **Ratified**: TODO(RATIFICATION_DATE): 原始批准日期未记录，待维护者提供依据。 | **Last Amended**: 2026-10-22

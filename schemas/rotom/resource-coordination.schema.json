@@ -1,0 +1,805 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rotom resource coordination data; no historical or maintenance authority",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/domain"
+    },
+    {
+      "$ref": "#/$defs/runtime-anchor"
+    },
+    {
+      "$ref": "#/$defs/scope-claim"
+    },
+    {
+      "$ref": "#/$defs/scope-anchor"
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 32,
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "token": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "not": {
+        "pattern": "[^A-Za-z0-9._-]"
+      }
+    },
+    "runtime_identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 192,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "not": {
+        "pattern": "[^A-Za-z0-9._-]"
+      }
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?:/|/(?:[^/\\u0000]+/)*[^/\\u0000]+)$",
+      "not": {
+        "anyOf": [
+          {
+            "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+          },
+          {
+            "pattern": "[\\u0000-\\u001f\\u007f\\\\]"
+          }
+        ]
+      }
+    },
+    "physical": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "device",
+        "inode"
+      ],
+      "properties": {
+        "device": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inode": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "resource_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "device",
+        "inode",
+        "key_id"
+      ],
+      "properties": {
+        "kind": {
+          "const": "runtime"
+        },
+        "device": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "key_id": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "machine",
+        "local",
+        "profile"
+      ],
+      "properties": {
+        "machine": {
+          "$ref": "#/$defs/token"
+        },
+        "local": {
+          "$ref": "#/$defs/path"
+        },
+        "profile": {
+          "$ref": "#/$defs/token"
+        }
+      }
+    },
+    "owner_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_root",
+        "binding"
+      ],
+      "properties": {
+        "state_root": {
+          "$ref": "#/$defs/path"
+        },
+        "binding": {
+          "$ref": "#/$defs/binding"
+        }
+      }
+    },
+    "resource": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/runtime_resource"
+        },
+        {
+          "$ref": "#/$defs/scope_resource"
+        }
+      ]
+    },
+    "reservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "op_id",
+        "owner_ref",
+        "resources",
+        "phase"
+      ],
+      "properties": {
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "run_id": {
+          "$ref": "#/$defs/id"
+        },
+        "op_id": {
+          "$ref": "#/$defs/id"
+        },
+        "owner_ref": {
+          "$ref": "#/$defs/owner_ref"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "phase": {
+          "enum": [
+            "reserved",
+            "dispatched",
+            "unknown",
+            "cancelled",
+            "owner_pending",
+            "owner_attached",
+            "release_pending",
+            "released"
+          ]
+        },
+        "owner_link": {
+          "$ref": "#/$defs/owner_link"
+        },
+        "release_receipt": {
+          "$ref": "#/$defs/release_receipt"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "enum": [
+                  "owner_pending",
+                  "owner_attached"
+                ]
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "required": [
+              "owner_link"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "owner_link"
+            ]
+          },
+          "then": {
+            "properties": {
+              "phase": {
+                "enum": [
+                  "owner_pending",
+                  "owner_attached",
+                  "dispatched",
+                  "unknown",
+                  "release_pending",
+                  "released"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "enum": [
+                  "release_pending",
+                  "released"
+                ]
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "required": [
+              "owner_link",
+              "release_receipt"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "release_receipt"
+            ]
+          },
+          "then": {
+            "required": [
+              "owner_link"
+            ],
+            "properties": {
+              "phase": {
+                "enum": [
+                  "release_pending",
+                  "released",
+                  "unknown"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "batch_id",
+        "generation",
+        "operation",
+        "resources",
+        "selected_runs",
+        "phase"
+      ],
+      "properties": {
+        "acceptance_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "progress": {
+          "type": "object",
+          "$comment": "Strict maintenance-batch validation and intent binding are applied by resource_protocol; stored atomically with the intent."
+        },
+        "batch_id": {
+          "$ref": "#/$defs/id"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "operation": {
+          "enum": [
+            "setup",
+            "stop_only"
+          ]
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "selected_runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "phase": {
+          "enum": [
+            "active",
+            "dispatched",
+            "unknown",
+            "cancelled"
+          ]
+        }
+      }
+    },
+    "domain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "domain_id",
+        "physical",
+        "revision",
+        "resources",
+        "reservations",
+        "intents"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "type": "integer"
+        },
+        "kind": {
+          "const": "domain"
+        },
+        "domain_id": {
+          "$ref": "#/$defs/id"
+        },
+        "physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resources": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/resource"
+          }
+        },
+        "reservations": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/reservation"
+          }
+        },
+        "intents": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/intent"
+          }
+        }
+      }
+    },
+    "runtime-anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "protocol",
+        "domain_id",
+        "domain_physical",
+        "resource_id",
+        "resource_key"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "type": "integer"
+        },
+        "kind": {
+          "const": "runtime-anchor"
+        },
+        "protocol": {
+          "const": "rotom-resource-v1"
+        },
+        "domain_id": {
+          "$ref": "#/$defs/id"
+        },
+        "domain_physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "resource_id": {
+          "$ref": "#/$defs/id"
+        },
+        "resource_key": {
+          "$ref": "#/$defs/resource_key"
+        }
+      }
+    },
+    "digest": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "instance_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "device",
+        "inode",
+        "key_id"
+      ],
+      "properties": {
+        "kind": {
+          "const": "instance"
+        },
+        "device": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "key_id": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "native_home_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "device",
+        "inode",
+        "key_id"
+      ],
+      "properties": {
+        "kind": {
+          "const": "native-home"
+        },
+        "device": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inode": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "key_id": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "instance_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "key"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "key": {
+          "$ref": "#/$defs/instance_key"
+        }
+      }
+    },
+    "native_home_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "key"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "key": {
+          "$ref": "#/$defs/native_home_key"
+        }
+      }
+    },
+    "owner_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registry_physical",
+        "instance",
+        "native_home",
+        "ownership_digest",
+        "record_digest"
+      ],
+      "properties": {
+        "registry_physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "instance": {
+          "$ref": "#/$defs/instance_reference"
+        },
+        "native_home": {
+          "$ref": "#/$defs/native_home_reference"
+        },
+        "ownership_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "record_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "release_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observed_at_ns",
+        "owner_record_digest"
+      ],
+      "properties": {
+        "observed_at_ns": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "owner_record_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "runtime_resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "key",
+        "cache",
+        "runtime_identity",
+        "status"
+      ],
+      "properties": {
+        "resource_id": {
+          "$ref": "#/$defs/id"
+        },
+        "key": {
+          "$ref": "#/$defs/resource_key"
+        },
+        "cache": {
+          "$ref": "#/$defs/path"
+        },
+        "runtime_identity": {
+          "$ref": "#/$defs/runtime_identity"
+        },
+        "status": {
+          "enum": [
+            "preparing",
+            "ready",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "scope_resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "key",
+        "path",
+        "scope_id",
+        "anchor_digest",
+        "status"
+      ],
+      "properties": {
+        "resource_id": {
+          "$ref": "#/$defs/id"
+        },
+        "key": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/instance_key"
+            },
+            {
+              "$ref": "#/$defs/native_home_key"
+            }
+          ]
+        },
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "scope_id": {
+          "$ref": "#/$defs/id"
+        },
+        "anchor_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "status": {
+          "enum": [
+            "preparing",
+            "ready",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "scope-claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "protocol",
+        "scope_id",
+        "domain_id",
+        "domain_physical",
+        "parent_physical",
+        "instance_path",
+        "owner_ref"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "type": "integer"
+        },
+        "kind": {
+          "const": "scope-claim"
+        },
+        "protocol": {
+          "const": "rotom-scope-v1"
+        },
+        "scope_id": {
+          "$ref": "#/$defs/id"
+        },
+        "domain_id": {
+          "$ref": "#/$defs/id"
+        },
+        "domain_physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "parent_physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "instance_path": {
+          "$ref": "#/$defs/path"
+        },
+        "owner_ref": {
+          "$ref": "#/$defs/owner_ref"
+        }
+      }
+    },
+    "scope_instance_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "path",
+        "key"
+      ],
+      "properties": {
+        "resource_id": {
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "key": {
+          "$ref": "#/$defs/instance_key"
+        }
+      }
+    },
+    "scope_home_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "path",
+        "key"
+      ],
+      "properties": {
+        "resource_id": {
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "key": {
+          "$ref": "#/$defs/native_home_key"
+        }
+      }
+    },
+    "scope-anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "protocol",
+        "scope_id",
+        "domain_id",
+        "domain_physical",
+        "parent_physical",
+        "instance_physical",
+        "owner_ref",
+        "claim_digest",
+        "ownership_digest",
+        "instance",
+        "native_home"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "type": "integer"
+        },
+        "kind": {
+          "const": "scope-anchor"
+        },
+        "protocol": {
+          "const": "rotom-scope-v1"
+        },
+        "scope_id": {
+          "$ref": "#/$defs/id"
+        },
+        "domain_id": {
+          "$ref": "#/$defs/id"
+        },
+        "domain_physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "parent_physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "instance_physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "owner_ref": {
+          "$ref": "#/$defs/owner_ref"
+        },
+        "claim_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "ownership_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "instance": {
+          "$ref": "#/$defs/scope_instance_reference"
+        },
+        "native_home": {
+          "$ref": "#/$defs/scope_home_reference"
+        }
+      }
+    }
+  }
+}

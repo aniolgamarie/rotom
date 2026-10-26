@@ -24,6 +24,12 @@ def private_dir(path: Path) -> None:
     private_dir(path.parent)
   try:
     path.mkdir(mode=0o700)
+    for directory in (path, path.parent):
+      fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+      try:
+        os.fsync(fd)
+      finally:
+        os.close(fd)
   except FileExistsError:
     info = path.lstat()
     if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o700:
@@ -66,7 +72,8 @@ def read_json(path: Path) -> dict | None:
       if (checked.st_dev, checked.st_ino) != (info.st_dev, info.st_ino):
         raise TermcfgError(4, "private_file_changed")
       with os.fdopen(fd, "r", encoding="utf-8", closefd=False) as stream:
-        value = json.load(stream)
+        value = json.load(stream, object_pairs_hook=_strict_pairs,
+          parse_constant=_invalid_number, parse_float=_invalid_number)
     finally:
       os.close(fd)
   except (OSError, ValueError) as exc:
@@ -74,6 +81,33 @@ def read_json(path: Path) -> dict | None:
   if not isinstance(value, dict):
     raise TermcfgError(2, "invalid_private_state")
   return value
+
+
+def _strict_pairs(pairs):
+  value = {}
+  for key, item in pairs:
+    if key in value:
+      raise ValueError("duplicate field")
+    value[key] = item
+  return value
+
+
+def _invalid_number(value):
+  raise ValueError("unsupported number")
+
+
+def _validate_generated(machine, target_id, generated):
+  if generated is None:
+    return
+  if target_id != "rotom-entry-binding":
+    raise ValueError("generated target mismatch")
+  if any(type(generated[key]) is not int or generated[key] != 1 for key in ("schema_version", "generator_version")):
+    raise ValueError("generated version mismatch")
+  if type(generated["payload"]["mode"]) is not int:
+    raise ValueError("generated mode mismatch")
+  relative = _relative_path(generated["payload"]["relative"])
+  if str(relative) != generated["payload"]["relative"]:
+    raise ValueError("generated path mismatch")
 
 
 def read_state(machine: MachineSelection, *, legacy: bool = False) -> dict:
@@ -88,8 +122,15 @@ def read_state(machine: MachineSelection, *, legacy: bool = False) -> dict:
   if value is None:
     return blank_state(machine)
   try:
+    if type(value.get("version")) is not int or value["version"] not in (1, 2, 3):
+      raise ValueError("unsupported version")
     schema = json.loads((REPO_ROOT / "schemas/termcfg" / ("legacy-state-v1.schema.json" if value.get("version") == 1 else "state.schema.json")).read_text())
     Draft202012Validator(schema).validate(value)
+    for target_id, record in value["targets"].items():
+      _validate_generated(machine, target_id, record.get("generated"))
+    for backups in value["previous"].values():
+      for target_id, backup in backups.items():
+        _validate_generated(machine, target_id, backup.get("prior_generated"))
   except TermcfgError:
     raise
   except Exception as exc:
@@ -113,10 +154,14 @@ def read_journal(machine: MachineSelection) -> dict | None:
   if value is None:
     return None
   try:
+    if type(value.get("version")) is not int or value["version"] not in (1, 2, 3):
+      raise ValueError("unsupported version")
     schema = json.loads((REPO_ROOT / "schemas/termcfg" / ("legacy-state-v1.schema.json" if value.get("version") == 1 else "state.schema.json")).read_text())
     journal_schema = {"$schema": schema["$schema"], "$defs": schema["$defs"], "$ref": "#/$defs/journal"}
     Draft202012Validator(journal_schema).validate(value)
     Draft202012Validator(schema).validate(value["state_before"])
+    if type(value["state_before"].get("version")) is not int or value["state_before"]["version"] > value["version"]:
+      raise ValueError("journal version mismatch")
     if value["state_before"]["machine_id"] != machine.machine_id:
       raise ValueError("machine mismatch")
     seen = set()
@@ -129,6 +174,10 @@ def read_journal(machine: MachineSelection) -> dict | None:
           target_id in seen or str(relative) != item["relative"]):
         raise ValueError("journal target mismatch")
       seen.add(target_id)
+      _validate_generated(machine, target_id, item.get("generated"))
+      if item.get("generated") is not None and (item["relative"] != ".local/share/rotom/entry.json" or
+          item["component"] != "zsh" or item["generated"]["payload"]["sha256"] != item["desired"]):
+        raise ValueError("generated journal mismatch")
       backup = item.get("backup")
       if backup and backup.get("path") is not None:
         candidate = Path(backup["path"])

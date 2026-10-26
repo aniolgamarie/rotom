@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 import getpass
+from rotom.context import require_input
 import json
 from pathlib import Path
 import re
@@ -113,7 +114,9 @@ def render_edit(original, updates, expected):
   return source.encode("utf-8")
 
 
-def _ask(label, *, default=None):
+def _ask(label, *, default=None, context=None, optional=False):
+  if context is not None:
+    return context.input_gateway.text(label, policy=context.input_policy, optional=optional, default=default).strip()
   suffix = f" [{default}]" if default is not None else ""
   try:
     value = input(f"{label}{suffix}: ").strip()
@@ -141,43 +144,50 @@ def _positive(value):
   return number
 
 
-def _answers(workspace):
-  provider_id = _id(_ask("新 provider ID"))
-  model_id = _id(_ask("新 model ID"))
+def _answers(workspace, *, context=None):
+  def ask(label, **options):
+    return _ask(label, **options, **({"context": context} if context is not None else {}))
+  provider_id = _id(ask("新 provider ID"))
+  model_id = _id(ask("新 model ID"))
   protocols = ("openai-compatible", "openai-responses", "anthropic-messages") if workspace.agent == "omp" else (
     "openai-compatible", "openai-responses")
-  protocol = _ask("协议 " + " / ".join(protocols), default="openai-compatible")
+  protocol = (context.input_gateway.choose([(key, key) for key in protocols], policy=context.input_policy, label="协议")
+    if context is not None else ask("协议 " + " / ".join(protocols), default="openai-compatible"))
   if protocol not in protocols:
     raise ConfigError("model-wizard-invalid-protocol")
-  base_url = _ask("服务 base URL（不要包含密钥）")
-  remote_id = _ask("服务端模型 ID")
-  inputs = [part.strip() for part in _ask("输入能力，逗号分隔", default="text").split(",")]
+  base_url = ask("服务 base URL（不要包含密钥）")
+  remote_id = ask("服务端模型 ID")
+  inputs = [part.strip() for part in ask("输入能力，逗号分隔", default="text").split(",")]
   if not inputs or set(inputs) - {"text", "image"} or len(set(inputs)) != len(inputs):
     raise ConfigError("model-wizard-invalid-input")
   if workspace.agent == "omp":
     from .omp import ROLE_MAP
     roles = tuple(ROLE_MAP)
-    role = _id(_ask("绑定角色 " + " / ".join(roles), default="main"))
+    role = (context.input_gateway.choose([(key, key) for key in roles], policy=context.input_policy, label="角色")
+      if context is not None else _id(ask("绑定角色 " + " / ".join(roles), default="main")))
     if role not in roles:
       raise ConfigError("model-wizard-invalid-role")
   else:
-    role = _id(_ask("绑定角色", default="main"))
+    role = _id(ask("绑定角色", default="main"))
   model = {"provider": provider_id, "remote_id": remote_id, "input": inputs}
   if workspace.agent == "omp":
-    model["context_window"] = _positive(_ask("上下文容量（已核实的正整数）"))
-    model["max_output_tokens"] = _positive(_ask("最大输出 token（已核实的正整数）"))
+    model["context_window"] = _positive(ask("上下文容量（已核实的正整数）"))
+    model["max_output_tokens"] = _positive(ask("最大输出 token（已核实的正整数）"))
     if not model["context_window"] or not model["max_output_tokens"]:
       raise ConfigError("omp-model-capacity-required")
-  source = _ask("模型规格来源（可留空）")
+  source = ask("模型规格来源（可留空）", optional=True)
   if source:
     model["source"] = source
   secret_name = _id(provider_id + "_key")
-  try:
-    with warnings.catch_warnings():
-      warnings.simplefilter("error", getpass.GetPassWarning)
-      secret = getpass.getpass("API key（隐藏输入，启用时必填）: ")
-  except (EOFError, OSError, getpass.GetPassWarning):
-    raise ConfigError("model-wizard-secret-input-unavailable") from None
+  if context is not None:
+    secret = context.input_gateway.hidden("API key（隐藏输入）", policy=context.input_policy)
+  else:
+    try:
+      with warnings.catch_warnings():
+        warnings.simplefilter("error", getpass.GetPassWarning)
+        secret = getpass.getpass("API key（隐藏输入，启用时必填）: ")
+    except (EOFError, OSError, getpass.GetPassWarning):
+      raise ConfigError("model-wizard-secret-input-unavailable") from None
   if not secret:
     raise ConfigError("model-wizard-key-required-for-selection")
   return provider_id, model_id, role, secret_name, secret, {
@@ -285,7 +295,8 @@ def model_status(args):
 
 
 def enable_preset(args):
-  if not sys.stdin.isatty() or not sys.stdout.isatty():
+  context = require_input(args)
+  if context is None and (not sys.stdin.isatty() or not sys.stdout.isatty()):
     raise ConfigError("model-wizard-requires-terminal")
   progress = Progress("model enable", args)
   progress.stage("读取私人配置与公共模型预设", hint="validate")
@@ -319,12 +330,15 @@ def enable_preset(args):
   needs_key = not secret
   if not secret:
     progress.stage("读取所需 API key（隐藏输入）", hint="validate")
-    try:
-      with warnings.catch_warnings():
-        warnings.simplefilter("error", getpass.GetPassWarning)
-        secret = getpass.getpass(f"{args.preset} API key（隐藏输入）: ")
-    except (EOFError, OSError, getpass.GetPassWarning):
-      raise ConfigError("model-wizard-secret-input-unavailable") from None
+    if context is not None:
+      secret = context.input_gateway.hidden("API key（隐藏输入）", policy=context.input_policy)
+    else:
+      try:
+        with warnings.catch_warnings():
+          warnings.simplefilter("error", getpass.GetPassWarning)
+          secret = getpass.getpass(f"{args.preset} API key（隐藏输入）: ")
+      except (EOFError, OSError, getpass.GetPassWarning):
+        raise ConfigError("model-wizard-secret-input-unavailable") from None
     if not secret:
       raise ConfigError("model-preset-key-required")
   proposed = deepcopy(old)
@@ -372,7 +386,10 @@ def enable_preset(args):
     progress.stage("等待确认并写入私人文件", hint="validate")
     print(f"提案：为 {workspace.agent}/{workspace.profile} 启用 {model['name']}（{protocol}），新密钥保存到共享文件；" +
       ("绑定角色 " + ", ".join(role_updates) + "。" if role_updates else "保留现有角色绑定。"))
-    if _ask("写入私人机器文件？输入 yes 确认") != "yes":
+    if _ask("写入私人机器文件？输入 yes 确认", **({"context": context} if context is not None else {})) != "yes":
+      if context is not None:
+        from rotom.context import InputError
+        raise InputError(130)
       print("已取消；机器文件未修改")
       return 0
     def write_config():
@@ -387,7 +404,8 @@ def enable_preset(args):
 
 
 def add_model(args):
-  if not sys.stdin.isatty() or not sys.stdout.isatty():
+  context = require_input(args)
+  if context is None and (not sys.stdin.isatty() or not sys.stdout.isatty()):
     raise ConfigError("model-wizard-requires-terminal")
   if args.model_command != "add":
     raise ConfigError("model-wizard-command")
@@ -410,7 +428,7 @@ def add_model(args):
   if checked_snapshot is None or checked_snapshot[2] != snapshot[2]:
     raise Conflict("本地配置在解析期间发生变化；请重试")
   progress.stage("收集模型参数", hint="validate")
-  provider_id, model_id, role, secret_name, secret, provider, model = _answers(workspace)
+  provider_id, model_id, role, secret_name, secret, provider, model = _answers(workspace, **({"context": context} if context is not None else {}))
   public = _public_ids(workspace.repository)
   if provider_id in public["providers"] or model_id in public["models"]:
     raise ConfigError("model-wizard-public-id-exists")
@@ -458,7 +476,10 @@ def add_model(args):
     rendered = render_edit(original, updates, proposed)
     progress.stage("等待确认并写入私人文件", hint="validate")
     print(f"提案：为 {workspace.agent}/{workspace.profile} 新增 provider {provider_id}、model {model_id}，绑定角色 {role}；密钥保存到共享文件。")
-    if _ask("写入私人机器文件？输入 yes 确认") != "yes":
+    if _ask("写入私人机器文件？输入 yes 确认", **({"context": context} if context is not None else {})) != "yes":
+      if context is not None:
+        from rotom.context import InputError
+        raise InputError(130)
       print("已取消；机器文件未修改")
       return 0
     save_shared_key(old, args.local, secret_name, secret, provider_id=provider_id, after_write=lambda:

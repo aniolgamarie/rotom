@@ -1,0 +1,574 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "launcher_protocol",
+    "repository",
+    "entry_relative",
+    "python_relative",
+    "repository_identity"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "launcher_protocol": {
+      "type": "integer",
+      "const": 1
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "entry_relative": {
+      "const": "rotom"
+    },
+    "python_relative": {
+      "const": ".venv/bin/python"
+    },
+    "repository_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "sources",
+        "environment"
+      ],
+      "properties": {
+        "root": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "device",
+            "inode",
+            "uid",
+            "mode"
+          ],
+          "properties": {
+            "device": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "inode": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "uid": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "sources": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "rotom",
+            "src/rotom/entry.py",
+            "src/rotom/entry_locator.py",
+            "schemas/rotom/entry-binding.schema.json",
+            "terminals/zsh/rotom"
+          ],
+          "properties": {
+            "rotom": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "device",
+                "inode",
+                "uid",
+                "mode",
+                "size",
+                "mtime_ns",
+                "ctime_ns",
+                "sha256"
+              ],
+              "properties": {
+                "device": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "inode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mtime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ctime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            },
+            "src/rotom/entry.py": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "device",
+                "inode",
+                "uid",
+                "mode",
+                "size",
+                "mtime_ns",
+                "ctime_ns",
+                "sha256"
+              ],
+              "properties": {
+                "device": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "inode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mtime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ctime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            },
+            "src/rotom/entry_locator.py": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "device",
+                "inode",
+                "uid",
+                "mode",
+                "size",
+                "mtime_ns",
+                "ctime_ns",
+                "sha256"
+              ],
+              "properties": {
+                "device": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "inode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mtime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ctime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            },
+            "schemas/rotom/entry-binding.schema.json": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "device",
+                "inode",
+                "uid",
+                "mode",
+                "size",
+                "mtime_ns",
+                "ctime_ns",
+                "sha256"
+              ],
+              "properties": {
+                "device": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "inode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mtime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ctime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            },
+            "terminals/zsh/rotom": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "device",
+                "inode",
+                "uid",
+                "mode",
+                "size",
+                "mtime_ns",
+                "ctime_ns",
+                "sha256"
+              ],
+              "properties": {
+                "device": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "inode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mtime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ctime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            }
+          }
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "identity",
+            "config",
+            "python_path",
+            "python",
+            "environment_links",
+            "python_links"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "pattern": "^/"
+            },
+            "identity": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "device",
+                "inode",
+                "uid",
+                "mode"
+              ],
+              "properties": {
+                "device": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "inode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "config": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "device",
+                "inode",
+                "uid",
+                "mode",
+                "size",
+                "mtime_ns",
+                "ctime_ns",
+                "sha256"
+              ],
+              "properties": {
+                "device": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "inode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mtime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ctime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            },
+            "python_path": {
+              "type": "string",
+              "pattern": "^/"
+            },
+            "python": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "device",
+                "inode",
+                "uid",
+                "mode",
+                "size",
+                "mtime_ns",
+                "ctime_ns",
+                "sha256"
+              ],
+              "properties": {
+                "device": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "inode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mtime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ctime_ns": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            },
+            "environment_links": {
+              "type": "array",
+              "maxItems": 40,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "identity",
+                  "target"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "pattern": "^/"
+                  },
+                  "identity": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "device",
+                      "inode",
+                      "uid",
+                      "mode"
+                    ],
+                    "properties": {
+                      "device": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "inode": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "uid": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "mode": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  "target": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "python_links": {
+              "type": "array",
+              "maxItems": 40,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "identity",
+                  "target"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "pattern": "^/"
+                  },
+                  "identity": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "device",
+                      "inode",
+                      "uid",
+                      "mode"
+                    ],
+                    "properties": {
+                      "device": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "inode": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "uid": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "mode": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  "target": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

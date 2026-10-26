@@ -24,13 +24,15 @@ def test_distinct_dsh_runs_share_admission_and_exclude_maintenance(tmp_path, mon
   profile = workspace.instance / "dsh-home/profiles/agentcfg"
   before = sentinel_factory(profile)
   ready, finish = Barrier(3), Event()
-  def child(argv, **kwargs):
-    if argv[1:] == ["--version"]:
-      return SimpleNamespace(returncode=0, stdout="v24.2.0", stderr="")
+  def preflight(argv, **kwargs):
+    assert argv[1:] == ["--version"]
+    return SimpleNamespace(returncode=0, stdout="v24.2.0", stderr="")
+  def child(spec, env, pass_fds, **kwargs):
     ready.wait(timeout=10)
     assert finish.wait(10)
-    return SimpleNamespace(returncode=0)
-  monkeypatch.setattr(runtime.subprocess, "run", child)
+    return 0
+  monkeypatch.setattr(runtime.subprocess, "run", preflight)
+  monkeypatch.setattr(runtime, "_run_dsh_child", child)
   with ThreadPoolExecutor(max_workers=2) as pool:
     runs = [pool.submit(runtime.run, workspace, cwd=tmp_path) for _ in range(2)]
     try:

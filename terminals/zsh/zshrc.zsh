@@ -18,11 +18,15 @@ fi
 
 export LANG="${LANG:-en_US.UTF-8}"
 if [[ "$HOME" == /* ]]; then
+  typeset -U path
   case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
     *) PATH="$HOME/.local/bin:$PATH" ;;
   esac
   export PATH
+  # 固定受管目录优先；唯一数组防止重复source累积，早于Zinit/OMZ及所有compinit。
+  typeset -U fpath
+  fpath=("$HOME/.local/share/rotom/zsh/site-functions" "${fpath[@]}")
 else
   print -u2 -r -- "termcfg: invalid HOME; local bin default not added"
 fi

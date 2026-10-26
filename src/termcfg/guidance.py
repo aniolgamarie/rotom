@@ -28,6 +28,7 @@ class Context:
   components: tuple[str, ...] | None = ()
   home: str | None = None
   home_requested: bool = False
+  invocation: object = None
 
   def public(self):
     return {"machine": self.machine, "components": self.components or (),
@@ -37,27 +38,40 @@ class Context:
 def context_for(args):
   # 延迟导入避免 errors/config 的循环；仅使用注册的词法约束，不读机器文件。
   from .config import MACHINE_ID
+  from rotom.context import invocation_context
   machine = getattr(args, "machine", None)
   if not isinstance(machine, str) or not MACHINE_ID.fullmatch(machine):
     machine = None
   values = getattr(args, "_guidance_components", getattr(args, "component", None))
   return Context(machine, _components(values), getattr(args, "_guidance_home", None),
-                 bool(getattr(args, "home", None)))
+                 bool(getattr(args, "home", None)), invocation_context(args))
 
 
 def _render(command, arguments, components, fallback_components, context):
+  prefix = (context.invocation.display_prefix, "term") if context.invocation is not None else ("./termcfg",)
+  def help_for(name=None):
+    if name is None:
+      return shlex.join((*prefix, "--help"))
+    if context.invocation is not None:
+      from dataclasses import replace
+      from rotom.context import TypedInvocation
+      scope = replace(context.invocation.scope, machine=context.machine, local=None,
+        component=context.components if name in _MULTI | _SINGLE and context.components else ())
+      invocation = TypedInvocation(replace(context.invocation, scope=scope), ())
+      return shlex.join((*invocation.advice_tokens(("term", name)), "--help"))
+    return shlex.join((*prefix, name, "--help"))
   if command is None:
-    return "./termcfg --help"
+    return help_for()
   if "--help" in arguments:
-    return shlex.join(("./termcfg", command, "--help"))
+    return help_for(command)
   if context.machine is None:
-    return "./termcfg --help"
+    return help_for()
   if context.components is None:
-    return shlex.join(("./termcfg", command, "--help"))
+    return help_for(command)
   selected = components if components is not None else context.components or fallback_components
   home = context.home
   if context.home_requested and home is None:
-    return shlex.join(("./termcfg", "plan" if command not in _DIAGNOSTIC else command, "--help"))
+    return help_for("plan" if command not in _DIAGNOSTIC else command)
   if context.home_requested and command not in _DIAGNOSTIC:
     # 不把诊断目标、计划 ID 或确认参数带回保存的 HOME；先重新检查保存目标。
     command = "status" if command in {"recover", "rollback", "migrate"} else "plan"
@@ -65,14 +79,23 @@ def _render(command, arguments, components, fallback_components, context):
   if command in _SINGLE and len(selected) != 1:
     # 单组件命令没有多选语法；保留全部范围，先做明确的只读诊断。
     command, arguments = "doctor", ()
-  words = ["./termcfg"]
-  if context.machine != "default":
-    words.extend(("--machine", context.machine))
-  words.append(command)
-  words.extend(arguments)
-  if command in _MULTI | _SINGLE:
-    for component in selected:
-      words.extend(("--component", component))
+  if context.invocation is not None:
+    from dataclasses import replace
+    from rotom.context import TypedInvocation
+    scope = replace(context.invocation.scope, machine=context.machine, local=None,
+      component=selected if command in _MULTI | _SINGLE else ())
+    invocation = TypedInvocation(replace(context.invocation, scope=scope), ())
+    words = list(invocation.advice_tokens(("term", command)))
+    words.extend(arguments)
+  else:
+    words = ["./termcfg"]
+    if context.machine != "default":
+      words.extend(("--machine", context.machine))
+    words.append(command)
+    words.extend(arguments)
+    if command in _MULTI | _SINGLE:
+      for component in selected:
+        words.extend(("--component", component))
   if home is not None and command in _DIAGNOSTIC:
     words.extend(("--home", home))
   return shlex.join(words)

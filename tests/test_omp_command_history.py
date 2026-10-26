@@ -12,6 +12,12 @@ history = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(history)
 
 
+@pytest.fixture(autouse=True)
+def history_temporary_root(tmp_path, isolated_environment, monkeypatch):
+  # 输出 fixture 位于本测试根内；不依赖 basetemp 恰在 /tmp 的额外豁免。
+  monkeypatch.setattr(history.tempfile, "gettempdir", lambda: str(tmp_path))
+
+
 def tool(command, name="bash"):
   return {"type": "message", "message": {"role": "assistant", "content": [{"type": "toolCall", "name": name, "arguments": {"command": command}}]}}
 

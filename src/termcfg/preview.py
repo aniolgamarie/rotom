@@ -5,7 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from .catalog import SourceArtifact, load_catalog
+from .catalog import GeneratedArtifact, GeneratedTemplate, SourceArtifact, load_catalog
 from .config import MachineSelection
 from .errors import TermcfgError
 from .guidance import hint
@@ -24,10 +24,16 @@ class PlannedTarget:
   custom_zshenv: bool = False
 
   def public_dict(self) -> dict:
-    return {"target_id": self.artifact.id, "component": self.artifact.component,
+    result = {"target_id": self.artifact.id, "component": self.artifact.component,
             "path": str(self.artifact.destination), "action": self.action,
             "backup": self.backup, "reason": self.reason,
             "source_digest": self.artifact.sha256}
+    if isinstance(self.artifact, GeneratedArtifact):
+      from rotom.entry import parse_binding
+      result["entry_binding"] = {"repository": parse_binding(self.artifact.bytes(), check_source=False)["repository"],
+        "previous_repository": self.artifact.previous_repository,
+        "launcher_protocol": 1, "generator_version": self.artifact.generator_version}
+    return result
 
 
 @dataclass(frozen=True)
@@ -64,12 +70,15 @@ def _old_starter_link(target_id: str, link: str) -> bool:
   return target_id in mapping and "/starter/shell_config/" in link and link.endswith(mapping[target_id])
 
 
-def build_preview(machine: MachineSelection, components: tuple[str, ...]) -> Preview:
+def build_preview(machine: MachineSelection, components: tuple[str, ...], *, entry_repo=None) -> Preview:
   require_no_pending_recovery(machine)
+  if entry_repo is not None and "zsh" not in components:
+    raise TermcfgError(2, "entry_repo_requires_zsh")
   if "herdr" in components:
     from .work_config import check_config_location
     check_config_location(machine.target_home)
-  catalog = load_catalog()
+  catalog = tuple(item.materialize(machine, entry_repo) if isinstance(item, GeneratedTemplate) else item
+    for item in load_catalog() if item.component in components)
   state = read_state(machine)
   known = {artifact.bytes() for artifact in catalog}
   targets = []
@@ -107,6 +116,10 @@ def build_preview(machine: MachineSelection, components: tuple[str, ...]) -> Pre
   snapshot = {"machine_id": machine.machine_id, "home": str(machine.target_home),
               "components": components, "state": state, "lock": _lock_digest(components),
               "targets": [{"id": t.artifact.id, "source": t.artifact.sha256,
+                           "destination": str(t.artifact.destination), "mode": t.artifact.mode,
+                           "kind": getattr(t.artifact, "kind", "static"),
+                           "generator_version": getattr(t.artifact, "generator_version", None),
+                           "source_inputs_digest": getattr(t.artifact, "source_inputs_digest", None),
                            "before": t.before.as_dict(), "action": t.action} for t in targets]}
   return Preview(_digest_object(snapshot), tuple(targets), state,
                  _digest_object(state), snapshot["lock"])

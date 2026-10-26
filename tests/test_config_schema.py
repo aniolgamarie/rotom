@@ -366,6 +366,32 @@ def test_local_annotation_ref_targets_are_strict_and_never_fetched(target, monke
   assert calls == []
 
 
+def test_structural_ref_targets_share_root_meta_validation(monkeypatch):
+  schema, _ = api()
+  definition = closed({"value": {"$ref": "#/$defs/a"}})
+  definition["$defs"] = {"a": closed({"next": {"$ref": "#/$defs/z"}}), "z": {"type": "integer"}}
+  calls = []
+  original = schema.Draft202012Validator.validate
+  def counted(self, value, *args, **kwargs):
+    calls.append(value)
+    return original(self, value, *args, **kwargs)
+  monkeypatch.setattr(schema.Draft202012Validator, "validate", counted)
+  schema._strict_schema_serialized.cache_clear()
+  schema._strict_schema(definition)
+  assert len(calls) == 1
+
+
+@pytest.mark.parametrize("annotation,pointer", [("default", "default"), ("examples", "examples/0")])
+def test_annotation_schema_subtrees_still_receive_meta_validation(annotation, pointer):
+  schema, _ = api()
+  from jsonschema.exceptions import ValidationError
+  target = closed({"nested": {"type": "integer", "minimum": "invalid"}})
+  definition = closed({"value": {"$ref": "#/$defs/holder/" + pointer}})
+  definition["$defs"] = {"holder": {"type": "string", annotation: [target] if annotation == "examples" else target}}
+  with pytest.raises(ValidationError):
+    schema._strict_schema(definition)
+
+
 @pytest.mark.parametrize("reference", [
   "https://example.invalid/schema", "file:///private/schema", "//example.invalid/schema",
 ])
@@ -524,6 +550,56 @@ def test_schema_content_cache_never_hides_in_place_mutation():
   document["properties"]["flag"]["unsupportedRule"] = True
   with pytest.raises(ValueError):
     schema._strict_schema(document)
+
+
+@pytest.mark.parametrize("damage", ["unknown-field", "unknown-option", "bad-option", "version", "missing-id"])
+def test_profile_source_batch_preserves_strict_validation_for_every_document(damage):
+  schema, _ = api()
+  first = document("profile")
+  last = deepcopy(first)
+  last["id"] = "synthetic-last"
+  if damage == "unknown-field": last["unknown"] = True
+  elif damage == "unknown-option": last["agent_options"]["unknown"] = True
+  elif damage == "bad-option": last["agent_options"]["terminal_images"] = "wrong"
+  elif damage == "version": last["schema_version"] = True
+  else: del last["id"]
+  with pytest.raises(schema.ConfigError):
+    schema.validate_profile_sources([first, last], adapter_schemas=adapter_context())
+
+
+def test_profile_source_batch_reuses_checks_only_within_the_request(monkeypatch):
+  schema, _ = api()
+  reads, bundles = [], []
+  original_read, original_bundle = schema._read_schema, schema._bundle
+  def read(kind):
+    reads.append(kind)
+    return original_read(kind)
+  def bundle(context, agent):
+    bundles.append(agent)
+    return original_bundle(context, agent)
+  monkeypatch.setattr(schema, "_read_schema", read)
+  monkeypatch.setattr(schema, "_bundle", bundle)
+  context = adapter_context()
+  documents = [document("profile") for _ in range(100)]
+  schema.validate_profile_sources(documents, adapter_schemas=context)
+  assert reads == ["profile"] and bundles == ["synthetic"]
+  context.bundles["synthetic"].agent_options["properties"]["terminal_images"]["type"] = "string"
+  with pytest.raises(schema.ConfigError):
+    schema.validate_profile_sources(documents, adapter_schemas=context)
+  assert reads == ["profile", "profile"] and bundles == ["synthetic", "synthetic"]
+
+
+def test_profile_source_batch_rereads_framework_schema_on_next_request(tmp_path, monkeypatch):
+  schema, _ = api()
+  package = tmp_path / "standalone-package"
+  package.mkdir()
+  shutil.copytree(FIXTURES.parents[2] / "schemas", package / "schemas")
+  monkeypatch.setattr(schema, "__file__", str(package / "schema.py"))
+  schema.validate_profile_sources([document("profile")], adapter_schemas=adapter_context())
+  (package / "schemas/profile.schema.json").write_text("{}")
+  with pytest.raises(schema.ConfigError) as caught:
+    schema.validate_profile_sources([document("profile")], adapter_schemas=adapter_context())
+  assert caught.value.code == "schema-resource"
 
 
 @pytest.mark.parametrize("definition", [

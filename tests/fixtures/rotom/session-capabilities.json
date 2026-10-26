@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "purpose": "pinned-source handoff evidence, isolated prototypes and scoped native acceptance; capability admission is exact-combination only",
+  "pinned": {
+    "dsh-core": "0.2.1-rc.2",
+    "dsh-tui": "0.16.1"
+  },
+  "facts": {
+    "core_roots_mean_foreground": false,
+    "session_stat_loads_body": false,
+    "native_writer_scope": "one persisted session; backend and platform dependent",
+    "tui_completed_switch_event": "tui/session-switched",
+    "tui_decision_event": "tui/session-switch",
+    "initial_foreground_proof": "public scene channel metadata candidate; ready alone is not history-loaded",
+    "public_scene_export": "./scenes: TuiSceneProps.channel",
+    "scene_observation_scope": "mounted foreground metadata snapshot; no final seal or lossless switch history",
+    "startup_missing_session_behavior": "strict explicit target; native missing-ID preflight and active-TUI/external-writer rejection verified; no fresh fallback",
+    "native_resume_acceptance": "T053 controlled and T054 default CLI passed on exact Linux managed DSH lock; original session/cwd/history, new run, zero input, load unknown, continue not_sent",
+    "initialization_success_gap": "TUI may reuse an initializing registered agent; scene ready and whenIdle do not prove initialization committed",
+    "controlled_reuse_policy": "no public exact-branch rejection seam found in reviewed pinned APIs",
+    "prototype_receipt_ceiling": "foreground-matched; native_load and launch_binding remain unproven",
+    "prototype_transport": "parent-held child IPC; stdout is not an observation source",
+    "handoff_requires_strict_load_receipt": false,
+    "continue_without_load_receipt": "never sent",
+    "dispatch_without_load_receipt": "launch_dispatched; actual session/cwd unconfirmed; no automatic retry",
+    "explicit_resume_channel": "runProfile cmdline args -> TUI --resume ID parser; config.sessionId takes precedence",
+    "bare_resume_allowed": false,
+    "configuration_boundary": "validate profile user patch, HOME patch and final managed patch; argv/env alone do not establish effective store or target",
+    "native_writer_owner": "official host strict resume transaction; parent must not pre-acquire same native writer",
+    "upstream_contract_required_for_handoff": false
+  },
+  "cases": [
+    {
+      "id": "decision-is-not-completion",
+      "events": [
+        {
+          "type": "tui/session-switch",
+          "kind": "resume",
+          "targetSessionId": "session-example"
+        }
+      ],
+      "expected": "unconfirmed"
+    },
+    {
+      "id": "completed-explicit-switch",
+      "events": [
+        {
+          "type": "tui/session-switched",
+          "kind": "resume",
+          "sessionId": "session-example",
+          "cwd": "/tmp/rotom-example-project"
+        }
+      ],
+      "expected": "candidate identity; verify current run, emitter and writer separately"
+    },
+    {
+      "id": "root-list-is-not-foreground",
+      "root_ids": [
+        "agent-example"
+      ],
+      "expected": "unknown"
+    },
+    {
+      "id": "requested-id-is-not-loaded-id",
+      "requested": "session-example",
+      "observed": "session-other",
+      "expected": "reject restored"
+    },
+    {
+      "id": "missing-id-no-cold-fallback",
+      "requested": "session-missing",
+      "exists": false,
+      "expected": "official host rejects target; never restored or replacement session; process creation alone does not prove target loaded"
+    },
+    {
+      "id": "lost-final-seal",
+      "exit_confirmed": true,
+      "seal_confirmed": false,
+      "expected": "stopped fact separate; no automatic final-session restoration"
+    },
+    {
+      "id": "scene-ready-without-load-proof",
+      "ready": true,
+      "expected": "foreground metadata only; not restored or input-ready"
+    },
+    {
+      "id": "adoption-tail-rollback",
+      "ready_was_set": true,
+      "public_channel_lease": "revoked before deferred sample",
+      "expected": "unknown; no foreground confirmation"
+    },
+    {
+      "id": "host-owned-writer-lifetime",
+      "sequence": [
+        "writer",
+        "strict-open",
+        "history",
+        "publication",
+        "foreground",
+        "host-close",
+        "release"
+      ],
+      "expected": "writer remains held after foreground observation until host close"
+    },
+    {
+      "id": "retry-revokes-requested-backend",
+      "retry": true,
+      "requested_backend": "dsh",
+      "selected_backend": "other",
+      "expected": "controlled resume must refuse before launch; no cold fallback"
+    },
+    {
+      "id": "registered-agent-initialization-later-fails",
+      "scene_ready": true,
+      "session_and_cwd_match": true,
+      "initialization": "pending then rejects",
+      "expected": "metadata may match; never loaded/restored; subsequent failure becomes unknown"
+    },
+    {
+      "id": "old-run-private-receipt",
+      "envelope_run": "previous-run",
+      "expected": "reject invalid envelope"
+    },
+    {
+      "id": "stdout-is-not-receipt",
+      "transport": "stdout",
+      "expected": "no foreground confirmation"
+    },
+    {
+      "id": "request-home-is-not-observed-home",
+      "session_and_cwd_match": true,
+      "native_home_origin": "parent request",
+      "expected": "launch_binding unproven; cannot persist as confirmed SessionRef"
+    },
+    {
+      "id": "safe-handoff-without-load-receipt",
+      "launch_dispatched": true,
+      "load_receipt": null,
+      "expected": "launch_dispatched; preserve requested identity separately; actual identity unknown; no continue/retry/kill"
+    },
+    {
+      "id": "native-zero-is-not-load",
+      "native_exit_code": 0,
+      "expected": "no restored without matching actual load receipt"
+    },
+    {
+      "id": "dispatch-reply-lost",
+      "launch_reply": "timeout or disconnected",
+      "expected": "unknown; preserve new run when known; do not retry same accepted request"
+    },
+    {
+      "id": "effective-session-root-override",
+      "later_patch_changes_root": true,
+      "expected": "reject automatic dispatch despite exact argv and requested HOME"
+    }
+  ],
+  "source_evidence": {
+    "reviewed_main": "109e2e7769a60c31a44bc0810e408356e2c1c8a1",
+    "fetched_origin_main": "467d5cd4e1cbc72e50c8bf69c6f8233a22d34168",
+    "repository": "https://github.com/ccch1mneyyy/dsh-TUI.git",
+    "tag": "v0.16.1",
+    "commit": "73ff99fbed56563bf154d719effd09f9f9725349",
+    "matches_repository_manifest": true,
+    "acquisition": "git objects only; no checkout/install/upstream execution",
+    "published_archive_verified_this_revision": false,
+    "strict_startup_resume": "src/dsh-adapter/plugin.ts:2815-2929; same-process existing agent is a distinct reuse branch",
+    "other_backend_startup": "src/dsh-adapter/backends.ts:98-134; does not establish DSH startup",
+    "switch_completion_scope": "explicit new/resume/rewind; not initial startup receipt",
+    "reviewed_public_exports": [
+      "./api",
+      "./extensions",
+      "./plugin-host",
+      "./scenes"
+    ],
+    "public_channel_lifetime": "src/dsh-adapter/channel-ui.ts:23-121 and src/adapter/channel/ui.ts:65-158; public reads check active lease",
+    "core_repository": "https://github.com/deepseek-ai/deepseek-harness",
+    "core_tag": "dsh-v0.2.1-rc.2",
+    "core_resume": "packages/core/agent-loop/src/index.ts:806-883; write open, read, seed, publish",
+    "jsonl_writer": "packages/session/session-persistence-jsonl/src/index.ts open and src/storage.ts close; tagged README documents cross-process lease and platform limits",
+    "tagged_lease_implementation": "not retrieved; do not substitute another revision",
+    "writer_launch_coverage": "source chain covers cooperating official JSONL writers, not arbitrary writers; exact Linux managed DSH active-TUI/external-writer refusal and recovery after release passed T053",
+    "fake_prototype": "scene registration and child IPC correlate metadata to a fresh request; strict load/launch binding remain unproven",
+    "probe_module": "tests/fixtures/dsh-session-observer-probe/index.mjs",
+    "probe_tests": "tests/node/dsh_session_observer_probe.test.mjs",
+    "launcher_tests": "tests/node/dsh_resume_launch.test.mjs",
+    "native_resume_acceptance": "T053 controlled and T054 default CLI passed on exact Linux managed DSH lock; original session/cwd/history, new run, zero input, load unknown, continue not_sent",
+    "implementation_base": "109e2e7769a60c31a44bc0810e408356e2c1c8a1",
+    "feature_rebased_to_reviewed_main": false,
+    "previous_implementation_base": "39a9389d3bddc27f394fa26bc75236cf1bb0b89c",
+    "feature_migrated_to_reviewed_main": true,
+    "feature_merged_into_main": false,
+    "migration_method": "task-owned working-tree diff replay onto fresh main worktree; original preserved",
+    "scene_module": "tests/fixtures/dsh-session-observer-probe/scene.mjs",
+    "scene_tests": "tests/node/dsh_session_scene_probe.test.mjs",
+    "attempt_module": "tests/fixtures/dsh-session-observer-probe/attempt.mjs",
+    "attempt_tests": "tests/node/dsh_session_attempt_probe.test.mjs",
+    "initialization_boundary": "agent-loop publication precedes awaited created listeners; TUI existing get branch bypasses resume await",
+    "quiescence_is_not_success": "agent-loop/src/agent.ts runMaintenance finally resolves activity on success or failure; whenIdle does not return initialization outcome",
+    "upstream_contract_proposal": "docs/rotom-dsh-startup-contract.md; local draft only, not sent",
+    "tui_resume_parser": "src/sessionHistory.ts:73-108; src/dsh-adapter/plugin.ts:579-589",
+    "profile_boot_args": "cached profile-boot-C14i-8IN.js:302-318; options.args -> cmdline",
+    "profile_boot_layers": "cached profile-boot-C14i-8IN.js:201-246; rebuild root, bundles -> profile -> HOME -> explicit patchFiles",
+    "cordis_patch_semantics": "cached cordis-plugin-include/lib/index.js:56-104; matching id/name, skip on miss, whole config replacement; no deep merge guarantee",
+    "session_root": "TUI cordis.patch.yml:188-195; environment or managed DSH_HOME/sessions, later patch can override",
+    "effective_config_policy": "admitted handoff permits only deployed profile selectors, unchanged managed fields, plain native UI preferences, empty HOME patch and unchanged final patch/launcher; unreviewed shapes reject",
+    "cached_material_identity": "Core/profile-boot cached package 0.2.1-rc.2; archive bytes not reverified this revision",
+    "host_owned_writer_tests": "tests/test_rotom_resume.py; synthetic only",
+    "managed_resume_seam_tests": "tests/test_rotom_resume_runtime.py; fake processes with real temporary leases",
+    "managed_dsh_candidate": "src/agentcfg/dsh_sessions.py; default CLI admitted only for exact Linux managed DSH lock, observer none, here; no strict load receipt or automatic continue",
+    "public_metadata_query": "Core 0.2.1-rc.2 public sessionPersistence.stat(id); header id/cwd only; exact root explicit; duplicate id rejects; no snapshot remains unknown; integration and exact-lock native lookup/missing-ID acceptance passed",
+    "live_dispatch": "Popen success -> separate journal/after_dispatch -> inherited terminal wait; no timeout, retry, kill or input",
+    "private_request_facts": "resume-attempts format v1; separate from RunRecord session observations; intent durable before spawn; post-spawn persistence failure never replaces native exit",
+    "installed_material_verification": "current installed lock receipt and full-copy inventory matched; original Core20/TUI3287 package-index files match SHA512/size/mode; downloaded archive SRI not recomputed"
+  }
+}

@@ -219,7 +219,7 @@ def test_selected_fake_cancellation_preserves_unknown_owner(module_workspace, tm
   with pytest.raises(KeyboardInterrupt):
     runtime.run(workspace, cwd=tmp_path)
   owners = run_owners.Registry(workspace.state_root / "run-owners", workspace.binding).snapshot()
-  assert len(owners) == 1 and next(iter(owners.values()))["state"] == "unknown"
+  assert len(owners) == 1 and run_owners.record_state(next(iter(owners.values()))) == "unknown"
   with pytest.raises(Conflict): commands.apply_candidate(workspace, lock, workspace.candidate(lock.identity))
 
 

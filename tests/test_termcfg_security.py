@@ -119,7 +119,7 @@ def test_symlinked_target_parent_blocks_plan_without_touching_outside(isolated_e
   assert sentinel.read_text() == "untouched\n"
 
 
-def test_private_target_content_is_absent_from_error_json(isolated_environment, capsys):
+def test_private_target_content_is_absent_from_error_json(isolated_environment, capsys, fake_terminal_commands):
   from termcfg.cli import main
   assert main(["init-local", "--component", "zsh"]) == 0
   (isolated_environment.home / ".zshenv").write_text("export API_KEY=synthetic-private\n")

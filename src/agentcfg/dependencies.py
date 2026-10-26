@@ -465,12 +465,12 @@ def sync(workspace, lock, adapter_id="dsh", *, progress=None):
 
 
 def _sync_guarded(workspace, lock, adapter_id, *, progress=None):
-  from .lifecycle import guard
+  from .lifecycle import inactive_guard
   # 已知恢复待处理时不初始化物理实例；排他状态锁内仍会再次复核。
   with Tree(workspace.state_root) as state:
     if state.read("pending.json"):
       raise Conflict("存在待恢复部署；请先 apply/rollback，恢复完成前不能 sync")
-  with guard(workspace):
+  with inactive_guard(workspace):
     return _sync(workspace, lock, adapter_id, progress=progress)
 
 

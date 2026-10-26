@@ -41,11 +41,15 @@ def test_first_adoption_rollback_restores_old_file_and_removes_new(isolated_envi
   plan = rollback_preview(machine, "zsh")
   previous_backup = Path(state_with_core["previous"]["zsh"]["zshenv"]["path"])
   assert previous_backup.exists()
-  assert {target["target_id"] for target in plan["targets"]} == {"zshrc", "zshenv"}
+  assert {target["target_id"] for target in plan["targets"]} == {
+    "zshrc", "zshenv", "rotom-launcher", "rotom-completion", "rotom-entry-binding"}
   assert main(["rollback", "--component", "zsh", "--plan-id", plan["plan_id"]]) == 0
   assert (home / ".zshenv").read_text() == "export EDITOR=vi\n"
   assert (home / ".zshenv").stat().st_mode & 0o777 == 0o640
   assert not (home / ".zshrc").exists()
+  assert not (home / ".local/bin/rotom").exists()
+  assert not (home / ".local/share/rotom/zsh/site-functions/_rotom").exists()
+  assert not (home / ".local/share/rotom/entry.json").exists()
   state = read_state(machine)
   assert "zsh" not in state["previous"]
   assert "zshenv" not in state["targets"]

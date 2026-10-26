@@ -179,7 +179,7 @@ def test_cursor_fake_cancellation_keeps_unknown_and_blocks_maintenance(cursor_wo
   monkeypatch.setattr(runtime.subprocess, "run", cancel)
   with pytest.raises(KeyboardInterrupt): runtime.run(workspace, cwd=tmp_path)
   records = run_owners.Registry(workspace.state_root / "run-owners", workspace.binding).snapshot()
-  assert len(records) == 1 and next(iter(records.values()))["state"] == "unknown"
+  assert len(records) == 1 and run_owners.record_state(next(iter(records.values()))) == "unknown"
   from agentcfg.storage import Conflict
   with pytest.raises(Conflict): commands.apply_candidate(workspace, lock, workspace.candidate(lock.identity))
   assert not launched

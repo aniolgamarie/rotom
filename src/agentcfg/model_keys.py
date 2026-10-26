@@ -5,6 +5,8 @@ import sys
 import warnings
 from copy import deepcopy
 
+from rotom.context import require_input
+
 from .config import read_local_document
 from .schema import ConfigError
 from .secret_files import credential_section, key_location, save_shared_key, section_label
@@ -14,7 +16,8 @@ from .workspace import load_workspace
 
 
 def set_model_key(args):
-  if not sys.stdin.isatty() or not sys.stdout.isatty():
+  context = require_input(args)
+  if context is None and (not sys.stdin.isatty() or not sys.stdout.isatty()):
     raise ConfigError("model-wizard-requires-terminal")
   workspace = load_workspace(args.local, args.profile, allow_missing_local_values=True)
   provider = workspace.resolved.data["providers"].get(args.provider)
@@ -34,12 +37,15 @@ def set_model_key(args):
     print("此 key 已保存在旧机器文件中，本次更新原位置；其他 key 默认写入共享文件。")
   else:
     print("所有引用此凭据的工具和 profile 共用；输入不会回显。")
-  try:
-    with warnings.catch_warnings():
-      warnings.simplefilter("error", getpass.GetPassWarning)
-      value = getpass.getpass("API key（隐藏输入，留空取消）: ")
-  except (EOFError, OSError, getpass.GetPassWarning):
-    raise ConfigError("model-wizard-secret-input-unavailable") from None
+  if context is not None:
+    value = context.input_gateway.hidden("隐藏值（空输入取消）", policy=context.input_policy)
+  else:
+    try:
+      with warnings.catch_warnings():
+        warnings.simplefilter("error", getpass.GetPassWarning)
+        value = getpass.getpass("API key（隐藏输入，留空取消）: ")
+    except (EOFError, OSError, getpass.GetPassWarning):
+      raise ConfigError("model-wizard-secret-input-unavailable") from None
   if not value:
     print("已取消；密钥未修改。")
     return 0

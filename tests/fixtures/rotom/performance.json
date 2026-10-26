@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "workload_version": 1,
+  "iterations": 30,
+  "process_model": "independent cold Python process per sample; filesystem caches are not flushed",
+  "percentile_method": "nearest rank: sorted samples at ceil(percentile * count)",
+  "isolation": {
+    "private_modes": {"directory": "0700", "file": "0600"},
+    "environment": "fresh HOME, XDG, TMP and empty PATH; prepared venv reused without writes",
+    "child_guards": ["network", "nested processes", "signals", "procfs", "filesystem writes"],
+    "source_policy": "explicit public Python, schema and TOML allowlist; no git, cache, auth, native sessions or host packages",
+    "record_states": ["unknown", "idle_confirmed"]
+  },
+  "workloads": {
+    "empty": {"machines": 0, "public_profiles": 0, "runs": 0},
+    "catalog": {"machines": 32, "public_profiles": 100, "runs": 0},
+    "runs": {"machines": 1, "public_profiles": 1, "runs": 1000}
+  },
+  "scenarios": [
+    {"id": "help-empty", "phase": "help", "workload": "empty", "arguments": ["--help"], "expected_exit": 0, "output": "help", "budget_seconds": 1.0},
+    {"id": "help-catalog", "phase": "help", "workload": "catalog", "arguments": ["--help"], "expected_exit": 0, "output": "help", "budget_seconds": 1.0},
+    {"id": "help-runs", "phase": "help", "workload": "runs", "arguments": ["--help"], "expected_exit": 0, "output": "help", "budget_seconds": 1.0},
+    {"id": "complete-empty-machines", "phase": "completion", "workload": "empty", "arguments": ["_complete", "--kind", "machine", "--namespace", "agent"], "expected_exit": 0, "output": "machines", "budget_seconds": 1.0},
+    {"id": "complete-catalog-machines", "phase": "completion", "workload": "catalog", "arguments": ["_complete", "--kind", "machine", "--namespace", "agent"], "expected_exit": 0, "output": "machines", "budget_seconds": 1.0},
+    {"id": "complete-catalog-profiles", "phase": "completion", "workload": "catalog", "arguments": ["_complete", "--kind", "profile", "--tool", "dsh"], "expected_exit": 0, "output": "profiles", "budget_seconds": 1.0},
+    {"id": "list-runs", "phase": "list", "workload": "runs", "arguments": ["--no-input", "agent", "--machine", "bench-machine-000", "instances", "list", "--format", "json"], "expected_exit": 0, "output": "runs", "budget_seconds": 2.0}
+  ]
+}

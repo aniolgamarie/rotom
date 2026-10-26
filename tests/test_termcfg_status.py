@@ -43,7 +43,9 @@ def test_offline_plan_apply_status_and_drift(isolated_environment, fake_terminal
 
 
 
-def test_plan_ready_reflects_required_environment(isolated_environment, capsys):
+def test_plan_ready_reflects_required_environment(isolated_environment, capsys, fake_terminal_commands):
+  # 来源准备好仍不代表宿主存在；保留原先的缺zsh程序前提。
+  (fake_terminal_commands / "zsh").unlink()
   assert main(["init-local", "--component", "zsh"]) == 0
   capsys.readouterr()
   assert main(["plan", "--component", "zsh", "--json"]) == 0

@@ -1,6 +1,5 @@
 """termcfg 独立命令行与简短的可诊断结果。"""
 
-import argparse
 import json
 import os
 from pathlib import Path
@@ -8,13 +7,15 @@ import shutil
 import sys
 import tempfile
 
+from rotom.context import InputError, invocation_context, require_input
 from .catalog import load_catalog
 from .config import COMPONENTS, MachineSelection, encode_machine, environment_home, machine_path, read_machine, xdg_path
 from .diagnostics import current_progress, emit, reset_progress
 from .environment import inspect_environment, status_report
 from .errors import TermcfgError
 from .guidance import context_for, hint, resolve_hints
-from .cli_help import COMMANDS, ENTRY_GUIDE, ROOT_HELP, argument_label, describe_options, parameter_guidance
+from .cli_help import ENTRY_GUIDE
+from .cli_parser import Parser, build_parser
 from .lease import operation_lease
 from .packages import lock_plugin, sync
 from .preview import build_preview
@@ -22,102 +23,7 @@ from .state import read_journal, require_no_pending_recovery
 from .transaction import apply, recover, rollback, rollback_preview
 
 
-class Parser(argparse.ArgumentParser):
-  command_name = None
-
-  def fail(self, detail=None):
-    error = TermcfgError(2, "invalid_arguments", hint(self.command_name, "--help"))
-    error.usage_detail = parameter_guidance(self, detail) if detail else parameter_guidance(self)
-    raise error
-
-  def error(self, message):
-    # argparse 的 message 可能包含私人值或未知 token；不反射、不解析它。
-    self.fail()
-
-  def _check_value(self, action, value):
-    if action.choices is not None and value not in action.choices:
-      choices = "、".join(action.choices)
-      self.fail(f"{argument_label(action)}：不支持的选择；可选：{choices}")
-
-  def _get_value(self, action, arg_string):
-    try:
-      return super()._get_value(action, arg_string)
-    except argparse.ArgumentError:
-      self.fail(f"{argument_label(action)}：值类型无效；请检查该参数说明")
-
-  def parse_args(self, args=None, namespace=None):
-    parsed, extras = self.parse_known_args(args, namespace)
-    if extras:
-      # 已解析的命令来自 choices；不扫描未知 argv 来猜上下文。
-      for action in self._actions:
-        if isinstance(action, argparse._SubParsersAction):
-          selected = action.choices.get(getattr(parsed, "command", None))
-          if selected is not None:
-            selected.fail("参数无效或位置不正确；请检查本命令参数")
-      self.fail()
-    return parsed
-
-
-def build_parser() -> Parser:
-  parser = Parser(prog="./termcfg", description="独立管理 zsh/tmux 与可选 Herdr 公开配置",
-                  epilog=ROOT_HELP, formatter_class=argparse.RawDescriptionHelpFormatter)
-  parser.add_argument("--machine", default="default")
-  parser.add_argument("--json", action="store_true")
-  commands = parser.add_subparsers(dest="command", required=True, title="命令", metavar="COMMAND")
-
-  def add_command(name):
-    summary, detail = COMMANDS[name]
-    child = commands.add_parser(name, help=summary, description=summary, epilog=detail,
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
-    child.command_name = name
-    return child
-
-  add_command("components")
-  init = add_command("init-local")
-  init.add_argument("--component", action="append", choices=sorted(COMPONENTS))
-  init.add_argument("--edit", action="store_true")
-  init.add_argument("--none", action="store_true")
-  plan = add_command("plan")
-  plan.add_argument("--component", action="append", choices=sorted(COMPONENTS))
-  plan.add_argument("--home")
-  doctor_parser = add_command("doctor")
-  doctor_parser.add_argument("--component", action="append", choices=sorted(COMPONENTS))
-  doctor_parser.add_argument("--strict", action="store_true")
-  doctor_parser.add_argument("--home")
-  status_parser = add_command("status")
-  status_parser.add_argument("--component", action="append", choices=sorted(COMPONENTS))
-  status_parser.add_argument("--home")
-  apply_parser = add_command("apply")
-  apply_parser.add_argument("--component", action="append", choices=sorted(COMPONENTS))
-  apply_parser.add_argument("--plan-id")
-  apply_parser.add_argument("--adopt-target", action="append", default=[])
-  apply_parser.add_argument("--confirm-zshenv")
-  add_command("recover")
-  lock_parser = add_command("lock")
-  lock_parser.add_argument("--component", required=True, choices=["tmux", "zsh"])
-  lock_parser.add_argument("--version", required=True)
-  lock_parser.add_argument("--plugin")
-  lock_parser.add_argument("--repo", help="新增插件的 GitHub 仓库（owner/name，须在允许前缀内）")
-  lock_parser.add_argument("--entry", help="新增插件的入口文件相对路径")
-  lock_parser.add_argument("--timeout", type=int, default=300)
-  sync_parser = add_command("sync")
-  sync_parser.add_argument("--component", required=True, choices=["tmux", "zsh"])
-  sync_parser.add_argument("--timeout", type=int, default=300)
-  migrate_parser = add_command("migrate")
-  migrate_parser.add_argument("--drop-mihomo", action="store_true", required=True)
-  rollback_parser = add_command("rollback")
-  rollback_parser.add_argument("--component", required=True, choices=sorted(COMPONENTS))
-  rollback_parser.add_argument("--plan-only", action="store_true")
-  rollback_parser.add_argument("--plan-id")
-  for command in commands.choices.values():
-    command.add_argument("--machine", default=argparse.SUPPRESS)
-    command.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
-    describe_options(command)
-  describe_options(parser)
-  return parser
-
-
-def _write_new_machine(path: Path, payload: bytes) -> None:
+def _write_new_machine(path: Path, payload: bytes, *, before_replace=None) -> None:
   for directory in (path.parent.parent, path.parent):
     if directory.exists() or directory.is_symlink():
       info = directory.lstat()
@@ -132,6 +38,8 @@ def _write_new_machine(path: Path, payload: bytes) -> None:
       stream.write(payload)
       stream.flush()
       os.fsync(stream.fileno())
+    if before_replace is not None:
+      before_replace()
     os.replace(temporary, path)
     directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
     try:
@@ -143,7 +51,14 @@ def _write_new_machine(path: Path, payload: bytes) -> None:
       os.unlink(temporary)
 
 
-def _interactive_selection(previous: tuple[str, ...] | None) -> tuple[str, ...]:
+def _interactive_selection(previous: tuple[str, ...] | None, *, context=None) -> tuple[str, ...]:
+  if context is not None:
+    rows = [(name, name) for name in ("zsh", "tmux", "herdr")]
+    rows.append(("none", "保存空组件选择"))
+    if previous is not None:
+      rows.append(("previous", "保持已经保存的组件选择"))
+    selected = context.input_gateway.choose(rows, policy=context.input_policy, label="组件")
+    return previous if selected == "previous" else () if selected == "none" else (selected,)
   defaults = previous if previous is not None else tuple(
     name for name in ("zsh", "tmux") if shutil.which(name)
   )
@@ -163,7 +78,9 @@ def _interactive_selection(previous: tuple[str, ...] | None) -> tuple[str, ...]:
   return values
 
 
-def _confirm(message: str) -> bool:
+def _confirm(message: str, *, context=None) -> bool:
+  if context is not None:
+    return context.input_gateway.confirm(message, policy=context.input_policy)
   print(f"{message} 输入 yes 确认: ", end="", file=sys.stderr, flush=True)
   return input().strip().lower() == "yes"
 
@@ -173,7 +90,42 @@ def cmd_init(args) -> dict:
     raise TermcfgError(2, "component_and_none_conflict")
   home = None if args.edit else environment_home()
   path = machine_path(args.machine)
+  context = invocation_context(args)
+  selected = None
+  snapshot = None
+  def identity():
+    try:
+      info = path.lstat()
+      return (info.st_dev, info.st_ino, info.st_mtime_ns, info.st_size, info.st_mode, info.st_uid, info.st_nlink)
+    except FileNotFoundError:
+      return None
+  if context is not None:
+    # 输入与批准先于创建协作锁；接受后在原锁内复核所审阅文件身份。
+    exists = path.exists() or path.is_symlink()
+    if exists and not args.edit:
+      raise TermcfgError(2, "machine_exists", hint("init-local", "--edit"))
+    if not exists and args.edit:
+      raise TermcfgError(2, "machine_missing", hint("init-local"))
+    snapshot = identity()
+    previous = read_machine(args.machine) if exists else None
+    if identity() != snapshot:
+      raise TermcfgError(4, "machine_selection_changed", hint("init-local", "--edit"))
+    if args.component:
+      selected = tuple(args.component)
+      if len(set(selected)) != len(selected):
+        raise TermcfgError(2, "duplicate_component")
+    elif args.none:
+      selected = ()
+    else:
+      require_input(context)
+      selected = _interactive_selection(previous.components if previous else None, context=context)
+    if context.input_gateway.allows_input(context.input_policy):
+      print("组件: " + (",".join(previous.components) if previous else "(未初始化)")
+        + " → " + (",".join(selected) or "(空)"), file=context.input_gateway.stderr)
+      _confirm("保存私人机器选择？", context=context)
   with operation_lease(args.machine):
+    if context is not None and identity() != snapshot:
+      raise TermcfgError(4, "machine_selection_changed", hint("init-local", "--edit"))
     exists = path.exists() or path.is_symlink()
     if exists and not args.edit:
       raise TermcfgError(2, "machine_exists", hint("init-local", "--edit"))
@@ -182,7 +134,9 @@ def cmd_init(args) -> dict:
     previous = read_machine(args.machine) if exists else None
     if previous is not None:
       require_no_pending_recovery(previous)
-    if args.component:
+    if context is not None:
+      components = selected
+    elif args.component:
       components = tuple(args.component)
       if len(set(components)) != len(components):
         raise TermcfgError(2, "duplicate_component")
@@ -202,11 +156,16 @@ def cmd_init(args) -> dict:
     })
     before = ",".join(previous.components) if previous else "(未初始化)"
     after = ",".join(components) if components else "(空)"
-    print(f"组件: {before} → {after}", file=sys.stderr)
-    if sys.stdin.isatty() and not _confirm("保存私人机器选择？"):
+    if context is None:
+      print(f"组件: {before} → {after}", file=sys.stderr)
+    if context is None and sys.stdin.isatty() and not _confirm("保存私人机器选择？"):
       next_step = hint("init-local", "--edit") if exists else hint("init-local")
       raise TermcfgError(4, "confirmation_declined", next_step)
-    _write_new_machine(path, encode_machine(machine))
+    def check_reviewed_identity():
+      if identity() != snapshot:
+        raise TermcfgError(4, "machine_selection_changed", hint("init-local", "--edit"))
+    _write_new_machine(path, encode_machine(machine),
+      **({"before_replace": check_reviewed_identity} if context is not None else {}))
     args._guidance_components = components
     return {"command": "init-local", "machine_id": args.machine, "components": list(components), "private_file": str(path), "overall_ready": True, "ready": True, "next_command": hint("doctor")}
 
@@ -244,6 +203,34 @@ def _interactive_apply(preview):
   custom = any(item.custom_zshenv for item in preview.targets)
   zshenv = preview.plan_id if not custom or _confirm(".zshenv 将整文件替换；旧非秘密内容已安排备份，继续？") else None
   return required, zshenv
+
+
+def _context_apply_approval(args, preview, context):
+  """完整批准直接交回原事务；缺批准只在三流允许时单独审阅。"""
+  if args.plan_id is not None and args.plan_id != preview.plan_id:
+    raise TermcfgError(2, "plan_id_mismatch", hint("plan"))
+  required = {item.artifact.id for item in preview.targets if item.action == "adopt-required"}
+  adopted = set(args.adopt_target)
+  if adopted - required:
+    raise TermcfgError(2, "invalid_adoption_target", hint("plan"))
+  custom = any(item.custom_zshenv for item in preview.targets)
+  if args.confirm_zshenv is not None and args.confirm_zshenv != preview.plan_id:
+    raise TermcfgError(2, "zshenv_confirmation_mismatch", hint("plan"))
+  missing = args.plan_id is None or bool(required - adopted)
+  zshenv = args.confirm_zshenv
+  if missing or (custom and zshenv is None):
+    require_input(context)
+    print("计划 " + preview.plan_id, file=context.input_gateway.stderr)
+    for item in preview.targets:
+      print(f"  {item.artifact.component}/{item.artifact.id}: {item.action}; 旧文件备份={item.backup}",
+        file=context.input_gateway.stderr)
+    if missing:
+      _confirm("备份列出的旧目标并应用此计划（含列出的接管目标）？", context=context)
+      adopted = required
+    if custom and zshenv is None:
+      _confirm(".zshenv 将整文件替换；旧非秘密内容已安排备份，继续？", context=context)
+      zshenv = preview.plan_id
+  return preview.plan_id, adopted, zshenv
 
 
 def _failure_payload(args, reason: str, next_command: str, *, context: dict | None = None) -> dict:
@@ -293,13 +280,15 @@ def _emit_result(args, payload, *, json_mode):
   emit(resolve_hints(payload, context), json_mode=json_mode, context=context.public())
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, *, context=None) -> int:
   reset_progress()
   tokens = list(argv if argv is not None else sys.argv[1:])
   json_mode = "--json" in tokens
   args = None
   try:
     args = build_parser().parse_args(tokens)
+    if context is not None:
+      args.invocation_context = context
     catalog = None
     if args.command in {"components", "plan", "doctor", "apply", "rollback"}:
       catalog = load_catalog()
@@ -310,7 +299,8 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "plan":
       machine = _diagnostic_home(read_machine(args.machine), args)
       selection = _selected(machine, args, empty_all=True)
-      result = build_preview(machine, selection).public_dict()
+      options = {"entry_repo": args.entry_repo} if args.entry_repo is not None else {}
+      result = build_preview(machine, selection, **options).public_dict()
       result["environment"] = inspect_environment(machine, selection)
       result["overall_ready"] = result["ready"] = (
         result["ready"] and all(entry["ready"] for entry in result["environment"].values()))
@@ -359,11 +349,16 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "apply":
       machine = read_machine(args.machine)
       selection = _selected(machine, args)
-      if not sys.stdin.isatty() and args.plan_id is None:
-        raise TermcfgError(2, "plan_id_required", hint("plan"))
-      outcome = apply(machine, selection, plan_id=args.plan_id,
-                      adopted=set(args.adopt_target), confirm_zshenv=args.confirm_zshenv,
-                      confirm=_interactive_apply if sys.stdin.isatty() else None)
+      options = {"entry_repo": args.entry_repo} if args.entry_repo is not None else {}
+      if context is not None:
+        plan_id, adopted, zshenv = _context_apply_approval(args, build_preview(machine, selection, **options), context)
+        outcome = apply(machine, selection, plan_id=plan_id, adopted=adopted, confirm_zshenv=zshenv, **options)
+      else:
+        if not sys.stdin.isatty() and args.plan_id is None:
+          raise TermcfgError(2, "plan_id_required", hint("plan"))
+        outcome = apply(machine, selection, plan_id=args.plan_id,
+                        adopted=set(args.adopt_target), confirm_zshenv=args.confirm_zshenv,
+                        confirm=_interactive_apply if sys.stdin.isatty() else None, **options)
       result = {"command": "apply", "machine_id": args.machine,
                 "components": {component: {"changed": [value for value in outcome["changed"] if value in [a.id for a in catalog if a.component == component]]} for component in selection},
                 **outcome, "overall_ready": True, "ready": True, "next_command": hint("doctor")}
@@ -377,15 +372,25 @@ def main(argv: list[str] | None = None) -> int:
           raise TermcfgError(2, "plan_only_conflict")
         result = {"command": "rollback-plan", **rollback_preview(machine, args.component)}
       else:
-        if not sys.stdin.isatty() and not args.plan_id:
+        if context is not None and args.plan_id is None:
+          require_input(context)
+        elif context is None and not sys.stdin.isatty() and not args.plan_id:
           raise TermcfgError(2, "plan_id_required", hint("rollback", "--plan-only", components=(args.component,)))
         def approve(plan):
           print(f"回滚计划 {plan['plan_id']}", file=sys.stderr)
           for target in plan["targets"]:
             print(f"  {target['target_id']}: 恢复 {target['restore_kind']}", file=sys.stderr)
-          return _confirm("恢复上一版公开配置？")
-        outcome = rollback(machine, args.component, plan_id=args.plan_id,
-                           confirm=approve if sys.stdin.isatty() else None)
+          return _confirm("恢复上一版公开配置？", **({"context": context} if context is not None else {}))
+        if context is not None:
+          plan_id = args.plan_id
+          if plan_id is None:
+            plan = rollback_preview(machine, args.component)
+            approve(plan)
+            plan_id = plan["plan_id"]
+          outcome = rollback(machine, args.component, plan_id=plan_id)
+        else:
+          outcome = rollback(machine, args.component, plan_id=args.plan_id,
+                             confirm=approve if sys.stdin.isatty() else None)
         result = {"command": "rollback", **outcome, "overall_ready": True,
                   "ready": True, "next_command": hint("status")}
     elif args.command == "lock":
@@ -410,6 +415,9 @@ def main(argv: list[str] | None = None) -> int:
       raise TermcfgError(2, "unsupported_command")
     _emit_result(args, result, json_mode=args.json)
     return 0
+  except InputError as exc:
+    _emit_result(args, _failure_payload(args, "input_cancelled" if exc.exit_code == 130 else "input_required", hint("plan")), json_mode=json_mode)
+    return exc.exit_code
   except TermcfgError as exc:
     if not tokens:
       print(ENTRY_GUIDE, file=sys.stderr, end="")

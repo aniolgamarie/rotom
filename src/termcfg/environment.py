@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import shutil
 
-from .catalog import load_catalog
+from .catalog import GeneratedTemplate, load_catalog
 from .config import MachineSelection, xdg_path
 from .errors import TermcfgError
 from .guidance import hint
@@ -87,7 +87,8 @@ def inspect_environment(machine: MachineSelection, components: tuple[str, ...]) 
       if item.component != component:
         continue
       try:
-        item.bytes()
+        if not isinstance(item, GeneratedTemplate):
+          item.bytes()
         inspect_target(machine.target_home, item.destination)
       except TermcfgError as exc:
         blockers.append(exc.reason)
@@ -129,7 +130,7 @@ def status_report(machine: MachineSelection, components: tuple[str, ...]) -> dic
           from .home_targets import read_regular
           from .secret_boundary import admit_existing
           identity["digest"] = admit_existing(item.id, read_regular(machine.target_home, item.destination, current),
-                                               known_public_contents={item.bytes()},
+                                               known_public_contents=set() if isinstance(item, GeneratedTemplate) else {item.bytes()},
                                                trusted_digest=record["after"].get("digest"))
         targets[item.id] = "synced" if identity == record["after"] else "drift"
       except TermcfgError:

@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "source": "schemas/termcfg/state.schema.json at implementation baseline",
+  "source_sha256": "29e0ab53a6a0a904225ea8c2679671e5e815581a3a1723b8d237abeeb8d2eaca",
+  "purpose": "frozen legacy v2 reader contract for generated state compatibility tests"
+}

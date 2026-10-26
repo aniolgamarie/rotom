@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "capability": "exact-combination-native-acceptance",
+  "platforms": {
+    "linux": {
+      "stable_handle_apis": [
+        {
+          "name": "os.pidfd_open",
+          "python_min": "3.9",
+          "linux_min": "5.3",
+          "source": "https://docs.python.org/3.11/library/os.html#os.pidfd_open"
+        },
+        {
+          "name": "signal.pidfd_send_signal",
+          "python_min": "3.9",
+          "linux_min": "5.1",
+          "source": "https://docs.python.org/3.11/library/signal.html#signal.pidfd_send_signal"
+        }
+      ],
+      "production_admitted": false
+    },
+    "other": {
+      "capability": "unknown",
+      "production_admitted": false
+    }
+  },
+  "agents": {
+    "dsh": {
+      "production_admitted": false,
+      "admission": "listed-combinations-only",
+      "pending": [
+        "full-maintenance-setup-restore",
+        "other-runtime-platform-combinations"
+      ]
+    },
+    "pi": {
+      "production_admitted": false,
+      "pending": [
+        "native-stop-semantics",
+        "launch-time-host-binding",
+        "real-host-validation"
+      ]
+    },
+    "omp": {
+      "production_admitted": false,
+      "pending": [
+        "native-stop-semantics",
+        "launch-time-host-binding",
+        "real-host-validation"
+      ]
+    }
+  },
+  "feature_merged_into_main": false,
+  "admitted_combinations": [
+    {
+      "agent": "dsh",
+      "platform": "linux",
+      "backend": "managed",
+      "operation": "stop_only",
+      "runtime_identity": "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d",
+      "registration": 2,
+      "control": "linux-pidfd-stop-v1",
+      "new_launch_binding_required": true,
+      "native_checks": [
+        "default-managed-launch",
+        "three-select-two",
+        "unselected-third-unchanged",
+        "single-original-pidfd-signal",
+        "original-leases-released",
+        "terminal-restored",
+        "zero-terminal-input"
+      ],
+      "setup_admitted": false,
+      "force_admitted": false,
+      "automatic_continue_admitted": false,
+      "evidence": "specs/008-rotom-command-experience/main-review.md#62-dsh-默认入口的精确停止验收"
+    }
+  ]
+}

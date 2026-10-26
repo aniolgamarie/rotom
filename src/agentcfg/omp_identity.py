@@ -78,6 +78,7 @@ def _validate_saved_owner(raw, expected):
 
 def _preflight_existing_instance(workspace, expected):
   """在创建物理锁前拒绝未归属内容，避免失败接管留下任何痕迹。"""
+  _reject_coordinated_scope(workspace)
   if not workspace.instance.exists() and not workspace.instance.is_symlink():
     return
   with Tree(workspace.instance) as tree:
@@ -95,10 +96,17 @@ def preflight_setup(workspace):
   validate_layout(native_identity(workspace.profile, workspace.instance))
 
 
+def _reject_coordinated_scope(workspace):
+  from .resource_scopes import scope_claim_exists
+  if scope_claim_exists(workspace.instance):
+    raise Conflict("OMP实例存在资源协调声明；当前合作入口尚未开放")
+
+
 @contextmanager
 def lifecycle_guard(workspace, *, create=False, shared=False):
   if create and shared:
     raise ValueError("OMP所有权创建不得使用共享租约")
+  _reject_coordinated_scope(workspace)
   expected = ownership(workspace)
   if create:
     _preflight_existing_instance(workspace, expected)
@@ -121,6 +129,7 @@ def lifecycle_guard(workspace, *, create=False, shared=False):
       raise Conflict("OMP物理实例锁身份或权限无效")
     with advisory_lock(fd, shared=shared, unlock=False, busy_message="OMP实例已有活动进程",
         unavailable_message="当前文件系统无法提供OMP物理实例锁"):
+      _reject_coordinated_scope(workspace)
       with Tree(workspace.instance) as tree:
         raw = tree.read(".agentcfg-omp-owner.json")
         if raw is not None:

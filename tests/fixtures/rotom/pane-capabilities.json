@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "purpose": "synthetic public capability comparison; not native acceptance",
+  "herdr": {
+    "version": "0.9.5",
+    "server_restore": "reported native session and argv in saved logical pane/cwd",
+    "per_pane_restart_api": "not declared in pinned public method enum",
+    "request_id": "response correlation; replay idempotency unproven",
+    "pane_run_success": "queue admission only",
+    "layout_apply_preserves_pty": false,
+    "production_admitted": false
+  },
+  "decision": {
+    "original_location": "unavailable",
+    "candidate": "existing manager optional residence",
+    "native_acceptance": "not executed"
+  },
+  "cases": [
+    {
+      "id": "server-generation-changed",
+      "old_pane": "pane-example",
+      "expected": "requery ownership; old id not sufficient"
+    },
+    {
+      "id": "pane-closed-or-reused",
+      "expected": "do not launch or send; review new location"
+    },
+    {
+      "id": "manager-exited-descendant-live",
+      "expected": "not parked; resources unknown"
+    },
+    {
+      "id": "run-released-session-unsealed",
+      "expected": "parked may be provable; exact final session restore unavailable"
+    },
+    {
+      "id": "resume-response-lost",
+      "expected": "unknown; reconcile without replay"
+    },
+    {
+      "id": "manager-code-changed",
+      "expected": "explicit new location"
+    },
+    {
+      "id": "pane-input-admitted",
+      "expected": "not agent accepted"
+    }
+  ],
+  "production_admitted": false,
+  "prototype": {
+    "capability": "finite-state-mechanism-only",
+    "route": "existing-manager-optional-residence",
+    "cycles": 1,
+    "transport": "injected-fake-callbacks-only",
+    "real_endpoint_pty_process_signal_validation": "not-executed",
+    "binding": [
+      "container-generation",
+      "manager-pid-birth",
+      "manager-code",
+      "control-protocol",
+      "endpoint",
+      "server-generation-pane-cwd"
+    ],
+    "resume_order": [
+      "persist-intent",
+      "consume-permit",
+      "launch-once"
+    ],
+    "unknown": "absorbing-no-replay",
+    "session_loaded": "exact-new-run-and-session-observation",
+    "send_input": "not-provided"
+  },
+  "agents": {
+    "dsh": {
+      "production_admitted": false
+    },
+    "pi": {
+      "production_admitted": false
+    },
+    "omp": {
+      "production_admitted": false
+    }
+  }
+}

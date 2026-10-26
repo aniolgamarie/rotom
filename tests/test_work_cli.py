@@ -660,3 +660,107 @@ def test_removed_type_selector_offers_only_existing_instance_focus(monkeypatch, 
   monkeypatch.setattr(work_ui, "select", choose)
   assert work_ui.type_action(settings, binding, new=new) == (
     ("retired", "existing-locator") if has_instances and not new else None)
+def _rotom_work_context(path, *, policy="auto", answer=""):
+  import io
+  from rotom.context import InputGateway, InvocationContext, InputPolicy
+  class Stream(io.StringIO):
+    def isatty(self):
+      return True
+  return InvocationContext(tuple(path), input_policy=InputPolicy(policy),
+    input_gateway=InputGateway(Stream(answer), Stream(), Stream()))
+
+
+def test_rotom_selector_no_input_rejects_before_fzf(monkeypatch):
+  from termcfg import work_ui
+  from rotom.context import InputError
+  monkeypatch.setattr(work_ui, "resolve_executable", lambda *a: pytest.fail("fzf discovery"))
+  context = _rotom_work_context(("work", "enter"), policy="no_input")
+  with pytest.raises(InputError) as caught:
+    work_ui.select([("alpha", "Alpha"), ("beta", "Beta")], context=context)
+  assert caught.value.exit_code == 2
+
+
+def test_rotom_selector_numbered_fallback_uses_same_opaque_id(monkeypatch):
+  from termcfg import work_ui
+  def unavailable(*a):
+    raise TermcfgError(5, "work_selector_unavailable")
+  monkeypatch.setattr(work_ui, "resolve_executable", unavailable)
+  context = _rotom_work_context(("work", "enter"), answer="2\n")
+  assert work_ui.select([("alpha", "Alpha"), ("beta", "Beta")], context=context) == "beta"
+  assert context.input_gateway.stdout.getvalue() == ""
+  assert "Beta" in context.input_gateway.stderr.getvalue()
+
+
+@pytest.mark.parametrize("args,path", [
+  ([], ("work", "enter")),
+  (["open"], ("work", "open")),
+  (["rebind", "shell"], ("work", "rebind")),
+  (["close"], ("work", "close")),
+  (["config", "edit"], ("work", "config", "edit")),
+])
+def test_rotom_work_no_input_missing_gate_before_native_or_editor(tmp_path, monkeypatch, args, path):
+  from termcfg import work_config
+  monkeypatch.setattr(work_config, "read_settings", lambda **k: pytest.fail("configuration read before missing input gate"))
+  context = _rotom_work_context(path, policy="no_input")
+  assert work.main(args, context=context) == 2
+
+
+def test_rotom_work_editor_no_input_has_no_temp_file_or_process(tmp_path, monkeypatch, sentinel_factory):
+  from termcfg import work_edit
+  from rotom.context import InputError
+  settings = local_settings(tmp_path)
+  before = sentinel_factory(tmp_path)
+  monkeypatch.setattr(work_edit, "resolve_executable", lambda *a: pytest.fail("editor discovery"))
+  context = _rotom_work_context(("work", "config", "edit"), policy="no_input")
+  with pytest.raises(InputError) as caught:
+    work_edit.edit(settings, context=context)
+  assert caught.value.exit_code == 2
+  before.assert_unchanged()
+def test_rotom_recursive_work_dispatch_keeps_same_context(monkeypatch):
+  from termcfg import work_ui
+  settings = SimpleNamespace(selectors=("--machine", "workstation"))
+  context = _rotom_work_context(("work", "enter"))
+  monkeypatch.setattr(work_ui, "selector", lambda *a, **k: ["status"])
+  calls = []
+  monkeypatch.setattr(work, "main", lambda args, **kwargs: calls.append((args, kwargs)) or 0)
+  assert work.structured_command(SimpleNamespace(command=None), settings, context=context) == 0
+  assert calls == [(["--machine", "workstation", "status"], {"context": context})]
+
+
+def test_rotom_checkout_success_survives_cancelled_enter(monkeypatch, capsys):
+  from contextlib import nullcontext
+  from termcfg import work_git
+  settings = SimpleNamespace(selectors=("--machine", "workstation"))
+  context = _rotom_work_context(("work", "worktree", "create"))
+  monkeypatch.setattr(work, "operation_lock", lambda *a: nullcontext())
+  monkeypatch.setattr(work_git, "create", lambda *a, **k: {"path": "/tmp/rotom-example-checkout", "created": True})
+  seen = []
+  monkeypatch.setattr(work, "main", lambda args, **kwargs: seen.append(kwargs["context"]) or 130)
+  assert work.execute_worktree_plan(settings, object(), enter=True, context=context) == 130
+  output = capsys.readouterr()
+  assert json.loads(output.out)["created"] is True
+  assert "checkout_retained" in output.err
+  assert seen == [context]
+@pytest.mark.parametrize("saved_source", [False, True])
+def test_rotom_explicit_checkout_cancel_returns_130_and_preserves_accepted_source(tmp_path, monkeypatch, saved_source):
+  from termcfg import work_ui, work_git
+  from termcfg.work_config import read_settings
+  settings, parent, _ = ui_worktree_case(tmp_path, monkeypatch, coverage=not saved_source)
+  if saved_source:
+    calls = []
+    def preview(current, **kwargs):
+      calls.append(current)
+      if len(calls) == 1:
+        raise TermcfgError(2, "work_git_destination_source_required")
+      return SimpleNamespace(facts=ui_worktree_facts(current, tmp_path / "original", parent))
+    monkeypatch.setattr(work_git, "preview", preview)
+  choices = iter(("0", "new", "0", "cancel"))
+  monkeypatch.setattr(work_ui, "select", lambda *a, **k: next(choices))
+  monkeypatch.setattr(work_ui, "selector", lambda current, **kwargs: work_ui.worktree_form(current, **kwargs))
+  context = _rotom_work_context(("work", "worktree", "create"), answer="yes\nyes\n")
+  assert work.main(["--local", str(settings.local_path)], context=context) == 130
+  assert not (parent / "topic").exists()
+  if saved_source:
+    saved = read_settings(local=settings.local_path)
+    assert saved.structured["sources"][0]["id"] == "copies"
+    assert "已保存" in context.input_gateway.stderr.getvalue()

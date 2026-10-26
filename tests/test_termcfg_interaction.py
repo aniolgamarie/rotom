@@ -245,3 +245,136 @@ def test_legacy_status_does_not_guess_unverified_home_scope(monkeypatch, capsys)
   output = capsys.readouterr().out
   assert "PRIVATE-CANARY" not in output
   assert json.loads(output)["next_command"] == "./termcfg plan --help"
+def _rotom_context(path, *, policy="auto", answer="", ttys=(True, True, True)):
+  import io
+  from rotom.context import InputGateway, InvocationContext, InputPolicy
+  class Stream(io.StringIO):
+    def __init__(self, content, tty):
+      super().__init__(content)
+      self.tty = tty
+    def isatty(self):
+      return self.tty
+  streams = [Stream(answer if i == 0 else "", tty) for i, tty in enumerate(ttys)]
+  return InvocationContext(tuple(path), input_policy=InputPolicy(policy), input_gateway=InputGateway(*streams))
+
+
+def test_rotom_no_input_init_explicit_components_never_reads_input(isolated_environment, monkeypatch):
+  import io
+  from termcfg.cli import main
+  class Tty(io.StringIO):
+    def isatty(self):
+      return True
+  monkeypatch.setattr("sys.stdin", Tty())
+  monkeypatch.setattr("builtins.input", lambda *a: pytest.fail("legacy input called"))
+  context = _rotom_context(("term", "init-local"), policy="no_input")
+  assert main(["init-local", "--component", "zsh"], context=context) == 0
+
+
+@pytest.mark.parametrize("ttys", [(True, False, True), (True, True, False), (False, True, True)])
+def test_rotom_init_missing_selection_requires_all_three_ttys(isolated_environment, monkeypatch, sentinel_factory, ttys):
+  from termcfg.cli import main
+  monkeypatch.setattr("builtins.input", lambda *a: pytest.fail("legacy input called"))
+  before = sentinel_factory(isolated_environment.home)
+  context = _rotom_context(("term", "init-local"), answer="zsh\nyes\n", ttys=ttys)
+  assert main(["init-local"], context=context) == 2
+  before.assert_unchanged()
+  assert context.input_gateway.stdin.tell() == 0
+
+
+def test_rotom_init_cancel_before_acceptance_creates_no_files(isolated_environment, monkeypatch, sentinel_factory):
+  from termcfg.cli import main
+  monkeypatch.setattr("builtins.input", lambda *a: pytest.fail("legacy input called"))
+  before = sentinel_factory(isolated_environment.home)
+  context = _rotom_context(("term", "init-local"), answer="\n")
+  assert main(["init-local"], context=context) == 130
+  before.assert_unchanged()
+
+
+def test_rotom_apply_no_input_complete_approval_ignores_stdin_tty(isolated_environment, monkeypatch, fake_terminal_commands):
+  import io
+  from termcfg.cli import main
+  from termcfg.config import read_machine
+  from termcfg.preview import build_preview
+  assert main(["init-local", "--component", "zsh"]) == 0
+  plan = build_preview(read_machine("default"), ("zsh",))
+  class Tty(io.StringIO):
+    def isatty(self):
+      return True
+  monkeypatch.setattr("sys.stdin", Tty())
+  monkeypatch.setattr("builtins.input", lambda *a: pytest.fail("legacy input called"))
+  context = _rotom_context(("term", "apply"), policy="no_input")
+  assert main(["apply", "--component", "zsh", "--plan-id", plan.plan_id], context=context) == 0
+
+
+def test_rotom_apply_missing_approval_reports_two_before_input_or_write(isolated_environment, monkeypatch, sentinel_factory, fake_terminal_commands):
+  from termcfg.cli import main
+  assert main(["init-local", "--component", "zsh"]) == 0
+  before = sentinel_factory(isolated_environment.home)
+  monkeypatch.setattr("builtins.input", lambda *a: pytest.fail("legacy input called"))
+  context = _rotom_context(("term", "apply"), policy="no_input")
+  assert main(["apply", "--component", "zsh"], context=context) == 2
+  before.assert_unchanged()
+
+
+def test_rotom_apply_cancel_keeps_current_action_unaccepted(isolated_environment, monkeypatch, sentinel_factory, fake_terminal_commands):
+  from termcfg.cli import main
+  assert main(["init-local", "--component", "zsh"]) == 0
+  before = sentinel_factory(isolated_environment.home)
+  monkeypatch.setattr("builtins.input", lambda *a: pytest.fail("legacy input called"))
+  context = _rotom_context(("term", "apply"), answer="no\n")
+  assert main(["apply", "--component", "zsh"], context=context) == 130
+  before.assert_unchanged()
+def test_rotom_term_hints_keep_selected_machine_and_components(isolated_environment, capsys):
+  from termcfg.cli import main
+  context = _rotom_context(("term", "init-local"), policy="no_input")
+  assert main(["--machine", "workstation", "init-local", "--component", "zsh", "--json"], context=context) == 0
+  result = json.loads(capsys.readouterr().out)
+  assert shlex.split(result["next_command"]) == ["rotom", "term", "--machine", "workstation", "doctor", "--component", "zsh"]
+
+
+@pytest.mark.parametrize("adopt", [False, True])
+def test_rotom_apply_missing_distinct_approval_keeps_private_and_home_files(isolated_environment, fake_terminal_commands, sentinel_factory, adopt):
+  from termcfg.cli import main
+  from termcfg.config import read_machine
+  from termcfg.preview import build_preview
+  assert main(["init-local", "--component", "zsh"]) == 0
+  target = isolated_environment.home / ".zshenv"
+  target.write_text("export EDITOR=vi\n")
+  plan = build_preview(read_machine("default"), ("zsh",))
+  before = sentinel_factory(isolated_environment.home)
+  context = _rotom_context(("term", "apply"), policy="no_input")
+  args = ["apply", "--component", "zsh", "--plan-id", plan.plan_id]
+  if adopt:
+    args += ["--adopt-target", "zshenv"]
+  assert main(args, context=context) == 2
+  before.assert_unchanged()
+
+
+def test_rotom_rollback_cancel_before_acceptance_preserves_all_files(isolated_environment, fake_terminal_commands, sentinel_factory):
+  from termcfg.cli import main
+  from termcfg.config import read_machine
+  from termcfg.preview import build_preview
+  assert main(["init-local", "--component", "zsh"]) == 0
+  plan = build_preview(read_machine("default"), ("zsh",))
+  assert main(["apply", "--component", "zsh", "--plan-id", plan.plan_id]) == 0
+  before = sentinel_factory(isolated_environment.home)
+  context = _rotom_context(("term", "rollback"), answer="no\n")
+  assert main(["rollback", "--component", "zsh"], context=context) == 130
+  before.assert_unchanged()
+
+
+def test_rotom_init_rejects_file_change_during_read_before_prompt(isolated_environment, monkeypatch):
+  from termcfg import cli
+  from termcfg.config import machine_path
+  assert cli.main(["init-local", "--component", "zsh"]) == 0
+  read = cli.read_machine
+  path = machine_path("default")
+  def changed(*a, **k):
+    result = read(*a, **k)
+    path.write_bytes(path.read_bytes() + b"\n# external edit\n")
+    return result
+  monkeypatch.setattr(cli, "read_machine", changed)
+  context = _rotom_context(("term", "init-local"), answer="yes\n")
+  assert cli.main(["init-local", "--edit", "--component", "tmux"], context=context) == 4
+  assert context.input_gateway.stdin.tell() == 0
+  assert path.read_bytes().endswith(b"# external edit\n")

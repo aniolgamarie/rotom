@@ -1,0 +1,1154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/rotom/maintenance.schema.json",
+  "$comment": "Pure snapshot data; valid JSON never grants live ownership, approval, dispatch or release authority.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/stop-plan"
+    },
+    {
+      "$ref": "#/$defs/batch"
+    },
+    {
+      "$ref": "#/$defs/stop-acceptance"
+    },
+    {
+      "$ref": "#/$defs/dsh-stop-plan"
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$",
+      "minLength": 32,
+      "maxLength": 32
+    },
+    "sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "minLength": 64,
+      "maxLength": 64
+    },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "pid": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        },
+        "birth_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "pid",
+        "birth_id"
+      ],
+      "additionalProperties": false
+    },
+    "physical": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "inode": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        }
+      },
+      "required": [
+        "device",
+        "inode"
+      ],
+      "additionalProperties": false
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "local": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "agent": {
+          "enum": [
+            "dsh",
+            "pi",
+            "omp"
+          ]
+        },
+        "profile": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "machine",
+        "local"
+      ],
+      "additionalProperties": false
+    },
+    "run-scope": {
+      "type": "object",
+      "properties": {
+        "machine": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "local": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "agent": {
+          "enum": [
+            "dsh",
+            "pi",
+            "omp"
+          ]
+        },
+        "profile": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "machine",
+        "local",
+        "agent",
+        "profile"
+      ],
+      "additionalProperties": false
+    },
+    "resource-key": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "instance",
+            "runtime",
+            "native-home"
+          ]
+        },
+        "device": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "inode": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "kind",
+        "device",
+        "inode",
+        "key_id"
+      ],
+      "additionalProperties": false
+    },
+    "resource": {
+      "type": "object",
+      "properties": {
+        "resource_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "domain_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "domain_physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        },
+        "key": {
+          "$ref": "#/$defs/resource-key"
+        },
+        "reference_runs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          },
+          "minItems": 1,
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "coverage": {
+          "enum": [
+            "complete",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "resource_id",
+        "domain_id",
+        "domain_physical",
+        "generation",
+        "key",
+        "reference_runs",
+        "coverage"
+      ],
+      "additionalProperties": false
+    },
+    "observation": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "enum": [
+            "active",
+            "unknown"
+          ]
+        },
+        "manager_identity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/identity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "host_identity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/identity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "record_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "state",
+        "manager_identity",
+        "host_identity",
+        "record_digest"
+      ],
+      "additionalProperties": false
+    },
+    "restore": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "manual",
+            "new-location",
+            "original"
+          ]
+        },
+        "capability": {
+          "enum": [
+            "supported",
+            "unknown",
+            "unavailable"
+          ]
+        },
+        "session_status": {
+          "enum": [
+            "confirmed",
+            "sealed",
+            "historical",
+            "unknown"
+          ]
+        },
+        "target_digest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "minLength": 64,
+              "maxLength": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "mode",
+        "capability",
+        "session_status",
+        "target_digest"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "manual"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "target_digest": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "target_digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$",
+                "minLength": 64,
+                "maxLength": 64
+              }
+            }
+          }
+        }
+      ]
+    },
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "scope": {
+          "$ref": "#/$defs/run-scope"
+        },
+        "observation": {
+          "$ref": "#/$defs/observation"
+        },
+        "deployment_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "resource_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          },
+          "minItems": 3,
+          "maxItems": 4096,
+          "uniqueItems": true
+        },
+        "restore": {
+          "$ref": "#/$defs/restore"
+        }
+      },
+      "required": [
+        "run_id",
+        "scope",
+        "observation",
+        "deployment_digest",
+        "resource_ids",
+        "restore"
+      ],
+      "additionalProperties": false
+    },
+    "run": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "scope": {
+          "$ref": "#/$defs/run-scope"
+        },
+        "observation": {
+          "$ref": "#/$defs/observation"
+        },
+        "deployment_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "resource_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          },
+          "minItems": 3,
+          "maxItems": 4096,
+          "uniqueItems": true
+        },
+        "restore": {
+          "$ref": "#/$defs/restore"
+        },
+        "observation_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "run_id",
+        "scope",
+        "observation",
+        "deployment_digest",
+        "resource_ids",
+        "restore",
+        "observation_digest"
+      ],
+      "additionalProperties": false
+    },
+    "stop-plan": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "kind": {
+          "const": "stop-plan"
+        },
+        "protocol": {
+          "const": "rotom-maintenance-v1"
+        },
+        "plan_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "operation": {
+          "enum": [
+            "stop_only",
+            "setup"
+          ]
+        },
+        "selected_runs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          },
+          "minItems": 1,
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/run"
+          },
+          "minItems": 1,
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource"
+          },
+          "minItems": 1,
+          "maxItems": 4096,
+          "uniqueItems": true
+        },
+        "readiness": {
+          "enum": [
+            "ready",
+            "blocked"
+          ]
+        },
+        "blockers": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "control-observation-unknown",
+              "resource-coverage-unknown",
+              "unselected-run-reference",
+              "restore-capability-unavailable",
+              "session-unsealed"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 5,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "protocol",
+        "plan_id",
+        "scope",
+        "operation",
+        "selected_runs",
+        "runs",
+        "resources",
+        "readiness",
+        "blockers"
+      ],
+      "additionalProperties": false
+    },
+    "dispatch": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "enum": [
+            "not_dispatched",
+            "dispatch_intent",
+            "dispatched",
+            "confirmed",
+            "unknown"
+          ]
+        },
+        "dispatch_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{32}$",
+              "minLength": 32,
+              "maxLength": 32
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "dispatch_id"
+      ],
+      "additionalProperties": false
+    },
+    "launch": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "enum": [
+            "not_dispatched",
+            "dispatch_intent",
+            "dispatched",
+            "confirmed",
+            "unknown"
+          ]
+        },
+        "dispatch_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{32}$",
+              "minLength": 32,
+              "maxLength": 32
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "new_run_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{32}$",
+              "minLength": 32,
+              "maxLength": 32
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "dispatch_id",
+        "new_run_id"
+      ],
+      "additionalProperties": false
+    },
+    "facts": {
+      "type": "object",
+      "properties": {
+        "stop_requested": {
+          "type": "boolean"
+        },
+        "exit_confirmed": {
+          "type": "boolean"
+        },
+        "resources_released": {
+          "type": "boolean"
+        },
+        "session_sealed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "stop_requested",
+        "exit_confirmed",
+        "resources_released",
+        "session_sealed"
+      ],
+      "additionalProperties": false
+    },
+    "item": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "stop_phase": {
+          "enum": [
+            "accepted",
+            "stop_requested",
+            "stopped_confirmed",
+            "failed",
+            "unknown"
+          ]
+        },
+        "restore_phase": {
+          "enum": [
+            "not_requested",
+            "manual",
+            "restore_pending",
+            "launch_dispatched",
+            "restored",
+            "failed",
+            "unknown"
+          ]
+        },
+        "facts": {
+          "$ref": "#/$defs/facts"
+        },
+        "launch_dispatch": {
+          "$ref": "#/$defs/launch"
+        }
+      },
+      "required": [
+        "run_id",
+        "stop_phase",
+        "restore_phase",
+        "facts",
+        "launch_dispatch"
+      ],
+      "additionalProperties": false
+    },
+    "operation-result": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "setup"
+        },
+        "status": {
+          "enum": [
+            "succeeded",
+            "failed",
+            "partial",
+            "unknown"
+          ]
+        },
+        "exit_code": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -255,
+              "maximum": 255
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "result_digest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "minLength": 64,
+              "maxLength": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "operation",
+        "status",
+        "exit_code",
+        "result_digest"
+      ],
+      "additionalProperties": false
+    },
+    "batch": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "kind": {
+          "const": "maintenance-batch"
+        },
+        "protocol": {
+          "const": "rotom-maintenance-v1"
+        },
+        "batch_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "plan": {
+          "$ref": "#/$defs/stop-plan"
+        },
+        "operation": {
+          "enum": [
+            "stop_only",
+            "setup"
+          ]
+        },
+        "accepted_runs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          },
+          "minItems": 1,
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "phase": {
+          "enum": [
+            "accepted",
+            "stop_requested",
+            "stopped_confirmed",
+            "maintenance_dispatch_intent",
+            "maintenance_running",
+            "maintenance_succeeded",
+            "restore_pending",
+            "launch_dispatched",
+            "restored",
+            "failed",
+            "partial",
+            "unknown"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/item"
+          },
+          "minItems": 1,
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "maintenance_dispatch": {
+          "$ref": "#/$defs/dispatch"
+        },
+        "operation_result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/operation-result"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "review_required": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "protocol",
+        "batch_id",
+        "revision",
+        "plan",
+        "operation",
+        "accepted_runs",
+        "phase",
+        "items",
+        "maintenance_dispatch",
+        "operation_result",
+        "review_required"
+      ],
+      "additionalProperties": false
+    },
+    "stop-acceptance": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "kind": {
+          "const": "stop-acceptance"
+        },
+        "protocol": {
+          "const": "rotom-maintenance-v1"
+        },
+        "domain_id": {
+          "$ref": "#/$defs/id"
+        },
+        "domain_physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551614
+        },
+        "batch": {
+          "$ref": "#/$defs/batch"
+        },
+        "records": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 1024,
+          "propertyNames": {
+            "$ref": "#/$defs/id"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "schema_version": {
+                "type": "integer",
+                "const": 2
+              }
+            },
+            "required": [
+              "schema_version"
+            ]
+          },
+          "$comment": "Every complete v2 record is additionally validated in memory by the run-owner Registry; this never reads target storage."
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "protocol",
+        "domain_id",
+        "domain_physical",
+        "expected_revision",
+        "batch",
+        "records"
+      ],
+      "additionalProperties": false
+    },
+    "local-resource": {
+      "type": "object",
+      "properties": {
+        "resource_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        },
+        "key": {
+          "$ref": "#/$defs/resource-key"
+        },
+        "reference_runs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          },
+          "minItems": 1,
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "coverage": {
+          "enum": [
+            "complete",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "resource_id",
+        "key",
+        "reference_runs",
+        "coverage"
+      ],
+      "additionalProperties": false
+    },
+    "registry-coordinator": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "dsh-instance-registry"
+        },
+        "binding_digest": {
+          "$ref": "#/$defs/sha"
+        },
+        "registry_physical": {
+          "$ref": "#/$defs/physical"
+        },
+        "records_digest": {
+          "$ref": "#/$defs/sha"
+        }
+      },
+      "required": [
+        "kind",
+        "binding_digest",
+        "registry_physical",
+        "records_digest"
+      ],
+      "additionalProperties": false
+    },
+    "dsh-stop-plan": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 2
+        },
+        "kind": {
+          "const": "stop-plan"
+        },
+        "protocol": {
+          "const": "rotom-maintenance-v2"
+        },
+        "plan_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "machine": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "local": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "agent": {
+              "const": "dsh"
+            },
+            "profile": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            }
+          },
+          "required": [
+            "machine",
+            "local",
+            "agent",
+            "profile"
+          ],
+          "additionalProperties": false
+        },
+        "operation": {
+          "enum": [
+            "stop_only",
+            "setup"
+          ]
+        },
+        "selected_runs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "minLength": 32,
+            "maxLength": 32
+          },
+          "minItems": 1,
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "runs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/run"
+              },
+              {
+                "properties": {
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "machine": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                      },
+                      "local": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "agent": {
+                        "const": "dsh"
+                      },
+                      "profile": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                      }
+                    },
+                    "required": [
+                      "machine",
+                      "local",
+                      "agent",
+                      "profile"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "restore": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/restore"
+                      },
+                      {
+                        "properties": {
+                          "mode": {
+                            "const": "manual"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/local-resource"
+          },
+          "minItems": 1,
+          "maxItems": 4096,
+          "uniqueItems": true
+        },
+        "readiness": {
+          "enum": [
+            "ready",
+            "blocked"
+          ]
+        },
+        "blockers": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "control-observation-unknown",
+              "resource-coverage-unknown",
+              "unselected-run-reference",
+              "restore-capability-unavailable",
+              "session-unsealed",
+              "stop-capability-unavailable"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 6,
+          "uniqueItems": true
+        },
+        "coordinator": {
+          "$ref": "#/$defs/registry-coordinator"
+        },
+        "control_capability": {
+          "enum": [
+            "supported",
+            "unavailable"
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "protocol",
+        "plan_id",
+        "scope",
+        "operation",
+        "selected_runs",
+        "runs",
+        "resources",
+        "readiness",
+        "blockers",
+        "coordinator",
+        "control_capability"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

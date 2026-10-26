@@ -5,7 +5,7 @@ from termcfg.config import read_machine
 from termcfg.preview import build_preview
 
 
-def test_plan_has_stable_per_file_actions(isolated_environment):
+def test_plan_has_stable_per_file_actions(isolated_environment, fake_terminal_commands):
   assert main(["init-local", "--component", "zsh"]) == 0
   machine = read_machine("default")
   first = build_preview(machine, ("zsh",))
@@ -15,7 +15,7 @@ def test_plan_has_stable_per_file_actions(isolated_environment):
   assert not (machine.private_state_root / "state.json").exists()
 
 
-def test_custom_zshenv_needs_adoption_and_separate_confirmation(isolated_environment):
+def test_custom_zshenv_needs_adoption_and_separate_confirmation(isolated_environment, fake_terminal_commands):
   assert main(["init-local", "--component", "zsh"]) == 0
   (isolated_environment.home / ".zshenv").write_text("export EDITOR=vi\n")
   plan = build_preview(read_machine("default"), ("zsh",))
@@ -24,7 +24,7 @@ def test_custom_zshenv_needs_adoption_and_separate_confirmation(isolated_environ
   assert target.custom_zshenv
 
 
-def test_unknown_private_content_blocked_without_digest(isolated_environment):
+def test_unknown_private_content_blocked_without_digest(isolated_environment, fake_terminal_commands):
   assert main(["init-local", "--component", "zsh"]) == 0
   (isolated_environment.home / ".zshenv").write_text("export API_KEY=synthetic-private\n")
   plan = build_preview(read_machine("default"), ("zsh",))

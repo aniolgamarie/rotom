@@ -9,7 +9,7 @@ import stat
 import uuid
 from contextlib import contextmanager
 
-from .catalog import REPO_ROOT, load_catalog
+from .catalog import GeneratedArtifact, REPO_ROOT, load_catalog
 from .config import MachineSelection, require_current_machine
 from .diagnostics import Progress
 from .errors import TermcfgError
@@ -68,10 +68,13 @@ def _verified_backup(machine: MachineSelection, backup: dict) -> bytes | None:
   candidate = Path(path)
   if not candidate.is_absolute() or candidate.resolve().parent.parent != machine.private_state_root / "backups":
     raise TermcfgError(4, "backup_outside_private_root")
-  info = candidate.lstat()
-  if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1 or stat.S_IMODE(info.st_mode) != 0o600:
-    raise TermcfgError(4, "unsafe_backup")
-  data = candidate.read_bytes()
+  from rotom import entry
+  try:
+    fd = entry._call(entry.entry_locator._directory, candidate.parent, private=True)
+    os.close(fd)
+    data, _ = entry._call(entry.entry_locator._file, candidate, mode=0o600)
+  except TermcfgError as error:
+    raise TermcfgError(4, "unsafe_backup") from error
   if hashlib.sha256(data).hexdigest() != backup["digest"]:
     raise TermcfgError(4, "backup_changed")
   return data
@@ -94,7 +97,8 @@ def _restore_one(machine: MachineSelection, relative: Path, backup: dict, *, bef
 
 def _journal_items(machine: MachineSelection, preview: Preview, changes: list[PlannedTarget]) -> dict:
   transaction_id = uuid.uuid4().hex
-  return {"version": 2, "kind": "apply", "transaction_id": transaction_id,
+  version = 3 if preview.state["version"] == 3 or any(isinstance(item.artifact, GeneratedArtifact) for item in changes) else 2
+  return {"version": version, "kind": "apply", "transaction_id": transaction_id,
           "phase": "prepared", "plan_id": preview.plan_id,
           "state_before": preview.state,
           "items": [{"target_id": item.artifact.id,
@@ -107,6 +111,34 @@ def _journal_items(machine: MachineSelection, preview: Preview, changes: list[Pl
                     for item in changes]}
 
 
+def _write_generated_payload(machine, transaction_id, artifact):
+  from .state import atomic_bytes
+  relative = Path("payloads") / transaction_id / "rotom-entry-binding.json"
+  path = machine.private_state_root / relative
+  private_dir(path.parent)
+  atomic_bytes(path, artifact.bytes(), mode=0o600)
+  generated = {"schema_version": 1, "kind": artifact.kind,
+    "generator_version": artifact.generator_version,
+    "source_inputs_digest": artifact.source_inputs_digest,
+    "payload": {"relative": str(relative), "sha256": artifact.sha256, "mode": 0o600}}
+  _verified_payload(machine, generated)
+  return generated
+
+
+def _verified_payload(machine, generated):
+  from .state import _validate_generated
+  _validate_generated(machine, "rotom-entry-binding", generated)
+  path = machine.private_state_root / generated["payload"]["relative"]
+  from rotom import entry
+  fd = entry._call(entry.entry_locator._directory, path.parent, private=True)
+  os.close(fd)
+  data, _ = entry._call(entry.entry_locator._file, path, mode=0o600)
+  if hashlib.sha256(data).hexdigest() != generated["payload"]["sha256"]:
+    raise TermcfgError(4, "generated_payload_changed")
+  entry.parse_binding(data, check_source=False)
+  return data
+
+
 def _write_journal(machine: MachineSelection, journal: dict) -> None:
   write_json(journal_file(machine), journal)
 
@@ -116,9 +148,9 @@ def _current_identity(machine: MachineSelection, target_id: str, relative: Path,
   current = inspect_target(machine.target_home, relative)
   identity = current.as_dict()
   if current.kind == "file":
-    artifact = next((item for item in load_catalog() if item.id == target_id), None)
-    known = {artifact.bytes()} if artifact is not None else set()
     data = read_regular(machine.target_home, relative, current)
+    # 已保存的精确摘要用于归类，所有权仍由调用方核对完整文件身份。
+    known = {data} if hashlib.sha256(data).hexdigest() in trusted_digests else set()
     digest = None
     for trusted in trusted_digests:
       try:
@@ -135,6 +167,21 @@ def _current_identity(machine: MachineSelection, target_id: str, relative: Path,
 
 def _recovery_identity(machine: MachineSelection, relative: Path, record: dict) -> dict:
   """只与 journal 的受信摘要比较，不把外部改动的摘要存入状态或输出。"""
+  for name in ("before", "after", "intended_after", "recovery_intended", "expected_restore"):
+    expected = record.get(name)
+    if expected is None:
+      continue
+    kind = expected.get("kind")
+    fields = {"kind"} if kind == "absent" else {"kind", "uid", "dev", "ino", "mode", "mtime_ns", "size"}
+    fields |= {"digest"} if kind == "file" else {"link"} if kind == "symlink" else set()
+    if kind not in {"absent", "file", "symlink"} or set(expected) != fields:
+      raise TermcfgError(2, "incomplete_recovery_identity")
+    for key in fields - {"kind", "digest", "link"}:
+      if type(expected[key]) is not int or expected[key] < 0:
+        raise TermcfgError(2, "incomplete_recovery_identity")
+    if kind == "file" and (not isinstance(expected["digest"], str) or len(expected["digest"]) != 64
+        or any(c not in "0123456789abcdef" for c in expected["digest"])):
+      raise TermcfgError(2, "incomplete_recovery_identity")
   current = inspect_target(machine.target_home, relative)
   observed = current.as_dict()
   matching_files = []
@@ -190,7 +237,8 @@ def _check_approvals(preview: Preview, *, adopted: set[str], confirm_zshenv: str
 
 
 def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progress) -> dict:
-  changes = [item for item in preview.targets if item.action != "unchanged"]
+  changes = sorted((item for item in preview.targets if item.action != "unchanged"),
+    key=lambda item: isinstance(item.artifact, GeneratedArtifact))
   if not changes:
     return {"changed": [], "unchanged": [item.artifact.id for item in preview.targets]}
   private_dir(machine.private_state_root)
@@ -198,6 +246,10 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
   transaction_id = journal["transaction_id"]
   backups_dir = machine.private_state_root / "backups" / transaction_id
   private_dir(backups_dir)
+  for item, record in zip(changes, journal["items"], strict=True):
+    if isinstance(item.artifact, GeneratedArtifact):
+      item.artifact.verify_source()
+      record["generated"] = _write_generated_payload(machine, transaction_id, item.artifact)
   _write_journal(machine, journal)
   try:
     to_backup = [item for item in preview.targets if item.before.kind != "absent"]
@@ -215,6 +267,8 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
           prior = preview.state["targets"].get(item.artifact.id)
           backup["managed_before"] = prior is not None
           backup["prior_source_digest"] = prior["source_digest"] if prior else None
+          if prior and prior.get("generated") is not None:
+            backup["prior_generated"] = prior["generated"]
           _write_journal(machine, journal)
     for item in changes:
       if item.before.kind == "absent":
@@ -233,7 +287,9 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
   journal["phase"] = "writing"
   _write_journal(machine, journal)
   new_state = json.loads(json.dumps(preview.state))
+  new_state["version"] = journal["version"]
   changed_components = set()
+  entry_activation = None
   try:
     for index, (item, record) in enumerate(zip(changes, journal["items"], strict=True), 1):
       progress.stage("write", component=item.artifact.component, item=f"{index}/{len(changes)} {item.artifact.id}")
@@ -243,6 +299,9 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
         def record_intent(identity):
           record["intended_after"] = identity
           _write_journal(machine, journal)
+        if isinstance(item.artifact, GeneratedArtifact):
+          item.artifact.verify_source()
+          entry_activation = "possibly_activated"
         atomic_target_bytes(machine.target_home, item.artifact.destination, item.artifact.bytes(),
                             item.artifact.mode, before_replace=record_intent, expected=item.before.as_dict())
         record["after"] = _identity_with_digest(machine, item)
@@ -253,6 +312,11 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
         new_state["targets"][item.artifact.id] = {"component": item.artifact.component,
                                                    "after": record["after"],
                                                    "source_digest": item.artifact.sha256}
+        if record.get("generated") is not None:
+          new_state["targets"][item.artifact.id]["generated"] = record["generated"]
+          entry_activation = "activated"
+          journal["phase"] = "activated"
+          _write_journal(machine, journal)
         changed_components.add(item.artifact.component)
     progress.stage("verify")
     old_previous = new_state["previous"]
@@ -265,10 +329,24 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
     journal["phase"] = "committed"
     _write_journal(machine, journal)
     journal_file(machine).unlink()
-  except Exception:
+  except (Exception, KeyboardInterrupt) as error:
     if journal["phase"] != "committed":
       journal["phase"] = "recovery_pending"
-      _write_journal(machine, journal)
+      try:
+        _write_journal(machine, journal)
+      except (OSError, TermcfgError, KeyboardInterrupt):
+        # 原先的写前身份日志仍是恢复依据，不能以二次写日志失败遮蔽激活事实。
+        pass
+    if entry_activation is not None:
+      if isinstance(error, TermcfgError):
+        error.context["entry_activation"] = entry_activation
+        raise
+      failure = TermcfgError(130 if isinstance(error, KeyboardInterrupt) else 6,
+        "entry_activation_pending", hint("recover"))
+      failure.context["entry_activation"] = entry_activation
+      raise failure from error
+    if isinstance(error, KeyboardInterrupt) and journal["version"] == 3:
+      raise TermcfgError(130, "interrupted", hint("recover")) from error
     raise
   cleanup_pending = False
   try:
@@ -286,11 +364,12 @@ def _commit_apply(machine: MachineSelection, preview: Preview, progress: Progres
 
 def apply(machine: MachineSelection, components: tuple[str, ...], *, plan_id: str | None,
           adopted: set[str], confirm_zshenv: str | None,
-          confirm=None) -> dict:
+          confirm=None, entry_repo=None) -> dict:
   """交互确认回调在机器锁内运行；写入前再持仓库共享锁复核。"""
   progress = Progress("apply")
   with operation_lease(machine.machine_id):
     require_current_machine(machine)
+    require_no_pending_recovery(machine)
     progress.stage("validate")
     from .environment import inspect_environment
     environment = inspect_environment(machine, components)
@@ -301,7 +380,7 @@ def apply(machine: MachineSelection, components: tuple[str, ...], *, plan_id: st
       target_id = next(iter(environment[component]["target_issues"]), None)
       raise TermcfgError(5, "required_environment_missing", hint("doctor", "--strict"),
                          component=component, target_id=target_id, stage="validate")
-    preview = build_preview(machine, components)
+    preview = build_preview(machine, components, entry_repo=entry_repo)
     if plan_id is not None and plan_id != preview.plan_id:
       raise TermcfgError(2, "plan_id_mismatch", hint("plan"))
     if confirm is not None:
@@ -310,7 +389,7 @@ def apply(machine: MachineSelection, components: tuple[str, ...], *, plan_id: st
       raise TermcfgError(2, "plan_id_required", hint("plan"))
     _check_approvals(preview, adopted=adopted, confirm_zshenv=confirm_zshenv)
     with repository_lease(REPO_ROOT, exclusive=False):
-      current = build_preview(machine, components)
+      current = build_preview(machine, components, entry_repo=entry_repo)
       if current.plan_id != preview.plan_id:
         raise TermcfgError(4, "snapshot_changed", hint("plan"))
       return _commit_apply(machine, current, progress)
@@ -330,6 +409,12 @@ def recover(machine: MachineSelection) -> dict:
       return {"recovered": False, "reason": "already_committed"}
     # 先全部复核，再恢复任何目标。
     for record in journal["items"]:
+      if record.get("generated") is not None:
+        _verified_payload(machine, record["generated"])
+      if record.get("backup") is not None:
+        _verified_backup(machine, record["backup"])
+        if record["backup"].get("prior_generated") is not None:
+          _verified_payload(machine, record["backup"]["prior_generated"])
       relative = Path(record["relative"])
       identity = _recovery_identity(machine, relative, record)
       current = inspect_target(machine.target_home, relative)
@@ -349,6 +434,7 @@ def recover(machine: MachineSelection) -> dict:
     journal["phase"] = "recovery_pending"
     _write_journal(machine, journal)
     restored_state = json.loads(json.dumps(journal["state_before"]))
+    restored_state["version"] = max(restored_state["version"], journal["version"])
     for record in reversed(journal["items"]):
       relative = Path(record["relative"])
       identity = _recovery_identity(machine, relative, record)
@@ -390,6 +476,10 @@ def rollback_preview(machine: MachineSelection, component: str) -> dict:
     if identity != record["after"]:
       raise TermcfgError(4, "rollback_target_drift", hint("status"))
     _verified_backup(machine, backup)
+    if backup.get("prior_generated") is not None:
+      _verified_payload(machine, backup["prior_generated"])
+    if record.get("generated") is not None:
+      _verified_payload(machine, record["generated"])
     targets.append({"target_id": target_id, "relative": str(item.destination),
                     "current": identity, "restore_kind": backup["before"]["kind"],
                     "backup_digest": backup.get("digest")})
@@ -418,7 +508,7 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
     transaction_id = uuid.uuid4().hex
     backup_dir = machine.private_state_root / "backups" / transaction_id
     private_dir(backup_dir)
-    journal = {"version": 2, "kind": "rollback", "transaction_id": transaction_id,
+    journal = {"version": state["version"], "kind": "rollback", "transaction_id": transaction_id,
                "phase": "prepared", "plan_id": plan["plan_id"], "state_before": state,
                "items": []}
     _write_journal(machine, journal)
@@ -432,6 +522,8 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
           raise TermcfgError(4, "rollback_target_drift", hint("rollback", "--plan-only", components=(component,)))
         current_backup = {"before": current, "path": None, "digest": None,
                           "managed_before": True, "prior_source_digest": state["targets"][target_id]["source_digest"]}
+        if state["targets"][target_id].get("generated") is not None:
+          current_backup["prior_generated"] = state["targets"][target_id]["generated"]
         if current["kind"] == "file":
           data = read_regular(machine.target_home, Path(target["relative"]), inspect_target(machine.target_home, Path(target["relative"])))
           from .state import atomic_bytes
@@ -456,8 +548,9 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
     journal["phase"] = "writing"
     _write_journal(machine, journal)
     new_state = json.loads(json.dumps(state))
+    entry_transition = None
     try:
-      for record in journal["items"]:
+      for record in reversed(journal["items"]):
         target_id = record["target_id"]
         relative = Path(record["relative"])
         identity = _current_identity(machine, target_id, relative,
@@ -469,8 +562,12 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
         def record_intent(expected):
           record["intended_after"] = expected
           _write_journal(machine, journal)
+        if target_id == "rotom-entry-binding":
+          entry_transition = "possibly_removed" if old_backup["before"]["kind"] == "absent" else "possibly_restored"
         _restore_one(machine, relative, old_backup, before_replace=record_intent,
                      expected=identity)
+        if target_id == "rotom-entry-binding":
+          entry_transition = "removed" if old_backup["before"]["kind"] == "absent" else "restored"
         restored = _current_identity(machine, target_id, relative,
                                      (old_backup["before"].get("digest"),))
         record["after"] = restored
@@ -479,6 +576,9 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
         if old_backup.get("managed_before"):
           new_state["targets"][target_id] = {"component": component, "after": restored,
                                               "source_digest": old_backup["prior_source_digest"]}
+          if old_backup.get("prior_generated") is not None:
+            _verified_payload(machine, old_backup["prior_generated"])
+            new_state["targets"][target_id]["generated"] = old_backup["prior_generated"]
         else:
           new_state["targets"].pop(target_id, None)
       progress.stage("verify", component=component)
@@ -488,10 +588,23 @@ def rollback(machine: MachineSelection, component: str, *, plan_id: str | None, 
       journal["phase"] = "committed"
       _write_journal(machine, journal)
       journal_file(machine).unlink()
-    except Exception:
+    except (Exception, KeyboardInterrupt) as error:
       if journal["phase"] != "committed":
         journal["phase"] = "recovery_pending"
-        _write_journal(machine, journal)
+        try:
+          _write_journal(machine, journal)
+        except (OSError, TermcfgError, KeyboardInterrupt):
+          pass
+      if entry_transition is not None:
+        if isinstance(error, TermcfgError):
+          error.context["entry_transition"] = entry_transition
+          raise
+        failure = TermcfgError(130 if isinstance(error, KeyboardInterrupt) else 6,
+          "entry_transition_pending", hint("recover"))
+        failure.context["entry_transition"] = entry_transition
+        raise failure from error
+      if isinstance(error, KeyboardInterrupt) and journal["version"] == 3:
+        raise TermcfgError(130, "interrupted", hint("recover")) from error
       raise
     cleanup_pending = False
     try:

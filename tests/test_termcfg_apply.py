@@ -242,9 +242,11 @@ def test_state_commit_failure_leaves_recoverable_journal(isolated_environment, m
       raise OSError("synthetic state commit failure")
     return original_write(path, value)
   monkeypatch.setattr(transaction, "write_json", fail_state)
-  with pytest.raises(OSError):
+  with pytest.raises(transaction.TermcfgError) as caught:
     transaction.apply(machine, ("zsh",), plan_id=plan.plan_id,
                       adopted=set(), confirm_zshenv=None)
+  assert caught.value.code == 6 and caught.value.reason == "entry_activation_pending"
+  assert caught.value.context["entry_activation"] == "activated"
   monkeypatch.setattr(transaction, "write_json", original_write)
   assert (machine.private_state_root / "journal.json").exists()
   assert transaction.recover(machine)["recovered"] is True

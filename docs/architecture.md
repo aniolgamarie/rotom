@@ -37,6 +37,12 @@ flowchart LR
 
 `src/termcfg/` separately implements zsh/tmux previews, transactions, pinned plugins, and explicit legacy metadata migration. Proxy service control has been removed. It does not run implicitly from agent setup or launch.
 
+## Unified entry and observations
+
+`rotom` is a thin facade over the existing agentcfg, termcfg, and work parsers and executors. Invocation context carries explicit scope and input policy; preferences cannot replace native argument ownership, deployment approvals, fixed workspace bindings, or session ownership. Static help and restricted completion avoid business effects. Managed zsh launchers use an explicit checkout binding and the existing terminal transaction journal.
+
+Read-only `agent instances list` loads one selected machine/configuration snapshot, enumerates all profiles unless explicitly filtered, and validates existing ownership records under short existing physical/metadata leases. Linux manager liveness checks read only registered PID birth identities. They do not establish host, descendant, session, or resource-release proofs. Session views preserve scoped historical references without inspecting native session bodies. Fresh Linux OMP registration requires complete cooperative resource ownership. Explicit `resume --here` and precise `stop_only` are admitted only for the verified Linux managed-DSH combination. Resume rechecks the requested session scope and deployment before launch; stop requires the registered original-host control endpoint and the current reviewed plan. Full maintenance execution, original-pane recovery and automatic continuation remain unavailable; see [session evidence](rotom-session-capabilities.md) and [stop evidence](rotom-stop-capabilities.md).
+
 ## Configuration and secrets
 
 Objects merge recursively; arrays normally replace wholesale, including empty arrays. `false` remains meaningful. The shared default model layer adds deduplicated provider/model choices and lets explicit role bindings take precedence. Stable local model IDs are separate from remote IDs and protocol routes.

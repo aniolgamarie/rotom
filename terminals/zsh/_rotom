@@ -1,0 +1,353 @@
+#compdef rotom
+
+# 静态命令/选项快照来自统一parser；静态测试双向核验，加载时不读配置。
+emulate -L zsh
+setopt local_options no_sh_word_split
+
+local -A _rotom_commands=(
+  _root 'run resume agent term work config'
+  agent 'init-local profiles setup model validate render plan lock sync apply run usage inventory doctor capture rollback instances maintenance'
+  'agent model' 'add presets status key url enable'
+  'agent instances' 'list stop'
+  'agent maintenance' 'plan stop execute restore status cancel'
+  term 'components init-local plan doctor status apply recover lock sync migrate rollback'
+  work 'enter open rebind list status reconcile source project named config worktree close'
+  'work source' add
+  'work project' add
+  'work named' 'add enter rename'
+  'work config' 'check edit'
+  'work worktree' create
+  config 'show set unset'
+)
+
+local -A _rotom_options=(
+  _root '-h --help --interactive --no-input'
+  run '-h --help --machine --local --profile --cwd --inherit-env --unset-env --proxy'
+  resume '-h --help --machine --local --profile --session --here --original --new-tab'
+  agent '-h --help --machine --local --profile'
+  'agent init-local' '-h --help --machine --profile'
+  'agent profiles' '-h --help'
+  'agent setup' '-h --help'
+  'agent model' '-h --help'
+  'agent model add' '-h --help'
+  'agent model presets' '-h --help --verbose'
+  'agent model status' '-h --help --verbose'
+  'agent model key' '-h --help'
+  'agent model url' '-h --help'
+  'agent model enable' '-h --help --protocol'
+  'agent validate' '-h --help --format'
+  'agent render' '-h --help --format'
+  'agent plan' '-h --help --from-pi-home --format'
+  'agent lock' '-h --help --agent --format'
+  'agent sync' '-h --help --format'
+  'agent apply' '-h --help --format'
+  'agent run' '-h --help --cwd --inherit-env --unset-env --proxy'
+  'agent usage' '-h --help'
+  'agent inventory' '-h --help --source --format'
+  'agent doctor' '-h --help --environment --live --input --format'
+  'agent capture' '-h --help --format'
+  'agent rollback' '-h --help --format'
+  'agent instances' '-h --help'
+  'agent instances list' '-h --help --agent --format'
+  'agent instances stop' '-h --help --run --dry-run --plan-id --wait-seconds'
+  'agent maintenance' '-h --help'
+  'agent maintenance plan' '-h --help --operation --batch --run --format'
+  'agent maintenance stop' '-h --help --operation --run --plan-id --wait-seconds --format'
+  'agent maintenance execute' '-h --help --batch --plan-id --format'
+  'agent maintenance restore' '-h --help --batch --wait-seconds --format'
+  'agent maintenance status' '-h --help --batch --format'
+  'agent maintenance cancel' '-h --help --batch --format'
+  term '-h --help --machine --json'
+  'term components' '-h --help --machine --json'
+  'term init-local' '-h --help --component --edit --none --machine --json'
+  'term plan' '-h --help --component --home --entry-repo --machine --json'
+  'term doctor' '-h --help --component --strict --home --machine --json'
+  'term status' '-h --help --component --home --machine --json'
+  'term apply' '-h --help --component --plan-id --adopt-target --confirm-zshenv --entry-repo --machine --json'
+  'term recover' '-h --help --machine --json'
+  'term lock' '-h --help --component --version --plugin --repo --entry --timeout --machine --json'
+  'term sync' '-h --help --component --timeout --machine --json'
+  'term migrate' '-h --help --drop-mihomo --machine --json'
+  'term rollback' '-h --help --component --plan-only --plan-id --machine --json'
+  work '-h --help --machine --local'
+  'work enter' '-h --help'
+  'work open' '-h --help --new'
+  'work rebind' '-h --help --accept'
+  'work list' '-h --help --json --live'
+  'work status' '-h --help --json'
+  'work reconcile' '-h --help --json'
+  'work source' '-h --help'
+  'work source add' '-h --help --id --path --mode --template --dry-run --depth --include-hidden --exclude --follow-symlinks'
+  'work project' '-h --help'
+  'work project add' '-h --help --path --mode --template --dry-run'
+  'work named' '-h --help'
+  'work named add' '-h --help --id --title --start-path --template --dry-run'
+  'work named enter' '-h --help'
+  'work named rename' '-h --help --title --dry-run'
+  'work config' '-h --help'
+  'work config check' '-h --help'
+  'work config edit' '-h --help'
+  'work worktree' '-h --help'
+  'work worktree create' '-h --help --repo --path --template --new-branch --existing-branch --base --enter --dry-run'
+  'work close' '-h --help --dry-run --scope --yes'
+  config '-h --help'
+  'config show' '-h --help'
+  'config set' '-h --help'
+  'config unset' '-h --help'
+)
+
+local -A _rotom_enums=(
+  'agent model enable|--protocol' 'openai anthropic'
+  'agent validate|--format' 'auto human json'
+  'agent render|--format' 'auto human json'
+  'agent plan|--format' 'auto human json'
+  'agent lock|--agent' 'dsh pi omp'
+  'agent lock|--format' 'auto human json'
+  'agent sync|--format' 'auto human json'
+  'agent apply|--format' 'auto human json'
+  'agent inventory|--format' 'auto human json'
+  'agent doctor|--format' 'auto human json'
+  'agent capture|--format' 'auto human json'
+  'agent rollback|--format' 'auto human json'
+  'agent instances list|--agent' 'dsh pi omp'
+  'agent instances list|--format' 'auto human json'
+  'agent maintenance plan|--operation' setup
+  'agent maintenance plan|--format' 'auto human json'
+  'agent maintenance stop|--operation' setup
+  'agent maintenance stop|--format' 'auto human json'
+  'agent maintenance execute|--format' 'auto human json'
+  'agent maintenance restore|--format' 'auto human json'
+  'agent maintenance status|--format' 'auto human json'
+  'agent maintenance cancel|--format' 'auto human json'
+  'term init-local|--component' 'herdr tmux zsh'
+  'term plan|--component' 'herdr tmux zsh'
+  'term doctor|--component' 'herdr tmux zsh'
+  'term status|--component' 'herdr tmux zsh'
+  'term apply|--component' 'herdr tmux zsh'
+  'term lock|--component' 'tmux zsh'
+  'term sync|--component' 'tmux zsh'
+  'term rollback|--component' 'herdr tmux zsh'
+  'work source add|--mode' 'git directory'
+  'work project add|--mode' 'git directory'
+)
+
+local -a _rotom_leaves=(
+  'agent apply'
+  'agent capture'
+  'agent doctor'
+  'agent init-local'
+  'agent instances list'
+  'agent instances stop'
+  'agent inventory'
+  'agent lock'
+  'agent maintenance cancel'
+  'agent maintenance execute'
+  'agent maintenance plan'
+  'agent maintenance restore'
+  'agent maintenance status'
+  'agent maintenance stop'
+  'agent model add'
+  'agent model enable'
+  'agent model key'
+  'agent model presets'
+  'agent model status'
+  'agent model url'
+  'agent plan'
+  'agent profiles'
+  'agent render'
+  'agent rollback'
+  'agent run'
+  'agent setup'
+  'agent sync'
+  'agent usage'
+  'agent validate'
+  'config set'
+  'config show'
+  'config unset'
+  resume
+  run
+  'term apply'
+  'term components'
+  'term doctor'
+  'term init-local'
+  'term lock'
+  'term migrate'
+  'term plan'
+  'term recover'
+  'term rollback'
+  'term status'
+  'term sync'
+  'work close'
+  'work config check'
+  'work config edit'
+  'work enter'
+  'work list'
+  'work named add'
+  'work named enter'
+  'work named rename'
+  'work open'
+  'work project add'
+  'work rebind'
+  'work reconcile'
+  'work source add'
+  'work status'
+  'work worktree create'
+)
+
+local -a _rotom_value_options=(--adopt-target --agent --base --batch --component --confirm-zshenv --cwd --depth --entry --entry-repo --exclude --existing-branch --format --from-pi-home --home --id --inherit-env --local --machine --mode --new-branch --operation --path --plan-id --plugin --profile --protocol --proxy --repo --run --scope --session --source --start-path --template --timeout --title --unset-env --version --wait-seconds)
+local -a _rotom_flags=(--accept --adopt-target --agent --base --batch --component --confirm-zshenv --cwd --depth --drop-mihomo --dry-run --edit --enter --entry --entry-repo --environment --exclude --existing-branch --follow-symlinks --format --from-pi-home --help --here --home --id --include-hidden --inherit-env --input --interactive --json --live --local --machine --mode --new --new-branch --new-tab --no-input --none --operation --original --path --plan-id --plan-only --plugin --profile --protocol --proxy --repo --run --scope --session --source --start-path --strict --template --timeout --title --unset-env --verbose --version --wait-seconds --yes -h)
+
+# 先收集并校验完整NUL响应，再作为值交给compadd；错误静默退回静态候选。
+_rotom_ids() {
+  emulate -L zsh
+  local raw id
+  local -a ids
+  raw="$(command rotom _complete "$@" 2>/dev/null)" || return 1
+  [[ -n "$raw" && "$raw" == *$'\0' ]] || return 1
+  [[ "$raw" != $'\0'* && "$raw" != *$'\0\0'* ]] || return 1
+  raw="${raw%$'\0'}"
+  ids=("${(@0)raw}")
+  for id in "${ids[@]}"; do
+    [[ -n "$id" && ${#id} -le 255 && "$id" == [[:alnum:]_]* && "$id" != *[^[:alnum:]_.-]* ]] || return 1
+  done
+  compadd -a ids
+}
+
+local _rotom_path=_root token option value need="" cur="${words[CURRENT]}"
+local machine="" local_path="" profile="" tool="" kind="" namespace="" value_option=""
+local -a children _rotom_option_words positions query enum_words
+integer index machine_seen=0 local_seen=0 profile_seen=0 tool_seen=0
+
+# 只解释光标前的管理token；原生边界后的任何字词均不再查询。
+for (( index=2; index<CURRENT; index++ )); do
+  token="${words[index]}"
+  [[ "$token" == -- ]] && return 1
+  [[ "$_rotom_path" == "agent usage" ]] && return 1
+  if [[ -z "$need" && "$token" == -* ]]; then
+    option="${token%%=*}"
+    _rotom_option_words=("${(@s: :)_rotom_options[$_rotom_path]}")
+    (( ${_rotom_option_words[(Ie)$option]} )) || return 1
+  fi
+  if [[ -n "$need" ]]; then
+    option="$need"
+    value="$token"
+    need=""
+  elif [[ "$token" == --*=* ]]; then
+    option="${token%%=*}"
+    value="${token#*=}"
+    (( ${_rotom_value_options[(Ie)$option]} )) || return 1
+  elif (( ${_rotom_value_options[(Ie)$token]} )); then
+    need="$token"
+    continue
+  elif [[ "$token" == -* ]]; then
+    (( ${_rotom_flags[(Ie)$token]} )) || return 1
+    continue
+  else
+    children=("${(@s: :)_rotom_commands[$_rotom_path]}")
+    if (( ${children[(Ie)$token]} )); then
+      if [[ "$_rotom_path" == _root ]]; then
+        _rotom_path="$token"
+      else
+        _rotom_path="$_rotom_path $token"
+      fi
+    else
+      if [[ "$_rotom_path" == (run|resume|"agent run") && ${#positions} -eq 0 && "$token" == (dsh|pi|omp) ]]; then
+        tool="$token"
+        (( ++tool_seen ))
+      fi
+      positions+=("$token")
+    fi
+    continue
+  fi
+  case "$option" in
+    --machine) machine="$value"; (( ++machine_seen )) ;;
+    --local) local_path="$value"; (( ++local_seen )) ;;
+    --profile) profile="$value"; (( ++profile_seen )) ;;
+    --tool|--agent) tool="$value"; (( ++tool_seen )) ;;
+  esac
+done
+[[ "$_rotom_path" == "agent usage" ]] && return 1
+(( machine_seen <= 1 && local_seen <= 1 && profile_seen <= 1 && tool_seen <= 1 )) || return 1
+(( machine_seen == 0 || local_seen == 0 )) || return 1
+case "$_rotom_path" in
+  run|resume|agent|agent\ *) namespace=agent ;;
+  term|term\ *) namespace=term ;;
+  work|work\ *) namespace=work ;;
+esac
+
+value_option="$need"
+if [[ "$cur" == --*=* ]]; then
+  value_option="${cur%%=*}"
+  _rotom_option_words=("${(@s: :)_rotom_options[$_rotom_path]}")
+  (( ${_rotom_option_words[(Ie)$value_option]} )) || return 1
+  compset -P '*='
+fi
+# 非动态枚举来自同一parser快照；动态kind仍走受限协议按操作过滤。
+if [[ -n "$value_option" && "$value_option" != (--machine|--profile|--agent|--tool|--component|--template|--session) ]]; then
+  enum_words=("${(@s: :)_rotom_enums[$_rotom_path|$value_option]}")
+  if [[ -n "${enum_words[1]}" ]]; then
+    compadd -a enum_words
+    return
+  fi
+fi
+case "$value_option" in
+  --machine) kind=machine ;;
+  --profile) kind=profile ;;
+  --agent|--tool) kind=tool ;;
+  --component) kind=component ;;
+  --template) [[ "$namespace" == work ]] && kind=work-template ;;
+  --session) [[ "$_rotom_path" == resume ]] && kind=session ;;
+  "") ;;
+  *) return 1 ;;
+esac
+if [[ -z "$value_option" ]]; then
+  case "$_rotom_path" in
+    run|resume|"agent run") (( ${#positions} == 0 )) && kind=tool ;;
+    "agent model key"|"agent model url") (( ${#positions} == 0 )) && kind=provider ;;
+    "agent model enable") (( ${#positions} == 0 )) && kind=preset ;;
+    "work open"|"work rebind") (( ${#positions} == 0 )) && kind=work-type ;;
+    "work named enter"|"work named rename") (( ${#positions} == 0 )) && kind=work-named ;;
+    "config set"|"config unset") (( ${#positions} == 0 )) && kind=preference-key ;;
+  esac
+fi
+
+if [[ -n "$kind" && ( -n "$value_option" || "$cur" != -* ) ]]; then
+  query=(--kind "$kind")
+  case "$kind" in
+    machine)
+      [[ -n "$namespace" ]] || return 1
+      query+=(--namespace "$namespace")
+      ;;
+    provider|work-type|work-template|work-named|session)
+      [[ -n "$machine" || -n "$local_path" ]] || return 1
+      [[ -n "$machine" ]] && query+=(--machine "$machine")
+      [[ -n "$local_path" ]] && query+=(--local "$local_path")
+      query+=(--namespace "$namespace")
+      if [[ "$kind" == provider ]]; then
+        [[ -n "$profile" ]] || return 1
+        query+=(--profile "$profile")
+      elif [[ "$kind" == session ]]; then
+        [[ -n "$tool" ]] || return 1
+        [[ -n "$profile" ]] && query+=(--profile "$profile")
+        query+=(--tool "$tool")
+      fi
+      ;;
+    profile)
+      [[ -n "$tool" ]] && query+=(--tool "$tool")
+      ;;
+  esac
+  # 只传注册叶子；正在选择命令的中间路径没有动态操作范围。
+  if [[ "$kind" != preference-key ]] && (( ${_rotom_leaves[(Ie)$_rotom_path]} )); then
+    query+=(--command "$_rotom_path")
+  fi
+  _rotom_ids "${query[@]}" && return 0
+fi
+
+# 所有候选都是固定命令/参数或协议返回的ID；没有通用文件系统/原生宿主兜底。
+_rotom_option_words=("${(@s: :)_rotom_options[$_rotom_path]}")
+children=("${(@s: :)_rotom_commands[$_rotom_path]}")
+if [[ -z "$value_option" && "$cur" != -* && -n "${children[1]}" ]]; then
+  compadd -a children
+else
+  compadd -a _rotom_option_words
+fi

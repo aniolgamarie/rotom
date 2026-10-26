@@ -1,16 +1,20 @@
 """从管理仓库显式构建当前选中配置；不改 cwd，不读取其他工具账号。"""
 
 from dataclasses import dataclass, field
+import json
+import os
 from pathlib import Path
+import stat
 
 from .config import AdapterSources, SourceInputs, LocalConfig, load_local, load_sources, resolve_config
 from .dsh import DshAdapter
 from .pi import PiAdapter
 from .omp import OmpAdapter
 from .model_defaults import model_default_selection
-from .paths import safe_id
+from .paths import PathError, safe_id, trusted_source_directory
 from .render import render_candidate
-from .schema import AdapterSchemas
+from .schema import AdapterSchemas, ConfigError, validate_profile_sources
+from .storage import Conflict, identity
 
 
 ADAPTER_TYPES = {"dsh": DshAdapter, "pi": PiAdapter, "omp": OmpAdapter}
@@ -110,6 +114,105 @@ def load_workspace(local, profile=None, *, repository=None, proposal=None,
     from .schema import validate_document
     config = LocalConfig(merge_layers((("local", config.data), ("request", proposal))).data)
     validate_document("local", config.data, adapter_schemas=catalog.adapter_schemas)
+  return _resolved_workspace(repository, local, catalog, adapters, config, store, profile,
+    allow_missing_local_values=allow_missing_local_values)
+
+
+@dataclass(frozen=True)
+class InstanceWorkspace:
+  """只含实例观察所需归属；不能作为启动、渲染或维护工作区使用。"""
+  agent: str
+  profile: str
+  local_path: Path = field(repr=False)
+  machine_id: str = field(repr=False)
+  instance: Path = field(repr=False)
+  state_root: Path = field(repr=False)
+  global_state_root: str | Path | None = field(default=None, repr=False)
+  cache: Path | None = field(default=None, repr=False)
+
+  @property
+  def binding(self):
+    return {"machine": self.machine_id, "local": str(self.local_path), "profile": self.profile}
+
+
+def _public_profile_sources(repository):
+  from .config import _parse_toml
+  documents = []
+  try:
+    with trusted_source_directory(repository / "profiles") as parent:
+      for name in sorted(os.listdir(parent)):
+        if not name.endswith(".toml"):
+          continue
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=parent)
+        with os.fdopen(fd, "rb") as stream:
+          before = os.fstat(stream.fileno())
+          if (not stat.S_ISREG(before.st_mode) or before.st_uid not in (0, os.geteuid())
+              or before.st_nlink != 1 or before.st_mode & 0o022):
+            raise Conflict("公开配方来源不安全")
+          content = stream.read()
+          after = os.fstat(stream.fileno())
+        current = os.stat(name, dir_fd=parent, follow_symlinks=False)
+        if identity(before) != identity(after) or identity(before) != identity(current):
+          raise Conflict("公开配方来源在读取期间变化")
+        document = _parse_toml(content, ("profile", str(len(documents) + 1)))
+        try:
+          json.dumps(document, allow_nan=False)
+        except (TypeError, ValueError):
+          raise ConfigError("schema", ("profile",)) from None
+        documents.append((Path(name).stem, document))
+  except (OSError, PathError):
+    raise Conflict("无法安全读取公开配方来源") from None
+  return documents
+
+
+def load_instance_workspaces(local, profiles, *, repository=None):
+  """一次严格读取配方和机器；观察不依赖模型目录或启动就绪解析。"""
+  from .config import _machine_layers
+  repository = repository or Path(__file__).resolve().parents[2]
+  documents = _public_profile_sources(repository)
+  agents = {document.get("agent") for _, document in documents if type(document.get("agent")) is str}
+  if any(type(document.get("agent")) is not str or document["agent"] not in ADAPTER_TYPES
+      for _, document in documents):
+    raise ConfigError("adapter-schema", ("profile", "agent"))
+  if "pi" in agents:
+    try:
+      with trusted_source_directory(repository / "agents/pi/schemas") as parent:
+        for name in os.listdir(parent):
+          if name.endswith(".json"):
+            info = os.stat(name, dir_fd=parent, follow_symlinks=False)
+            if (not stat.S_ISREG(info.st_mode) or info.st_uid not in (0, os.geteuid())
+                or info.st_nlink != 1 or info.st_mode & 0o022):
+              raise Conflict("公开适配器 schema 来源不安全")
+    except (OSError, PathError):
+      raise Conflict("无法安全读取公开适配器 schema 来源") from None
+  bundles = {agent: ADAPTER_TYPES[agent](repository).schemas().bundles[agent] for agent in sorted(agents)}
+  context = AdapterSchemas(bundles)
+  validate_profile_sources([document for _, document in documents], adapter_schemas=context)
+  available = {}
+  for stem, document in documents:
+    identifier = safe_id(document["id"])
+    if identifier != stem or identifier in available:
+      raise ConfigError("reference", ("profile", "id"))
+    available[identifier] = document["agent"]
+  context = AdapterSchemas(bundles, available)
+  config, _ = load_local(local, adapter_schemas=context, load_credentials=False)
+  requested = set(profiles) | set(config.data.get("overrides", {}).get("profiles", {}))
+  default = config.data["machine"].get("default_profile")
+  if default is not None:
+    requested.add(default)
+  if requested - available.keys():
+    raise ConfigError("reference", ("profile",))
+  defaults, machine = _machine_layers(config.data["machine"], frozenset())
+  paths = {**defaults["paths"], **machine.get("paths", {})}
+  return tuple(InstanceWorkspace(available[profile], profile, local.absolute(), machine["id"],
+    Path(paths["instances_root"]) / available[profile] / profile,
+    Path(paths["state_root"]) / available[profile] / profile,
+    global_state_root=paths["state_root"],
+    cache=Path(paths["cache_root"]) / available[profile] / profile) for profile in profiles)
+
+
+def _resolved_workspace(repository, local, catalog, adapters, config, store, profile, *,
+    allow_missing_local_values):
   resolved = resolve_config(catalog, config, profile_id=profile,
     adapter_schemas=catalog.adapter_schemas,
     allow_missing_local_values=allow_missing_local_values)

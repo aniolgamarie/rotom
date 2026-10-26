@@ -54,7 +54,9 @@ def test_complete_pipeline_launches_only_prepared_official_entry_and_keeps_nativ
   assert options["env"]["PI_CODING_AGENT_DIR"] == str(workspace.instance / "pi-home")
   assert options["env"]["PI_CODING_AGENT_SESSION_DIR"] == str(workspace.instance / "pi-home/sessions")
   records = run_owners.Registry(workspace.state_root / "run-owners", workspace.binding).snapshot()
-  assert len(records) == 2 and all(record["state"] == "unknown" for record in records.values())
+  assert len(records) == 2
+  assert all(record["schema_version"] == 2 and run_owners.record_state(record) == "unknown"
+    for record in records.values())
   with pytest.raises(Conflict): commands.apply_candidate(workspace, lock, workspace.candidate(lock.identity))
 
 

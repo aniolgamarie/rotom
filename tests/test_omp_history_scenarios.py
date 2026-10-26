@@ -12,6 +12,12 @@ scenes = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(scenes)
 
 
+@pytest.fixture(autouse=True)
+def history_temporary_root(tmp_path, isolated_environment, monkeypatch):
+  # 合成压缩产物使用本测试的临时根，不借助系统 /tmp 路径豁免。
+  monkeypatch.setattr(scenes.history.tempfile, "gettempdir", lambda: str(tmp_path))
+
+
 def corpus(commands):
   counters = dict.fromkeys(("files", "events", "extracted", "unsupportedCommandCarrier", "malformed", "redactionSkipped",
     "dynamicCommandSkipped", "nonCommand", "jsScripts", "jsLiteralCommands", "jsUnresolvedCalls", "jsMalformedScripts", "secondPassSkipped"), 0)
