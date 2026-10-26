@@ -255,6 +255,8 @@ def _batch(value):
   planned = {run["run_id"]: run for run in plan["runs"]}
   dispatch = result["maintenance_dispatch"]
   _dispatch(dispatch)
+  if "setup_plan_digest" in dispatch and dispatch["state"] == "not_dispatched":
+    _invalid()
   ids = {dispatch["dispatch_id"]} - {None}
   successors, unknown, failed = set(), dispatch["state"] == "unknown", False
   for run_id, item in items.items():

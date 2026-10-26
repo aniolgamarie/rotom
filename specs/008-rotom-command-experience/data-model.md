@@ -259,6 +259,18 @@ observe 前拒绝；全部已记录时也检查原绝对 deadline，到期或时
 仅有 EX 也不够：未知/未关联 owner、额外共享引用或其它活动意图仍阻断。返回批次是一次历史观察，不能携带锁
 或构造 BatchPermit，后续 setup 须再次经过实际写入门禁。本入口不接受 stop_only，不要求 DSH 精确停止等待共享第三项退出。
 
+**setup 派发前置（部分实现）**：独立 `SetupReview` 在无锁处接受明确批准，绑定完整 stopped_confirmed
+批次、原 intent generation 与实际 setup 计划摘要；停止批准不能替代它。`record_setup_dispatch`
+重新取得原物理 EX、核验部署和完整 released owner/receipt，再在原 Domain → owner NB 顺序下
+重核批次 revision，单次消费审阅，原子保存 maintenance_dispatch_intent 和唯一 dispatch_id。
+`maintenance_dispatch.setup_plan_digest` 是可选的严格 SHA-256 字段，not_dispatched 阶段禁止出现；
+新派发必须保存，旧派发缺字段仍可作历史读取，但不能据此发行新许可。该字段不包含配置或秘密正文。
+
+只有协调事务明确成功退出后才发行绑定提交后完整批次的进程内 BatchPermit。提交响应丢失时不发行，
+许可发行失败时也不重写派发意图；重新审阅旧快照不能越过已有 dispatch phase。所有物理和 owner 锁
+在返回前释放，意图、预留及原 owner 保留；普通启动/写入仍被原 guard 阻断。当前只接收 manual 恢复路径，
+实际 setup 预览摘要计算、原首个副作用 guard 消费及后续步骤仍待接线；此接缝不执行 setup 或恢复。
+
 新预留增加 `generation`，取其成功提交后的域 revision；可信调用方可以用 `expected_revision`
 在同一短锁中拒绝过期快照。域 revision 是整个域的保守代际，任何协调写入均推进它；
 预留的 generation 固定不变并进入 owner 双向摘要，不要求后续派发仍等于全域当前 revision。

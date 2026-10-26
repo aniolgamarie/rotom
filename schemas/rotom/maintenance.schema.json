@@ -565,6 +565,9 @@
               "type": "null"
             }
           ]
+        },
+        "setup_plan_digest": {
+          "$ref": "#/$defs/sha"
         }
       },
       "required": [

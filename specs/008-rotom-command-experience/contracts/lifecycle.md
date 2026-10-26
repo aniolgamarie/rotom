@@ -245,6 +245,14 @@ BatchPermit 是由已接受批次派生的有限内存凭证，绑定 batch/revi
 在 dispatch_intent 已持久化且原操作第一次副作用门禁核验后消费，只允许同次 runner 的声明步骤
 继续复核；崩溃后不能重建一个新凭证重跑可能已消费的操作，先对账。普通 CLI 不需要该凭证，
 仍走自己的原有批准与资源门禁。
+
+当前内部派发前置只接受完整退出/释放且 manual 恢复的 setup 批次。独立 SetupReview 绑定完整批次、
+原意图 generation 与 setup 计划摘要；重新取得原物理 EX、核验原部署及全部相关 owner/receipt 后，
+在 Domain → owner NB 顺序下消费审阅并提交派发意图。新维护派发在原批次内保存严格
+`setup_plan_digest`；旧无摘要派发只读兼容，不能恢复内存批准。BatchPermit 仅在持久事务明确返回后发行，
+响应丢失不读回重签，重新批准旧快照不重放已派发批次。返回后锁已关闭；实际预览、首次副作用 guard、
+后续操作及结果对账尚未接线，普通 guard 继续拒绝活动意图。该内部原语不代表 T074/T075 全部完成。
+
 普通 CLI 保持原输出；批次结果封装原 operation 的结果与退出码，进度进入 stderr，
 不能将内层 setup 的打印混入外层 JSON，也不能另复制一套 setup。
 

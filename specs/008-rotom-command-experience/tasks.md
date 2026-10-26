@@ -310,6 +310,8 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 - [ ] T074 [US6] 在 `src/agentcfg/maintenance.py`、`src/agentcfg/commands.py` 定义并校验 BatchPermit，逐字约束“有限内存凭证：batch/revision/代际、operation、资源与部署/计划摘要、原维护批准及唯一 dispatch ID；在原操作首个副作用门禁核验后消费，不是公开输入或持久可重放令牌”；普通 CLI 仍用原批准，ResumePermit/用户 JSON 不能构造维护批准，已消费崩溃后不重签重跑。（依赖：T072、T073；覆盖：FR-034、FR-043）
 
+  T074/T075 内部前置已实现：独立 SetupReview 与提交后 BatchPermit 均绑定完整批次、意图代际、setup 计划摘要及进程身份；审阅在原物理释放/部署重核后单次消费，随后原子保存唯一派发 ID 和 setup_plan_digest。仅明确提交成功后发行许可，响应丢失或发行失败不重试；普通 guard 仍阻挡活动意图。实际 setup 预览摘要计算、首个副作用 guard 消费、后续步骤和结果对账未接线，当前只接受 manual 恢复，不勾选两项。见 [第 68 节](main-review.md#68-setup-独立批准与持久派发前置)。
+
 - [ ] T075 [US6] 在 `src/agentcfg/maintenance.py` 接入 setup runner：全部退出/资源/原维护计划批准均有效才 durable 记录 maintenance_dispatch_intent，在原操作首个副作用 guard 消费 BatchPermit；逐步复核资源与部署并保存原 operation result/code，可能已执行/回包丢失先对账不重试，停止批准不能代替写入批准。（依赖：T074；覆盖：FR-032、FR-034、FR-035、SC-009）
 
 - [ ] T076 [US6] 在 `src/agentcfg/maintenance.py`、`src/agentcfg/sessions.py` 实现恢复清单与 ResumePermit，逐字字段“精确 batch/代际、后继 run/op、SessionRef、预期部署、位置；一次消费，不是一般 profile 白名单”；stop_only/确证未派发且部署未变用审阅旧契约，成功用保存新契约，partial/unknown 先原 journal/事实对账再新审阅；复用日常 resume/writer 门禁，不绕其它批次，多 TUI 不共用 stdin。（依赖：T075、T048；覆盖：FR-024、FR-035、FR-036、FR-037、FR-041、SC-009）
