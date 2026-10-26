@@ -337,7 +337,8 @@
             "active",
             "dispatched",
             "unknown",
-            "cancelled"
+            "cancelled",
+            "completed"
           ]
         }
       }

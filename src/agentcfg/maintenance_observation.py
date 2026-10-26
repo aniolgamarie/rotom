@@ -41,6 +41,26 @@ def _scope(args, workspace, batch):
     raise Conflict(_ERROR)
 
 
+def _read_target(workspace, target_digest, state_fd):
+  """借入原物理租约读取目标；调用方另在前后核验全部资源，不授予许可。"""
+  with Tree(workspace.state_root) as state, Tree(workspace.instance) as target:
+    _same_file(state, "instance.lock", state_fd)
+    pending = state.read("pending.json") is not None
+    if pending:
+      target_state = "journal-pending"
+    else:
+      saved = deployment.read_state(state)
+      current = saved["current"]
+      matches = (current is not None and current["binding"] == workspace.binding
+        and saved["owner"]["binding"] == workspace.binding
+        and setup_deployment_digest(current) == target_digest)
+      if matches:
+        runtime.check_deployed_resources(current, target)
+      target_state = "target-matches" if matches else "target-differs"
+    _same_file(state, "instance.lock", state_fd)
+  return target_state, pending
+
+
 def observe_setup(domain, batch_id, *, expected_revision, args) -> SetupObservation:
   """仅按本次显式配置定位同 scope 完整批次；不沿历史路径查其它实例。
 
@@ -72,21 +92,7 @@ def observe_setup(domain, batch_id, *, expected_revision, args) -> SetupObservat
 
       check()
       state_fd = leases[batch["accepted_runs"][0]]["state_fd"]
-      with Tree(workspace.state_root) as state, Tree(workspace.instance) as target:
-        _same_file(state, "instance.lock", state_fd)
-        pending = state.read("pending.json") is not None
-        if pending:
-          target_state = "journal-pending"
-        else:
-          saved = deployment.read_state(state)
-          current = saved["current"]
-          matches = (current is not None and current["binding"] == workspace.binding
-            and saved["owner"]["binding"] == workspace.binding
-            and setup_deployment_digest(current) == target_digest)
-          if matches:
-            runtime.check_deployed_resources(current, target)
-          target_state = "target-matches" if matches else "target-differs"
-        _same_file(state, "instance.lock", state_fd)
+      target_state, pending = _read_target(workspace, target_digest, state_fd)
       check()
     return SetupObservation(deepcopy(batch), target_state, True, pending)
   except Exception:

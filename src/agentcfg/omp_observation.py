@@ -6,6 +6,7 @@ from .lifecycle import _omp_launch_context, _omp_path
 from .omp_lifecycle import _same_file
 from .paths import safe_id
 from .resource_coordination import Domain
+from .resource_protocol import TERMINAL_INTENT_PHASES
 from .resource_scopes import _verify
 from .run_owners import Registry, record_state
 from .storage import Conflict, Tree, advisory_lock
@@ -112,7 +113,7 @@ def snapshot(workspace, *, instance_fd):
           if (record is None or record.get("coordination_domain") is None
               or expected.get(entry["phase"]) != record_state(record)):
             pending = True
-        if any(entry["phase"] != "cancelled" and scope.intersection(entry["resources"])
+        if any(entry["phase"] not in TERMINAL_INTENT_PHASES and scope.intersection(entry["resources"])
             for entry in state["intents"].values()):
           pending = True
         return records, pending

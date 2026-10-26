@@ -289,6 +289,14 @@ pending journal 只报告存在，不解析/修复；current 与受保护投影�
 取消只作用于余下动作，保留已停止项与恢复清单。未派发的本批意图可按匹配代际解除；
 可能已执行、unknown owner 或未知维护结果的保护不能仅靠 cancel 消除，先只读对账/原 journal 恢复。
 
+已明确成功且保存目标摘要的 setup 可以通过独立的 complete_setup_manual 收尾：只接受原计划 manual、
+全部停止/资源释放及未派发后继，先在原物理 EX 内核验目标和完整 owner/资源现场，再在锁外单独批准人工交接。
+批准必须精确 True；冻结完整 batch/revision/generation，回调异常原样传播。批准后重新解析显式同 scope，
+取得原实例/状态/包 EX 再核现场，最后在 Domain → owner NB 的同一事务设置 intent.completed 并推进 Batch revision、
+逐项 restore_phase=manual。批次仍 maintenance_succeeded，原 operation_result 和清单保留，不把人工交接算成恢复成功。
+completed 仅停止本批意图对资源的阻挡；其它 reservation/intent/owner 及原生启动门禁继续生效，没有新恢复许可。
+提交异常保留可能已写事实，不自动重试或把 unknown/partial 改成 completed；原 cancel 规则不扩大，也不删除历史。
+
 | 已证明事实 | 恢复依据 |
 | --- | --- |
 | stop_only 或维护确证未派发，部署仍匹配停止前快照 | 用户审阅的停止前契约，重新校验可用性 |

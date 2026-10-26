@@ -12,6 +12,7 @@ from . import commands, maintenance, maintenance_dispatch, maintenance_permit, m
 from . import deployment, maintenance_release, maintenance_setup, runtime
 from .maintenance_deployment import check_stop_deployment
 from .omp_lifecycle import _same_file, _shared_file
+from .resource_protocol import TERMINAL_INTENT_PHASES
 from .setup_preview import setup_deployment_digest, setup_plan_digest, _strict_json
 from .storage import Conflict, Tree
 from .deployment import json_bytes
@@ -113,7 +114,7 @@ class _Execution:
     _, batch = self._load(domain, state)
     accepted = {item["resource_id"] for item in batch["plan"]["resources"]
       if item["key"]["kind"] in ("instance", "native-home")}
-    if resources != accepted or any(key != batch["batch_id"] and entry["phase"] != "cancelled"
+    if resources != accepted or any(key != batch["batch_id"] and entry["phase"] not in TERMINAL_INTENT_PHASES
         and resources.intersection(entry["resources"]) for key, entry in state["intents"].items()):
       raise Conflict(_ERROR)
     self._stage = {"preflight": "preflight", "prepare": "prepared", "apply": "apply_ready"}[stage]

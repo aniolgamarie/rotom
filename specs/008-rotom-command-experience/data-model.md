@@ -219,8 +219,9 @@ inode 认领旧记录。独立声明防止单独租约损坏被当作旧格式�
 
 reservation 保存 run/op、owner_ref（state_root 与 machine/local/profile 绑定）、resource_id 集合和
 reserved/dispatched/unknown/cancelled。intent 保存 batch/generation、setup 或 stop_only、资源与明确
-selected_runs 集合，以及 active/dispatched/unknown/cancelled。只有 reserved 预留或 active 意图可取消；
-dispatched/unknown 不清除，不设 TTL，也没有 release API。完整字段、未知字段和交叉引用由 codec 检查，
+selected_runs 集合；初始阶段只有 active/dispatched/unknown/cancelled，后续成功人工交接增加下述 completed。
+只有 reserved 预留或未推进的 active 意图可取消；dispatched/unknown 不因取消清除，不设 TTL。
+退出释放与成功交接分别走下述专属 API。完整字段、未知字段和交叉引用由 codec 检查，
 原子状态转换由短域锁完成。这些记录不等于 RunRecord、退出证明、批准或 BatchPermit。
 后续停止必须带回原 scope/operation/run 集合重算，不靠一个摘要猜原输入。
 普通 stop 可 stop_only；恢复后新 run/op/receipt 不能继承旧已消费许可。
@@ -302,6 +303,19 @@ pending 存在只报告 journal-pending；无 pending 时核对 current 及受�
 现场无法确认报告 unconfirmed。结果返回前释放锁；匹配只描述当时部署契约和受保护投影，不证明整个运行包、
 历史执行成功或恢复安全，不改结果/意图、不清 unknown、不发行许可、不重试或恢复 journal。
 历史未知结果的持久对账、journal 恢复、批量恢复及 CLI 接线仍待实现。
+
+**明确成功后的人工交接（部分实现）**：intent 新增 completed，只允许已保存 setup 成功、退出码 0、
+结果摘要及两个计划/目标摘要，且完整批次均已退出/释放、原计划为 manual、各项 restore_phase 为 manual、
+没有任何后继派发。全部所选 reservation 必须仍 released 且有原 receipt；codec 只核保存事实，现场证明仍由
+专属事务在原物理锁内取得。未知/部分结果、目标缺失或任一未释放不允许 completed。
+
+内部 complete_setup_manual 在取得原物理 EX 并核验目标、owner/receipt 和共享引用后释放锁，单独展示冻结的
+批次与意图代际，要求明确 True 才交接人工。批准后重新解析同一显式配置、重取原 EX 并复核完整现场；
+最终 Domain → owner NB 事务将 Batch revision 加一、逐项 restore_phase 设 manual、intent 设 completed。
+原成功结果、plan、所选 run、部署摘要、预留、owner、资源和恢复清单均保留，不保存“已恢复”或发送启动/继续。
+物理与 owner 锁覆盖提交/fsync；响应未知不读回升级或自动重试。completed 与 cancelled 仅作为资源意图的
+终态被普通门禁忽略，旧停止/维护 writer 和 cancel/mark_unknown 仍拒绝再次推进它；原人工恢复清单继续可查。
+旧版本不能识别 completed 时按未知状态拒绝，不保证旧入口读取新记录，不降级或改写历史来兼容。
 
 新预留增加 `generation`，取其成功提交后的域 revision；可信调用方可以用 `expected_revision`
 在同一短锁中拒绝过期快照。域 revision 是整个域的保守代际，任何协调写入均推进它；

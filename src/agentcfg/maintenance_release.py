@@ -13,6 +13,7 @@ from .maintenance_deployment import check_stop_deployment
 from .control_deadline import ControlDeadline
 from .omp_lifecycle import _same_file
 from .paths import safe_id
+from .resource_protocol import TERMINAL_INTENT_PHASES
 from .run_owners import record_state
 from .storage import Conflict, Tree, advisory_lock, instance_lock
 
@@ -149,7 +150,7 @@ def _hold_released(domain, state, saved, batch, workspaces, leases, stack):
   if any(entry["phase"] not in ("released", "cancelled") and resources.intersection(entry["resources"])
       for entry in state["reservations"].values()):
     raise ValueError()
-  if any(key != batch["batch_id"] and entry["phase"] != "cancelled" and resources.intersection(entry["resources"])
+  if any(key != batch["batch_id"] and entry["phase"] not in TERMINAL_INTENT_PHASES and resources.intersection(entry["resources"])
       for key, entry in state["intents"].items()):
     raise ValueError()
   groups = {}

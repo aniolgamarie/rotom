@@ -12,6 +12,7 @@ _MAX_BYTES = 2 * 1024 * 1024
 _MAX_DEPTH = 32
 _KINDS = ("domain", "runtime-anchor", "scope-claim", "scope-anchor")
 _ERROR = "共享资源协调记录无效"
+TERMINAL_INTENT_PHASES = ("cancelled", "completed")
 
 
 def _invalid(*args):
@@ -111,6 +112,8 @@ def _semantics(value):
         _invalid()
     if "progress" in intent:
       _progress(value, intent)
+    elif intent["phase"] == "completed":
+      _invalid()
 
 
 def _progress(state, intent):
@@ -133,6 +136,20 @@ def _progress(state, intent):
   if intent["phase"] == "cancelled" and batch != maintenance._initial_batch(batch["batch_id"], plan):
     # 尚未接入完整维护取消；旧入口只能取消从未推进的初始批次。
     _invalid()
+  if intent["phase"] == "completed":
+    dispatch, result = batch["maintenance_dispatch"], batch["operation_result"]
+    if (intent["operation"] != "setup" or batch["phase"] != "maintenance_succeeded"
+        or batch["review_required"] or dispatch["state"] != "confirmed"
+        or "setup_plan_digest" not in dispatch or "target_deployment_digest" not in dispatch
+        or result is None or result["status"] != "succeeded" or result["exit_code"] != 0
+        or result["result_digest"] is None
+        or any(run["restore"]["mode"] != "manual" for run in plan["runs"])
+        or any(item["restore_phase"] != "manual" or item["stop_phase"] != "stopped_confirmed"
+          or not item["facts"]["exit_confirmed"] or not item["facts"]["resources_released"]
+          or item["launch_dispatch"]["state"] != "not_dispatched" for item in batch["items"])
+        or any(state["reservations"][run]["phase"] != "released"
+          or "release_receipt" not in state["reservations"][run] for run in intent["selected_runs"])):
+      _invalid()
 
 
 def _validate(value, kind):

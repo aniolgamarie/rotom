@@ -11,7 +11,7 @@ import uuid
 from . import storage
 from .paths import PathError, _absolute_directory, safe_id
 from .resource_keys import resource_key
-from .resource_protocol import decode, encode
+from .resource_protocol import TERMINAL_INTENT_PHASES, decode, encode
 from .storage import Conflict, Tree, advisory_lock, identity
 
 
@@ -184,7 +184,7 @@ class Domain:
   @staticmethod
   def _idle(state, resources):
     for table in ("reservations", "intents"):
-      terminal = ("cancelled", "released") if table == "reservations" else ("cancelled",)
+      terminal = ("cancelled", "released") if table == "reservations" else TERMINAL_INTENT_PHASES
       if any(resources.intersection(entry["resources"]) and entry["phase"] not in terminal
           for entry in state[table].values()):
         raise Conflict(_ERROR)
@@ -201,7 +201,7 @@ class Domain:
 
   @staticmethod
   def _unfenced(state, resources):
-    if any(entry["phase"] != "cancelled" and resources.intersection(entry["resources"])
+    if any(entry["phase"] not in TERMINAL_INTENT_PHASES and resources.intersection(entry["resources"])
         for entry in state["intents"].values()):
       raise Conflict(_ERROR)
 

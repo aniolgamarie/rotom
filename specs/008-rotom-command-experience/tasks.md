@@ -318,6 +318,8 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 - [ ] T077 [US6] 在 `src/agentcfg/maintenance.py`、`src/agentcfg/lifecycle.py` 实现 status/reconcile/cancel：只取消剩余动作，匹配代际解除已证未派发的本批意图；保留已停止/待恢复/unknown 与原维护结果，可能已执行或未知占用不因取消清保护；pending/unknown/待恢复/可能派发及已完成记录首版均不自动清理。（依赖：T076；覆盖：FR-034、FR-035、FR-036）
 
+  T077 成功分支已部分实现：completed 严格绑定已保存成功 setup、目标摘要、原 manual 计划及完整释放事实；complete_setup_manual 先现场核验、锁外独立批准，再于原 EX 内复核后同事务终结意图并记逐项 manual，保留原维护结果和清单。未知/部分成功不因此解除保护，cancel 原规则不变；完整 status/reconcile/cancel 与 CLI 仍未完成。见 [第 73 节](main-review.md#73-成功维护收尾与人工恢复交接)。
+
 - [ ] T078 [US6] 在 `src/rotom/cli.py` 注册并接通 instances stop 和 maintenance plan/stop/execute/status/restore/cancel 全部叶子，普通 stop 与维护共用精确计划/执行器；首版 operation 仅 setup/stop_only，原 scope+run+plan 与独立原操作批准不能缺失，参数/导航/补全/无输入门控同步注册，不新增万能 --yes。（依赖：T077；覆盖：FR-007、FR-012、FR-030、FR-034、FR-037）
 
 - [ ] T079 [US6] 在 `src/agentcfg/maintenance.py`、`src/rotom/cli.py` 输出 batch/revision、requested/effected scope、逐项 stop/restore、dispatch、原 operation result/code、review_required 与完整范围 next command；保留原维护明确失败退出码，不被外层取消或展示成功覆盖，进度只到 stderr。（依赖：T078；覆盖：FR-013、FR-033、FR-035、SC-009）
