@@ -1,6 +1,7 @@
 """逐受管项三方部署；单份 previous 和可恢复 pending，不保存混合原生文件。"""
 
 import base64
+from contextlib import nullcontext
 from copy import deepcopy
 from dataclasses import dataclass, field
 import json
@@ -435,32 +436,34 @@ def guard_saved_state(state, state_guard):
   state_guard({**saved, "pending": journal})
 
 
-def apply(instance: Path, state_root: Path, candidate, binding, launch, *, expected_plan=None, state_guard=None, prepare=None):
-  with Tree(state_root, create=True) as state, instance_lock(state):
-    guard_saved_state(state, state_guard)
-    with Tree(instance, create=True) as target:
-      recover(target, state, prepare=prepare)
-      old = read_state(state)
-      change = plan(target, old, candidate, binding, launch)
-      if expected_plan is not None and change != expected_plan:
-        raise Conflict("预览后部署状态已变化；请重新运行 setup")
-      if change.conflicts:
-        raise Conflict("部署有未接管目标或双方修改冲突；请先查看 plan")
-      # 只在计划通过后保留实际管理过的共享文件来源，支持动态模块退出再选；
-      # 不预认领候选路径，也不保存原生未知字段的内容。
-      owner = deepcopy(old.get("owner")) or {"binding": binding, "shared_files": launch.get("shared_files", [])}
-      shared = sorted({item["path"] for item in change.current["items"].values() if item["selector"]})
-      owner["shared_files"] = list(dict.fromkeys([*owner["shared_files"], *shared]))
-      if same(old["current"], change.current) and not change.changes and same(old.get("owner"), owner):
-        if prepare is not None:
-          transact(target, state, old, old, [], prepare=prepare)
+def apply(instance: Path, state_root: Path, candidate, binding, launch, *, expected_plan=None, state_guard=None, prepare=None, maintenance_guard=None):
+  with Tree(state_root, create=maintenance_guard is None) as state, (
+      instance_lock(state, create=False) if maintenance_guard is not None else instance_lock(state)) as state_fd:
+    with maintenance_guard(state_fd) if maintenance_guard is not None else nullcontext():
+      guard_saved_state(state, state_guard)
+      with Tree(instance, create=maintenance_guard is None) as target:
+        recover(target, state, prepare=prepare)
+        old = read_state(state)
+        change = plan(target, old, candidate, binding, launch)
+        if expected_plan is not None and change != expected_plan:
+          raise Conflict("预览后部署状态已变化；请重新运行 setup")
+        if change.conflicts:
+          raise Conflict("部署有未接管目标或双方修改冲突；请先查看 plan")
+        # 只在计划通过后保留实际管理过的共享文件来源，支持动态模块退出再选；
+        # 不预认领候选路径，也不保存原生未知字段的内容。
+        owner = deepcopy(old.get("owner")) or {"binding": binding, "shared_files": launch.get("shared_files", [])}
+        shared = sorted({item["path"] for item in change.current["items"].values() if item["selector"]})
+        owner["shared_files"] = list(dict.fromkeys([*owner["shared_files"], *shared]))
+        if same(old["current"], change.current) and not change.changes and same(old.get("owner"), owner):
+          if prepare is not None:
+            transact(target, state, old, old, [], prepare=prepare)
+          return change.public()
+        # 只变更基线（如 C=D）也记录当前事实，但无实际变更不轮换 previous。
+        binding_changed = old["current"] is None or old["current"]["launch"] != launch
+        previous = {"current": old["current"], "changes": change.changes} if change.changes or binding_changed else old["previous"]
+        after = {"version": 1, "current": change.current, "previous": previous, "owner": owner}
+        transact(target, state, old, after, change.changes, prepare=prepare)
         return change.public()
-      # 只变更基线（如 C=D）也记录当前事实，但无实际变更不轮换 previous。
-      binding_changed = old["current"] is None or old["current"]["launch"] != launch
-      previous = {"current": old["current"], "changes": change.changes} if change.changes or binding_changed else old["previous"]
-      after = {"version": 1, "current": change.current, "previous": previous, "owner": owner}
-      transact(target, state, old, after, change.changes, prepare=prepare)
-      return change.public()
 
 
 def rollback(instance: Path, state_root: Path, binding, *, prepare=None):

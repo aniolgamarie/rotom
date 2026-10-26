@@ -254,8 +254,18 @@ BatchPermit 是由已接受批次派生的有限内存凭证，绑定 batch/revi
 已由内部 review_and_dispatch_setup 连接：复用普通 prepared/current_plan，冻结完整摘要与脱敏预览，
 只接受 Linux OMP 同一显式 local/profile、原实例/HOME/缓存/运行包以及完整批次，不隐式选择子集或登记新资源。
 回调不持物理/Domain/owner 锁，必须明确 True；普通准备错误、取消和批准异常保持原契约，批准后由原派发事务
-重核部署、owner 与 CAS。首次副作用 guard、后续操作及结果对账尚未接线，普通 guard 继续拒绝活动意图。
-此内部接缝不执行 setup 或消费 BatchPermit，不代表 T074/T075 全部完成。
+重核部署、owner 与 CAS。审阅接缝返回后仍不执行 setup 或消费 BatchPermit。
+
+内部 execute_setup 已连接同一原 Linux OMP scope/cache/runtime 的实际共用 setup 路径：显式传递
+进程内执行上下文，原同步 guard 持实例 EX → 状态 SH → 包 EX，重读计划与现场，按 Domain → owner NB
+复核并消费一次许可、持久记录 running；明确返回后释放元数据锁再进入同步主体。后续 apply 沿原实例 EX
+与状态 EX 顺序，再持包 SH 重核计划/原部署/释放事实，覆盖原 recover、prepare 和事务，不重入已持 EX。
+未登记旧资源、新 scope/缓存/运行包、跨 profile 集合不因此获得登记或执行权限，普通 guard 继续拒绝活动意图。
+
+原结果与退出码返回，批次只保存规范结果摘要；同步后非零结果记 partial，明确 running 后业务异常记 unknown
+且原样传播。partial/unknown 同事务将原 intent 阶段置 unknown，保留资源和 owner；记账失败不掩盖原异常。
+首次消费后提交响应不明时，保留可能的 dispatch_intent/running 与已消费许可，提示核验而不读回升级或二次写入；
+完成响应丢失不重跑。这里只接受 manual 恢复；完整 CLI、崩溃后的 journal/事实对账和恢复仍待完成，不代表 T074/T075 全部完成。
 
 普通 setup 在展示/批准回调前冻结真实计划摘要，同步后从重新准备的工作区与计划复算。
 摘要包括完整 current/changes/drift/conflicts、目标 binding 和实例/状态/缓存根、锁与候选身份；

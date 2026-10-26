@@ -49,17 +49,23 @@ def _check_runtime(domain, workspace, runtime_identity):
     domain.check_runtime(workspace.cache, runtime_identity, lease_fd=fd, idle=False)
 
 
-def prepare_setup(workspace, runtime_identity):
+def prepare_setup(workspace, runtime_identity, *, maintenance=None):
   """fresh 才能登记新包；不创建实例、profile state 或 owner，也不清理失败保护。
 
   跨资源首次登记不是全有或全无；并发留下的部分或混合现场必须保留并失败关闭。
   """
   try:
+    if maintenance is not None:
+      from .maintenance_execution import require_execution
+      require_execution(maintenance).check_runtime(workspace, runtime_identity, stage="prepare")
     domain = _context(workspace, runtime_identity)
     cooperative = scopes.scope_claim_exists(workspace.instance)
     claimed_runtime = coordination.runtime_claim_exists(workspace.cache, runtime_identity)
+    if maintenance is not None and not (cooperative and claimed_runtime):
+      raise Conflict(_ERROR)
     if cooperative:
-      with omp_scope_write_guard(workspace):
+      options = {"maintenance": maintenance, "stage": "prepare"} if maintenance is not None else {}
+      with omp_scope_write_guard(workspace, **options):
         pass
     elif _exists(workspace.instance, directory=True):
       omp_identity.preflight_setup(workspace)
@@ -86,14 +92,21 @@ def prepare_setup(workspace, runtime_identity):
 
 
 @contextmanager
-def apply_guard(workspace, runtime_identity):
+def apply_guard(workspace, runtime_identity, *, maintenance=None):
   """现存合作资源核验后才登记 fresh scope；返回原 instance EX fd。"""
   with ExitStack() as stack:
     try:
+      if maintenance is not None:
+        from .maintenance_execution import require_execution
+        require_execution(maintenance).check_runtime(workspace, runtime_identity, stage="apply")
       domain = _context(workspace, runtime_identity)
       legacy = False
+      if maintenance is not None and not (scopes.scope_claim_exists(workspace.instance)
+          and coordination.runtime_claim_exists(workspace.cache, runtime_identity)):
+        raise Conflict(_ERROR)
       if scopes.scope_claim_exists(workspace.instance):
-        guard = omp_scope_write_guard(workspace)
+        options = {"maintenance": maintenance, "stage": "apply"} if maintenance is not None else {}
+        guard = omp_scope_write_guard(workspace, **options)
       else:
         claimed_runtime = coordination.runtime_claim_exists(workspace.cache, runtime_identity)
         if _exists(workspace.instance, directory=True):

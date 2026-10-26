@@ -8,6 +8,7 @@
 - [独立 setup 批准与持久派发](#68-setup-独立批准与持久派发前置)。
 - [完整 setup 预览绑定](#69-真实-setup-预览绑定)。
 - [实际维护预览与批准连接](#70-实际维护预览与独立批准连接)。
+- [原门禁中的维护执行与结果记账](#71-原门禁中的维护执行与结果记账)。
 
 各节记录当时基线、验证和限制；历史通过不自动转记为新候选验证，内部前置也不等于完整维护 runner 已开放。
 
@@ -2041,3 +2042,46 @@ apply 或资源准备，没有消费 BatchPermit；普通启动/写入 guard 继
 
 executor（gpt-6.1-sol / medium）负责实现和隔离验证，scout（gpt-6-luna / high）独立审阅稳定差异，
 主代理负责目标/事务边界、文档和整合验收。实际 argv、各轮结果、源摘要、提交及整合核验保存在私人证据包。
+
+
+## 71. 原门禁中的维护执行与结果记账
+
+第 70 节预览/批准连接已以 `1fcea403` 快进合入 main，整合后 54 passed，33.50s、退出 0。
+本节从该 main 建立独立工作树，推进同一原 Linux OMP scope/cache/runtime、manual 恢复的内部 setup 执行。
+仍为 86/117；完整停止/维护 CLI、崩溃后的 journal/事实对账、恢复及跨工具原生准入尚未完成。
+
+`execute_setup` 接受本进程已发行的派发结果，复用原 `_setup_operation`，显式将执行上下文传到
+原预检、资源准备、同步和 apply；普通调用保留原参数与顺序。只接受原已登记资源，不静默选择子集、
+登记新包/实例或跳过同步。首次同步在原物理 guard 内按实例 EX → 状态 SH → 包 EX 核验完整计划、
+原部署及全部 released owner/receipt，随后 Domain → owner NB 顺序消费一次 BatchPermit，原子保存
+maintenance_running/dispatched；事务明确返回后释放元数据锁，再进入原同步主体。安装期间不持 Domain/owner 锁。
+
+后续 apply 复用原实例 EX 和状态 EX，再取得原包 SH，重读计划并核对原部署、全部资源引用和 owner。
+该门禁覆盖原 recover、prepare 与事务，不另套 EX 重入；维护路径不创建缺失实例、状态根或锁。
+原 SetupResult 与退出码返回，持久批次只保存 code/status 与规范结果摘要。成功保存 maintenance_succeeded；
+同步后的明确非零结果保守保存 partial，已明确 running 后的业务异常保存 unknown 并原样抛出。
+partial/unknown 与同一原 intent.phase=unknown 同笔更新，原资源集合、预留和 owner 保留；普通入口仍受意图保护。
+
+首次消费后提交响应不明时，没有可信的新 CAS，保留可能的 dispatch_intent/running 及已消费许可，
+输出固定核验提示，不读回升级、不再次写 unknown、不重试同步。运行中结果记账失败不掩盖原业务/控制异常；
+完成记账响应丢失也不重跑 setup。这些限制是实际失败分支，不把保留 running 表述为 unknown 已保存。
+
+隔离组合实际部署合成文件，保持真实 OMP 适配器准入、后端同步/物理 guard、协调/owner 记录及 deployment.apply；
+只替换候选配置、运行包载荷/下载与合成 launch 的校验输入。测试在同步体内证明实例 EX/状态 SH/包 EX，
+在部署准备内证明实例 EX/状态 EX/包 SH，并证明 Domain/owner 锁已释放。没有启动官方宿主或联网，
+不能将该机制验证当作新的官方运行包、平台或完整维护 CLI 验收。
+
+| 验证 | 实际结果 | 说明 |
+| --- | --- | --- |
+| 参数传递与原 setup/deployment | 127 passed，1.22s、退出 0 | 新增 37 项；首次窄验 36 passed、1 failed 为测试漏计原 transact 内的 recover，修正事件断言 |
+| 普通 OMP 准入/同步/部署八套 | 203 passed，33.90s、退出 0 | 对应生产路径执行期稳定；后续仅修新内部执行模块的结果记账，不改普通分支 |
+| 真实门禁故障组合首次 | 16 passed、11 failed | 九项暴露 unknown/partial 只更新 Batch、未同步原 intent.phase 的实现遗漏；另两项为测试在提交期重取 Domain 锁、错误期待原始 OSError |
+| 后续阶段验证 | 19 passed、10 failed；随后 29 passed、2 failed | 前者执行期间源码修复、不可作最终证据，并修一项非法共享引用 fixture；后者剩两项仅是原回滚 prepare 事件断言，改为首次故障后原恢复正常执行 |
+| 最终真实门禁窄验 | 31 passed，42.66s、退出 0 | 包含同 scope 两 run 只执行一次、未选共享 unknown 阻断、逐提交/响应丢失、异常原样及部分结果 |
+| 执行、派发、审阅与参数传递组合 | 156 passed，126.28s、退出 0 | 最终生产/测试摘要稳定；包含上行 31 项，不重复计数 |
+
+各项有重叠，不相加；失败证据全部保留。最终源摘要、公开内容审查、提交和整合结果保存在私人证据包。
+executor（gpt-6.1-sol / medium）负责参数传递及测试，主代理负责消费/锁/结果事务和集成验收，
+scout（gpt-6-luna / high）审查稳定差异。原 executor 在真实成功路径通过后遇模型容量错误；替换 executor
+承接已有 fixture 完成故障测试，未将容量失败记作通过。文档同时修正 plan/quickstart 中已过期的“尚未合入 main”状态，
+历史各阶段证据仍保留，不扩大当前完成任务数。

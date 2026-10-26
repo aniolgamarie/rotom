@@ -306,11 +306,11 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 - [X] T073 [US6] 在 `src/agentcfg/commands.py` 抽取 setup 共用核心操作/结果接缝，保留预检、安装、re-prepare、计划复核和 apply 顺序；普通 CLI 输出不变，runner 复用原物理 EX guard 而非外套 EX 后重入，不复制 setup，返回原结果/退出码以免内层打印污染外层 JSON。（依赖：T008；等价核心抽取可独立验收，维护 runner 接线仍须 T072；覆盖：FR-002、FR-013、FR-034）
 
-  T073 的共用核心和普通 CLI 已完成独立验收：保留原批准、进度、结果、预检/同步/复核/apply 顺序及原物理 guard，返回原 apply 结果与退出码。实际维护 runner 与 Permit 属于 T074/T075，尚未接线。
+  T073 的共用核心和普通 CLI 已完成独立验收：保留原批准、进度、结果、预检/同步/复核/apply 顺序及原物理 guard，返回原 apply 结果与退出码。实际维护 runner 与 Permit 属于 T074/T075；限定 Linux OMP 同 scope/runtime 的内部执行已接线，完整 CLI 与恢复对账仍未完成。
 
 - [ ] T074 [US6] 在 `src/agentcfg/maintenance.py`、`src/agentcfg/commands.py` 定义并校验 BatchPermit，逐字约束“有限内存凭证：batch/revision/代际、operation、资源与部署/计划摘要、原维护批准及唯一 dispatch ID；在原操作首个副作用门禁核验后消费，不是公开输入或持久可重放令牌”；普通 CLI 仍用原批准，ResumePermit/用户 JSON 不能构造维护批准，已消费崩溃后不重签重跑。（依赖：T072、T073；覆盖：FR-034、FR-043）
 
-  T074/T075 内部前置已实现：独立 SetupReview 与提交后 BatchPermit 均绑定完整批次、意图代际、setup 计划摘要及进程身份；审阅在原物理释放/部署重核后单次消费，随后原子保存唯一派发 ID 和 setup_plan_digest。仅明确提交成功后发行许可，响应丢失或发行失败不重试；普通 guard 仍阻挡活动意图。真实 setup 预览的共用摘要已用于普通核心：冻结完整计划和目标身份，sync 后即使脱敏摘要不变也拒绝实际变更。真实预览与独立维护批准、原持久派发已连接：只接受 Linux OMP 同一显式 local/profile、原实例/缓存/运行包，完整批次不能静默取子集；首个副作用 guard 消费、后续步骤和结果对账仍未接线，当前只接受 manual 恢复，不勾选两项。见 [第 68 节](main-review.md#68-setup-独立批准与持久派发前置)、[第 69 节](main-review.md#69-真实-setup-预览绑定)及[第 70 节](main-review.md#70-实际维护预览与独立批准连接)。
+  T074/T075 内部前置已实现：独立 SetupReview 与提交后 BatchPermit 均绑定完整批次、意图代际、setup 计划摘要及进程身份；审阅在原物理释放/部署重核后单次消费，随后原子保存唯一派发 ID 和 setup_plan_digest。仅明确提交成功后发行许可，响应丢失或发行失败不重试；普通 guard 仍阻挡活动意图。真实 setup 预览的共用摘要已用于普通核心：冻结完整计划和目标身份，sync 后即使脱敏摘要不变也拒绝实际变更。真实预览与独立维护批准、原持久派发已连接：只接受 Linux OMP 同一显式 local/profile、原实例/缓存/运行包，完整批次不能静默取子集；原同步门禁中的单次消费、后续部署复核与原结果记账已有内部接线：执行仍只覆盖同一原 scope/cache/runtime，保持 manual 恢复；完整控制/CLI、崩溃后的 journal/事实对账和恢复未完成，不勾选两项。见 [第 68 节](main-review.md#68-setup-独立批准与持久派发前置)、[第 69 节](main-review.md#69-真实-setup-预览绑定)、[第 70 节](main-review.md#70-实际维护预览与独立批准连接)及[第 71 节](main-review.md#71-原门禁中的维护执行与结果记账)。
 
 - [ ] T075 [US6] 在 `src/agentcfg/maintenance.py` 接入 setup runner：全部退出/资源/原维护计划批准均有效才 durable 记录 maintenance_dispatch_intent，在原操作首个副作用 guard 消费 BatchPermit；逐步复核资源与部署并保存原 operation result/code，可能已执行/回包丢失先对账不重试，停止批准不能代替写入批准。（依赖：T074；覆盖：FR-032、FR-034、FR-035、SC-009）
 

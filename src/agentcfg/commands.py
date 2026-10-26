@@ -162,14 +162,19 @@ def cmd_apply(args):
   return output(w, "apply", apply_candidate(w, lock, candidate), args=args)
 
 
-def apply_candidate(w, lock, candidate, *, expected_plan=None):
+def apply_candidate(w, lock, candidate, *, expected_plan=None, maintenance=None):
   guard = getattr(w.adapter, "apply_lifecycle_guard", None) or getattr(w.adapter, "lifecycle_guard", None)
   guard_for = getattr(w.adapter, "apply_lifecycle_guard_for", None)
-  admission = guard_for(w, lock) if guard_for is not None else guard(w) if guard else nullcontext()
-  with admission:
+  if maintenance is not None and guard_for is None:
+    raise Conflict("维护 setup 需要支持维护准入的原部署门禁")
+  options = {"maintenance": maintenance} if maintenance is not None else {}
+  admission = guard_for(w, lock, **options) if guard_for is not None else guard(w) if guard else nullcontext()
+  with admission as instance_fd:
+    apply_options = {"maintenance_guard": lambda state_fd: maintenance.apply_guard(w, lock, candidate,
+      expected_plan, instance_fd=instance_fd, state_fd=state_fd)} if maintenance is not None else {}
     return deployment.apply(w.instance, w.state_root, candidate, w.binding, runtime.record(w, lock),
       expected_plan=expected_plan, state_guard=getattr(w.adapter, "validate_deployment_state", None),
-      prepare=lambda launch: prepare_launch(w, launch))
+      prepare=lambda launch: prepare_launch(w, launch), **apply_options)
 
 
 def prepare_launch(workspace, launch):
@@ -178,17 +183,23 @@ def prepare_launch(workspace, launch):
   workspace.adapter.prepare_runtime(workspace, root)
 
 
-def sync_backend(w, lock, progress):
+def sync_backend(w, lock, progress, *, maintenance=None):
   """可选进度能力；旧扩展后端继续使用原有双参数 sync 契约。"""
   action = w.backend.sync
   try:
     parameters = inspect.signature(action).parameters
   except (TypeError, ValueError):
     parameters = {}
+  options = {}
+  if maintenance is not None:
+    parameter = parameters.get("maintenance")
+    if parameter is None or parameter.kind not in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY):
+      raise Conflict("维护 setup 需要后端显式支持维护同步准入")
+    options["maintenance"] = maintenance
   if "progress" in parameters or any(item.kind is inspect.Parameter.VAR_KEYWORD for item in parameters.values()):
-    return action(w, lock, progress=progress)
+    return action(w, lock, progress=progress, **options)
   progress("检查运行包")
-  return action(w, lock)
+  return action(w, lock, **options)
 
 
 @dataclass(frozen=True)
@@ -200,7 +211,7 @@ class SetupResult:
   hint: str | None = None
 
 
-def _setup_operation(args, *, progress, preview, approve) -> SetupResult:
+def _setup_operation(args, *, progress, preview, approve, maintenance=None) -> SetupResult:
   """可信内部复用接口，不授予维护权限；副作用仍通过原有 guard。
 
   preview 只展示；approve 通过抛异常拒绝，不接受用户 JSON 或布尔许可。
@@ -215,15 +226,16 @@ def _setup_operation(args, *, progress, preview, approve) -> SetupResult:
   if plan.conflicts or plan.drift:
     return SetupResult(w, 4, None, "存在冲突或漂移，部署已停止。", "plan")
   approve(w, lock, candidate, plan)
+  options = {"maintenance": maintenance} if maintenance is not None else {}
   pre_sync_preflight = getattr(w.adapter, "pre_sync_preflight", None)
   if pre_sync_preflight is not None:
-    pre_sync_preflight(w)
+    pre_sync_preflight(w, **options)
   prepare_resources = getattr(w.adapter, "prepare_setup_resources", None)
   if prepare_resources is not None:
-    prepare_resources(w, lock)
+    prepare_resources(w, lock, **options)
   progress.stage("同步依赖（缺失时可能联网）", hint="doctor")
   with progress.heartbeat():
-    sync_backend(w, lock, progress.sync_stage)
+    sync_backend(w, lock, progress.sync_stage, **options)
   # 同步期间来源或目标可能改变；重新读取并比对预览，再进入 apply 的写入门禁。
   progress.stage("复核配置与部署计划", hint="plan")
   current, current_lock, current_candidate = prepared(args)
@@ -233,7 +245,7 @@ def _setup_operation(args, *, progress, preview, approve) -> SetupResult:
       or setup_plan_digest(current, current_lock, current_candidate, updated) != initial_digest):
     return SetupResult(current, 4, None, "同步期间配置或目标发生变化；请重新运行 setup。", "setup")
   progress.stage("写入部署", hint="plan")
-  result = apply_candidate(current, current_lock, current_candidate, expected_plan=updated)
+  result = apply_candidate(current, current_lock, current_candidate, expected_plan=updated, **options)
   return SetupResult(current, 0, result)
 
 

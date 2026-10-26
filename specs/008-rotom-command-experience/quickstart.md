@@ -18,7 +18,7 @@ T117 已完成对应隔离契约更新：安全官方交接能力充分、但没
 仍 active、inbox 空、journal 无记录、共享 EX 仍忙；独立新 plan 再只清理第三项。
 三项均 exit 0、idle_confirmed、termios 恢复、原 inode 租约释放、输入为零且源码未变。
 [完整证据](main-review.md#62-dsh-默认入口的精确停止验收) 不扩大为并发启动、会话恢复或维护准入。
-当前仍为 86/117，尚未合入 main。
+当前仍为 86/117；已验收的基础范围已合入 main，内部维护增量按 main-review 的独立证据推进，完整维护 CLI 尚未开放。
 
 先用完整机器/profile/run 做 dry-run，再显式提交当前 PLAN_ID；实际结果含 BATCH_ID 和 status/cancel 命令。
 默认 30 秒、范围 1–300 秒，全部所选项共用同一绝对截止时间。
@@ -35,7 +35,7 @@ T054 的精确 Linux DSH `resume --here` 保持已有准入，加载仍待确认
 
 日期：2026-10-23。状态：实施中；统一入口与严格记录层已有隔离阶段证据，整个功能未完成，DSH 当前终端恢复已有独立原生验收；T039 真实 zsh/Tab 已在本指南末尾所述的临时范围通过。
 下文区分已有候选隔离验收、旧阶段 RED 历史和未来任务，不能将规划表或隔离通过当作日常原生准入。
-本轮已从 `109e2e7` 建立承接工作树并运行相关隔离回归，采用主线 OMP `18.12.6` 锁；旧 `39a9389` 工作树及原阶段证据保留。承接阶段没有执行第三方宿主或原生验收；后续已授权的 T039 单独记账。参见 [承接记录](main-review.md#6-实施承接与隔离验证)。
+历史承接阶段从 `109e2e7` 建立工作树并运行相关隔离回归，采用当时主线 OMP `18.12.6` 锁；旧 `39a9389` 工作树及原阶段证据保留。当前整合与后续增量的基线见 main-review。承接阶段没有执行第三方宿主或原生验收；后续已授权的 T039 单独记账。参见 [承接记录](main-review.md#6-实施承接与隔离验证)。
 依据：[规格](spec.md)、[CLI 契约](contracts/cli.md)、[入口部署](contracts/entry-deployment.md)、
 [生命周期](contracts/lifecycle.md)、[数据模型](data-model.md)。
 
@@ -128,7 +128,7 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest -q -p no:cacheprovid
 Node 接线检查使用空继承环境和专用临时 HOME/XDG；上述短命令仅表示套件入口，执行时须保持隔离条件。
 默认沙箱一次 stdout 捕获异常导致超时，作为环境不足保留；通过记录来自支持执行器的最终稳定源码。
 测试自身的遗留 fake Node 子进程已按精确身份清理，未给原生 Agent 发信号；最终 fixture 用显式 finish、
-断连和有界自行退出保证该历史 fake 失败路径清理。候选恢复交接、运行中派发与记录机制已有隔离实现；T053 官方原生交接及 T054 默认恢复入口已在固定 Linux 组合通过，工作树实现尚未合入 main。停止服务、fence、人工快照与请求核验的早期候选证据保留；当前精确 DSH stop_only 已按上节独立验收，完整维护/恢复编排与其它组合仍未准入。[公开启动结果缺口](../../docs/rotom-dsh-startup-contract.md) 只限制 restored/自动继续，不再作为派发实现的硬前置。
+断连和有界自行退出保证该历史 fake 失败路径清理。候选恢复交接、运行中派发与记录机制已有隔离实现；T053 官方原生交接及 T054 默认恢复入口已在固定 Linux 组合通过，该限定范围已合入 main，整合及后续增量见 main-review。停止服务、fence、人工快照与请求核验的早期候选证据保留；当前精确 DSH stop_only 已按上节独立验收，完整维护/恢复编排与其它组合仍未准入。[公开启动结果缺口](../../docs/rotom-dsh-startup-contract.md) 只限制 restored/自动继续，不再作为派发实现的硬前置。
 
 资源身份本轮最终组合为上述两个新套件，加 `test_omp_dependencies.py`、`test_omp_runtime_foundation.py`、
 `test_rotom_runtime_observation.py`、`test_lifecycle_leases.py`，共 **186 passed**，退出 0；66/9 项包含在该总数中。

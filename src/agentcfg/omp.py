@@ -675,17 +675,20 @@ class OmpAdapter(Adapter):
     from .omp_admission import write_guard
     return write_guard(workspace, create=True)
 
-  def pre_sync_preflight(self, workspace):
+  def pre_sync_preflight(self, workspace, *, maintenance=None):
     from .omp_admission import preflight
-    preflight(workspace)
+    options = {"maintenance": maintenance} if maintenance is not None else {}
+    preflight(workspace, **options)
 
-  def prepare_setup_resources(self, workspace, lock):
+  def prepare_setup_resources(self, workspace, lock, *, maintenance=None):
     from .omp_admission import prepare
-    return prepare(workspace, lock)
+    options = {"maintenance": maintenance} if maintenance is not None else {}
+    return prepare(workspace, lock, **options)
 
-  def apply_lifecycle_guard_for(self, workspace, lock):
+  def apply_lifecycle_guard_for(self, workspace, lock, *, maintenance=None):
     from .omp_admission import apply_for
-    return apply_for(workspace, lock)
+    options = {"maintenance": maintenance} if maintenance is not None else {}
+    return apply_for(workspace, lock, **options)
 
   def validate_arguments(self, arguments):
     validate_managed_argv(arguments)

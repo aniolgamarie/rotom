@@ -274,7 +274,7 @@ def cancel_omp_launch(reservation, workspace):
 
 
 @contextmanager
-def omp_scope_write_guard(workspace):
+def omp_scope_write_guard(workspace, *, maintenance=None, stage=None):
   """只保护已登记实例和 HOME 的显式写入；不授予共享包维护或首次采用。"""
   from contextlib import ExitStack
   import os
@@ -299,7 +299,11 @@ def omp_scope_write_guard(workspace):
       domain = Domain(root)
       with domain._transaction() as state:
         resources = _verify(state, workspace, instance_fd=fd, native_home_fd=home.fd)
-        domain._unfenced(state, resources)
+        if maintenance is None:
+          domain._unfenced(state, resources)
+        else:
+          from .maintenance_execution import require_execution
+          require_execution(maintenance).check_scope(domain, state, workspace, resources, stage=stage)
         if any(entry["phase"] not in ("cancelled", "released")
             and resources.intersection(entry["resources"]) for entry in state["reservations"].values()):
           raise ValueError()

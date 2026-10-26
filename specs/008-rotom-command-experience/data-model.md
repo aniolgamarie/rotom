@@ -274,7 +274,20 @@ observe 前拒绝；全部已记录时也检查原绝对 deadline，到期或时
 原资源 key/ID、owner 引用、实例/HOME、runtime identity 和缓存路径均与当前 workspace 一致才展示脱敏预览。
 批准在锁外接受明确 True，取消/回调异常及普通准备错误保持原契约；完整摘要冻结于回调前，随后只调用一次
 原派发事务。新包/新缓存、多 profile 或无法匹配完整批次均拒绝，不按历史路径打开其它工作区。
-原首个副作用 guard 消费及后续步骤仍待接线；此接缝不执行 setup、sync、apply 或恢复，也不消费 BatchPermit。
+此审阅接缝只返回派发结果，不自行执行 setup、sync、apply 或恢复，也不消费 BatchPermit。
+
+**限定 setup 执行（部分实现）**：内部 execute_setup 消费同进程派发结果，复用原共用 setup 操作，
+仅支持同一原 Linux OMP scope/cache/runtime 及 manual 恢复。原同步 guard 在实例 EX → 状态 SH → 包 EX
+下重读完整计划并复核原部署/释放 owner/全部资源引用；Domain → owner NB 顺序下消费许可，
+原子保存 maintenance_running/dispatched，明确返回后才执行原同步主体。Domain/owner 锁不覆盖安装。
+原 apply 在实例 EX → 状态 EX 后取得包 SH，重新核对计划和原释放事实，再执行原 recover/prepare/transact；
+不另套实例或状态 EX，不在维护路径创建缺失根/锁，也不登记新资源。普通入口仍受原活动意图阻挡。
+
+原 SetupResult 原样返回，持久结果只保存 code/status 与规范摘要，不保存配置正文。成功记 maintenance_succeeded；
+同步后明确非零结果保留原 code，保守记 partial；已明确进入 running 后的业务异常记 unknown，并原样抛出。
+partial/unknown 与原 intent.phase=unknown 同笔更新，所有原资源/预留/owner 保留。结果记账失败不掩盖
+原业务异常。若首次消费后的提交响应不明，没有可信新 CAS，保留可能的 dispatch_intent/running 和已消费许可，
+给固定提示，不读回升级、不再写 unknown 或重试同步。完成响应丢失也不重跑；崩溃后的只读对账及恢复仍待实现。
 
 新预留增加 `generation`，取其成功提交后的域 revision；可信调用方可以用 `expected_revision`
 在同一短锁中拒绝过期快照。域 revision 是整个域的保守代际，任何协调写入均推进它；

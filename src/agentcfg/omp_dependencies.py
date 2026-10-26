@@ -313,7 +313,7 @@ class OmpBackend:
     return (root / "bin",)
 
   @contextmanager
-  def runtime_guard(self, workspace, identity, *, exclusive=False):
+  def runtime_guard(self, workspace, identity, *, exclusive=False, maintenance=None):
     from .resource_keys import resource_key
     from .resource_coordination import Domain, read_runtime_anchor, runtime_claim_exists
     from .resource_scopes import scope_claim_exists
@@ -322,12 +322,19 @@ class OmpBackend:
     instance = getattr(workspace, "instance", None)
     scoped = instance is not None and scope_claim_exists(instance)
     claimed = runtime_claim_exists(workspace.cache, identity)
+    if maintenance is not None:
+      from .maintenance_execution import require_execution
+      require_execution(maintenance)
+      if not scoped or not claimed:
+        raise Conflict("维护 setup 必须使用原已登记实例和运行包")
     if scoped or claimed:
       if exclusive is not True:
         raise Conflict("OMP共享资源需要合作运行登记；不能从普通共享包租约启动")
       if not claimed:
         raise Conflict("OMP实例与运行包的协调归属不完整；未执行同步")
-      with self._coordinated_sync_guard(workspace, identity) as fd:
+      guard = (self._coordinated_sync_guard(workspace, identity, maintenance=maintenance)
+        if maintenance is not None else self._coordinated_sync_guard(workspace, identity))
+      with guard as fd:
         yield fd
       return
     with Tree(workspace.cache / "leases", create=True) as tree:
@@ -360,7 +367,7 @@ class OmpBackend:
         os.close(fd)
 
   @contextmanager
-  def _coordinated_sync_guard(self, workspace, identity):
+  def _coordinated_sync_guard(self, workspace, identity, *, maintenance=None):
     """只消费已有可信新包归属；EX 后重核空闲，不创建实例、域或替代租约。"""
     from contextlib import ExitStack
     from .lifecycle import _omp_path, _omp_launch_context
@@ -381,10 +388,22 @@ class OmpBackend:
         if scoped:
           if _omp_launch_context(workspace)[0] != root:
             raise ValueError()
-          physical = stack.enter_context(_shared_file(instance, ".agentcfg-omp.lock"))
+          if maintenance is None:
+            physical = stack.enter_context(_shared_file(instance, ".agentcfg-omp.lock"))
+          else:
+            from .maintenance_release import _exclusive_file
+            target = stack.enter_context(Tree(instance))
+            physical = _exclusive_file(stack, target, ".agentcfg-omp.lock")
           home = stack.enter_context(Tree(instance / "user-home"))
           if home.fd is None:
             raise ValueError()
+        if maintenance is not None:
+          from .maintenance_execution import require_execution
+          require_execution(maintenance)
+          if not scoped:
+            raise ValueError()
+          # 原 instance → state → package 顺序；状态 SH 覆盖同步中的计划/部署核验。
+          state_fd = stack.enter_context(_shared_file(workspace.state_root, "instance.lock"))
         tree = stack.enter_context(Tree(cache / "leases"))
         if tree.fd is None:
           raise ValueError()
@@ -397,15 +416,21 @@ class OmpBackend:
           raise ValueError()
         # 协调锁只覆盖核验；从此至激活结束持续持包 EX，不在协调锁内安装或等待。
         domain = Domain(root)
-        with domain._transaction() as state:
-          if scoped:
-            resources = _verify(state, workspace, instance_fd=physical, native_home_fd=home.fd)
-            domain._unfenced(state, resources)
-          runtime = domain._runtime(state, cache, identity, fd)
-          domain._idle(state, {runtime})
+        if maintenance is None:
+          with domain._transaction() as state:
+            if scoped:
+              resources = _verify(state, workspace, instance_fd=physical, native_home_fd=home.fd)
+              domain._unfenced(state, resources)
+            runtime = domain._runtime(state, cache, identity, fd)
+            domain._idle(state, {runtime})
+        else:
+          maintenance.begin_sync(domain, workspace, identity, instance_fd=physical, state_fd=state_fd,
+            native_home_fd=home.fd, package_fd=fd)
       except Exception:
         raise Conflict("OMP共享包归属或空闲状态不能确认；保留保护，未执行同步") from None
       yield fd
+      if maintenance is not None:
+        maintenance.finish_sync()
 
   def _receipt(self, workspace, lock, identity):
     self._permission_runtime(workspace, lock)
@@ -501,13 +526,15 @@ class OmpBackend:
         os.fsync(tree.fd)
       tree.replace(name, None, expected=raw[2])
 
-  def sync(self, workspace, lock, *, progress=None):
+  def sync(self, workspace, lock, *, progress=None, maintenance=None):
     from .publication import reader_lease
     # 发布锁先于运行包锁，覆盖校验、安装和激活的完整消费期。
     with reader_lease(workspace.repository, "omp"):
+      if maintenance is not None:
+        return self._sync(workspace, lock, progress=progress, maintenance=maintenance)
       return self._sync(workspace, lock, progress=progress)
 
-  def _sync(self, workspace, lock, *, progress=None):
+  def _sync(self, workspace, lock, *, progress=None, maintenance=None):
     announce = progress or (lambda stage: None)
     announce("检查锁与运行包")
     # 从受信仓库重读，防止调用者用伪造的内存对象绕过锁完整性。
@@ -517,7 +544,9 @@ class OmpBackend:
     identity = self.runtime_identity(workspace, lock)
     self._permission_runtime(workspace, lock)
     root = self.root(workspace, identity)
-    with self.runtime_guard(workspace, identity, exclusive=True):
+    guard = (self.runtime_guard(workspace, identity, exclusive=True, maintenance=maintenance)
+      if maintenance is not None else self.runtime_guard(workspace, identity, exclusive=True))
+    with guard:
       self._recover_activation(workspace, lock, identity)
       if self.status(workspace, identity) == "installed":
         return {"status": "installed", "identity": identity}

@@ -4,13 +4,13 @@
 
 **Input**: Feature specification from `specs/008-rotom-command-experience/spec.md`
 
-**Status**: 实施中，当前 86/117。统一入口、交互/help/补全、受限会话视图和实例列表已有验收证据；DSH 官方恢复候选及待确认契约已完成隔离验证。T065/T066 的 OMP 资源协调和普通启动、T073 共用 setup 核心、T096/T101/T102 人工继续分支已独立完成。DSH 精确 stop_only 已完成默认入口原生单项与三选二验收，限 Linux managed、完整固定锁及新启动的有效 endpoint；T069/T070 的完整跨工具停止维护范围尚未完成。真实 zsh 入口/Tab 已在获授权的专用临时 HOME 和受信源码/工具链副本通过 T039 验收；T053 固定 Linux DSH 当前终端真实恢复交接已验收，T054 精确组合日常准入及普通 CLI 原生复验已完成；跨工具停止维护及原位置能力仍未验收，尚未合入 main。
+**Status**: 实施中，当前 86/117。统一入口、交互/help/补全、受限会话视图和实例列表已有验收证据；DSH 官方恢复候选及待确认契约已完成隔离验证。T065/T066 的 OMP 资源协调和普通启动、T073 共用 setup 核心、T096/T101/T102 人工继续分支已独立完成。DSH 精确 stop_only 已完成默认入口原生单项与三选二验收，限 Linux managed、完整固定锁及新启动的有效 endpoint；T069/T070 的完整跨工具停止维护范围尚未完成。真实 zsh 入口/Tab 已在获授权的专用临时 HOME 和受信源码/工具链副本通过 T039 验收；T053 固定 Linux DSH 当前终端真实恢复交接已验收，T054 精确组合日常准入及普通 CLI 原生复验已完成；已验收的统一入口和限定 DSH 停止/恢复范围已合入 main；跨工具停止维护及原位置能力仍未验收。维护 setup 已推进到同一原 Linux OMP scope/cache/runtime 的内部批准、原门禁执行与结果记账，完整 CLI 和崩溃对账仍未开放，详见 main-review 最新增量。
 Spec Kit 的逻辑功能标签为 `008-rotom-command-experience`，不表示 Git 分支发生切换。
-设计源码基线 `17bbacd6`；原实施工作树基于 `39a9389` 并完整保留。本轮从最新 main `109e2e7` 建立独立承接工作树，迁移本功能差异及已审阅设计与宪章修订。
-原 `design/rotom-cli-entry` 工作树保留；实施前重新核对共享绑定、Pi 启动契约与文件所有权。
-本轮修订前本地 `main` 已推进到 `109e2e7`，纳入 OMP `18.12.6`，相对上轮 fetch 的
-`origin/main` `467d5cd` 领先 9 个提交、落后 0。当前 worktree 为 `.cache/worktrees/rotom-command-experience-main-20261023`，直接继承 main 的 OMP `18.12.6` 锁；没有重写旧锁或修改上游。
-T001 已记录基线承接、文件所有权及受影响验证范围；旧证据与本轮实际回归分开保留。
+历史设计源码基线 `17bbacd6`；原实施工作树基于 `39a9389` 并完整保留，随后曾从 main `109e2e7` 建立独立承接工作树。已验收范围后来从新主线重放整合；当前内部执行增量基于 main `1fcea403`，各阶段候选与证据见 main-review，不把旧基线当作当前入口。
+历史承接记录保留了 `design/rotom-cli-entry` 及原候选，要求实施前核对共享绑定、Pi 启动契约与文件所有权。
+当时本地 `main` 为 `109e2e7`，纳入 OMP `18.12.6`，相对该次 fetch 的 `origin/main` `467d5cd`
+领先 9 个提交、落后 0；承接工作树为 `.cache/worktrees/rotom-command-experience-main-20261023`，直接继承当时主线锁。
+这些值属于历史快照；T001 与后续 main-review 分别记录各轮基线、文件所有权和实际验收，没有重写旧锁或修改上游。
 精确源码事实、范围与依赖调整见 [主线核对与规划修订](main-review.md)。
 
 ## Summary
@@ -214,7 +214,7 @@ Pi 保留原有的可靠身份前置，不能借新路径开放未支持平台�
 OMP 同一缓存运行包可由多个实例共享，单实例 owner 检查无法覆盖其他实例的 unknown；
 候选已将同域 instance/HOME/runtime 的完整引用接入全新 Linux setup/apply/run 和只读查询。
 旧资源首次采用、部分现场、非 Linux 和自动维护不因此准入；T065/T066 的资源协调及普通接线已独立验收，
-T062/T063 的完整维护集成仍未完成，尚未合入 main。
+T062/T063 的完整维护集成仍未完成；已验收的基础范围已合入 main，历史候选与后续内部维护增量分别见 main-review。
 该条件独立于已收口的 T044/T045/US5，不把只读查询或新资源候选验收扩成全局历史证明。
 保留原有 OMP cache-only sync 和物理/包租约语义，不提前增加全局扫描或凭单个包 EX 声称完整释放。
 TUI 精确 commit 已取得；显式非空目标进入严格 resume，但同进程已有 agent 会走独立复用分支。

@@ -25,9 +25,14 @@ def _admit(select):
     yield admitted
 
 
-def preflight(workspace):
+def preflight(workspace, *, maintenance=None):
   try:
-    if scopes.scope_claim_exists(workspace.instance):
+    if maintenance is not None:
+      if not scopes.scope_claim_exists(workspace.instance):
+        raise Conflict(_ERROR)
+      with omp_scope_write_guard(workspace, maintenance=maintenance, stage="preflight"):
+        pass
+    elif scopes.scope_claim_exists(workspace.instance):
       with omp_scope_write_guard(workspace):
         pass
     else:
@@ -44,11 +49,14 @@ def _require_legacy(workspace, identity):
     raise Conflict(_ERROR)
 
 
-def prepare(workspace, lock):
+def prepare(workspace, lock, *, maintenance=None):
   try:
     identity = runtime.runtime_identity(workspace, lock)
+    if maintenance is not None and sys.platform != "linux":
+      raise Conflict(_ERROR)
     if sys.platform == "linux":
-      omp_setup.prepare_setup(workspace, identity)
+      options = {"maintenance": maintenance} if maintenance is not None else {}
+      omp_setup.prepare_setup(workspace, identity, **options)
     else:
       # 非 Linux 不登记；已有合作证据不能降级为旧入口。
       _require_legacy(workspace, identity)
@@ -64,11 +72,14 @@ def write_guard(workspace, *, create=False):
     else omp_identity.lifecycle_guard(workspace, create=create))
 
 
-def apply_for(workspace, lock):
+def apply_for(workspace, lock, *, maintenance=None):
   def select():
     identity = runtime.runtime_identity(workspace, lock)
+    if maintenance is not None and sys.platform != "linux":
+      raise Conflict(_ERROR)
     if sys.platform == "linux":
-      return omp_setup.apply_guard(workspace, identity)
+      options = {"maintenance": maintenance} if maintenance is not None else {}
+      return omp_setup.apply_guard(workspace, identity, **options)
     _require_legacy(workspace, identity)
     return omp_identity.lifecycle_guard(workspace, create=True)
   return _admit(select)
