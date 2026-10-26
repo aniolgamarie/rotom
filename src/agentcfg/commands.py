@@ -183,26 +183,34 @@ def prepare_launch(workspace, launch):
   workspace.adapter.prepare_runtime(workspace, root)
 
 
-def sync_backend(w, lock, progress, proxy=None, *, maintenance=None):
-  """可选进度/代理/维护准入能力；旧扩展后端继续使用原有双参数 sync 契约。"""
-  action = w.backend.sync
+def _keyword_capability(action, name, *, variadic=True):
+  """显式同名仅位置参数不能靠 **kwargs 冒充可消费的关键字能力。"""
   try:
     parameters = inspect.signature(action).parameters
   except (TypeError, ValueError):
-    parameters = {}
-  var_keyword = any(item.kind is inspect.Parameter.VAR_KEYWORD for item in parameters.values())
+    return False
+  parameter = parameters.get(name)
+  if parameter is not None:
+    return parameter.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
+  return variadic and any(item.kind is inspect.Parameter.VAR_KEYWORD for item in parameters.values())
+
+
+def sync_backend(w, lock, progress, proxy=None, *, maintenance=None):
+  """可选进度/代理/维护准入能力；旧扩展后端继续使用原有双参数 sync 契约。"""
+  action = w.backend.sync
   options = {}
   if maintenance is not None:
-    parameter = parameters.get("maintenance")
-    if parameter is None or parameter.kind not in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY):
+    if not _keyword_capability(action, "maintenance", variadic=False):
       raise Conflict("维护 setup 需要后端显式支持维护同步准入")
     options["maintenance"] = maintenance
-  if "progress" in parameters or var_keyword:
+  if proxy is not None:
+    if not _keyword_capability(action, "proxy"):
+      raise ConfigError("sync-proxy-unsupported")
+    options["proxy"] = proxy
+  if _keyword_capability(action, "progress"):
     options["progress"] = progress
   else:
     progress("检查运行包")
-  if proxy is not None and ("proxy" in parameters or var_keyword):
-    options["proxy"] = proxy
   return action(w, lock, **options)
 
 
@@ -296,21 +304,15 @@ def cmd_lock(args):
     return 0
   w = workspace(args)
   from .execution_environment import selected_proxy
-  _, proxy = selected_proxy(w.resolved.data["machine"], proxy_name)
+  # 构建代理须当次明确选择；普通会话的持久默认不改变安装器行为。
+  proxy = selected_proxy(w.resolved.data["machine"], proxy_name)[1] if proxy_name is not None else None
   resolve_for = getattr(w.backend, "resolve_lock_for", None)
   action = resolve_for if resolve_for is not None else w.backend.resolve_lock
   target = w if resolve_for is not None else w.repository
   if proxy is None:
     action(target)
     return output(w, "lock", {"locked": True}, args=args)
-  import inspect
-  try:
-    parameters = inspect.signature(action).parameters
-  except (TypeError, ValueError):
-    parameters = {}
-  accepts = "proxy" in parameters or any(
-    parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in parameters.values())
-  if not accepts:
+  if not _keyword_capability(action, "proxy"):
     from .schema import ConfigError
     raise ConfigError("lock-proxy-unsupported")
   action(target, proxy=proxy)
@@ -322,11 +324,13 @@ def cmd_sync(args):
   progress.stage("校验配置与锁", hint="validate")
   w = workspace(args)
   from .execution_environment import selected_proxy
-  _, proxy = selected_proxy(w.resolved.data["machine"], getattr(args, "proxy", None))
+  proxy_name = getattr(args, "proxy", None)
+  proxy = selected_proxy(w.resolved.data["machine"], proxy_name)[1] if proxy_name is not None else None
   lock = w.backend.read_lock(w.repository)
   progress.stage("同步依赖", hint="doctor")
   with progress.heartbeat():
-    result = sync_backend(w, lock, progress.sync_stage, proxy=proxy)
+    options = {"proxy": proxy} if proxy is not None else {}
+    result = sync_backend(w, lock, progress.sync_stage, **options)
   return output(w, "sync", result, args=args)
 
 

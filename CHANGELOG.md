@@ -22,7 +22,7 @@ Notable user-visible changes are recorded here. Unreleased entries describe repo
 
 ### Fixed
 
-- `lock` and `sync` for DSH/Pi can reach the npm registry through a named proxy: pass `--proxy <name>` to resolve `[machine.proxies.<name>]` into npm-native `npm_config_proxy`/`npm_config_https_proxy`/`npm_config_noproxy` for the build environment only. Caller proxy variables remain filtered out of dependency builds, the session environment is unchanged, and OMP lock resolution (no npm) rejects the flag with `lock-proxy-unsupported`.
+- `lock` and `sync` for DSH/Pi can reach the npm registry through an explicitly selected named proxy: pass `--proxy <name>` to resolve `[machine.proxies.<name>]` into npm-native `npm_config_proxy`/`npm_config_https_proxy`/`npm_config_noproxy` for the build environment only. Caller proxy variables and the ordinary-session proxy default are not inherited by these operations. Unsupported backends, including OMP, reject an explicit proxy with `lock-proxy-unsupported` or `sync-proxy-unsupported`. Calls without a proxy retain the existing narrow backend contract; proxy support cannot substitute for explicit maintenance admission. Setup keeps its existing build-environment and approval rules.
 - DSH development subprocesses and stdio MCP can use caller HOME/XDG while TUI preferences remain isolated. termcfg preserves explicit NVM_DIR and selects private hooks through XDG with conflict diagnostics.
 - Pi upgrade previews read the persisted manifest baseline, allowing `plan` to run after deployment while rejecting corrupt saved manifests.
 - Malformed frozen pnpm importer, dependency, and package-name structures now produce a configuration error instead of an uncaught attribute error.

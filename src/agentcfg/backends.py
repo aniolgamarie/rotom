@@ -38,7 +38,8 @@ class DshBackend:
 
   def sync(self, workspace, lock, *, progress=None, proxy=None):
     from .dependencies import sync
-    return sync(workspace, lock, self.adapter_id, progress=progress, proxy=proxy)
+    options = {"proxy": proxy} if proxy is not None else {}
+    return sync(workspace, lock, self.adapter_id, progress=progress, **options)
 
   def root(self, workspace, identity):
     from .paths import safe_id

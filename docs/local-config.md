@@ -211,6 +211,22 @@ The precedence is caller defaults, machine inherit/values/editor, machine unset,
 
 One-shot options accept names only. An explicit missing inherited variable, repeated/conflicting options, unsupported operation or protected variable fails before resolving credentials or starting the host. One-shot inherit can restore a machine-unset variable from the caller. Options after `--` still belong to the native program. Installers and restricted workers do not acquire these ordinary-session overrides.
 
+DSH and Pi dependency builds have a separate, explicit selection: `lock --proxy NAME` and `sync --proxy NAME`
+read the named declaration and supply npm's `npm_config_proxy`, `npm_config_https_proxy`, and optional
+`npm_config_noproxy`. These commands do not inherit `machine.environment.proxy` or caller proxy variables.
+The selection is not saved to the lock, deployment, or session. Unsupported backends, including OMP,
+reject an explicit build proxy instead of proceeding without it; omitting the option preserves their existing behavior.
+
+```sh
+./rotom agent --machine workstation --profile pi-base sync --proxy work
+./agentcfg --machine workstation --profile pi-base lock --agent pi --proxy work
+```
+
+`setup` and maintenance setup do not add a proxy option or inherit the ordinary-session default. When
+dependencies need this proxy, first run `sync --proxy NAME` for the same explicit scope, then review and run
+`setup`. Active-instance, ownership, pending-recovery, and maintenance-approval checks still apply; selecting
+a proxy does not grant permission to update an active instance or skip deployment review.
+
 Each launch warns when caller inputs are omitted or overridden, including intentional changes. Ordinary names and reason categories are bounded; protected inputs are counted without reading/comparing their values. `doctor --environment` shows a value-free preview of the deployed host contract and pending declaration changes, not proof of every downstream process. No values or hashes are logged.
 
 Environment tables and one-shot options cannot override managed HOME/XDG, DSH_/AGENTCFG_ prefixes, NODE_OPTIONS/NODE_PATH, credential destinations or startup/preload controls. Pi Cursor proxy clearing and other adapter restrictions remain enforced; an incompatible explicit override is rejected rather than silently undone. Keep secrets out of ordinary environment settings and use the credential workflow. Machine editor overrides EDITOR/VISUAL before explicit unset.

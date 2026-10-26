@@ -48,7 +48,9 @@ class _CapableBackend:
 
 def test_sync_backend_threads_proxy_only_to_capable_backends():
   legacy = SimpleNamespace(backend=_LegacyBackend())
-  assert sync_backend(legacy, object(), lambda stage: None, proxy=PROXY) == {"installed": True}
+  with pytest.raises(ConfigError, match="sync-proxy-unsupported"):
+    sync_backend(legacy, object(), lambda stage: None, proxy=PROXY)
+  assert sync_backend(legacy, object(), lambda stage: None) == {"installed": True}
   capable = SimpleNamespace(backend=_CapableBackend())
   assert sync_backend(capable, object(), lambda stage: None, proxy=PROXY) == {"proxy": PROXY, "progress": True}
   assert sync_backend(capable, object(), lambda stage: None) == {"proxy": None, "progress": True}
