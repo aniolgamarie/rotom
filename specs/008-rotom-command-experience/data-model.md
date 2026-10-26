@@ -302,7 +302,15 @@ target-unavailable；有摘要时持原实例/状态/包 EX，在内容读取前
 pending 存在只报告 journal-pending；无 pending 时核对 current 及受保护投影，报告 target-matches/target-differs；
 现场无法确认报告 unconfirmed。结果返回前释放锁；匹配只描述当时部署契约和受保护投影，不证明整个运行包、
 历史执行成功或恢复安全，不改结果/意图、不清 unknown、不发行许可、不重试或恢复 journal。
-历史未知结果的持久对账、journal 恢复、批量恢复及 CLI 接线仍待实现。
+历史未知结果的持久对账、journal 恢复、批量恢复及完整维护 CLI 接线仍待实现。
+
+只读 `status_setup` 将明确 Linux OMP scope 的现存 setup 批次与上述现场观察组合；CLI 仅在显式 profile 的
+公开声明为 OMP 时进入此路径，不自动扫描批次。响应保留原 operation_result 与独立查询 exit_code，输出
+batch/revision、intent_generation/phase、逐项 stop/restore、dispatch、review_required、observation 及精确 status 命令。
+protected 仅表示本批资源意图是否仍有效，不声明全局资源空闲；continue_status 固定 not_sent。
+原明确非零维护退出码优先保留；completed 且当前目标和资源核验通过、无 pending 才返回 0。
+初始未派发且无结果的 cancelled 在正常 no-saved-target 观察下返回 0，只确认本批取消，不证明停止或恢复。
+其它状态返回 4，包括原维护成功但仍待交接、目标不匹配或不能确认。查询不推进历史、解除保护或授予控制能力。
 
 **明确成功后的人工交接（部分实现）**：intent 新增 completed，只允许已保存 setup 成功、退出码 0、
 结果摘要及两个计划/目标摘要，且完整批次均已退出/释放、原计划为 manual、各项 restore_phase 为 manual、

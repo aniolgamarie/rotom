@@ -279,6 +279,12 @@ pending journal 只报告存在，不解析/修复；current 与受保护投影�
 改成成功，不清意图/预留或签发恢复许可。竞争、损坏或身份变化报告 unconfirmed；控制中断和原配置错误原样传播。
 该观察不验证完整官方运行包，也不证明历史 dispatch 是否执行；后续持久对账与恢复必须独立处理。
 
+显式 OMP profile 的 maintenance status 可只读查询同 scope 现存 setup 批次。命令保留原结果/退出码，
+分别展示现场观察、人工恢复清单和本批意图保护；manual 不能显示成 restored，continue 固定 not_sent。
+原非零维护码优先保留；已完成人工交接且当前目标/资源匹配、无 pending 才返回 0；原成功待交接或任何不确定仍为 4。
+初始未派发即取消的正常无目标观察可返回 0，仅表示取消；异常观察仍为 4。查询不写记录、不恢复 journal，
+不提供 execute/restore/cancel 的后续执行建议，也不把缺失记录初始化为空批次。
+
 普通 setup 在展示/批准回调前冻结真实计划摘要，同步后从重新准备的工作区与计划复算。
 摘要包括完整 current/changes/drift/conflicts、目标 binding 和实例/状态/缓存根、锁与候选身份；
 即使公共脱敏计数相同，真实内容或目标变化也返回 4，不进入 apply。摘要不作为公开诊断，

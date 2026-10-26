@@ -128,6 +128,14 @@ To stop exact supported runs, replace these fictional scope/run values, `PLAN_ID
 
 The whole selection shares one deadline: 30 seconds by default, 1–300 allowed. Unknown or expired execution returns 4 with the batch preserved; requests are never automatically resent or escalated to force. Status is read-only. Cancel handles only unposted active items or reconciles an already confirmed close; it cannot undo an uncertain dispatch. Saved session details stay historical and do not authorize automatic restore or continuation. See command `--help` and the [default-stop acceptance](specs/008-rotom-command-experience/main-review.md#62-dsh-默认入口的精确停止验收).
 
+Linux OMP setup batches also have a read-only status route. It requires an existing batch and an explicit public profile whose declared tool is `omp`; the name prefix does not select the tool. Use the selected local file or machine path; the query does not discover batches, infer a historical profile, or scan other machines. Without an explicit profile, status retains the DSH route. Replace `BATCH_ID` with the existing full 32-character lowercase hexadecimal ID:
+
+```sh
+./rotom --no-input agent --local /path/to/machine.toml --profile omp-default maintenance status --batch BATCH_ID --format json
+```
+
+The OMP JSON preserves the original `operation_result` separately from the query's `exit_code`. `protected` describes only this batch's resource intent, not global resource availability. A successful operation awaiting handoff still returns 4; completed handoff with the current target and resources verified returns 0. Unknown or pending observations return 4, and an existing nonzero operation result keeps its code. A normally observed batch cancelled before any dispatch returns 0 only to report cancellation; an abnormal observation still returns 4. `manual` does not mean the session has resumed, and `continue_status` stays `not_sent`. Output supports `auto`, `human`, and `json`; its only next command is the exact status query. OMP maintenance `stop`, `execute`, `restore`, and `cancel` remain unavailable. The CLI change passed 336 isolated checks; a later fixture wording correction passed its 21 checks separately, without adding those counts or claiming native validation. Feature progress remains 86/117.
+
 ## What Rotom manages
 
 - Shared model and provider references, with independent credentials, protocols, routes, and billing.

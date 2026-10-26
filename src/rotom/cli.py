@@ -85,11 +85,11 @@ def _future_agent(parser):
   stop.add_argument("--dry-run", action="store_true")
   stop.add_argument("--plan-id")
   stop.add_argument("--wait-seconds", type=_wait_seconds, default=30)
-  maintenance = groups.add_parser("maintenance", help="查询或取消普通停止批次；完整维护与批量恢复尚未准入")
+  maintenance = groups.add_parser("maintenance", help="查询普通停止或显式 Linux OMP 维护批次；完整维护与批量恢复尚未准入")
   commands = maintenance.add_subparsers(dest="maintenance_command", required=True)
   for name in ("plan", "stop", "execute", "restore", "status", "cancel"):
     child = commands.add_parser(name, help=("只读 setup 计划；实际维护尚未准入" if name == "plan"
-      else "查询普通停止批次" if name == "status" else "取消尚未投递的普通停止项，或核对原收尾" if name == "cancel"
+      else "只读查询普通停止或显式 --profile 的 Linux OMP 维护批次，无写入能力" if name == "status" else "取消尚未投递的普通停止项，或核对原收尾" if name == "cancel"
       else "维护 " + name + "；当前能力待准入"))
     if name == "plan":
       targets = child.add_mutually_exclusive_group(required=True)
@@ -341,7 +341,7 @@ def command_effects(path):
     return ("read:selected-owner-records-and-deployed-layout-for-plan", "capability:stop-maintenance-not-admitted",
       "network:none", "write:none", "control:none")
   if path == ("agent", "maintenance", "status"):
-    return ("read:explicit-dsh-stop-batch", "network:none", "write:none", "control:none")
+    return ("read:explicit-dsh-stop-or-linux-omp-setup-batch", "network:none", "write:none", "control:none")
   if path == ("agent", "maintenance", "cancel"):
     return ("read:explicit-dsh-stop-batch", "network:none", "write:verified-stop-close", "control:none")
   if path == ("resume",):
@@ -458,7 +458,9 @@ def _configure_static_help(parser):
     if path in (("agent", "instances", "list"), ("agent", "instances", "stop"), ("agent", "maintenance", "plan")):
       lines.append("版本：deployment 是启动时配置/部署组合摘要，runtime 是锁定运行包身份；旧记录缺失时为 unknown，不按当前配置补填。版本相同不表示进程或资源已释放。")
     if path in (("agent", "maintenance", "status"), ("agent", "maintenance", "cancel")):
-      lines.append("--batch 使用停止返回的完整32位小写十六进制ID。status只读；cancel只解除已确认退出或尚未投递的活动项，已投递/unknown不强行清除。写入后响应丢失须按原收尾事实对账；不重发停止或自动恢复。")
+      lines.append("--batch 使用已保存批次的完整32位小写十六进制ID。status只读；DSH cancel只解除已确认退出或尚未投递的活动项，已投递/unknown不强行清除。写入后响应丢失须按原收尾事实对账；不重发停止或自动恢复。")
+    if path == ("agent", "maintenance", "status"):
+      lines.append("Linux OMP 只读维护查询须显式 --profile 与 --batch；按公开 profile 声明识别工具，不自动发现批次或扫描机器。沿所选 --local/--machine 读取，无写入、完成、恢复、取消或执行能力；人工恢复状态不等于会话已恢复，未发送继续。")
     if path == ("work", "worktree", "create"):
       lines.append("条件必填：--new-branch需要--base；--existing-branch禁止--base；创建与进入分别接受。")
     if path == ("_complete",):
@@ -868,6 +870,10 @@ def dispatch(invocation, args):
   if path == ("agent", "instances", "stop"):
     return dispatch_stop_plan(invocation, args)
   if path in (("agent", "maintenance", "status"), ("agent", "maintenance", "cancel")):
+    scope = invocation.context.scope
+    if (path[-1] == "status" and "profile" in invocation.context.explicit_fields
+        and scope.profile is not None and _profile_tool(scope.profile) == "omp"):
+      return dispatch_setup_maintenance_status(invocation, args)
     return dispatch_stop_status(invocation, args)
   if path == ("agent", "maintenance", "plan") and args.operation is not None:
     if not args.run:
@@ -1109,6 +1115,49 @@ def render_stop_result(result, *, output="auto"):
     print(_text("查询：" + shlex.join(value["next_commands"]["status"])))
     if value["status"] not in ("stopped", "cancelled"):
       print(_text("仅未投递的活动项可取消：" + shlex.join(value["next_commands"]["cancel"])))
+
+
+def render_setup_maintenance_status(result, *, output="auto"):
+  from agentcfg.presentation import _text
+  import shlex
+  value = dict(result)
+  exact = value["scope"]
+  status = ["rotom", "agent", "--local", exact["local"], "--profile", exact["profile"],
+    "maintenance", "status", "--batch", value["batch_id"]]
+  value["next_commands"] = {"status": status}
+  if output == "json" or output == "auto" and not sys.stdout.isatty():
+    print(json.dumps(value, ensure_ascii=False, sort_keys=True))
+  else:
+    def line(text): print(_text(text))
+    line(f"OMP setup 维护批次 {value['batch_id']}（只读）")
+    line(f"revision={value['revision']} intent_generation={value['intent_generation']} "
+      f"intent={value['intent_phase']} phase={value['phase']}")
+    line(f"scope: local={exact['local']} profile={exact['profile']} agent={exact['agent']}")
+    original = value["operation_result"]
+    line(f"operation={value['operation']} operation_result={original['status'] if original else 'not_recorded'} "
+      f"exit_code={original['exit_code'] if original else 'unknown'}")
+    line(f"maintenance_dispatch={value['maintenance_dispatch']['state']} review_required={value['review_required']} "
+      f"本批资源意图保护={value['protected']} continue_status={value['continue_status']}")
+    for item in value["items"]:
+      line(f"  run={item['run_id']} stop={item['stop_phase']} restore={item['restore_phase']}")
+    observed = value["observation"]
+    line(f"target_state={observed['target_state']} resources_checked={observed['resources_checked']} "
+      f"pending_journal={observed['pending_journal']} reason={observed['reason']}")
+    line("只读查询：" + shlex.join(status))
+  print(_text("rotom: 仅只读观察；人工恢复状态不等于会话已恢复，未发送继续。"), file=sys.stderr)
+
+
+def dispatch_setup_maintenance_status(invocation, args):
+  from types import SimpleNamespace
+  from agentcfg.cli import local_path
+  from agentcfg.paths import xdg_config_home
+  from agentcfg.maintenance_status import status_setup
+  scope = invocation.context.scope
+  local = local_path(scope.local) if scope.local is not None else (
+    xdg_config_home() / "agentcfg" / "machines" / ((scope.machine or "default") + ".toml"))
+  result = status_setup(SimpleNamespace(local=local, profile=scope.profile, agent="omp"), args.batch)
+  render_setup_maintenance_status(result, output=args.format)
+  return result["exit_code"]
 
 
 def dispatch_stop_status(invocation, args):

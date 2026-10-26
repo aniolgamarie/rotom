@@ -18,11 +18,11 @@ T117 已完成对应隔离契约更新：安全官方交接能力充分、但没
 仍 active、inbox 空、journal 无记录、共享 EX 仍忙；独立新 plan 再只清理第三项。
 三项均 exit 0、idle_confirmed、termios 恢复、原 inode 租约释放、输入为零且源码未变。
 [完整证据](main-review.md#62-dsh-默认入口的精确停止验收) 不扩大为并发启动、会话恢复或维护准入。
-当前仍为 86/117；已验收的基础范围已合入 main，内部维护增量按 main-review 的独立证据推进，完整维护 CLI 尚未开放。
+当前仍为 86/117；已验收的基础范围已合入 main，内部维护增量按 main-review 的独立证据推进，完整维护控制 CLI 尚未开放。
 
 内部维护已保存首次同步前的目标部署摘要，并提供只读现场观察，见[第 72 节](main-review.md#72-目标部署绑定与只读现场观察)。
 隔离检查包括目标契约、apply 后的命名锁/owner/资源复核，以及只读观察的竞争、pending 和结果不升级。
-观察匹配不证明历史执行成功，不清保护或代替 journal 恢复；这不新增可用于日常机器的维护命令。
+观察匹配不证明历史执行成功，不清保护或代替 journal 恢复；内部观察本身不授予维护控制能力，当前只读 CLI 范围见下文。
 
 明确成功后的内部人工交接另见[第 73 节](main-review.md#73-成功维护收尾与人工恢复交接)：需要独立批准和新一轮完整现场核验。
 交接只结束本批资源意图，保留人工待恢复清单和原维护结果，不执行恢复。未知、部分成功、pending 和目标不匹配仍拒绝。
@@ -31,7 +31,7 @@ T117 已完成对应隔离契约更新：安全官方交接能力充分、但没
 默认 30 秒、范围 1–300 秒，全部所选项共用同一绝对截止时间。
 实际停止等待未确定或到期返回 4，保留 batch/快照/派发事实，不重发、不强杀、不自动恢复或继续。
 status 只读；cancel 仅取消尚未投递项或对已确证停止项收尾对账，不能清除 unknown 派发。
-setup/maintenance execute/restore、Pi/OMP、其它平台、旧 run 和 force 仍未准入；
+setup/maintenance execute/restore、Pi/OMP 的停止与自动恢复、其它平台、旧 run 和 force 仍未准入；
 T054 的精确 Linux DSH `resume --here` 保持已有准入，加载仍待确认。
 
 ### 历史原生阶段与恢复证据
@@ -45,6 +45,27 @@ T054 的精确 Linux DSH `resume --here` 保持已有准入，加载仍待确认
 历史承接阶段从 `109e2e7` 建立工作树并运行相关隔离回归，采用当时主线 OMP `18.12.6` 锁；旧 `39a9389` 工作树及原阶段证据保留。当前整合与后续增量的基线见 main-review。承接阶段没有执行第三方宿主或原生验收；后续已授权的 T039 单独记账。参见 [承接记录](main-review.md#6-实施承接与隔离验证)。
 依据：[规格](spec.md)、[CLI 契约](contracts/cli.md)、[入口部署](contracts/entry-deployment.md)、
 [生命周期](contracts/lifecycle.md)、[数据模型](data-model.md)。
+
+## 当前 Linux OMP 只读维护状态（2026-10-26）
+
+基于 main `18c342f` 的增量只开放现存 setup batch 的 status。显式公开 profile 的工具声明必须为 `omp`，
+不按名称前缀识别，也不自动发现历史 batch/profile；local 或机器配置仍沿所选路径读取，不扫描其它机器。
+没有显式 profile 继续走 DSH 原 status。将下例的 `BATCH_ID` 换为现存完整 32 位小写十六进制 ID：
+
+```sh
+./rotom --no-input agent --local /path/to/machine.toml --profile omp-default maintenance status --batch BATCH_ID --format json
+```
+
+支持 `auto/human/json`，不读 stdin、不写入、不启动宿主。JSON 将原 `operation_result` 与查询 `exit_code` 分开，
+`protected` 只说明本批资源意图；当前资源核验看 observation，不能据此声称全局空闲。
+原操作成功但未交接仍返回 4；completed 且当前目标/资源核验通过返回 0；unknown/pending 返回 4，
+既有非零操作结果保留原退出码。初始未派发即取消且观察正常返回 0 仅说明取消，异常观察仍为 4。
+逐项 manual 不等于会话已恢复，`continue_status=not_sent`。后续命令只有同一精确范围的 status；
+OMP maintenance stop/execute/restore/cancel 尚未准入，本命令也不创建批次或完成交接。
+
+CLI/DSH 控制回归及静态 help/parser 的稳定代码验收为 **336 passed**；fixture 对齐真实
+`target-matches` 拼写后，新 CLI suite 为 **21 passed**。两轮有重叠，不累加，不作为宿主原生验证。
+T077/T078 仅部分推进，仍为 **86/117**。
 
 ## 当前可执行的文档核查
 
@@ -171,6 +192,7 @@ Node 接线检查使用空继承环境和专用临时 HOME/XDG；上述短命令
 | `./rotom --no-input agent --machine workstation --profile dsh-default maintenance execute --batch BATCH_ID` | 未准入，当前返回 5；停止完成不代替 setup 批准或维护物理门禁 |
 | `./rotom --no-input agent --machine workstation --profile dsh-default maintenance restore --batch BATCH_ID --wait-seconds 1` | 未准入，当前返回 5；不会自动恢复或发送继续 |
 | `./rotom --no-input agent --machine workstation --profile dsh-default maintenance status --batch BATCH_ID --format json` | 只读保存的目标、版本、历史 session 和当前请求/派发状态，不重发；返回完整 batch 和后续命令 |
+| `./rotom --no-input agent --local /path/to/machine.toml --profile omp-default maintenance status --batch BATCH_ID --format json` | 现存 Linux OMP setup 批次只读查询；原操作结果与查询退出码分离，不创建批次、不清保护、不恢复 |
 | `./rotom --no-input agent --machine workstation --profile dsh-default maintenance cancel --batch BATCH_ID` | 只取消未投递活动项或对已确证停止的 close 收尾；unknown 保留保护，不重发 |
 
 交互测试还须覆盖根和各命令组导航、编号兜底、自由文本输入、只有一个候选仍不替代批准、

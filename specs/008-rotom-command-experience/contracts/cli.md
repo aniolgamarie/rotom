@@ -156,7 +156,8 @@ rotom --no-input term --machine workstation sync --component zsh
 | `agent maintenance stop` | E operation；E/T run 集合；A plan-id；D wait | 复算目标/资源快照；接受后才持久化批次 |
 | `agent maintenance execute` | T batch；A 需要重审时的 plan-id/原操作批准 | 退出与资源释放门禁；只派发已审阅操作 |
 | `agent maintenance restore` | T batch；E 已接受位置；D wait | 同日常恢复身份/writer 门禁；多实例不共用 stdin |
-| `agent maintenance status`、`agent maintenance cancel` | T batch；D scope | status 只读；cancel 先对账，不抹除已发生事实 |
+| `agent maintenance status` | T 现存 batch；D scope/format；OMP 须显式 profile | DSH 原查询；Linux OMP 仅按公开 profile 的工具声明进入只读查询 |
+| `agent maintenance cancel` | T batch；D scope | 保持 DSH 原收尾对账，不抹除已发生事实；未开放 OMP 取消 |
 
 `instances`、`maintenance` 及全部嵌套命令组无子命令时有该层导航；能力未准入的项须标限制。
 `_complete` 是唯一内部叶子，亦须注册静态 help、参数 schema 与零副作用策略。
@@ -222,6 +223,23 @@ operation（维护时）和 plan ID，复核后才能接受；不能仅拿摘要
 非交互实际停止缺 plan-id 先返回 2；显式 plan-id 与当前计划不符返回 4；匹配后仍只展示计划并返回 5，
 不询问批准、不写停止意图或发送信号。只读预览成功返回 0，即使 readiness=blocked。
 `maintenance plan --batch` 和其它执行叶子仍未准入，返回 5；不能把计划可查视作维护已可执行。
+Linux OMP 的 `maintenance status` 已接通只读 setup 批次查询：必须提供现存 `--batch` 和显式
+`--profile`，由公开 profile 声明的工具为 `omp` 决定路由，不按名称前缀或 `scope.agent` 猜测。
+沿原 `--local` 或所选机器配置路径读取，不扫描其它机器、历史路径或自动发现批次/profile；
+没有显式 profile 时仍走原 DSH 查询。OMP 的 stop/execute/restore/cancel 均未开放，status 不调用它们。
+
+```sh
+./rotom --no-input agent --local /path/to/machine.toml --profile omp-default maintenance status --batch BATCH_ID --format json
+```
+
+`BATCH_ID` 须替换为现存的完整 32 位小写十六进制 ID。`auto/human/json` 都不读 stdin、
+不写入或控制宿主；JSON 的 stdout 只有一个对象，限制说明进入 stderr，human 转义终端控制字符。
+输出保留原 `operation_result` 与独立的查询 `exit_code`、逐项 stop/restore 和现场 observation；
+`protected` 只表示本批资源意图是否仍阻挡，不证明全局资源空闲。原维护成功但尚未交接返回 4；
+completed 且当前目标/资源核验通过返回 0；unknown/pending 返回 4，既有非零 operation result 保留原码。
+初始未派发即取消且正常只读观察返回 0 仅表示取消，异常观察仍为 4。manual 不表示已恢复，
+`continue_status=not_sent`；`next_commands` 只给同一精确 local/profile/batch 的 status argv。
+
 其它原有命令仍可独立调用；扩展维护操作须单独完成资源闭包与恢复审查。
 控制等待 `--wait-seconds` 默认 30，范围 1–300；整个所选集合共享一个阶段的绝对单调 deadline，
 不按 run 重置。耗尽返回逐项事实和下一步，不强杀、不自动进入 execute/restore。
