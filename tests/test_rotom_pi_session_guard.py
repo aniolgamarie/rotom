@@ -186,15 +186,20 @@ def test_ambiguous_or_incomplete_arguments_fail_with_fixed_session_error(case,ar
 
 
 @pytest.mark.parametrize("inline", [False,True])
-def test_exact_session_argument_is_mapped_to_original_path_and_leased_before_yield(case,inline):
+@pytest.mark.parametrize("suffix", [(), ("--", "--session=literal-prompt")])
+def test_exact_session_argument_is_mapped_to_original_path_and_leased_before_yield(case,inline,suffix):
   path=header(case)
-  args=("--session="+SESSION,) if inline else ("--session",SESSION)
+  args=(("--session="+SESSION,) if inline else ("--session",SESSION))+suffix
   spec=LaunchSpec(("node","synthetic",*args),case.store.cwd,"a"*64,())
   (case.ws.state_root / "pi-session-guards" / (RUN_ID+".json")).unlink()
   borrowed=os.open(case.store.cwd,os.O_RDONLY | os.O_DIRECTORY)
   try:
     with guard.prepare(case.ws,spec,{"SYNTHETIC":"kept"},(borrowed,),run_id=RUN_ID,arguments=args) as (changed,env,fds):
-      assert ("--session="+str(path) if inline else str(path)) in changed.argv
+      option=changed.argv.index("--session")
+      assert changed.argv[option:option+2] == ("--session",str(path))
+      assert "--session="+str(path) not in changed.argv
+      if suffix:
+        assert changed.argv[-len(suffix):] == suffix
       assert env["SYNTHETIC"] == "kept" and json.loads(env["ROTOM_PI_CONTROL_CONTEXT"])["initial_session"] == SESSION
       assert borrowed in fds and len(fds)==2 and metadata(case).exists()
       lease=fds[-1]; os.fstat(lease)

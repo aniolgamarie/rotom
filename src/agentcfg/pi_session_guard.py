@@ -289,7 +289,8 @@ def prepare(workspace, spec, env, pass_fds, *, run_id, arguments=(), target=None
       raise SessionError(2, "invalid_pi_session_arguments")
     position = len(argv) - len(arguments) + index
     if equal:
-      argv[position] = "--session=" + str(target.path)
+      # 官方解析器只识别独立 --session；等号形式会被当作扩展参数。
+      argv[position:position + 1] = ["--session", str(target.path)]
     else:
       argv[position + 1] = str(target.path)
   elif target is not None and requested is not None:

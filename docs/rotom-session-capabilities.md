@@ -36,7 +36,7 @@ Pi 的公开 guard/helper/扩展由 `locks/pi/session-control.json` 对三个自
 | 工具 | 完整 runtime identity | observer identity |
 | --- | --- | --- |
 | DSH | `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` | `none` |
-| Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `100331dd76bf2740304f7177ca1452660317484f674bb374a48fefae802f5817`（三来源控制锁） |
+| Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `1c2986e858b6f905b17f3af4cfe349ca4fdbd56b08df311fb2d984cfc309b430`（三来源控制锁） |
 | OMP | `490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab` | `none` |
 
 ## 运行归属实现进度

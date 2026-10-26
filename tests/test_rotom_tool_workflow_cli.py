@@ -368,3 +368,29 @@ def test_cancel_reports_unresolved_stop_without_repeating_dispatch(command, monk
   assert [row["action"] for row in events] == ["cancel"]
   assert len(state.stop_calls) == 1 and not state.backend_calls and not state.syncs
   assert state.streams.stdin.reads == 0 and calls
+
+
+@pytest.mark.parametrize("phase", ["stop-pending", "setup", "restore"])
+@pytest.mark.parametrize("cancelled", [False, True])
+def test_status_does_not_mask_unresolved_stage_with_cancel(command, capsys, phase, cancelled):
+  state = command
+  if phase == "restore":
+    updated(state, capsys)
+  else:
+    stopped(state, capsys)
+  store = flow.Store(state.ws, state.batch)
+  if phase == "stop-pending":
+    state.stop_result["status"] = "pending"
+  elif phase == "setup":
+    store.append(store.read(), "setup-intent", plan_id="a" * 64, deployment="b" * 64)
+  else:
+    store.append(store.read(), "restore-intent", run_id=RUNS[0])
+  if cancelled:
+    store.append(store.read(), "cancel")
+  before = store.read()
+  calls = (len(state.stop_calls), len(state.syncs), len(state.backend_calls))
+  assert invoke(state, "status", "--batch", state.batch) == 4
+  result = take(capsys)
+  assert result["cancelled"] is cancelled
+  assert store.read() == before
+  assert (len(state.stop_calls), len(state.syncs), len(state.backend_calls)) == calls

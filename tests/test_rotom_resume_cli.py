@@ -129,6 +129,20 @@ def test_location_rejected_with_full_scope_here_advice(setup, option):
   assert cli.main(["resume", "dsh", "--local", "/tmp/synthetic.toml", "--session", "example", option], resume_candidate=candidate()) == 5
   assert calls == []
   assert "--here" in streams.stderr.getvalue() and "尚未准入" in streams.stderr.getvalue()
+  assert "安装 Herdr 也不会启用" in streams.stderr.getvalue()
+  assert "不需要 Herdr" in streams.stderr.getvalue()
+
+
+def test_here_resume_never_checks_herdr_prerequisites(setup, monkeypatch):
+  from termcfg import work, work_config
+  target, candidate, calls, _, _, _ = setup
+  def forbidden(*args, **kwargs):
+    pytest.fail("current-terminal resume does not depend on Herdr")
+  monkeypatch.setattr(work_config, "read_settings", forbidden)
+  monkeypatch.setattr(work_config, "resolve_executable", forbidden)
+  monkeypatch.setattr(work, "connected", forbidden)
+  assert cli.main(["--no-input", "resume", "dsh", "--session", "example", "--here"], resume_candidate=candidate()) == 0
+  assert calls == [target]
 
 
 def test_explicit_filters_never_fall_back(setup):

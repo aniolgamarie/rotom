@@ -1,6 +1,6 @@
 # 按工具执行停止、更新与恢复
 
-状态：候选实现与分组验收已完成。基线 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main；合入须人工批准。本文说明候选接口，不能据此将日常入口切到候选工作树。
+状态：候选已提交；分支复审发现未解决的 Pi 打印模式保护问题，当前不满足合入条件，见[分支复审](../specs/008-rotom-command-experience/branch-review.md)。此前分组验证保留为阶段证据。基线 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main；合入须人工批准。本文说明候选接口，不能据此将日常入口切到候选工作树。
 
 ## 分阶段操作
 
@@ -32,6 +32,8 @@ Pi/OMP 的 stop endpoint 保存为既有 inbox 的 sidecar，绑定原 run/manag
 
 ## 恢复和 writer 的真实边界
 
+Herdr 是工作区原生终端操作的前提：`work enter`、`work named enter` 需要配置的 Herdr 可执行文件和可核验 API，从外部进入可启动配置的 headless 会话；`work open`、`close`、`rebind` 需要当前 Herdr 调用上下文与运行中的 API。`work list --live`、`status`、`reconcile` 查询运行中的 API，不自动启动，endpoint unknown 不等于未安装或空闲。配置检查/编辑、注册元数据、离线 `work list`、不带 `--enter` 的 Git worktree 创建不需要 Herdr；`worktree create --enter` 仅后续进入需要它，进入失败保留 checkout。`named rename` 先保存元数据，再尝试同步原生标题，Herdr 不可用时保留保存结果并提示待同步。根 `resume --here`（默认）及 `maintenance restore` 在当前终端交接，不需要 Herdr；`resume --original` 和 `--new-tab` 当前尚未准入，安装 Herdr 也不会启用，请改用 `--here`。
+
 DSH 沿用已验收的原 Host 后端；Pi/OMP 使用 `HandoffResumeBackend`，核实保存部署、原 cwd 与精确会话文件后创建新运行。批准的部署摘要还会传入运行入口，在原物理/状态共享锁内重核，锁一直保持到宿主退出；预检后的配置漂移会拒绝派发并保留恢复意图。加载没有可信回执时显示“加载待确认”，请在官方 TUI 核对实际 ID、目录与历史；始终 `continue_status=not_sent`。退出码 0、人工确认或历史引用都不等于机器确认 `restored`。原 pane、新标签页和自动继续仍是独立条件能力，不能以本轮实现补勾完成。
 
 | 工具 | 当前候选保护与限制 |
@@ -48,7 +50,7 @@ Pi 的辅助 guard 观察只产生有来源的历史会话线索，不读会话�
 | 工具 | 完整 runtime identity | observer identity |
 | --- | --- | --- |
 | DSH | `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` | `none` |
-| Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `100331dd76bf2740304f7177ca1452660317484f674bb374a48fefae802f5817`（三来源控制锁） |
+| Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `1c2986e858b6f905b17f3af4cfe349ca4fdbd56b08df311fb2d984cfc309b430`（三来源控制锁） |
 | OMP | `490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab` | `none` |
 
 ## 错误、取消与历史批次
@@ -58,7 +60,7 @@ Pi 的辅助 guard 观察只产生有来源的历史会话线索，不读会话�
 ./rotom --no-input resume pi --machine workstation --profile pi-base --session SESSION_ID --here
 ```
 
-接受前取消/EOF/Ctrl-C 为 130，不派发动作。接受后的 cancel 只终止后续编排、保存原事实；不撤销已发生的停止或配置更新，不自动恢复。已投递或 unknown 的停止不能强行清保护；只对未投递或已证实退出的原 stop 批次按原协议收尾。即使停止快照缺失或原停止尚不确定，取消事实也先独立保存；这些情况返回 4，原保护继续保留。保留待恢复项，按 status 对账，不重发可能已执行的 setup/restore。参数/配置错误 2，凭据缺失 3，冲突/未知/待恢复 4，缺依赖或能力未准入 5，文件系统/内部错误 6；宿主交接保留原生退出码。
+接受前取消/EOF/Ctrl-C 为 130，不派发动作。接受后的 cancel 只终止后续编排、保存原事实；不撤销已发生的停止或配置更新，不自动恢复。已投递或 unknown 的停止不能强行清保护；只对未投递或已证实退出的原 stop 批次按原协议收尾。即使停止快照缺失或原停止尚不确定，取消事实也先独立保存；这些情况返回 4，原保护继续保留。保留待恢复项，按 status 对账，不重发可能已执行的 setup/restore。status 对停止 pending 及无结果的 setup/restore 意图返回 4，即使取消已保存也不将它们显示为查询成功；已知原生结果仍单独保留。参数/配置错误 2，凭据缺失 3，冲突/未知/待恢复 4，缺依赖或能力未准入 5，文件系统/内部错误 6；宿主交接保留原生退出码。
 
 旧 stop 批次保留原 status/cancel 语义；不伪造 workflow 清单。旧 OMP Domain setup 批次不迁移、不重放，显式公开 `--profile` 声明为 omp 并提供现存 batch 时仍可只读查询：
 

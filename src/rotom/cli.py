@@ -467,11 +467,13 @@ def _configure_static_help(parser):
       "副作用：" + "；".join(effects), "最短示例：" + examples[0], "显式范围示例：" + examples[1],
       "原生帮助：run --后的全部token和agent usage全部尾部含--help属于宿主；管理说明请看agent --help。"]
     if path == ("resume",):
+      lines.append("Herdr 边界：默认 --here 在当前终端恢复，不需要 Herdr。--original/--new-tab 当前尚未准入，安装 Herdr 也不会启用；请使用 --here。")
       lines.append("根 --interactive 可在启动前选择仅显示人工文本并独立确认；文本须为可打印单行，最多4096字符/16384 UTF-8字节；不发送、不操作剪贴板或聚焦。DSH/Pi/OMP 当前终端恢复分别核验；Pi 写保护仅覆盖 Rotom 合作实例；加载待确认，不会发送继续；上游默认可能生成自动回顾。")
       lines.append("OMP 在原生写入冲突时可能生成分叉 session，请核对实际 ID。")
     if path == ("agent", "instances", "stop"):
       lines.append("--run 为完整32位小写十六进制且不得重复。--dry-run 只读预览；DSH/Pi/OMP 逐工具核验受管控制通道，旧运行无通道时需人工停止。非交互实际停止须显式 --plan-id（缺失返回2，漂移返回4）；交互展示计划并确认。超时/结果未知返回4和原 batch 查询命令，不重发或强杀。")
     if path[:2] == ("agent", "maintenance"):
+      lines.append("Herdr 边界：maintenance restore 在当前终端恢复，不需要 Herdr；原位置和新标签页恢复当前尚未准入，安装 Herdr 也不会启用。")
       lines.append("DSH/Pi/OMP 分阶段完成：plan → stop → plan --batch → execute → restore --run。--operation setup 可省略。--run 为完整32位小写十六进制且不得重复；--session RUN_ID=SESSION_ID 可重复，但每个运行只能映射一次。TTY 缺失目标时选择，非TTY须明确目标；stop/execute 还须当前 --plan-id（缺失返回2，漂移返回4）。execute 重走普通 setup 批准与活动/共享资源门禁；restore 只交接一项当前终端。Pi 写保护仅覆盖 Rotom 合作实例；加载待确认、不发送继续。取消保留已发生事实，不自动撤销配置或恢复会话。")
       lines.append("OMP 在原生写入冲突时可能生成分叉 session，请核对实际 ID。cancel 已保存但停止仍未知时返回4，保护保留。")
     if path in (("agent", "instances", "list"), ("agent", "instances", "stop"), ("agent", "maintenance", "plan")):
@@ -482,6 +484,20 @@ def _configure_static_help(parser):
       lines.append("历史 Linux OMP 批次的只读查询仍须显式 --profile 与 --batch；按公开 profile 声明识别工具，不自动迁移或重放。沿所选 --local/--machine 读取，无写入；旧批次的人工恢复状态不等于会话已恢复，未发送继续。")
     if path == ("work", "worktree", "create"):
       lines.append("条件必填：--new-branch需要--base；--existing-branch禁止--base；创建与进入分别接受。")
+      lines.append("Herdr 边界：Git worktree 创建本身不需要 Herdr；--enter 的后续进入需要配置的 Herdr，可启动 headless 会话；进入失败保留已创建的 checkout。--dry-run 不进入。")
+    if path == ("work",):
+      lines.append("Herdr 边界：enter、named enter、open、close、rebind、list --live、status、reconcile 依赖配置的 Herdr 及可核验 API。enter 可启动 headless 会话；open 需要当前 Herdr 调用上下文。配置检查/编辑、source/project/named add、离线 list 和不带 --enter 的 Git worktree 创建不需要 Herdr；named rename 保存元数据后另尝试同步原生标题。")
+    if path in (("work", "enter"), ("work", "named", "enter")):
+      lines.append("Herdr 前提：需要配置的 Herdr 可执行文件与可核验 API；从外部进入时可启动配置的 headless 会话，再 attach。")
+    if path in (("work", "open"), ("work", "close"), ("work", "rebind")):
+      lines.append("Herdr 前提：需要运行中的配置 Herdr、可核验 API 和当前 Herdr 调用上下文；请先 work enter PATH。open 不从普通终端自动启动会话。")
+    if path in (("work", "list"), ("work", "status"), ("work", "reconcile")):
+      lines.append("Herdr 边界：离线 work list 不需要 Herdr；list --live、status、reconcile 的原生状态查询需要配置的 Herdr 及运行中的可核验 API，不启动会话。endpoint unavailable-or-unknown 不证明空闲，也不一定表示未安装 Herdr。")
+    if path == ("work", "named", "rename"):
+      lines.append("Herdr 边界：元数据标题保存不需要 Herdr；保存后尝试通过运行中的配置 Herdr API 同步原生标题。Herdr 不可用或绑定无法核验时，保存结果保留，原生标题可能待同步；--dry-run 不保存或同步。")
+    if path in (("work", "config"), ("work", "config", "check"), ("work", "config", "edit"),
+        ("work", "source", "add"), ("work", "project", "add"), ("work", "named", "add")):
+      lines.append("Herdr 边界：此配置或注册元数据操作不需要 Herdr，不连接原生会话。")
     if path == ("_complete",):
       lines.append("补全stdout仅合法ID加NUL；正常缺数据0空，非法/不安全查询非零空。不读认证/会话正文，不写索引缓存；--后停止补全。")
     current.epilog = "\n".join(lines)

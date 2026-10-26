@@ -1024,6 +1024,7 @@ def synchronize_named_title(settings, identifier, title):
   except TermcfgError as error:
     if error.code == 5:
       print("work_named_title: saved; native presentation not synchronized")
+      print("Herdr native title sync pending: API unavailable or prerequisites not prepared; metadata title is saved", file=sys.stderr)
       return 0
     raise TermcfgError(4, "work_named_title_saved_native_presentation_pending", "work status") from None
 
@@ -1118,6 +1119,7 @@ def structured_native_command(args, settings, *, context=None):
           result = lifecycle_report_v2(client, state)
     except TermcfgError as error:
       result = {"endpoint": "unavailable-or-unknown", "bindings": [], "reason": error.reason}
+      print("Herdr live endpoint unavailable or unverified; inspect reason; this does not prove Herdr is absent or the workspace is idle", file=sys.stderr)
     if args.command == "list":
       from dataclasses import asdict
       result["candidates"] = [asdict(item) for item in discover(settings).candidates]
@@ -1377,6 +1379,11 @@ def main(argv=None, *, context=None):
         from .work_edit import manual_fragment
         error.fragment = manual_fragment(operation, values)
     print(error.reason + ": " + (next_hint(error.code) if context is not None else error.next_command), file=sys.stderr)
+    if args is not None and error.code != 2:
+      if args.command in ("enter", "open", "close", "rebind") or (args.command == "named" and args.action == "enter"):
+        print("Herdr prerequisite: configured executable and verified API required; enter may start headless; open/close/rebind require the current Herdr caller. Check the reported reason; unverified context does not imply Herdr is missing.", file=sys.stderr)
+      elif error.reason == "work_named_title_saved_native_presentation_pending":
+        print("Herdr native title sync pending; metadata title is saved. Verify the configured Herdr API and live binding with work status.", file=sys.stderr)
     if getattr(error, "fragment", None):
       print("Manual machine.work fragment:\n" + error.fragment, file=sys.stderr)
     return error.code

@@ -139,7 +139,7 @@ class CandidateResume:
       show("请求恢复：" + description(target))
       show("同范围当前终端恢复命令：" + command(target))
       if args.original or args.new_tab:
-        show("所选终端位置能力尚未准入；可在现有官方 TUI 人工选择目标")
+        show("所选终端位置能力尚未准入；安装 Herdr 也不会启用 --original/--new-tab；请使用不需要 Herdr 的 --here，或在现有官方 TUI 人工选择目标")
         return 5
       if target.confirmation == "unknown" or target.cwd_status == "unknown" or target.cwd is None:
         show("会话归属或 cwd 未知，不可自动恢复；请在官方 TUI 人工检查")

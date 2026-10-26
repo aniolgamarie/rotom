@@ -1,5 +1,7 @@
 # 验证指南
 
+**2026-10-26 分支复审**：发现 Pi 打印/非 TTY 模式下 helper 失败不能可靠阻止后续提示词；该项仍未解决，当前不满足合入条件。其余修正、验证和范围见[分支复审](branch-review.md)。
+
 ## 当前候选验证与操作
 
 候选实现、分组回归及稳定差异审查已完成；基于 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main。合入须另经人工批准。官方 Pi/OMP TUI/PTY、隔离回归及受影响复验见[验收记录](tool-workflow-validation.md)。

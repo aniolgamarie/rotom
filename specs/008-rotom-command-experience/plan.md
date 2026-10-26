@@ -1,5 +1,7 @@
 # Implementation Plan: Rotom 命令与会话体验
 
+**2026-10-26 分支复审**：发现 Pi 打印/非 TTY 模式下 helper 失败不能可靠阻止后续提示词；该项仍未解决，当前不满足合入条件。其余修正、验证和范围见[分支复审](branch-review.md)。
+
 **Branch**: `feat/tool-maintenance-workflows-20261026` | **Date**: 2026-10-26 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/008-rotom-command-experience/spec.md`

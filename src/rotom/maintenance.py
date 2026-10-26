@@ -153,7 +153,12 @@ def dispatch(invocation, args):
   if command == "status":
     result = workflow.status(workspace, batch_id)
     _render(_next(result), context)
-    return 4 if result["stop_status"] == "unknown" or result["status"] == "setup-unknown" else 0
+    # 取消只禁止后续阶段，不能盖住已派发动作尚无结果的事实。
+    unresolved = result["stop_status"] not in ("stopped", "cancelled")
+    unresolved = unresolved or result["setup"] is not None and result["setup"]["action"] == "setup-intent"
+    unresolved = unresolved or any(row is not None and row["action"] == "restore-intent"
+      for row in result["restores"].values())
+    return 4 if unresolved else 0
   if command == "cancel":
     result = workflow.cancel(workspace, batch_id)
     _render(_next(result), context)
