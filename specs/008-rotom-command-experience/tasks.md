@@ -302,7 +302,7 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 - [ ] T072 [US6] 在 `src/agentcfg/maintenance.py` 实现注入单调时钟的 stop/ready 控制预算：“`--wait-seconds` 为 1–300 的整数”，默认 30，整个所选集合共享每阶段绝对 deadline，不逐项重置；超时返回 4 和已发生事实/待恢复/完整下一步，不继续维护/强杀，不限制 setup 安装或普通 TUI 生命周期。（依赖：T071；覆盖：FR-033、FR-035、FR-041、SC-009）
 
-  T072 前置已独立验收：共享 ControlDeadline 和内部后代观察等待循环。记录先于 confirmed，超期/响应不明返回 4 并保留事实；confirmed 不证明 manager SH 释放，也不签发维护许可。DSH stop_only 的生产请求和短元数据锁等待现已共用原绝对截止点；接受后的停止前段已增加原子 Batch progress 和共享预算等待记账：已保存 exit 跳过，新观察顺序 CAS，记录响应不明或超期保留事实不重试；即使全部已有 exit 也检查原 deadline。setup 物理 EX 核验现有独立非阻塞入口，但尚未并入完整维护的共享预算流程；完整维护状态转换及 ready 循环尚未接线，本任务不勾完成。
+  T072 前置已独立验收：共享 ControlDeadline 和内部后代观察等待循环。记录先于 confirmed，超期/响应不明返回 4 并保留事实；confirmed 不证明 manager SH 释放，也不签发维护许可。DSH stop_only 的生产请求和短元数据锁等待现已共用原绝对截止点；接受后的停止前段已增加原子 Batch progress 和共享预算等待记账：已保存 exit 跳过，新观察顺序 CAS，记录响应不明或超期保留事实不重试；即使全部已有 exit 也检查原 deadline。setup 退出记账与单次物理 EX 确认已通过内部组合入口共享同一 deadline；等待返回初读或最后明确保存的 revision，确认只按此版本 CAS，不读回重签。超期或响应不明保留事实且返回 4；确认事务跨期成功也不能继续维护。结果不持锁、不签发 Permit；完整维护状态转换、CLI runner 及 ready 循环尚未接线，本任务不勾完成。见 [第 67 节](main-review.md#67-退出与资源确认共享预算)。
 
 - [X] T073 [US6] 在 `src/agentcfg/commands.py` 抽取 setup 共用核心操作/结果接缝，保留预检、安装、re-prepare、计划复核和 apply 顺序；普通 CLI 输出不变，runner 复用原物理 EX guard 而非外套 EX 后重入，不复制 setup，返回原结果/退出码以免内层打印污染外层 JSON。（依赖：T008；等价核心抽取可独立验收，维护 runner 接线仍须 T072；覆盖：FR-002、FR-013、FR-034）
 

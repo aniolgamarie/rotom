@@ -5,6 +5,7 @@ exit_confirmed 仅指同身份完整后代观察已保存，不证明 manager �
 本模块只推进 accepted/stop_requested，后续失败、完成、维护和恢复阶段交给专属转换。
 """
 from copy import deepcopy
+from dataclasses import dataclass
 
 from . import maintenance, maintenance_store, maintenance_wait, run_owners
 from .control_deadline import ControlDeadline
@@ -14,6 +15,13 @@ from .storage import Conflict, Tree
 
 
 _ERROR = "维护停止进展或原批次不能确认；保留已保存事实且不重试"
+
+
+@dataclass(frozen=True)
+class BatchReleaseWaitResult(ReleaseWaitResult):
+  """携带初读或本调用最后明确保存的 CAS revision，不从未知响应读回升级。"""
+
+  revision: int
 
 
 def _load(domain, state, batch_id):
@@ -119,18 +127,18 @@ def wait_for_batch_release(domain, batch_id, *, deadline, observe):
       for run in batch["accepted_runs"] if run not in existing}
   except Exception:
     raise Conflict(_ERROR) from None
+  revision = batch["revision"]
   if not targets:
     try:
       reason = "deadline-expired" if deadline.expired() else None
     except Exception:
       reason = "clock-unconfirmed"
-    return ReleaseWaitResult(tuple(sorted(existing)), (), 4 if reason else 0, reason)
-  revision = batch["revision"]
+    return BatchReleaseWaitResult(tuple(sorted(existing)), (), 4 if reason else 0, reason, revision)
 
   def record(proof):
     nonlocal revision
     revision = record_exit(domain, batch_id, expected_revision=revision, proof=proof)["revision"]
 
   result = maintenance_wait.wait_for_release(targets, deadline=deadline, observe=observe, record=record)
-  return ReleaseWaitResult(tuple(sorted(existing | set(result.confirmed_runs))), result.pending_runs,
-    result.exit_code, result.reason)
+  return BatchReleaseWaitResult(tuple(sorted(existing | set(result.confirmed_runs))), result.pending_runs,
+    result.exit_code, result.reason, revision)

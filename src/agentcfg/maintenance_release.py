@@ -6,9 +6,11 @@
 
 from contextlib import ExitStack
 from copy import deepcopy
+from dataclasses import dataclass
 
 from . import maintenance, maintenance_progress, omp_observation, resource_owners, resource_scopes
 from .maintenance_deployment import check_stop_deployment
+from .control_deadline import ControlDeadline
 from .omp_lifecycle import _same_file
 from .paths import safe_id
 from .run_owners import record_state
@@ -16,6 +18,69 @@ from .storage import Conflict, Tree, advisory_lock, instance_lock
 
 
 _ERROR = "维护资源释放不能确认；保留原批次事实和保护，不执行 setup"
+
+
+@dataclass(frozen=True)
+class SetupReleaseWaitResult:
+  """退出观察与本次明确返回的物理释放事实；返回前锁已释放，不是 setup 许可。"""
+
+  confirmed_runs: tuple[str, ...]
+  pending_runs: tuple[str, ...]
+  release_confirmed: bool
+  revision: int
+  exit_code: int
+  reason: str | None
+
+
+def _budget_reason(deadline):
+  try:
+    return "deadline-expired" if deadline.expired() else None
+  except Exception:
+    return "clock-unconfirmed"
+
+
+def wait_for_setup_release(domain, batch_id, *, deadline, observe, workspaces):
+  """同一原预算先保存退出观察，再单次尝试原 EX 确认；不执行维护。
+
+  observe 必须可信且非阻塞。确认事务的 I/O/fsync 可以跨截止点，只有调用前后
+  检查预算，不提供硬实时中断。响应不明不读回、不重新签 CAS、不重试或清保护。
+  """
+  try:
+    if (type(deadline) is not ControlDeadline or not callable(observe)
+        or type(workspaces) is not dict):
+      raise ValueError()
+    selected = dict(workspaces)
+    with domain._transaction() as state:
+      saved, batch = maintenance_progress._load(domain, state, batch_id)
+      if (saved["intent"]["phase"] not in ("active", "dispatched")
+          or batch["phase"] not in ("accepted", "stop_requested") or batch["operation"] != "setup"
+          or set(selected) != set(batch["accepted_runs"])):
+        raise ValueError()
+  except Exception:
+    raise Conflict(_ERROR) from None
+  confirmed = tuple(sorted(item["run_id"] for item in batch["items"] if item["facts"]["exit_confirmed"]))
+  pending = tuple(sorted(set(batch["accepted_runs"]) - set(confirmed)))
+  revision = batch["revision"]
+
+  def result(reason=None, *, release_confirmed=False):
+    return SetupReleaseWaitResult(confirmed, pending, release_confirmed, revision, 4 if reason else 0, reason)
+
+  reason = _budget_reason(deadline)
+  if reason:
+    return result(reason)
+  observed = maintenance_progress.wait_for_batch_release(domain, batch_id, deadline=deadline, observe=observe)
+  confirmed, pending, revision = observed.confirmed_runs, observed.pending_runs, observed.revision
+  if observed.exit_code != 0:
+    return SetupReleaseWaitResult(confirmed, pending, False, revision, observed.exit_code, observed.reason)
+  reason = _budget_reason(deadline)
+  if reason:
+    return result(reason)
+  try:
+    committed = confirm_setup_release(domain, batch_id, expected_revision=revision, workspaces=selected)
+  except Conflict:
+    return result("release-unconfirmed")
+  revision = committed["revision"]
+  return result(_budget_reason(deadline), release_confirmed=True)
 
 
 def _load(domain, state, batch_id, expected_revision):

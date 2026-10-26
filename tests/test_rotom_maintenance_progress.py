@@ -173,6 +173,8 @@ def test_wait_skips_existing_fact_and_returns_all_confirmed_without_resource_cla
     return proof(value, run)
   result = progress.wait_for_batch_release(case.domain, BATCH, deadline=ControlDeadline(1, clock=lambda: 0), observe=observe)
   assert result.exit_code == 0 and result.confirmed_runs == RUNS[:2] and result.pending_runs == ()
+  assert type(result) is progress.BatchReleaseWaitResult and isinstance(result, progress.ReleaseWaitResult)
+  assert result.revision == 2
   assert seen == [RUNS[1]]
   batch = progress.read_batch(case.domain, BATCH)
   assert batch["revision"] == 2 and batch["phase"] == "accepted"
@@ -185,6 +187,7 @@ def test_wait_uses_shared_deadline_even_when_last_record_commits_after_expiry(ac
   result = progress.wait_for_batch_release(case.domain, BATCH, deadline=ControlDeadline(1, clock=lambda: now[0]), observe=observe)
   assert result.exit_code == 4 and result.reason == "deadline-expired"
   assert result.confirmed_runs == RUNS[:2] and not result.pending_runs and seen == list(RUNS[:2])
+  assert result.revision == 2
   assert progress.read_batch(case.domain, BATCH)["revision"] == 2
 
 
@@ -198,6 +201,7 @@ def test_wait_record_response_loss_preserves_prior_fact_and_never_retries(accept
     observe=lambda run, manager: proof(value, run))
   assert result.exit_code == 4 and result.reason == "record-unconfirmed"
   assert result.confirmed_runs == RUNS[:1] and result.pending_runs == RUNS[1:2] and calls == [RUNS[1]]
+  assert result.revision == 1
   assert all(item["facts"]["exit_confirmed"] for item in progress.read_batch(case.domain, BATCH)["items"])
 
 
@@ -210,6 +214,7 @@ def test_all_saved_facts_check_deadline_without_observing(accepted, expired):
   result = progress.wait_for_batch_release(case.domain, BATCH, deadline=deadline,
     observe=lambda *a: pytest.fail("saved facts must not be observed again"))
   assert result.confirmed_runs == RUNS[:2] and result.pending_runs == ()
+  assert result.revision == 2
   assert result.exit_code == (4 if expired else 0)
   assert result.reason == ("deadline-expired" if expired else None) and ledger(case.domain) == before
 
@@ -231,6 +236,7 @@ def test_concurrent_progress_revision_conflicts_without_reobserving_or_retry(acc
     return proof(value, run)
   result = progress.wait_for_batch_release(case.domain, BATCH, deadline=ControlDeadline(1, clock=lambda: 0), observe=observe)
   assert result.reason == "record-unconfirmed" and result.exit_code == 4
+  assert result.revision == 0
   assert seen == [RUNS[0]] and result.confirmed_runs == () and result.pending_runs == RUNS[:2]
   batch = progress.read_batch(case.domain, BATCH)
   assert batch["revision"] == 1 and items(batch)[RUNS[1]]["facts"]["stop_requested"] is True
@@ -243,6 +249,7 @@ def test_observation_failure_preserves_already_recorded_fact_and_fixed_reason(ac
   result = progress.wait_for_batch_release(case.domain, BATCH, deadline=ControlDeadline(1, clock=lambda: 0), observe=observe)
   assert result.reason == "observation-unconfirmed" and result.confirmed_runs == RUNS[:1]
   assert result.pending_runs == RUNS[1:2] and "synthetic-private-canary" not in repr(result)
+  assert result.revision == 1
   assert progress.read_batch(case.domain, BATCH)["revision"] == 1
 
 
@@ -257,6 +264,7 @@ def test_all_confirmed_clock_failure_is_not_a_success(accepted):
   result = progress.wait_for_batch_release(case.domain, BATCH, deadline=deadline, observe=lambda *a: pytest.fail("already recorded"))
   assert result.confirmed_runs == RUNS[:2] and result.pending_runs == ()
   assert result.exit_code == 4 and result.reason == "clock-unconfirmed"
+  assert result.revision == 2
 
 
 def test_read_rejects_changed_domain_physical_root(accepted, monkeypatch):
