@@ -52,7 +52,7 @@ def test_configuration_commands_never_read_shared_credentials(credential_files, 
     raise AssertionError("configuration command read shared credentials")
   monkeypatch.setattr(secret_files, "read_secrets_document", forbidden_read)
   # 依赖同步由假后端完成；其余命令执行真实离线解析和临时目录部署。
-  monkeypatch.setattr(commands, "sync_backend", lambda *args: {"status": "synthetic-sync"})
+  monkeypatch.setattr(commands, "sync_backend", lambda *args, **kwargs: {"status": "synthetic-sync"})
   workspace = load_workspace(local)
   assert CANARY not in repr(workspace.resolved)
   assert cli.main([command]) == 0

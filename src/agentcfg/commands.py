@@ -183,22 +183,26 @@ def prepare_launch(workspace, launch):
   workspace.adapter.prepare_runtime(workspace, root)
 
 
-def sync_backend(w, lock, progress, *, maintenance=None):
-  """可选进度能力；旧扩展后端继续使用原有双参数 sync 契约。"""
+def sync_backend(w, lock, progress, proxy=None, *, maintenance=None):
+  """可选进度/代理/维护准入能力；旧扩展后端继续使用原有双参数 sync 契约。"""
   action = w.backend.sync
   try:
     parameters = inspect.signature(action).parameters
   except (TypeError, ValueError):
     parameters = {}
+  var_keyword = any(item.kind is inspect.Parameter.VAR_KEYWORD for item in parameters.values())
   options = {}
   if maintenance is not None:
     parameter = parameters.get("maintenance")
     if parameter is None or parameter.kind not in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY):
       raise Conflict("维护 setup 需要后端显式支持维护同步准入")
     options["maintenance"] = maintenance
-  if "progress" in parameters or any(item.kind is inspect.Parameter.VAR_KEYWORD for item in parameters.values()):
-    return action(w, lock, progress=progress, **options)
-  progress("检查运行包")
+  if "progress" in parameters or var_keyword:
+    options["progress"] = progress
+  else:
+    progress("检查运行包")
+  if proxy is not None and ("proxy" in parameters or var_keyword):
+    options["proxy"] = proxy
   return action(w, lock, **options)
 
 
@@ -280,18 +284,36 @@ def cmd_rollback(args):
 
 
 def cmd_lock(args):
+  proxy_name = getattr(args, "proxy", None)
   if getattr(args, "agent", None) == "omp":
+    if proxy_name is not None:
+      from .schema import ConfigError
+      raise ConfigError("lock-proxy-unsupported")
     from .omp_dependencies import OmpBackend
     repository = Path(__file__).resolve().parents[2]
     OmpBackend().resolve_lock(repository)
     emit_result({"command": "lock", "agent": "omp", "locked": True}, args=args)
     return 0
   w = workspace(args)
+  from .execution_environment import selected_proxy
+  _, proxy = selected_proxy(w.resolved.data["machine"], proxy_name)
   resolve_for = getattr(w.backend, "resolve_lock_for", None)
-  if resolve_for is not None:
-    resolve_for(w)
-  else:
-    w.backend.resolve_lock(w.repository)
+  action = resolve_for if resolve_for is not None else w.backend.resolve_lock
+  target = w if resolve_for is not None else w.repository
+  if proxy is None:
+    action(target)
+    return output(w, "lock", {"locked": True}, args=args)
+  import inspect
+  try:
+    parameters = inspect.signature(action).parameters
+  except (TypeError, ValueError):
+    parameters = {}
+  accepts = "proxy" in parameters or any(
+    parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in parameters.values())
+  if not accepts:
+    from .schema import ConfigError
+    raise ConfigError("lock-proxy-unsupported")
+  action(target, proxy=proxy)
   return output(w, "lock", {"locked": True}, args=args)
 
 
@@ -299,10 +321,12 @@ def cmd_sync(args):
   progress = Progress("sync", args)
   progress.stage("校验配置与锁", hint="validate")
   w = workspace(args)
+  from .execution_environment import selected_proxy
+  _, proxy = selected_proxy(w.resolved.data["machine"], getattr(args, "proxy", None))
   lock = w.backend.read_lock(w.repository)
   progress.stage("同步依赖", hint="doctor")
   with progress.heartbeat():
-    result = sync_backend(w, lock, progress.sync_stage)
+    result = sync_backend(w, lock, progress.sync_stage, proxy=proxy)
   return output(w, "sync", result, args=args)
 
 

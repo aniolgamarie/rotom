@@ -291,12 +291,16 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["dsh", "pi", "omp"],
         help="目标工具",
     )
+    lock.add_argument("--proxy", metavar="NAME", default=None,
+        help="仅本次重建使用本地配置 [machine.proxies.NAME] 的命名代理访问 npm 注册表（仅 dsh/pi）")
 
     # sync: 依赖安装消费
-    subparsers.add_parser(
+    sync = subparsers.add_parser(
         "sync",
         help="消费现有锁，暂存安装并注册可用运行包",
     )
+    sync.add_argument("--proxy", metavar="NAME", default=None,
+        help="仅本次同步使用本地配置 [machine.proxies.NAME] 的命名代理访问 npm 注册表")
 
     # apply: 部署配置
     subparsers.add_parser(

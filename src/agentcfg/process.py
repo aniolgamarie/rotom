@@ -16,6 +16,16 @@ class DependencyError(StateError):
   exit_code = 5
 
 
+def npm_proxy_config(proxy):
+  """命名代理档案 → npm 原生配置变量；未选择代理时不注入，调用者环境一律不透传。"""
+  if proxy is None:
+    return {}
+  result = {"npm_config_proxy": proxy["url"], "npm_config_https_proxy": proxy["url"]}
+  if proxy.get("no_proxy"):
+    result["npm_config_noproxy"] = proxy["no_proxy"]
+  return result
+
+
 def environment(machine=None, *, home=None):
   names = BASE_ENV | {name for name in os.environ if name.startswith("LC_")}
   env = {name: os.environ[name] for name in names if name in os.environ}

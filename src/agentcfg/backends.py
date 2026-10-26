@@ -30,14 +30,15 @@ class DshBackend:
     from .dependencies import read_lock
     return read_lock(repository, self.adapter_id, self.adapter_version)
 
-  def resolve_lock(self, repository):
+  def resolve_lock(self, repository, *, proxy=None):
     from .dependencies import resolve_lock
+    kwargs = {} if proxy is None else {"proxy": proxy}
     return resolve_lock(repository, adapter_id=self.adapter_id,
-                        expected_adapter_version=self.adapter_version)
+                        expected_adapter_version=self.adapter_version, **kwargs)
 
-  def sync(self, workspace, lock, *, progress=None):
+  def sync(self, workspace, lock, *, progress=None, proxy=None):
     from .dependencies import sync
-    return sync(workspace, lock, self.adapter_id, progress=progress)
+    return sync(workspace, lock, self.adapter_id, progress=progress, proxy=proxy)
 
   def root(self, workspace, identity):
     from .paths import safe_id
