@@ -159,8 +159,8 @@ def build_parser():
   resume.add_argument("--format", choices=("auto", "human", "json"), default="auto")
   location = resume.add_mutually_exclusive_group()
   for name, description in (("here", "当前终端交接，保留会话原工作目录（默认）"),
-      ("original", "原终端位置恢复；需独立验证的位置能力"),
-      ("new-tab", "新标签页恢复；需独立验证的位置能力")):
+      ("original", "原终端位置恢复；当前尚未开放"),
+      ("new-tab", "新标签页恢复；当前尚未开放")):
     location.add_argument("--" + name, action="store_true", help=description)
   resume.epilog = ("默认 --here；不发送继续文本。请求 ID、启动派发与实际加载分别判断；"
     "DSH/Pi/OMP 分别核验锁定运行包、原目录和原生保护；无加载回执保持待确认，不自动重试或强杀。"
@@ -472,15 +472,20 @@ def _configure_static_help(parser):
       "输入条件：auto要求stdin/stdout/stderr全部TTY；--no-input不读输入，缺参或缺等价批准返回2；--interactive缺任一TTY返回2；取消/EOF/Ctrl-C返回130。选择目标不等于批准。",
       "副作用：" + "；".join(effects), "最短示例：" + examples[0], "显式范围示例：" + examples[1],
       "原生帮助：run --后的全部token和agent usage全部尾部含--help属于宿主；管理说明请看agent --help。"]
+    if path in (("run",), ("agent", "run")):
+      lines.append("启动边界：当前普通启动在 Agent 退出后返回 shell；处于 Herdr 中也不会自动获得原 pane 恢复能力。原 pane 恢复尚未开放，需受支持的 Rotom 驻留启动器托管。")
     if path == ("resume",):
       lines.append("停止记录：--stopped --list 只读列出 session ID、原 cwd、标题和阶段，不需要工具、session 或 TTY；坏记录保留已知行并返回4。--stopped 恢复在TTY缺少目标时只选择一次；非TTY须完整 --batch 与 --run。不默认选最近；与 --session/--original/--new-tab 冲突。候选不等于加载成功，启动前仍复核原文件与能力；旧 stop 快照仅显示人工核对命令，不参与快速恢复。普通 --session 恢复保持原行为。")
-      lines.append("Herdr 边界：默认 --here 在当前终端恢复，不需要 Herdr。--original/--new-tab 当前尚未准入，安装 Herdr 也不会启用；请使用 --here。")
+      lines.append("Herdr 边界：默认 --here 在当前终端恢复，不需要 Herdr。--original/--new-tab 当前尚未准入、尚未开放，安装 Herdr 也不会启用；请使用 --here。")
+      lines.append("原 pane 恢复边界：开放时也仅限通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，并须只停止 Agent、保留 launcher 与 pane。旧普通实例、直接官方 CLI 或仅刚新启动均不保证原位；launcher 或 pane 关闭/丢失后，改在当前终端或新位置恢复。当前可用 rotom resume --stopped --list 查询停止记录，再用 --here 恢复。")
       lines.append("普通 --session 恢复的根 --interactive 可在启动前选择仅显示人工文本并独立确认；文本须为可打印单行，最多4096字符/16384 UTF-8字节；不发送、不操作剪贴板或聚焦。DSH/Pi/OMP 当前终端恢复分别核验；Pi 写保护仅覆盖 Rotom 合作实例；加载待确认，不会发送继续；上游默认可能生成自动回顾。")
       lines.append("OMP 在原生写入冲突时可能生成分叉 session，请核对实际 ID。")
     if path == ("agent", "instances", "stop"):
       lines.append("--run 为完整32位小写十六进制且不得重复。--dry-run 只读预览；DSH/Pi/OMP 逐工具核验受管控制通道，旧运行无通道时需人工停止。非交互实际停止须显式 --plan-id（缺失返回2，漂移返回4）；交互展示计划并确认。超时/结果未知返回4和原 batch 查询命令，不重发或强杀。")
     if path[:2] == ("agent", "maintenance"):
-      lines.append("Herdr 边界：maintenance restore 在当前终端恢复，不需要 Herdr；原位置和新标签页恢复当前尚未准入，安装 Herdr 也不会启用。")
+      lines.append("Herdr 边界：maintenance restore 在当前终端恢复，不需要 Herdr；--original/--new-tab 原位置和新标签页恢复当前尚未准入，安装 Herdr 也不会启用。")
+      if path == ("agent", "maintenance", "restore"):
+        lines.append("原 pane 恢复尚未开放；开放时也仅限通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，并须只停止 Agent、保留 launcher 与 pane。旧普通实例、直接官方 CLI 或仅刚新启动均不保证原位；launcher 或 pane 关闭/丢失后，改在当前终端或新位置恢复。当前使用本命令在当前终端恢复，或用 rotom resume --stopped --list 查询停止记录后以 --here 恢复。")
       lines.append("DSH/Pi/OMP 分阶段完成：plan → stop → plan --batch → execute → restore --run。--operation setup 可省略。--run 为完整32位小写十六进制且不得重复；--session RUN_ID=SESSION_ID 可重复，但每个运行只能映射一次。TTY 缺失目标时选择，非TTY须明确目标；stop/execute 还须当前 --plan-id（缺失返回2，漂移返回4）。execute 重走普通 setup 批准与活动/共享资源门禁；restore 只交接一项当前终端。Pi 写保护仅覆盖 Rotom 合作实例；加载待确认、不发送继续。取消保留已发生事实，不自动撤销配置或恢复会话。")
       lines.append("OMP 在原生写入冲突时可能生成分叉 session，请核对实际 ID。cancel 已保存但停止仍未知时返回4，保护保留。")
     if path in (("agent", "instances", "list"), ("agent", "instances", "stop"), ("agent", "maintenance", "plan")):

@@ -379,11 +379,20 @@ kind 仍来自物理 key。字段不包含秘密、任意命令或维护许可�
 
 ## 7. ContainerRecord 与 ContinueRequest
 
-仅原位置能力通过后新增 ContainerRecord：container_id、generation、管理进程身份、TerminalRef、
+ContainerRecord 是已选驻留路线实施所需的模型，当前尚未接入生产；P-PANE 是正式开放前的逐工具原生验收门槛，
+不是开始开发或定义模型的前置。交付位置包括 Herdr 新标签页，以及通过 Rotom Herdr 入口新建、
+由驻留启动器托管且该工具已验收的新实例原 pane；两种位置当前均尚未实现准入。
+普通 shell 启动退出后返回 shell，旧普通实例不在线升级。launcher/pane 丢失、被复用或身份不明时转明确接受的新位置。
+
+ContainerRecord 包含 container_id、generation、管理进程身份、TerminalRef、
 manager_code_identity、control_protocol、受保护 endpoint 身份、state 与已消费 request ID。
 状态为 running、parking、parked、resume_pending、unknown、closed；parking 不等于资源已释放。
 parked 在全部单次运行租约退出之后，不能保留旧运行包/环境/凭据对象。
 旧单次 manager 没有该记录，不能在线推断为 parked；管理代码变化时首版转明确的新位置路径。
+
+统一的严格加载回执、原生 TUI 自动继续与 Pi Pro 委派不在本轮承诺内；驻留不将加载待确认升级为 restored，
+continue 保持 not_sent。`pi-pro` 作为普通 profile 的停止、更新与恢复兼容性仍保留。
+以下 ContinueRequest 为独立输入能力的历史模型，不是本轮驻留或新标签页交付依赖。
 
 ContinueRequest 含新 run/op、SessionRef、批准文本摘要/固定模板身份、目标 ready 证据及
 not_sent、dispatch_intent、accepted、unknown 结果。批准文本仅在当次执行内存中，

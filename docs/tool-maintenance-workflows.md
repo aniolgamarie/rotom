@@ -54,7 +54,11 @@ Pi/OMP 的 stop endpoint 保存为既有 inbox 的 sidecar，绑定原 run/manag
 
 Herdr 是工作区原生终端操作的前提：`work enter`、`work named enter` 需要配置的 Herdr 可执行文件和可核验 API，从外部进入可启动配置的 headless 会话；`work open`、`close`、`rebind` 需要当前 Herdr 调用上下文与运行中的 API。`work list --live`、`status`、`reconcile` 查询运行中的 API，不自动启动，endpoint unknown 不等于未安装或空闲。配置检查/编辑、注册元数据、离线 `work list`、不带 `--enter` 的 Git worktree 创建不需要 Herdr；`worktree create --enter` 仅后续进入需要它，进入失败保留 checkout。`named rename` 先保存元数据，再尝试同步原生标题，Herdr 不可用时保留保存结果并提示待同步。根 `resume --here`（默认）及 `maintenance restore` 在当前终端交接，不需要 Herdr；`resume --original` 和 `--new-tab` 当前尚未准入，安装 Herdr 也不会启用，请改用 `--here`。
 
-DSH 沿用已验收的原 Host 后端；Pi/OMP 使用 `HandoffResumeBackend`，核实保存部署、原 cwd 与精确会话文件后创建新运行。批准的部署摘要还会传入运行入口，在原物理/状态共享锁内重核，锁一直保持到宿主退出；预检后的配置漂移会拒绝派发并保留恢复意图。加载没有可信回执时显示“加载待确认”，请在官方 TUI 核对实际 ID、目录与历史；始终 `continue_status=not_sent`。退出码 0、人工确认或历史引用都不等于机器确认 `restored`。原 pane、新标签页和自动继续仍是独立条件能力，不能以本轮实现补勾完成。
+DSH 沿用已验收的原 Host 后端；Pi/OMP 使用 `HandoffResumeBackend`，核实保存部署、原 cwd 与精确会话文件后创建新运行。批准的部署摘要还会传入运行入口，在原物理/状态共享锁内重核，锁一直保持到宿主退出；预检后的配置漂移会拒绝派发并保留恢复意图。加载没有可信回执时显示“加载待确认”，请在官方 TUI 核对实际 ID、目录与历史；始终 `continue_status=not_sent`。退出码 0、人工确认或历史引用都不等于机器确认 `restored`。
+
+下一阶段已选 Herdr 新标签页和新托管实例原 pane，当前均待实现及正式验收。原 pane 开放后仅适用于通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，入口默认驻留；普通 shell `rotom run` 仍在 Agent 退出后返回，旧普通实例或直接官方 CLI 不在线升级。只停止 Agent 才能保留原位等待；launcher/pane 关闭、被复用或归属未知时需当前终端或另行接受的新位置。help 与当前拒绝信息已说明这一区别，将来的逐项诊断仍须生产实现和验收。细节及证据见[位置能力说明](rotom-pane-capabilities.md)。
+
+统一严格加载回执、原生 TUI 自动继续不在本轮承诺中；Pi Pro 委派独立规划，`pi-pro` 作为普通 profile 的维护恢复兼容性不受影响。不能将上述未开放项或历史已替代任务补勾成完成，当前任务分类见 [tasks.md](../specs/008-rotom-command-experience/tasks.md#当前范围与未勾选项的含义)。
 
 | 工具 | 当前候选保护与限制 |
 | --- | --- |

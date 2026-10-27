@@ -12,7 +12,7 @@
 
 确认停止后按原协议关闭本 stop fence，再调用普通 setup 的最新计划与独立批准，原实例/HOME/包锁、owner、共享引用和 Domain 门禁全保留；新 run 可阻挡，不能扩大 stop 集合。本 workflow 不消费或重新发行旧 Domain batch permit，不把 stop_only 当资源维护许可。
 
-逐项 restore 在当前终端创建新 run，Pi/OMP 使用 HandoffResumeBackend，DSH 原 Host 不变。保留 setup 原结果和退出码；未知不重试，不回滚猜目标。restore-intent/请求派发与加载证据分开；缺回执显示待确认并请核对 TUI ID，始终 continue=not_sent。原 pane、新标签页和自动继续仍需各自准入。
+逐项 restore 在当前终端创建新 run，Pi/OMP 使用 HandoffResumeBackend，DSH 原 Host 不变。保留 setup 原结果和退出码；未知不重试，不回滚猜目标。restore-intent/请求派发与加载证据分开；缺回执显示待确认并请核对 TUI ID，始终 continue=not_sent。原 pane/新标签页已选为下一阶段交付但尚未实现准入；统一严格加载回执与原生 TUI 自动继续本轮不承诺。
 
 Pi 公开扩展/helper 在启动与切换前 claim 租约，旧 active/unknown 无 guard 或当前来源不符阻挡；只保证 Rotom 合作进程范围。三来源锁为 locks/pi/session-control.json。普通 --session 完整 ID 核实为精确路径，原生 --resume 是 picker；缺失文件原生会新建 ID，Rotom 先严格重核，外部事后变化仍 unknown。OMP 只读打开不持 writer 锁，固定 session-manager.ts:1103–1128 在竞争首次写入时分叉 sibling 新 ID；不承诺任意外部 writer 提前拒绝。自动输入所需 writer/加载/接收证据不因交接而放宽。
 
@@ -347,17 +347,23 @@ stop/恢复 ready 等待默认 30 秒，`--wait-seconds` 为 1–300 的整数�
 
 ## 原位置与继续
 
-显式驻留契约将 container 与单次 run 分开；原生子进程及相关后代完整退出、完成租约收尾后才 parked。
-会话事件未封口不阻止已证实空闲的容器 parked，但必须显示会话历史/未知、限制自动恢复并保留人工路径；
-容器空闲、资源释放和确切会话恢复资格分别判断。
+以下是已选待实现的驻留/新标签页契约，当前接口尚未开放。通过 Rotom Herdr 入口新建、该工具已验收的托管实例默认驻留，普通 shell 单次 run 退出返回；旧普通实例和直接官方 CLI 不在线升级。
+驻留将 container 与单次 run 分开；原生子进程及相关后代完整退出、完成租约收尾后才 parked，在原 pane 显示等待恢复。
+会话事件未封口不阻止已证实空闲的容器 parked；严格封口/加载回执不足也不单独阻断已准入的明确官方交接。
+仍按日常恢复核实目标、原目录、部署和该工具 writer 防护，缺回执显示加载待确认、零自动输入。
+容器空闲、子进程运行、资源释放与 session 加载确认分别判断，不能用活动子进程代替已加载证明。
 控制端点使用私人权限、同用户调用者校验和 container/generation/op 匹配，不接受任意命令文本。
 启动请求先 durable 记录，再建立新 run 与一次性许可；回包丢失为 unknown，先查事实，不重发。
 
-正常单次 run 不变；既有实例不在线变驻留。work 新建/重绑采用新容器版本，不能复用旧 accepted/receipt。
+work 新建/重绑采用新容器版本，不能复用旧 accepted/receipt，也不能从处于 Herdr 或启动时间较新推断具备驻留。
 管理源码或协议身份变化时首版拒绝在旧进程恢复；无租约 re-exec/handoff 是另行验证的后续能力。
 终端已关闭、复用或身份不明时保留待恢复，重新接受新位置；不按标题/焦点或按键猜测空闲 shell。
 
-“继续”独立批准目标和文本；只有本次新 run、实际加载的确切会话、ready 与 writer 排他均有效时发送。
+新标签页要求可核验的 Herdr 公开 API，复用受保护 bootstrap 与恢复意图；逐项创建并使用独立终端，保留原 session/cwd/部署及 workflow 门禁。先保存唯一请求意图，再调用创建；分别报告创建、交接、失败或未知，可能已经创建时先查询事实，不自动重开。缺 Herdr 时说明没有执行与同范围当前终端命令，不能静默切位置。
+
+help 和命令提示说明当前未开放及未来适用条件；实现后的只读诊断和停止计划逐项说明可用、不支持、launcher/pane 丢失、身份/结果未知与下一步，不增加无证据的成功标志。Pi Pro 委派不属于本契约，`pi-pro` 普通 profile 仍遵循同一维护恢复门禁。
+
+以下自动继续协议保留为历史附加设计，本轮不实现或开放。“继续”独立批准目标和文本；只有本次新 run、实际加载的确切会话、ready 与 writer 排他均有效时发送。
 派发前记录 intent，有可靠确认才 accepted；无幂等/确认的未知结果不重发。
 持久记录只保留批准文本摘要/固定模板身份和结果，文本本身仅在当次明确批准的执行内存中，
 不复制进恢复清单。派发前丢失文本须重新预览批准，可能已派发后仍先对账，不能重新发送。

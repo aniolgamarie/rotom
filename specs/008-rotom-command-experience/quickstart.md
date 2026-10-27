@@ -8,6 +8,8 @@
 
 逐阶段命令、TTY/非 TTY、取消及旧批次兼容见[维护流程指南](../../docs/tool-maintenance-workflows.md)。候选三工具 stop_only → 关本次 fence → 最新独立 setup 批准/原全门禁 → 逐项当前终端恢复。Pi Claims 仅合作进程；OMP 同 ID open 不取锁，竞争首次写入可能分叉新 ID；都显示加载待确认，零继续。
 
+已选后续交付为 Herdr 新标签页，以及通过 Rotom Herdr 入口新建、由驻留启动器托管且该工具已验收的新实例原 pane；当前两种位置均尚未实现准入。普通 shell 启动退出后返回 shell，旧普通实例不升级。仅停止 Agent 并保留 launcher/pane 才能等待原位恢复；launcher/pane 丢失或身份不明时改用当前终端或明确接受的新位置。统一严格加载回执、原生 TUI 自动继续及 Pi Pro 委派不在本轮承诺内；`pi-pro` 普通 profile 的停止、更新与恢复兼容性保留。详见[原位置能力指南](../../docs/rotom-pane-capabilities.md)。
+
 最终集合按分组及受影响完整文件复验对账：13,561 passed / 12 skipped，未解决失败与未覆盖均为 0；这不是一次未中断的全绿运行。原始失败和精确范围见验收记录，不累加重叠组。该阶段为 93/125，新增停止历史阶段为 97/129；T125 的 main 人工整合仍待批准；历史勾选含义保留。
 
 ## 历史恢复验收口径（2026-10-24）
@@ -250,8 +252,9 @@ help 各场景也满足原预算，T106/T107/T108 已完成；完整结果及范
    真实官方交接可通过验收且机器加载态仍待确认，不要求新上游接口；仅在可信回执充分时才记录 restored。Pi/OMP 单独验证，不类推。
 3. 阶段三：只针对明确选择的合成受管实例验证真实优雅停止、后代与资源退出证明、有限等待、
    未选实例保留及维护/恢复失败对账；停止批准不替代维护部署批准。
-4. 阶段四与附加能力：原 pane 保留和复用防护、Rotom 代际兼容、continue 的明确文本与接收确认分别验收。
-   缺证据继续未开放，允许使用此前已准入的当前终端恢复；绝不以按键注入代替公开能力。
+4. 阶段四：实施 Herdr 新标签页及 Rotom Herdr 托管新实例的驻留原 pane 恢复，分别验收位置身份、复用防护、Rotom 代际兼容与未知请求对账。
+   P-PANE 是逐工具正式开放前的原生验收门槛，不是开始开发前置；当前两种位置均未开放，使用此前已准入的当前终端恢复。
+   统一严格加载回执、原生 TUI 自动继续与 Pi Pro 委派不作本轮承诺，恢复后等待人工输入；绝不以按键注入代替公开能力。
 
 ## 结果记录与完成标准
 
@@ -283,6 +286,8 @@ T064/T086 当时只完成有限 fake 原型，真实停止/原位恢复在该阶
 没有执行测试主体；修正执行准备后在相同源码上取得上述结果，原失败日志保留。
 前一阶段 886 项回归的 98 个源码文件摘要全部保持一致，因此复用该证据，不重复运行或累加通过数。
 该原型阶段的恢复/事件契约保留 5 passed / 44 failed 历史结果；后续 T117 与候选协调器/事件实现的隔离验收见上表，不能将任何组合结果称为全库通过。
+
+2026-10-27 的独立授权 Pi 核心探针另证明稳定父进程保留同一 PTY、停止/更新后新 run 请求原 session/cwd 的可行性，不能类推为 Herdr 绑定、生产驻留实现或 DSH/OMP 原位验收；当前原 pane 和新标签页仍未实现准入。
 
 
 ## T039 真实入口验收结果
@@ -335,7 +340,7 @@ setup 继续要求完整覆盖并拒绝未选引用。该隔离阶段尚未准�
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -B -m pytest -q -p no:cacheprovider tests/test_rotom_stopped_sessions.py tests/test_rotom_stopped_cli.py tests/test_rotom_tool_session_headers.py tests/test_rotom_tool_maintenance.py tests/test_rotom_tool_workflow_cli.py tests/test_rotom_resume_cli.py tests/test_rotom_help_completion.py tests/test_rotom_zsh_completion.py
 ```
 
-新入口已另经显式授权的真实全 CLI 停止/更新/恢复验收；上述命令仍是独立隔离回归，不能替代原生证据。`resume --stopped --list` 只读已保存的停止记录，原位恢复和自动继续仍未开放。
+新入口已另经显式授权的真实全 CLI 停止/更新/当前终端恢复验收；上述命令仍是独立隔离回归，不能替代原生证据。`resume --stopped --list` 只读已保存的停止记录，当前 `--here` 不需要 Herdr；已选驻留原 pane 与 Herdr 新标签页仍未实现准入，自动继续不在本轮承诺内。本次文档同步不新增真实宿主或 Herdr 测试授权与执行结果，既有 zsh/PTY 与 Pi 核心探针仅证明各自记录的范围。
 
 显式原生脚本见 `tests/manual/*_tool_workflow_native.py`，使用前先查 `--help`；必须另有真实宿主、隔离目录及停止范围授权。以下为参数模板，NODE_ROOT/RUNTIME/BINARY 必须是已核验的锁定公开运行包；各 OUT 目录须不存在，不能指向真实 HOME：
 
