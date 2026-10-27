@@ -1,5 +1,43 @@
 # 按工具维护流程：验收范围与证据
 
+## 2026-10-27：官方宿主贯穿公开 CLI 的补验
+
+从候选 `47e1481` 继续，main 基线仍为 `45953f0`。以下使用未经修改的锁定官方宿主、Linux 原用户 UID、全新私人 HOME/XDG 和合成会话。运行阶段由 bubblewrap 隔离网络；DSH 的假模型 HTTP 服务在同一隔离网络的 loopback 内，不连接外部模型。没有注入恢复后端、替换生产启动器或修改原生包。原始 argv、退出码、锁、逐文件来源摘要和失败历史保存在私人任务记录。
+
+三工具均通过公开 CLI 完成：启动 → 维护 plan/明确批准 stop → 已停止批次最新 plan/独立批准 execute → 实际配置更新 → `resume --stopped --list` → 精确 batch/run 当前终端恢复 → 独立停止新 run → 重复恢复拒绝。每次只有一个合成实例；旧 DSH 三选二和共享资源/失败场景的分项证据仍按原范围保留。
+
+| 工具与组合 | 实际更新 | 原生结果 |
+| --- | --- | --- |
+| DSH，完整锁 `e4d56f…` | `terminal_images` 从 false 到 true，至少一项实际变更 | 初始及恢复宿主退出 0；同一原生 session 与 cwd，历史 `DONE_ONE` 可见，新 run；终端属性恢复；重复恢复返回 4；原 host 身份均退出。初始输入 28 字节创建合成历史，恢复输入 0 字节。 |
+| Pi Base，候选锁 `62ac8348…` | thinking 从 medium 到 low | 生产公开扩展初始及恢复观察到精确 ID/cwd；两次退出 0，终端恢复，原历史保留、重复恢复 4、无活动 manager，恢复输入 0 字节。 |
+| Pi Base，新锁 `a68d9dcf…` | 同上，保留 Cursor/footer 的精确锁选择 | 与上行同项通过。先在私人候选加入精确准入，再跑完整链路；其 `sessions.py` SHA-256 与本轮应用到任务分支的源码完全一致。 |
+| Pi Pro，新锁 `a68d9dcf…` | 同上，保留 Pro 默认 footer 与协作配置 | 与 Base 同项独立通过；没有调用委派工具或模型，不将 Base 结果类推为 Pro 通过。 |
+| OMP 18.12.6，完整锁 `490e6c90…` | 更换已声明主题，至少一项实际变更 | 使用公开 `resume --session` 启动已有合成会话，随后完整维护与 `--stopped` 恢复。两次 host 退出 143，manager 按原生码返回；原目录/历史可见、新 run、终端恢复、owner 全为 idle_confirmed、重复恢复 4、输入 0 字节。最终无追踪执行退出 0。 |
+
+各工具仍记录 `load_confirmation=unknown`、`continue_status=not_sent`。TUI 中的历史与人工观察不升级为严格加载回执。DSH 的恢复使本地假模型请求从 2 次增加到 3 次，系统请求材料保留为宿主标题/辅助行为；不能称零模型请求或把它记为 Rotom 发送继续。Pi/OMP 本轮没有模型提示输入。
+
+显式原生脚本分别为 `tests/manual/dsh_tool_workflow_native.py`、`pi_tool_workflow_native.py`、`omp_tool_workflow_native.py`，均要求 `--allow-host`，不进入默认 pytest。运行包准备经过正常安装器/后端及收据核验；OMP 的可再生缓存放在 namespace 的 tmpfs，防止重复二进制占满系统磁盘。新 Pi 两档正常 `npm ci --ignore-scripts`、离线闭包及脚本审核通过；官方 host tarball SRI 和每档 1,276 个归档文件字节匹配。
+
+### OMP 真实验收发现与修复
+
+原停止客户端轮询 `status` 时会短暂持有 owner 锁；OMP 已证明完整退出后的 `finish_owner` 若碰到该锁，原 NB 获取立即失败，保留 active 并阻断后续维护。真实诊断记录到 owner 的 `BlockingIOError`，随后退出阶段抛 Conflict，终端显示收尾未确认；信号已发送不等于停止完成。
+
+修复只在退出写入前遇到真实 owner 锁竞争时，释放 Domain，最多等待 2 秒后按原顺序重取并重核。owner 仍以 NB 获取，成功后持续持有至 Domain 提交/同步/读回完成；任一写入或结果不确定都不重试。两个退出阶段的原 manager、完整释放观察、路径/资源/摘要和 unknown 保护保持严格校验。2 秒是锁竞争预算，不是整个持久化事务的执行时限。
+
+针对性测试用真实临时 flock 复现旧获取路径：4 failed / 4 passed；修复后的新测试及 owner/release/cooperative 组为 202 passed。Pi 准入及 guard/观察/维护 CLI 组为 318 passed / 4 skipped。各组有重叠，不相加为全库结果。最终维护/停止历史受影响回归另记私人任务记录，未把旧 13,561 项结果冒充本轮全量重跑。
+
+失败历史保留：测试 fixture 缺少模型容量/vision 字段、错误使用受管 `run --resume`、启动探针争 owner 锁、准备阶段 DNS/祖先归属限制、早期退出 helper 在 Domain 提交前释放 owner 的单测失败，以及临时磁盘耗尽。修正均经过对应复验。启动时控制服务未建立仍保留人工停止提示，不把无端点记录当可自动控制。
+
+### main 的 Pi 锁兼容结论
+
+main 的四个未提交 Pi 锁文件始终未修改或吸收到本分支。新锁完整 identity 为 `a68d9dcf3346c0c6ab9bff231f85510dea2d9d25794664cd835cd476c3460587`；本轮只给这组锁和当前 observer `e286d053…` 的 Linux/managed/here 组合新增精确交接条目，旧 `62ac8348…` 仍支持。新条目不开放严格加载、自动继续或其它位置。
+
+新 Base 锁的选择为 footer 后 Cursor，且 Cursor 需要公开 cursor provider；默认仅 footer 的 Base 示例与该选择不同，会按既有规则拒绝 stale lock。核验用临时配置显式声明锁中的选择，没有暗改公共默认或真实机器配置。Pro 没有新增直接依赖，但间接闭包变化已独立安装并做原生验收。账号登录、真实模型/委派工具及其它平台不在本轮验收范围。
+
+本节 supersedes 下方旧阶段“全 CLI 未验证”和“新 Pi 锁未准入”的状态；历史记录保留。main 整合仍需人工批准和整合验收。
+
+## 以下为此前阶段记录
+
 **2026-10-26 分支复审补验**：Pi 保护失败后的执行阻断已修复，覆盖打印、JSON、RPC 与 TUI；官方运行包分项与受影响隔离回归通过。候选尚未合入 main，合入须人工批准；完整官方 CLI 维护链路等未验证范围仍单独保留。详见[分支复审](branch-review.md)。
 
 日期：2026-10-26。开发基线为 main `45953f09ce14908282b4af4c08101227e151ca3f`；

@@ -10,6 +10,10 @@ from agentcfg import sessions
 RUNTIME = "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d"
 KEY = {"agent": "dsh", "backend": "managed", "runtime_identity": RUNTIME,
   "observer_identity": "none", "platform": "linux", "location": "here"}
+NEW_PI_KEY = {"agent": "pi", "backend": "managed",
+  "runtime_identity": "a68d9dcf3346c0c6ab9bff231f85510dea2d9d25794664cd835cd476c3460587",
+  "observer_identity": "e286d053f59613d94c8be14d89f3def12dafdc67ef54a9746d7d2229ce362d9a",
+  "platform": "linux", "location": "here"}
 
 
 def query(**changes):
@@ -88,6 +92,24 @@ def test_tool_handoff_requires_reviewed_complete_lock_and_control_sources(agent)
   assert result.handoff == "admitted" and not result.load_confirmation and not result.automatic_continue
   assert sessions.session_capability(**{**key, "runtime_identity": "0" * 64}).handoff == "unavailable"
   assert sessions.session_capability(**{**key, "observer_identity": "other"}).handoff == "unavailable"
+
+
+def test_new_pi_lock_handoff_preserves_manual_loading_and_continuation_boundaries():
+  result = sessions.session_capability(**NEW_PI_KEY)
+  assert result.handoff == "admitted" and result.reason == "verified_linux_pi_handoff"
+  assert result.load_confirmation is False and result.automatic_continue is False and result.final_seal is False
+  assert all(getattr(result, key) == value for key, value in NEW_PI_KEY.items())
+
+
+@pytest.mark.parametrize("change", [
+  {"agent": "omp"}, {"backend": "other"}, {"runtime_identity": "0" * 64},
+  {"observer_identity": "other"}, {"platform": "darwin"}, {"platform": "win32"},
+  {"location": "original"}, {"location": "new-tab"},
+])
+def test_new_pi_lock_handoff_requires_the_exact_reviewed_combination(change):
+  result = sessions.session_capability(**{**NEW_PI_KEY, **change})
+  assert result.handoff == "unavailable" and result.reason == "exact_combination_unavailable"
+  assert result.load_confirmation is False and result.automatic_continue is False and result.final_seal is False
 
 
 def test_query_has_no_config_environment_or_subprocess_dependency(monkeypatch):

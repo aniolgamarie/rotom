@@ -16,11 +16,11 @@ T042 调查并原型验证现有官方恢复入口、实际 HOME/scope、writer 
 
 ## 当前候选边界
 
-候选实现与分组验收已完成：基于 main `45953f0`，分支 `feat/tool-maintenance-workflows-20261026`；保留在任务分支，尚未合入 main；合入须另经人工批准。官方 Pi/OMP TUI/PTY、分组隔离回归及受影响最终复验均已有结果，见验收记录。
+候选实现与分组验收已完成：基于 main `45953f0`，分支 `feat/tool-maintenance-workflows-20261026`；保留在任务分支，尚未合入 main；合入须另经人工批准。2026-10-27 已补齐三工具贯穿公开 CLI 的真实维护链路，并单独核验新 Pi 锁 Base/Pro，见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。
 
 | 工具与版本 | 当前终端交接 | writer 与加载限制 |
 | --- | --- | --- |
-| DSH core 0.2.1-rc.2、TUI 0.16.1 | 沿用原 Host 后端与固定完整锁的历史准入证据 | 加载待确认、零继续；历史原生证据不记作本轮重跑。 |
+| DSH core 0.2.1-rc.2、TUI 0.16.1 | 原 Host 后端，固定锁公开 CLI 维护与恢复已补验 | 加载待确认、零继续；恢复可产生宿主自身辅助模型请求，详见最新记录。 |
 | Pi 1.3.0 | 候选 `HandoffResumeBackend` 精确文件/原 cwd 交接 | 公开扩展 guard 只保护 Rotom 合作进程；旧 unguarded active/unknown 阻挡 claim，原生缺失文件可能产生新 ID。 |
 | OMP 18.12.6 | 候选 `HandoffResumeBackend` 精确路径/原 cwd 交接 | 只读 open 不取得 writer 锁；竞争首次写入会分叉新 ID，不能承诺提前拒绝外部 writer。 |
 
@@ -37,6 +37,7 @@ Pi 的公开 guard/helper/扩展由 `locks/pi/session-control.json` 对三个自
 | --- | --- | --- |
 | DSH | `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` | `none` |
 | Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `e286d053f59613d94c8be14d89f3def12dafdc67ef54a9746d7d2229ce362d9a`（三来源控制锁） |
+| Pi（新锁，Base/Pro 分别核验） | `a68d9dcf3346c0c6ab9bff231f85510dea2d9d25794664cd835cd476c3460587` | 同上；Base 的 footer/Cursor 顺序及 provider 选择须与锁一致，不自动改变公共默认。 |
 | OMP | `490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab` | `none` |
 
 ## 运行归属实现进度

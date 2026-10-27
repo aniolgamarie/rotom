@@ -1,6 +1,6 @@
 # 按工具执行停止、更新与恢复
 
-状态：候选留在任务分支；复审发现的 Pi 保护失败阻断已修复，官方分项与受影响回归通过，见[分支复审](../specs/008-rotom-command-experience/branch-review.md)。此前分组验证保留为阶段证据，完整官方 CLI 维护链路等未验证范围仍单列。基线 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main；合入须人工批准。本文说明候选接口，不能据此将日常入口切到候选工作树。
+状态：候选留在任务分支，尚未合入 main，合入须人工批准。2026-10-27 已补齐 DSH/Pi/OMP 官方宿主贯穿公开 CLI 的停止、实际 setup 更新、停止清单与当前终端恢复验收，并修复 OMP 退出记账与查询之间的短锁竞争；main 新 Pi 锁的 Base/Pro 也已单独核验，见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。基线 main `45953f0`；本文说明候选接口，日常入口仍按已部署绑定运行。
 
 ## 分阶段操作
 
@@ -71,6 +71,7 @@ Pi 的辅助 guard 观察只产生有来源的历史会话线索，不读会话�
 | --- | --- | --- |
 | DSH | `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` | `none` |
 | Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `e286d053f59613d94c8be14d89f3def12dafdc67ef54a9746d7d2229ce362d9a`（三来源控制锁） |
+| Pi（另经 Base/Pro 核验的新锁） | `a68d9dcf3346c0c6ab9bff231f85510dea2d9d25794664cd835cd476c3460587` | 同上；Base 配置需与该锁的 footer/Cursor 选择及 provider 声明相符，不自动更改默认选择。 |
 | OMP | `490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab` | `none` |
 
 ## 错误、取消与历史批次
@@ -92,7 +93,9 @@ Pi 的辅助 guard 观察只产生有来源的历史会话线索，不读会话�
 
 ## 验收记录与剩余工作
 
-最新复审修正已通过 71 条 Node 测试、391 passed / 4 skipped 的受影响 Python 组，以及 11 项官方 Pi 分项。真实 helper 的 TUI 启动拒绝和运行中失联均退出 4，并恢复 PTY 终端属性。完整官方 CLI 维护链路仍未验证；当前来源、失败阻断与剩余边界见[分支复审](../specs/008-rotom-command-experience/branch-review.md)。
+2026-10-27 的真实全 CLI 维护验收与 OMP 退出锁竞争修复已完成，Pi 新锁 Base/Pro 均有独立原生结果。隔离专项组包括 owner/release/cooperative 202 passed、Pi guard/准入/维护 CLI 318 passed / 4 skipped；各组重叠，不合算为全库结果。main 人工整合、其它平台、慢 SSH 与可选 Bun 材料仍单列，原 pane/新标签页和自动继续仍未开放，详见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。
+
+此前复审修正通过的 71 条 Node 测试、391 passed / 4 skipped Python 组及 11 项官方 Pi 分项保留原范围。真实 helper 的 TUI 启动拒绝和运行中失联均退出 4，PTY 属性恢复，见[分支复审](../specs/008-rotom-command-experience/branch-review.md)。
 
 以下是提交 `2cda58d` 阶段分别执行、有重叠的范围证据，不相加：tool workflow 162 passed；停止稳定组 165 passed；CLI 最终组 180 passed/4 skipped（较广阶段组 3451 passed/4 skipped）；Pi 观察组 250 passed；恢复组 21 passed。失败历史保留。UTF-8 header 最终组 78 passed；Pi 扩展 Node 最终组 43 passed。最终 workflow/resume/runtime/CLI 组为 353 passed / 4 skipped，旧 CLI/footer 组 99 passed，命令历史组 116 passed；最终集合对账为 13,561 passed / 12 skipped，未解决失败和未覆盖均为 0；分组覆盖与原失败复验见独立验收记录，main 合入另需人工批准。
 

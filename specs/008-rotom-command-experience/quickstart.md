@@ -1,6 +1,6 @@
 # 验证指南
 
-**2026-10-26 分支复审补验**：Pi 保护失败后的执行阻断已修复，覆盖打印、JSON、RPC 与 TUI；官方运行包分项与受影响隔离回归通过。候选尚未合入 main，合入须人工批准；完整官方 CLI 维护链路等未验证范围仍单独保留。详见[分支复审](branch-review.md)。
+**2026-10-27 最新验收**：官方 DSH/Pi/OMP 贯穿公开 CLI 的停止、实际配置更新、停止清单及原会话恢复均已通过；main 新 Pi 锁的 Base/Pro 另经完整闭包和原生验收。OMP 退出与查询的短锁竞争已修复并复验；候选仍需人工批准合入 main。详见[验收记录](tool-workflow-validation.md)。
 
 ## 当前候选验证与操作
 
@@ -335,4 +335,14 @@ setup 继续要求完整覆盖并拒绝未选引用。该隔离阶段尚未准�
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -B -m pytest -q -p no:cacheprovider tests/test_rotom_stopped_sessions.py tests/test_rotom_stopped_cli.py tests/test_rotom_tool_session_headers.py tests/test_rotom_tool_maintenance.py tests/test_rotom_tool_workflow_cli.py tests/test_rotom_resume_cli.py tests/test_rotom_help_completion.py tests/test_rotom_zsh_completion.py
 ```
 
-新入口的真实全 CLI 停止/更新/恢复链路尚未验证；不能用上述隔离结果替代原生证据。`resume --stopped --list` 只读已保存的停止记录，原位恢复和自动继续仍未开放。
+新入口已另经显式授权的真实全 CLI 停止/更新/恢复验收；上述命令仍是独立隔离回归，不能替代原生证据。`resume --stopped --list` 只读已保存的停止记录，原位恢复和自动继续仍未开放。
+
+显式原生脚本见 `tests/manual/*_tool_workflow_native.py`，使用前先查 `--help`；必须另有真实宿主、隔离目录及停止范围授权。以下为参数模板，NODE_ROOT/RUNTIME/BINARY 必须是已核验的锁定公开运行包；各 OUT 目录须不存在，不能指向真实 HOME：
+
+```sh
+.venv/bin/python -B tests/manual/pi_tool_workflow_native.py --allow-host --root OUT --node-root NODE_ROOT
+.venv/bin/python -B tests/manual/dsh_tool_workflow_native.py --allow-host --root OUT --node-root NODE_ROOT --runtime RUNTIME
+.venv/bin/python -B tests/manual/omp_tool_workflow_native.py --allow-host --root OUT --node-root NODE_ROOT --binary BINARY
+```
+
+Pi 准备可下载精确锁定公开依赖，宿主运行阶段禁网。DSH 仅用隔离 loopback 假模型，恢复输入为零但宿主可发辅助请求。OMP 首次使用公开 resume 加载合成历史；退出竞争的原生复验必须关闭 `--diagnose`。详细结果和失败历史见[验收记录](tool-workflow-validation.md)。

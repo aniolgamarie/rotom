@@ -1,11 +1,12 @@
 """内部 OMP owner 关联与退出记账；不启动宿主、不生成退出证明或维护许可。"""
 
 from copy import deepcopy
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 import hashlib
 import os
 import re
 import stat
+import time
 
 from . import omp_identity, run_owners
 from .paths import _absolute_directory
@@ -16,6 +17,53 @@ from .storage import Conflict, Tree
 
 
 _ERROR = "共享资源 owner 关联不能确认；保留阻塞并重新核验"
+_RELEASE_LOCK_WAIT_NS = 2_000_000_000
+
+
+class _ReleaseOwnerBusy(Exception):
+  """只表示尚未进入退出写入的 owner 短锁竞争。"""
+
+
+@contextmanager
+def _release_transaction(domain, run_id, workspace):
+  """Domain → owner NB；等待时释放 Domain，yield 后任何异常都不重放。"""
+  from .stop_locks import try_locked
+  deadline = time.monotonic_ns() + _RELEASE_LOCK_WAIT_NS
+  while True:
+    if time.monotonic_ns() >= deadline:
+      raise Conflict(_ERROR)
+    entered = False
+    try:
+      busy = False
+      # owner 的关闭晚于 Domain 提交，保持跨文件提交的原锁边界。
+      with ExitStack() as owners:
+        try:
+          with domain._transaction(write=True) as state:
+            entry = state["reservations"][run_id]
+            registry = _registry(workspace, entry)
+            tree = owners.enter_context(try_locked(registry))
+            if tree is None:
+              # 先异常退出 Domain，禁止空提交；owner 适配器随后正常退出。
+              raise _ReleaseOwnerBusy()
+            if time.monotonic_ns() >= deadline:
+              raise Conflict(_ERROR)
+            entered = True
+            yield state, entry, registry, tree
+        except _ReleaseOwnerBusy:
+          if entered:
+            raise
+          busy = True
+      if busy:
+        raise _ReleaseOwnerBusy()
+      return
+    except _ReleaseOwnerBusy:
+      if entered:
+        raise
+      left = deadline - time.monotonic_ns()
+      if left <= 0:
+        raise Conflict(_ERROR) from None
+      # 所有元数据锁均已释放；不等待物理锁、不重试已开始的持久化阶段。
+      time.sleep(min(0.01, left / 1_000_000_000))
 
 
 def _digest(value):
@@ -282,13 +330,8 @@ def finish_owner(domain, run_id, *, observation, workspace,
   """
   with _boundary():
     manager = _release_manager(run_id, observation)
-    with ExitStack() as owners, domain._transaction(write=True) as state:
-      entry = state["reservations"][run_id]
+    with _release_transaction(domain, run_id, workspace) as (state, entry, registry, tree):
       if entry["phase"] != "dispatched" or "release_receipt" in entry:
-        raise Conflict(_ERROR)
-      registry = _registry(workspace, entry)
-      tree = owners.enter_context(registry._locked(nonblocking=True))
-      if tree is None:
         raise Conflict(_ERROR)
       records, _ = registry._records(tree)
       record = records.get(run_id)
@@ -314,13 +357,8 @@ def reconcile_owner_release(domain, run_id, *, observation, workspace,
   """
   with _boundary():
     manager = _release_manager(run_id, observation)
-    with ExitStack() as owners, domain._transaction(write=True) as state:
-      entry = state["reservations"][run_id]
+    with _release_transaction(domain, run_id, workspace) as (state, entry, registry, tree):
       if entry["phase"] not in ("release_pending", "released"):
-        raise Conflict(_ERROR)
-      registry = _registry(workspace, entry)
-      tree = owners.enter_context(registry._locked(nonblocking=True))
-      if tree is None:
         raise Conflict(_ERROR)
       records, originals = registry._records(tree)
       record = records.get(run_id)

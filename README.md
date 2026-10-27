@@ -140,6 +140,8 @@ The OMP JSON preserves the original `operation_result` separately from the query
 
 The candidate also provides stopped-session history without Herdr: `./rotom resume --stopped --list --format human` shows saved session IDs, directories, titles/notes and per-item status; `./rotom resume pi --stopped` selects a complete maintenance item for current-terminal handoff. Noninteractive selection requires exact `--batch` and `--run`. Add matching `--label RUN_ID=TITLE` arguments to maintenance plan/stop to preserve a short note. OMP can use its independent title metadata; DSH/Pi do not scan transcripts to generate summaries. Incomplete legacy snapshots only offer a manual recovery command. Loading stays unconfirmed and no continuation is sent. See the [stopped-session guide](docs/tool-maintenance-workflows.md#已停止会话清单与快捷恢复); this candidate remains on the task branch pending human approval to merge.
 
+Authorized isolated official-host checks now cover the full CLI stop/setup/stopped-history/resume flow for DSH, Pi and OMP. The additional Pi lock `a68d9dcf…` has separate Base and Pro checks and exact handoff admission; main’s four existing lock edits remain untouched. See the [current native validation record](specs/008-rotom-command-experience/tool-workflow-validation.md) for source binding, the OMP exit-lock fix, and remaining limits.
+
 ## What Rotom manages
 
 - Shared model and provider references, with independent credentials, protocols, routes, and billing.
