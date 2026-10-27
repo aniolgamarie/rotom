@@ -81,7 +81,7 @@ Herdr 是工作区原生终端操作的前提：`work enter`、`work named enter
 
 DSH 沿用已验收的原 Host 后端；Pi/OMP 使用 `HandoffResumeBackend`，核实保存部署、原 cwd 与精确会话文件后创建新运行。批准的部署摘要还会传入运行入口，在原物理/状态共享锁内重核，锁一直保持到宿主退出；预检后的配置漂移会拒绝派发并保留恢复意图。加载没有可信回执时显示“加载待确认”，请在官方 TUI 核对实际 ID、目录与历史；始终 `continue_status=not_sent`。退出码 0、人工确认或历史引用都不等于机器确认 `restored`。
 
-Herdr 新标签页和新托管实例原 pane 候选已实现，正式位置验收仍在进行，不能据此宣称已原生通过。原 pane 开放后仅适用于通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，入口默认驻留；普通 shell `rotom run` 仍在 Agent 退出后返回，旧普通实例或直接官方 CLI 不在线升级。只停止 Agent 才能保留原位等待；launcher/pane 关闭、被复用或归属未知时需当前终端或另行接受的新位置。help 与当前拒绝信息已说明这一区别，maintenance plan/停止交互批准中的 location_diagnostics 为只读提示，不改变 plan_id；停止清单还可展示已有 location_request，不能据此重新开放已派发请求。细节及证据见[位置能力说明](rotom-pane-capabilities.md)。
+Herdr 新标签页和新托管实例原 pane 候选已实现，十二组正式原生验收已通过，准入限定支持矩阵中的六个精确 Linux managed 组合及两种位置。原 pane 仅适用于通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，入口默认驻留；普通 shell `rotom run` 仍在 Agent 退出后返回，旧普通实例或直接官方 CLI 不在线升级。只停止 Agent 才能保留原位等待；launcher/pane 关闭、被复用或归属未知时需当前终端或另行接受的新位置。help 与当前拒绝信息已说明这一区别，maintenance plan/停止交互批准中的 location_diagnostics 为只读提示，不改变 plan_id；停止清单还可展示已有 location_request，不能据此重新开放已派发请求。细节及证据见[位置能力说明](rotom-pane-capabilities.md)。
 
 统一严格加载回执、原生 TUI 自动继续不在本轮承诺中；Pi Pro 委派独立规划，`pi-pro` 作为普通 profile 的维护恢复兼容性不受影响。不能将上述未开放项或历史已替代任务补勾成完成，当前任务分类见 [tasks.md](../specs/008-rotom-command-experience/tasks.md#当前范围与未勾选项的含义)。
 
