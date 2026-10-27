@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rotom private container record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "container_id", "generation", "manager_identity", "terminal_ref", "manager_code_identity", "control_protocol", "endpoint_identity", "scope", "state", "run_id", "child_identity", "consumed_request_ids", "last_request_id"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "container_id": {"$ref": "#/$defs/id"},
+    "generation": {"$ref": "#/$defs/positive"},
+    "manager_identity": {"$ref": "#/$defs/manager"},
+    "terminal_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["socket_path", "server_identity", "workspace_id", "tab_id", "pane_id", "terminal_id", "cwd"],
+      "properties": {
+        "socket_path": {"$ref": "#/$defs/path"},
+        "server_identity": {
+          "type": "array", "minItems": 2, "maxItems": 2,
+          "items": {"$ref": "#/$defs/nonnegative"}
+        },
+        "workspace_id": {"$ref": "#/$defs/text"},
+        "tab_id": {"$ref": "#/$defs/text"},
+        "pane_id": {"$ref": "#/$defs/text"},
+        "terminal_id": {"$ref": "#/$defs/text"},
+        "cwd": {"$ref": "#/$defs/path"}
+      }
+    },
+    "manager_code_identity": {"type": "string", "pattern": "^[0-9a-f]{64}$", "minLength": 64, "maxLength": 64},
+    "control_protocol": {"type": "integer", "const": 1},
+    "endpoint_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "device", "inode"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "device": {"$ref": "#/$defs/nonnegative"},
+        "inode": {"$ref": "#/$defs/positive"}
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["local", "profile", "agent"],
+      "properties": {
+        "local": {"$ref": "#/$defs/path"},
+        "profile": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$", "not": {"pattern": "[^A-Za-z0-9_.-]"}, "minLength": 1, "maxLength": 128},
+        "agent": {"enum": ["dsh", "pi", "omp"]}
+      }
+    },
+    "state": {"enum": ["running", "parking", "parked", "resume_pending", "unknown", "closed"]},
+    "run_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+    "child_identity": {"anyOf": [{"$ref": "#/$defs/manager"}, {"type": "null"}]},
+    "consumed_request_ids": {"type": "array", "maxItems": 4096, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+    "last_request_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]}
+  },
+  "allOf": [{
+    "if": {"properties": {"state": {"enum": ["parked", "closed"]}}},
+    "then": {"properties": {"child_identity": {"type": "null"}}}
+  }],
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[0-9a-f]{32}$", "minLength": 32, "maxLength": 32},
+    "positive": {"type": "integer", "minimum": 1, "maximum": 18446744073709551615},
+    "nonnegative": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "text": {"type": "string", "minLength": 1, "maxLength": 255, "pattern": "^[^\u0000]+$"},
+    "path": {"type": "string", "minLength": 1, "maxLength": 8192, "pattern": "^/[^\u0000]*$"},
+    "manager": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pid", "birth_id"],
+      "properties": {
+        "pid": {"$ref": "#/$defs/positive"},
+        "birth_id": {"$ref": "#/$defs/text"}
+      }
+    }
+  }
+}

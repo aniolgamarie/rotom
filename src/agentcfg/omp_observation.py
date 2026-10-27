@@ -9,7 +9,7 @@ from .resource_coordination import Domain
 from .resource_protocol import TERMINAL_INTENT_PHASES
 from .resource_scopes import _verify
 from .run_owners import Registry, record_state
-from .storage import Conflict, Tree, advisory_lock
+from .storage import Conflict, LockBusy, Tree, advisory_lock
 
 
 _ERROR = "OMP实例观察归属或协调记录不能确认；保留未知状态"
@@ -50,6 +50,8 @@ def guard(workspace, *, shared=True):
         raise ValueError()
       with domain._transaction() as state:
         _verify(state, workspace, instance_fd=fd, native_home_fd=home.fd)
+    except LockBusy:
+      raise
     except Exception:
       raise Conflict(_ERROR) from None
     yield fd

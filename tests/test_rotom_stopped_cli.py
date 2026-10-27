@@ -105,7 +105,7 @@ def test_nontty_missing_target_never_reads_or_queries(history_case, suffix):
 
 
 @pytest.mark.parametrize("options", [
-  ["--stopped", "--session", SESSION], ["--stopped", "--original"], ["--stopped", "--new-tab"],
+  ["--stopped", "--session", SESSION], ["--stopped", "--list", "--original"], ["--stopped", "--list", "--new-tab"],
   ["--list"], ["--batch", BATCH], ["--run", RUN], ["--stopped", "--batch", "bad", "--list"],
   ["--stopped", "--run", "A" * 32, "--list"],
   ["--stopped", "--batch", BATCH, "--batch", BATCH, "--list"],
@@ -325,3 +325,179 @@ def test_help_and_completion_include_stopped_and_labels_without_backend(history_
   source = (Path(__file__).resolve().parents[1] / "terminals/zsh/_rotom").read_text()
   assert "--stopped --list --batch --run --format" in source
   assert "--session --label --format" in source
+
+
+@pytest.mark.parametrize("location", ["original", "new-tab"])
+def test_saved_workflow_location_rechecks_then_dispatches(history_case, monkeypatch, location):
+  import sys
+  state = history_case
+  calls = []
+  def dispatch_location(ws, batch_id, run_id, context, *, location):
+    calls.append((ws, batch_id, run_id, location))
+    return 19
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
+  assert cli.main([*state.prefix, "--batch", BATCH, "--run", RUN, "--" + location]) == 19
+  assert calls == [(state.ws, BATCH, RUN, location)]
+  assert len(state.queries) == 2 and state.launches == state.restores == []
+
+
+@pytest.mark.parametrize("location", ["here", "original", "new-tab"])
+def test_list_location_is_parameter_error_before_history(history_case, location):
+  state = history_case
+  assert cli.main([*state.prefix, "--list", "--" + location]) == 2
+  assert state.queries == state.loads == state.launches == []
+
+
+@pytest.fixture
+def batch_history(history_case):
+  state = history_case
+  second = deepcopy(state.rows[0])
+  second.update(run_id="c" * 32, session_id="second-session")
+  second["session_ref"]["native_ref"] = "second-session"
+  state.rows.append(second)
+  return state
+
+
+@pytest.mark.parametrize("location", ["new-tab", "original"])
+def test_batch_all_aggregates_each_location_without_stdin(batch_history, monkeypatch, location):
+  import sys
+  state = batch_history
+  calls = []
+  def dispatch_location(ws, batch_id, run_id, context, *, location):
+    assert len(state.loads) >= 2
+    calls.append((run_id, location))
+    print(json.dumps({"run_id": run_id, "handoff": True, "request_id": run_id}), file=context.input_gateway.stdout)
+    return 0
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
+  assert cli.main([*state.prefix, "--batch", BATCH, "--all", "--" + location]) == 0
+  result = json.loads(state.streams.stdout.getvalue())
+  assert result["batch_id"] == BATCH and result["location"] == location
+  assert [item["run_id"] for item in result["results"]] == [RUN, "c" * 32]
+  assert all(item["exit_code"] == 0 and item["result"]["handoff"] for item in result["results"])
+  assert result["load_confirmation"] == "unknown" and result["continue_status"] == "not_sent"
+  assert calls == [(RUN, location), ("c" * 32, location)] and state.streams.stdin.reads == 0
+
+
+@pytest.mark.parametrize("damage", ["unrestorable", "unknown-source", "scope", "incomplete", "duplicate"])
+def test_batch_all_rejects_entire_invalid_batch_before_dispatch(batch_history, monkeypatch, damage):
+  import sys
+  state = batch_history
+  if damage == "unrestorable": state.rows[1]["restorable"] = False
+  elif damage == "unknown-source": state.rows[1]["source"] = "stop"
+  elif damage == "scope": state.rows[1]["scope"]["profile"] = "other"
+  elif damage == "incomplete": state.incomplete = True
+  else: state.rows.append(deepcopy(state.rows[0]))
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(
+    dispatch_location=lambda *args, **kwargs: pytest.fail("invalid batch dispatched")))
+  assert cli.main([*state.prefix, "--batch", BATCH, "--all", "--new-tab"]) == 4
+  result = json.loads(state.streams.stdout.getvalue())
+  assert all(item["result"]["status"] == "not_dispatched" for item in result["results"])
+  assert state.streams.stdin.reads == 0
+
+
+@pytest.mark.parametrize("options", [["--all"], ["--stopped", "--all", "--new-tab"],
+  ["--stopped", "--batch", BATCH, "--all"], ["--stopped", "--batch", BATCH, "--all", "--here"],
+  ["--stopped", "--batch", BATCH, "--all", "--new-tab", "--run", RUN],
+  ["--stopped", "--batch", BATCH, "--all", "--new-tab", "--list"],
+  ["--stopped", "--batch", BATCH, "--all", "--original", "--session", SESSION]])
+def test_batch_all_invalid_combinations_fail_before_history(history_case, options):
+  state = history_case
+  assert cli.main(["--no-input", "resume", "--local", str(state.ws.local_path), *options]) == 2
+  assert state.queries == state.loads == state.launches == []
+
+
+@pytest.mark.parametrize("failure_index", [0, 1])
+@pytest.mark.parametrize("failure", ["nonzero", "no-json", "exception", "config", "credential"])
+def test_batch_all_stops_on_first_unconfirmed_item_and_retains_prior_facts(batch_history, monkeypatch, failure_index, failure):
+  import sys
+  from agentcfg.storage import Conflict
+  state = batch_history
+  third = deepcopy(state.rows[1])
+  third.update(run_id="d" * 32, session_id="third-session")
+  third["session_ref"]["native_ref"] = "third-session"
+  state.rows.append(third)
+  calls = []
+  def dispatch_location(ws, batch_id, run_id, context, *, location):
+    calls.append(run_id)
+    if len(calls) - 1 == failure_index:
+      if failure == "exception": raise Conflict("synthetic private detail")
+      if failure == "config":
+        from agentcfg.schema import ConfigError
+        raise ConfigError("synthetic-configuration-change")
+      if failure == "credential":
+        from agentcfg.secrets import CredentialError
+        raise CredentialError()
+      if failure == "no-json": return 0
+      return 5
+    print(json.dumps({"run_id": run_id, "handoff": True}), file=context.input_gateway.stdout)
+    return 0
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
+  assert cli.main([*state.prefix, "--batch", BATCH, "--all", "--new-tab"]) == 4
+  result = json.loads(state.streams.stdout.getvalue())
+  assert calls == [RUN, "c" * 32][:failure_index + 1]
+  assert result["results"][failure_index]["result"]["status"] == "unknown"
+  assert all(item["result"]["status"] == "not_dispatched" for item in result["results"][failure_index + 1:])
+  if failure_index:
+    assert result["results"][0]["exit_code"] == 0 and result["results"][0]["result"]["handoff"]
+  assert "private detail" not in state.streams.stderr.getvalue()
+  assert state.streams.stdin.reads == 0
+
+
+def test_batch_all_rechecks_every_target_before_first_dispatch(batch_history, monkeypatch):
+  import sys
+  state = batch_history
+  def query(path, **filters):
+    rows = [deepcopy(row) for row in state.rows if filters["run_id"] in (None, row["run_id"])]
+    if filters["run_id"] == "c" * 32:
+      rows[0]["cwd"] = "/synthetic/drift"
+    return {"schema_version": 1, "sessions": rows, "issues": [], "incomplete": False}
+  state.query_override = query
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(
+    dispatch_location=lambda *args, **kwargs: pytest.fail("drifted batch dispatched")))
+  assert cli.main([*state.prefix, "--batch", BATCH, "--all", "--new-tab"]) == 4
+  assert all(item["result"]["status"] == "not_dispatched"
+    for item in json.loads(state.streams.stdout.getvalue())["results"])
+
+
+def test_batch_all_human_output_is_per_item_without_json_fragments(batch_history, monkeypatch):
+  import sys
+  state = batch_history
+  def dispatch_location(ws, batch_id, run_id, context, *, location):
+    print(json.dumps({"handoff": True}), file=context.input_gateway.stdout)
+    return 0
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
+  assert cli.main([*state.prefix, "--batch", BATCH, "--all", "--original", "--format", "human"]) == 0
+  text = state.streams.stdout.getvalue()
+  assert text.count("已交接") == 2 and RUN in text and "c" * 32 in text
+  assert "加载待确认，不发送继续" in text and '"handoff"' not in text
+
+
+def test_batch_all_repeated_command_never_replays_previous_intents(batch_history, monkeypatch):
+  import sys
+  state = batch_history
+  calls = []
+  def dispatch_location(ws, batch_id, run_id, context, *, location):
+    calls.append(run_id)
+    next(row for row in state.rows if row["run_id"] == run_id).update(restorable=False, restore_status="unknown")
+    print(json.dumps({"handoff": True}), file=context.input_gateway.stdout)
+    return 0
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
+  argv = [*state.prefix, "--batch", BATCH, "--all", "--new-tab"]
+  assert cli.main(argv) == 0
+  state.streams.stdout.seek(0)
+  state.streams.stdout.truncate()
+  assert cli.main(argv) == 4
+  assert calls == [RUN, "c" * 32]
+  assert all(item["result"]["status"] == "not_dispatched"
+    for item in json.loads(state.streams.stdout.getvalue())["results"])
+
+
+def test_batch_all_help_is_static_and_explains_exact_limits(history_case, capsys, monkeypatch):
+  monkeypatch.setattr(stopped_sessions, "for_scope", lambda *args, **kwargs: pytest.fail("help read history"))
+  assert cli.main(["resume", "--help"]) == 0
+  text = capsys.readouterr().out
+  for expected in ("--all", "--stopped --batch", "不接受 --run/--session/--list/--here", "not_dispatched",
+      "逐项独立交接", "逐工具/Linux/Herdr/驻留准入", "--all --new-tab"):
+    assert expected in text
+  definition = cli._registry(cli.build_parser())[("resume",)]
+  assert any(parameter.name == "all" for parameter in definition.parameters)

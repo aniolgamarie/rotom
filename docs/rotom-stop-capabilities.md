@@ -24,6 +24,8 @@
 整组共用同一绝对截止时间，不逐项延长。实际停止等待未知或到期返回 4，并保留 batch 和已写事实，
 不重发、不强杀、不自动恢复，也不发送继续文本。精确组合或当前现场不支持时返回 5。
 
+停止 close 后及最终核对使用本次原绝对截止点等待 owner/inbox/journal 的纯读短锁；过期后只允许一次无竞争 NB 观察，竞争时保留 unknown，不重新 close、投稿或发信号，已落盘 close 与 fence 事实不回滚。独立 status 仍默认 NB。
+
 `maintenance status` 只读；manager/host、目录、版本与 session 来自保存快照，
 confirmed session 也只显示 historical，unknown 不补造。它们不证明当前会话加载或可恢复。
 普通 stop 批次的 `maintenance cancel` 只取消尚未投递的活动项，或对已确证停止的收尾记录作明确对账；
@@ -90,7 +92,7 @@ TUI 固定 commit 已核对；Core/JSONL 缓存尚缺与官方归档的字节级
 不声称覆盖外部原生信号处理器或任意多线程宿主。
 
 句柄在原 wait 期间保留，只关闭自身 pidfd，不发送信号或等待/收割 child。
-登记采用 owner 非阻塞锁，锁内再次核验句柄和当前 manager，只更新该 active/managed DSH 的
+该历史阶段登记采用 owner 非阻塞锁；当前 bind_current_host 仅在首次写入前按新 2 秒预算等待短 owner 锁，不重试 body。锁内再次核验句柄和当前 manager，只更新该 active/managed DSH 的
 host 观察与观察时间；保存的 session/cwd 事实不变，`protocol.control` 仍为 null。
 OMP 的合作 owner 不走此接口，避免绕开双向摘要事务。SSH、未登记及自定义启动路径沿用原派发方式。
 

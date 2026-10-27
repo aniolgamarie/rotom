@@ -1,4 +1,4 @@
-"""原 pane 恢复边界只作提示，不启用位置能力或查询真实终端。"""
+"""原 pane 恢复的静态帮助与普通 session 边界，不查询真实终端。"""
 import io
 import shlex
 import subprocess
@@ -29,7 +29,12 @@ def test_help_explains_pane_boundary_without_io(path, monkeypatch, capsys):
   monkeypatch.setattr(subprocess, "Popen", forbidden)
   assert cli.main([*path, "--help"]) == 0
   text = capsys.readouterr().out
-  assert "尚未开放" in text and "驻留启动器托管" in text
+  assert "驻留启动器托管" in text
+  if path[-1] == "run":
+    assert "Rotom Herdr 专用入口" in text
+  else:
+    for expected in ("已保存完整 workflow 清单", "逐工具/Linux/Herdr/驻留准入", "位置诊断", "加载待确认", "不发送继续"):
+      assert expected in text
   if path[-1] == "run":
     assert "Agent 退出后返回 shell" in text
     assert "处于 Herdr 中也不会自动获得原 pane 恢复能力" in text
@@ -60,8 +65,8 @@ def test_rejected_location_preserves_stdout_scope_and_exit(option, scope, output
     assert expected in text
 
 
-@pytest.mark.parametrize("option", ["--original", "--new-tab", "--session"])
-def test_stopped_location_conflicts_still_fail_before_candidate(option, monkeypatch):
+@pytest.mark.parametrize("option", ["--session"])
+def test_stopped_session_conflict_fails_before_candidate(option, monkeypatch):
   streams = InputGateway(io.StringIO(), io.StringIO(), io.StringIO())
   monkeypatch.setattr(cli, "InputGateway", lambda: streams)
   suffix = [option, "example"] if option == "--session" else [option]

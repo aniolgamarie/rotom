@@ -68,6 +68,15 @@ def package_path(case):
   return case.ws.cache / "leases" / (case.lock.identity + ".lock")
 
 
+def test_startup_package_validation_waits_for_short_domain_writer(case):
+  from test_rotom_start_stop_lock_contention import owner_lock
+  with case.module.cooperative_run(case.ws, case.lock.identity) as lease:
+    with owner_lock(case.domain.root, release=True) as released:
+      with lease.package_guard(case.ws, case.lock.identity) as fd:
+        assert type(fd) is int
+    assert released.is_set()
+
+
 def busy(path):
   fd = os.open(path, os.O_RDWR | os.O_NOFOLLOW)
   try:

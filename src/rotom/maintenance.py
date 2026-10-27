@@ -146,7 +146,10 @@ def dispatch(invocation, args):
     if value["readiness"] != "ready" and any(blocker.startswith("session-required:") for blocker in value["blockers"]):
       raise InputError(2)
     if command == "plan":
-      _render({**value, "readonly": True, "selected_runs": value["stop_plan"]["selected_runs"], "plan": value["stop_plan"]}, context)
+      from .pane_dispatch import describe_options
+      positions = {run: describe_options(workspace, run) for run in value["stop_plan"]["selected_runs"]}
+      _render({**value, "readonly": True, "selected_runs": value["stop_plan"]["selected_runs"],
+        "plan": value["stop_plan"], "location_diagnostics": positions}, context)
       return 0
     if args.plan_id is not None and args.plan_id != value["plan_id"]:
       _render(value, context)
@@ -154,7 +157,9 @@ def dispatch(invocation, args):
     def approve(current):
       if args.plan_id is not None:
         return args.plan_id == current["plan_id"]
-      _render(current, context, stream=gateway.stderr)
+      from .pane_dispatch import describe_options
+      positions = {run: describe_options(workspace, run) for run in current["stop_plan"]["selected_runs"]}
+      _render({**current, "location_diagnostics": positions}, context, stream=gateway.stderr)
       return gateway.confirm("保存所选会话清单并仅停止这些运行；更新配置须另行批准", policy=policy)
     result = workflow.stop(workspace, expected_plan=value, approve=approve, wait_seconds=args.wait_seconds)
     _render(_next(result), context)
@@ -202,6 +207,7 @@ def dispatch(invocation, args):
     _render(_next(result), context)
     return code
   if command == "restore":
+    location = "original" if getattr(args, "original", False) else "new-tab" if getattr(args, "new_tab", False) else "here"
     result = workflow.status(workspace, batch_id)
     selected = getattr(args, "run", None)
     pending = [run for run, state in result["restores"].items() if state is None]
@@ -211,13 +217,17 @@ def dispatch(invocation, args):
         return _text(f"{run} / session={result['targets'][run]['ref']['native_ref']} / "
           f"cwd={result['targets'][run]['cwd']} / title={title}")
       selected = gateway.choose([(run, description(run))
-        for run in pending], policy=policy, label="选择本终端恢复的实例")
-    return restore_selected(workspace, batch_id, selected, context)
+        for run in pending], policy=policy, label=("选择本终端恢复的实例" if location == "here" else
+          "选择恢复实例（" + location + "；须逐工具/Linux/Herdr/驻留准入，不发送继续）"))
+    return restore_selected(workspace, batch_id, selected, context, location=location)
   raise InputError(2)
 
 
-def restore_selected(workspace, batch_id, run_id, context):
+def restore_selected(workspace, batch_id, run_id, context, *, location="here"):
   """两种公开入口共用同一部署绑定、持久意图和防重门禁。"""
+  if location != "here":
+    from .pane_dispatch import dispatch_location
+    return dispatch_location(workspace, batch_id, run_id, context, location=location)
   gateway = context.input_gateway
   def launch(target, *, expected_deployment):
     from .resume import backend_for_workspace

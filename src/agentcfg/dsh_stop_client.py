@@ -76,11 +76,13 @@ def publish_request(workspace, request, *, expected_record):
     raise Conflict(_ERROR) from None
 
 
-def status_stop(workspace, *, batch_id):
+def status_stop(workspace, *, batch_id, deadline_ns=None):
   """只读原快照和当前事实；看不到进程不等于它已退出。"""
   registry = _registry(workspace)
   try:
-    with registry._locked(nonblocking=True) as owner, Tree(workspace.state_root) as parent:
+    owner_guard = (registry._locked(nonblocking=True) if deadline_ns is None
+      else stop_locks.locked(registry, deadline_ns, allow_expired_once=True))
+    with owner_guard as owner, Tree(workspace.state_root) as parent:
       saved = run_stop_fence._read_snapshot(parent, registry, batch_id, owner)
       if saved is None:
         raise ValueError()
@@ -96,7 +98,9 @@ def status_stop(workspace, *, batch_id):
         state = "unknown"
         if current is not None and dsh_stop_completion._unchanged(historical, current):
           state = current["lifecycle_state"]
-        channel = dsh_stop_control.channel_state(workspace, historical)
+        # 到期后的最终核对只做旧 NB 观察，不为内部短锁建立新预算。
+        options = {} if deadline_ns is None or time.monotonic_ns() >= deadline_ns else {"deadline_ns": deadline_ns}
+        channel = dsh_stop_control.channel_state(workspace, historical, **options)
         requests = channel["requests"]
         if len(requests) > 1 or any(item["batch_id"] != batch_id or item["plan_id"] != snapshot["plan_id"] for item in requests):
           raise ValueError()
@@ -153,7 +157,8 @@ def execute_stop(workspace, *, expected_plan, approve, wait_seconds=30, batch_id
           if deadline.expired():
             raise ValueError()
           dsh_stop_scope.save_reviewed_snapshot(workspace, instance_fd=instance_fd, state_fd=state_fd,
-            expected_records=records, expected_layout=layout, batch_id=batch_id, plan=plan, review=review)
+            expected_records=records, expected_layout=layout, batch_id=batch_id, plan=plan, review=review,
+            deadline_ns=deadline.deadline_ns)
           for run in plan["selected_runs"]:
             if deadline.expired():
               raise ValueError()
@@ -172,13 +177,14 @@ def execute_stop(workspace, *, expected_plan, approve, wait_seconds=30, batch_id
         if (current is not None and all(row["lifecycle_state"] == "idle_confirmed" for row in current["targets"])
             and all(observer.exited() for observer in exits.values())):
           # 收尾写入只尝试一次；响应未知留给后续明确请求核对。
-          dsh_stop_completion.close_stop(workspace, batch_id=batch_id, plan_id=plan["plan_id"], reason="stopped")
-          return status_stop(workspace, batch_id=batch_id)
+          dsh_stop_completion.close_stop(workspace, batch_id=batch_id, plan_id=plan["plan_id"],
+            reason="stopped", deadline_ns=deadline.deadline_ns)
+          return status_stop(workspace, batch_id=batch_id, deadline_ns=deadline.deadline_ns)
         time.sleep(min(0.05, deadline.remaining()))
     except Exception:
       # 已接受、局部投递、写后失败均不回滚；显式查询/取消必须核对落盘事实。
       pass
     try:
-      return status_stop(workspace, batch_id=batch_id)
+      return status_stop(workspace, batch_id=batch_id, deadline_ns=deadline.deadline_ns)
     except Conflict:
       return result | {"status": "unknown"}

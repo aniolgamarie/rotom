@@ -34,9 +34,9 @@ def advisory_lock(fd, *, shared=False, unlock=True, busy_message="实例仍被�
   try:
     fcntl.flock(fd, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
   except OSError as error:
-    message = (busy_message if error.errno in (errno.EACCES, errno.EAGAIN)
-      else unavailable_message or busy_message)
-    raise Conflict(message) from None
+    if error.errno in (errno.EACCES, errno.EAGAIN):
+      raise LockBusy(busy_message) from None
+    raise Conflict(unavailable_message or busy_message) from None
   try:
     yield fd
   finally:

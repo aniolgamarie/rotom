@@ -234,3 +234,33 @@ def test_accepted_exec_survives_parent_pending_bookkeeping(tmp_path, monkeypatch
     assert len(execute.calls) == 1
   finally:
     parent.close()
+
+
+@pytest.mark.parametrize("agent", ["dsh", "pi"])
+def test_v2_agent_wrap_uses_reviewed_settings_after_accepted(tmp_path, monkeypatch, agent):
+  import sys
+  from types import SimpleNamespace
+  from termcfg.work_state import launch_digest
+  prepare = work_config.prepare_launch
+  def reviewed(*args, **kwargs):
+    result = prepare(*args, **kwargs)
+    result["launch"]["launcher"] = agent
+    result["launch"]["runtime"] = {"generation": "c" * 64, "identity": "synthetic-runtime", "policy": "isolated"}
+    result["digest"] = launch_digest(result["cwd"], result["captured_home"], result["launch"])
+    return result
+  monkeypatch.setattr(work_config, "prepare_launch", reviewed)
+  value, settings, fake, parent, _, pane = setup_launch(tmp_path, monkeypatch)
+  wrapped, calls = [], []
+  def wrap_launch(chosen, launcher, command, cwd, client, current):
+    assert chosen is settings and launcher == agent and client is fake
+    assert fake.panes[pane["pane_id"]]["tokens"]["rw2_phase"] == "accepted"
+    assert current["pane_id"] == pane["pane_id"] and cwd == value["cwd"]
+    wrapped.append(command)
+    return ["/synthetic-resident", "fixed"]
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(wrap_launch=wrap_launch))
+  try:
+    assert work_shell.launch_payload_v2(wire(value), client=fake, settings=settings,
+      execute=lambda *args: calls.append(args)) == 0
+    assert len(wrapped) == 1 and calls[0][1] == ["/synthetic-resident", "fixed"]
+  finally:
+    parent.close()

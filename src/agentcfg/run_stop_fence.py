@@ -10,7 +10,7 @@ import json
 import os
 import re
 
-from . import run_owners, storage
+from . import run_owners, storage, stop_locks
 from .storage import Conflict, Tree
 
 
@@ -103,7 +103,7 @@ def _check_snapshot_link(parent, registry, owner, value):
   return snapshot
 
 
-def install(registry, *, batch_id, plan_id, expected_records, before_publish=None, recovery_snapshot=None):
+def install(registry, *, batch_id, plan_id, expected_records, before_publish=None, recovery_snapshot=None, deadline_ns=None):
   """内部阻断事务，返回 None；不核验用户批准、资源闭包或停止能力。
 
   上层必须已按原顺序持有实例/状态 SH，并持续至本事务完成，以排除正在执行的
@@ -128,7 +128,8 @@ def install(registry, *, batch_id, plan_id, expected_records, before_publish=Non
       from . import run_stop_snapshot as codec
       snapshot_raw = codec.encode_snapshot(recovery_snapshot)
       snapshot = codec.decode_snapshot(snapshot_raw)
-    with registry._locked(nonblocking=True) as owner, Tree(registry.root.parent) as parent:
+    guard = registry._locked(nonblocking=True) if deadline_ns is None else stop_locks.locked(registry, deadline_ns)
+    with guard as owner, Tree(registry.root.parent) as parent:
       physical = _physical(owner)
       records, _ = registry._records(owner)
       if run_owners._encode(records) != expected:

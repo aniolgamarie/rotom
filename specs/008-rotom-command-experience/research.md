@@ -88,7 +88,7 @@ help/公开目录先返回，不能为帮助加载偏好或机器。精确规则
 ## R6. DSH 的最小会话恢复路径
 
 **Decision**：DSH 是首个实际恢复目标；在当前受管 `runProfile` 路径中，通过经过验证的
-ResumeRequest 接入官方会话恢复入口，这是待实现/验证的接线目标，不表示参数通道已打通；已有公开观察仅作为可选证据，不能为缺失的加载事实背书。
+本段为早期研究状态：当时 ResumeRequest 接入官方会话恢复入口仍待实现/验证，不表示当时参数通道已打通；已有公开观察仅作为可选证据，不能为缺失的加载事实背书。
 不执行上游全局启动器的安装/修复路径，不读取或复制会话正文，不靠原生 argv 猜测恢复。
 
 **Rationale**：当前 [launch.mjs](../../agents/dsh/templates/launch.mjs) 直接调用公开 profile-boot，
@@ -185,11 +185,11 @@ T044 只完成基础观察和 DSH/Pi 登记，OMP 缺记录保持未登记/未�
 驻留等待在单次运行租约之外；管理代码/协议变化时首版拒绝旧进程原位恢复，允许明确选择新位置。
 Herdr 公开重启作为比较路线，不凭现有 Rotom allowlist 断言上游不存在能力。
 
-**最新范围决定（2026-10-27）**：已选择薄驻留启动器路线，并交付 Herdr 新标签页。
+**本次候选实现（2026-10-27）**：薄驻留启动器和 Herdr 新标签页 transport 已实现，最终十二组无 trace 原生验收全部通过，现按六个精确 Linux managed 组合开放两种位置。
 原 pane 仅面向通过 Rotom Herdr 入口新建、由驻留启动器托管且该工具已验收的实例；
 仅停止 Agent 并保留 launcher/pane 才能等待原位恢复。普通 shell 启动退出后返回 shell，旧普通实例不升级，
 仅在 Herdr 内或刚新启动不构成资格。launcher/pane 丢失、被复用或身份不明时使用明确接受的新位置。
-当前原 pane 与新标签页均尚未实现准入；P-PANE 约束正式开放，不阻止生产实现开始。
+候选只接受已停止且已完成 setup/update 的完整 workflow；普通 --session 不取得位置能力。P-PANE 约束精确 Linux managed 组合正式开放，不能由核心探针、help 或隔离回归代替。
 统一严格加载回执、原生 TUI 自动继续及 Pi Pro 委派不在本轮承诺内；恢复仍可保持加载待确认、零自动输入，
 `pi-pro` 普通 profile 的停止、更新与恢复兼容性保留。最新边界见[原位置能力指南](../../docs/rotom-pane-capabilities.md)。
 
@@ -200,7 +200,17 @@ Herdr 公开重启作为比较路线，不凭现有 Rotom allowlist 断言上游
 现有 [原生 API 契约](../006-configurable-workspaces/contracts/native-api.md) 未准入该控制路径。
 历史自动继续研究还需新运行/确切会话/ready/接收确认；当前不承诺该能力，默认不发送。
 
+**Implementation**：agentcfg.pane_records 保存容器身份；restore_locations 保存目录身份锚定的不可变请求与 CAS receipt；tool_maintenance 先 reserve 原恢复意图。rotom.resident/pane_dispatch/restore_child 与 termcfg.restore_tabs 只用固定公开 API、socket 请求引用和固定子命令。新 tab 创建不重发；批量 --all 先核验整批、逐项独立交接，失败后保留部分结果。源码身份变化拒绝旧容器；parked 释放 Agent 单次租约与凭据环境。普通 rotom run 不驻留，Herdr V1/V2 新 DSH/Pi 与符合组合的新 tab 恢复才参与驻留准入。
+
 **Alternatives considered**：给 shell 键入命令、从标题猜位置、复用旧 work receipt、自动导入新模块或重发未知输入均不采用。
+
+### 当前实现的锁与驻留选择
+
+薄 parent 在 child 活动时仅等待退出，不轮询 Registry/Domain。child 退出后核对唯一出生身份和完整 release 才保存真实 run_id 并 parked；active 位置按需关联只是候选，不能绕过原位 saved run、parked 与一次请求消费。
+
+Domain 首次写锁默认等待 2 秒；显式 deadline 保留原预算，body/commit/unlock 不重放。默认外部读仍 NB，合作启动只为 package_guard/check_omp_launch 两处只读首锁给 2 秒。资源/anchor 选择与预留现在同一写事务完成，替代早期 snapshot→reserve 拆分后依靠全域 revision 竞争拒绝的设计；通用 reserve 的严格 CAS 不变。停止最终 status 沿原 deadline 观察，过期无竞争可读，有竞争保留未知，不重 close/信号。
+
+V1 accepted 前保存最后核验的 caller，accepted 后 pending 正常清除不使驻留包装误退 shell。机制本身不能证明原生可用；当前六组合、两位置的准入另由最终十二组无 trace 原生验收确立，DSH/Pi 的 V1/V2 work Agent 入口四项亦通过。
 
 ## R11. 性能与规模的初始验收口径
 
@@ -211,7 +221,7 @@ Herdr 公开重启作为比较路线，不凭现有 Rotom allowlist 断言上游
 
 不测原生宿主、模型、网络或安装耗时来归因门面性能；首次实现先记录真实基线，
 正确性与隐私失败不能靠性能结果豁免。指标超限必须修复或明确重新审阅预算，不能静默标通过。
-停止/ready 等待默认 30 秒，可选 1–300 秒，使用单调绝对截止时间，整个所选集合共享一个阶段预算。
+停止等待默认30秒、可选1–300秒，使用单调绝对截止时间，整个停止集合共享阶段预算。新增位置交接按每个有界请求核验，不把批量逐项执行描述为一笔跨终端事务。
 
 **Rationale**：这是本地个人 CLI，不需要服务器吞吐或 uptime SLA；重点是发现入口和拒绝等待的响应。
 驻留 CPU/内存与 PTY 成本随 P-PANE 单独建立实际基线，未测量不宣称性能通过。
@@ -222,7 +232,7 @@ Herdr 公开重启作为比较路线，不凭现有 Rotom allowlist 断言上游
 
 技术选型、数据归属、版本方向和失败策略已确定；没有留给用户的技术栈或范围问题。
 以下表格保留原型规划；实际完成范围以任务及验收记录为准，不能将规划当作已通过的研究实验。
-P-PANE 是生产实现后、正式开放前的原生验收门槛，不是开始开发的前置；P-INPUT 是独立历史研究，不是本轮交付依赖。
+本轮六个精确 Linux managed 组合已完成 P-PANE，最终十二组无 trace 原生验收全部通过；其它组合仍须逐项满足原生验收门槛。P-PANE 不是开始开发的前置；P-INPUT 是独立历史研究，不是本轮交付依赖。
 
 | 编号 | 输出证据 | 通过后解锁 | 失败时处理 |
 | --- | --- | --- | --- |

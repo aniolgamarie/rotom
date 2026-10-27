@@ -10,7 +10,7 @@ import time
 
 from . import omp_identity, run_owners
 from .paths import _absolute_directory
-from .resource_coordination import _boundary, _physical
+from .resource_coordination import DomainLockBusy, _boundary, _physical
 from .resource_keys import resource_key
 from .run_owners import Registry, _encode, record_state
 from .storage import Conflict, Tree
@@ -26,7 +26,7 @@ class _ReleaseOwnerBusy(Exception):
 
 @contextmanager
 def _release_transaction(domain, run_id, workspace):
-  """Domain → owner NB；等待时释放 Domain，yield 后任何异常都不重放。"""
+  """Domain → owner NB；首锁竞争共用原预算，yield 后任何异常都不重放。"""
   from .stop_locks import try_locked
   deadline = time.monotonic_ns() + _RELEASE_LOCK_WAIT_NS
   while True:
@@ -38,7 +38,7 @@ def _release_transaction(domain, run_id, workspace):
       # owner 的关闭晚于 Domain 提交，保持跨文件提交的原锁边界。
       with ExitStack() as owners:
         try:
-          with domain._transaction(write=True) as state:
+          with domain._transaction(write=True, deadline_ns=deadline) as state:
             entry = state["reservations"][run_id]
             registry = _registry(workspace, entry)
             tree = owners.enter_context(try_locked(registry))
@@ -56,7 +56,7 @@ def _release_transaction(domain, run_id, workspace):
       if busy:
         raise _ReleaseOwnerBusy()
       return
-    except _ReleaseOwnerBusy:
+    except (_ReleaseOwnerBusy, DomainLockBusy):
       if entered:
         raise
       left = deadline - time.monotonic_ns()

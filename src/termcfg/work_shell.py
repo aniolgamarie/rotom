@@ -171,7 +171,9 @@ def launch_payload_v2(text, *, client=None, settings=None, execute=None):
                 for key in observed)):
             raise conflict("work_launch_pane_changed")
         return current
+      chosen = None
       def prepared():
+        nonlocal chosen
         deadline.remaining()
         if source_digest() != value["source_digest"]:
           raise conflict("work_launch_source_changed")
@@ -214,7 +216,10 @@ def launch_payload_v2(text, *, client=None, settings=None, execute=None):
           environment.pop(name, None)
           os.environ.pop(name, None)
         os.chdir(value["cwd"])
-        scope(accepted=True)
+        current = scope(accepted=True)
+        if value["launch"]["launcher"] in ("dsh", "pi"):
+          from rotom.pane_dispatch import wrap_launch
+          command = wrap_launch(chosen, value["launch"]["launcher"], command, value["cwd"], client, current)
         deadline.remaining()
         try:
           (execute or os.execvpe)(command[0], command, environment)
@@ -345,7 +350,7 @@ def launch_payload(text, *, client=None, settings=None, execute=None):
       if state.get("rw_commit") is not None or state.get("rw_phase") != "ready":
         raise TermcfgError(4, "work_launch_commit_mismatch", "work enter PATH")
       time.sleep(deadline.remaining(0.02))
-    validate()
+    caller = validate()
     # accepted请求可能已经应用但丢响应；失败上报不明时不能回退成伪有效普通shell。
     accepted = True
     report_tokens(client, "pane", pane_id, {"rw_phase": "accepted"}, source=LAUNCH_SOURCE)
@@ -354,6 +359,9 @@ def launch_payload(text, *, client=None, settings=None, execute=None):
     environment.pop(PAYLOAD_ENV, None)
     os.environ.pop(PAYLOAD_ENV, None)
     os.chdir(root)
+    if value["role"] in ("dsh", "pi"):
+      from rotom.pane_dispatch import wrap_launch
+      command = wrap_launch(settings, value["role"], command, str(root), client, caller)
     try:
       (execute or os.execvpe)(command[0], command, environment)
     except OSError:
@@ -385,13 +393,25 @@ def fallback_shell():
   env = dict(os.environ)
   env.pop(PAYLOAD_ENV, None)
   env.pop(PAYLOAD_ENV_V2, None)
+  env.pop("ROTOM_RESTORE_LAUNCH_V1", None)
   os.execvpe(executable, [executable], env)
   return 0
 
 
 def main():
+  restore_payload = os.environ.pop("ROTOM_RESTORE_LAUNCH_V1", None)
   structured_payload = os.environ.pop(PAYLOAD_ENV_V2, None)
   payload = os.environ.pop(PAYLOAD_ENV, None)
+  if restore_payload is not None:
+    if structured_payload is not None or payload is not None:
+      print("work_launch_payload_versions_conflict", file=sys.stderr)
+      return 2
+    try:
+      from .restore_tabs import bootstrap_restore
+      return bootstrap_restore(restore_payload)
+    except TermcfgError as error:
+      print(error.reason + ": rotom tools", file=sys.stderr)
+      return error.code
   if structured_payload is not None:
     if payload is not None:
       print("work_launch_payload_versions_conflict", file=sys.stderr)

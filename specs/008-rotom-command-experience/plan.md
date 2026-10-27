@@ -2,15 +2,15 @@
 
 **2026-10-27 已停止会话入口**：本增量从候选 `4738b04` 继续，基线 main 仍为 `45953f0`，不改日常入口。`agentcfg.stopped_sessions` 只读聚合所选机器/profile 的自有 workflow/stop 快照；workflow v2 计划增加可选展示元数据，reader 兼容 v1。人工备注在停止前与会话引用一起批准；OMP 仅投影已有固定标题槽，不读正文。CLI `resume --stopped --list` 展示历史，`resume --stopped` 选择单项并复用原维护 restore；标题不参与会话身份，恢复继续核实原目录、部署、原生引用和能力。日志损坏/取消/未知/已有派发拒绝快速恢复；旧独立快照不能证明 workflow 来源，仅给人工核对命令，避免日志丢失导致降级。新 T126–T129 独立记录实现、隔离回归及稳定审查；既有原生验收不冒充新入口真实全链路通过。
 
-**2026-10-27 最新验收**：官方 DSH/Pi/OMP 贯穿公开 CLI 的停止、实际配置更新、停止清单及原会话恢复均已通过；main 新 Pi 锁的 Base/Pro 另经完整闭包和原生验收。OMP 退出与查询的短锁竞争已修复并复验；候选仍需人工批准合入 main。详见[验收记录](tool-workflow-validation.md)。
+**历史当前终端验收（2026-10-27；不涵盖新增位置路径）**：官方 DSH/Pi/OMP 贯穿公开 CLI 的停止、实际配置更新、停止清单及原会话恢复均已通过；main 新 Pi 锁的 Base/Pro 另经完整闭包和原生验收。OMP 退出与查询的短锁竞争已修复并复验；候选仍需人工批准合入 main。详见[验收记录](tool-workflow-validation.md)。
 
 **Branch**: `feat/tool-maintenance-workflows-20261026` | **Date**: 2026-10-26 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/008-rotom-command-experience/spec.md`
 
-**Status**: 候选实现、分组回归及稳定差异审查已完成；基于 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main。合入须另经人工批准。官方 Pi/OMP TUI/PTY、隔离回归及受影响复验见[验收记录](tool-workflow-validation.md)。
+**Status**: 既有当前终端维护候选的实现、分组回归及稳定差异审查保留原范围；新增位置恢复最终十二组无 trace 原生验收全部通过，已开放六个精确 Linux managed 组合的两种位置；基于 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main。合入须另经人工批准。官方 Pi/OMP TUI/PTY、隔离回归及受影响复验见[验收记录](tool-workflow-validation.md)。
 
-历史任务完成记录 86/117 保留；T118–T124 阶段完成时为 93/125，停止历史阶段为 97/129，原生补验与竞争修复后为 101/133，T125 的 main 人工整合仍待批准。最新已选原 pane/新标签页列为待实现交付；严格加载统一回执、原生 TUI 自动继续、Pi Pro 委派不承诺。未勾选项的历史替代/范围外/有效待办已在 [tasks.md](tasks.md#当前范围与未勾选项的含义) 分别标注，不批量补勾。
+历史任务完成记录 86/117 保留；T118–T124 阶段完成时为 93/125，停止历史阶段为 97/129，原生补验与竞争修复后为 101/133，T125 的 main 人工整合仍待批准。原 pane/新标签页已按六个精确 Linux managed 组合开放，最终十二组无 trace 原生验收全部通过；严格加载统一回执、原生 TUI 自动继续、Pi Pro 委派不承诺。未勾选项的历史替代/范围外/有效待办已在 [tasks.md](tasks.md#当前范围与未勾选项的含义) 分别标注，不批量补勾。
 
 Spec Kit 的逻辑功能标签为 `008-rotom-command-experience`，不表示 Git 分支发生切换。
 历史设计源码基线 `17bbacd6`；原实施工作树基于 `39a9389` 并完整保留，随后曾从 main `109e2e7` 建立独立承接工作树。已验收范围后来从新主线重放整合；成功人工交接增量基于 main `b55c9b9`，当前只读 status CLI 增量基于 main `18c342f`，各阶段候选与证据见 main-review，不把旧基线当作当前入口。
@@ -22,11 +22,11 @@ Spec Kit 的逻辑功能标签为 `008-rotom-command-experience`，不表示 Git
 
 ## Summary
 
-本轮采用按工具的阶段编排，替代旧全工具 Domain 许可前提。Pi 公开扩展负责合作 session 租约及切换，OMP 原生竞争首次写入可能分叉；Pi/OMP 使用 HandoffResumeBackend，DSH 原 Host 不变。停止集合不扩大，并发新运行阻挡普通 setup；原操作结果保留，零继续。下一阶段的位置恢复复用这些门禁，不重新要求旧统一 Domain。
+本轮采用按工具的阶段编排，替代旧全工具 Domain 许可前提。Pi 公开扩展负责合作 session 租约及切换，OMP 原生竞争首次写入可能分叉；Pi/OMP 使用 HandoffResumeBackend，DSH 原 Host 不变。停止集合不扩大，并发新运行阻挡普通 setup；原操作结果保留，零继续。本次候选位置恢复复用这些门禁，不重新要求旧统一 Domain。
 
-已选路线为 Herdr 新标签页，以及薄驻留启动器保留原 pane。对 Rotom Herdr 入口新建且逐工具已验收的托管实例默认驻留；普通 shell 单次 run 退出返回，旧普通/直接官方实例不在线升级，pane/launcher 丢失或管理代码不兼容时改用明确接受的新位置。新标签页复用现有公开 tab.create 和受保护 intent/bootstrap，记录逐项创建/交接/失败/未知，结果未知先对账，不自动重开。当前两条路径均未生产实现或正式准入。
+已选路线为 Herdr 新标签页，以及薄驻留启动器保留原 pane。对 Rotom Herdr 入口新建且逐工具已验收的托管实例默认驻留；普通 shell 单次 run 退出返回，旧普通/直接官方实例不在线升级，pane/launcher 丢失或管理代码不兼容时改用明确接受的新位置。新标签页复用现有公开 tab.create 和受保护 intent/bootstrap，记录逐项创建/交接/失败/未知，结果未知先对账，不自动重开。位置恢复已通过最终无 trace 原生验收，公开准入限定六个精确 Linux managed 工具/profile/锁与运行包组合、各原 pane/新标签页共十二条；不类推其它平台、SSH 或新运行包。
 
-官方 Pi 的稳定父进程/同一 PTY 停止、实际更新、新 run 恢复核心探针已通过；它不证明 Herdr 控制、绑定、重复请求或 DSH/OMP 驻留。生产任务为 T085/T087–T095 与 T135–T138，T134 仅校正当前提示和规划。help、命令、只读诊断及停止计划须显示能力及准确下一步。详见 [位置能力与证据](../../docs/rotom-pane-capabilities.md)。
+官方 Pi 的稳定父进程/同一 PTY 停止、实际更新、新 run 恢复核心探针已通过；它不证明 Herdr 控制、绑定、重复请求或 DSH/OMP 驻留。生产候选包括 `agentcfg/{pane_records,restore_locations,tool_maintenance}.py`、`rotom/{resident,pane_dispatch,restore_child}.py` 与 `termcfg/restore_tabs.py`。当前验收状态以任务记录为准；T134 的历史提示验收不替代位置原生验收。help、命令、只读诊断及停止计划须显示能力及准确下一步。详见 [位置能力与证据](../../docs/rotom-pane-capabilities.md)。
 
 增加以项目名关联的统一门面，复用 agentcfg、termcfg 和 work 的业务执行路径。
 第一阶段交付三工具短启动、显式偏好、所有叶子缺参交互、help、补全及受管 zsh 入口。
@@ -59,6 +59,14 @@ CLI 稳定代码回归 336 passed，fixture 拼写纠正后的新 suite 21 passe
 [CLI](contracts/cli.md)、[入口部署](contracts/entry-deployment.md)、
 [生命周期](contracts/lifecycle.md) 约束用户接口与恢复边界；
 [quickstart](quickstart.md) 区分现有回归、未来隔离套件和独立授权的真实验收。
+
+## 本次位置恢复实现
+
+入口只接受已停止、setup/update 成功且未取消、未派发的完整 workflow。普通 `rotom run` 不驻留，普通 `--session` 位置恢复不开放。通过 Rotom Herdr V1/V2 新建的 DSH/Pi Agent，以及通过新 tab 恢复且符合驻留组合的新实例，使用薄 launcher；未准入组合沿原普通启动路径并提示不支持。`pi-pro` 的普通 profile 兼容性保留，不包含 Pro 委派。
+
+`reserve_restore` 先追加普通 restore-intent，再建立受保护位置请求；LocationStore 用目录物理身份与 receipt CAS 串行一次消费。新 tab 只调用一次公开 `tab.create`；bootstrap 的 ready → committed → handoff 与 child 的 executing 分开。原 pane 使用受保护 Unix socket、peer/manager 出生身份与固定请求引用，不发送按键。parked 不持 Agent 单次租约、运行包或凭据环境；源码身份变化拒绝旧 launcher 混用新模块。父进程活动期不轮询 Registry/Domain，退出后才核验释放；active 的位置候选由只读诊断按 child/manager 完整出生身份按需关联，绝不因此准入原位。
+
+批量 `--stopped --batch B --all --original|--new-tab` 先核验同 scope/profile/batch 的全部记录，再逐项重查与分发，逐项保留 JSON 事实；首个非零或未知结果后剩余项为 not_dispatched。默认 here 仍仅一项。诊断与位置状态投影不改变 plan_id，也不授予恢复许可。
 
 ## Technical Context
 
@@ -103,6 +111,14 @@ Jinja2、tomlkit 0.15.2；pytest 为隔离验证。fzf 可选；不新增 TUI �
 工程负载包含空配置、32 个机器名/100 个公开配方、1,000 条单机器记录；
 不是全机扫描、多用户服务、生产容量上限或跨机器远程控制。
 
+### 短锁等待与原子预留
+
+Domain 写事务默认只在取得首个元数据 flock 前使用新的 2 秒单调预算；显式传入截止点时沿用原绝对值，不续期。只等待 EAGAIN/EWOULDBLOCK，权限、路径与元数据错误立即失败。进入 body 后的校验、写入、提交或解锁异常均不重放事务。Domain → owner NB 的顺序保持，域锁内不等待物理锁、宿主或用户。
+
+外部 snapshot 和普通只读事务默认仍为 NB；仅合作启动的 package_guard 和 check_omp_launch 显式使用各自首锁前的 2 秒读预算。OMP 资源、scope/runtime anchor 选择与 _reserve_locked 在同一 Domain 写事务中完成，提交成功后才返回 token；不再拆成未持锁 snapshot → reserve。通用 Domain.reserve 的 expected_revision 严格 CAS 保留。
+
+停止完成后的最终 status 查询沿用本次停止的原截止时间；到期后只允许无竞争的 NB 观察，有竞争仍返回未知并保留落盘 close/fence 事实，不重新 close、投稿或发送信号。
+
 ## Constitution Check
 
 本轮以工作树宪章 3.0.0 修订文本评估；其合入与临时同步报告清理仍走独立治理流程。
@@ -145,7 +161,7 @@ specs/008-rotom-command-experience/
     └── lifecycle.md
 ```
 
-`tasks.md` 已生成并随实施维护；当前维护 125 项任务（原 117 项与新增 T118–T125）；仅按实际实现及验收更新勾选，规划变化本身不结项。
+`tasks.md` 随实施由任务负责人维护；历史计数保留在相应阶段记录，仅按实际实现和验收更新勾选，文档同步不结项。
 
 ### Source Code (repository root)
 
@@ -193,11 +209,11 @@ agentcfg 仍拥有 Agent 运行/部署，termcfg 仍拥有终端文件事务与 
 | F 阶段一收口 | 用户文档、兼容矩阵与稳定差异 | A–E；原生终端验收按授权单列 |
 | S 日常恢复/实例 | sessions、runtime、run_owners、DSH 薄插件 | T044/T045 与 US5 保持现有范围；T042 核实安全官方交接，T117 补待确认/零输入契约；加载回执与自动继续分别准入，不要求上游新增接口 |
 | M 停止维护 | tool_maintenance、精确 stop、共用 setup 与工具恢复接缝 | T118–T125；三工具 stop_only、先保存清单，同 ID stop 快照，关本次 fence 后普通 setup 最新独立批准/原全门禁，逐项当前终端恢复；OMP 保留 Domain，DSH/Pi 不强套 Domain；未知不重试 |
-| P 已选位置 | 薄驻留启动器、Herdr 新标签页、work 新版本接缝 | 实施后逐工具/位置原生验收才开放；旧实例不在线升级、管理代码兼容、单次 run 租约分离 |
+| P 已选位置 | 薄驻留启动器、Herdr 新标签页、work 新版本接缝 | 六个精确 Linux managed 组合的两种位置已通过最终原生验收；旧实例不在线升级、管理代码兼容、单次 run 租约分离 |
 | I 历史附加继续 | 本轮仅保留人工指引和零发送 | P-INPUT 自动发送不在本轮承诺，不阻塞位置交付或普通恢复 |
 
 A–D 可先行，E 事务扩展独立验收；S 的原型尽早并行，不能等全部维护完成才调查 session。
-P-PANE 是逐工具正式开放前的原生门槛，不阻挡已选驻留生产实现；新标签页独立验收。尚未准入的组合继续使用当前终端或已接受的人工路径。
+本轮六个精确 Linux managed 组合的原 pane、新标签页已满足 P-PANE，最终十二组无 trace 原生验收全部通过；DSH/Pi 的 V1/V2 work Agent 入口四项也已正式通过。其它组合仍按逐工具/位置原生门槛独立验收。尚未准入的组合继续使用当前终端或已接受的人工路径。
 主代理负责事务、锁顺序、日志和恢复的关键判断；共享文件只给一个写入者，
 另一任务可只读搜集证据。所有写入结束后才对稳定差异进行最终审阅。
 
@@ -359,7 +375,7 @@ reviewed live 入口在所有现场检查后、首次清单写入前以非阻塞
 T072 的生产控制/Batch 事实及 ready 等待接线仍依赖 T071。
 
 T070 的启动现场身份观察可独立于停止执行器先行：只在 DSH 候选恢复已有 Popen 分支捕获
-单线程 Linux 直接子进程的 pidfd/PPID/出生身份，在 owner 非阻塞锁内绑定本次记录，
+单线程 Linux 直接子进程的 pidfd/PPID/出生身份，在 owner 锁内绑定本次记录；当前首次绑定写入前可用新 2 秒预算等短锁，进入 body 后不重放，
 control 保持 null；无捕获/登记证据仍运行原 child，不强杀、不重试。本地受管普通 DSH run
 与候选恢复共用该生命周期；普通等待异常返回冲突，不继承 subprocess.run 的自动 kill。
 SSH、未登记、显式启动 hook 保留原路，OMP 的合作登记需要单独事务，不在此接缝更新。

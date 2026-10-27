@@ -394,3 +394,18 @@ def test_status_does_not_mask_unresolved_stage_with_cancel(command, capsys, phas
   assert result["cancelled"] is cancelled
   assert store.read() == before
   assert (len(state.stop_calls), len(state.syncs), len(state.backend_calls)) == calls
+
+
+@pytest.mark.parametrize("location", ["original", "new-tab"])
+def test_maintenance_restore_location_dispatches_saved_workflow(command, capsys, monkeypatch, location):
+  import sys
+  state = command
+  updated(state, capsys)
+  calls = []
+  def dispatch_location(ws, batch_id, run_id, context, *, location):
+    calls.append((ws, batch_id, run_id, location))
+    return 19
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
+  assert invoke(state, "restore", "--batch", state.batch, "--run", RUNS[0], "--" + location) == 19
+  assert calls == [(state.ws, state.batch, RUNS[0], location)]
+  assert state.backend_calls == []

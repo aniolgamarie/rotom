@@ -10,19 +10,21 @@ description: "Rotom 命令与会话体验的实施任务"
 
 **Branch**: `feat/tool-maintenance-workflows-20261026`；逻辑功能标识为 `008-rotom-command-experience`。
 
-**Status**: 实施中。已完成项按实际隔离验证勾选；尚未执行或环境不足的原生验收与未实现能力保留未完成。阶段证据与单一写入责任记录于忽略的私人任务记录。
+**Status**: 本轮候选实施与验收完成，待人工批准整合。已完成项按实际证据勾选；历史替代、范围外和人工整合任务保持未勾。阶段证据与单一写入责任记录于忽略的私人任务记录。
 
-**当前候选（2026-10-27）**：维护及当前终端恢复按 Phase 12–14 的 T118–T133 验收，替代旧跨工具统一 Domain 前提。基线 main `45953f0`，候选没有切换日常入口，T125 的人工整合仍待批准。最新用户选择把原 pane 与新标签页列为下一交付范围；它们尚未实现，不能以已有当前终端恢复验收代替。范围、任务状态及证据见下表和 [验收记录](tool-workflow-validation.md)。
+**当前候选（2026-10-27）**：维护及当前终端恢复按 Phase 12–14 的 T118–T133 验收，替代旧跨工具统一 Domain 前提。基线 main `45953f0`，候选没有切换日常入口，T125 的人工整合仍待批准。最新用户选择把原 pane 与新标签页列为下一交付范围；生产机制、隔离验证及同一最终源码的 12 组真实 Herdr/官方宿主验收已通过；12 条精确位置准入已原样开放，支持文档、最终交付全量测试与稳定差异审查已完成。候选没有合入 main。范围、任务状态及证据见下表和 [验收记录](tool-workflow-validation.md)。
 
 ## 当前范围与未勾选项的含义
 
 核对修订前：任务分支 `121ab0a` 为 101/133，main `45953f0` 为 86/117；main 的旧任务表不包含后续候选增量。未勾选不全代表当前必做缺口：
 
-本次修订新增 T134–T138，仅 T134 的提示/规划同步完成，现为 102/138；36 个未勾选项中，17 个历史已替代、4 个本轮范围外、14 个位置恢复实现/验收任务和 1 个 T125 人工整合。这个计数不表示原 pane 或新标签页已交付。
+本次机制、真实位置验收与支持文档已完成 T085、T087–T095、T135–T138，现为 116/138；22 个未勾选项中，17 个历史已替代、4 个本轮范围外和 1 个 T125 人工整合。T095/T138 已通过支持矩阵、帮助/补全、公开信息和稳定差异检查；准入仅含本次实际通过的精确组合，不推定已合入 main。
 
 | 分类 | 任务 | 当前处理 |
 | --- | --- | --- |
-| 已选、待实现及验收 | T085、T087–T095；新标签页 T135–T138 | Herdr 新标签页；受支持的 Rotom Herdr 新托管实例默认驻留、保留原 pane。分别按工具实测后才开放 |
+| 机制及隔离验证已完成 | T085、T087–T093、T135、T136 | 受保护记录、薄驻留、独立 tab 交接、批量选择和只读诊断已实现；位置准入仅含下列实测组合 |
+| 真实位置验收已完成 | T094、T137 | 同一最终源码通过 8 组会话流程与 4 组 DSH/Pi V1/V2 work 入口；6 组合的两位置共 12 key 已开放 |
+| 支持文档与稳定交付检查已完成 | T095、T138 | 按实际矩阵公布条件；完整隔离回归14,153 passed / 13 skipped / 0 failed，最终help文案另经专项复验，见验收记录 |
 | 历史方案已被替代 | T062、T063、T069–T072、T074–T084 | 其中 17 个未完成项保留未勾，逐条标注替代任务；不再按旧统一 Domain 前提开发或阻挡新流程 |
 | 本轮不承诺 | T098–T100、T103 | 原生 TUI 自动继续未选；统一严格加载回执也不承诺。保留历史设计，不算本轮待实现门禁 |
 | 人工整合待批准 | T125 | 当轮候选经人工审阅批准后才合入 main，不由任务勾选推导批准 |
@@ -32,7 +34,7 @@ description: "Rotom 命令与会话体验的实施任务"
 
 当前实现执行清单仅为上述 14 个位置任务；带“历史已替代”或“本轮范围外”的未勾选项不交给 implement 执行。T125 单独处理人工整合。没有把统一严格加载回执、自动继续或任意未知结果必须变成成功作为这些任务的完成条件；未知可明确保留，未验收组合不开放。
 
-原 pane 的适用条件是通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例；普通 shell `rotom run` 仍随 Agent 退出返回。旧普通实例、直接官方 CLI、launcher/pane 丢失时不保证原位，需当前终端或用户接受的新位置。help、命令提示及将来的只读诊断须说明可用、不支持、丢失、未知和下一步。Pi Pro 委派不是本功能任务；`pi-pro` 普通 profile 的维护/恢复仍保留。
+原 pane 的适用条件是通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例；普通 shell `rotom run` 仍随 Agent 退出返回。旧普通实例、直接官方 CLI、launcher/pane 丢失时不保证原位，需当前终端或用户接受的新位置。help、命令提示及只读诊断须说明可用、不支持、丢失、未知和下一步。Pi Pro 委派不是本功能任务；`pi-pro` 普通 profile 的维护/恢复仍保留。
 
 **历史范围修订（2026-10-24）**：按用户决定，官方恢复交接与严格加载确认/继续分开；缺回执时待确认、零自动输入、不自动重试。T042 不再等待上游新增接口，T117 已验证该边界；T046–T052 候选机制及 CLI 接线已完成隔离验收，T096/T101/T102 的人工分支已通过，T073 共用 setup 核心、T065/T066 新资源协调及普通 OMP 接线已独立验收，当前 86/117。T053 已完成 Linux 固定组合真实交接验收，T054 精确组合的默认入口、缺参菜单与普通 CLI 原生复验亦已完成。全新 Linux OMP setup/apply/run 和只读查询已有候选验证，T062/T063 完整维护集成仍未收口；不能把这些阶段证据误报为自动停止维护可用。
 
@@ -366,33 +368,33 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 ---
 
-## Phase 9: User Story 7 — 新托管实例的原终端位置（P4，已选、待实现）
+## Phase 9: User Story 7 — 新托管实例的原终端位置（P4，真实验收完成、交付收口中）
 
 **Purpose / Goal**: 已选择薄驻留启动器；受支持的 Rotom Herdr 新托管实例默认保留原 pane，普通 shell 单次 run 行为不变。按工具验证后才正式开放，验证失败升级设计决策，不能据此写成已交付。
 
 **Independent Test**: 有/无能力、旧实例首次采用、pane 消失/复用、管理代码变化、重复请求/回包丢失均有正确分支；准入后真实停止在原位置等待且释放租约，新请求创建同 session 的新 run。未准入仍满足停止前说明与替代选择。
 
-- [ ] T085 [P] [US7] 在 `tests/test_rotom_restore_capabilities.py` 编写新 Herdr 托管/普通 shell/旧实例能力区分、pane 归属/消失/复用、container 代际、管理代码/协议变化、parked 租约、重复/unknown 请求及批量 stdin 分离的 fake 用例；只读诊断说明可用、不支持、丢失、未知及下一步。静态/fake 不作为原位可用证据。（依赖：T123、T129、T134；覆盖：FR-038、FR-039、FR-040、FR-041、SC-010）
+- [X] T085 [P] [US7] 在 `tests/test_rotom_restore_capabilities.py` 编写新 Herdr 托管/普通 shell/旧实例能力区分、pane 归属/消失/复用、container 代际、管理代码/协议变化、parked 租约、重复/unknown 请求及批量 stdin 分离的 fake 用例；只读诊断说明可用、不支持、丢失、未知及下一步。静态/fake 不作为原位可用证据。（依赖：T123、T129、T134；覆盖：FR-038、FR-039、FR-040、FR-041、SC-010）
 
 - [X] T086 [P] [US7] 在 `docs/rotom-pane-capabilities.md`、`tests/fixtures/rotom/pane-capabilities.json` 完成 P-PANE 公开 Herdr 重启与现有 manager 可选驻留的比较/fake 原型，记录精确来源和协议、信号/PTY/身份/cwd/单次请求边界；可在 T008 后先只读取证，不因 Rotom 当前 allowlist 推断上游无能力。本项是当时比较/fake 证据；后续已选薄驻留，Pi 核心真实 PTY 探针另记能力文档，均不代替生产实现与正式验收；不足时升级设计决策，不改宿主或建通用终端平台。（依赖：T008；覆盖：FR-038、FR-040、FR-043）
 
-- [ ] T087 [US7] 在 `schemas/rotom/container.schema.json`、`src/agentcfg/runtime.py` 定义驻留所需 ContainerRecord：“container_id、generation、管理进程身份、TerminalRef、manager_code_identity、control_protocol、受保护 endpoint 身份、state 与已消费 request ID”；逐字状态“running、parking、parked、resume_pending、unknown、closed；parking 不等于资源已释放”。容器/子进程状态与 session 加载确认分开；先实现，再由 T094 决定对外准入。（依赖：T085、T086；覆盖：FR-039、FR-040、FR-041）
+- [X] T087 [US7] 在 `schemas/rotom/container.schema.json`、`src/agentcfg/pane_records.py` 定义驻留所需 ContainerRecord：“container_id、generation、管理进程身份、TerminalRef、manager_code_identity、control_protocol、受保护 endpoint 身份、state 与已消费 request ID”；逐字状态“running、parking、parked、resume_pending、unknown、closed；parking 不等于资源已释放”。容器/子进程状态与 session 加载确认分开；先实现，再由 T094 决定对外准入。（依赖：T085、T086；覆盖：FR-039、FR-040、FR-041）
 
-- [ ] T088 [US7] 在 `src/agentcfg/runtime.py` 实现薄驻留启动器：manager/container 与单次 run 分离，完整后代/资源收尾才 parked，同一 pane 显示等待恢复；逐字约束“parked 在全部单次运行租约退出之后，不能保留旧运行包/环境/凭据对象”。严格封口/加载回执不足不单独阻断已准入的明确官方交接，仍核实 session/cwd/部署与工具 writer 防护，保持待确认、零自动输入。普通 shell 单次 run 宿主退出即返回，旧实例不在线变驻留。（依赖：T087；覆盖：FR-039、FR-032、FR-043、SC-010）
+- [X] T088 [US7] 在 `src/rotom/resident.py` 实现薄驻留启动器：manager/container 与单次 run 分离，完整后代/资源收尾才 parked，同一 pane 显示等待恢复；逐字约束“parked 在全部单次运行租约退出之后，不能保留旧运行包/环境/凭据对象”。严格封口/加载回执不足不单独阻断已准入的明确官方交接，仍核实 session/cwd/部署与工具 writer 防护，保持待确认、零自动输入。普通 shell 单次 run 宿主退出即返回，旧实例不在线变驻留。（依赖：T087；覆盖：FR-039、FR-032、FR-043、SC-010）
 
-- [ ] T089 [US7] 在 `src/agentcfg/lifecycle.py`、`src/agentcfg/runtime.py` 实现受保护原位控制端点：同用户和 endpoint 身份校验，精确 container/generation/op/run 绑定，不接受任意 argv/shell/文本；先 durable 请求意图再新 run，一次许可消费，回包丢失先查事实不重发。（依赖：T088；覆盖：FR-040、FR-041、FR-043）
+- [X] T089 [US7] 在 `src/rotom/resident.py`、`src/rotom/pane_dispatch.py`、`src/agentcfg/restore_locations.py` 实现受保护原位控制端点：同用户和 endpoint 身份校验，精确 container/generation/op/run 绑定，不接受任意 argv/shell/文本；先 durable 请求意图再新 run，一次许可消费，回包丢失先查事实不重发。（依赖：T088；覆盖：FR-040、FR-041、FR-043）
 
-- [ ] T090 [US7] 在 `src/termcfg/work.py`、`src/termcfg/work_state.py`、`src/termcfg/work_shell.py` 接入 Rotom Herdr 新建/重绑：仅对该工具已准入的新实例默认驻留，固定实例 binding 与用途 type 规则不变；重绑需重新审阅，不复用旧 accepted/receipt，不假定旧工作区升级。尚无工作区 type 或驻留证据的工具明确不支持，不从短启动推断其原位能力。（依赖：T089；覆盖：FR-004、FR-038、FR-040、FR-041）
+- [X] T090 [US7] 在 `src/termcfg/work.py`、`src/termcfg/work_state.py`、`src/termcfg/work_shell.py` 接入 Rotom Herdr 新建/重绑：仅对该工具已准入的新实例默认驻留，固定实例 binding 与用途 type 规则不变；重绑需重新审阅，不复用旧 accepted/receipt，不假定旧工作区升级。尚无工作区 type 或驻留证据的工具明确不支持，不从短启动推断其原位能力。（依赖：T089；覆盖：FR-004、FR-038、FR-040、FR-041）
 
-- [ ] T091 [US7] 在 `src/agentcfg/sessions.py`、`src/agentcfg/tool_workflow.py` 复用公开 workflow 恢复意图/部署门禁，接通原位置恢复、只读诊断和停止前逐项能力披露：核实位置归属、launcher 存活及容器代际，使用新 run/一次批准；普通/旧实例、位置丢失、不兼容或未知分别解释，给出精确范围的当前终端或经接受的新位置。原位不满足允许保留运行，位置后来变化保留待恢复并重新接受；多 TUI 不争 stdin，不按标题/焦点/按键猜空 shell。（依赖：T090、T123、T128；覆盖：FR-025、FR-038、FR-040、FR-041、SC-010）
+- [X] T091 [US7] 在 `src/rotom/pane_dispatch.py`、`src/rotom/restore_child.py`、`src/agentcfg/tool_maintenance.py` 复用公开 workflow 恢复意图/部署门禁，接通原位置恢复、只读诊断和停止前逐项能力披露：核实位置归属、launcher 存活及容器代际，使用新 run/一次批准；普通/旧实例、位置丢失、不兼容或未知分别解释，给出精确范围的当前终端或经接受的新位置。原位不满足允许保留运行，位置后来变化保留待恢复并重新接受；多 TUI 不争 stdin，不按标题/焦点/按键猜空 shell。（依赖：T090、T123、T128；覆盖：FR-025、FR-038、FR-040、FR-041、SC-010）
 
-- [ ] T092 [US7] 在 `src/agentcfg/runtime.py`、`src/agentcfg/sessions.py` 核验 manager_code_identity/control_protocol，管理源码或协议变化时首版拒绝旧进程原位恢复并提供明确新位置，不自动混用新旧模块；无租约 re-exec/handoff 留后续独立设计，不在本次引入隐式接管。（依赖：T091；覆盖：FR-040、FR-041）
+- [X] T092 [US7] 在 `src/rotom/resident.py`、`src/rotom/pane_dispatch.py`、`src/termcfg/work.py` 核验 manager_code_identity/control_protocol，管理源码或协议变化时首版拒绝旧进程原位恢复并提供明确新位置，不自动混用新旧模块；无租约 re-exec/handoff 留后续独立设计，不在本次引入隐式接管。（依赖：T091；覆盖：FR-040、FR-041）
 
-- [ ] T093 [US7] 运行 `tests/test_rotom_restore_capabilities.py` 及相关 work、resume、maintenance 隔离回归：释放后 parked 与 session 历史/unknown 共存、端点伪造/复用、重复消费、结果未知、普通 shell 退出返回，以及 help/命令/只读诊断的状态矩阵。机制证据与未准入原位能力分别记录，静态提示测试不算现场能力证明。（依赖：T092；覆盖：SC-010、FR-043、FR-044）
+- [X] T093 [US7] 运行 `tests/test_rotom_restore_capabilities.py` 及相关 work、resume、maintenance 隔离回归：释放后 parked 与 session 历史/unknown 共存、端点伪造/复用、重复消费、结果未知、普通 shell 退出返回，以及 help/命令/只读诊断的状态矩阵。机制证据与未准入原位能力分别记录，静态提示测试不算现场能力证明。（依赖：T092；覆盖：SC-010、FR-043、FR-044）
 
-- [ ] T094 [US7] 在 T093/T130 通过且有对应 Herdr/PTY/真实进程授权范围后，按 `specs/008-rotom-command-experience/quickstart.md` 验证 P-PANE：分别核实工具/运行包组合的新 Herdr 托管启动、原位置等待/租约释放、同 session/cwd 新 run、pane/launcher 关闭或复用、代码变化、重复/unknown 请求与已接受替代位置。记录 parked CPU/内存基线、版本、实际 argv 和结果；Pi 核心探针不类推其它工具或 Herdr 验收，不要求统一严格加载回执或自动继续。（依赖：T093、T130；覆盖：FR-039、FR-040、FR-041、SC-010）
+- [X] T094 [US7] 在 T093/T130 通过且有对应 Herdr/PTY/真实进程授权范围后，按 `specs/008-rotom-command-experience/quickstart.md` 验证 P-PANE：分别核实工具/运行包组合的新 Herdr 托管启动、原位置等待/租约释放、同 session/cwd 新 run、pane/launcher 关闭或复用、代码变化、重复/unknown 请求与已接受替代位置。记录 parked CPU/内存基线、版本、实际 argv 和结果；Pi 核心探针不类推其它工具或 Herdr 验收，不要求统一严格加载回执或自动继续。（依赖：T093、T130；覆盖：FR-039、FR-040、FR-041、SC-010）
 
-- [ ] T095 [US7] 在 `src/rotom/cli.py`、`docs/rotom-pane-capabilities.md`、`README.md` 公布实测工具/位置矩阵、Rotom Herdr 新托管实例默认驻留、普通 shell/旧实例限制、launcher/pane 丢失和代码不兼容的下一步；help、命令、只读诊断和停止计划一致。仅开放 T094 实际通过组合，待验证工具明确不支持，不把严格加载/自动继续或 Pi Pro 委派列作已交付。（依赖：T094；覆盖：FR-038、FR-040、FR-044）
+- [X] T095 [US7] 在 `src/rotom/cli.py`、`docs/rotom-pane-capabilities.md`、`README.md` 公布实测工具/位置矩阵、Rotom Herdr 新托管实例默认驻留、普通 shell/旧实例限制、launcher/pane 丢失和代码不兼容的下一步；help、命令、只读诊断和停止计划一致。仅开放 T094 实际通过组合，待验证工具明确不支持，不把严格加载/自动继续或 Pi Pro 委派列作已交付。（依赖：T094；覆盖：FR-038、FR-040、FR-044）
 
 **Checkpoint**: 只对本阶段实际已验证范围记录完成；未授权原生任务单列未执行，未完成能力不声明可用。
 
@@ -487,13 +489,13 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 - [X] T134 [US7] 在 `src/rotom/cli.py`、`src/rotom/resume.py` 明确普通 run 退出返回、当前 --original/--new-tab 未开放、未来仅 Rotom Herdr 新托管且逐工具已验收实例可原位、pane/launcher 丢失的替代路径；以 `tests/test_rotom_pane_help_boundaries.py` 及相关回归检查静态帮助无业务 I/O、拒绝出口/精确范围命令与原行为兼容。同步任务表及 spec/plan/contracts/能力指南，逐项保留历史替代与未选项，排除 Pro 委派；本项不启用位置能力。（依赖：T133；覆盖：FR-014、FR-015、FR-027、FR-038、FR-044）
 
-- [ ] T135 [P] [US7] 在 `tests/test_rotom_restore_new_tab.py` 编写新标签页 fake 契约：精确停止清单选择/独立 stdin、原 session/cwd/部署门禁、Herdr 缺失或 API 未知、创建与 bootstrap 失败、响应丢失、重复请求先对账；列表/help/只读诊断不创建标签页。旧独立快照仍只给人工路径，不因改位置绕过来源/取消/派发检查。（依赖：T128、T130、T134；覆盖：FR-025、FR-038、FR-040、FR-041、FR-045、SC-010、SC-013）
+- [X] T135 [P] [US7] 在 `tests/test_rotom_restore_new_tab.py` 编写新标签页 fake 契约：精确停止清单选择/独立 stdin、原 session/cwd/部署门禁、Herdr 缺失或 API 未知、创建与 bootstrap 失败、响应丢失、重复请求先对账；列表/help/只读诊断不创建标签页。旧独立快照仍只给人工路径，不因改位置绕过来源/取消/派发检查。（依赖：T128、T130、T134；覆盖：FR-025、FR-038、FR-040、FR-041、FR-045、SC-010、SC-013）
 
-- [ ] T136 [US7] 在 `src/rotom/resume.py`、`src/rotom/stopped.py`、`src/agentcfg/tool_workflow.py` 与 `src/termcfg/work.py`/`work_shell.py` 接入新标签页的明确选择与逐项结果：复用受保护 intent/bootstrap、公开 tab.create 和官方精确恢复，不拼 shell、不发送 TUI 文本；先保存唯一派发意图，创建/交接/失败/未知分列，可能已开页不自动重发。缺 Herdr 或不可核验 API 时说明未执行及同范围 --here 下一步，不把未准入工具偷偷降级。（依赖：T135；覆盖：FR-025、FR-038、FR-040、FR-041、FR-045）
+- [X] T136 [US7] 在 `src/rotom/stopped.py`、`src/rotom/maintenance.py`、`src/rotom/restore_child.py`、`src/agentcfg/restore_locations.py`、`src/agentcfg/tool_maintenance.py` 与 `src/termcfg/restore_tabs.py`/`work_shell.py` 接入新标签页的明确选择与逐项结果（`--stopped --batch B --all --original|--new-tab`）：复用受保护 intent/bootstrap、公开 tab.create 和官方精确恢复，不拼 shell、不发送 TUI 文本；先保存唯一派发意图，创建/交接/失败/未知分列，可能已开页不自动重发。缺 Herdr 或不可核验 API 时说明未执行及同范围 --here 下一步，不把未准入工具偷偷降级。（依赖：T135；覆盖：FR-025、FR-038、FR-040、FR-041、FR-045）
 
-- [ ] T137 [US7] 在有对应 Herdr/PTY/真实进程授权的隔离范围内，逐工具验证新标签页精确 session/cwd 与独立终端、加载待确认/零自动继续、重复/未知零重复开页、部分失败保留清单；运行相关 work/resume/maintenance 隔离回归，保存版本/argv/结果。未测组合不开放，不类推驻留或当前终端证据。（依赖：T136；覆盖：FR-027、FR-041、FR-044、SC-010、SC-013）
+- [X] T137 [US7] 在有对应 Herdr/PTY/真实进程授权的隔离范围内，逐工具验证新标签页精确 session/cwd 与独立终端、加载待确认/零自动继续、重复/未知零重复开页、部分失败保留清单；运行相关 work/resume/maintenance 隔离回归，保存版本/argv/结果。未测组合不开放，不类推驻留或当前终端证据。（依赖：T136；覆盖：FR-027、FR-041、FR-044、SC-010、SC-013）
 
-- [ ] T138 [US7] 在 help、`docs/rotom-pane-capabilities.md`、`docs/tool-maintenance-workflows.md` 和验收记录公布实际通过的新标签页组合、Herdr 前提、逐项状态/未知先对账及替代命令；核对静态补全和命令语法，稳定审查后仅开放已验收范围。原 pane 与新 tab 分别报告，不要求严格加载成功或自动继续。（依赖：T137；覆盖：FR-014、FR-027、FR-038、FR-044、FR-045）
+- [X] T138 [US7] 在 help、`docs/rotom-pane-capabilities.md`、`docs/tool-maintenance-workflows.md` 和验收记录公布实际通过的新标签页组合、Herdr 前提、逐项状态/未知先对账及替代命令；核对静态补全和命令语法，稳定审查后仅开放已验收范围。原 pane 与新 tab 分别报告，不要求严格加载成功或自动继续。（依赖：T137；覆盖：FR-014、FR-027、FR-038、FR-044、FR-045）
 
 ## Dependencies & Execution Order
 

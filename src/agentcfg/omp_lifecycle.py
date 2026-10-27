@@ -3,6 +3,7 @@ from contextlib import contextmanager, ExitStack
 import os
 import stat
 import sys
+import time
 
 from . import resource_owners as owners, run_owners
 from .descendants import DescendantScope
@@ -136,8 +137,9 @@ def cooperative_run(workspace, runtime_identity):
         package_used = True
         fd = stack.enter_context(_shared_file(cache, "leases/" + identity + ".lock"))
         key = resource_key("runtime", cache / "leases" / (identity + ".lock"), lease_fd=fd).as_dict()
-        if domain.snapshot()["resources"][token.runtime_resource_id]["key"] != key:
-          raise Conflict(_ERROR)
+        with domain._transaction(deadline_ns=time.monotonic_ns() + 2_000_000_000) as state:
+          if state["resources"][token.runtime_resource_id]["key"] != key:
+            raise Conflict(_ERROR)
         current_package_fd, package_active = fd, True
       except Exception:
         raise Conflict(_ERROR) from None

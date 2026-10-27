@@ -128,11 +128,11 @@ def inspect_deployment(workspace, record, *, instance_fd, state_fd) -> dict:
 
 
 def save_reviewed_snapshot(workspace, *, instance_fd, state_fd, expected_records, expected_layout,
-    plan, batch_id, review):
+    plan, batch_id, review, deadline_ns=None):
   """保存完整已审阅计划及阻断事实；不提供 host/覆盖证明或控制许可。
 
   审阅已在锁外完成。两 SH 和完整 owner CAS 内，先消费单次内存审阅，再发布
-  快照和 fence；失败不恢复审阅，不重放文件。生产入口尚不调用本函数。
+  快照和 fence；失败不恢复审阅，不重放文件。可选期限只用于首次写入前等待 owner 短锁。
   """
   from . import maintenance, stop_review
   try:
@@ -147,7 +147,7 @@ def save_reviewed_snapshot(workspace, *, instance_fd, state_fd, expected_records
     _save_snapshot(workspace, instance_fd=instance_fd, state_fd=state_fd,
       expected_records=expected_records, selected_runs=frozen["selected_runs"],
       expected_layout=expected_layout, batch_id=batch_id, plan_id=frozen["plan_id"],
-      plan=frozen, review=review)
+      plan=frozen, review=review, **({} if deadline_ns is None else {"deadline_ns": deadline_ns}))
   except Exception:
     raise Conflict(_ERROR) from None
 
@@ -165,7 +165,7 @@ def save_manual_snapshot(workspace, *, instance_fd, state_fd, expected_records, 
 
 
 def _save_snapshot(workspace, *, instance_fd, state_fd, expected_records, selected_runs,
-    expected_layout, batch_id, plan_id, before_publish=None, plan=None, review=None):
+    expected_layout, batch_id, plan_id, before_publish=None, plan=None, review=None, deadline_ns=None):
   try:
     # 任何 schema/Tree 打开前先拒绝关闭的借入 fd，避免整数被新文件复用。
     for fd in (instance_fd, state_fd):
@@ -220,7 +220,8 @@ def _save_snapshot(workspace, *, instance_fd, state_fd, expected_records, select
         from .stop_review import consume_stop_review
         consume_stop_review(review, plan=plan, batch_id=batch_id)
     run_stop_fence.install(registry, batch_id=batch_id, plan_id=plan_id, expected_records=records,
-      recovery_snapshot=snapshot, before_publish=before)
+      recovery_snapshot=snapshot, before_publish=before,
+      **({} if deadline_ns is None else {"deadline_ns": deadline_ns}))
   except Exception:
     raise Conflict(_ERROR) from None
 

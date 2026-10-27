@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 import sys
+import time
 
 from .deployment import json_bytes
 from .storage import Conflict, StateError, Tree, advisory_lock
@@ -170,7 +171,7 @@ class OmpLaunchReservation:
 
 
 def reserve_omp_launch(workspace, runtime_identity):
-  """不取物理 SH；只从现有声明/ledger 选候选，再以同锁 CAS 保存预留。"""
+  """不取物理 SH；声明/anchor 选择与预留在同一 Domain 写事务中完成。"""
   from . import resource_coordination as coordination, resource_scopes as scopes
   from .paths import safe_id
   from .resource_protocol import decode
@@ -179,44 +180,44 @@ def reserve_omp_launch(workspace, runtime_identity):
     root, owner, digest = _omp_launch_context(workspace)
     safe_id(runtime_identity)
     domain = coordination.Domain(root)
-    state = domain.snapshot()
-    with Tree(workspace.instance) as instance, Tree(workspace.instance / "user-home") as home:
-      if instance.fd is None or home.fd is None:
+    with domain._transaction(write=True) as state:
+      with Tree(workspace.instance) as instance, Tree(workspace.instance / "user-home") as home:
+        if instance.fd is None or home.fd is None:
+          raise Conflict(_OMP_LAUNCH_ERROR)
+      with Tree(workspace.instance.parent / scopes._CLAIMS) as claims:
+        raw = claims.read(scopes._claim_name(workspace.instance), max_bytes=scopes._LIMIT)
+        if raw is None or raw[1] != 0o600:
+          raise Conflict(_OMP_LAUNCH_ERROR)
+        claim = decode(raw[0], kind="scope-claim")
+      if (claim["domain_id"] != state["domain_id"] or claim["domain_physical"] != state["physical"]
+          or claim["owner_ref"] != owner or claim["instance_path"] != str(workspace.instance)
+          or not coordination.runtime_claim_exists(workspace.cache, runtime_identity)):
         raise Conflict(_OMP_LAUNCH_ERROR)
-    with Tree(workspace.instance.parent / scopes._CLAIMS) as claims:
-      raw = claims.read(scopes._claim_name(workspace.instance), max_bytes=scopes._LIMIT)
-      if raw is None or raw[1] != 0o600:
+      runtime_claim = coordination._read_runtime_claim(workspace.cache, runtime_identity)
+      chosen = []
+      for kind, path in (("instance", workspace.instance / ".agentcfg-omp.lock"),
+          ("native-home", workspace.instance / "user-home")):
+        matches = [record for record in state["resources"].values()
+          if record["status"] == "ready" and record["key"]["kind"] == kind and record.get("path") == str(path)]
+        if len(matches) != 1 or matches[0]["scope_id"] != claim["scope_id"]:
+          raise Conflict(_OMP_LAUNCH_ERROR)
+        chosen.append(matches[0])
+      if chosen[0]["anchor_digest"] != chosen[1]["anchor_digest"]:
         raise Conflict(_OMP_LAUNCH_ERROR)
-      claim = decode(raw[0], kind="scope-claim")
-    if (claim["domain_id"] != state["domain_id"] or claim["domain_physical"] != state["physical"]
-        or claim["owner_ref"] != owner or claim["instance_path"] != str(workspace.instance)
-        or not coordination.runtime_claim_exists(workspace.cache, runtime_identity)):
-      raise Conflict(_OMP_LAUNCH_ERROR)
-    runtime_claim = coordination._read_runtime_claim(workspace.cache, runtime_identity)
-    chosen = []
-    for kind, path in (("instance", workspace.instance / ".agentcfg-omp.lock"),
-        ("native-home", workspace.instance / "user-home")):
-      matches = [record for record in state["resources"].values()
-        if record["status"] == "ready" and record["key"]["kind"] == kind and record.get("path") == str(path)]
-      if len(matches) != 1 or matches[0]["scope_id"] != claim["scope_id"]:
+      runtimes = [record for record in state["resources"].values()
+        if record["status"] == "ready" and record["key"]["kind"] == "runtime"
+        and record.get("cache") == str(workspace.cache) and record.get("runtime_identity") == runtime_identity]
+      if (len(runtimes) != 1 or runtime_claim["domain_id"] != state["domain_id"]
+          or runtime_claim["domain_physical"] != state["physical"]
+          or runtime_claim["resource_id"] != runtimes[0]["resource_id"]
+          or runtime_claim["resource_key"] != runtimes[0]["key"]):
         raise Conflict(_OMP_LAUNCH_ERROR)
-      chosen.append(matches[0])
-    if chosen[0]["anchor_digest"] != chosen[1]["anchor_digest"]:
-      raise Conflict(_OMP_LAUNCH_ERROR)
-    runtimes = [record for record in state["resources"].values()
-      if record["status"] == "ready" and record["key"]["kind"] == "runtime"
-      and record.get("cache") == str(workspace.cache) and record.get("runtime_identity") == runtime_identity]
-    if (len(runtimes) != 1 or runtime_claim["domain_id"] != state["domain_id"]
-        or runtime_claim["domain_physical"] != state["physical"]
-        or runtime_claim["resource_id"] != runtimes[0]["resource_id"]
-        or runtime_claim["resource_key"] != runtimes[0]["key"]):
-      raise Conflict(_OMP_LAUNCH_ERROR)
-    resources = sorted([record["resource_id"] for record in chosen] + [runtimes[0]["resource_id"]])
-    if any("generation" not in entry and set(resources).intersection(entry["resources"])
-        for entry in state["reservations"].values()):
-      raise Conflict(_OMP_LAUNCH_ERROR)
-    receipt = domain.reserve(run_id=uuid.uuid4().hex, op_id=uuid.uuid4().hex, owner_ref=owner,
-      resources=resources, expected_revision=state["revision"])
+      resources = sorted([record["resource_id"] for record in chosen] + [runtimes[0]["resource_id"]])
+      if any("generation" not in entry and set(resources).intersection(entry["resources"])
+          for entry in state["reservations"].values()):
+        raise Conflict(_OMP_LAUNCH_ERROR)
+      receipt = domain._reserve_locked(state, run_id=uuid.uuid4().hex, op_id=uuid.uuid4().hex, owner_ref=owner,
+        resources=resources, expected_revision=state["revision"])
     return OmpLaunchReservation(root, state["domain_id"],
       (state["physical"]["device"], state["physical"]["inode"]), receipt["run_id"], receipt["op_id"],
       receipt["generation"], tuple(receipt["resources"]), runtimes[0]["resource_id"], runtime_identity, digest)
@@ -249,7 +250,7 @@ def check_omp_launch(reservation, workspace, *, instance_fd, native_home_fd, pac
   try:
     root, _, _ = _omp_launch_context(workspace)
     domain = coordination.Domain(root)
-    with domain._transaction() as state:
+    with domain._transaction(deadline_ns=time.monotonic_ns() + 2_000_000_000) as state:
       _check_omp_reservation(state, reservation, workspace, phase="reserved")
       scope_resources = scopes._verify(state, workspace, instance_fd=instance_fd, native_home_fd=native_home_fd)
       runtime_resource = domain._runtime(state, workspace.cache, reservation.runtime_identity, package_fd)

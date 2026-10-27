@@ -16,7 +16,7 @@ T042 调查并原型验证现有官方恢复入口、实际 HOME/scope、writer 
 
 ## 当前候选边界
 
-候选实现与分组验收已完成：基于 main `45953f0`，分支 `feat/tool-maintenance-workflows-20261026`；保留在任务分支，尚未合入 main；合入须另经人工批准。2026-10-27 已补齐三工具贯穿公开 CLI 的真实维护链路，并单独核验新 Pi 锁 Base/Pro，见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。
+既有当前终端维护候选的实现与分组验收保留原范围：基于 main `45953f0`，分支 `feat/tool-maintenance-workflows-20261026`；保留在任务分支，尚未合入 main；合入须另经人工批准。2026-10-27 已补齐三工具贯穿公开 CLI 的真实维护链路，并单独核验新 Pi 锁 Base/Pro，见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。
 
 | 工具与版本 | 当前终端交接 | writer 与加载限制 |
 | --- | --- | --- |
@@ -26,7 +26,7 @@ T042 调查并原型验证现有官方恢复入口、实际 HOME/scope、writer 
 
 详见[维护流程与分项证据](tool-maintenance-workflows.md)。Pi 原生 `--resume` 是 picker；明确恢复用 Rotom `resume pi --session` 完整 ID，普通 `--session` 完整 ID 转为精确路径并持租约。恢复前严格重核存在性；外部事后变化仍可使结果 unknown。OMP 固定源码 `session-manager.ts:1103–1128` 的 sibling 分叉语义已用无网络合成会话原生验证：第二次同 ID 打开成功，首次写入后新 ID，原 ID 不变；原 writer 释放后可恢复原 ID 写入。
 
-当前恢复都区分请求、派发、实际加载与继续；请在官方 TUI 核对 ID。严格加载确认、原 pane 和自动继续未因此开放。DSH 历史完整锁为 `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d`，运行包变化不自动继承准入。
+当前恢复都区分请求、派发、实际加载与继续；请在官方 TUI 核对 ID。严格加载确认和自动继续未因此开放；原 pane/新 tab 候选已实现，但已通过最终十二组无 trace 原生验收，现仅开放六个精确 Linux managed 组合的两种位置。普通 --session 的位置恢复保持未开放。DSH 历史完整锁为 `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d`，运行包变化不自动继承准入。
 
 Pi 的公开 guard/helper/扩展由 `locks/pi/session-control.json` 对三个自有来源校验。辅助观察仅作 historical，不读正文；合法旧 hash 与已不存在 cwd 可保留历史线索，实际恢复仍重新检查。损坏/跨 run/host/目录/权限记录拒绝采用，观察失败不丢掉进程列表。
 

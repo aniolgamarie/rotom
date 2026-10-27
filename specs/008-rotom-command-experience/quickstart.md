@@ -1,6 +1,12 @@
 # 验证指南
 
-**2026-10-27 最新验收**：官方 DSH/Pi/OMP 贯穿公开 CLI 的停止、实际配置更新、停止清单及原会话恢复均已通过；main 新 Pi 锁的 Base/Pro 另经完整闭包和原生验收。OMP 退出与查询的短锁竞争已修复并复验；候选仍需人工批准合入 main。详见[验收记录](tool-workflow-validation.md)。
+**历史当前终端验收（2026-10-27；不涵盖新增位置路径）**：官方 DSH/Pi/OMP 贯穿公开 CLI 的停止、实际配置更新、停止清单及原会话恢复均已通过；main 新 Pi 锁的 Base/Pro 另经完整闭包和原生验收。OMP 退出与查询的短锁竞争已修复并复验；候选仍需人工批准合入 main。详见[验收记录](tool-workflow-validation.md)。
+
+## 当前候选的并发与交接边界
+
+驻留 parent 在 child 存活时不轮询 owner/Domain，退出后才核验出生身份及完整释放。active 位置只是按 child/manager 身份关联的候选，不能代替原位 parked/saved run 门禁。Domain 写事务默认仅首锁前等待 2 秒，显式 deadline 不续期；外部只读默认 NB，仅合作启动 package_guard/check_omp_launch 两处显式读预算。OMP 资源/anchor 选择和预留同写事务完成，提交后才返回 token，通用 reserve CAS 保持。停止最终查询复用原截止点，过期只作无竞争观察，不重 close/信号。V1 accepted 后正常清 pending，驻留包装使用 accepted 前最后核验的 caller。
+
+最终十二组无 trace 位置原生验收已通过，准入限六个精确 Linux managed 组合；最终默认隔离全量14,153 passed / 13 skipped / 0 failed（共14,166个唯一测试），前一快照 `14102 + 13 skipped` 保留为历史。功能尚未合入 main，T125 待人工批准。
 
 ## 当前候选验证与操作
 
@@ -8,7 +14,7 @@
 
 逐阶段命令、TTY/非 TTY、取消及旧批次兼容见[维护流程指南](../../docs/tool-maintenance-workflows.md)。候选三工具 stop_only → 关本次 fence → 最新独立 setup 批准/原全门禁 → 逐项当前终端恢复。Pi Claims 仅合作进程；OMP 同 ID open 不取锁，竞争首次写入可能分叉新 ID；都显示加载待确认，零继续。
 
-已选后续交付为 Herdr 新标签页，以及通过 Rotom Herdr 入口新建、由驻留启动器托管且该工具已验收的新实例原 pane；当前两种位置均尚未实现准入。普通 shell 启动退出后返回 shell，旧普通实例不升级。仅停止 Agent 并保留 launcher/pane 才能等待原位恢复；launcher/pane 丢失或身份不明时改用当前终端或明确接受的新位置。统一严格加载回执、原生 TUI 自动继续及 Pi Pro 委派不在本轮承诺内；`pi-pro` 普通 profile 的停止、更新与恢复兼容性保留。详见[原位置能力指南](../../docs/rotom-pane-capabilities.md)。
+Herdr 新标签页与薄驻留原 pane 候选已经实现；最终十二组无 trace 原生验收全部通过，现仅开放六个精确 Linux managed 组合的两种位置。两种位置只面向已停止且已完成 setup/update 的完整 maintenance workflow，普通 --session 位置恢复不开放。普通 shell 启动退出后返回 shell，旧普通实例不升级。仅停止 Agent 并保留 launcher/pane 才能等待原位恢复；launcher/pane 丢失或身份不明时改用当前终端或明确接受的新位置。统一严格加载回执、原生 TUI 自动继续及 Pi Pro 委派不在本轮承诺内；`pi-pro` 普通 profile 的停止、更新与恢复兼容性保留。详见[原位置能力指南](../../docs/rotom-pane-capabilities.md)。
 
 最终集合按分组及受影响完整文件复验对账：13,561 passed / 12 skipped，未解决失败与未覆盖均为 0；这不是一次未中断的全绿运行。原始失败和精确范围见验收记录，不累加重叠组。该阶段为 93/125，新增停止历史阶段为 97/129；T125 的 main 人工整合仍待批准；历史勾选含义保留。
 
@@ -20,17 +26,17 @@
 
 T042 改为现有官方入口、实际 HOME/scope、writer 和状态边界调查及原型。T053 已完成 Linux 固定组合的受控交接、合成历史、缺失目标、活动 TUI 和外部 writer 拒绝验收，机器态仍待确认；额外请求已定位为 TUI 自动回顾，T054 精确组合的默认入口及独立原生复验已完成，不等待新上游接口。缓存 Core 两个内存 case 不是恢复验证。严格回执提案未发送、当前不计划提交，仅属可选历史研究，不是交付依赖。以下旧阶段记录不重新计为新范围通过。
 
-T117 已完成对应隔离契约更新：安全官方交接能力充分、但没有严格加载回执时，只派发一次，保持加载待确认、零继续、零自动重试，超时不强杀；保留范围/cwd/缺失目标/writer 冲突负例。当前总数 117，已完成 86，具体状态以 tasks.md 为准。T096/T101/T102 仅完成零发送与人工分支，T053 已完成固定组合的真实交接验证，T054 已独立核验实际准入接线；完整停止维护尚未完成。
+T117 已完成对应隔离契约更新：安全官方交接能力充分、但没有严格加载回执时，只派发一次，保持加载待确认、零继续、零自动重试，超时不强杀；保留范围/cwd/缺失目标/writer 冲突负例。当时总数117、完成86；这是历史快照，当前任务状态以 tasks.md 为准。T096/T101/T102 仅完成零发送与人工分支，T053 已完成固定组合的真实交接验证，T054 已独立核验实际准入接线；完整停止维护尚未完成。
 
 ## 历史 DSH 精确停止（main 基线阶段）
 
-工作树中的 `stop_only` 现仅准入 Linux managed DSH、完整锁
+该 main 基线阶段的 `stop_only` 当时仅准入 Linux managed DSH、完整锁
 `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` 和新启动后成功登记的原 host/control endpoint。
 默认普通 runtime 的三实例原生验收已通过：首轮真实 CLI 仅停止前两项，第三项 owner/出生身份
 仍 active、inbox 空、journal 无记录、共享 EX 仍忙；独立新 plan 再只清理第三项。
 三项均 exit 0、idle_confirmed、termios 恢复、原 inode 租约释放、输入为零且源码未变。
 [完整证据](main-review.md#62-dsh-默认入口的精确停止验收) 不扩大为并发启动、会话恢复或维护准入。
-当前仍为 86/117；已验收的基础范围已合入 main，内部维护增量按 main-review 的独立证据推进，完整维护控制 CLI 尚未开放。
+该历史阶段为 86/117；当时已验收的基础范围已合入 main，完整维护控制 CLI 尚未开放。后续 workflow 与本次位置候选分别见本文开头，不沿用该历史状态判断。
 
 内部维护已保存首次同步前的目标部署摘要，并提供只读现场观察，见[第 72 节](main-review.md#72-目标部署绑定与只读现场观察)。
 隔离检查包括目标契约、apply 后的命名锁/owner/资源复核，以及只读观察的竞争、pending 和结果不升级。
@@ -43,7 +49,7 @@ T117 已完成对应隔离契约更新：安全官方交接能力充分、但没
 默认 30 秒、范围 1–300 秒，全部所选项共用同一绝对截止时间。
 实际停止等待未确定或到期返回 4，保留 batch/快照/派发事实，不重发、不强杀、不自动恢复或继续。
 status 只读；cancel 仅取消尚未投递项或对已确证停止项收尾对账，不能清除 unknown 派发。
-setup/maintenance execute/restore、Pi/OMP 的停止与自动恢复、其它平台、旧 run 和 force 仍未准入；
+该历史阶段的 setup/maintenance execute/restore、Pi/OMP 停止及其它平台、旧 run 和 force 当时仍未准入；
 T054 的精确 Linux DSH `resume --here` 保持已有准入，加载仍待确认。
 
 ### 历史原生阶段与恢复证据
@@ -160,7 +166,7 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest -q -p no:cacheprovid
 | `tests/test_rotom_control_deadline.py`、`tests/test_rotom_maintenance_wait.py`、`tests/test_rotom_maintenance_wait_integration.py` | 共享阶段预算与内部后代观察等待；保存事实不释放 manager SH、不授予维护资格，生产控制/Batch/ready 接线未完成 |
 | `tests/test_rotom_continue.py`、`tests/test_rotom_input_probe.py` | 显式人工指引、零发送/正文不落盘与独立输入 fake 原型；不证明自动输入准入 |
 | `tests/test_rotom_dsh_stop_client.py`、`tests/test_rotom_stop_control_cli.py` | 最终历史目标/版本展示两套 46 passed；真实临时快照、fake manager/时钟与 CLI，未知不升级实时确认，不能代替原生验收 |
-| 未来文件 `tests/test_rotom_restore_capabilities.py` | T085 后创建；原位独立准入，批量 stdin 和位置归属边界 |
+| `tests/test_rotom_restore_capabilities.py` | 驻留候选的隔离机制检查；不代替位置原生准入 |
 
 不存在的未来文件不写成可复制 pytest 命令。实现后记录实际 argv、候选/源码摘要、锁、退出码、
 通过/失败/跳过数量与私人证据引用；skip、缺环境、未授权、未实现分别记录。
@@ -168,7 +174,7 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest -q -p no:cacheprovid
 Node 接线检查使用空继承环境和专用临时 HOME/XDG；上述短命令仅表示套件入口，执行时须保持隔离条件。
 默认沙箱一次 stdout 捕获异常导致超时，作为环境不足保留；通过记录来自支持执行器的最终稳定源码。
 测试自身的遗留 fake Node 子进程已按精确身份清理，未给原生 Agent 发信号；最终 fixture 用显式 finish、
-断连和有界自行退出保证该历史 fake 失败路径清理。候选恢复交接、运行中派发与记录机制已有隔离实现；T053 官方原生交接及 T054 默认恢复入口已在固定 Linux 组合通过，该限定范围已合入 main，整合及后续增量见 main-review。停止服务、fence、人工快照与请求核验的早期候选证据保留；当前精确 DSH stop_only 已按上节独立验收，完整维护/恢复编排与其它组合仍未准入。[公开启动结果缺口](../../docs/rotom-dsh-startup-contract.md) 只限制 restored/自动继续，不再作为派发实现的硬前置。
+断连和有界自行退出保证该历史 fake 失败路径清理。候选恢复交接、运行中派发与记录机制已有隔离实现；T053 官方原生交接及 T054 默认恢复入口已在固定 Linux 组合通过，该限定范围已合入 main，整合及后续增量见 main-review。停止服务、fence、人工快照与请求核验的早期候选证据保留；当前精确 DSH stop_only 已按上节独立验收，该历史阶段的完整维护/恢复编排与其它组合当时仍未准入；当前 here 候选与位置候选分别按本文开头的范围和独立记录判断。[公开启动结果缺口](../../docs/rotom-dsh-startup-contract.md) 只限制 restored/自动继续，不再作为派发实现的硬前置。
 
 资源身份本轮最终组合为上述两个新套件，加 `test_omp_dependencies.py`、`test_omp_runtime_foundation.py`、
 `test_rotom_runtime_observation.py`、`test_lifecycle_leases.py`，共 **186 passed**，退出 0；66/9 项包含在该总数中。
@@ -287,7 +293,7 @@ T064/T086 当时只完成有限 fake 原型，真实停止/原位恢复在该阶
 前一阶段 886 项回归的 98 个源码文件摘要全部保持一致，因此复用该证据，不重复运行或累加通过数。
 该原型阶段的恢复/事件契约保留 5 passed / 44 failed 历史结果；后续 T117 与候选协调器/事件实现的隔离验收见上表，不能将任何组合结果称为全库通过。
 
-2026-10-27 的独立授权 Pi 核心探针另证明稳定父进程保留同一 PTY、停止/更新后新 run 请求原 session/cwd 的可行性，不能类推为 Herdr 绑定、生产驻留实现或 DSH/OMP 原位验收；当前原 pane 和新标签页仍未实现准入。
+2026-10-27 的独立授权 Pi 核心探针另证明稳定父进程保留同一 PTY、停止/更新后新 run 请求原 session/cwd 的可行性，不能类推为 Herdr 绑定、生产驻留实现或 DSH/OMP 原位验收；当前原 pane 和新标签页的六个精确 Linux managed 组合已另经最终十二组无 trace 原生验收；该历史探针不是本次位置原生验收。
 
 
 ## T039 真实入口验收结果
@@ -332,6 +338,22 @@ setup 继续要求完整覆盖并拒绝未选引用。该隔离阶段尚未准�
 逐文件匹配，不把索引验证冒充重新下载官方归档。真实启动/停止有限证据见
 [main-review 第 55 节](main-review.md#55-锁定官方包的真实启动与精确停止)。
 
+## 位置恢复的命令与验收边界
+
+下列命令在已通过最终原生验收的六个精确 Linux managed 组合内开放，仍须重新核验现场门禁。先对同一完整 workflow 批次完成精确停止和独立批准的 setup/update。`--list` 与默认 here 不需要 Herdr；位置分发需要当前受支持的 Herdr 上下文，原 pane 还需保留的受管 launcher。
+
+```sh
+./rotom resume pi --machine workstation --profile pi-base --stopped --list --format json
+./rotom --no-input resume pi --machine workstation --profile pi-base --stopped --batch BATCH_ID --run RUN_ID --new-tab --format json
+./rotom --no-input agent --machine workstation --profile pi-base maintenance restore --batch BATCH_ID --run RUN_ID --original --format json
+./rotom --no-input resume pi --machine workstation --profile pi-base --stopped --batch BATCH_ID --all --new-tab --format json
+./rotom --no-input resume pi --machine workstation --profile pi-base --stopped --batch BATCH_ID --all --original --format json
+```
+
+BATCH_ID/RUN_ID 必须替换为实际完整32位小写十六进制值；示例不授予任何现场操作许可。`--all` 不接受 --here/--run/--session/--list；先拒绝坏记录、不可恢复项或跨 scope/profile/batch，再逐项重查、独立终端交接。JSON 只形成一个汇总；首个失败或未知后剩余项为 not_dispatched，之前事实保留，返回4。重复执行不能重放已有 restore-intent。普通 `resume --session ... --original|--new-tab` 仍不开放。
+
+Herdr V1/V2 新 DSH/Pi 和符合组合的新 tab 恢复可由驻留候选包装，普通 rotom run 不驻留。parked 不持 Agent 单次租约和凭据；源码或位置身份变化拒绝旧容器。加载待确认，零自动继续；Pi Pro 委派不在范围，pi-pro 普通 profile 兼容保留。对应隔离文件包括 test_rotom_pane_records.py、test_rotom_restore_locations.py、test_rotom_restore_new_tab.py、test_rotom_restore_capabilities.py、test_rotom_pane_dispatch.py；此处列出检查范围，不新增任何测试通过计数或原生结论。
+
 ## 已停止会话入口的隔离复验
 
 新增入口使用方式见[维护指南](../../docs/tool-maintenance-workflows.md#已停止会话清单与快捷恢复)。以下测试只使用合成会话、临时状态与假宿主，不启动第三方 Agent：
@@ -340,7 +362,7 @@ setup 继续要求完整覆盖并拒绝未选引用。该隔离阶段尚未准�
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -B -m pytest -q -p no:cacheprovider tests/test_rotom_stopped_sessions.py tests/test_rotom_stopped_cli.py tests/test_rotom_tool_session_headers.py tests/test_rotom_tool_maintenance.py tests/test_rotom_tool_workflow_cli.py tests/test_rotom_resume_cli.py tests/test_rotom_help_completion.py tests/test_rotom_zsh_completion.py
 ```
 
-新入口已另经显式授权的真实全 CLI 停止/更新/当前终端恢复验收；上述命令仍是独立隔离回归，不能替代原生证据。`resume --stopped --list` 只读已保存的停止记录，当前 `--here` 不需要 Herdr；已选驻留原 pane 与 Herdr 新标签页仍未实现准入，自动继续不在本轮承诺内。本次文档同步不新增真实宿主或 Herdr 测试授权与执行结果，既有 zsh/PTY 与 Pi 核心探针仅证明各自记录的范围。
+新入口已另经显式授权的真实全 CLI 停止/更新/当前终端恢复验收；上述命令仍是独立隔离回归，不能替代原生证据。`resume --stopped --list` 只读已保存的停止记录，当前 `--here` 不需要 Herdr；驻留原 pane 与 Herdr 新标签页已有候选实现，但公开准入已覆盖六个精确 Linux managed 组合的两种位置，自动继续不在本轮承诺内。本次文档同步不新增真实宿主或 Herdr 测试授权与执行结果，既有 zsh/PTY 与 Pi 核心探针仅证明各自记录的范围。
 
 显式原生脚本见 `tests/manual/*_tool_workflow_native.py`，使用前先查 `--help`；必须另有真实宿主、隔离目录及停止范围授权。以下为参数模板，NODE_ROOT/RUNTIME/BINARY 必须是已核验的锁定公开运行包；各 OUT 目录须不存在，不能指向真实 HOME：
 

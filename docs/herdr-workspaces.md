@@ -127,6 +127,23 @@ work --machine workstation worktree create --repo /projects/kernel --path /proje
 
 当前 `work close --dry-run` 能预览当前工作区范围及所有 tab/pane，包括未按用途登记的成员。CLI 的授权形式为 `close --scope TOKEN --yes`，但**当前原生公开协议缺少原子成员保护，实际关闭明确退出 5**。scope token 只绑定审阅范围，不等于 native guard；本轮没有完成或宣称全项目关闭成功。不要用 detach、折叠或预览成功替代关闭完成的判断。
 
+## Maintenance workflow 的位置恢复
+
+本节位置恢复已通过最终十二组无 trace 原生验收，仅开放[六个精确 Linux managed 组合的两种位置](rotom-pane-capabilities.md#本轮精确组合验收清单)。DSH/Pi 的 V1/V2 work Agent 入口四项也已正式通过；OMP 无默认 work type，经新标签页恢复建立 resident 后可原位恢复。不以历史 workspace 测试代替本次验收。
+
+Rotom Herdr V1/V2 新 DSH/Pi Agent 入口与符合驻留组合的新 tab 恢复可使用薄驻留 launcher；普通 rotom run 不驻留。Agent 与相关后代完整退出并结束单次租约后才 parked，等待明确恢复请求，不保留 Agent 运行包或凭据环境。launcher/pane 丢失、位置复用或源码身份变化时拒绝原位恢复，旧普通实例不自动升级。
+
+只有已停止且完成 setup/update 的完整 maintenance workflow 可选择 --original/--new-tab；普通 --session 位置请求不开放。默认 here 与停止清单的只读 --list 不需要 Herdr。单项与批量接口示例（ID 须换为完整32位小写十六进制值）：
+
+```sh
+./rotom --no-input resume pi --profile pi-base --stopped --batch BATCH_ID --run RUN_ID --new-tab --format json
+./rotom --no-input resume pi --profile pi-base --stopped --batch BATCH_ID --all --original --format json
+```
+
+V1 的 caller 在 accepted 前最后核验并保存；accepted 后父进程可正常清除 workspace pending，驻留包装使用保存的 caller，不因这次清除退回普通 shell。resident 仍重核实时终端身份，不能借 accepted 或清 pending 扩大许可。驻留 parent 在 child 存活时不读 owner/Domain；退出后才核验唯一出生身份及完整释放。active 位置的 child/manager 关联只是只读候选，原位仍须 parked 与保存的精确旧 run。
+
+新 tab 使用公开 tab.create 和专用恢复 payload；先持久化原 workflow 意图，再单次创建，ready/committed/handoff 和 child 执行事实分别核验。可能已经创建时只读查账，不重发、不向 pane 发送命令。批量先核验整批，逐项重查，首个失败或未知后停止，余项 not_dispatched，保留前面事实。加载仍待确认，零继续，Pi Pro 委派不在范围；pi-pro 普通 profile 兼容性保留。详细条件见[维护指南](tool-maintenance-workflows.md)和[位置能力说明](rotom-pane-capabilities.md)。
+
 ## 未知结果与支持边界
 
 `work status --json`、`work reconcile --json` 和 `work list --live --json` 提供只读观察。metadata 丢失、ID 重用、成员变化或交接结果不明保持 unknown；private 记录与原生标记需要共同核验，任何一方都不能独自授权。创建可能已派发后不重发。不要手工删除 pending 来假定 launcher 已取消。

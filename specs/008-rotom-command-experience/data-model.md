@@ -1,6 +1,6 @@
 # 数据模型与状态约束
 
-日期：2026-10-23。状态：待实现的契约；以 [规格](spec.md) 与宪章 3.0.0 为界。
+日期：2026-10-27。状态：契约及分阶段候选实现；新增位置路径未正式准入，历史模型按所属阶段解释；以 [规格](spec.md) 与宪章 3.0.0 为界。
 全部新持久对象有整数 `schema_version`，拒绝重复键、未知字段、非法类型及非有限数值。
 路径按已有安全原语验证；私人目录 `0700`、文件 `0600`，不保存秘密、完整环境、argv 或会话正文。
 
@@ -302,7 +302,7 @@ target-unavailable；有摘要时持原实例/状态/包 EX，在内容读取前
 pending 存在只报告 journal-pending；无 pending 时核对 current 及受保护投影，报告 target-matches/target-differs；
 现场无法确认报告 unconfirmed。结果返回前释放锁；匹配只描述当时部署契约和受保护投影，不证明整个运行包、
 历史执行成功或恢复安全，不改结果/意图、不清 unknown、不发行许可、不重试或恢复 journal。
-历史未知结果的持久对账、journal 恢复、批量恢复及完整维护 CLI 接线仍待实现。
+以上是旧 Domain 批次的历史边界；不会自动迁移或取得新 workflow 许可。新 workflow 的批量位置入口见下文，不能据此重放旧未知结果或恢复 journal。
 
 只读 `status_setup` 将明确 Linux OMP scope 的现存 setup 批次与上述现场观察组合；CLI 仅在显式 profile 的
 公开声明为 OMP 时进入此路径，不自动扫描批次。响应保留原 operation_result 与独立查询 exit_code，输出
@@ -333,11 +333,12 @@ protected 仅表示本批资源意图是否仍有效，不声明全局资源空�
 
 内部 `OmpLaunchReservation` 由可信 workspace 指定的全局 state_root/lifecycle 产生，
 不能从 claim 的路径指定协调根，也不把 per-profile state_root 当作独立域。
-预留阶段只读取已有独立声明与三个 ready 资源候选，并以快照 revision CAS 持久化；
+预留阶段在同一 Domain 写事务内读取已有独立声明、选择三个 ready 资源并调用 `_reserve_locked`；
+提交及同步成功后才返回 token。通用 `Domain.reserve(expected_revision=...)` 仍严格拒绝过期 revision；
 不取物理 SH，不创建或采用资源，不证明实际覆盖。token 只含不可变标识、代际与 owner_ref 摘要。
 调用方取得原实例/状态/包 SH 后，还须在一个短协调事务内重核同一 token、scope 锚点及包 fd；
 HOME fd 只固定身份。缺旧代际、claim、完整资源或出现别名/域变更均拒绝；响应丢失保留预留。
-此接口尚不派发宿主、创建 owner 或启用 OMP 日常登记。
+预留本身不派发宿主或创建 owner；后续合作启动仍通过原物理 SH、owner 关联及 dispatch 门禁。
 
 stop_only 意图允许已知 dispatched 引用中的明确非空子集，第三实例的 owner 与预留不变；
 setup 仍要求覆盖全部相交引用。两者遇相交 pending/unknown 等未确认阶段均拒绝。
@@ -379,19 +380,28 @@ kind 仍来自物理 key。字段不包含秘密、任意命令或维护许可�
 
 ## 7. ContainerRecord 与 ContinueRequest
 
-ContainerRecord 是已选驻留路线实施所需的模型，当前尚未接入生产；P-PANE 是正式开放前的逐工具原生验收门槛，
+ContainerRecord 已由 `agentcfg.pane_records` 和严格 `container.schema.json` 实现，驻留入口为 `rotom.resident`；P-PANE 的最终十二组无 trace 原生验收已通过，公开准入限定六个精确 Linux managed 组合的两种位置，
 不是开始开发或定义模型的前置。交付位置包括 Herdr 新标签页，以及通过 Rotom Herdr 入口新建、
-由驻留启动器托管且该工具已验收的新实例原 pane；两种位置当前均尚未实现准入。
+由驻留启动器托管且该工具已验收的新实例原 pane；两种位置已有候选实现，完成验收后才按精确 Linux managed 组合开放。
 普通 shell 启动退出后返回 shell，旧普通实例不在线升级。launcher/pane 丢失、被复用或身份不明时转明确接受的新位置。
 
 ContainerRecord 包含 container_id、generation、管理进程身份、TerminalRef、
 manager_code_identity、control_protocol、受保护 endpoint 身份、state 与已消费 request ID。
 状态为 running、parking、parked、resume_pending、unknown、closed；parking 不等于资源已释放。
 parked 在全部单次运行租约退出之后，不能保留旧运行包/环境/凭据对象。
+活动期间仅保存已捕获的 child 出生身份，run_id 可以为 null；驻留父进程不轮询 owner 或 Domain。停止前诊断按需从严格 RunRecord 的 manager_identity 关联 child_identity，只作候选、不回写容器。子进程退出后才核验唯一 owner 与完整释放并保存真实 run_id；原位准入还须 parked、saved run_id 匹配、child_identity 为空。
 旧单次 manager 没有该记录，不能在线推断为 parked；管理代码变化时首版转明确的新位置路径。
 
 统一的严格加载回执、原生 TUI 自动继续与 Pi Pro 委派不在本轮承诺内；驻留不将加载待确认升级为 restored，
 continue 保持 not_sent。`pi-pro` 作为普通 profile 的停止、更新与恢复兼容性仍保留。
+`agentcfg.restore_locations.LocationStore` 将不可变 `request.json` 与原子 `receipt.json` 保存在 workflow 对应的私人目录；目录 0700、文件 0600，未知/重复字段、非规范类型、目录替换或 CAS 漂移失败。request 的 root_identity 固定目录 device/inode，跨进程新 reader 也拒绝复制到另一目录的记录。
+
+request 字段为 schema_version、request_id、mode（original/new-tab）、scope（machine/local/profile/agent）、batch_id、run_id、session_ref、cwd、deployment_digest、workflow_revision、workflow_digest、manager_code_identity、terminal_ref、rotom_root、root_identity。不保存任意 argv、shell、环境、秘密或会话正文。receipt 字段为 schema_version、request_id、phase、terminal_ref、exit_code、reason；terminal_ref 首次赋值后不变。
+
+receipt 的主要路径为 prepared → dispatched → ready → committed → handoff → executing → exited；原 pane 允许 dispatched → handoff。失败或不确定进入 failed/unknown，终态不重新开放；原生退出码只在相应事实存在时保存，exited 不表示 session 已加载。child 重新核对 scope、原工作目录、精确会话、workflow 意图/取消、部署和源码身份后调用既有恢复后端；各层结果不互相覆盖。
+
+CLI 批量汇总是展示结果，不是新的持久授权：`{batch_id, location, results:[{run_id, exit_code, result}], load_confirmation:"unknown", continue_status:"not_sent"}`。未派发项的 result.status 为 not_dispatched，交接结果不明为 unknown；此前已交接的结果保留。`location_diagnostics` 只附加在计划/交互预览中，不进入 plan_id；停止清单的 location_request 只投影既有位置记录。
+
 以下 ContinueRequest 为独立输入能力的历史模型，不是本轮驻留或新标签页交付依赖。
 
 ContinueRequest 含新 run/op、SessionRef、批准文本摘要/固定模板身份、目标 ready 证据及
@@ -407,6 +417,12 @@ pending、unknown、待恢复或可能已派发对象不做自动过期删除；
 后续显式清理需另定可审阅范围；配置上一版备份继续遵守原有独立保留规则。
 任何元数据损坏、引用越界、权限不符或未知版本都拒绝控制并保留证据，不能重建为空状态。
 
+
+### 元数据事务预算
+
+Domain 写事务只有首个 flock 之前可等待，默认 2 秒；显式 deadline_ns 使用原绝对截止点。body、commit/fsync 和 unlock 异常不重新执行。外部只读事务和 snapshot 默认 NB；合作启动 package_guard、check_omp_launch 两处读显式给首锁 2 秒。退出收尾的 Domain 和 owner 首锁竞争共享原 2 秒预算，不在重新进入 Domain 时续期。
+
+停止最终查询沿原停止 deadline 只读核对，过期时只允许一次无竞争 NB 观察；close、请求与派发事实不回滚或重放。
 
 ### 合作运行上下文与提交前绑定
 

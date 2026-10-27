@@ -1,34 +1,76 @@
 # Rotom 原终端位置恢复能力
 
-状态：原 pane 和新标签页恢复尚未开放。T086 已完成公开接口比较和有限 fake 原型；2026-10-27 另以官方 Pi 验证了稳定父进程保留同一 PTY、停止/更新后创建新 run 的核心可行性。该探针没有接入 Herdr、生产驻留控制端点或工作区绑定，不能算原 pane 功能验收。
+状态：最终十二组无 trace 原生验收全部通过，现开放下列六个精确 Linux managed 工具/profile/锁与运行包组合的原 pane、新标签页共十二条准入。普通 --session 位置恢复不开放。下文 T086 有限 fake 模型和早期 Pi 核心探针属于历史证据，不能替代当前实现的真实 Herdr/工具验收，也不因文档更新而新增通过结果。
 
-## 已选择的交付范围
+## 实现与准入范围
 
-下一阶段交付两种位置：Herdr 新标签页，以及由 Rotom Herdr 入口新建的受支持托管实例的原 pane。原 pane 采用薄驻留启动器，只管理官方 Agent 的启动、退出和明确请求后的恢复；不修改 Agent，也不向 TUI 自动输入。
+候选实现覆盖两种位置：Herdr 新标签页，以及由 Rotom Herdr 入口新建的受支持托管实例的原 pane。原 pane 采用薄驻留启动器，只管理官方 Agent 的启动、退出和明确请求后的恢复；不修改 Agent，也不向 TUI 自动输入。
 
-- 对已经完成该工具驻留验收的 Rotom Herdr 新实例，入口默认保留启动器；停止 Agent 后原 pane 显示“等待恢复”，释放单次运行资源，明确请求后使用新 run 请求同一 session 和原 cwd。
+- 在下列已准入组合中，Rotom Herdr V1/V2 新建的 DSH/Pi Agent 以及符合驻留组合的新 tab 恢复默认保留启动器；停止 Agent 后原 pane 显示“等待恢复”，释放单次运行资源，明确请求后使用新 run 请求同一 session 和原 cwd。
 - 普通 shell 的 `rotom run` 仍在 Agent 退出后返回 shell。仅在 Herdr 内启动、刚启动、直接运行官方 CLI，或仅升级配置，都不使旧普通实例获得原位能力。
 - launcher 或 pane 关闭、被复用、归属未知或管理代码不兼容时，不能原位恢复；保留停止记录，提供当前终端或经过用户接受的新位置。
 - 新标签页需要 Herdr 的可核验公开 API。逐项记录创建、交接、失败和未知；可能已经创建的请求先查询，不自动重复开页。恢复后等待人工输入。
 
-help 和命令提示必须区分“当前未开放”和上述启用条件。实现后的只读能力诊断与停止计划还须逐项解释：可用、不支持、launcher/pane 丢失、身份或请求结果未知，并给出准确范围的下一步；没有观察证据时不造出可用结论。这些诊断属于 T085/T091/T095/T135–T138 的待实现验收，不是当前已存在的结构化字段。
+help 和命令提示区分已准入组合与不支持的来源、平台及位置。maintenance plan 和停止交互批准附加 location_diagnostics，逐项解释可用、不支持、launcher/pane 丢失或未知；这只是只读观察，不进入 plan_id、不授予恢复许可。停止清单 location_request 仅投影已有位置请求与 receipt，不重新加载配置或推断可用性。没有观察证据时不造出可用结论。
 
 统一的严格加载成功回执、原生 TUI 自动继续不在本轮承诺中。已有观察可以展示准确的 session/cwd，但缺回执仍是“加载待确认”、`continue=not_sent`，不会因驻留而升级成已恢复。Pi Pro 委派独立于本功能；`pi-pro` 作为普通 profile 的停止、更新与恢复兼容性仍在维护范围内。
 
+## 本轮精确组合验收清单
+
+下列身份以短前缀展示，实际判定使用完整 identity。最终十二组无 trace 原生验收均退出 0，下面六组合的原 pane、新标签页已逐项准入。验收源码身份为 `4b1779e5f99374dc91493e016471b088567ae37d7c5ec659ee40ed9900bc9755`；公开十二条键与验收表逐字相同。main 的 Pi 锁 `a68d9dcf…` 仅作为只读兼容输入，不吸收或修改其本地文件。
+
+| 工具 / profile | 完整锁前缀 | 运行包前缀 | 原 pane | 新标签页 |
+| --- | --- | --- | --- | --- |
+| DSH / dsh-default | `e4d56f338da80e78` | `e4d56f338da80e78` | 已通过并准入 | 已通过并准入 |
+| Pi / pi-base，候选锁 | `62ac8348c3433959` | `d97010399b8648a2` | 已通过并准入 | 已通过并准入 |
+| Pi / pi-pro，候选锁 | `62ac8348c3433959` | `2b087056df46cc40` | 已通过并准入 | 已通过并准入 |
+| Pi / pi-base，main 保留锁 | `a68d9dcf3346c0c6` | `567d64966f7b4d9b` | 已通过并准入 | 已通过并准入 |
+| Pi / pi-pro，main 保留锁 | `a68d9dcf3346c0c6` | `b4beec0dc0f4058f` | 已通过并准入 | 已通过并准入 |
+| OMP / omp-default，Linux x64 | `490e6c90d0ef4d89` | `490e6c90d0ef4d89…-linux-x64` | 已通过并准入 | 已通过并准入 |
+
+本清单只针对 Linux managed。新的运行包 identity 需重新验收；SSH、其它平台及未列出的组合不继承这些位置能力。Pi Pro 在此指普通 profile 的维护/恢复，不包含委派。
+
+Herdr 新 Agent 入口另有四项正式通过：
+
+| work 入口 | DSH | Pi |
+| --- | --- | --- |
+| V1 | 已通过 | 已通过 |
+| V2 | 已通过 | 已通过 |
+
+OMP 没有默认 work type；它通过已准入的新标签页恢复建立 resident，随后可按同样门禁原位恢复。普通 shell、旧单次实例与普通 `--session` 位置恢复均不因此获得原位能力。
+
+最终 delivery-verification 的14,166个唯一默认隔离测试已完成：14,153 passed / 13 skipped / 0 failed；`14102 + 13 skipped` 属于前一源码快照历史。功能仍在任务分支，尚未合入 main，T125 待人工批准；位置与隔离验收不推导整合完成。
+
+## 从完整 workflow 请求位置恢复
+
+先对同一批次完成精确停止与独立批准的 setup/update，再请求一个位置。旧独立 stop 快照、缺日志残留、取消/未知/已有派发记录不能取得位置许可。以下 BATCH_ID/RUN_ID 需替换为完整32位小写十六进制 ID；命令只在上述精确已准入组合与通过现场门禁的完整 workflow 内执行。
+
+```sh
+./rotom resume --stopped --list --format human
+./rotom --no-input resume pi --profile pi-base --stopped --batch BATCH_ID --run RUN_ID --new-tab --format json
+./rotom --no-input agent --profile pi-base maintenance restore --batch BATCH_ID --run RUN_ID --original --format json
+./rotom --no-input resume pi --profile pi-base --stopped --batch BATCH_ID --all --new-tab --format json
+./rotom --no-input resume pi --profile pi-base --stopped --batch BATCH_ID --all --original --format json
+```
+
+`--all` 必须指定 batch 和非 here 位置，不能带 --run/--session/--list/--here；整批须同 scope/profile/batch，任一坏记录、来源不明或不可恢复项都先拒绝整批。分发前逐项重查，各项独立终端、独立意图；首个失败或未知后停止后续项，未执行项标为 not_dispatched，保留此前结果。JSON 只有一个汇总，全部交接才返回0，否则4。默认 here 仍只交接一项，不争用 stdin。
+
+原 workflow 的 restore-intent 先持久化，再建立目录0700/文件0600的位置请求。request 固定目录 device/inode、精确 session/cwd、scope、workflow/deployment 和 manager 源码身份，不包含任意 argv、环境、秘密或会话正文。新 tab 只调用一次公开 tab.create；payload 使用专用 ROTOM_RESTORE_LAUNCH_V1，ready/committed/handoff 与 child 的 executing CAS 分开。原 pane 通过私人 socket 与 manager 出生身份核验，只发送请求引用，不向 pane 注入文本。响应丢失或写后失败保留未知状态，不重发。
+
 ## 两条路线的能力边界
 
-| 路线 | 已有公开能力 | 本功能还需要的证据 | 首版判断 |
+| 路线 | 已有公开能力 | 核验要求与证据 | 首版判断 |
 | --- | --- | --- | --- |
 | Herdr v0.9.5 原生恢复 | reporter 提交 session 引用与 `resume_argv` 后，server 重启可在原逻辑 pane 和目录恢复 Agent | 逐项维护后的精确恢复请求、跨 server 的新身份核实、实际 session 加载与请求结果对账 | 保留平台自身恢复语义，当前不能据此开放逐 pane 的原位维护恢复 |
-| Rotom 现有 manager 的驻留扩展 | 本仓库可以在单次运行之外保留启动器，不需要修改上游 Agent；官方 Pi 的稳定父进程/同一 PTY 核心探针已通过 | 三工具分别验证完整退出与资源释放、parked、私人控制端点、代际与一次请求消费、管理代码身份，以及真实 Herdr 绑定和故障路径 | 已选实施路线；生产实现及逐工具原生验收前不开放 |
+| Rotom 现有 manager 的驻留扩展 | 本仓库可以在单次运行之外保留启动器，不需要修改上游 Agent；官方 Pi 的稳定父进程/同一 PTY 核心探针已通过 | 三工具分别验证完整退出与资源释放、parked、私人控制端点、代际与一次请求消费、管理代码身份，以及真实 Herdr 绑定和故障路径 | 六个精确 Linux managed 组合已完成最终原生验收并准入；其它组合不继承 |
 
-当前保留用户明确接受的新位置或人工恢复。旧单次实例不会在线转成驻留容器。原位能力不足不授权关闭其它实例、重启整个 Herdr server 或向 pane 注入命令。
+当前仍可使用独立于 Herdr 的 here 交接或人工恢复；新位置候选需明确请求和独立准入。旧单次实例不会在线转成驻留容器。原位能力不足不授权关闭其它实例、重启整个 Herdr server 或向 pane 注入命令。
 
 ## 核心可行性证据与缺口
 
 2026-10-27 的隔离 Pi 探针使用未经修改的锁定官方程序和真实公开 CLI：稳定父进程保留同一 PTY，停止旧 run 后完成实际 setup 更新，再以新 run 请求原 session/cwd；父进程跨维护存活，两次宿主退出 0、终端属性还原、恢复输入 0 字节。源码摘要、原始命令与日志保存在私人任务记录。这只证明启动器保留终端的核心路线可行，不证明 Herdr 端点、绑定、重复请求、生产代码更新兼容，也不类推为 DSH/OMP 的驻留验证。
 
-生产工作仍为 T085/T087–T095；新标签页工作为 T135–T138。T134 仅完成当前 help/拒绝信息与规划核对，不表示上述实现完成。任务及历史替代关系见 [tasks.md](../specs/008-rotom-command-experience/tasks.md)。
+生产候选现由 agentcfg/{pane_records,restore_locations,tool_maintenance}.py、rotom/{resident,pane_dispatch,restore_child}.py 与 termcfg/restore_tabs.py 实现。T134 只完成历史提示核对；本次源码、隔离测试和真实位置验收须分别判断，不把历史任务快照当作当前未实现结论。任务及历史替代关系见 [tasks.md](../specs/008-rotom-command-experience/tasks.md)。
 
 ## Herdr 公开来源与解释
 
@@ -45,9 +87,10 @@ pane 身份必须结合 server 代际和实时观察；“原逻辑 pane”不�
 驻留 manager 只管理启动和退出，继续使用官方 Agent 与本仓库现有 runtime。单次 run、manager 容器和原生 session 是独立身份。
 
 - 宿主及相关后代完整退出、单次运行租约全部结束后，才能进入 `parked`；不能保留旧环境、秘密或运行包对象。会话封口缺失与进程释放分别展示。
-- 恢复请求绑定 container、generation、op、新 run、部署与确切 SessionRef；先保存请求意图，再消费一次许可。响应丢失先只读对账，结果未知时不重发。
+- Agent 活动期间，驻留 parent 只等待 child 退出，不读取 owner/Domain。容器此时可尚无 run_id；停止前的位置诊断按 child_identity 与严格 RunRecord.manager_identity 的完整出生身份按需关联，查询不回写。这个候选关联不能用于原位交接；退出后核验唯一出生身份及完整 release、记录真实 run_id 才可 parked。原位消费还要求 saved run_id 与目标相同、child_identity 为空，旧 run 的延迟请求拒绝。
+- 原位 socket 请求绑定 container、generation 与受保护 request_root；不可变位置请求再绑定 request_id、workflow batch/run、部署、源码与确切 SessionRef，恢复创建新 run；先保存请求意图，再消费一次许可。响应丢失先只读对账，结果未知时不重发。
 - 管理源码或控制协议变化后，首版要求明确的新位置；旧 manager 不能混用新模块。旧单次实例首次采用须重新审阅。
-- 普通恢复默认等待输入。“继续”有独立的目标、文本和就绪批准，不能由 Herdr 入队响应代替 Agent 接收确认。
+- 普通恢复等待人工输入，本轮不提供自动继续。Herdr 入队或交接成功不等于 Agent 已加载会话，更不等于已经收到继续文本。
 
 合成核验输入保存在 `tests/fixtures/rotom/pane-capabilities.json`。它们不证明真实原位恢复已经可用；准入仍须满足生命周期契约及 P-SESSION、P-EXIT、P-PANE 的独立验证。
 
@@ -65,4 +108,4 @@ pane 身份必须结合 server 代际和实时观察；“原逻辑 pane”不�
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -B -m pytest -q -p no:cacheprovider tests/test_rotom_pane_probe.py
 ```
 
-本次 **58 passed，退出码 0**，含“运行包租约尚未释放却错误进入 parked”的有效 RED 与修复后结果。命令、源码摘要及日志保存在私人任务记录。回调顺序通过不代表真实落盘、真实许可消费或官方 session 加载；端点鉴权、稳定终端绑定和真实驻留生命周期仍待后续任务。T087 及之后的生产实现门槛保持不变。
+该历史模型阶段 **58 passed，退出码 0**，含“运行包租约尚未释放却错误进入 parked”的有效 RED 与修复后结果。命令、源码摘要及日志保存在私人任务记录。回调顺序通过不代表真实落盘、真实许可消费或官方 session 加载；候选生产实现已经加入端点鉴权、稳定终端绑定和驻留生命周期；该模型结果不证明生产原生验收；当前生产支持由上面的最终十二组无 trace 原生结果单独确立。

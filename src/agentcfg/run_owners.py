@@ -585,12 +585,13 @@ class Registry:
     观察或写入结果不明时不重试；已运行的宿主继续由原等待路径处理。
     """
     from .spawned_host import SpawnedHost
+    from . import stop_locks
     try:
       _run_id(run_id)
       if type(host) is not SpawnedHost:
         raise ValueError()
-      # 可选观察不等待其它元数据操作者；错过登记只使 host 保持未知。
-      with self._locked(nonblocking=True) as tree:
+      # 只在首次 owner 写入前等短锁；后续验证及可能已提交的写入均不重放。
+      with stop_locks.locked(self, time.monotonic_ns() + 2_000_000_000) as tree:
         records, originals = self._records(tree)
         record = records.get(run_id)
         if (record is None or record["schema_version"] != 2 or record["agent"] not in ("dsh", "pi")
@@ -612,20 +613,23 @@ class Registry:
     except Exception:
       raise Conflict("本次启动的宿主身份未能登记；保留未知观察与原运行保护") from None
 
-  def bind_current_control(self, run_id, host, service):
+  def bind_current_control(self, run_id, host, service, *, deadline_ns=None):
     """只登记当前原句柄/服务的描述；不派发停止，也不以历史记录授予 live 权限。
 
-    调用者保留原运行租约；只按 owner NB → inbox 短锁顺序读取，不取得物理锁。
+    调用者保留原运行租约；按 owner → inbox 短锁顺序读取，不取得物理锁。
+    默认仍 NB；显式期限仅在首次 owner 写入前等短锁，锁内事务不重试。
     写入或响应不明时不重试、不改变已启动宿主，历史描述随 owner 状态保留。
     """
     from .spawned_host import SpawnedHost
     from .stop_service import StopService
+    from . import stop_locks
     try:
       _run_id(run_id)
       if (type(host) is not SpawnedHost or type(service) is not StopService
           or service.belongs_to(run_id, host) is not True):
         raise ValueError()
-      with self._locked(nonblocking=True) as tree:
+      guard = self._locked(nonblocking=True) if deadline_ns is None else stop_locks.locked(self, deadline_ns)
+      with guard as tree:
         records, originals = self._records(tree)
         record = records.get(run_id)
         if (record is None or record["schema_version"] != 2 or record["agent"] not in ("dsh", "pi")

@@ -2,10 +2,13 @@
 
 from contextlib import contextmanager
 from copy import deepcopy
+import errno
+import fcntl
 import os
 from pathlib import Path
 import re
 import stat
+import time
 import uuid
 
 from . import storage
@@ -21,12 +24,54 @@ _ERROR = "共享资源协调状态不能确认；保留阻塞并重新核验"
 _CLAIMS = "runtime-claims"
 
 
+class DomainLockBusy(Conflict):
+  """仅表示本次 Domain 事务尚未取得首个元数据锁。"""
+
+
 @contextmanager
 def _boundary():
   try:
     yield
+  except DomainLockBusy:
+    raise
   except (OSError, PathError, ValueError, TypeError, KeyError, Conflict):
     raise Conflict(_ERROR) from None
+
+
+@contextmanager
+def _domain_lock(fd, *, shared, deadline_ns=None):
+  # 只在取得首锁之前分类；yield/提交/解锁中的异常不能成为重试凭据。
+  if deadline_ns is not None and (type(deadline_ns) is not int or not 0 < deadline_ns <= 2**63 - 1):
+    raise Conflict(_ERROR)
+  last = None
+  def remaining():
+    nonlocal last
+    now = time.monotonic_ns()
+    if type(now) is not int or not 0 <= now <= 2**63 - 1 or last is not None and now < last:
+      raise Conflict(_ERROR)
+    last = now
+    return deadline_ns - now
+  while True:
+    if deadline_ns is not None and remaining() <= 0:
+      raise Conflict(_ERROR)
+    try:
+      fcntl.flock(fd, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+      break
+    except OSError as error:
+      if error.errno not in (errno.EAGAIN, errno.EWOULDBLOCK):
+        raise Conflict(_ERROR) from None
+      if deadline_ns is None:
+        raise DomainLockBusy(_ERROR) from None
+      left = remaining()
+      if left <= 0:
+        raise Conflict(_ERROR) from None
+      time.sleep(min(0.01, left / 1_000_000_000))
+  try:
+    if deadline_ns is not None and remaining() <= 0:
+      raise Conflict(_ERROR)
+    yield
+  finally:
+    fcntl.flock(fd, fcntl.LOCK_UN)
 
 
 def _physical(fd):
@@ -124,12 +169,14 @@ class Domain:
     self.root = Path(root)
 
   @contextmanager
-  def _transaction(self, *, write=False):
+  def _transaction(self, *, write=False, deadline_ns=None):
     # 短锁中只读写本域元数据；绝不等待物理锁、宿主、网络或用户输入。
     with _boundary(), Tree(self.root) as tree:
       if tree.fd is None:
         raise Conflict(_ERROR)
-      with advisory_lock(tree.fd, shared=not write):
+      if write and deadline_ns is None:
+        deadline_ns = time.monotonic_ns() + 2_000_000_000
+      with _domain_lock(tree.fd, shared=not write, deadline_ns=deadline_ns):
         before = tree.read(_STATE, max_bytes=_LIMIT)
         if before is None or before[1] != 0o600:
           raise Conflict(_ERROR)
@@ -207,19 +254,24 @@ class Domain:
 
   def reserve(self, *, run_id, op_id, owner_ref, resources, expected_revision=None):
     with self._transaction(write=True) as state:
-      if expected_revision is not None and (type(expected_revision) is not int or expected_revision != state["revision"]):
-        raise Conflict(_ERROR)
-      selected = self._resources(state, resources)
-      self._unfenced(state, selected)
-      if run_id in state["reservations"] or any(entry["op_id"] == op_id
-          for entry in state["reservations"].values()):
-        raise Conflict(_ERROR)
-      state["reservations"][run_id] = {"run_id": run_id, "op_id": op_id,
-        "owner_ref": deepcopy(owner_ref), "resources": sorted(resources), "phase": "reserved",
-        "generation": state["revision"] + 1}
-      receipt = deepcopy(state["reservations"][run_id])
+      receipt = self._reserve_locked(state, run_id=run_id, op_id=op_id, owner_ref=owner_ref,
+        resources=resources, expected_revision=expected_revision)
     # 只有原子写入及 fsync 返回后才交回；响应丢失不得凭空重发同一运行。
     return receipt
+
+  def _reserve_locked(self, state, *, run_id, op_id, owner_ref, resources, expected_revision=None):
+    """仅供已持本域写锁的内部调用者；提交完成前不得交回外部启动许可。"""
+    if expected_revision is not None and (type(expected_revision) is not int or expected_revision != state["revision"]):
+      raise Conflict(_ERROR)
+    selected = self._resources(state, resources)
+    self._unfenced(state, selected)
+    if run_id in state["reservations"] or any(entry["op_id"] == op_id
+        for entry in state["reservations"].values()):
+      raise Conflict(_ERROR)
+    state["reservations"][run_id] = {"run_id": run_id, "op_id": op_id,
+      "owner_ref": deepcopy(owner_ref), "resources": sorted(resources), "phase": "reserved",
+      "generation": state["revision"] + 1}
+    return deepcopy(state["reservations"][run_id])
 
   def dispatch(self, run_id, *, lease_fds):
     """调用方先取得全部物理 SH；先持久化可能派发，再由未来合作启动器执行。"""

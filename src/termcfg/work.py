@@ -27,7 +27,11 @@ _last_sequence = 0
 LAUNCH_FILES = ("work", "rotom-work-shell", "src/termcfg/work.py", "src/termcfg/work_shell.py",
   "src/termcfg/work_config.py", "src/termcfg/work_state.py", "src/termcfg/work_projects.py",
   "src/termcfg/work_edit.py", "src/termcfg/work_ui.py", "src/termcfg/work_git.py",
-  "src/termcfg/herdr.py", "schemas/local.schema.json")
+  "src/termcfg/herdr.py", "src/termcfg/restore_tabs.py", "src/agentcfg/restore_locations.py",
+  "src/agentcfg/pane_records.py", "src/rotom/restore_child.py", "src/rotom/resident.py", "src/rotom/pane_dispatch.py",
+  "src/agentcfg/run_owners.py", "src/agentcfg/storage.py", "src/agentcfg/paths.py",
+  "src/agentcfg/lifecycle.py", "src/agentcfg/descendants.py", "src/agentcfg/tool_maintenance.py",
+  "schemas/rotom/container.schema.json", "schemas/rotom/run-record.schema.json", "schemas/local.schema.json")
 
 
 def conflict(reason="work_context_unknown"):
@@ -325,10 +329,21 @@ def _focus(client, pane, workspace_id, expected_tokens=None):
 
 
 def source_digest(root=ROOT):
+  root = Path(root)
+  names = set(LAUNCH_FILES)
+  # 驻留父进程不能与后来更新的框架模块混用；新增模块同样改变代码身份。
+  for package in ("agentcfg", "rotom", "termcfg"):
+    directory = root / "src" / package
+    if directory.is_symlink():
+      raise conflict("work_launch_source_changed")
+    for source in directory.glob("*.py"):
+      if source.is_symlink():
+        raise conflict("work_launch_source_changed")
+      names.add(source.relative_to(root).as_posix())
   digest = hashlib.sha256()
-  for name in LAUNCH_FILES:
+  for name in sorted(names):
     digest.update(name.encode() + b"\0")
-    digest.update((Path(root) / name).read_bytes())
+    digest.update((root / name).read_bytes())
     digest.update(b"\0")
   return digest.hexdigest()
 

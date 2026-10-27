@@ -139,25 +139,77 @@ def test_intersecting_legacy_generationless_reservation_is_not_adopted(prepared)
   assert (domain.root / "coordination.json").read_bytes() == before
 
 
-@pytest.mark.parametrize("race", ["revision", "intent"])
-def test_snapshot_race_refuses_without_retry_or_cancel(prepared, monkeypatch, race):
+def test_launch_selection_and_reservation_use_one_write_transaction(prepared, monkeypatch):
+  _, domain, _, _ = prepared
+  snapshot = core.Domain.snapshot
+  monkeypatch.setattr(core.Domain, "snapshot", lambda *args: pytest.fail("launch must not select from an unlocked snapshot"))
+  token = reserve(prepared)
+  assert snapshot(domain)["reservations"][token.run_id]["generation"] == token.generation
+
+
+def test_generic_reserve_keeps_exact_revision_cas(prepared):
   ws, domain, _, runtime = prepared
-  original = core.Domain.reserve
-  calls = []
-  def competing(selected, **kwargs):
-    calls.append(kwargs)
-    if race == "revision":
-      original(selected, run_id="a" * 32, op_id="b" * 32,
-        owner_ref={"state_root": str(ws.state_root), "binding": ws.binding}, resources=[runtime["resource_id"]])
-    else:
-      selected.accept_intent(batch_id="a" * 32, generation=1, operation="stop_only",
-        expected_revision=selected.snapshot()["revision"], resources=[runtime["resource_id"]], selected_runs=[])
-    return original(selected, **kwargs)
-  monkeypatch.setattr(core.Domain, "reserve", competing)
+  old = domain.snapshot()["revision"]
+  domain.reserve(run_id="a" * 32, op_id="b" * 32,
+    owner_ref={"state_root": str(ws.state_root), "binding": ws.binding}, resources=[runtime["resource_id"]])
+  before = (domain.root / "coordination.json").read_bytes()
   with pytest.raises(Conflict):
-    reserve(prepared)
-  assert len(calls) == 1
-  assert calls[0]["run_id"] not in domain.snapshot()["reservations"]
+    domain.reserve(run_id="c" * 32, op_id="d" * 32,
+      owner_ref={"state_root": str(ws.state_root), "binding": ws.binding},
+      resources=[runtime["resource_id"]], expected_revision=old)
+  assert (domain.root / "coordination.json").read_bytes() == before
+
+
+def test_launch_fence_is_checked_inside_atomic_reservation(prepared):
+  _, domain, _, runtime = prepared
+  domain.accept_intent(batch_id="a" * 32, generation=1, operation="stop_only",
+    expected_revision=domain.snapshot()["revision"], resources=[runtime["resource_id"]], selected_runs=[])
+  before = (domain.root / "coordination.json").read_bytes()
+  with pytest.raises(Conflict): reserve(prepared)
+  assert (domain.root / "coordination.json").read_bytes() == before
+  assert not domain.snapshot()["reservations"]
+
+
+def test_two_concurrent_launches_reserve_distinct_runs_without_snapshot_drift(prepared, monkeypatch):
+  import threading
+  import time
+  _, domain, _, _ = prepared
+  barrier = threading.Barrier(2)
+  original = core.Domain._reserve_locked
+  calls, results = [], []
+  def reserve_once(selected, state, **kwargs):
+    calls.append(kwargs["run_id"])
+    time.sleep(0.03)
+    return original(selected, state, **kwargs)
+  monkeypatch.setattr(core.Domain, "_reserve_locked", reserve_once)
+  def launch():
+    try:
+      barrier.wait(timeout=2)
+      results.append(reserve(prepared))
+    except BaseException as error: results.append(error)
+  threads = [threading.Thread(target=launch) for _ in range(2)]
+  before = domain.snapshot()["revision"]
+  for thread in threads: thread.start()
+  for thread in threads: thread.join(timeout=3)
+  assert not any(thread.is_alive() for thread in threads)
+  assert len(results) == 2 and all(isinstance(item, lifecycle.OmpLaunchReservation) for item in results), results
+  assert len(calls) == len(set(calls)) == 2
+  state = domain.snapshot()
+  assert state["revision"] == before + 2
+  assert set(state["reservations"]) == {item.run_id for item in results}
+  assert {entry["phase"] for entry in state["reservations"].values()} == {"reserved"}
+  assert results[0].resources == results[1].resources
+
+
+def test_startup_physical_verification_waits_for_short_domain_writer(prepared):
+  from test_rotom_start_stop_lock_contention import owner_lock
+  _, domain, _, _ = prepared
+  token = reserve(prepared)
+  before = (domain.root / "coordination.json").read_bytes()
+  with owner_lock(domain.root, release=True) as released:
+    assert check(token, prepared) is None
+  assert released.is_set()
+  assert (domain.root / "coordination.json").read_bytes() == before
 
 
 @pytest.mark.parametrize("field,value", [("generation", 999), ("domain_id", "a" * 32),

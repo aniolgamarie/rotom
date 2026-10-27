@@ -1,10 +1,10 @@
 # 按工具执行停止、更新与恢复
 
-状态：候选留在任务分支，尚未合入 main，合入须人工批准。2026-10-27 已补齐 DSH/Pi/OMP 官方宿主贯穿公开 CLI 的停止、实际 setup 更新、停止清单与当前终端恢复验收，并修复 OMP 退出记账与查询之间的短锁竞争；main 新 Pi 锁的 Base/Pro 也已单独核验，见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。基线 main `45953f0`；本文说明候选接口，日常入口仍按已部署绑定运行。
+状态：候选留在任务分支，尚未合入 main，合入须人工批准。新增位置恢复实现已写入，最终十二组无 trace 原生验收全部通过，公开准入限定六个精确 Linux managed 组合的两种位置。以下 2026-10-27 当前终端历史证据不涵盖新增位置路径：已补齐 DSH/Pi/OMP 官方宿主贯穿公开 CLI 的停止、实际 setup 更新、停止清单与当前终端恢复验收，并修复 OMP 退出记账与查询之间的短锁竞争；main 新 Pi 锁的 Base/Pro 也已单独核验，见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。基线 main `45953f0`；本文说明候选接口，日常入口仍按已部署绑定运行。
 
 ## 分阶段操作
 
-DSH、Pi、OMP 共用明确选择后的流程：保存恢复清单 → 精确停止 → 关闭本次 stop fence → 独立预览并批准普通 setup → 逐项当前终端恢复。这不是一笔跨进程事务。停止批准不授予更新许可，恢复也不发送继续文本。
+DSH、Pi、OMP 共用明确选择后的流程：保存恢复清单 → 精确停止 → 关闭本次 stop fence → 独立预览并批准普通 setup → 逐项恢复（默认当前终端，位置候选须另行准入）。这不是一笔跨进程事务。停止批准不授予更新许可，恢复也不发送继续文本。
 
 以下使用虚构机器、run 和 session；先用列表与原 TUI 核对，再替换占位值。run/batch 使用完整 32 位小写十六进制 ID，session 使用工具的完整 ID。示例选 Pi；DSH/OMP 使用对应公开 profile。尚未部署日常入口时在候选工作树使用 `./rotom`。
 
@@ -18,9 +18,19 @@ DSH、Pi、OMP 共用明确选择后的流程：保存恢复清单 → 精确停
 ./rotom --no-input agent --machine workstation --profile pi-base maintenance restore --batch BATCH_ID --run RUN_ID
 ```
 
-完整目标锁没有恢复准入时，plan/stop 在停止前拒绝，execute 在更新批准前再次检查；可改用独立 instances stop、普通 setup 和官方界面人工恢复。第一次 plan 的摘要只用于 stop；停止完成后的 `plan --batch` 返回最新 setup 摘要，只用于 execute。不要复用摘要或把 JSON 当许可。`--operation setup` 可省略；首次 plan 与 stop 的 `--run`、`--session` 映射必须一致。选择多个运行时重复 `--run` 和对应 `--session`，不重复同一 run；restore 每次只交接一项当前终端，不让多项争用 stdin。
+完整目标锁没有恢复准入时，plan/stop 在停止前拒绝，execute 在更新批准前再次检查；可改用独立 instances stop、普通 setup 和官方界面人工恢复。第一次 plan 的摘要只用于 stop；停止完成后的 `plan --batch` 返回最新 setup 摘要，只用于 execute。不要复用摘要或把 JSON 当许可。`--operation setup` 可省略；首次 plan 与 stop 的 `--run`、`--session` 映射必须一致。选择多个运行时重复 `--run` 和对应 `--session`，不重复同一 run；maintenance restore 每次交接一项，默认当前终端，不让多项争用 stdin；另接受互斥 --here/--original/--new-tab。批量位置请求使用下述 resume --stopped --batch B --all。
 
 自动交互要求 stdin/stdout/stderr 全部 TTY；根 `--interactive` 可明确请求交互，但不能绕过这一条件。TTY 可选择缺失的运行与会话，展示计划后分别批准 stop 和 setup。非 TTY 或根 `--no-input` 必须给足目标及当前 `--plan-id`，不读 stdin；缺参/批准返回 2，计划漂移返回 4。restore 的宿主仍需要自己的交互终端，`--no-input` 只约束 Rotom 的提问，不模拟宿主输入。计划只读，无网络和控制；execute 可通过原安装器联网/写配置，restore 可启动官方宿主。
+
+## 并发短锁与事实保留
+
+驻留 parent 在 child 活动时不读取 owner/Domain；退出后才按唯一出生身份核验完整 release 并 parked。active 的位置诊断只按 child/manager 身份关联候选，不授原位许可；原位消费仍需 parked、保存的 run 与所选旧 run 精确匹配。
+
+共享 Domain 写事务默认只在首个 flock 前等最多 2 秒，显式 deadline 沿用原绝对点，不续期；进入 body 后的校验、提交或解锁异常不重放。外部只读和 snapshot 默认 NB，只有合作启动 package_guard/check_omp_launch 两处显式首锁读预算。OMP 资源及 anchor 选择与预留同一写事务完成，提交成功后才返回 token；通用 reserve 的 revision CAS 仍严格。
+
+停止 close 后与最终 fallback 的 status 沿本次原截止时间等待纯读短锁；已过期时只允许一次无竞争观察，竞争或其它未知仍保留 close/fence 的真实落盘状态，不重 close、请求或信号。独立 status 默认 NB。Herdr V1 使用 accepted 前最后核验的 caller，accepted 后正常清 pending 不会导致驻留交接误退 shell。
+
+本节描述实现语义，最终十二组无 trace 位置原生验收全部通过；[六组合、两位置及四项 work 入口矩阵](rotom-pane-capabilities.md#本轮精确组合验收清单)是实际支持范围。最终 delivery-verification 的14,166个唯一默认隔离测试已完成：14,153 passed / 13 skipped / 0 failed；前一源码快照 `14102 + 13 skipped` 保留为历史。功能分支尚未合入 main，T125 待人工批准。
 
 ## 精确停止与独立更新
 
@@ -40,7 +50,7 @@ Pi/OMP 的 stop endpoint 保存为既有 inbox 的 sidecar，绑定原 run/manag
 ./rotom --no-input resume pi --machine workstation --profile pi-base --stopped --batch BATCH_ID --run RUN_ID --here
 ```
 
-第一条只读列出记录，可用 `--format json` 获取结构化信息和精确范围的下一步 argv。第二条在 TTY 中选择一个满足批次条件的会话，直接交接到当前终端；第三条适合已知精确批次与运行的调用。非交互恢复必须同时给出完整 `--batch` 和 `--run`，不默认选最近一项。`--stopped` 不与 `--session`、`--original` 或 `--new-tab` 混用；不指定机器时沿用普通 resume 的机器解析。每次只恢复一项。
+第一条只读列出记录，可用 `--format json` 获取结构化信息和精确范围的下一步 argv。第二条在 TTY 中选择一个满足批次条件的会话，直接交接到当前终端；第三条适合已知精确批次与运行的调用。非交互单项恢复必须同时给出完整 --batch 和 --run，不默认选最近一项。--stopped 与 --session 冲突，但可选择 --original/--new-tab；--list 不能带任何位置选项或 --all。不指定机器时沿用普通 resume 的机器解析。默认 here 仍只恢复一项。
 
 维护批次的会话会在停止前保存。可给 plan 和 stop 同时添加相同的 `--label RUN_ID=TITLE`，例如 `--label 'RUN_ID=修复配置加载'`；多个 run 可重复该选项。备注限 1–160 字符单行文字。没有备注时，OMP 尝试读取官方固定标题槽；DSH/Pi 显示无标题，目前不扫描正文或自动生成摘要。标题属于这次批准的清单，变更后需重新 plan；标题不替代 session 身份。旧 v1 维护清单仍能读取，无标题保持为空。人工备注和原生标题只保存在本地私人状态，不应包含凭据。
 
@@ -48,15 +58,30 @@ Pi/OMP 的 stop endpoint 保存为既有 inbox 的 sidecar，绑定原 run/manag
 
 旧 `instances stop` 的独立快照没有 workflow 来源证明；缺失维护日志的残留快照也可能呈现相同形态。因此这类记录只展示 ID、目录和人工核对后的普通恢复命令（JSON 的 `next_commands.manual_restore`），不直接进入批次快速恢复，以免绕过丢失的取消或派发记录。未观察到 ID/原目录时继续显示未知，不猜测。清单只能列出 Rotom 已保存的停止记录，不能追溯外部 `kill` 且未登记的会话。
 
-选择恢复后仍显示“加载待确认”，由人在官方 TUI 核对；不发送继续命令。原 pane 和新标签页未开放不妨碍使用上述当前终端入口。
+选择恢复后仍显示“加载待确认”，由人在官方 TUI 核对；不发送继续命令。当前位置支持限定下述精确组合；当前终端入口独立于 Herdr 与位置准入。
+
+## 完整批次的位置恢复候选
+
+只有已经停止、setup/update 成功且未取消/未派发的完整 workflow 项可进入位置门禁。以下命令只在已通过最终原生验收的六个精确 Linux managed 组合内开放，现场仍须重新通过全部门禁。
+
+```sh
+./rotom --no-input resume pi --machine workstation --profile pi-base --stopped --batch BATCH_ID --run RUN_ID --new-tab --format json
+./rotom --no-input agent --machine workstation --profile pi-base maintenance restore --batch BATCH_ID --run RUN_ID --original --format json
+./rotom --no-input resume pi --machine workstation --profile pi-base --stopped --batch BATCH_ID --all --new-tab --format json
+./rotom --no-input resume pi --machine workstation --profile pi-base --stopped --batch BATCH_ID --all --original --format json
+```
+
+--all 须完整 batch、非 here 位置，禁止 --run/--session/--list/--here。第一次分发前核验整批同 scope/profile/batch 的全部项，来源不明、坏记录或不可恢复项拒绝整批，不静默筛选；随后每项再重查原范围、精确会话、目录和部署。每项使用独立终端和一次意图，不共用 TUI 输入。遇非零或未知立即停止后续派发，未执行项明确 not_dispatched，先前创建/交接事实保留。JSON 只输出一个 `{batch_id,location,results,load_confirmation,continue_status}` 汇总，各结果保留 run_id、exit_code、result；全部交接返回0，其余返回4。不要将整体重试当成未执行项恢复，先查询原批次与位置事实。
+
+Herdr V1/V2 的新 DSH/Pi Agent 启动与符合驻留组合的新 tab 恢复可由薄 launcher 管理；普通 rotom run 不驻留。只停止 Agent 并保留 launcher/pane 才能等待原位恢复。parked 不持单次 Agent 租约、运行包或凭据环境；源码身份变化、pane 复用或丢失拒绝旧位置，不在线升级旧普通实例。
 
 ## 恢复和 writer 的真实边界
 
-Herdr 是工作区原生终端操作的前提：`work enter`、`work named enter` 需要配置的 Herdr 可执行文件和可核验 API，从外部进入可启动配置的 headless 会话；`work open`、`close`、`rebind` 需要当前 Herdr 调用上下文与运行中的 API。`work list --live`、`status`、`reconcile` 查询运行中的 API，不自动启动，endpoint unknown 不等于未安装或空闲。配置检查/编辑、注册元数据、离线 `work list`、不带 `--enter` 的 Git worktree 创建不需要 Herdr；`worktree create --enter` 仅后续进入需要它，进入失败保留 checkout。`named rename` 先保存元数据，再尝试同步原生标题，Herdr 不可用时保留保存结果并提示待同步。根 `resume --here`（默认）及 `maintenance restore` 在当前终端交接，不需要 Herdr；`resume --original` 和 `--new-tab` 当前尚未准入，安装 Herdr 也不会启用，请改用 `--here`。
+Herdr 是工作区原生终端操作的前提：`work enter`、`work named enter` 需要配置的 Herdr 可执行文件和可核验 API，从外部进入可启动配置的 headless 会话；`work open`、`close`、`rebind` 需要当前 Herdr 调用上下文与运行中的 API。`work list --live`、`status`、`reconcile` 查询运行中的 API，不自动启动，endpoint unknown 不等于未安装或空闲。配置检查/编辑、注册元数据、离线 `work list`、不带 `--enter` 的 Git worktree 创建不需要 Herdr；`worktree create --enter` 仅后续进入需要它，进入失败保留 checkout。`named rename` 先保存元数据，再尝试同步原生标题，Herdr 不可用时保留保存结果并提示待同步。根 resume --here（默认）及 maintenance restore --here 在当前终端交接，不需要 Herdr。完整 workflow 的 --original/--new-tab 候选需要当前受支持 Herdr 上下文与精确组合准入；公开准入仅覆盖已验收的六个精确 Linux managed 组合、两种位置。普通 resume --session 的这两个位置保持未开放，安装 Herdr 本身不授予资格。
 
 DSH 沿用已验收的原 Host 后端；Pi/OMP 使用 `HandoffResumeBackend`，核实保存部署、原 cwd 与精确会话文件后创建新运行。批准的部署摘要还会传入运行入口，在原物理/状态共享锁内重核，锁一直保持到宿主退出；预检后的配置漂移会拒绝派发并保留恢复意图。加载没有可信回执时显示“加载待确认”，请在官方 TUI 核对实际 ID、目录与历史；始终 `continue_status=not_sent`。退出码 0、人工确认或历史引用都不等于机器确认 `restored`。
 
-下一阶段已选 Herdr 新标签页和新托管实例原 pane，当前均待实现及正式验收。原 pane 开放后仅适用于通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，入口默认驻留；普通 shell `rotom run` 仍在 Agent 退出后返回，旧普通实例或直接官方 CLI 不在线升级。只停止 Agent 才能保留原位等待；launcher/pane 关闭、被复用或归属未知时需当前终端或另行接受的新位置。help 与当前拒绝信息已说明这一区别，将来的逐项诊断仍须生产实现和验收。细节及证据见[位置能力说明](rotom-pane-capabilities.md)。
+Herdr 新标签页和新托管实例原 pane 候选已实现，正式位置验收仍在进行，不能据此宣称已原生通过。原 pane 开放后仅适用于通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，入口默认驻留；普通 shell `rotom run` 仍在 Agent 退出后返回，旧普通实例或直接官方 CLI 不在线升级。只停止 Agent 才能保留原位等待；launcher/pane 关闭、被复用或归属未知时需当前终端或另行接受的新位置。help 与当前拒绝信息已说明这一区别，maintenance plan/停止交互批准中的 location_diagnostics 为只读提示，不改变 plan_id；停止清单还可展示已有 location_request，不能据此重新开放已派发请求。细节及证据见[位置能力说明](rotom-pane-capabilities.md)。
 
 统一严格加载回执、原生 TUI 自动继续不在本轮承诺中；Pi Pro 委派独立规划，`pi-pro` 作为普通 profile 的维护恢复兼容性不受影响。不能将上述未开放项或历史已替代任务补勾成完成，当前任务分类见 [tasks.md](../specs/008-rotom-command-experience/tasks.md#当前范围与未勾选项的含义)。
 
@@ -97,7 +122,7 @@ Pi 的辅助 guard 观察只产生有来源的历史会话线索，不读会话�
 
 ## 验收记录与剩余工作
 
-2026-10-27 的真实全 CLI 维护验收与 OMP 退出锁竞争修复已完成，Pi 新锁 Base/Pro 均有独立原生结果。隔离专项组包括 owner/release/cooperative 202 passed、Pi guard/准入/维护 CLI 318 passed / 4 skipped；各组重叠，不合算为全库结果。main 人工整合、其它平台、慢 SSH 与可选 Bun 材料仍单列，原 pane/新标签页和自动继续仍未开放，详见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。
+历史当前终端范围：2026-10-27 的真实全 CLI 维护验收与 OMP 退出锁竞争修复已完成，Pi 新锁 Base/Pro 均有独立原生结果。隔离专项组包括 owner/release/cooperative 202 passed、Pi guard/准入/维护 CLI 318 passed / 4 skipped；各组重叠，不合算为全库结果。main 人工整合、其它平台、慢 SSH 与可选 Bun 材料仍单列，当时原 pane/新标签页尚未开放；当前位置准入另见[精确支持矩阵](rotom-pane-capabilities.md#本轮精确组合验收清单)，自动继续仍未开放，详见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。
 
 此前复审修正通过的 71 条 Node 测试、391 passed / 4 skipped Python 组及 11 项官方 Pi 分项保留原范围。真实 helper 的 TUI 启动拒绝和运行中失联均退出 4，PTY 属性恢复，见[分支复审](../specs/008-rotom-command-experience/branch-review.md)。
 

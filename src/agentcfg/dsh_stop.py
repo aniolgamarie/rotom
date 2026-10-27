@@ -3,8 +3,9 @@ from copy import deepcopy
 import hashlib
 import os
 import re
+import time
 
-from . import dsh_stop_control, dsh_stop_scope, lifecycle, maintenance, run_owners, run_stop_fence
+from . import dsh_stop_control, dsh_stop_scope, lifecycle, maintenance, run_owners, run_stop_fence, stop_locks
 from .storage import Conflict, Tree, instance_lock
 
 
@@ -60,7 +61,7 @@ def workspace_for_scope(local, *, selected_runs, profile=None):
           continue
       with lifecycle.observation_guard(ws):
         registry = run_owners.Registry(ws.state_root / "run-owners", ws.binding)
-        with registry._locked(nonblocking=True) as owner:
+        with stop_locks.locked(registry, time.monotonic_ns() + 2_000_000_000) as owner:
           records, _ = registry._records(owner)
           if set(selected) & set(records):
             if not set(selected) <= set(records):
@@ -95,7 +96,8 @@ def capture_stop(workspace, *, selected_runs, operation="stop_only"):
       raise ValueError()
     registry = run_owners.Registry(workspace.state_root / "run-owners", workspace.binding)
     with lifecycle.observation_guard(workspace) as instance_fd, Tree(workspace.state_root) as state:
-      with instance_lock(state, shared=True, create=False) as state_fd, registry._locked(nonblocking=True) as owner:
+      with instance_lock(state, shared=True, create=False) as state_fd, \
+          stop_locks.locked(registry, time.monotonic_ns() + 2_000_000_000) as owner:
         if owner is None:
           raise ValueError()
         run_stop_fence.assert_unfenced(registry)
@@ -129,7 +131,8 @@ def capture_stop(workspace, *, selected_runs, operation="stop_only"):
         coordinator = {"kind": workspace.agent + "-instance-registry", "binding_digest": registry.binding_digest,
           "registry_physical": {"device": info.st_dev, "inode": info.st_ino}, "records_digest": _digest(records)}
         # 当前活通道只授予精确停止候选；未知外部资源覆盖仍阻断 setup。
-        control = "supported" if all(dsh_stop_control.available_locked(workspace, records[run])
+        control = "supported" if all(dsh_stop_control.available_locked(workspace, records[run],
+          deadline_ns=time.monotonic_ns() + 2_000_000_000)
           for run in selected) else "unavailable"
         plan = maintenance.build_dsh_stop_plan(scope=scope, operation=operation, selected_runs=selected,
           runs=runs, resources=resources, coordinator=coordinator, control_capability=control)

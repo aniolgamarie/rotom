@@ -445,6 +445,10 @@ def status(workspace, batch_id):
           and setup_deployment_digest(current) == setup[-1]["deployment"])
     except (StateError, OSError):
       pass
+  from .restore_locations import status_for
+  locations = {run: status_for(workspace, batch_id, run) for run in result["targets"]}
+  if any(item is not None for item in locations.values()):
+    result["locations"] = locations
   return result
 
 
@@ -476,8 +480,8 @@ def execute(workspace, batch_id, *, approve, progress, preview):
   return outcome.code, status(workspace, batch_id)
 
 
-def restore(workspace, batch_id, *, run_id, launch):
-  """一个明确目标交给当前终端；意图持久化后不自动重放。"""
+def reserve_restore(workspace, batch_id, *, run_id):
+  """为精确目标先保存普通恢复意图；位置创建不能绕过原防重门禁。"""
   store = Store(workspace, batch_id)
   value = store.read()
   observed = status(workspace, batch_id)
@@ -495,11 +499,55 @@ def restore(workspace, batch_id, *, run_id, launch):
         or setup_deployment_digest(current) != observed["setup"]["deployment"]):
       raise Conflict(_ERROR)
   intent = store.append(value, "restore-intent", run_id=run_id)
-  code = launch(target, expected_deployment=observed["setup"]["deployment"])
+  return intent, asdict(target), observed["setup"]["deployment"]
+
+
+def _finish_restore(store, intent, run_id, target, deployment_digest, launch):
+  code = launch(target, expected_deployment=deployment_digest)
   if type(code) is not int or not 0 <= code <= 255:
     raise Conflict(_ERROR)
   store.complete_restore(intent, run_id, code)
-  return code, status(workspace, batch_id)
+  return code, status(store.workspace, store.batch_id)
+
+
+def restore(workspace, batch_id, *, run_id, launch):
+  """一个明确目标交给当前终端；意图持久化后不自动重放。"""
+  intent, target, deployed = reserve_restore(workspace, batch_id, run_id=run_id)
+  return _finish_restore(Store(workspace, batch_id), intent, run_id, _target(target), deployed, launch)
+
+
+def restore_reserved(workspace, request, *, launch):
+  """仅供已一次消费的位置交接；重核原意图、目标、取消与当前部署。"""
+  batch_id, run_id = request["batch_id"], request["run_id"]
+  if request["scope"] != {**workspace.binding, "agent": workspace.agent}:
+    raise Conflict(_ERROR)
+  store = Store(workspace, batch_id)
+  current = store.read()
+  revision = request["workflow_revision"]
+  if current is None or type(revision) is not int or not 1 <= revision <= current["revision"]:
+    raise Conflict(_ERROR)
+  events = current["events"][:revision]
+  last = events[-1]
+  if (last["action"] != "restore-intent" or last["run_id"] != run_id
+      or _digest(last) != request["workflow_digest"]
+      or any(row["action"] == "cancel" for row in current["events"])
+      or any(row["run_id"] == run_id for row in current["events"][revision:])):
+    raise Conflict(_ERROR)
+  expected = current["manifest"]["plan"]["targets"][run_id]
+  if expected["ref"] != request["session_ref"] or expected["cwd"] != request["cwd"]:
+    raise Conflict(_ERROR)
+  target = lookup_session(workspace, request["session_ref"]["native_ref"])
+  _target_scope(workspace, target)
+  if target.ref != _target(expected).ref or target.cwd != expected["cwd"]:
+    raise Conflict(_ERROR)
+  observed = status(workspace, batch_id)
+  if (observed["cancelled"] or observed["restores"][run_id] != last
+      or observed["setup"] is None or observed["setup"]["action"] != "setup-result"
+      or observed["setup"]["exit_code"] != 0 or observed["setup"]["deployment"] != request["deployment_digest"]
+      or observed["current_deployment_match"] is not True):
+    raise Conflict(_ERROR)
+  intent = {"manifest": current["manifest"], "events": events, "revision": revision, "digest": _digest(last)}
+  return _finish_restore(store, intent, run_id, target, request["deployment_digest"], launch)
 
 
 def cancel(workspace, batch_id):

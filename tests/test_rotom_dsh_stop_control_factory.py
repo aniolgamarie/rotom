@@ -162,11 +162,16 @@ def test_channel_reads_sorted_requests_without_current_manager_or_writes(case, m
 
 
 @pytest.mark.parametrize("stage", ["owner", "inbox"])
-def test_busy_metadata_is_nonblocking_and_never_grants_availability(case, stage):
+def test_busy_metadata_factory_deadline_or_inbox_nb_never_grants_availability(case, stage, monkeypatch):
   if stage == "owner":
+    # 新工厂允许期限内等 owner；可前进时钟核验到期零端点/写入，不死等。
+    ticks = iter((0, 0, 2_000_000_001))
+    monkeypatch.setattr("agentcfg.stop_locks.time.monotonic_ns", lambda: next(ticks, 2_000_000_001))
+    before = record_bytes(case.store)
     with case.store.registry._locked(nonblocking=True):
       with pytest.raises(Conflict): make(case)
     assert not (case.ws.state_root / "stop-inboxes").exists()
+    assert record_bytes(case.store) == before and not case.calls
   else:
     service = make(case)
     record = case.store.registry.snapshot()[RUN_ID]
@@ -193,9 +198,9 @@ def test_service_never_sends_when_reviewed_chain_rejects(case, monkeypatch, dama
 def test_post_bind_read_failure_closes_service_and_preserves_committed_descriptor(case, monkeypatch):
   original = owners.Registry.bind_current_control
   services = []
-  def bind(registry, run_id, host, service):
+  def bind(registry, run_id, host, service, *, deadline_ns=None):
     services.append(service)
-    original(registry, run_id, host, service)
+    original(registry, run_id, host, service, **({} if deadline_ns is None else {"deadline_ns": deadline_ns}))
     def fail(*a, **kw): raise ValueError("synthetic-private-canary")
     monkeypatch.setattr(control, "_current", fail)
   monkeypatch.setattr(owners.Registry, "bind_current_control", bind)

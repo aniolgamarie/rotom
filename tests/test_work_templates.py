@@ -219,6 +219,9 @@ def test_introduced_launch_modules_tampering_blocks_commit_or_exec(tmp_path, mon
     target = source / name
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(work_config.ROOT / name, target)
+  # 管理器身份现覆盖三个完整包；合成 checkout 也须复制完整来源再验证篡改。
+  shutil.copytree(work_config.ROOT / "src", source / "src", dirs_exist_ok=True,
+    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
   original_digest = work.source_digest
   before = original_digest(source)
   def tamper():

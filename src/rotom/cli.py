@@ -111,7 +111,10 @@ def _future_agent(parser):
       child.add_argument("--session", action="append", metavar="RUN_ID=SESSION_ID", help="为所选运行指定精确恢复会话；可重复，TTY 缺失时提供选择")
       child.add_argument("--label", action="append", metavar="RUN_ID=TITLE", help="用户备注可补缺少原生标题的会话；不自动生成摘要，可重复且每个运行一次")
     if name == "restore":
-      child.add_argument("--run", action=UniqueSelector, help="本终端恢复的一个运行；缺失时交互选择，非TTY必填")
+      child.add_argument("--run", action=UniqueSelector, help="恢复的一个运行；缺失时交互选择，非TTY必填")
+      location = child.add_mutually_exclusive_group()
+      for name in ("here", "original", "new-tab"):
+        location.add_argument("--" + name, action="store_true")
     if name == "execute":
       child.add_argument("--plan-id", action=UniqueSelector, help="当前 setup 预览摘要；无交互时必填")
     if name == "stop":
@@ -147,20 +150,21 @@ def build_parser():
   run.add_argument("--proxy", metavar="NAME", default=None,
     help="仅本次普通启动使用 [machine.proxies.NAME] 的命名代理，优先于持久默认")
   run.epilog = "原生参数放在 -- 后；不自动安装或部署。示例：rotom run pi -- --help"
-  resume = commands.add_parser("resume", help="DSH/Pi/OMP 精确会话在当前终端恢复交接；加载待确认")
+  resume = commands.add_parser("resume", help="DSH/Pi/OMP 精确恢复交接；完整 workflow 可选 Herdr 位置，加载待确认")
   resume.add_argument("tool", nargs="?", choices=("dsh", "pi", "omp"), help="会话所属工具；能力分别验证")
   _selectors(resume, profile=True)
   from agentcfg.cli import UniqueSelector, selection_id
   resume.add_argument("--session", type=selection_id, help="所选 machine/local 与 profile 范围内的明确 session ID")
-  resume.add_argument("--stopped", action="store_true", help="从 Rotom 已保存的停止记录选择；当前终端恢复，不需要 Herdr")
+  resume.add_argument("--stopped", action="store_true", help="从 Rotom 已保存的完整 workflow 清单选择；默认当前终端恢复")
   resume.add_argument("--list", action="store_true", help="仅列出停止记录的 session ID、cwd 和标题；须与 --stopped 一起使用")
   resume.add_argument("--batch", action=UniqueSelector, help="停止记录的完整32位小写十六进制批次 ID；须 --stopped")
   resume.add_argument("--run", action=UniqueSelector, help="停止记录的完整32位小写十六进制运行 ID；须 --stopped")
+  resume.add_argument("--all", action="store_true", help="逐项恢复指定完整 workflow 批次；须 --stopped --batch 和 --new-tab 或 --original，不接受 --run/--session/--list/--here")
   resume.add_argument("--format", choices=("auto", "human", "json"), default="auto")
   location = resume.add_mutually_exclusive_group()
   for name, description in (("here", "当前终端交接，保留会话原工作目录（默认）"),
-      ("original", "原终端位置恢复；当前尚未开放"),
-      ("new-tab", "新标签页恢复；当前尚未开放")):
+      ("original", "完整 workflow 的原 pane 恢复；须保留已准入的 Rotom Herdr 驻留实例"),
+      ("new-tab", "完整 workflow 的新标签页恢复；须已准入的 Linux/Herdr 组合")):
     location.add_argument("--" + name, action="store_true", help=description)
   resume.epilog = ("默认 --here；不发送继续文本。请求 ID、启动派发与实际加载分别判断；"
     "DSH/Pi/OMP 分别核验锁定运行包、原目录和原生保护；无加载回执保持待确认，不自动重试或强杀。"
@@ -350,7 +354,7 @@ def command_effects(path):
     return ("read:selected-machine-owner-records-and-process-birth-identity",
       "network:none", "write:none", "control:none")
   if path == ("agent", "instances", "stop"):
-    return ("read:selected-owner-records-and-deployed-layout-for-plan", "capability:linux-managed-dsh-stop",
+    return ("read:selected-owner-records-and-deployed-layout-for-plan", "capability:per-tool-linux-managed-stop",
       "network:none", "write:reviewed-snapshot-request-and-close", "control:original-pidfd-once",
       "condition:--dry-run-is-read-only")
   if path == ("agent", "maintenance", "plan"):
@@ -364,9 +368,9 @@ def command_effects(path):
   if path == ("agent", "maintenance", "execute"):
     return ("read:fresh-setup-plan", "network:locked-installers", "write:original-setup-guards-and-stage-result", "control:none")
   if path == ("agent", "maintenance", "restore"):
-    return ("read:one-exact-session-and-deployment", "network:host-defined", "write:one-restore-intent-and-native-session", "control:current-terminal-handoff-no-continue")
+    return ("read:one-exact-session-and-deployment", "network:host-defined", "write:one-restore-intent-and-native-session", "control:validated-location-handoff-no-continue")
   if path == ("resume",):
-    return ("capability:per-tool-current-terminal", "network:host-defined", "write:run-owner/resume-attempt/session", "control:handoff-only-no-continue")
+    return ("capability:per-tool-here-or-saved-workflow-location", "network:host-defined", "write:run-owner/resume-attempt/session", "control:handoff-only-no-continue")
   if path[:2] in (("agent", "instances"), ("agent", "maintenance")):
     return ("capability:not-admitted", "network:none", "write:none", "control:none")
   if path[0] == "config":
@@ -473,20 +477,20 @@ def _configure_static_help(parser):
       "副作用：" + "；".join(effects), "最短示例：" + examples[0], "显式范围示例：" + examples[1],
       "原生帮助：run --后的全部token和agent usage全部尾部含--help属于宿主；管理说明请看agent --help。"]
     if path in (("run",), ("agent", "run")):
-      lines.append("启动边界：当前普通启动在 Agent 退出后返回 shell；处于 Herdr 中也不会自动获得原 pane 恢复能力。原 pane 恢复尚未开放，需受支持的 Rotom 驻留启动器托管。")
+      lines.append("启动边界：普通启动在 Agent 退出后返回 shell；处于 Herdr 中也不会自动获得原 pane 恢复能力。通过 Rotom Herdr 专用入口新建、由已准入的驻留启动器托管的实例才保留原 pane；停止预览会显示位置诊断。")
     if path == ("resume",):
-      lines.append("停止记录：--stopped --list 只读列出 session ID、原 cwd、标题和阶段，不需要工具、session 或 TTY；坏记录保留已知行并返回4。--stopped 恢复在TTY缺少目标时只选择一次；非TTY须完整 --batch 与 --run。不默认选最近；与 --session/--original/--new-tab 冲突。候选不等于加载成功，启动前仍复核原文件与能力；旧 stop 快照仅显示人工核对命令，不参与快速恢复。普通 --session 恢复保持原行为。")
-      lines.append("Herdr 边界：默认 --here 在当前终端恢复，不需要 Herdr。--original/--new-tab 当前尚未准入、尚未开放，安装 Herdr 也不会启用；请使用 --here。")
-      lines.append("原 pane 恢复边界：开放时也仅限通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，并须只停止 Agent、保留 launcher 与 pane。旧普通实例、直接官方 CLI 或仅刚新启动均不保证原位；launcher 或 pane 关闭/丢失后，改在当前终端或新位置恢复。当前可用 rotom resume --stopped --list 查询停止记录，再用 --here 恢复。")
-      lines.append("普通 --session 恢复的根 --interactive 可在启动前选择仅显示人工文本并独立确认；文本须为可打印单行，最多4096字符/16384 UTF-8字节；不发送、不操作剪贴板或聚焦。DSH/Pi/OMP 当前终端恢复分别核验；Pi 写保护仅覆盖 Rotom 合作实例；加载待确认，不会发送继续；上游默认可能生成自动回顾。")
+      lines.append("停止记录：--stopped --list 只读列出 session ID、原 cwd、标题和阶段，不需要工具、session 或 TTY；坏记录保留已知行并返回4。--stopped 恢复在TTY缺少目标时只选择一次；非TTY单项恢复须完整 --batch 与 --run。不默认选最近；与 --session 冲突。--all 须完整 --batch 和 --original 或 --new-tab，只处理同一完整 workflow 批次；不接受 --run/--session/--list/--here。整批先核验，逐项独立交接，任一失败即停止后续派发；未执行项保留 not_dispatched。示例：rotom resume --stopped --batch bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb --all --new-tab。--list 不接受位置选项；--original/--new-tab 仅用于已保存完整 workflow 清单。位置交接不等于加载成功，启动前仍复核原文件与能力；旧 stop 快照仅显示人工核对命令，不参与快速恢复。普通 --session 恢复保持原行为。")
+      lines.append("Herdr 边界：默认 --here 在当前终端恢复，不需要 Herdr。--original/--new-tab 仅用于已保存完整 workflow 清单，须逐工具/Linux/Herdr/驻留准入；仅安装 Herdr 也不会启用未准入的组合。普通 --session 仍仅支持 --here；旧快照须人工恢复。停止预览会逐项显示位置诊断，执行前重新核验。")
+      lines.append("原 pane 恢复边界：仅限通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，并须只停止 Agent、保留 launcher 与 pane。旧普通实例、直接官方 CLI 或仅刚新启动均不保证原位；launcher 或 pane 关闭/丢失后，改在当前终端或新位置恢复。当前可用 rotom resume --stopped --list 查询停止记录，再用 --here 恢复。")
+      lines.append("普通 --session 恢复的根 --interactive 可在启动前选择仅显示人工文本并独立确认；文本须为可打印单行，最多4096字符/16384 UTF-8字节；不发送、不操作剪贴板或聚焦。DSH/Pi/OMP 当前终端恢复分别核验；Pi 写保护仅覆盖 Rotom 合作实例；加载待确认，不发送继续；上游默认可能生成自动回顾。")
       lines.append("OMP 在原生写入冲突时可能生成分叉 session，请核对实际 ID。")
     if path == ("agent", "instances", "stop"):
       lines.append("--run 为完整32位小写十六进制且不得重复。--dry-run 只读预览；DSH/Pi/OMP 逐工具核验受管控制通道，旧运行无通道时需人工停止。非交互实际停止须显式 --plan-id（缺失返回2，漂移返回4）；交互展示计划并确认。超时/结果未知返回4和原 batch 查询命令，不重发或强杀。")
     if path[:2] == ("agent", "maintenance"):
-      lines.append("Herdr 边界：maintenance restore 在当前终端恢复，不需要 Herdr；--original/--new-tab 原位置和新标签页恢复当前尚未准入，安装 Herdr 也不会启用。")
+      lines.append("Herdr 边界：maintenance restore 默认 --here 在当前终端恢复，不需要 Herdr；--original/--new-tab 仅用于已保存完整 workflow 清单，须逐工具/Linux/Herdr/驻留准入。停止预览会逐项显示位置诊断，执行前重新核验；仅安装 Herdr 不代表所有组合可用。")
       if path == ("agent", "maintenance", "restore"):
-        lines.append("原 pane 恢复尚未开放；开放时也仅限通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，并须只停止 Agent、保留 launcher 与 pane。旧普通实例、直接官方 CLI 或仅刚新启动均不保证原位；launcher 或 pane 关闭/丢失后，改在当前终端或新位置恢复。当前使用本命令在当前终端恢复，或用 rotom resume --stopped --list 查询停止记录后以 --here 恢复。")
-      lines.append("DSH/Pi/OMP 分阶段完成：plan → stop → plan --batch → execute → restore --run。--operation setup 可省略。--run 为完整32位小写十六进制且不得重复；--session RUN_ID=SESSION_ID 可重复，但每个运行只能映射一次。TTY 缺失目标时选择，非TTY须明确目标；stop/execute 还须当前 --plan-id（缺失返回2，漂移返回4）。execute 重走普通 setup 批准与活动/共享资源门禁；restore 只交接一项当前终端。Pi 写保护仅覆盖 Rotom 合作实例；加载待确认、不发送继续。取消保留已发生事实，不自动撤销配置或恢复会话。")
+        lines.append("原 pane 恢复仅限通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，并须只停止 Agent、保留 launcher 与 pane。旧普通实例、直接官方 CLI 或仅刚新启动均不保证原位；launcher 或 pane 关闭/丢失后，改在当前终端或新位置恢复。可用本命令的 --here 在当前终端恢复，或用 rotom resume --stopped --list 查询停止记录后选择位置。")
+      lines.append("DSH/Pi/OMP 分阶段完成：plan → stop → plan --batch → execute → restore --run。--operation setup 可省略。--run 为完整32位小写十六进制且不得重复；--session RUN_ID=SESSION_ID 可重复，但每个运行只能映射一次。TTY 缺失目标时选择，非TTY须明确目标；stop/execute 还须当前 --plan-id（缺失返回2，漂移返回4）。execute 重走普通 setup 批准与活动/共享资源门禁；restore 只交接一项；默认 --here，位置选项须逐工具与 Herdr 前提核验。Pi 写保护仅覆盖 Rotom 合作实例；加载待确认、不发送继续。取消保留已发生事实，不自动撤销配置或恢复会话。")
       lines.append("OMP 在原生写入冲突时可能生成分叉 session，请核对实际 ID。cancel 已保存但停止仍未知时返回4，保护保留。")
     if path in (("agent", "instances", "list"), ("agent", "instances", "stop"), ("agent", "maintenance", "plan")):
       lines.append("版本：deployment 是启动时配置/部署组合摘要，runtime 是锁定运行包身份；旧记录缺失时为 unknown，不按当前配置补填。版本相同不表示进程或资源已释放。")
@@ -739,7 +743,12 @@ def validate_explicit_conditions(args):
         raise InputError(2)
   if path == ("resume",):
     stopped = getattr(args, "stopped", False)
-    if stopped and (args.session is not None or args.original or args.new_tab):
+    if args.all and (not stopped or args.batch is None or args.run is not None or args.session is not None
+        or args.list or not (args.original or args.new_tab)):
+      raise InputError(2)
+    if stopped and args.session is not None:
+      raise InputError(2)
+    if args.list and (args.here or args.original or args.new_tab):
       raise InputError(2)
     if not stopped and (args.list or args.batch is not None or args.run is not None):
       raise InputError(2)
@@ -836,7 +845,7 @@ def complete_missing(parser, args, management, gateway, policy, *, resume_candid
     current = sub.choices[selected]
   validate_explicit_conditions(args)
   if path == ("resume",) and getattr(args, "stopped", False):
-    if not args.list and (args.batch is None or args.run is None):
+    if not args.list and not args.all and (args.batch is None or args.run is None):
       gateway.require_input(policy)
     return tokens, args, navigated, candidate_scope, None
   if path == ("resume",):

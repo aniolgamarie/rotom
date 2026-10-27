@@ -1,6 +1,6 @@
 # CLI 公共契约
 
-日期：2026-10-26。状态：本轮分阶段维护候选已通过分组与受影响复验，尚未合入 main；合入须人工批准。P-SESSION/P-EXIT/P-PANE/P-INPUT 仍分别准入。
+日期：2026-10-26。状态：既有当前终端维护候选的分组与受影响复验保留原范围；新增位置恢复已通过最终十二组无 trace 原生验收，公开准入为六个精确 Linux managed 组合的两种位置。尚未合入 main，合入须人工批准。P-SESSION/P-EXIT/P-PANE/P-INPUT 仍分别准入。
 依据：[规格](../spec.md)、[007 入口设计](../../007-rotom-cli-entry/design.md)、
 [维护设计](../../007-rotom-cli-entry/maintenance.md)。部署产物见
 [入口部署契约](entry-deployment.md)，身份、停止和恢复门禁见
@@ -15,6 +15,10 @@ rotom run [TOOL] [--machine NAME | --local PATH] [--profile ID]
           [--cwd PATH] [--inherit-env NAME]... [--unset-env NAME]... [-- ARGS...]
 rotom resume [TOOL] [--session ID] [--machine NAME | --local PATH]
              [--profile ID] [--here | --original | --new-tab]
+rotom resume [TOOL] [--machine NAME | --local PATH] [--profile ID]
+             --stopped [--list | --batch B --run R [--here | --original | --new-tab]]
+rotom resume [TOOL] [--machine NAME | --local PATH] [--profile ID]
+             --stopped --batch B --all (--original | --new-tab)
 rotom agent [--machine NAME | --local PATH] [--profile ID] SUBCOMMAND ...
 rotom term [--machine NAME] SUBCOMMAND ...
 rotom work [--machine NAME | --local PATH] SUBCOMMAND ...
@@ -155,7 +159,7 @@ rotom --no-input term --machine workstation sync --component zsh
 | `agent maintenance plan` | D setup operation 或 T batch；E/T run/session 映射；D scope | 只读，不建批次/准入意图；先核验目标完整锁的恢复准入 |
 | `agent maintenance stop` | D setup operation；E/T run/session 映射；A 当前 plan-id；D wait | 复算目标/资源快照；接受后才持久化批次 |
 | `agent maintenance execute` | T batch；A 每次最新 setup plan-id 或独立交互批准 | 退出与资源释放门禁、恢复能力重核；普通 setup 重新检查当前状态 |
-| `agent maintenance restore` | T batch、run（TTY 可选）；当前终端 | 同日常恢复身份/writer 门禁；每次一项，不共用 stdin |
+| `agent maintenance restore` | T batch、run（TTY 可选）；默认 here，可显式 original/new-tab 候选 | 同日常恢复身份/writer 门禁；每次一项，不共用 stdin |
 | `agent maintenance status` | T 现存 batch；D scope/format；旧 OMP Domain 批次须显式 profile | 三工具 workflow 查询；旧停止/Domain 批次沿原查询路径 |
 | `agent maintenance cancel` | T batch；D scope | 三工具 workflow 先保存取消事实，再按原停止协议安全收尾；旧 OMP Domain 批次不迁移或开放新取消能力 |
 
@@ -194,9 +198,13 @@ rotom --no-input term --machine workstation sync --component zsh
 阶段二首先真实验收 DSH 当前终端官方恢复交接、指定历史和 writer 冲突拒绝；
 缺严格加载回执不禁止已准入的交接，输出明确区分“请求 session”“已派发”“加载待确认”“未发送继续”。
 机器没有证据时不得显示“恢复成功”。用户在官方 TUI 自行确认和输入，不增加“强制标记已恢复”的开关。
-Pi/OMP 当前终端交接按本轮工具方案验收。当前 `--original`/`--new-tab` 尚未开放，安装 Herdr 不会启用；拒绝时给出同范围可复制的 `--here` 命令，保留能力未准入退出码 5，不污染结果 stdout。
+Pi/OMP 当前终端交接按本轮工具方案验收。普通 `--session` 的 `--original`/`--new-tab` 尚未开放；拒绝时给出同范围可复制的 `--here` 命令，保留能力未准入退出码 5，不污染结果 stdout。
 
-下一交付已选 Herdr 新标签页，以及受支持的 Rotom Herdr 新托管实例原 pane：逐工具验收后才开放，Herdr 新托管入口默认驻留；普通 shell 单次 run 退出返回。旧普通/直接官方实例不升级，launcher 或 pane 丢失时使用当前终端或明确接受的新位置。help、命令提示与将来的只读诊断/停止计划说明条件、可用/不支持/丢失/未知和下一步；静态 help 不查询 Herdr、私人配置或启动程序。新标签页创建和恢复交接逐项展示，可能已创建时不重复开页。
+Herdr 新标签页和受支持 Rotom Herdr 新托管实例原 pane 已有候选实现，最终十二组无 trace 原生验收全部通过，现仅开放六个精确 Linux managed 组合的两种位置。驻留包装覆盖 Herdr V1/V2 的新 DSH/Pi Agent 启动和符合驻留组合的新 tab 恢复；普通 shell 单次 run 退出返回。旧普通/直接官方实例不升级，launcher 或 pane 丢失时使用当前终端或明确接受的新位置。help、命令提示与只读诊断/停止计划说明条件、可用/不支持/丢失/未知和下一步；静态 help 不查询 Herdr、私人配置或启动程序。新标签页创建和恢复交接逐项展示，可能已创建时不重复开页。
+
+位置入口仅接受已停止且已完成 setup/update 的完整 maintenance workflow；普通 session 和旧 stop 快照不得绕过来源门禁。`maintenance restore --batch B --run R` 也接受互斥的 `--here/--original/--new-tab`，默认 here。
+
+`--all` 必须与 `--stopped --batch B` 及非 here 位置配合，不能带 `--run/--session/--list/--here`；缺 batch 即 2。先核验批次所有项同范围、可恢复且来源完整，坏记录或不可恢复项拒绝整批，不静默过滤。分发前逐项重查，独立终端、独立意图，不让多个 TUI 争 stdin。JSON 只输出一个 batch 汇总，保留每项 run_id、exit_code 与 result；首个非零或未知后停止，后续为 not_dispatched，保留先前事实，汇总返回 4，全部交接返回 0。`--list` 保持只读且不能带任意位置或 `--all`。
 
 统一严格加载回执、原生 TUI 自动继续与 Pi Pro 委派本轮不承诺；`pi-pro` 普通 profile 的维护/恢复兼容性保留。位置选择不放宽原范围、精确会话、目录、部署、取消与已派发防重门禁，加载待确认仍为零自动输入。T134 的提示验收不能代替 T085/T087–T095 和 T135–T138 的生产实现/原生验收。
 
@@ -210,6 +218,8 @@ Pi/OMP 当前终端交接按本轮工具方案验收。当前 `--original`/`--ne
 
 当前终端的交接提示进入 stderr，保留原生 stdio 与最终退出码；原生退出码 0 不是加载确认。
 维护 restore 同样保留已知原生退出码，包括 0，同时保留加载待确认；退出结果未知才返回 4 并保留未完成意图，不自动重试。
+停止完成后的最终 status 查询沿原停止 deadline 等待纯读短锁；过期后只允许无竞争 NB 观察，仍不能确认时保留 unknown 与落盘事实，不再次 close、发布或发送信号。独立 status 保持默认 NB。
+
 只读 status 的退出码反映阶段记录可否查询及停止/setup/restore 是否仍无确定结果；停止 pending、未完成的 setup-intent/restore-intent 均返回 4，cancel 不能盖住这些事实。已知原生退出结果仍保存在原阶段记录，不把加载待确认或原生 0 升格为 restored。
 确认等待超时仅停止后续自动步骤，不终止已交接的交互会话；显式已知失败保留原错误及退出码。
 

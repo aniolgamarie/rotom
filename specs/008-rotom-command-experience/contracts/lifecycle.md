@@ -1,6 +1,6 @@
 # 会话、停止与恢复生命周期契约
 
-日期：2026-10-26。状态：本轮分阶段维护候选已通过分组与受影响复验，尚未合入 main；合入须人工批准。P-SESSION/P-EXIT/P-PANE/P-INPUT 仍分别准入。
+日期：2026-10-26。状态：既有当前终端维护候选的分组与受影响复验保留原范围；新增位置恢复已通过最终十二组无 trace 原生验收，公开准入为六个精确 Linux managed 组合的两种位置。尚未合入 main，合入须人工批准。P-SESSION/P-EXIT/P-PANE/P-INPUT 仍分别准入。
 依据：[规格](../spec.md)、[数据模型](../data-model.md)、[研究](../research.md)。
 所有状态为受管事实；收到请求、界面存在和原生退出码 0 不能替代成功证明。
 
@@ -12,7 +12,7 @@
 
 确认停止后按原协议关闭本 stop fence，再调用普通 setup 的最新计划与独立批准，原实例/HOME/包锁、owner、共享引用和 Domain 门禁全保留；新 run 可阻挡，不能扩大 stop 集合。本 workflow 不消费或重新发行旧 Domain batch permit，不把 stop_only 当资源维护许可。
 
-逐项 restore 在当前终端创建新 run，Pi/OMP 使用 HandoffResumeBackend，DSH 原 Host 不变。保留 setup 原结果和退出码；未知不重试，不回滚猜目标。restore-intent/请求派发与加载证据分开；缺回执显示待确认并请核对 TUI ID，始终 continue=not_sent。原 pane/新标签页已选为下一阶段交付但尚未实现准入；统一严格加载回执与原生 TUI 自动继续本轮不承诺。
+逐项 restore 在当前终端创建新 run，Pi/OMP 使用 HandoffResumeBackend，DSH 原 Host 不变。保留 setup 原结果和退出码；未知不重试，不回滚猜目标。restore-intent/请求派发与加载证据分开；缺回执显示待确认并请核对 TUI ID，始终 continue=not_sent。原 pane/新标签页候选已实现，已按六个精确 Linux managed 组合开放两种位置，最终十二组无 trace 原生验收全部通过；统一严格加载回执与原生 TUI 自动继续本轮不承诺。
 
 Pi 公开扩展/helper 在启动与切换前 claim 租约，旧 active/unknown 无 guard 或当前来源不符阻挡；只保证 Rotom 合作进程范围。三来源锁为 locks/pi/session-control.json。普通 --session 完整 ID 核实为精确路径，原生 --resume 是 picker；缺失文件原生会新建 ID，Rotom 先严格重核，外部事后变化仍 unknown。OMP 只读打开不持 writer 锁，固定 session-manager.ts:1103–1128 在竞争首次写入时分叉 sibling 新 ID；不承诺任意外部 writer 提前拒绝。自动输入所需 writer/加载/接收证据不因交接而放宽。
 
@@ -345,23 +345,35 @@ stop/恢复 ready 等待默认 30 秒，`--wait-seconds` 为 1–300 的整数�
 缺参/必要批准为 2，所有权/漂移/未知为 4，依赖或公开能力不足为 5；
 维护自身明确失败保留原结果和退出码，不能因外层取消或展示成功而覆盖。
 
+### 短锁等待与原子预留
+
+Domain 写事务默认只在取得首个元数据 flock 前使用新的 2 秒单调预算；显式传入截止点时沿用原绝对值，不续期。只等待 EAGAIN/EWOULDBLOCK，权限、路径与元数据错误立即失败。进入 body 后的校验、写入、提交或解锁异常均不重放事务。Domain → owner NB 的顺序保持，域锁内不等待物理锁、宿主或用户。
+
+外部 snapshot 和普通只读事务默认仍为 NB；仅合作启动的 package_guard 和 check_omp_launch 显式使用各自首锁前的 2 秒读预算。OMP 资源、scope/runtime anchor 选择与 _reserve_locked 在同一 Domain 写事务中完成，提交成功后才返回 token；不再拆成未持锁 snapshot → reserve。通用 Domain.reserve 的 expected_revision 严格 CAS 保留。
+
+停止完成后的最终 status 查询沿用本次停止的原截止时间；到期后只允许无竞争的 NB 观察，有竞争仍返回未知并保留落盘 close/fence 事实，不重新 close、投稿或发送信号。
+
 ## 原位置与继续
 
-以下是已选待实现的驻留/新标签页契约，当前接口尚未开放。通过 Rotom Herdr 入口新建、该工具已验收的托管实例默认驻留，普通 shell 单次 run 退出返回；旧普通实例和直接官方 CLI 不在线升级。
-驻留将 container 与单次 run 分开；原生子进程及相关后代完整退出、完成租约收尾后才 parked，在原 pane 显示等待恢复。
+以下驻留/新标签页契约已有候选实现；最终十二组无 trace 原生验收全部通过，现仅开放六个精确 Linux managed 组合的两种位置。仅已停止且已完成 setup/update 的完整 maintenance workflow 可申请位置恢复，普通 --session 的位置恢复保持未开放。通过 Rotom Herdr 入口新建、该工具已验收的托管实例默认驻留，普通 shell 单次 run 退出返回；旧普通实例和直接官方 CLI 不在线升级。
+驻留将 container 与单次 run 分开。parent 在 child 存活时不读取 owner/Domain；child 退出后才按唯一出生身份核验本 run 的完整释放，完成租约收尾后才 parked，在原 pane 显示等待恢复。active 的位置查询按 child_identity 与严格 RunRecord.manager_identity 只读关联候选；原位消费仍要求 parked、saved run_id 精确匹配、child_identity 为空，旧 run 的延迟请求拒绝。
 会话事件未封口不阻止已证实空闲的容器 parked；严格封口/加载回执不足也不单独阻断已准入的明确官方交接。
 仍按日常恢复核实目标、原目录、部署和该工具 writer 防护，缺回执显示加载待确认、零自动输入。
 容器空闲、子进程运行、资源释放与 session 加载确认分别判断，不能用活动子进程代替已加载证明。
 控制端点使用私人权限、同用户调用者校验和 container/generation/op 匹配，不接受任意命令文本。
 启动请求先 durable 记录，再建立新 run 与一次性许可；回包丢失为 unknown，先查事实，不重发。
 
-work 新建/重绑采用新容器版本，不能复用旧 accepted/receipt，也不能从处于 Herdr 或启动时间较新推断具备驻留。
+Rotom Herdr V1/V2 的新 DSH/Pi Agent 启动与符合驻留组合的新 tab 恢复使用独立容器，不能复用旧 accepted/receipt，也不能从处于 Herdr 或启动时间较新推断具备驻留。
 管理源码或协议身份变化时首版拒绝在旧进程恢复；无租约 re-exec/handoff 是另行验证的后续能力。
 终端已关闭、复用或身份不明时保留待恢复，重新接受新位置；不按标题/焦点或按键猜测空闲 shell。
 
 新标签页要求可核验的 Herdr 公开 API，复用受保护 bootstrap 与恢复意图；逐项创建并使用独立终端，保留原 session/cwd/部署及 workflow 门禁。先保存唯一请求意图，再调用创建；分别报告创建、交接、失败或未知，可能已经创建时先查询事实，不自动重开。缺 Herdr 时说明没有执行与同范围当前终端命令，不能静默切位置。
 
-help 和命令提示说明当前未开放及未来适用条件；实现后的只读诊断和停止计划逐项说明可用、不支持、launcher/pane 丢失、身份/结果未知与下一步，不增加无证据的成功标志。Pi Pro 委派不属于本契约，`pi-pro` 普通 profile 仍遵循同一维护恢复门禁。
+help 和命令提示区分候选实现与未开放组合；只读诊断和停止计划逐项说明可用、不支持、launcher/pane 丢失、身份/结果未知与下一步，不增加无证据的成功标志。Pi Pro 委派不属于本契约，`pi-pro` 普通 profile 仍遵循同一维护恢复门禁。
+
+位置意图先复用普通 workflow restore-intent，再保存受保护请求；只有持久 ready/committed/handoff 与固定终端身份匹配后才能交给 child。child 以 CAS 将 handoff 消费为 executing，重核取消、精确会话与部署；写后失败不撤销消费。原生结果与 location receipt 分开，记录失败不伪造未派发或再次启动。
+
+`--stopped --batch B --all --original|--new-tab` 在第一次分发前核验整批，再逐项重查；一项失败或未知后不分发余项，既有创建/交接事实保留，余项明确 not_dispatched。取消只禁止余下动作，不抹去已有派发、退出或未知事实。当前终端默认仍是单项交接。
 
 以下自动继续协议保留为历史附加设计，本轮不实现或开放。“继续”独立批准目标和文本；只有本次新 run、实际加载的确切会话、ready 与 writer 排他均有效时发送。
 派发前记录 intent，有可靠确认才 accepted；无幂等/确认的未知结果不重发。
@@ -371,7 +383,7 @@ help 和命令提示说明当前未开放及未来适用条件；实现后的只
 不等待上游增强，不用人工确认、原生 pane input 的存在或焦点正确代替 Agent 接收证明。
 
 
-T114 的内部 owner 关联遵循物理 SH → 协调 EX → owner EX(NB)。第二层元数据锁忙时立即拒绝，
+T114 的内部 owner 关联遵循物理 SH → 协调 EX → owner EX(NB)。owner 元数据锁忙时立即拒绝，
 不能持协调锁阻塞等待 owner。各事务在协调提交及 fsync 完成前保持 owner 锁，提交后才释放。
 第一次提交仅写 owner_pending；第二次写同 run ID 的不可覆盖 owner 并保存 owner_attached。
 owner 新文件发布后 fsync 失败或后续提交失败均保留 pending/attached 阻塞，不删除记录或重新派发。

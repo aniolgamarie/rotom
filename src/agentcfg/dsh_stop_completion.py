@@ -2,7 +2,7 @@
 from copy import deepcopy
 import json
 
-from . import lifecycle, run_owners, run_stop_fence, run_stop_snapshot, storage
+from . import lifecycle, run_owners, run_stop_fence, run_stop_snapshot, stop_locks, storage
 from .omp_lifecycle import _same_file
 from .resource_keys import resource_key
 from .stop_dispatches import StopDispatches
@@ -89,12 +89,13 @@ def unposted(workspace, record):
   return not channel["requests"] and channel["dispatch"] is None
 
 
-def close_stop(workspace, *, batch_id, plan_id, reason):
+def close_stop(workspace, *, batch_id, plan_id, reason, deadline_ns=None):
   """先持原两 SH，再以 owner CAS 保存收尾、撤销本 fence；不触碰 owner。
 
   cancelled 只接受仍无请求/派发的 active 项或已确证退出项；unknown/已投稿的活动项
   继续受保护。所有客户投稿必须在相同 owner 锁内复核 fence 和 close 标记。
   响应丢失后的显式重入只对账原收尾，不重发、不覆盖旧清单、不删除其它操作的 fence。
+  给定原停止截止点时，只在进入首个收尾写入前等待 owner 短锁；body 仍只执行一次。
   """
   try:
     run_owners._run_id(batch_id)
@@ -103,7 +104,9 @@ def close_stop(workspace, *, batch_id, plan_id, reason):
       raise ValueError()
     registry = run_owners.Registry(workspace.state_root / "run-owners", workspace.binding)
     with lifecycle.observation_guard(workspace) as instance_fd, Tree(workspace.state_root) as parent:
-      with instance_lock(parent, shared=True, create=False) as state_fd, registry._locked(nonblocking=True) as owner:
+      owner_guard = (registry._locked(nonblocking=True) if deadline_ns is None
+        else stop_locks.locked(registry, deadline_ns))
+      with instance_lock(parent, shared=True, create=False) as state_fd, owner_guard as owner:
         prior = _read_close(registry, owner, parent, batch_id)
         fence = run_stop_fence._read_locked(registry, owner, parent)
         if prior is not None:

@@ -257,3 +257,64 @@ def test_preparation_cannot_restart_expired_parent_budget(launch_case, monkeypat
   with pytest.raises(TermcfgError):
     launch_payload(json.dumps(value), client=api, settings=settings,
       execute=lambda *args: pytest.fail("expired parent executed"))
+
+
+@pytest.mark.parametrize("agent", ["dsh", "pi"])
+def test_agent_launch_wraps_only_after_accepted_with_reviewed_settings(launch_case, monkeypatch, agent):
+  import sys
+  from types import SimpleNamespace
+  api, settings, value, pane_id = launch_case
+  value["role"] = agent
+  api.workspaces[value["workspace_id"]]["tokens"]["rw_pending"] = agent + ":" + value["op"] + ":primary"
+  wrapped = []
+  def wrap_launch(chosen, launcher, command, cwd, client, pane):
+    assert chosen is settings and launcher == agent and client is api
+    assert api.panes[pane_id]["tokens"]["rw_phase"] == "accepted"
+    assert pane["pane_id"] == pane_id and cwd == value["checkout"]
+    wrapped.append(command)
+    return ["/synthetic-resident", "fixed"]
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(wrap_launch=wrap_launch))
+  monkeypatch.setattr(os, "chdir", lambda path: None)
+  calls = []
+  assert launch_payload(json.dumps(value), client=api, settings=settings,
+    execute=lambda *args: calls.append(args)) == 0
+  assert len(wrapped) == 1 and calls[0][1] == ["/synthetic-resident", "fixed"]
+
+
+@pytest.mark.parametrize("agent", ["dsh", "pi"])
+def test_accepted_parent_cleanup_does_not_invalidate_committed_agent_launch(launch_case, monkeypatch, agent):
+  import sys
+  from types import SimpleNamespace
+  from termcfg import work_shell
+  api, settings, value, pane_id = launch_case
+  value["role"] = agent
+  api.workspaces[value["workspace_id"]]["tokens"]["rw_pending"] = agent + ":" + value["op"] + ":primary"
+  expected = {key: api.panes[pane_id][key] for key in ("workspace_id", "tab_id", "pane_id", "terminal_id")}
+  original = api.request
+  cleaned = []
+  def request(method, params=None):
+    result = original(method, params)
+    if method == "pane.report_metadata" and params["tokens"].get("rw_phase") == "accepted":
+      api.workspaces[value["workspace_id"]]["tokens"].pop("rw_pending")
+      cleaned.append(True)
+    return result
+  api.request = request
+  wrapped, executed = [], []
+  def wrap_launch(chosen, launcher, command, cwd, client, pane):
+    assert cleaned == [True] and chosen is settings and launcher == agent and client is api
+    assert all(pane[key] == item for key, item in expected.items())
+    assert pane["tokens"]["rw_phase"] == "ready"
+    assert api.panes[pane_id]["tokens"]["rw_phase"] == "accepted"
+    assert cwd == value["checkout"]
+    wrapped.append(command)
+    return ["/synthetic-resident", "fixed"]
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(wrap_launch=wrap_launch))
+  monkeypatch.setattr(os, "chdir", lambda path: None)
+  monkeypatch.setattr(work_shell, "launch_payload", lambda text: launch_payload(text,
+    client=api, settings=settings, execute=lambda *args: executed.append(args)))
+  monkeypatch.setattr(work_shell, "fallback_shell", lambda: pytest.fail("committed launch fell back to shell"))
+  monkeypatch.setenv(PAYLOAD_ENV, json.dumps(value))
+  assert work_shell.main() == 0
+  assert len(wrapped) == 1 and len(executed) == 1
+  assert executed[0][1] == ["/synthetic-resident", "fixed"]
+  assert api.panes[pane_id]["tokens"]["rw_phase"] == "accepted"

@@ -3,6 +3,10 @@
 契约日期：2026-10-23。状态更新：2026-10-24 已获授权并在专用临时 HOME、受信源码副本与离线工具链通过真实 Linux zsh/Tab、入口绑定保持、显式换绑和回滚验收；日常入口未切换。实际范围及证据见[本轮记录](../main-review.md#19-真实-zsh-入口与-tab-验收)。
 依据：[规格 FR-017–020](../spec.md#functional-requirements)、[数据模型](../data-model.md)。
 
+## Herdr V1 的提交后交接
+
+V1 在写 accepted 之前最后核验并保存 caller；accepted 后父进程可以正常清除 workspace pending。驻留包装使用已核验的 caller，不在 accepted 后重新要求 pending 存在。原 fixed command、namespace/source/tty、marked/accepted 错误分支及普通 shell fallback 保持；pending 清除不授予新的恢复许可，resident 仍核验实时 terminal 身份。
+
 ## 目标与安装定位
 
 | 目标 | 内容 | mode |
@@ -85,3 +89,8 @@ rollback 使用记录的上一版内容和身份，不意味着软件降级或�
 | 调用环境改变 | 从不同 HOME/XDG/cwd 调用同一已安装文件仍定位同一绑定；不读取另一 HOME 的同名文件 |
 
 默认验证均使用临时 HOME/XDG、假文件和故障注入；真实 zsh/终端加载不能由上述模拟代替。
+
+
+## 位置恢复候选与入口绑定
+
+本次驻留和新 tab 恢复复用已经准备好的仓库入口，不增设日常 launcher、不自动切换 checkout，也不改变 entry.json 的批准/回滚语义。内部 child/resident 使用固定仓库 `.venv/bin/python -B` 与固定脚本路径，业务导入锁定该 checkout；受保护请求不能提供任意 argv。驻留源码身份覆盖三个自有 Python 包与既有受审 schema，代码变化拒绝旧驻留进程混用新逻辑。此内部执行约束不代表公开位置组合已经验收，普通 rotom run 仍为单次启动。

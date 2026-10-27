@@ -6,6 +6,7 @@
 from copy import deepcopy
 import os
 import sys
+import time
 
 from . import dsh_stop_scope, run_owners, stop_locks
 from .spawned_host import SpawnedHost
@@ -121,7 +122,7 @@ def available(workspace, record):
 
 
 def _current(registry, run_id):
-  with registry._locked(nonblocking=True) as tree:
+  with stop_locks.locked(registry, time.monotonic_ns() + 2_000_000_000) as tree:
     records, _ = registry._records(tree)
     return records[run_id]
 
@@ -161,7 +162,8 @@ def factory_for(workspace, *, instance_fd, state_fd):
       inbox, journal = _stores(workspace, run_id, wait_for_lock=True)
       service = StopService(run_id, host, inbox=inbox, journal=journal, verify=verify)
       if record["agent"] == "dsh":
-        registry.bind_current_control(run_id, host, service)
+        registry.bind_current_control(run_id, host, service,
+          deadline_ns=time.monotonic_ns() + 2_000_000_000)
       registered = _current(registry, run_id)
       expected = deepcopy(record)
       if record["agent"] == "dsh":

@@ -110,6 +110,9 @@ def _workflow_rows(workspace, batch_id):
     rows.append(_row(workspace, batch_id, run, target["ref"], target["cwd"], source="workflow",
       title=label["title"], title_source=label["source"], observed_at_ns=target["observed_at_ns"],
       stop_status=value["stop_status"], restore_status=status))
+    location = value.get("locations", {}).get(run)
+    if location is not None:
+      rows[-1]["location_request"] = deepcopy(location)
   return rows
 
 

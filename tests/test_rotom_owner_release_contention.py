@@ -182,3 +182,91 @@ def test_release_does_not_retry_owner_permission_error(tmp_path, monkeypatch):
   assert len(attempts) == 1
   assert (domain.root / "coordination.json").read_bytes() == before_domain
   assert owner_path(ws).read_bytes() == before_owner
+
+
+@pytest.mark.parametrize("phase", ["dispatched", "release_pending"])
+@pytest.mark.parametrize("shared", [False, True])
+def test_release_waits_for_first_domain_lock_before_any_body(tmp_path, monkeypatch, phase, shared):
+  ws, domain, cache, anchor = dispatched(tmp_path)
+  original = fcntl.flock
+  busy, done = threading.Event(), threading.Event()
+  outcome = []
+  with held(ws, cache, anchor) as args:
+    if phase == "release_pending": pending(domain, args, monkeypatch)
+    with Tree(domain.root) as query:
+      original(query.fd, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+      key = (os.fstat(query.fd).st_dev, os.fstat(query.fd).st_ino)
+      def flock(fd, operation):
+        info = os.fstat(fd)
+        if fd != query.fd and (info.st_dev, info.st_ino) == key and operation & fcntl.LOCK_EX:
+          assert operation & fcntl.LOCK_NB
+          try: return original(fd, operation)
+          except BlockingIOError:
+            busy.set()
+            raise
+        return original(fd, operation)
+      monkeypatch.setattr(fcntl, "flock", flock)
+      def worker():
+        try: outcome.append(invoke(phase, domain, args))
+        except BaseException as error: outcome.append(error)
+        finally: done.set()
+      thread = threading.Thread(target=worker)
+      thread.start()
+      try:
+        assert busy.wait(1), "必须实际遇到独立 Domain fd 竞争"
+        assert not done.wait(0.02), "首次锁未取得时应等待，不能放弃本次完整退出观察"
+      finally:
+        original(query.fd, fcntl.LOCK_UN)
+        thread.join(timeout=3)
+      assert not thread.is_alive() and outcome == [RUN], outcome
+  assert domain.snapshot()["reservations"][RUN]["phase"] == "released"
+  assert json.loads(owner_path(ws).read_bytes())["lifecycle_state"] == "idle_confirmed"
+
+
+@pytest.mark.parametrize("phase", ["dispatched", "release_pending"])
+def test_first_domain_lock_expiry_keeps_both_original_records(tmp_path, monkeypatch, phase):
+  monkeypatch.setattr(owners, "_RELEASE_LOCK_WAIT_NS", 50_000_000)
+  ws, domain, cache, anchor = dispatched(tmp_path)
+  with held(ws, cache, anchor) as args:
+    if phase == "release_pending": pending(domain, args, monkeypatch)
+    before_domain = (domain.root / "coordination.json").read_bytes()
+    before_owner = owner_path(ws).read_bytes()
+    with Tree(domain.root) as query:
+      fcntl.flock(query.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+      with pytest.raises(Conflict): invoke(phase, domain, args)
+    assert (domain.root / "coordination.json").read_bytes() == before_domain
+    assert owner_path(ws).read_bytes() == before_owner
+
+
+def test_first_domain_permission_error_is_not_retried(tmp_path, monkeypatch):
+  ws, domain, cache, anchor = dispatched(tmp_path)
+  key = (domain.root.stat().st_dev, domain.root.stat().st_ino)
+  original = fcntl.flock
+  attempts = []
+  def flock(fd, operation):
+    info = os.fstat(fd)
+    if (info.st_dev, info.st_ino) == key and operation & fcntl.LOCK_EX:
+      attempts.append(operation)
+      raise PermissionError(errno.EACCES, "synthetic domain permission failure")
+    return original(fd, operation)
+  with held(ws, cache, anchor) as args:
+    before = (domain.root / "coordination.json").read_bytes()
+    monkeypatch.setattr(fcntl, "flock", flock)
+    with pytest.raises(Conflict): invoke("dispatched", domain, args)
+    assert attempts and len(attempts) == 1
+    assert (domain.root / "coordination.json").read_bytes() == before
+
+
+def test_domain_busy_from_entered_body_does_not_repeat_release(tmp_path, monkeypatch):
+  from agentcfg.resource_coordination import DomainLockBusy
+  ws, domain, cache, anchor = dispatched(tmp_path)
+  calls = []
+  def nested(*args, **kwargs):
+    calls.append("body")
+    raise DomainLockBusy("synthetic nested transaction contention")
+  with held(ws, cache, anchor) as args:
+    before = (domain.root / "coordination.json").read_bytes()
+    monkeypatch.setattr(owners, "_check_link", nested)
+    with pytest.raises(Conflict): invoke("dispatched", domain, args)
+    assert calls == ["body"]
+    assert (domain.root / "coordination.json").read_bytes() == before

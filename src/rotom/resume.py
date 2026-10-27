@@ -139,8 +139,8 @@ class CandidateResume:
       show("请求恢复：" + description(target))
       show("同范围当前终端恢复命令：" + command(target))
       if args.original or args.new_tab:
-        show("所选终端位置能力尚未准入、尚未开放；安装 Herdr 也不会启用 --original/--new-tab，处于 Herdr 或刚新启动也不等于可原位恢复。")
-        show("原 pane 恢复开放时也仅限通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，并须只停止 Agent、保留 launcher 与 pane；旧普通实例和直接官方 CLI 不保证原位。launcher 或 pane 关闭/丢失后须在当前终端或新位置恢复。")
+        show("普通 --session 的所选终端位置能力尚未准入、尚未开放；安装 Herdr 也不会启用这条入口的 --original/--new-tab，处于 Herdr 或刚新启动也不等于可原位恢复。完成维护的停止清单可使用 --stopped 另行选择已准入位置。")
+        show("原 pane 恢复仅限通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例，并须只停止 Agent、保留 launcher 与 pane；旧普通实例和直接官方 CLI 不保证原位。launcher 或 pane 关闭/丢失后须在当前终端或新位置恢复。")
         show("请使用上方同范围命令，以不需要 Herdr 的 --here 在当前终端恢复；停止记录可用 rotom resume --stopped --list 查询，或在现有官方 TUI 人工选择目标。")
         return 5
       if target.confirmation == "unknown" or target.cwd_status == "unknown" or target.cwd is None:
