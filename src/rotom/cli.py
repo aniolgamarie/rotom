@@ -109,6 +109,7 @@ def _future_agent(parser):
       child.add_argument("--batch", action=UniqueSelector, required=True)
     if name in ("plan", "stop"):
       child.add_argument("--session", action="append", metavar="RUN_ID=SESSION_ID", help="为所选运行指定精确恢复会话；可重复，TTY 缺失时提供选择")
+      child.add_argument("--label", action="append", metavar="RUN_ID=TITLE", help="用户备注可补缺少原生标题的会话；不自动生成摘要，可重复且每个运行一次")
     if name == "restore":
       child.add_argument("--run", action=UniqueSelector, help="本终端恢复的一个运行；缺失时交互选择，非TTY必填")
     if name == "execute":
@@ -149,8 +150,13 @@ def build_parser():
   resume = commands.add_parser("resume", help="DSH/Pi/OMP 精确会话在当前终端恢复交接；加载待确认")
   resume.add_argument("tool", nargs="?", choices=("dsh", "pi", "omp"), help="会话所属工具；能力分别验证")
   _selectors(resume, profile=True)
-  from agentcfg.cli import selection_id
+  from agentcfg.cli import UniqueSelector, selection_id
   resume.add_argument("--session", type=selection_id, help="所选 machine/local 与 profile 范围内的明确 session ID")
+  resume.add_argument("--stopped", action="store_true", help="从 Rotom 已保存的停止记录选择；当前终端恢复，不需要 Herdr")
+  resume.add_argument("--list", action="store_true", help="仅列出停止记录的 session ID、cwd 和标题；须与 --stopped 一起使用")
+  resume.add_argument("--batch", action=UniqueSelector, help="停止记录的完整32位小写十六进制批次 ID；须 --stopped")
+  resume.add_argument("--run", action=UniqueSelector, help="停止记录的完整32位小写十六进制运行 ID；须 --stopped")
+  resume.add_argument("--format", choices=("auto", "human", "json"), default="auto")
   location = resume.add_mutually_exclusive_group()
   for name, description in (("here", "当前终端交接，保留会话原工作目录（默认）"),
       ("original", "原终端位置恢复；需独立验证的位置能力"),
@@ -467,8 +473,9 @@ def _configure_static_help(parser):
       "副作用：" + "；".join(effects), "最短示例：" + examples[0], "显式范围示例：" + examples[1],
       "原生帮助：run --后的全部token和agent usage全部尾部含--help属于宿主；管理说明请看agent --help。"]
     if path == ("resume",):
+      lines.append("停止记录：--stopped --list 只读列出 session ID、原 cwd、标题和阶段，不需要工具、session 或 TTY；坏记录保留已知行并返回4。--stopped 恢复在TTY缺少目标时只选择一次；非TTY须完整 --batch 与 --run。不默认选最近；与 --session/--original/--new-tab 冲突。候选不等于加载成功，启动前仍复核原文件与能力；旧 stop 快照仅显示人工核对命令，不参与快速恢复。普通 --session 恢复保持原行为。")
       lines.append("Herdr 边界：默认 --here 在当前终端恢复，不需要 Herdr。--original/--new-tab 当前尚未准入，安装 Herdr 也不会启用；请使用 --here。")
-      lines.append("根 --interactive 可在启动前选择仅显示人工文本并独立确认；文本须为可打印单行，最多4096字符/16384 UTF-8字节；不发送、不操作剪贴板或聚焦。DSH/Pi/OMP 当前终端恢复分别核验；Pi 写保护仅覆盖 Rotom 合作实例；加载待确认，不会发送继续；上游默认可能生成自动回顾。")
+      lines.append("普通 --session 恢复的根 --interactive 可在启动前选择仅显示人工文本并独立确认；文本须为可打印单行，最多4096字符/16384 UTF-8字节；不发送、不操作剪贴板或聚焦。DSH/Pi/OMP 当前终端恢复分别核验；Pi 写保护仅覆盖 Rotom 合作实例；加载待确认，不会发送继续；上游默认可能生成自动回顾。")
       lines.append("OMP 在原生写入冲突时可能生成分叉 session，请核对实际 ID。")
     if path == ("agent", "instances", "stop"):
       lines.append("--run 为完整32位小写十六进制且不得重复。--dry-run 只读预览；DSH/Pi/OMP 逐工具核验受管控制通道，旧运行无通道时需人工停止。非交互实际停止须显式 --plan-id（缺失返回2，漂移返回4）；交互展示计划并确认。超时/结果未知返回4和原 batch 查询命令，不重发或强杀。")
@@ -652,6 +659,9 @@ def main(argv=None, *, resume_candidate=None):
     context = InvocationContext(path, explicit_fields=explicit, input_policy=policy,
       output_mode="json" if getattr(args, "json", False) else getattr(args, "format", "auto"), scope=scope, input_gateway=gateway)
     invocation = TypedInvocation(context, tuple(management), tuple(native_tail))
+    if path == ("resume",) and getattr(args, "stopped", False):
+      from .stopped import dispatch as dispatch_stopped
+      return dispatch_stopped(invocation, args)
     if path == ("resume",) and resume_candidate is not None:
       from .resume import CandidateResume
       if type(resume_candidate) is not CandidateResume:
@@ -715,12 +725,21 @@ def validate_explicit_conditions(args):
       batch = getattr(args, "batch", None)
       if batch is not None and re.fullmatch(r"[0-9a-f]{32}", batch) is None:
         raise InputError(2)
-      from .maintenance import _sessions
+      from .maintenance import _labels, _sessions
       mapping = _sessions(getattr(args, "session", None))
-      if batch is not None and path[-1] == "plan" and (runs or mapping):
+      labels = _labels(getattr(args, "label", None))
+      if batch is not None and path[-1] == "plan" and (runs or mapping or labels):
         raise InputError(2)
-      if runs is not None and set(mapping) - set(runs):
+      if runs is not None and (set(mapping) | set(labels)) - set(runs):
         raise InputError(2)
+  if path == ("resume",):
+    stopped = getattr(args, "stopped", False)
+    if stopped and (args.session is not None or args.original or args.new_tab):
+      raise InputError(2)
+    if not stopped and (args.list or args.batch is not None or args.run is not None):
+      raise InputError(2)
+    if any(value is not None and re.fullmatch(r"[0-9a-f]{32}", value) is None for value in (args.batch, args.run)):
+      raise InputError(2)
   if path in (("run",), ("resume",), ("agent", "run")):
     profile = getattr(args, "profile", None)
     if profile is not None:
@@ -811,6 +830,10 @@ def complete_missing(parser, args, management, gateway, policy, *, resume_candid
     path = (*path, selected)
     current = sub.choices[selected]
   validate_explicit_conditions(args)
+  if path == ("resume",) and getattr(args, "stopped", False):
+    if not args.list and (args.batch is None or args.run is None):
+      gateway.require_input(policy)
+    return tokens, args, navigated, candidate_scope, None
   if path == ("resume",):
     if getattr(args, "session", None) is None:
       gateway.require_input(policy)

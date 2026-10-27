@@ -8,7 +8,7 @@
 
 逐阶段命令、TTY/非 TTY、取消及旧批次兼容见[维护流程指南](../../docs/tool-maintenance-workflows.md)。候选三工具 stop_only → 关本次 fence → 最新独立 setup 批准/原全门禁 → 逐项当前终端恢复。Pi Claims 仅合作进程；OMP 同 ID open 不取锁，竞争首次写入可能分叉新 ID；都显示加载待确认，零继续。
 
-最终集合按分组及受影响完整文件复验对账：13,561 passed / 12 skipped，未解决失败与未覆盖均为 0；这不是一次未中断的全绿运行。原始失败和精确范围见验收记录，不累加重叠组。当前 93/125，T125 的 main 人工整合仍待批准；历史勾选含义保留。
+最终集合按分组及受影响完整文件复验对账：13,561 passed / 12 skipped，未解决失败与未覆盖均为 0；这不是一次未中断的全绿运行。原始失败和精确范围见验收记录，不累加重叠组。该阶段为 93/125，新增停止历史阶段为 97/129；T125 的 main 人工整合仍待批准；历史勾选含义保留。
 
 ## 历史恢复验收口径（2026-10-24）
 
@@ -326,3 +326,13 @@ setup 继续要求完整覆盖并拒绝未选引用。该隔离阶段尚未准�
 验证既有受管收据、锁字节及完整源/副本摘要。Core 20、TUI 3287 个原包文件与对应本地锁索引
 逐文件匹配，不把索引验证冒充重新下载官方归档。真实启动/停止有限证据见
 [main-review 第 55 节](main-review.md#55-锁定官方包的真实启动与精确停止)。
+
+## 已停止会话入口的隔离复验
+
+新增入口使用方式见[维护指南](../../docs/tool-maintenance-workflows.md#已停止会话清单与快捷恢复)。以下测试只使用合成会话、临时状态与假宿主，不启动第三方 Agent：
+
+```sh
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -B -m pytest -q -p no:cacheprovider tests/test_rotom_stopped_sessions.py tests/test_rotom_stopped_cli.py tests/test_rotom_tool_session_headers.py tests/test_rotom_tool_maintenance.py tests/test_rotom_tool_workflow_cli.py tests/test_rotom_resume_cli.py tests/test_rotom_help_completion.py tests/test_rotom_zsh_completion.py
+```
+
+新入口的真实全 CLI 停止/更新/恢复链路尚未验证；不能用上述隔离结果替代原生证据。`resume --stopped --list` 只读已保存的停止记录，原位恢复和自动继续仍未开放。

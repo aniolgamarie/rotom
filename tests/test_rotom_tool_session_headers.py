@@ -81,6 +81,7 @@ def test_exact_projection_read_only_and_no_body_access(native, monkeypatch):
   assert b"".join(consumed) == prefix + (json.dumps(value) + "\n").encode()
   assert target.path == path
   assert target.known.cwd == value["cwd"]
+  assert target.title == (None if workspace.agent == "pi" else "fixture-private-title")
   assert target.known.confirmation == target.known.cwd_status == "historical"
   home = workspace.instance / ("pi-home" if workspace.agent == "pi" else "user-home")
   kind = "pi-home" if workspace.agent == "pi" else "omp-managed-home"
@@ -220,6 +221,7 @@ def test_omp_fixed_256_byte_utf8_slot_with_current_v3_header_is_not_transcript(o
   target = headers.lookup(workspace, SESSION)
   assert b"".join(consumed) == slot + header
   assert target.known.ref.native_ref == SESSION and target.known.cwd == value["cwd"]
+  assert target.title == "合成标题 🌱"
   assert "private" not in repr(target)
   assert tuple(root.rglob("*")) == before
 
@@ -235,6 +237,13 @@ def test_omp_title_change_preserves_header_digest_and_target_identity(omp_native
   import hashlib
   assert current.header_digest == hashlib.sha256(header[:-1]).hexdigest()
   assert current.file_identity == target.file_identity
+  assert current.title == "a new title"
+
+
+def test_omp_native_title_controls_are_safe_display_only(omp_native):
+  workspace, _, path, value = omp_native
+  path.write_bytes(title_slot("合成\u202e\x1b[31m标题") + (json.dumps(value) + "\nBODY-CANARY\n").encode())
+  assert headers.lookup(workspace, SESSION).title == "合成??[31m标题"
 
 
 @pytest.mark.parametrize("encoding", ["utf-16-le", "utf-16-be", "utf-32-le", "utf-32-be"])

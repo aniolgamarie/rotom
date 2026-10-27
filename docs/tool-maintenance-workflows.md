@@ -30,6 +30,26 @@ Pi/OMP 的 stop endpoint 保存为既有 inbox 的 sidecar，绑定原 run/manag
 
 确认退出并关闭本次 stop fence 后，execute 重新取得普通 setup 的最新计划与独立批准，重走实例/HOME/包物理锁、owner 和共享资源完整门禁。并发新运行、未选共享引用或 unknown 均可阻止更新；不会扩大原停止集合。原维护结果和退出码保留，状态查询或恢复结果不能覆盖它。可能已执行的 unknown 不自动重试；只有可证实允许的新执行才能重新预览并批准，不从磁盘重建许可。
 
+## 已停止会话清单与快捷恢复
+
+不需要 Herdr。候选入口支持在当前机器的已保存停止记录中查看工具、profile、完整 session ID、原目录、标题、batch/run 和停止/恢复状态：
+
+```sh
+./rotom resume --machine workstation --stopped --list --format human
+./rotom resume pi --machine workstation --profile pi-base --stopped
+./rotom --no-input resume pi --machine workstation --profile pi-base --stopped --batch BATCH_ID --run RUN_ID --here
+```
+
+第一条只读列出记录，可用 `--format json` 获取结构化信息和精确范围的下一步 argv。第二条在 TTY 中选择一个满足批次条件的会话，直接交接到当前终端；第三条适合已知精确批次与运行的调用。非交互恢复必须同时给出完整 `--batch` 和 `--run`，不默认选最近一项。`--stopped` 不与 `--session`、`--original` 或 `--new-tab` 混用；不指定机器时沿用普通 resume 的机器解析。每次只恢复一项。
+
+维护批次的会话会在停止前保存。可给 plan 和 stop 同时添加相同的 `--label RUN_ID=TITLE`，例如 `--label 'RUN_ID=修复配置加载'`；多个 run 可重复该选项。备注限 1–160 字符单行文字。没有备注时，OMP 尝试读取官方固定标题槽；DSH/Pi 显示无标题，目前不扫描正文或自动生成摘要。标题属于这次批准的清单，变更后需重新 plan；标题不替代 session 身份。旧 v1 维护清单仍能读取，无标题保持为空。人工备注和原生标题只保存在本地私人状态，不应包含凭据。
+
+“可尝试恢复”只表示批次条件满足；执行时仍会重新核实原生 ID、目录、部署和能力。配置尚未更新、取消、已有恢复意图/结果、停止未知或部署漂移的批次不会进入快速选择列表。`--list` 查询损坏批次时保留其它可读行并返回 4，不把未知当空历史；另一条完整批次仍可独立选择，执行前按精确范围复核。记录的 `observed_at_ns` 是会话观察时刻，不是停止时间。历史查询不读取原生会话正文，也不启动宿主。human 输出将控制/格式字符可见化；JSON 保留精确路径原值供程序使用。
+
+旧 `instances stop` 的独立快照没有 workflow 来源证明；缺失维护日志的残留快照也可能呈现相同形态。因此这类记录只展示 ID、目录和人工核对后的普通恢复命令（JSON 的 `next_commands.manual_restore`），不直接进入批次快速恢复，以免绕过丢失的取消或派发记录。未观察到 ID/原目录时继续显示未知，不猜测。清单只能列出 Rotom 已保存的停止记录，不能追溯外部 `kill` 且未登记的会话。
+
+选择恢复后仍显示“加载待确认”，由人在官方 TUI 核对；不发送继续命令。原 pane 和新标签页未开放不妨碍使用上述当前终端入口。
+
 ## 恢复和 writer 的真实边界
 
 Herdr 是工作区原生终端操作的前提：`work enter`、`work named enter` 需要配置的 Herdr 可执行文件和可核验 API，从外部进入可启动配置的 headless 会话；`work open`、`close`、`rebind` 需要当前 Herdr 调用上下文与运行中的 API。`work list --live`、`status`、`reconcile` 查询运行中的 API，不自动启动，endpoint unknown 不等于未安装或空闲。配置检查/编辑、注册元数据、离线 `work list`、不带 `--enter` 的 Git worktree 创建不需要 Herdr；`worktree create --enter` 仅后续进入需要它，进入失败保留 checkout。`named rename` 先保存元数据，再尝试同步原生标题，Herdr 不可用时保留保存结果并提示待同步。根 `resume --here`（默认）及 `maintenance restore` 在当前终端交接，不需要 Herdr；`resume --original` 和 `--new-tab` 当前尚未准入，安装 Herdr 也不会启用，请改用 `--here`。

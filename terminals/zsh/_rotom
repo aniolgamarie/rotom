@@ -23,7 +23,7 @@ local -A _rotom_commands=(
 local -A _rotom_options=(
   _root '-h --help --interactive --no-input'
   run '-h --help --machine --local --profile --cwd --inherit-env --unset-env --proxy'
-  resume '-h --help --machine --local --profile --session --here --original --new-tab'
+  resume '-h --help --machine --local --profile --session --here --original --new-tab --stopped --list --batch --run --format'
   agent '-h --help --machine --local --profile'
   'agent init-local' '-h --help --machine --profile'
   'agent profiles' '-h --help'
@@ -51,8 +51,8 @@ local -A _rotom_options=(
   'agent instances list' '-h --help --agent --format'
   'agent instances stop' '-h --help --run --dry-run --plan-id --wait-seconds'
   'agent maintenance' '-h --help'
-  'agent maintenance plan' '-h --help --operation --batch --run --session --format'
-  'agent maintenance stop' '-h --help --operation --run --plan-id --session --wait-seconds --format'
+  'agent maintenance plan' '-h --help --operation --batch --run --session --label --format'
+  'agent maintenance stop' '-h --help --operation --run --plan-id --session --label --wait-seconds --format'
   'agent maintenance execute' '-h --help --batch --plan-id --format'
   'agent maintenance restore' '-h --help --batch --run --format'
   'agent maintenance status' '-h --help --batch --format'
@@ -98,6 +98,7 @@ local -A _rotom_options=(
 
 local -A _rotom_enums=(
   'agent model enable|--protocol' 'openai anthropic'
+  'resume|--format' 'auto human json'
   'agent validate|--format' 'auto human json'
   'agent render|--format' 'auto human json'
   'agent plan|--format' 'auto human json'
@@ -194,8 +195,8 @@ local -a _rotom_leaves=(
   'work worktree create'
 )
 
-local -a _rotom_value_options=(--adopt-target --agent --base --batch --component --confirm-zshenv --cwd --depth --entry --entry-repo --exclude --existing-branch --format --from-pi-home --home --id --inherit-env --local --machine --mode --new-branch --operation --path --plan-id --plugin --profile --protocol --proxy --repo --run --scope --session --source --start-path --template --timeout --title --unset-env --version --wait-seconds)
-local -a _rotom_flags=(--accept --adopt-target --agent --base --batch --component --confirm-zshenv --cwd --depth --drop-mihomo --dry-run --edit --enter --entry --entry-repo --environment --exclude --existing-branch --follow-symlinks --format --from-pi-home --help --here --home --id --include-hidden --inherit-env --input --interactive --json --live --local --machine --mode --new --new-branch --new-tab --no-input --none --operation --original --path --plan-id --plan-only --plugin --profile --protocol --proxy --repo --run --scope --session --source --start-path --strict --template --timeout --title --unset-env --verbose --version --wait-seconds --yes -h)
+local -a _rotom_value_options=(--adopt-target --agent --base --batch --component --confirm-zshenv --cwd --depth --entry --entry-repo --exclude --existing-branch --format --from-pi-home --home --id --inherit-env --label --local --machine --mode --new-branch --operation --path --plan-id --plugin --profile --protocol --proxy --repo --run --scope --session --source --start-path --template --timeout --title --unset-env --version --wait-seconds)
+local -a _rotom_flags=(--accept --adopt-target --agent --base --batch --component --confirm-zshenv --cwd --depth --drop-mihomo --dry-run --edit --enter --entry --entry-repo --environment --exclude --existing-branch --follow-symlinks --format --from-pi-home --help --here --home --id --include-hidden --inherit-env --input --interactive --json --label --list --live --local --machine --mode --new --new-branch --new-tab --no-input --none --operation --original --path --plan-id --plan-only --plugin --profile --protocol --proxy --repo --run --scope --session --source --start-path --stopped --strict --template --timeout --title --unset-env --verbose --version --wait-seconds --yes -h)
 
 # 先收集并校验完整NUL响应，再作为值交给compadd；错误静默退回静态候选。
 _rotom_ids() {

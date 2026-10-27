@@ -86,9 +86,12 @@ def _validate_manifest(workspace, batch_id, manifest):
         or manifest["kind"] != "tool-maintenance-workflow" or manifest["batch_id"] != batch_id):
       raise ValueError()
     value = manifest["plan"]
-    if (type(value) is not dict or set(value) != {"schema_version", "kind", "operation", "scope", "stop_plan",
-        "targets", "setup", "blockers", "plan_id", "readiness"}
-        or type(value["schema_version"]) is not int or value["schema_version"] != 1
+    fields = {"schema_version", "kind", "operation", "scope", "stop_plan",
+      "targets", "setup", "blockers", "plan_id", "readiness"}
+    if type(value) is dict and value.get("schema_version") == 2:
+      fields.add("display")
+    if (type(value) is not dict or set(value) != fields
+        or type(value["schema_version"]) is not int or value["schema_version"] not in (1, 2)
         or value["kind"] != "tool-maintenance-plan" or value["operation"] != "setup"
         or value["scope"] != {**workspace.binding, "agent": workspace.agent}
         or value["plan_id"] != _plan_digest(value) or value["readiness"] != "ready" or value["blockers"] != []):
@@ -105,6 +108,21 @@ def _validate_manifest(workspace, batch_id, manifest):
       if known.ref in refs:
         raise ValueError()
       refs.add(known.ref)
+    if value["schema_version"] == 2:
+      from .stopped_sessions import validate_title
+      if type(value["display"]) is not dict or set(value["display"]) != set(value["targets"]):
+        raise ValueError()
+      for label in value["display"].values():
+        if (type(label) is not dict or set(label) != {"title", "source"}
+            or label["source"] not in ("user", "native-omp", "unavailable")):
+          raise ValueError()
+        if label["source"] == "unavailable":
+          if label["title"] is not None:
+            raise ValueError()
+        else:
+          validate_title(label["title"])
+          if label["source"] == "native-omp" and workspace.agent != "omp":
+            raise ValueError()
     _setup_shape(value["setup"])
   except Exception:
     raise Conflict(_ERROR) from None
@@ -198,13 +216,20 @@ def preview_setup(workspace):
     "ready": not (plan.conflicts or plan.drift)}
 
 
-def plan(workspace, *, selected_runs, sessions):
+def plan(workspace, *, selected_runs, sessions, labels=None):
   """只读计划；每个恢复目标必须有明确 ID，不猜测当前或最新会话。"""
   from .dsh_stop import capture_stop
   observed, records, _ = capture_stop(workspace, selected_runs=selected_runs)
   if type(sessions) is not dict or set(sessions) - set(selected_runs):
     raise ValueError("session 映射必须属于所选运行")
+  from .stopped_sessions import validate_title
+  labels = {} if labels is None else labels
+  if type(labels) is not dict or set(labels) - set(selected_runs):
+    raise ValueError("label 映射必须属于所选运行")
+  for title in labels.values():
+    validate_title(title)
   targets, blockers = {}, list(observed["plan"]["blockers"])
+  display = {}
   auxiliary = {}
   if workspace.agent == "pi":
     from .pi_session_observation import from_records
@@ -225,15 +250,28 @@ def plan(workspace, *, selected_runs, sessions):
     if target.ref.native_ref != identifier or historical is not None and asdict(target.ref) != historical["session"]:
       raise Conflict(_ERROR)
     targets[run] = asdict(target)
+    title, source = labels.get(run), "user" if run in labels else "unavailable"
+    if title is None and workspace.agent == "omp":
+      from .tool_session_headers import lookup
+      from .sessions import SessionError
+      try:
+        header = lookup(workspace, identifier)
+        if header.known.ref == target.ref and header.known.cwd == target.cwd:
+          title = header.title
+          source = "native-omp" if title is not None else "unavailable"
+      except SessionError:
+        # 标题只是显示提示；已核验的恢复身份不因标题缺失变成伪造信息。
+        pass
+    display[run] = {"title": title, "source": source}
   # 两个运行不能在恢复时同时追加同一会话。
   if len({target["ref"]["native_ref"] for target in targets.values()}) != len(targets):
     blockers.append("duplicate-restore-session")
   setup = preview_setup(workspace)
   if not setup["ready"]:
     blockers.append("setup-conflict-or-drift")
-  value = {"schema_version": 1, "kind": "tool-maintenance-plan", "operation": "setup",
+  value = {"schema_version": 2, "kind": "tool-maintenance-plan", "operation": "setup",
     "scope": {**workspace.binding, "agent": workspace.agent}, "stop_plan": observed["plan"],
-    "targets": targets, "setup": setup, "blockers": sorted(blockers)}
+    "targets": targets, "display": display, "setup": setup, "blockers": sorted(blockers)}
   return {**value, "plan_id": _plan_digest(value), "readiness": "blocked" if blockers else "ready"}
 
 
@@ -350,7 +388,8 @@ class Store:
 def stop(workspace, *, expected_plan, approve, wait_seconds=30):
   from .dsh_stop_client import execute_stop
   fresh = plan(workspace, selected_runs=expected_plan["stop_plan"]["selected_runs"],
-    sessions={run: target["ref"]["native_ref"] for run, target in expected_plan["targets"].items()})
+    sessions={run: target["ref"]["native_ref"] for run, target in expected_plan["targets"].items()},
+    labels={run: label["title"] for run, label in expected_plan.get("display", {}).items() if label["source"] == "user"})
   # 查询时刻不参与批准摘要；session 内容/目录与精确停止计划必须仍相符。
   for run, target in fresh["targets"].items():
     target["observed_at_ns"] = expected_plan["targets"][run]["observed_at_ns"]
@@ -391,6 +430,7 @@ def status(workspace, batch_id):
     "revision": value["revision"], "stop_status": stop_status, "stop": stopped, "cancelled": cancelled,
     "setup": setup[-1] if setup else None, "restores": {run: rows[-1] if rows else None for run, rows in restored.items()},
     "targets": deepcopy(value["manifest"]["plan"]["targets"]), "continue_status": "not_sent",
+    "display": deepcopy(value["manifest"]["plan"].get("display", {})),
     "load_confirmation": "unknown", "resource_check": "required-by-setup"}
   result["status"] = ("cancelled" if cancelled else "stopped" if stop_status == "stopped" and not setup
     else "unknown" if stop_status == "unknown" else "pending")

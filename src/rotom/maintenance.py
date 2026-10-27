@@ -36,6 +36,18 @@ def _sessions(values):
   return result
 
 
+def _labels(values):
+  result = {}
+  for value in values or ():
+    from agentcfg.stopped_sessions import validate_title
+    run, separator, title = value.partition("=")
+    if re.fullmatch(r"[0-9a-f]{32}", run) is None or not separator or run in result:
+      raise ValueError("label 需为不重复的 RUN_ID=TITLE")
+    validate_title(title)
+    result[run] = title
+  return result
+
+
 def _batch_workspace(scope, batch_id):
   from agentcfg.local import available_profiles
   from agentcfg.workspace import load_instance_workspaces
@@ -121,14 +133,16 @@ def dispatch(invocation, args):
     if command == "stop" and args.plan_id is None:
       gateway.require_input(policy)
     supplied = _sessions(args.session)
-    if set(supplied) - set(runs):
+    labels = _labels(getattr(args, "label", None))
+    if (set(supplied) | set(labels)) - set(runs):
       raise InputError(2)
     selected = workspace_for_scope(Path(_local_path(context.scope)), selected_runs=runs, profile=context.scope.profile)
     workspace = load_workspace(selected.local_path, selected.profile)
     if workspace.binding != selected.binding or workspace.agent != selected.agent:
       raise Conflict("维护目标范围发生变化")
     sessions = _choose_sessions(workspace, runs, supplied, context)
-    value = workflow.plan(workspace, selected_runs=runs, sessions=sessions)
+    options = {"labels": labels} if labels else {}
+    value = workflow.plan(workspace, selected_runs=runs, sessions=sessions, **options)
     if value["readiness"] != "ready" and any(blocker.startswith("session-required:") for blocker in value["blockers"]):
       raise InputError(2)
     if command == "plan":
@@ -192,22 +206,32 @@ def dispatch(invocation, args):
     selected = getattr(args, "run", None)
     pending = [run for run, state in result["restores"].items() if state is None]
     if selected is None:
-      selected = gateway.choose([(run, _text(f"{run} / session={result['targets'][run]['ref']['native_ref']} / cwd={result['targets'][run]['cwd']}"))
+      def description(run):
+        title = ((result.get("display") or {}).get(run) or {}).get("title") or "无标题"
+        return _text(f"{run} / session={result['targets'][run]['ref']['native_ref']} / "
+          f"cwd={result['targets'][run]['cwd']} / title={title}")
+      selected = gateway.choose([(run, description(run))
         for run in pending], policy=policy, label="选择本终端恢复的实例")
-    def launch(target, *, expected_deployment):
-      from .resume import backend_for_workspace
-      if target.ref.agent == "omp":
-        print("OMP 在原生写入冲突时可能生成分叉 session；请核对界面实际 ID 后手动继续。", file=gateway.stderr, flush=True)
-      def notice(outcome):
-        if outcome.status == "launch_dispatched" and outcome.exit_code is None:
-          print("已发起恢复，加载待确认；在原生 TUI 核对 session ID、目录和历史后手动继续。", file=gateway.stderr, flush=True)
-      backend = backend_for_workspace(workspace, target, expected_deployment=expected_deployment)
-      outcome = ResumeCoordinator(backend, notice=notice).resume(target, location="here")
-      if outcome.exit_code is None:
-        # 派发或结果未知不是原生退出事实；保留原意图供明确查询，不补造失败结果。
-        raise SessionError(4, "restore_exit_unconfirmed")
-      return outcome.exit_code
-    code, result = workflow.restore(workspace, batch_id, run_id=selected, launch=launch)
-    _render(_next(result), context)
-    return code
+    return restore_selected(workspace, batch_id, selected, context)
   raise InputError(2)
+
+
+def restore_selected(workspace, batch_id, run_id, context):
+  """两种公开入口共用同一部署绑定、持久意图和防重门禁。"""
+  gateway = context.input_gateway
+  def launch(target, *, expected_deployment):
+    from .resume import backend_for_workspace
+    if target.ref.agent == "omp":
+      print("OMP 在原生写入冲突时可能生成分叉 session；请核对界面实际 ID 后手动继续。", file=gateway.stderr, flush=True)
+    def notice(outcome):
+      if outcome.status == "launch_dispatched" and outcome.exit_code is None:
+        print("已发起恢复，加载待确认；在原生 TUI 核对 session ID、目录和历史后手动继续。", file=gateway.stderr, flush=True)
+    backend = backend_for_workspace(workspace, target, expected_deployment=expected_deployment)
+    outcome = ResumeCoordinator(backend, notice=notice).resume(target, location="here")
+    if outcome.exit_code is None:
+      # 派发或结果未知不是原生退出事实；保留原意图供明确查询，不补造失败结果。
+      raise SessionError(4, "restore_exit_unconfirmed")
+    return outcome.exit_code
+  code, result = workflow.restore(workspace, batch_id, run_id=run_id, launch=launch)
+  _render(_next(result), context)
+  return code

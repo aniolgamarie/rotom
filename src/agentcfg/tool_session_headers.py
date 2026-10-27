@@ -30,6 +30,7 @@ class HeaderTarget:
   path: Path
   header_digest: str
   file_identity: tuple
+  title: str | None = None
 
 
 def _scope(workspace):
@@ -71,9 +72,10 @@ def _decode_line(raw):
 def _read_header(fd, agent):
   raw, terminated = _first_line(fd)
   value = _decode_line(raw)
+  title = None
   if agent == "omp" and type(value) is dict and value.get("type") == "title":
     # 固定 OMP 版本的公开 serializeTitleSlot：恰为 256 UTF-8 字节（含 LF）。
-    # 校验后才能跳一行；标题只用于识别物理前缀，不投影，也不绑定恢复身份。
+    # 标题仅作显示提示，不绑定恢复身份；不为标题扫描会话正文。
     fields = {"type", "v", "title", "updatedAt", "pad"}
     if (not terminated or len(raw) + 1 != _OMP_TITLE_SLOT_BYTES
         or not raw.startswith(b"{") or not raw.endswith(b"}")
@@ -83,9 +85,11 @@ def _read_header(fd, agent):
         or set(value["pad"]) - {" "}
         or "source" in value and value["source"] not in ("auto", "user")):
       raise SessionError(5, "invalid_session_title_slot")
+    from .stopped_sessions import display_title
+    title = display_title(value["title"])
     raw, _ = _first_line(fd)
     value = _decode_line(raw)
-  return raw, value
+  return raw, value, title
 
 
 def _header(tree, relative, workspace, kind, home):
@@ -99,7 +103,7 @@ def _header(tree, relative, workspace, kind, home):
       identity = (opened.st_dev, opened.st_ino)
       if identity != (before.st_dev, before.st_ino):
         raise SessionError(4, "session_header_changed")
-      raw, value = _read_header(fd, workspace.agent)
+      raw, value, title = _read_header(fd, workspace.agent)
       current = os.stat(name, dir_fd=parent, follow_symlinks=False)
       _safe(current)
       if identity != (current.st_dev, current.st_ino):
@@ -123,7 +127,7 @@ def _header(tree, relative, workspace, kind, home):
   known = KnownSession(SessionRef(workspace.agent, "managed", run_owners.native_home_key(
     {"kind": kind, "path": str(home)}), value["id"]), scope_key(workspace.binding),
     workspace.profile, str(cwd), "historical", "historical", time.time_ns(), None)
-  return HeaderTarget(known, tree.root / relative, hashlib.sha256(raw).hexdigest(), identity)
+  return HeaderTarget(known, tree.root / relative, hashlib.sha256(raw).hexdigest(), identity, title)
 
 
 def candidates(workspace):
