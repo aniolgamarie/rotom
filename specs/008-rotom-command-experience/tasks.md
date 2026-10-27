@@ -10,29 +10,29 @@ description: "Rotom 命令与会话体验的实施任务"
 
 **Branch**: `feat/tool-maintenance-workflows-20261026`；逻辑功能标识为 `008-rotom-command-experience`。
 
-**Status**: 本轮候选实施与验收完成，待人工批准整合。已完成项按实际证据勾选；历史替代、范围外和人工整合任务保持未勾。阶段证据与单一写入责任记录于忽略的私人任务记录。
+**Status**: 本轮候选实施与验收完成，待人工批准整合。已完成项按实际证据勾选；21 个历史项以非执行记录明确关闭，人工整合任务 T125 保持未勾。阶段证据与单一写入责任记录于忽略的私人任务记录。
 
 **当前候选（2026-10-27）**：维护及当前终端恢复按 Phase 12–14 的 T118–T133 验收，替代旧跨工具统一 Domain 前提。基线 main `45953f0`，候选没有切换日常入口，T125 的人工整合仍待批准。最新用户选择把原 pane 与新标签页列为下一交付范围；生产机制、隔离验证及同一最终源码的 12 组真实 Herdr/官方宿主验收已通过；12 条精确位置准入已原样开放，支持文档、最终交付全量测试与稳定差异审查已完成。候选没有合入 main。范围、任务状态及证据见下表和 [验收记录](tool-workflow-validation.md)。
 
-## 当前范围与未勾选项的含义
+## 当前范围与任务终态的含义
 
-核对修订前：任务分支 `121ab0a` 为 101/133，main `45953f0` 为 86/117；main 的旧任务表不包含后续候选增量。未勾选不全代表当前必做缺口：
+核对修订前：任务分支 `121ab0a` 为 101/133，main `45953f0` 为 86/117；main 的旧任务表不包含后续候选增量。以下区分当前执行清单与历史关闭记录；旧阶段计数仅作追溯：
 
-本次机制、真实位置验收与支持文档已完成 T085、T087–T095、T135–T138，现为 116/138；22 个未勾选项中，17 个历史已替代、4 个本轮范围外和 1 个 T125 人工整合。T095/T138 已通过支持矩阵、帮助/补全、公开信息和稳定差异检查；准入仅含本次实际通过的精确组合，不推定已合入 main。
+本次机制、真实位置验收与支持文档已完成 T085、T087–T095、T135–T138，当前有效复选框共 117 项：116 项完成，唯一未勾选项为 T125 人工整合。历史总计 138 个任务 ID；另有 21 项已关闭的非执行记录，其中 17 项被新方案替代、4 项按用户确定范围移除。关闭表示设计替代或范围终止，不表示原任务已实现或验收通过。T095/T138 已通过支持矩阵、帮助/补全、公开信息和稳定差异检查；准入仅含本次实际通过的精确组合，不推定已合入 main。
 
 | 分类 | 任务 | 当前处理 |
 | --- | --- | --- |
 | 机制及隔离验证已完成 | T085、T087–T093、T135、T136 | 受保护记录、薄驻留、独立 tab 交接、批量选择和只读诊断已实现；位置准入仅含下列实测组合 |
 | 真实位置验收已完成 | T094、T137 | 同一最终源码通过 8 组会话流程与 4 组 DSH/Pi V1/V2 work 入口；6 组合的两位置共 12 key 已开放 |
 | 支持文档与稳定交付检查已完成 | T095、T138 | 按实际矩阵公布条件；完整隔离回归14,153 passed / 13 skipped / 0 failed，最终help文案另经专项复验，见验收记录 |
-| 历史方案已被替代 | T062、T063、T069–T072、T074–T084 | 其中 17 个未完成项保留未勾，逐条标注替代任务；不再按旧统一 Domain 前提开发或阻挡新流程 |
-| 本轮不承诺 | T098–T100、T103 | 原生 TUI 自动继续未选；统一严格加载回执也不承诺。保留历史设计，不算本轮待实现门禁 |
+| 已关闭／被替代 | T062、T063、T069–T072、T074–T084 | 17 个历史项退出执行清单，原描述与替代映射保留，不声称旧方案完整实现；不再按旧统一 Domain 前提开发或阻挡新流程 |
+| 已关闭／按用户确定范围移除 | T098–T100、T103 | 原生 TUI 自动继续未选；统一严格加载回执也不承诺。4 个历史项退出执行清单，保留原设计，不声称这些能力已实现 |
 | 人工整合待批准 | T125 | 当轮候选经人工审阅批准后才合入 main，不由任务勾选推导批准 |
 | 本次帮助与规划修订 | T134 | 仅核对当前提示、范围和任务关系，不代表 pane 功能完成 |
 
-`[X]` 仅表示按该条定义完成并具有相应证据；历史未实现项加“已替代”或“本轮范围外”标签，仍保持 `[ ]`，不追改成历史完成。当前有效开发顺序见文末，不使用后面的历史依赖示例安排新流程。
+`[X]` 仅表示按该条定义完成并具有相应证据；`[ ]` 表示仍待执行的任务。历史未实现项使用普通列表记录“已关闭／被替代”或“已关闭／按用户确定范围移除”，保留原 ID、描述和替代映射，不追改为 `[X]`。当前有效开发顺序见文末，不使用后面的历史依赖示例安排新流程。
 
-当前实现执行清单仅为上述 14 个位置任务；带“历史已替代”或“本轮范围外”的未勾选项不交给 implement 执行。T125 单独处理人工整合。没有把统一严格加载回执、自动继续或任意未知结果必须变成成功作为这些任务的完成条件；未知可明确保留，未验收组合不开放。
+上述 14 个位置任务已按证据完成；当前执行清单仅剩 T125 的人工批准与整合收尾。21 个历史关闭记录不交给 implement 执行。没有把统一严格加载回执、自动继续或任意未知结果必须变成成功作为这些任务的完成条件；未知可明确保留，未验收组合不开放。
 
 原 pane 的适用条件是通过 Rotom Herdr 入口、由驻留启动器托管且该工具已验收的新实例；普通 shell `rotom run` 仍随 Agent 退出返回。旧普通实例、直接官方 CLI、launcher/pane 丢失时不保证原位，需当前终端或用户接受的新位置。help、命令提示及只读诊断须说明可用、不支持、丢失、未知和下一步。Pi Pro 委派不是本功能任务；`pi-pro` 普通 profile 的维护/恢复仍保留。
 
@@ -59,9 +59,10 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- 每项采用 `- [ ] Tnnn [P?] [USn?] 描述与文件路径`；编号连续且唯一，故事阶段必须有 US 标签。
+- 当前执行项采用 `- [ ] Tnnn [P?] [USn?] 描述与文件路径`，完成后按证据改为 `[X]`；历史关闭项采用 `- Tnnn [P?] [USn?] **【已关闭／原因】** 原描述`，不带复选框。138 个任务 ID 连续且各有唯一任务条目，故事阶段保留 US 标签。
+- 当前计数为 117 个有效复选框（116 完成、T125 唯一待执行）及 21 个历史关闭记录；历史关闭不计为实现完成，也不计为待办。
 - `[P]` 只表示在列明前置已完成后，能与所列不相交文件任务并行；依赖和单一写入责任优先。
-- 每项结尾列出直接依赖和 FR/SC；未选的条件能力保持未完成，不自动跳过并勾选。
+- 每项结尾列出直接依赖和 FR/SC；未选的条件能力不得勾为完成。已由用户确定移除的历史项记录关闭原因，未来重新选择时须重新明确范围与验收门槛。
 - 本清单不授权真实宿主、zsh/Herdr、信号、PTY、终端输入、真实账号/模型调用或日常配置部署。
   对应原生任务须另获范围明确的授权；未授权/未实现与“环境不足未验证”分别记录。
 
@@ -278,7 +279,7 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 ## Phase 8: User Story 6 — 原统一 Domain 方案与已完成内部增量（历史）
 
-当前公开编排以 Phase 12 的 T118–T125 为准；本节保留旧任务、协议及证据，不再要求 DSH/Pi 先采用统一 Domain。
+当前公开编排以 Phase 12 的 T118–T125 为准；本节保留旧任务、协议及证据，不再要求 DSH/Pi 先采用统一 Domain。17 个未完整实现的历史项已关闭并保留替代映射。下文阶段补充中的“仍未完成”“不勾选”等描述是当时的证据边界，不重新产生当前待办，也不证明旧统一 Domain、BatchPermit 或 ReleaseObservation 方案逐字实现。
 
 **Purpose / Goal**: 普通 stop 与维护共用身份/退出执行器，setup 维护的批准、资源协调、恢复清单及对账保持一致。
 
@@ -294,9 +295,9 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 - [X] T116 [US6] 在 `src/agentcfg/resource_scopes.py`、协调 schema/codec、`resource_owners.py` 与 `omp_identity.py` 建立仅全新 OMP 实例的 instance/native-home 唯一域锚点：父容器独立声明先持久化，再不可覆盖创建实例/锁/HOME 与锚点，最后登记域；所有中断保留声明，已有目录不采用。内部 owner 必须覆盖一个 runtime 加同域 instance/native-home，启动/退出前复核完整集合；普通入口在创建前与锁内拒绝声明/锚点，不开放生产。以 `tests/test_rotom_resource_scopes.py` 验证跨域、替换/损坏防降级、逐写入失败和三资源闭环；旧历史采用与 unknown 排他对账仍属 T065/T066。（依赖：T112、T113、T114、T115；覆盖：FR-021、FR-032、FR-034、FR-043）
 
-- [ ] T062 [P] [US6] **【历史已替代：T118/T123】** 在 `tests/test_rotom_maintenance.py` 先写只读 stop_only/setup 计划零写入、精确集合/资源/恢复方案、计划变化重审、保存恢复清单先于假停止、独立停止/维护批准与共享阶段 deadline 的失败用例；不用真实 kill 或宿主。（依赖：T052、T060；覆盖：FR-030、FR-031、FR-033、FR-034、FR-037、SC-008）
+- T062 [P] [US6] **【已关闭／被替代：T118/T123】** 在 `tests/test_rotom_maintenance.py` 先写只读 stop_only/setup 计划零写入、精确集合/资源/恢复方案、计划变化重审、保存恢复清单先于假停止、独立停止/维护批准与共享阶段 deadline 的失败用例；不用真实 kill 或宿主。（依赖：T052、T060；覆盖：FR-030、FR-031、FR-033、FR-034、FR-037、SC-008）
 
-- [ ] T063 [P] [US6] **【历史已替代：T119/T122/T123/T132】** 在 `tests/test_rotom_maintenance_recovery.py` 先写 reservation/intent 竞态、跨域别名（不同 instance/state 共享 cache、A 留 unknown 而 B Registry 为空、包 EX 可取、首次采纳及 cache-only sync）、旧入口物理锁、后代幸存/unknown、dispatch/fsync/响应丢失、部分 setup、取消及三类恢复部署依据用例，断言第三实例不被自动纳入、未知不重试或清保护。（依赖：T052、T060；覆盖：FR-032、FR-034、FR-035、FR-036、SC-008、SC-009）
+- T063 [P] [US6] **【已关闭／被替代：T119/T122/T123/T132】** 在 `tests/test_rotom_maintenance_recovery.py` 先写 reservation/intent 竞态、跨域别名（不同 instance/state 共享 cache、A 留 unknown 而 B Registry 为空、包 EX 可取、首次采纳及 cache-only sync）、旧入口物理锁、后代幸存/unknown、dispatch/fsync/响应丢失、部分 setup、取消及三类恢复部署依据用例，断言第三实例不被自动纳入、未知不重试或清保护。（依赖：T052、T060；覆盖：FR-032、FR-034、FR-035、FR-036、SC-008、SC-009）
 
 - [X] T064 [US6] 在 `docs/rotom-stop-capabilities.md`、`tests/fixtures/rotom/exit-capabilities.json` 完成 P-EXIT 的公开停止通道/稳定句柄/manager 保留/后代和资源释放观察的 fake 原型，明确平台与工具边界，复用 main 已有 Pi Linux DescendantScope 和有限完整释放证据，缺覆盖/后代幸存/manager 丢失仍保持 unknown；不将旧退出验收当成本功能停止通道已准入；可在 T044 后提前取证，真实通道验证归 T082，无证明不能开放对应自动停止维护。（依赖：T044；覆盖：FR-031、FR-032、FR-043、FR-044）
 
@@ -310,25 +311,25 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 - [X] T068 [US6] 在 `src/agentcfg/maintenance.py`、`schemas/rotom/maintenance.schema.json` 定义 Batch/逐项状态，逐字字段“随机 batch_id、revision、原计划/operation、已接受目标、逐项事实、dispatch 状态、原操作结果、review_required”；状态覆盖 accepted/stop_requested/stopped_confirmed/maintenance_dispatch_intent/maintenance_running/maintenance_succeeded/restore_pending/launch_dispatched/restored 和 failed/partial/unknown，可能已执行但无确认不能当未执行，非有限值/未知字段版本拒绝。本任务只定义严格编码、读取与逐项事实约束，先在 `tests/test_rotom_maintenance_codec.py` 验证；不创建磁盘批次、不实施状态转换或构造 Permit，格式有效不证明批准、派发或原生结果。真实持久化/转换由 T069 及后续任务负责。（依赖：T067；覆盖：FR-034、FR-035、SC-009）
 
-- [ ] T069 [US6] **【历史已替代：T118/T119/T123】** 在 `src/agentcfg/maintenance.py`、`src/agentcfg/lifecycle.py` 实现停止接受：重新核实稳定目标/部署/资源/恢复方案，在短协调锁以代际 CAS 拒绝重叠意图/未纳入预留，然后 durable 保存批次与恢复清单/意图后才派发；新运行不自动追加，普通 stop 无须预建维护批次且不派发 setup。（依赖：T068、T066、T062、T063；覆盖：FR-030、FR-031、FR-034、FR-037、SC-008）
+- T069 [US6] **【已关闭／被替代：T118/T119/T123】** 在 `src/agentcfg/maintenance.py`、`src/agentcfg/lifecycle.py` 实现停止接受：重新核实稳定目标/部署/资源/恢复方案，在短协调锁以代际 CAS 拒绝重叠意图/未纳入预留，然后 durable 保存批次与恢复清单/意图后才派发；新运行不自动追加，普通 stop 无须预建维护批次且不派发 setup。（依赖：T068、T066、T062、T063；覆盖：FR-030、FR-031、FR-034、FR-037、SC-008）
 
   当前已独立实现的范围：manual 恢复快照 codec，以及 `maintenance_store.py` 中先不可覆盖保存清单、再提交摘要绑定意图的内部事务。基础入口只核验元数据；live 入口借用已持 SH，重读所选 Registry 的实际完整 owner/同 scope 关联及物理资源，owner 锁覆盖协调提交。未选共享引用只查协调表，不跟随记录路径打开其它工作区。实际部署代际、绑定、runtime/native HOME 与受保护文件已在协调锁前核验；该检查借用原物理 SH，不验证完整运行包内容。停止专属内存审阅已绑定完整计划/批次/创建进程，live 核验后、首次发布前一次消费；回调须在取锁前完成，后续失败不还原。完整维护的交互/显式参数批准与停止接线仍待完成；DSH stop_only 已按第 62 节独立准入，不能据此勾选 T062/T063/T069；T065/T066 依据其独立资源协调与普通启动验收完成。
 
   DSH 增量：`dsh_stop_scope.py` 只读核验当前部署、基础 argv、保存的 launcher baseline 与实例内物理目录；`run_stop_fence.py` 在同一 owner 锁内重核完整记录、发布持久阻断文件。上层必须已持实例/状态两把 SH，首次发布前回调不得取 Domain、Registry/owner 或物理锁。文件存在时，新 run/resume 登记及普通 apply/sync/rollback 拒绝，已有退出/unknown 仍可记账。该原语不提供停止或维护许可，也没有默认创建、超时删除、取消或重放。人工恢复快照现已用独立小封套复用完整 RunRecord，在 owner 锁内核实全集摘要与所选记录，先持久快照、再发布摘要绑定的 v2 fence；不编造 Domain/Batch，孤儿只作历史参考，不自动重放。内部 `save_manual_snapshot` 已统一借入 fd 校验、输入冻结、锁前/owner 锁内部署复核和快照先行发布。只读 `inspect_stop_request` 已在同一 owner 锁内核对 v2 意图、所选快照、目标当前记录、host/manager、部署与文件身份；返回历史记录而非批准，独立批准/期限/endpoint/原句柄仍另核验。DSH v2 StopPlan 现已绑定 Registry 完整 owner 摘要与本地资源引用，正式 CLI 接通 dry-run/setup plan，展示启动时的配置/部署及运行包版本。stop_only 不以未知外部覆盖单独阻断已核实目标，setup 仍要求完整覆盖并拒绝未选共享引用；新启动且原控制端点可核实的固定 Linux DSH 组合已准入 stop_only。内部 v2 快照保存完整规范计划，`save_reviewed_snapshot` 在布局/全集 CAS 后、首次写入前消费精确 StopReview，失败不还原；不把审阅数据当控制许可。DSH stop_only 已接通该保存器及批准/控制链，状态查询和保守取消保留逐项事实；完整维护的合作覆盖、批次状态和 setup/restore 接线仍未完成，不关闭本任务。阶段证据见 `main-review.md` 第 49–54、62 节。
 
-- [ ] T070 [US6] **【历史已替代：T119/T124/T130】** 在 `src/agentcfg/maintenance.py`、`src/agentcfg/runtime.py` 实现 P-EXIT 已准入停止执行器：官方通道或稳定句柄发送前复核 birth/归属，只控制已选 host、保留 manager 观察者；不得按进程名/目录/进程组猜目标。优雅批准不能授权强杀，超时不升级；首版未定义的强制 CLI 保持未开放，未来开放须另定精确计划与批准。（依赖：T069、T064；覆盖：FR-031、FR-037、SC-008）
+- T070 [US6] **【已关闭／被替代：T119/T124/T130】** 在 `src/agentcfg/maintenance.py`、`src/agentcfg/runtime.py` 实现 P-EXIT 已准入停止执行器：官方通道或稳定句柄发送前复核 birth/归属，只控制已选 host、保留 manager 观察者；不得按进程名/目录/进程组猜目标。优雅批准不能授权强杀，超时不升级；首版未定义的强制 CLI 保持未开放，未来开放须另定精确计划与批准。（依赖：T069、T064；覆盖：FR-031、FR-037、SC-008）
 
   T070 已完成的隔离范围：普通受管 DSH 与候选恢复共用 host/pidfd 绑定及可选 StopService 工厂；只有绑定、启动记账和派发通知成功才安装服务；默认本地入口现在为新启动的固定 Linux DSH 组合提供工厂，成功后登记完整 control 端点，旧运行不追认。服务组合私人 inbox、严格请求、durable intent/sent 与原 pidfd 的单次 SIGTERM；完成/失败不重试，收尾仅撤销服务，随后由启动生命周期关闭句柄。工厂/处理失败继续等同一宿主，保留原生结果与未知事实，不发送继续文本。
 
   正式 DSH 只有实例目录与状态文件两把运行租约，包与 native HOME 位于实例内；扩展测试另注入第三把包锁。生命周期、服务和真实临时元数据组合已有假宿主/假内核验证；DSH stop_only 的生产批准、活动 fence、原句柄和资源回调及三实例原生验证现已完成。DSH 按同实例完整 owner 集合、包含关系及原 run/sync/apply 门禁核验，不推断相同 lock identity 的不同实例共享运行包，不放宽 OMP 判断。完整维护接线及其它组合仍缺，整体 T070 不勾选。
 
-- [ ] T071 [US6] **【历史已替代：T119/T124/T130】** 在 `src/agentcfg/run_owners.py`、`src/agentcfg/lifecycle.py`、`src/agentcfg/maintenance.py` 接入完整同身份后代/资源 ReleaseObservation；stopped_confirmed 与 session 最终封口分开，缺封口仅限制自动恢复、保留已接受人工路径，缺退出证明维持 unknown；不能用单 PID 死亡/删标记/manager 返回证明释放，owner unknown 只走原有物理 EX 核实路径。（依赖：T070；覆盖：FR-029、FR-032、FR-036、SC-008）
+- T071 [US6] **【已关闭／被替代：T119/T124/T130】** 在 `src/agentcfg/run_owners.py`、`src/agentcfg/lifecycle.py`、`src/agentcfg/maintenance.py` 接入完整同身份后代/资源 ReleaseObservation；stopped_confirmed 与 session 最终封口分开，缺封口仅限制自动恢复、保留已接受人工路径，缺退出证明维持 unknown；不能用单 PID 死亡/删标记/manager 返回证明释放，owner unknown 只走原有物理 EX 核实路径。（依赖：T070；覆盖：FR-029、FR-032、FR-036、SC-008）
 
   T071 停止前段已部分验收：`maintenance_progress.py` 将同身份完整 ReleaseObservation 记入原 intent 的持久 Batch progress；requested 与 exit 分开，逐批 revision CAS，第三项 owner/预留不变。只处理 accepted/stop_requested；unknown 不降级，后续 failed/stopped_confirmed/维护/恢复阶段不接管。exit_confirmed 只表示观察已保存，不证明 manager SH、资源释放或 session 封口，不产生停止完成/维护许可；整体任务仍未完成。见 [第 63 节](main-review.md#63-维护停止前段的持久进展记账)。
 
   setup 资源核验亦已独立验收：`maintenance_release.py` 自行取得原实例/运行包及当前命名状态锁 EX，核对原物理锚点、原接受部署、完整末态 owner/receipt 与所有资源引用，在同一协调提交中记录 resources_released/stopped_confirmed。EX、owner NB 锁覆盖提交；结果仅为历史观察，保留意图、不生成 Permit、不派发 setup。未选共享引用或 unknown 即使物理 EX 可取仍阻断。本入口只接收 setup，不把共享包 EX 作为 DSH stop_only 完成条件；完整生命周期/维护 runner 接线仍未完成。见 [第 64 节](main-review.md#64-setup-批次的资源释放核验)。
 
-- [ ] T072 [US6] **【历史已替代：T123/T130】** 在 `src/agentcfg/maintenance.py` 实现注入单调时钟的 stop/ready 控制预算：“`--wait-seconds` 为 1–300 的整数”，默认 30，整个所选集合共享每阶段绝对 deadline，不逐项重置；超时返回 4 和已发生事实/待恢复/完整下一步，不继续维护/强杀，不限制 setup 安装或普通 TUI 生命周期。（依赖：T071；覆盖：FR-033、FR-035、FR-041、SC-009）
+- T072 [US6] **【已关闭／被替代：T123/T130】** 在 `src/agentcfg/maintenance.py` 实现注入单调时钟的 stop/ready 控制预算：“`--wait-seconds` 为 1–300 的整数”，默认 30，整个所选集合共享每阶段绝对 deadline，不逐项重置；超时返回 4 和已发生事实/待恢复/完整下一步，不继续维护/强杀，不限制 setup 安装或普通 TUI 生命周期。（依赖：T071；覆盖：FR-033、FR-035、FR-041、SC-009）
 
   T072 前置已独立验收：共享 ControlDeadline 和内部后代观察等待循环。记录先于 confirmed，超期/响应不明返回 4 并保留事实；confirmed 不证明 manager SH 释放，也不签发维护许可。DSH stop_only 的生产请求和短元数据锁等待现已共用原绝对截止点；接受后的停止前段已增加原子 Batch progress 和共享预算等待记账：已保存 exit 跳过，新观察顺序 CAS，记录响应不明或超期保留事实不重试；即使全部已有 exit 也检查原 deadline。setup 退出记账与单次物理 EX 确认已通过内部组合入口共享同一 deadline；等待返回初读或最后明确保存的 revision，确认只按此版本 CAS，不读回重签。超期或响应不明保留事实且返回 4；确认事务跨期成功也不能继续维护。结果不持锁、不签发 Permit；完整维护状态转换、CLI runner 及 ready 循环尚未接线，本任务不勾完成。见 [第 67 节](main-review.md#67-退出与资源确认共享预算)。
 
@@ -336,33 +337,33 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
   T073 的共用核心和普通 CLI 已完成独立验收：保留原批准、进度、结果、预检/同步/复核/apply 顺序及原物理 guard，返回原 apply 结果与退出码。实际维护 runner 与 Permit 属于 T074/T075；限定 Linux OMP 同 scope/runtime 的内部执行已接线，完整 CLI 与恢复对账仍未完成。
 
-- [ ] T074 [US6] **【历史已替代：T118/T122】** 在 `src/agentcfg/maintenance.py`、`src/agentcfg/commands.py` 定义并校验 BatchPermit，逐字约束“有限内存凭证：batch/revision/代际、operation、资源与部署/计划摘要、原维护批准及唯一 dispatch ID；在原操作首个副作用门禁核验后消费，不是公开输入或持久可重放令牌”；普通 CLI 仍用原批准，ResumePermit/用户 JSON 不能构造维护批准，已消费崩溃后不重签重跑。（依赖：T072、T073；覆盖：FR-034、FR-043）
+- T074 [US6] **【已关闭／被替代：T118/T122】** 在 `src/agentcfg/maintenance.py`、`src/agentcfg/commands.py` 定义并校验 BatchPermit，逐字约束“有限内存凭证：batch/revision/代际、operation、资源与部署/计划摘要、原维护批准及唯一 dispatch ID；在原操作首个副作用门禁核验后消费，不是公开输入或持久可重放令牌”；普通 CLI 仍用原批准，ResumePermit/用户 JSON 不能构造维护批准，已消费崩溃后不重签重跑。（依赖：T072、T073；覆盖：FR-034、FR-043）
 
   T074/T075 内部前置已实现：独立 SetupReview 与提交后 BatchPermit 均绑定完整批次、意图代际、setup 计划摘要及进程身份；审阅在原物理释放/部署重核后单次消费，随后原子保存唯一派发 ID 和 setup_plan_digest。仅明确提交成功后发行许可，响应丢失或发行失败不重试；普通 guard 仍阻挡活动意图。真实 setup 预览的共用摘要已用于普通核心：冻结完整计划和目标身份，sync 后即使脱敏摘要不变也拒绝实际变更。真实预览与独立维护批准、原持久派发已连接：只接受 Linux OMP 同一显式 local/profile、原实例/缓存/运行包，完整批次不能静默取子集；原同步门禁中的单次消费、后续部署复核与原结果记账已有内部接线：执行仍只覆盖同一原 scope/cache/runtime，保持 manual 恢复；首次同步前的目标部署摘要与 apply 后完整物理/释放复核已补齐，并有只读现场观察；观察匹配不升级结果、不清保护。完整控制/CLI、历史未知结果的持久对账、journal 恢复仍未完成，不勾选两项。见 [第 68 节](main-review.md#68-setup-独立批准与持久派发前置)、[第 69 节](main-review.md#69-真实-setup-预览绑定)、[第 70 节](main-review.md#70-实际维护预览与独立批准连接)、[第 71 节](main-review.md#71-原门禁中的维护执行与结果记账)及[第 72 节](main-review.md#72-目标部署绑定与只读现场观察)。
 
-- [ ] T075 [US6] **【历史已替代：T122/T130】** 在 `src/agentcfg/maintenance.py` 接入 setup runner：全部退出/资源/原维护计划批准均有效才 durable 记录 maintenance_dispatch_intent，在原操作首个副作用 guard 消费 BatchPermit；逐步复核资源与部署并保存原 operation result/code，可能已执行/回包丢失先对账不重试，停止批准不能代替写入批准。（依赖：T074；覆盖：FR-032、FR-034、FR-035、SC-009）
+- T075 [US6] **【已关闭／被替代：T122/T130】** 在 `src/agentcfg/maintenance.py` 接入 setup runner：全部退出/资源/原维护计划批准均有效才 durable 记录 maintenance_dispatch_intent，在原操作首个副作用 guard 消费 BatchPermit；逐步复核资源与部署并保存原 operation result/code，可能已执行/回包丢失先对账不重试，停止批准不能代替写入批准。（依赖：T074；覆盖：FR-032、FR-034、FR-035、SC-009）
 
-- [ ] T076 [US6] **【历史已替代：T118/T121/T123】** 在 `src/agentcfg/maintenance.py`、`src/agentcfg/sessions.py` 实现恢复清单与 ResumePermit，逐字字段“精确 batch/代际、后继 run/op、SessionRef、预期部署、位置；一次消费，不是一般 profile 白名单”；stop_only/确证未派发且部署未变用审阅旧契约，成功用保存新契约，partial/unknown 先原 journal/事实对账再新审阅；复用日常 resume/writer 门禁，不绕其它批次，多 TUI 不共用 stdin。（依赖：T075、T048；覆盖：FR-024、FR-035、FR-036、FR-037、FR-041、SC-009）
+- T076 [US6] **【已关闭／被替代：T118/T121/T123】** 在 `src/agentcfg/maintenance.py`、`src/agentcfg/sessions.py` 实现恢复清单与 ResumePermit，逐字字段“精确 batch/代际、后继 run/op、SessionRef、预期部署、位置；一次消费，不是一般 profile 白名单”；stop_only/确证未派发且部署未变用审阅旧契约，成功用保存新契约，partial/unknown 先原 journal/事实对账再新审阅；复用日常 resume/writer 门禁，不绕其它批次，多 TUI 不共用 stdin。（依赖：T075、T048；覆盖：FR-024、FR-035、FR-036、FR-037、FR-041、SC-009）
 
-- [ ] T077 [US6] **【历史已替代：T123】** 在 `src/agentcfg/maintenance.py`、`src/agentcfg/lifecycle.py` 实现 status/reconcile/cancel：只取消剩余动作，匹配代际解除已证未派发的本批意图；保留已停止/待恢复/unknown 与原维护结果，可能已执行或未知占用不因取消清保护；pending/unknown/待恢复/可能派发及已完成记录首版均不自动清理。（依赖：T076；覆盖：FR-034、FR-035、FR-036）
+- T077 [US6] **【已关闭／被替代：T123】** 在 `src/agentcfg/maintenance.py`、`src/agentcfg/lifecycle.py` 实现 status/reconcile/cancel：只取消剩余动作，匹配代际解除已证未派发的本批意图；保留已停止/待恢复/unknown 与原维护结果，可能已执行或未知占用不因取消清保护；pending/unknown/待恢复/可能派发及已完成记录首版均不自动清理。（依赖：T076；覆盖：FR-034、FR-035、FR-036）
 
   T077 成功分支已部分实现：completed 严格绑定已保存成功 setup、目标摘要、原 manual 计划及完整释放事实；complete_setup_manual 先现场核验、锁外独立批准，再于原 EX 内复核后同事务终结意图并记逐项 manual，保留原维护结果和清单。未知/部分成功不因此解除保护，cancel 原规则不变。现存 Linux OMP setup batch 的只读 status 已连接显式 profile 的 CLI，保留原 operation_result 并单列查询 exit_code；protected 仅指本批资源意图，manual 不表示已恢复，continue_status 为 not_sent。成功未交接、unknown/pending 返回 4；completed 且当前目标/资源核验通过返回 0，原非零结果保留原码；初始未派发即取消的正常观察返回 0 只说明取消，异常观察仍为 4。完整 reconcile/cancel 及控制 CLI 仍未完成，本项不勾选。见 [第 73 节](main-review.md#73-成功维护收尾与人工恢复交接) 与 [第 74 节](main-review.md#74-显式-omp-维护状态命令)。
 
-- [ ] T078 [US6] **【历史已替代：T123/T128/T130】** 在 `src/rotom/cli.py` 注册并接通 instances stop 和 maintenance plan/stop/execute/status/restore/cancel 全部叶子，普通 stop 与维护共用精确计划/执行器；首版 operation 仅 setup/stop_only，原 scope+run+plan 与独立原操作批准不能缺失，参数/导航/补全/无输入门控同步注册，不新增万能 --yes。（依赖：T077；覆盖：FR-007、FR-012、FR-030、FR-034、FR-037）
+- T078 [US6] **【已关闭／被替代：T123/T128/T130】** 在 `src/rotom/cli.py` 注册并接通 instances stop 和 maintenance plan/stop/execute/status/restore/cancel 全部叶子，普通 stop 与维护共用精确计划/执行器；首版 operation 仅 setup/stop_only，原 scope+run+plan 与独立原操作批准不能缺失，参数/导航/补全/无输入门控同步注册，不新增万能 --yes。（依赖：T077；覆盖：FR-007、FR-012、FR-030、FR-034、FR-037）
 
   历史 T078 只读增量基于 main 18c342f：仅 status 且显式公开 profile 的工具声明为 omp 时路由 OMP；local/机器沿明确选择路径，不扫描历史或自动发现 batch/profile，需要现存 batch。支持 auto/human/json、零 stdin，JSON 单对象，human 转义控制字符；next_commands 只有精确 local/profile/batch 的 status。无显式 profile 保持 DSH 原路由，DSH status/cancel 行为保留，OMP stop/execute/restore/cancel 未准入。CLI 稳定代码 336 passed，fixture 契约拼写纠正后新 suite 21 passed，重叠不相加；后端及垂直验收见 [第 74 节](main-review.md#74-显式-omp-维护状态命令)，不作为原生证据。本项仍部分推进，不改 checkbox，总数仍为 86/117。
 
-- [ ] T079 [US6] **【历史已替代：T123/T128】** 在 `src/agentcfg/maintenance.py`、`src/rotom/cli.py` 输出 batch/revision、requested/effected scope、逐项 stop/restore、dispatch、原 operation result/code、review_required 与完整范围 next command；保留原维护明确失败退出码，不被外层取消或展示成功覆盖，进度只到 stderr。（依赖：T078；覆盖：FR-013、FR-033、FR-035、SC-009）
+- T079 [US6] **【已关闭／被替代：T123/T128】** 在 `src/agentcfg/maintenance.py`、`src/rotom/cli.py` 输出 batch/revision、requested/effected scope、逐项 stop/restore、dispatch、原 operation result/code、review_required 与完整范围 next command；保留原维护明确失败退出码，不被外层取消或展示成功覆盖，进度只到 stderr。（依赖：T078；覆盖：FR-013、FR-033、FR-035、SC-009）
 
-- [ ] T080 [US6] **【历史已替代：T124/T130/T132】** 运行 `tests/test_rotom_maintenance.py`、`tests/test_rotom_maintenance_recovery.py` 的锁顺序/并发/逐写入派发故障用例，证明三选二时第三实例始终保留且其阻塞资源会拒绝维护；覆盖新运行使批准失效、幸存后代/unknown、回包丢失与 cancel 不重试。（依赖：T079；覆盖：SC-008、SC-009、FR-032、FR-034、FR-035）
+- T080 [US6] **【已关闭／被替代：T124/T130/T132】** 运行 `tests/test_rotom_maintenance.py`、`tests/test_rotom_maintenance_recovery.py` 的锁顺序/并发/逐写入派发故障用例，证明三选二时第三实例始终保留且其阻塞资源会拒绝维护；覆盖新运行使批准失效、幸存后代/unknown、回包丢失与 cancel 不重试。（依赖：T079；覆盖：SC-008、SC-009、FR-032、FR-034、FR-035）
 
-- [ ] T081 [US6] **【历史已替代：T124/T129/T133】** 运行受影响 `tests/test_rotom_resume.py`、`tests/test_rotom_instances.py`、`tests/test_rotom_run_records.py`、`tests/test_lifecycle_leases.py` 及 setup 原有隔离回归；记录 `.cache/task-records/rotom-command-experience-implementation.json`，未取得 T053 真实官方交接证据时只能报告机制验证，不开放自动恢复维护。（依赖：T080；覆盖：FR-002、FR-024、FR-044、SC-006、SC-007、SC-008、SC-009）
+- T081 [US6] **【已关闭／被替代：T124/T129/T133】** 运行受影响 `tests/test_rotom_resume.py`、`tests/test_rotom_instances.py`、`tests/test_rotom_run_records.py`、`tests/test_lifecycle_leases.py` 及 setup 原有隔离回归；记录 `.cache/task-records/rotom-command-experience-implementation.json`，未取得 T053 真实官方交接证据时只能报告机制验证，不开放自动恢复维护。（依赖：T080；覆盖：FR-002、FR-024、FR-044、SC-006、SC-007、SC-008、SC-009）
 
-- [ ] T082 [US6] **【历史已替代：T124/T130】** 仅在 T053 真实官方交接通过且另获本次真实进程/信号/维护授权后，按 `specs/008-rotom-command-experience/quickstart.md` 验证 DSH P-EXIT 与三实例选二的真实停止/setup/恢复、后代退出、等待、未选保留、失败对账和资源阻塞；证据留私人位置并写 `.cache/task-records/rotom-command-experience-implementation.json` 的脱敏引用，未知保持未开放、不自动强杀或扩展目标。（依赖：T081、T053；覆盖：FR-031、FR-032、FR-034、FR-036、FR-037、SC-008、SC-009）
+- T082 [US6] **【已关闭／被替代：T124/T130】** 仅在 T053 真实官方交接通过且另获本次真实进程/信号/维护授权后，按 `specs/008-rotom-command-experience/quickstart.md` 验证 DSH P-EXIT 与三实例选二的真实停止/setup/恢复、后代退出、等待、未选保留、失败对账和资源阻塞；证据留私人位置并写 `.cache/task-records/rotom-command-experience-implementation.json` 的脱敏引用，未知保持未开放、不自动强杀或扩展目标。（依赖：T081、T053；覆盖：FR-031、FR-032、FR-034、FR-036、FR-037、SC-008、SC-009）
 
-- [ ] T083 [US6] **【历史已替代：T129/T133】** 在 `docs/rotom-stop-capabilities.md`、`README.md` 更新普通 stop/维护使用、独立批准、有限等待、逐项结果、原部署依据与人工恢复说明；只开放已有原生证明的工具/平台，原 pane 未准入时只用停止前接受的新位置或人工方案。（依赖：T082；覆盖：FR-030、FR-033、FR-035、FR-038、FR-044）
+- T083 [US6] **【已关闭／被替代：T129/T133】** 在 `docs/rotom-stop-capabilities.md`、`README.md` 更新普通 stop/维护使用、独立批准、有限等待、逐项结果、原部署依据与人工恢复说明；只开放已有原生证明的工具/平台，原 pane 未准入时只用停止前接受的新位置或人工方案。（依赖：T082；覆盖：FR-030、FR-033、FR-035、FR-038、FR-044）
 
-- [ ] T084 [US6] **【历史已替代：T129/T133】** 主代理针对稳定 `src/agentcfg/maintenance.py`、`src/agentcfg/lifecycle.py`、`src/agentcfg/commands.py`、schema 与测试 diff 验收锁顺序、durable intent/消费顺序、物理 guard、部署恢复分支及 unknown 保护，并在 `.cache/task-records/rotom-command-experience-implementation.json` 记录阶段结论；真实证据不足不勾选本故事完成，不阻塞无关已验证范围。（依赖：T083；覆盖：FR-032、FR-034、FR-036、FR-043、FR-044）
+- T084 [US6] **【已关闭／被替代：T129/T133】** 主代理针对稳定 `src/agentcfg/maintenance.py`、`src/agentcfg/lifecycle.py`、`src/agentcfg/commands.py`、schema 与测试 diff 验收锁顺序、durable intent/消费顺序、物理 guard、部署恢复分支及 unknown 保护，并在 `.cache/task-records/rotom-command-experience-implementation.json` 记录阶段结论；真实证据不足不勾选本故事完成，不阻塞无关已验证范围。（依赖：T083；覆盖：FR-032、FR-034、FR-036、FR-043、FR-044）
 
 **Checkpoint**: 只对本阶段实际已验证范围记录完成；未授权原生任务单列未执行，未完成能力不声明可用。
 
@@ -404,7 +405,7 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 **Purpose / Goal**: 继续是恢复后的另一项明确批准与接收确认；不阻塞普通恢复，不默认发送。
 
-本轮仅保留已验收的零发送与人工文本指引；T098–T100/T103 不进入本轮开发/交付门禁，也不把它们勾成完成。以后只有再次选择并取得足够公开接口证据才恢复这些任务。
+本轮仅保留已验收的零发送与人工文本指引；T098–T100/T103 已按用户确定范围移除并关闭，保留历史描述，不把它们勾成完成。以后只有再次选择并取得足够公开接口证据，才另行明确开发任务与验收门槛。
 
 **Independent Test**: 普通恢复零自动文本；附加继续只发送给本次确切新 run/session-ready，目标变化或缺证据不发送，可能已送达不重发；持久对象仅摘要/模板身份，不含文本正文。
 
@@ -412,17 +413,17 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 - [X] T097 [P] [US8] 在 `docs/rotom-input-capabilities.md`、`tests/fixtures/rotom/input-capabilities.json` 完成 P-INPUT 公开接收接口与确认语义的 fake 原型；记录新 run/确切会话/ready/writer 排他覆盖及幂等/接收结果证据。可在 T042 后提前调查，pane input 的存在不证明 Agent 可接收；不足时只人工复制/聚焦，不猜命令或改宿主。（依赖：T042；覆盖：FR-024、FR-042、FR-043）
 
-- [ ] T098 [US8] **【本轮范围外：自动继续未选】** 仅在 T097 满足契约后，在 `schemas/rotom/continue-request.schema.json`、`src/agentcfg/sessions.py` 定义 ContinueRequest，逐字约束“新 run/op、SessionRef、批准文本摘要/固定模板身份、目标 ready 证据”“not_sent、dispatch_intent、accepted、unknown”“批准文本仅在当次执行内存中，不持久化到恢复清单、通用运行记录或日志；不能保存模型回应或历史正文”；派发前丢失文本重新预览批准，可能已派发仍先对账。（依赖：T096、T097；覆盖：FR-042、FR-043、SC-011、SC-012）
+- T098 [US8] **【已关闭／按用户确定范围移除：自动继续未选】** 仅在 T097 满足契约后，在 `schemas/rotom/continue-request.schema.json`、`src/agentcfg/sessions.py` 定义 ContinueRequest，逐字约束“新 run/op、SessionRef、批准文本摘要/固定模板身份、目标 ready 证据”“not_sent、dispatch_intent、accepted、unknown”“批准文本仅在当次执行内存中，不持久化到恢复清单、通用运行记录或日志；不能保存模型回应或历史正文”；派发前丢失文本重新预览批准，可能已派发仍先对账。（依赖：T096、T097；覆盖：FR-042、FR-043、SC-011、SC-012）
 
-- [ ] T099 [US8] **【本轮范围外：自动继续未选】** 在 `src/rotom/cli.py`、`src/agentcfg/sessions.py` 的恢复/restore 交互中增加独立继续预览与文本确认，严格绑定本次新 run/op、SessionRef、ready 与有效 writer；只恢复时不显示为已批准继续，无契约等价非交互输入路径时返回 2，不凭空新增 flag，不把原位能力设为当前终端继续的前置。（依赖：T098、T048；覆盖：FR-009、FR-012、FR-026、FR-042、SC-011）
+- T099 [US8] **【已关闭／按用户确定范围移除：自动继续未选】** 在 `src/rotom/cli.py`、`src/agentcfg/sessions.py` 的恢复/restore 交互中增加独立继续预览与文本确认，严格绑定本次新 run/op、SessionRef、ready 与有效 writer；只恢复时不显示为已批准继续，无契约等价非交互输入路径时返回 2，不凭空新增 flag，不把原位能力设为当前终端继续的前置。（依赖：T098、T048；覆盖：FR-009、FR-012、FR-026、FR-042、SC-011）
 
-- [ ] T100 [US8] **【本轮范围外：自动继续未选】** 在 `src/agentcfg/sessions.py` 实现经过准入的 continue 派发：先 durable digest-only intent，重核确切新 run/session-ready/writer 再发送，可靠接收确认才 accepted，可能送达为 unknown；unknown/dispatch_intent 不重发，人工重新批准也不能绕过对账，结果与 restored 分列。（依赖：T099；覆盖：FR-024、FR-035、FR-042、SC-011）
+- T100 [US8] **【已关闭／按用户确定范围移除：自动继续未选】** 在 `src/agentcfg/sessions.py` 实现经过准入的 continue 派发：先 durable digest-only intent，重核确切新 run/session-ready/writer 再发送，可靠接收确认才 accepted，可能送达为 unknown；unknown/dispatch_intent 不重发，人工重新批准也不能绕过对账，结果与 restored 分列。（依赖：T099；覆盖：FR-024、FR-035、FR-042、SC-011）
 
 - [X] T101 [US8] 不依赖 T098–T100 自动输入实现，在 `src/rotom/cli.py`、`src/rotom/manual_continue.py`、`docs/rotom-input-capabilities.md` 根据 T097 的能力结论提供人工复制/聚焦路径；显式根 `--interactive` 可跳过、选固定示例或预览确认自定义单行文本，默认/无输入调用不新增读取。聚焦由用户执行，复制不暗中发送或调用剪贴板程序；当前明确接受的文本仅在当次必要展示使用，不存入恢复清单/日志或既有 JSON。P-INPUT 不成立时此路径仍可实施和验收，不能只写一条取证结论代替交互替代方式。（依赖：T048、T096、T097；覆盖：FR-013、FR-042、FR-043、FR-044）
 
 - [X] T102 [US8] 运行 `tests/test_rotom_continue.py`、普通 resume/maintenance 的相关隔离回归：始终验收未支持时零发送和可用人工复制/聚焦；若 P-INPUT 成立且本轮选择自动继续，须先完成 T100，再验收已准入候选正确派发、默认零继续、未知零重发和错误目标零文本。未实现自动分支单列未执行，不能冒充通过；SC-011/012 的实际范围写 `.cache/task-records/rotom-command-experience-implementation.json`。（依赖：T101、T052；覆盖：SC-011、SC-012、FR-044）
 
-- [ ] T103 [US8] **【本轮范围外：自动继续未选】** 仅在 T053 已通过并另获实际输入/会话及必要模型调用范围授权后，按 `specs/008-rotom-command-experience/quickstart.md` 验证 P-INPUT 的确切目标/就绪/接收结果和 unknown 对账，测试文本只用于批准范围；更新 `docs/rotom-input-capabilities.md` 及 `.cache/task-records/rotom-command-experience-implementation.json` 的脱敏引用，未通过或未授权不得开放自动继续或算该能力完成，不阻塞普通恢复。（依赖：T102、T100、T053；覆盖：FR-042、FR-043、FR-044、SC-011）
+- T103 [US8] **【已关闭／按用户确定范围移除：自动继续未选】** 仅在 T053 已通过并另获实际输入/会话及必要模型调用范围授权后，按 `specs/008-rotom-command-experience/quickstart.md` 验证 P-INPUT 的确切目标/就绪/接收结果和 unknown 对账，测试文本只用于批准范围；更新 `docs/rotom-input-capabilities.md` 及 `.cache/task-records/rotom-command-experience-implementation.json` 的脱敏引用，未通过或未授权不得开放自动继续或算该能力完成，不阻塞普通恢复。（依赖：T102、T100、T053；覆盖：FR-042、FR-043、FR-044、SC-011）
 
 **Checkpoint**: 只对本阶段实际已验证范围记录完成；未授权原生任务单列未执行，未完成能力不声明可用。
 
@@ -456,7 +457,7 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 ## Phase 12: 按工具的分阶段维护（2026-10-26，替代统一 Domain 前提）
 
-当前候选基于 main `45953f0`，保留在任务分支；main 合入须人工批准。T062–T084 保留历史编号和勾选含义，旧 OMP Domain 内部协议仍有效；其“所有工具必须先统一 Domain 才能编排”的前提由本阶段替代，不作为 DSH/Pi 新流程的前置。T118–T124 阶段验收为 93/125；原 pane 和自动继续不因本轮交接而补勾。
+当前候选基于 main `45953f0`，保留在任务分支；main 合入须人工批准。T062–T084 保留历史编号、已完成项证据和未实现项关闭原因，旧 OMP Domain 内部协议仍有效；其“所有工具必须先统一 Domain 才能编排”的前提由本阶段替代，不作为 DSH/Pi 新流程的前置。T118–T124 阶段验收为 93/125；原 pane 和自动继续不因本轮交接而补勾。
 
 - [X] T118 [US6] 固定按工具的三阶段接口、非秘密恢复清单、同 ID stop 快照及阶段事件；明确 candidate/main、旧批次兼容与逐阶段批准，不从记录重建许可。（覆盖：FR-030、FR-034、FR-035）
 - [X] T119 [US6] 验收 DSH/Pi/OMP stop_only 的原 host 捕获、sidecar endpoint、原 pidfd 单次请求及退出/fence 收尾；OMP host 通过 owner_pending/Domain 摘要登记，未选 run 不受控，旧无通道拒绝。（依赖：T118；覆盖：FR-028、FR-031、FR-032）
@@ -465,7 +466,7 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 - [X] T122 [US6] 关本次 stop fence 后重新预览并独立批准普通 setup，保留原全物理/owner/共享资源门禁；并发新 run 拒绝但不扩大停止集合；保留原结果，可能已执行 unknown 不重试。（依赖：T119；覆盖：FR-032–FR-036）
 - [X] T123 [US6] 验收公开 plan/stop/plan --batch/execute/restore --run/status/cancel 的 TTY、非 TTY、原结果与阶段状态输出、取消事实及旧 stop/OMP Domain 批次兼容；restore 逐项当前终端，无共享 stdin。（依赖：T121、T122；覆盖：FR-033、FR-035、FR-037、FR-041）
 - [X] T124 [US6] 按授权单列官方 Pi/OMP 原生 exact target、writer/分叉、缺失目标、原 pidfd 退出事实（RPC 143；Pi TUI 0 / OMP TUI 143）与释放后恢复证据；DSH 沿用历史证据；完成 TTY 及本轮整库/受影响稳定回归，保留失败与 skipped，不累加重叠套件。（依赖：T123；覆盖：FR-044、SC-006、SC-008、SC-009）
-- [ ] T125 完成当轮候选稳定差异、公开信息、来源锁、链接与人工审阅门禁；使用已批准的公开身份整理候选提交；合入 main 必须另获人工批准，未合入明确记录。维护增量合入不表示 US7 全部交付；未来 pane 增量还须 T095/T138 对应验收。（依赖：T124、T133、T134；覆盖：FR-043、FR-044）
+- [ ] T125 完成当轮候选稳定差异、公开信息、来源锁、链接与人工审阅门禁，使用已批准的公开身份整理候选提交；取得针对最终候选的人工明确批准后才合入 main，保护 main 既有工作并完成整合验收。整合通过后盘点活动引用、待保留提交及全部工作文件（包括忽略的证据与 venv），保留必要材料后，按 `docs/worktrees.md` 的条件常规清理对应 worktree 和本地分支。未合入、未验证或仍有待处理收尾须明确记录，不报告本轮全部完成；本任务不授予自动合入或远端发布权限。（依赖：T124、T133、T134、T095、T138；覆盖：FR-043、FR-044）
 
 本轮分项证据：workflow 162 passed；stop 稳定 165 passed；CLI 最终 180 passed/4 skipped（较广阶段 3451 passed/4 skipped）；Pi 观察 250 passed；resume 21 passed。各组重叠，不相加、不称 full suite。Pi 1.3.0 与 OMP 18.12.6 原生事实及剩余验证见[维护指南](../../docs/tool-maintenance-workflows.md)。
 
@@ -476,7 +477,7 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 - [X] T128 [US4] 接通 `resume --stopped --list`、TTY 单项选择、非交互精确 batch/run，复用维护 restore；补全/help/普通 resume 兼容，选择后重新校验范围，加载待确认、零自动继续，不需要 Herdr。（依赖：T126、T127；覆盖：FR-004、FR-045、SC-004、SC-013）
 - [X] T129 对稳定 diff 完成三工具隔离测试、正文读取哨兵、旧清单、坏日志与未知状态/重复恢复拒绝测试，独立复审、公开内容/链接/补全摘要检查及文档同步；记录候选提交与实际结果，原生全 CLI 链路未验证单列，main 整合仍须 T125 的人工批准。（依赖：T128；覆盖：FR-043、FR-044、FR-045、SC-013）
 
-本阶段不将原 pane、新标签页或自动继续记为完成；旧 T062–T084 的统一 Domain 前提已由 Phase 12 替代，不重写历史勾选记录。
+本阶段证据本身不将原 pane、新标签页或自动继续记为完成；位置能力以后续逐项验收为准。旧 T062–T084 的统一 Domain 前提已由 Phase 12 替代，已完成项证据保留，17 个未实现项以历史关闭记录追溯。
 
 ## Phase 14: 官方 CLI 验收、锁兼容与退出竞争（2026-10-27）
 
@@ -501,7 +502,7 @@ Phase 3–10 严格对应规格 US1–US8 和 P1→P5 优先级，最后为横�
 
 维护及当前终端恢复使用 T118 → T119/T120 → T121/T122 → T123 → T124，后续 T126–T133 已补齐停止历史与官方原生验收；T120 的 Pi writer 保护不要求 DSH/Pi 进入 Domain。T065/T066 继续约束 OMP 自有资源，普通 setup 原门禁全保留。
 
-当前已选 pane 范围：T134 固定提示/范围 → T085/T087 → T088 → T089 → T090 → T091 → T092 → T093 → T094 → T095；T086 是已完成的可行性工作，不是功能验收。新标签页 T135 → T136 → T137 → T138 可独立于驻留实现推进。T125 是人工 main 整合，任何当轮候选都须完成其相应门禁和人工批准；不能以合入维护增量表示整个 US7 已完成。自动继续的四个范围外任务不阻挡这两条交付路径。
+已完成的 pane 范围依赖追溯：T134 固定提示/范围 → T085/T087 → T088 → T089 → T090 → T091 → T092 → T093 → T094 → T095；T086 是已完成的可行性工作，不是功能验收。新标签页 T135 → T136 → T137 → T138 可独立于驻留实现推进。T125 是人工 main 整合，任何当轮候选都须完成其相应门禁和人工批准；不能以合入维护增量表示整个 US7 已完成。自动继续的四个历史项已按用户确定范围移除并关闭。当前仅余 T125：人工批准候选后合入 main 并完成整合验证，满足清理条件后清理对应任务 worktree 和本地分支；候选工作树准备完成不等于已合入或任务全部收尾。
 
 以下既有依赖图和 T062–T084 示例保留历史内部方案顺序，不覆盖上述当前流程。
 
@@ -712,7 +713,7 @@ scout 负责独立只读取证。每个任务包注明目标、输入、可写�
 
 ## Requirement Coverage
 
-下表保留历史任务映射，并补充 T118–T138；旧统一 Domain 条目须结合“已替代”标签读取，不是当前前置。全部 45 条 FR 与 13 条 SC 均有任务分配，覆盖不等于实现通过。原 pane/新标签页已选待实现，自动继续为本轮范围外，不能仅凭覆盖表结项。
+下表保留历史任务映射，并补充 T118–T138；旧统一 Domain 条目须结合“已关闭／被替代”标签读取，不是当前前置。全部 45 条 FR 与 13 条 SC 均有任务分配，覆盖不等于实现通过。原 pane/新标签页按逐项验收证据记录完成，自动继续已按用户确定范围移除并关闭，不能仅凭覆盖表结项或推定人工批准。
 
 | Requirement Key | Task IDs |
 | --- | --- |
@@ -788,3 +789,9 @@ Phase 12 新增 T118–T125 八项，其阶段进度为 93/125；Phase 13 完成
 - plan 中的性能预算属于待测目标；已有版本和本轮候选的源码、锁、部署、运行实例及验证范围分别记录。
 - 真实验收的授权范围未给出时保留未执行；缺实际执行器/依赖才记环境不足，未知不是零或成功。
 - 不在本功能任务中自动填写宪章原始批准日期或删除宪章临时同步报告，治理更新走独立明确范围。
+
+## 当前收尾执行顺序
+
+1. 冻结候选写入后审阅稳定差异，核对公开信息、身份、来源锁、链接及本轮实际验收证据；目标 main 前进时重新评估。
+2. T125 保持未勾，等待人工明确批准具体候选；批准后在授权范围内合入 main，保护 main 既有锁，执行与变更范围匹配的整合验证并记录实际结果。未合入或未验证必须明确记录。
+3. main 整合验收通过后，按 [worktree 细则](../../docs/worktrees.md) 盘点活动任务或引用、待保留提交及所有工作文件（包括忽略的证据与 venv）；满足保留和引用条件后才以常规 `git worktree remove` 和 `git branch -d` 清理对应任务 worktree 与本地分支。人工批准、main 整合验证及符合条件的清理完成后才可报告本轮全部收尾。21 个历史关闭项不重新进入上述执行顺序。
