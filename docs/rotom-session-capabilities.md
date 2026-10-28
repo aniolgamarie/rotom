@@ -36,9 +36,12 @@ Pi 的公开 guard/helper/扩展由 `locks/pi/session-control.json` 对三个自
 | 工具 | 完整 runtime identity | observer identity |
 | --- | --- | --- |
 | DSH | `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` | `none` |
-| Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `e286d053f59613d94c8be14d89f3def12dafdc67ef54a9746d7d2229ce362d9a`（三来源控制锁） |
+| Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `e286d053f59613d94c8be14d89f3def12dafdc67ef54a9746d7d2229ce362d9a`（三来源控制锁；历史来源保留） |
 | Pi（新锁，Base/Pro 分别核验） | `a68d9dcf3346c0c6ab9bff231f85510dea2d9d25794664cd835cd476c3460587` | 同上；Base 的 footer/Cursor 顺序及 provider 选择须与锁一致，不自动改变公共默认。 |
+| Pi（上述两组运行锁的当前来源） | 同上述 `62ac8348…` / `a68d9dcf…` 完整锁 | `3a8f77f7ecb2c0642db3af45708877a968cda033be385c61e737f1c628a4c2da`；claim 锁竞争返回4，逐组合复验见[验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。 |
 | OMP | `490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab` | `none` |
+
+普通 `rotom resume TOOL --session SESSION_ID` 在启动前核对同一 scope/profile 和完整 SessionRef（工具、backend、native HOME、精确引用）的已有恢复请求。已有请求仍 active/unknown、只有 intent、缺退出事实或归属断链时返回4，不因新 CLI、新 coordinator、新 run、改 cwd 或原 run 引用而再次派发；能安全核验时列出原 run，并提供同范围 `instances list --format json` 查询命令。先查询和核验，不能删除请求或重复运行命令来清除 unknown。旧 run 已完整 `idle_confirmed`，且请求保存 launched 与退出码后，即使加载仍 unknown，也允许用户明确发起新请求；不同会话及不同 scope/profile/HOME 的合法并行仍可使用。这只覆盖 Rotom 保存的恢复请求，Pi 合作 claim、DSH 原生 writer 与 OMP 可能分叉的限制继续适用。
 
 ## 运行归属实现进度
 

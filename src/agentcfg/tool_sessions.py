@@ -6,7 +6,7 @@ import sys
 from . import dsh_process, run_owners, runtime
 from .dsh_sessions import scope_key
 from .process import DependencyError
-from .resume_attempts import ResumeAttempts
+from .resume_attempts import PendingResume, ResumeAttempts
 from .schema import ConfigError
 from .secrets import CredentialError
 from .sessions import HandoffResumeBackend, KnownSession, LaunchReceipt, SessionError, _resume_target, session_capability
@@ -65,6 +65,8 @@ class OmpResumeCandidate(HandoffResumeBackend):
     try:
       options = {"expected_deployment": self.expected_deployment} if self.expected_deployment is not None else {}
       return runtime.run(workspace, cwd=Path(target.cwd), arguments=(), resume_operation=launch, **options)
+    except PendingResume as error:
+      raise SessionError(4, "resume_pending_unconfirmed", pending_run_ids=error.run_ids) from None
     except Conflict:
       raise SessionError(4, "omp_resume_conflict") from None
     except ConfigError:
@@ -111,12 +113,15 @@ class PiResumeCandidate(HandoffResumeBackend):
       registry = run_owners.Registry(selected.state_root / "run-owners", selected.binding)
       owner = registry.snapshot()[run_id]
       fds = tuple(fd for fd in (lifecycle_fd, lease, package_fd) if type(fd) is int)
+      journal = ResumeAttempts(selected.state_root / "resume-attempts", selected.binding)
+      # 既有同会话请求先只读核验；合作claim成功后，begin仍须原子重核并认领。
+      journal.check_pending(target, owner)
       # --resume 是原生 picker；--session 精确文件路径才绑定已核验的目标。
       resumed = replace(spec, argv=(*spec.argv, "--session", str(header.path)))
       from .pi_session_guard import prepare
       with prepare(selected, resumed, env, fds, run_id=run_id, target=header) as prepared:
         guarded_spec, guarded_env, guarded_fds = prepared
-        attempt = ResumeAttempts(selected.state_root / "resume-attempts", selected.binding).begin(target, owner)
+        attempt = journal.begin(target, owner)
         from .dsh_stop_control import default_factory
         control = default_factory(selected, owner, instance_fd=lifecycle_fd, state_fd=lease)
         def before(run):
@@ -131,6 +136,8 @@ class PiResumeCandidate(HandoffResumeBackend):
     try:
       options = {"expected_deployment": self.expected_deployment} if self.expected_deployment is not None else {}
       return runtime.run(workspace, cwd=Path(target.cwd), arguments=(), resume_operation=launch, **options)
+    except PendingResume as error:
+      raise SessionError(4, "resume_pending_unconfirmed", pending_run_ids=error.run_ids) from None
     except Conflict:
       raise SessionError(4, "pi_resume_conflict") from None
     except ConfigError:

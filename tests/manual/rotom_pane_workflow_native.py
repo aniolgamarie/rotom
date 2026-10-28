@@ -492,6 +492,34 @@ def inside(args):
       wait_for(lambda: ready(run), "paired initial native ready")
       old_runs[session_id] = run
     confirm_initial_records(list(old_runs.values()))
+    rejected_runs = set()
+    if args.check_pending_resume:
+      before = records()
+      hosts = {run: before[run]["host_identity"] for run in old_runs.values()}
+      native_files = {path.name: path.read_bytes() for path in sessions.glob("*.jsonl")}
+      call("paired-pending-resume-rejected", ["--no-input", "resume", args.tool,
+        "--local", str(ws.local_path), "--profile", ws.profile, "--session", ids[0], "--here"],
+        expected=4, json_output=False)
+      message = (ROOT / "logs/paired-pending-resume-rejected.stderr").read_text()
+      if (old_runs[ids[0]] not in message or "instances list" not in message or "--format json" not in message
+          or str(ws.local_path) not in message or ws.profile not in message):
+        raise RuntimeError("pending resume rejection lacks original run query reference")
+      after = records()
+      rejected_runs = set(after) - set(before)
+      for run in rejected_runs:
+        if after[run].get("host_identity") is not None or after[run]["lifecycle_state"] != "idle_confirmed":
+          raise RuntimeError("rejected resume acquired native host or remains active")
+      for run, host in hosts.items():
+        if (after[run]["host_identity"] != host or after[run]["lifecycle_state"] != before[run]["lifecycle_state"]
+            or run_owners.observed_process_identity(host["identity"]["pid"]) != host["identity"]
+            or run_owners.observed_process_identity(after[run]["manager_identity"]["pid"]) != after[run]["manager_identity"]):
+          raise RuntimeError("pending resume changed existing native owners")
+        wait_for(lambda: ready(run), "pending resume preserved active native UI")
+      if {path.name: path.read_bytes() for path in sessions.glob("*.jsonl")} != native_files:
+        raise RuntimeError("pending resume changed or forked native session history")
+      evidence["pending_resume"] = {"exit_code": 4, "original_run": old_runs[ids[0]],
+        "preserved_hosts": hosts, "rejected_managed_runs": sorted(rejected_runs),
+        "native_history_unchanged": True, "existing_native_owners_preserved": True}
     batch1 = workflow(list(old_runs.values()), 1, "low")
     for child, _, slave, before, _, _ in terminals:
       code = child.wait(timeout=30)
@@ -566,7 +594,7 @@ def inside(args):
     confirm_initial_records(list(third_runs.values()))
     call("paired-repeat-rejected", restore_tokens(batch2, list(second_runs.values()), "original"), expected=4, context=context)
     expected_runs = set(old_runs.values()) | set(second_runs.values()) | set(third_runs.values())
-    if len(expected_runs) != 6 or set(records()) != expected_runs: raise RuntimeError("paired replay created an extra run")
+    if len(expected_runs) != 6 or set(records()) != expected_runs | rejected_runs: raise RuntimeError("paired replay created an extra run")
     batch3 = workflow(list(third_runs.values()), 3, "low")
     native.stop_owned(server_identity)
     server.wait(timeout=10)
@@ -782,6 +810,7 @@ def main(argv=None):
   parser.add_argument("--prepare-only", action="store_true")
   parser.add_argument("--work-entry-only", choices=("v1", "v2"), help="仅验收公开work新建Agent默认驻留/停止；不声明会话恢复")
   parser.add_argument("--paired", action="store_true", help="两个不同合成会话的同批次 --all 位置恢复")
+  parser.add_argument("--check-pending-resume", action="store_true", help="仅OMP paired：活动会话的独立普通CLI重复恢复须拒绝且不分叉")
   parser.add_argument("--restore-wait-seconds", type=int, default=30, help="位置恢复等待预算秒数（1..300，默认30）")
   parser.add_argument("--diagnose-restore", action="store_true", help="仅restore_child自有agentcfg异常位置，不追踪官方宿主；诊断不算正式通过")
   parser.add_argument("--diagnose-initial", action="store_true", help="仅初始当前终端CLI的自有agentcfg异常位置，不追踪官方宿主；诊断不算正式通过")
@@ -818,6 +847,8 @@ def main(argv=None):
   if args.pi_base_cursor and (args.tool != "pi" or args.profile != "pi-base"):
     parser.error("--pi-base-cursor requires Pi Base")
   if args.lock_source is not None and args.tool != "pi": parser.error("--lock-source requires Pi")
+  if args.check_pending_resume and (args.tool != "omp" or not args.paired or args.prepare_only):
+    parser.error("--check-pending-resume requires OMP --paired native validation")
   if args.inside: return inside(args)
   if (args.root is None or not args.root.is_absolute() or args.root.exists()
       or args.node_root is None or args.runtime_source is None and not args.fresh_sync or args.herdr is None):
@@ -878,6 +909,7 @@ def main(argv=None):
     "--restore-wait-seconds", str(args.restore_wait_seconds)]
   if args.prepare_only: command.append("--prepare-only")
   if args.paired: command.append("--paired")
+  if args.check_pending_resume: command.append("--check-pending-resume")
   if args.work_entry_only: command += ["--work-entry-only", args.work_entry_only]
   if args.pi_base_cursor: command.append("--pi-base-cursor")
   if args.diagnose: command.append("--diagnose")

@@ -1,5 +1,6 @@
 """Pi 合作 writer 保护：真实临时flock/claim，仅合成manager/host，不启动Pi。"""
 from copy import deepcopy
+import errno
 import fcntl
 import hashlib
 import io
@@ -84,6 +85,42 @@ def test_precise_flock_and_durable_owner_protect_until_confirmed_idle(case):
     assert json.loads(metadata(case).read_bytes())["run_id"] == "b" * 32
   finally:
     first.close(); other.close()
+
+
+def test_real_live_claim_contention_is_fixed_conflict_and_preserves_original_metadata(case):
+  case.add()
+  first, other = case.claims(), case.claims("b" * 32)
+  try:
+    fd = first.claim(SESSION)
+    before = metadata(case).read_bytes()
+    with pytest.raises(Conflict) as caught:
+      other.claim(SESSION)
+    assert caught.value.exit_code == 4 and other.fds == {}
+    assert metadata(case).read_bytes() == before
+    os.fstat(fd)
+  finally:
+    first.close(); other.close()
+
+
+def test_claim_body_blocking_io_error_is_not_reclassified_as_lease_contention(case, monkeypatch):
+  claims = case.claims()
+  replace = Tree.replace
+  error = BlockingIOError(errno.EAGAIN, "synthetic-commit-response-loss")
+  writes = []
+  def lost(tree, name, data, **kwargs):
+    if tree.root.name == "pi-session-claims":
+      writes.append(name)
+      replace(tree, name, data, **kwargs)
+      raise error
+    return replace(tree, name, data, **kwargs)
+  monkeypatch.setattr(Tree, "replace", lost)
+  try:
+    with pytest.raises(BlockingIOError) as caught:
+      claims.claim(SESSION)
+    assert caught.value is error and writes == [SESSION + ".json"]
+    assert metadata(case).exists() and claims.fds == {}
+  finally:
+    claims.close()
 
 
 def test_inherited_same_run_fd_is_duplicated_and_close_never_unlocks_borrowed_lease(case):

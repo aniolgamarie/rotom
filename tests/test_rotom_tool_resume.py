@@ -1,6 +1,7 @@
 """Pi/OMP 真实管理路径和假宿主：精确目标、原目录、writer及原退出结果。"""
 from dataclasses import replace
 from types import SimpleNamespace
+import fcntl
 import json
 import os
 
@@ -176,3 +177,66 @@ def test_dsh_candidate_binds_runtime_to_approved_deployment(candidate, fake_subp
     fake_popen.queue(returncode=17)
     assert sessions.ResumeCoordinator(backend).resume(target, location="here").exit_code == 17
     assert len(fake_popen.calls) == 1
+
+
+@pytest.mark.parametrize("previous", ["intent", "unknown", "active"])
+def test_fresh_tool_coordinator_refuses_unfinished_request_before_second_spawn(tool, fake_popen, previous):
+  workspace, backend, target, _ = tool
+  def fresh():
+    return sessions.ResumeCoordinator(type(backend)(workspace))
+  def blocked():
+    with pytest.raises(sessions.SessionError) as caught:
+      fresh().resume(target, location="here")
+    assert caught.value.code == 4
+    assert "synthetic-private-canary" not in str(caught.value)
+    assert len(fake_popen.calls) == 1
+  if previous == "intent":
+    fake_popen.queue(spawn_error=OSError("synthetic-private-canary"))
+    with pytest.raises(sessions.SessionError):
+      fresh().resume(target, location="here")
+    blocked()
+  elif previous == "unknown":
+    fake_popen.queue(wait_error=TimeoutError("synthetic-private-canary"))
+    assert fresh().resume(target, location="here").status == "unknown"
+    blocked()
+  else:
+    observed = []
+    def competing():
+      try:
+        fresh().resume(target, location="here")
+      except sessions.SessionError as caught:
+        observed.append(caught.code)
+      else:
+        observed.append(None)
+    fake_popen.queue(returncode=0, on_wait=competing)
+    assert fresh().resume(target, location="here").exit_code == 0
+    assert observed == [4]
+  assert len(fake_popen.calls) == 1
+
+
+@pytest.mark.parametrize("tool", ["pi"], indirect=True)
+def test_pi_claim_race_after_two_free_prechecks_returns_four_without_invented_run(tool,
+    fake_popen, monkeypatch):
+  from agentcfg.resume_attempts import ResumeAttempts
+  workspace, backend, target, _ = tool
+  checked, held = [], []
+  check = ResumeAttempts.check_pending
+  def competing(journal, selected, owner):
+    for _ in range(2):
+      check(journal, selected, owner)
+      checked.append("free")
+    root = workspace.state_root / "pi-session-claims"
+    root.mkdir(mode=0o700, exist_ok=True)
+    fd = os.open(root / (SESSION + ".lock"), os.O_RDWR | os.O_CREAT, 0o600)
+    held.append(fd)
+    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+  monkeypatch.setattr(ResumeAttempts, "check_pending", competing)
+  try:
+    with pytest.raises(sessions.SessionError) as caught:
+      sessions.ResumeCoordinator(backend).resume(target, location="here")
+    assert caught.value.code == 4 and caught.value.pending_run_ids == ()
+    assert checked == ["free", "free"] and fake_popen.calls == []
+    assert not (workspace.state_root / "resume-attempts").exists()
+  finally:
+    for fd in held:
+      os.close(fd)

@@ -4,22 +4,49 @@
 记账失败不能终止宿主或覆盖原生退出码。旧 intent 没有安全重放含义。
 """
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from copy import deepcopy
 from dataclasses import asdict
+import errno
+import fcntl
 import hashlib
 import json
 import os
 import time
 
 from . import run_owners, storage
+from .control_deadline import ControlDeadline
 from .paths import PathError
 from .sessions import KnownSession, SessionRef, _resume_target
-from .storage import Conflict, Tree
+from .storage import Conflict, LockBusy, Tree
 
 
 _FIELDS = {"schema_version", "binding_digest", "run_id", "manager_identity", "requested",
   "dispatch", "exit_code", "load_confirmation", "continue_status"}
+
+
+class PendingResume(Conflict):
+  """可信范围内已有尚未完成的同会话请求；引用不是重放许可。"""
+
+  def __init__(self, run_ids):
+    self.run_ids = tuple(sorted(set(run_ids)))
+    for run_id in self.run_ids:
+      run_owners._run_id(run_id)
+    super().__init__("同一会话的恢复请求仍待核验；保留原请求，不重复派发")
+
+
+@contextmanager
+def _claim_lock(fd):
+  try:
+    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+  except OSError as error:
+    if error.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
+      raise LockBusy("恢复请求元数据忙") from None
+    raise Conflict("恢复请求元数据锁不能核验") from None
+  try:
+    yield
+  finally:
+    fcntl.flock(fd, fcntl.LOCK_UN)
 
 
 def _clock():
@@ -49,6 +76,87 @@ class ResumeAttempts:
     # 与 owner 使用同一短目录锁协议，但放在独立目录；不持此锁获取物理/owner锁。
     with self._registry._locked(create=create) as tree:
       yield tree
+
+  @contextmanager
+  def _admission(self, owners, *, create=False):
+    """先快照 owner 并释放短锁，再串行认领 attempt；两者不同时持锁。"""
+    deadline = ControlDeadline(2)
+    while True:
+      entered = False
+      try:
+        if deadline.expired():
+          raise Conflict("恢复请求元数据忙；保留原记录并重新查询")
+        with Tree(owners.root) as owner_tree:
+          if owner_tree.fd is None:
+            raise Conflict("恢复运行的归属记录缺失")
+          with _claim_lock(owner_tree.fd):
+            owners._verify_root(owner_tree)
+            records, _ = owners._records(owner_tree)
+          # idle_confirmed 是不可重启的终态；旧 active/unknown 快照只会保守拒绝。
+          # 此后出现的新 intent 若不在 owner 快照中同样拒绝；由 attempt 锁保证唯一认领。
+          # 保留 owner 目录句柄核对物理身份，扫描/持久化时不占用 OMP 的 owner NB 入口。
+          with Tree(self.root, create=create) as tree:
+            guard = _claim_lock(tree.fd) if tree.fd is not None else nullcontext()
+            with guard:
+              owners._verify_root(owner_tree)
+              if tree.fd is not None:
+                self._registry._verify_root(tree)
+              if deadline.expired():
+                raise Conflict("恢复请求元数据预算耗尽；保留原记录")
+              entered = True
+              yield records, tree if tree.fd is not None else None
+              owners._verify_root(owner_tree)
+              if tree.fd is not None:
+                self._registry._verify_root(tree)
+        return
+      except LockBusy:
+        # body、写入或提交中的异常不能成为重放依据。
+        if entered:
+          raise
+        left = deadline.remaining()
+        if left <= 0:
+          raise Conflict("恢复请求元数据忙；保留原记录并重新查询") from None
+        time.sleep(min(0.01, left))
+      except (OSError, PathError):
+        raise Conflict("恢复请求目录或归属不能安全核验；保留原记录") from None
+
+  def _pending(self, tree, target, owners):
+    if tree is None:
+      return
+    names = os.listdir(tree.fd)
+    pending = []
+    session = asdict(target.ref)
+    for name in sorted(names):
+      if not name.endswith(".json"):
+        raise Conflict("恢复请求目录含未知记录；保留原记录")
+      run_id = name[:-5]
+      run_owners._run_id(run_id)
+      record, _ = self._read(tree, run_id)
+      if record is None:
+        raise Conflict("恢复请求记录在核验中消失")
+      if record["requested"]["session"] != session:
+        continue
+      owner = owners.get(run_id)
+      if owner is None or owner.get("schema_version") != 2:
+        pending.append(run_id)
+        continue
+      self._project(owner, record)
+      observation = owner.get("process_observation", {})
+      if (run_owners.record_state(owner) != "idle_confirmed"
+          or observation.get("kind") != "complete_release" or observation.get("coverage") != "complete"
+          or record["dispatch"]["state"] != "launched" or record["exit_code"] is None):
+        pending.append(run_id)
+    if pending:
+      raise PendingResume(pending)
+
+  def check_pending(self, target, owner):
+    """只读预检不授予派发资格；begin 仍须在同一锁边界重新核验。"""
+    self._check_owner(target, owner)
+    registry = run_owners.Registry(self.root.parent / "run-owners", self.binding)
+    with self._admission(registry) as (records, tree):
+      if records.get(owner["run_id"]) != owner:
+        raise Conflict("恢复运行的归属发生变化")
+      self._pending(tree, target, records)
 
   def _validate(self, run_id, record):
     try:
@@ -147,8 +255,7 @@ class ResumeAttempts:
       "observed_at_ns": record["dispatch"]["observed_at_ns"], "exit_code": record["exit_code"],
       "load_confirmation": "unknown", "continue_status": "not_sent"}
 
-  def begin(self, target, owner):
-    """新 owner 后、spawn 前保存 intent；重复 run 或落盘结果不明均禁止重放。"""
+  def _check_owner(self, target, owner):
     try:
       if type(target) is not KnownSession or type(owner) is not dict or owner.get("schema_version") != 2:
         raise ValueError()
@@ -165,13 +272,22 @@ class ResumeAttempts:
         raise ValueError()
     except Exception:
       raise Conflict("恢复请求与本次运行登记不匹配") from None
+
+  def begin(self, target, owner):
+    """新 owner 后、spawn 前核验并认领；同会话未决请求不因新run而失效。"""
+    self._check_owner(target, owner)
+    run_id = owner["run_id"]
     record = {"schema_version": 1, "binding_digest": self.binding_digest, "run_id": run_id,
       "manager_identity": deepcopy(owner["manager_identity"]),
       "requested": {"session": asdict(target.ref), "cwd": target.cwd, "previous_run_id": target.run_id},
       "dispatch": {"state": "intent", "observed_at_ns": _clock()}, "exit_code": None,
       "load_confirmation": "unknown", "continue_status": "not_sent"}
     self._validate(run_id, record)
-    with self._locked(create=True) as tree:
+    registry = run_owners.Registry(self.root.parent / "run-owners", self.binding)
+    with self._admission(registry, create=True) as (records, tree):
+      if records.get(run_id) != owner:
+        raise Conflict("恢复运行的归属发生变化")
+      self._pending(tree, target, records)
       encoded = run_owners._encode(record)
       tree.write_new(run_id + ".json", encoded)
       storage.sync_directory_ancestors(self.root.parent)

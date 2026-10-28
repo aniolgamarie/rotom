@@ -196,6 +196,10 @@ rotom --no-input term --machine workstation sync --component zsh
 阶段一 `resume --help` 为静态 0；非交互缺少必要工具/会话或范围歧义为 2，
 参数完整但能力未开放为 5。静态 stub、离线 fake 均不计 R8/故事 4 完成。
 阶段二首先真实验收 DSH 当前终端官方恢复交接、指定历史和 writer 冲突拒绝；
+普通 `--session` 恢复必须跨 CLI/新 coordinator 核验已有请求；同 scope/profile/完整 SessionRef 的 active/unknown、孤立 intent 或不完整退出记录阻止再次派发并返回4。可信未决 run 引用进入诊断，另给同范围 `agent ... instances list --format json` 命令；无法核验的引用不编造。完整 idle 及已保存 launched/exit 后允许明确新请求，加载 unknown 本身不延长阻塞；不同会话与范围不全局互斥。并发核验/认领在宿主启动前完成，失败不发送原生参数或输入。
+
+同一维护批次的多个恢复项共享清单，但使用独立终端。清单首次取锁最多等待2秒；位置准备中的等待同时受原整批 `--wait-seconds` 截止点限制。取得锁后重新校验原意图与计划，漂移仍返回4；追加、完成记账、写后异常和宿主动作不自动重试。交接后的短锁等待不限制官方 Agent 的运行时间。
+
 缺严格加载回执不禁止已准入的交接，输出明确区分“请求 session”“已派发”“加载待确认”“未发送继续”。
 机器没有证据时不得显示“恢复成功”。用户在官方 TUI 自行确认和输入，不增加“强制标记已恢复”的开关。
 Pi/OMP 当前终端交接按本轮工具方案验收。普通 `--session` 的 `--original`/`--new-tab` 尚未开放；拒绝时给出同范围可复制的 `--here` 命令，保留能力未准入退出码 5，不污染结果 stdout。

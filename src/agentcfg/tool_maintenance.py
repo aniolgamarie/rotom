@@ -1,21 +1,25 @@
 """按工具编排停止、普通 setup 与恢复；阶段记录不授予部署或进程许可。"""
 from copy import deepcopy
+from contextlib import contextmanager
 from dataclasses import asdict
 import hashlib
 import json
 import os
 import re
 import sys
+import time
 from types import SimpleNamespace
 import uuid
 
 from . import commands, deployment, run_owners
+from .paths import PathError
 from .sessions import KnownSession, SessionRef
 from .setup_preview import setup_plan_digest, setup_deployment_digest
 from .storage import Conflict, StateError, Tree, sync_directory_ancestors
 
 
 _ERROR = "维护阶段或原批次不能确认；保留原记录，不自动重试"
+_STORE_LOCK_WAIT_NS = 2_000_000_000
 
 
 def _digest(value):
@@ -278,10 +282,23 @@ def plan(workspace, *, selected_runs, sessions, labels=None):
 class Store:
   """单批次追加事实；短锁内不交互、不取得实例锁、不启动任何动作。"""
 
-  def __init__(self, workspace, batch_id):
+  def __init__(self, workspace, batch_id, *, deadline_ns=None):
     run_owners._run_id(batch_id)
+    if deadline_ns is not None and (type(deadline_ns) is not int or not 0 < deadline_ns <= 2**63 - 1):
+      raise Conflict(_ERROR)
     self.workspace, self.batch_id = workspace, batch_id
+    self.deadline_ns = deadline_ns
     self.registry = run_owners.Registry(workspace.state_root / "maintenance-workflows" / batch_id, workspace.binding)
+
+  @contextmanager
+  def _locked(self, *, create=False):
+    from .stop_locks import locked
+    deadline = time.monotonic_ns() + _STORE_LOCK_WAIT_NS
+    if self.deadline_ns is not None:
+      deadline = min(deadline, self.deadline_ns)
+    # 仅首次取锁可等待；锁内校验、CAS和可能已提交的写入均只执行一次。
+    with locked(self.registry, deadline, create=create) as tree:
+      yield tree
 
   def _read(self, tree):
     if tree is None:
@@ -321,8 +338,15 @@ class Store:
     return {"manifest": manifest, "events": events, "revision": len(events), "digest": previous}
 
   def read(self):
-    with self.registry._locked(nonblocking=True) as tree:
-      return self._read(tree)
+    try:
+      with Tree(self.registry.root) as existing:
+        if existing.fd is None:
+          return None
+        with self._locked() as tree:
+          self.registry._verify_root(existing)
+          return self._read(tree)
+    except (OSError, PathError):
+      raise Conflict(_ERROR) from None
 
   def begin(self, value):
     try:
@@ -330,7 +354,7 @@ class Store:
       _validate_manifest(self.workspace, self.batch_id, manifest)
     except Exception:
       raise Conflict(_ERROR) from None
-    with self.registry._locked(create=True, nonblocking=True) as tree:
+    with self._locked(create=True) as tree:
       if os.listdir(tree.fd):
         raise Conflict(_ERROR)
       tree.write_new("manifest.json", run_owners._encode(manifest))
@@ -349,14 +373,14 @@ class Store:
     return self._read(tree)
 
   def append(self, expected, action, **fields):
-    with self.registry._locked(nonblocking=True) as tree:
+    with self._locked() as tree:
       current = self._read(tree)
       if current != expected:
         raise Conflict(_ERROR)
       return self._append(tree, current, action, **fields)
 
   def _complete(self, expected, action, *, run_id=None, exit_code, deployment=None):
-    with self.registry._locked(nonblocking=True) as tree:
+    with self._locked() as tree:
       current = self._read(tree)
       try:
         if (current is None or type(expected) is not dict or set(expected) != set(current)
@@ -411,9 +435,9 @@ def stop(workspace, *, expected_plan, approve, wait_seconds=30):
       "status": "unknown", "stop_status": "unknown", "continue_status": "not_sent"}
 
 
-def status(workspace, batch_id):
+def status(workspace, batch_id, *, deadline_ns=None):
   from .dsh_stop_client import status_stop
-  value = Store(workspace, batch_id).read()
+  value = Store(workspace, batch_id, deadline_ns=deadline_ns).read()
   if value is None:
     raise Conflict(_ERROR)
   try:
@@ -480,11 +504,11 @@ def execute(workspace, batch_id, *, approve, progress, preview):
   return outcome.code, status(workspace, batch_id)
 
 
-def reserve_restore(workspace, batch_id, *, run_id):
+def reserve_restore(workspace, batch_id, *, run_id, deadline_ns=None):
   """为精确目标先保存普通恢复意图；位置创建不能绕过原防重门禁。"""
-  store = Store(workspace, batch_id)
+  store = Store(workspace, batch_id, deadline_ns=deadline_ns)
   value = store.read()
-  observed = status(workspace, batch_id)
+  observed = status(workspace, batch_id, **({"deadline_ns": deadline_ns} if deadline_ns is not None else {}))
   if (observed["cancelled"] or observed["status"] != "updated" or run_id not in observed["targets"]
       or observed["restores"][run_id] is not None):
     raise Conflict(_ERROR)

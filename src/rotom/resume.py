@@ -86,6 +86,7 @@ class CandidateResume:
       status = "不可自动恢复" if (target.confirmation == "unknown" or target.cwd_status == "unknown" or target.cwd is None) else "历史候选"
       return _text(f"{target.ref.agent} / {target.profile} / {target.ref.backend} / {target.ref.native_home_ref} / {target.ref.native_ref} / cwd={target.cwd} / {status}")
 
+    target = None
     try:
       key, known = self._load_known(scope)
       index = SessionIndex(known)
@@ -172,6 +173,12 @@ class CandidateResume:
       return 0 if outcome.status in ("launch_dispatched", "restored") else 4
     except SessionError as error:
       show("恢复请求未能确认；未发送继续；请检查所选范围与官方 TUI")
+      if error.code == 4 and target is not None:
+        if error.pending_run_ids:
+          show("未决恢复run：" + ", ".join(error.pending_run_ids) + "；不重复派发，请先查询原运行。")
+        selectors = ["--local", scope.local] if scope.local is not None else ["--machine", scope.machine]
+        show("同范围查询：" + shlex.join([context.display_prefix, "agent", *selectors,
+          "--profile", target.profile, "instances", "list", "--format", "json"]))
       return error.code
 
 

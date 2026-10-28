@@ -10,7 +10,7 @@
 
 **Status**: 既有当前终端维护候选的实现、分组回归及稳定差异审查保留原范围；新增位置恢复最终十二组无 trace 原生验收全部通过，已开放六个精确 Linux managed 组合的两种位置；基于 main `45953f0`，保留在分支 `feat/tool-maintenance-workflows-20261026`，尚未合入 main。合入须另经人工批准。官方 Pi/OMP TUI/PTY、隔离回归及受影响复验见[验收记录](tool-workflow-validation.md)。
 
-历史任务完成记录 86/117 保留；T118–T124 阶段完成时为 93/125，停止历史阶段为 97/129，原生补验与竞争修复后为 101/133，T125 的 main 人工整合仍待批准。原 pane/新标签页已按六个精确 Linux managed 组合开放，最终十二组无 trace 原生验收全部通过；严格加载统一回执、原生 TUI 自动继续、Pi Pro 委派不承诺。当前有效执行项为118/119，T125是唯一待办；17项旧方案替代和4项按用户确定范围移除的记录已正式关闭，保留原ID与原因，不计作实现通过，见 [tasks.md](tasks.md#当前范围与任务终态的含义)。
+历史任务完成记录 86/117 保留；T118–T124 阶段完成时为 93/125，停止历史阶段为 97/129，原生补验与竞争修复后为 101/133，T125 的 main 人工整合仍待批准。原 pane/新标签页已按六个精确 Linux managed 组合开放，最终十二组无 trace 原生验收全部通过；严格加载统一回执、原生 TUI 自动继续、Pi Pro 委派不承诺。当前有效执行项为120/121，T139–T142的实施及受影响验收已完成，T125是唯一待办；17项旧方案替代和4项按用户确定范围移除的记录已正式关闭，保留原ID与原因，不计作实现通过，见 [tasks.md](tasks.md#当前范围与任务终态的含义)。
 
 Spec Kit 的逻辑功能标签为 `008-rotom-command-experience`，不表示 Git 分支发生切换。
 历史设计源码基线 `17bbacd6`；原实施工作树基于 `39a9389` 并完整保留，随后曾从 main `109e2e7` 建立独立承接工作树。已验收范围后来从新主线重放整合；成功人工交接增量基于 main `b55c9b9`，当前只读 status CLI 增量基于 main `18c342f`，各阶段候选与证据见 main-review，不把旧基线当作当前入口。
@@ -207,8 +207,8 @@ agentcfg 仍拥有 Agent 运行/部署，termcfg 仍拥有终端文件事务与 
 | D help/补全 | 注册元数据、completion、zsh _rotom | A–C；无配置 help、允许候选来源、NUL 和零副作用 |
 | E 受管入口 | term catalog/preview/transaction、schema、shell 资源 | A/D 与 P-ENTRY；恢复前不切换日常绑定；主代理审查日志顺序 |
 | F 阶段一收口 | 用户文档、兼容矩阵与稳定差异 | A–E；原生终端验收按授权单列 |
-| S 日常恢复/实例 | sessions、runtime、run_owners、DSH 薄插件 | T044/T045 与 US5 保持现有范围；T042 核实安全官方交接，T117 补待确认/零输入契约；加载回执与自动继续分别准入，不要求上游新增接口 |
-| M 停止维护 | tool_maintenance、精确 stop、共用 setup 与工具恢复接缝 | T118–T125；三工具 stop_only、先保存清单，同 ID stop 快照，关本次 fence 后普通 setup 最新独立批准/原全门禁，逐项当前终端恢复；OMP 保留 Domain，DSH/Pi 不强套 Domain；未知不重试 |
+| S 日常恢复/实例 | sessions、runtime、run_owners、DSH 薄插件 | T044/T045 与 US5 保持现有范围；T042 核实安全官方交接，T117 补待确认/零输入契约；T141 以短 owner 快照及独立请求锁核验完整 SessionRef 的持久未决请求，完整退出后允许明确新请求；加载回执与自动继续分别准入，不要求上游新增接口 |
+| M 停止维护 | tool_maintenance、精确 stop、共用 setup 与工具恢复接缝 | T118–T125、T142；维护清单首锁有界等待，位置准备沿原整批期限，body/CAS不重放；三工具 stop_only、先保存清单，同 ID stop 快照，关本次 fence 后普通 setup 最新独立批准/原全门禁，逐项当前终端恢复；OMP 保留 Domain，DSH/Pi 不强套 Domain；未知不重试 |
 | P 已选位置 | 薄驻留启动器、Herdr 新标签页、work 新版本接缝 | 六个精确 Linux managed 组合的两种位置已通过最终原生验收；旧实例不在线升级、管理代码兼容、单次 run 租约分离 |
 | I 历史附加继续 | 本轮仅保留人工指引和零发送 | P-INPUT 自动发送不在本轮承诺，不阻塞位置交付或普通恢复 |
 

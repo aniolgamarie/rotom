@@ -11,9 +11,14 @@ from . import run_owners
 
 
 class SessionError(Exception):
-  def __init__(self, code, reason):
+  def __init__(self, code, reason, *, pending_run_ids=()):
+    if (type(pending_run_ids) not in (tuple, list)
+        or any(type(value) is not str or re.fullmatch(r"[0-9a-f]{32}", value) is None
+          for value in pending_run_ids)):
+      raise ValueError("invalid pending resume references")
     self.code = code
     self.reason = reason
+    self.pending_run_ids = tuple(sorted(set(pending_run_ids)))
     super().__init__(reason)
 
 
@@ -53,6 +58,12 @@ _SESSION_HANDOFF_ADMITTED = frozenset({(
 ), (
   "pi", "managed", "a68d9dcf3346c0c6ab9bff231f85510dea2d9d25794664cd835cd476c3460587",
   "e286d053f59613d94c8be14d89f3def12dafdc67ef54a9746d7d2229ce362d9a", "linux", "here",
+), (
+  "pi", "managed", "62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558",
+  "3a8f77f7ecb2c0642db3af45708877a968cda033be385c61e737f1c628a4c2da", "linux", "here",
+), (
+  "pi", "managed", "a68d9dcf3346c0c6ab9bff231f85510dea2d9d25794664cd835cd476c3460587",
+  "3a8f77f7ecb2c0642db3af45708877a968cda033be385c61e737f1c628a4c2da", "linux", "here",
 ), (
   "omp", "managed", "490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab",
   "none", "linux", "here",
@@ -334,6 +345,7 @@ class ResumeCoordinator:
     self._request = None
     self._outcome = None
     self._failure = None
+    self._pending_run_ids = ()
 
   def snapshot(self):
     with self._lock:
@@ -385,7 +397,7 @@ class ResumeCoordinator:
         if self._request != request:
           raise SessionError(4, "resume_request_already_used")
         if self._failure is not None:
-          raise SessionError(*self._failure)
+          raise SessionError(*self._failure, pending_run_ids=self._pending_run_ids)
         return self._outcome
       _resume_target(target, location, cwd_override)
       self._request = request
@@ -395,6 +407,7 @@ class ResumeCoordinator:
     dispatched_run_id = None
     acknowledged = False
     failure = None
+    pending_run_ids = ()
 
     def before_dispatch(run_id):
       nonlocal dispatched, dispatched_run_id
@@ -456,7 +469,10 @@ class ResumeCoordinator:
     except SessionError as error:
       # 保留有限类别及退出码，不让后端异常中的路径/账号/会话正文进入结果或重查。
       code = error.code if type(error.code) is int and error.code in (2, 3, 4, 5, 6) else 6
-      failure = (code, "resume_result_unconfirmed" if dispatched else "resume_preflight_rejected")
+      if code == 4 and not dispatched:
+        pending_run_ids = error.pending_run_ids
+      failure = (code, "resume_pending_unconfirmed" if pending_run_ids else
+        "resume_result_unconfirmed" if dispatched else "resume_preflight_rejected")
       self._publish(target, "unknown", failure[1], run_id=dispatched_run_id)
     except Exception:
       self._publish(target, "unknown", "launch_result_unknown" if dispatched else "resume_preflight_failed",
@@ -466,7 +482,8 @@ class ResumeCoordinator:
     if failure is not None:
       with self._lock:
         self._failure = failure
-      raise SessionError(*failure)
+        self._pending_run_ids = pending_run_ids
+      raise SessionError(*failure, pending_run_ids=pending_run_ids)
     return self.snapshot()
 
 

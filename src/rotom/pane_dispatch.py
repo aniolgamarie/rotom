@@ -258,7 +258,8 @@ def dispatch_location(workspace, batch_id, run_id, context, *, location, deadlin
       root, container = _original_ready(workspace, run_id, deadline=deadline)
       deadline.remaining()
       reservation_started = True
-      store = reserve(workspace, batch_id, run_id, mode=location, terminal_ref=container["terminal_ref"])
+      store = reserve(workspace, batch_id, run_id, mode=location, terminal_ref=container["terminal_ref"],
+        deadline_ns=deadline.deadline_ns)
       result = _send_original(root, container, store, deadline=deadline)
     else:
       from termcfg.herdr import require_startup_evidence
@@ -275,7 +276,7 @@ def dispatch_location(workspace, batch_id, run_id, context, *, location, deadlin
       require_startup_evidence(client, settings, binary)
       deadline.remaining()
       reservation_started = True
-      store = reserve(workspace, batch_id, run_id, mode=location)
+      store = reserve(workspace, batch_id, run_id, mode=location, deadline_ns=deadline.deadline_ns)
       result = create_restore_tab(client, settings, store, workspace_id=pane["workspace_id"], caller_id=caller_id)
     result = {**result, "location": location, "batch_id": batch_id, "run_id": run_id,
       "load_confirmation": "unknown", "continue_status": "not_sent"}

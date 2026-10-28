@@ -28,6 +28,8 @@ help 和命令提示区分已准入组合与不支持的来源、平台及位置
 | Pi / pi-pro，main 保留锁 | `a68d9dcf3346c0c6` | `b4beec0dc0f4058f` | 已通过并准入 | 已通过并准入 |
 | OMP / omp-default，Linux x64 | `490e6c90d0ef4d89` | `490e6c90d0ef4d89…-linux-x64` | 已通过并准入 | 已通过并准入 |
 
+上述十二组原始验收绑定 `4b1779…`，后续共享预算修正另有绑定其源码的 Pi Base 双会话复验。T141/T142 的当前源码为 `86275882bdcd0a7cbc437a5cf4ee5332c3f4e919f8c72810a7a1735a51da8f55`：OMP 双会话正式流程已通过，Pi 四个既有锁/profile 的新自有来源均独立完成单项3run正式复验，连同OMP共5组18次官方运行通过；本轮没有重跑 DSH 或 V1/V2 四项工作入口，不把旧矩阵和完整隔离快照称作新源码全部重跑。最终状态见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。
+
 本清单只针对 Linux managed。新的运行包 identity 需重新验收；SSH、其它平台及未列出的组合不继承这些位置能力。Pi Pro 在此指普通 profile 的维护/恢复，不包含委派。
 
 Herdr 新 Agent 入口另有四项正式通过：

@@ -164,7 +164,10 @@ class Claims:
           with tree.parent(identifier + ".lock") as (parent, leaf):
             fd = os.open(leaf, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, 0o600, dir_fd=parent)
           _same_file(tree, identifier + ".lock", fd)
-        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        try:
+          fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+          raise Conflict(_ERROR) from None
         prior = _read(tree, identifier + ".json")
         home = run_owners.native_home_key(record["native_home_ref"])
         expected = {"schema_version": 1, "protocol": _PROTOCOL, "session_id": identifier,

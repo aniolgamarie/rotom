@@ -17,6 +17,8 @@ from test_rotom_run_records import store, v2_record
 def attempt_store(store):
   module = importlib.import_module("agentcfg.resume_attempts")
   owner = v2_record(store)
+  with Tree(store.registry.root, create=True) as tree:
+    tree.write_new(owner["run_id"] + ".json", run_owners._encode(owner))
   target = sessions.KnownSession(sessions.SessionRef("dsh", "managed",
     run_owners.native_home_key(owner["native_home_ref"]), "synthetic-session"),
     scope_key(store.binding), store.binding["profile"], str(store.cwd), "historical", "historical", 1, "b" * 32)

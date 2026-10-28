@@ -113,8 +113,12 @@ SessionObservation 记录当前 run/emitter 代际、递增序号、原生会话
 对应 `previous_run_id` 保存为 JSON null；不编造旧运行身份。新派发仍必须取得严格的新 run，
 metadata 的 ID/cwd 只记历史候选，不证明当前会话、加载、writer 空闲或最终封口。
 
+普通恢复在同一物理 SH 租约内先短锁读取严格 owner 快照并释放 owner 锁，再在独立请求目录锁内核验同一完整 SessionRef 的历史请求并发布新 intent。两只元数据锁不同时持有；扫描与 fsync 不占用 OMP 宿主登记的 owner NB 入口，不在请求锁内获取 Domain/物理锁。保留 owner 根目录句柄并在认领前后重核 inode/权限。合法 API 不复用 run ID，完整 idle 为单调终态；快照后新增 owner/请求若不在快照中按未决拒绝，旧 active/unknown 快照只会保守拒绝。请求锁串行化并发新认领，完整旧退出不会被 load unknown 阻挡。坏记录、孤立 intent、来源不符或可能已提交的失败均保留阻塞；只有首次真实锁竞争可在统一2秒预算内释放锁后重取，进入事务后的异常不重放。请求文件格式与 RunRecord v2 均不变化。
+
 WriterEvidence 记录后端/来源、会话键、有效期或租约身份与覆盖范围；不能将 Rotom 本地锁冒充原生外部 writer 排他。
 证据必须覆盖实际启动/发送；不能持久化一个旧的“无 writer”布尔值供未来批准使用。
+
+维护 Store 的初始写入、读取、追加及结果完成只在首次取锁前等待，使用既有短锁 helper；上限2秒，外部位置准备有更早绝对期限时取其较早值。read 固定原目录身份，缺目录返回 None 且不创建。等待后完整核验 manifest/events/revision 和原意图，CAS 漂移不自动重计划；开始读写 body 后任何失败都不重放，完整结果仍只为同一意图补记一次。锁内不获取物理或 Domain 锁，原宿主运行时长不受此预算限制。
 
 ## 6. StopPlan、Batch 与资源协调
 

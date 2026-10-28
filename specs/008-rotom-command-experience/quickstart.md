@@ -64,6 +64,15 @@ T054 的精确 Linux DSH `resume --here` 保持已有准入，加载仍待确认
 依据：[规格](spec.md)、[CLI 契约](contracts/cli.md)、[入口部署](contracts/entry-deployment.md)、
 [生命周期](contracts/lifecycle.md)、[数据模型](data-model.md)。
 
+## 普通恢复遇到已有未决请求
+
+```sh
+./rotom --no-input resume pi --machine workstation --profile pi-base --session SESSION_ID --here
+./rotom --no-input agent --machine workstation --profile pi-base instances list --format json
+```
+
+把 `SESSION_ID` 替换为同范围的完整原生引用。若已有未决请求，第一条返回4并显示可信原 run 和查询命令，官方宿主不会再次启动；在第二条结果中核对对应 run。损坏/断链/缺退出证明不能用重试或删除文件绕过。只有旧 run 完整退出且请求保存 launched/退出码后，才可再次明确运行第一条；加载待确认仍须在官方 TUI 核对，不会自动发送继续。不同会话的合法恢复不受这一会话的未决请求阻挡。
+
 ## 旧 Linux OMP Domain 批次的只读维护状态
 
 基于 main `18c342f` 的增量只开放现存 setup batch 的 status。显式公开 profile 的工具声明必须为 `omp`，

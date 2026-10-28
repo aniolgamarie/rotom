@@ -16,7 +16,7 @@ import time
 
 from . import deployment, dsh_process, native, run_owners, runtime
 from .process import DependencyError
-from .resume_attempts import ResumeAttempts
+from .resume_attempts import PendingResume, ResumeAttempts
 from .schema import ConfigError
 from .secrets import CredentialError
 from .sessions import HostResumeBackend, KnownSession, LaunchReceipt, SessionError, SessionRef, _resume_target, _token, session_capability
@@ -310,6 +310,8 @@ class DshResumeCandidate(HostResumeBackend):
       options = {"expected_deployment": self.expected_deployment} if self.expected_deployment is not None else {}
       return runtime.run(workspace, cwd=Path(target.cwd), arguments=("--resume", target.ref.native_ref),
         resume_operation=launch, **options)
+    except PendingResume as error:
+      raise SessionError(4, "resume_pending_unconfirmed", pending_run_ids=error.run_ids) from None
     except Conflict:
       raise SessionError(4, "dsh_resume_preflight_conflict") from None
     except ConfigError:

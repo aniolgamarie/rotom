@@ -218,7 +218,7 @@ def status_for(workspace, batch_id, run_id):
     return {"location": "unknown", "phase": "unknown", "reason": "location-record-unavailable"}
 
 
-def reserve(workspace, batch_id, run_id, *, mode, terminal_ref=None):
+def reserve(workspace, batch_id, run_id, *, mode, terminal_ref=None, deadline_ns=None):
   """普通 restore-intent 先阻止竞争；后续落盘/创建不明不撤销或重放。"""
   from . import tool_maintenance as flow
   from termcfg.work import ROOT, source_digest
@@ -233,7 +233,8 @@ def reserve(workspace, batch_id, run_id, *, mode, terminal_ref=None):
   store = LocationStore(location_root(workspace, batch_id, run_id))
   if store.read_request() is not None:
     raise Conflict(_ERROR)
-  intent, target, deployment = flow.reserve_restore(workspace, batch_id, run_id=run_id)
+  intent, target, deployment = flow.reserve_restore(workspace, batch_id, run_id=run_id,
+    **({"deadline_ns": deadline_ns} if deadline_ns is not None else {}))
   value = {"schema_version": 1, "request_id": uuid.uuid4().hex, "mode": mode,
     "scope": {**workspace.binding, "agent": workspace.agent}, "batch_id": batch_id, "run_id": run_id,
     "session_ref": deepcopy(target["ref"]), "cwd": target["cwd"], "deployment_digest": deployment,

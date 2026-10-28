@@ -28,7 +28,7 @@ DSH、Pi、OMP 共用明确选择后的流程：保存恢复清单 → 精确停
 
 共享 Domain 写事务默认只在首个 flock 前等最多 2 秒，显式 deadline 沿用原绝对点，不续期；进入 body 后的校验、提交或解锁异常不重放。外部只读和 snapshot 默认 NB，只有合作启动 package_guard/check_omp_launch 两处显式首锁读预算。OMP 资源及 anchor 选择与预留同一写事务完成，提交成功后才返回 token；通用 reserve 的 revision CAS 仍严格。
 
-停止 close 后与最终 fallback 的 status 沿本次原截止时间等待纯读短锁；已过期时只允许一次无竞争观察，竞争或其它未知仍保留 close/fence 的真实落盘状态，不重 close、请求或信号。独立 status 默认 NB。Herdr V1 使用 accepted 前最后核验的 caller，accepted 后正常清 pending 不会导致驻留交接误退 shell。
+停止 close 后与最终 fallback 的 status 沿本次原截止时间等待纯读短锁；已过期时只允许一次无竞争观察，竞争或其它未知仍保留 close/fence 的真实落盘状态，不重 close、请求或信号。独立的停止 status 默认 NB；维护 workflow 清单的首锁等待另按下文2秒上限处理。Herdr V1 使用 accepted 前最后核验的 caller，accepted 后正常清 pending 不会导致驻留交接误退 shell。
 
 本节描述实现语义，最终十二组无 trace 位置原生验收全部通过；[六组合、两位置及四项 work 入口矩阵](rotom-pane-capabilities.md#本轮精确组合验收清单)是实际支持范围。此前完整 delivery-verification 快照为14,166个唯一默认隔离测试：14,153 passed / 13 skipped / 0 failed；共享预算修正另有3740 passed / 4 skipped及官方Pi Base双会话原生复验；前一源码快照 `14102 + 13 skipped` 保留为历史。功能分支尚未合入 main，T125 待人工批准。
 
@@ -101,9 +101,14 @@ Pi 的辅助 guard 观察只产生有来源的历史会话线索，不读会话�
 | 工具 | 完整 runtime identity | observer identity |
 | --- | --- | --- |
 | DSH | `e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d` | `none` |
-| Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `e286d053f59613d94c8be14d89f3def12dafdc67ef54a9746d7d2229ce362d9a`（三来源控制锁） |
+| Pi | `62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558` | `e286d053f59613d94c8be14d89f3def12dafdc67ef54a9746d7d2229ce362d9a`（三来源控制锁；历史来源保留） |
 | Pi（另经 Base/Pro 核验的新锁） | `a68d9dcf3346c0c6ab9bff231f85510dea2d9d25794664cd835cd476c3460587` | 同上；Base 配置需与该锁的 footer/Cursor 选择及 provider 声明相符，不自动更改默认选择。 |
+| Pi（上述两组运行锁的当前来源） | 同上述 `62ac8348…` / `a68d9dcf…` 完整锁 | `3a8f77f7ecb2c0642db3af45708877a968cda033be385c61e737f1c628a4c2da`；claim 锁竞争返回4，逐组合复验见[验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。 |
 | OMP | `490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab` | `none` |
+
+普通 `rotom resume TOOL --session SESSION_ID` 在启动前核对同一 scope/profile 和完整 SessionRef（工具、backend、native HOME、精确引用）的已有恢复请求。已有请求仍 active/unknown、只有 intent、缺退出事实或归属断链时返回4，不因新 CLI、新 coordinator、新 run、改 cwd 或原 run 引用而再次派发；能安全核验时列出原 run，并提供同范围 `instances list --format json` 查询命令。先查询和核验，不能删除请求或重复运行命令来清除 unknown。旧 run 已完整 `idle_confirmed`，且请求保存 launched 与退出码后，即使加载仍 unknown，也允许用户明确发起新请求；不同会话及不同 scope/profile/HOME 的合法并行仍可使用。这只覆盖 Rotom 保存的恢复请求，Pi 合作 claim、DSH 原生 writer 与 OMP 可能分叉的限制继续适用。
+
+同一维护批次的多个恢复项共享清单，但使用独立终端。清单首次取锁最多等待2秒；位置准备中的等待同时受原整批 `--wait-seconds` 截止点限制。取得锁后重新校验原意图与计划，漂移仍返回4；追加、完成记账、写后异常和宿主动作不自动重试。交接后的短锁等待不限制官方 Agent 的运行时间。
 
 ## 错误、取消与历史批次
 
