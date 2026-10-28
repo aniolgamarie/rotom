@@ -41,7 +41,7 @@ Herdr 新 Agent 入口另有四项正式通过：
 
 OMP 没有默认 work type；它通过已准入的新标签页恢复建立 resident，随后可按同样门禁原位恢复。普通 shell、旧单次实例与普通 `--session` 位置恢复均不因此获得原位能力。
 
-此前完整 delivery-verification 快照为14,166个唯一默认隔离测试：14,153 passed / 13 skipped / 0 failed；共享预算修正另有3740 passed / 4 skipped及官方Pi Base双会话原生复验，见最新验收记录；`14102 + 13 skipped` 属于前一源码快照历史。功能仍在任务分支，尚未合入 main，T125 待人工批准；位置与隔离验收不推导整合完成。
+此前完整 delivery-verification 快照为14,166个唯一默认隔离测试：14,153 passed / 13 skipped / 0 failed；共享预算修正另有3740 passed / 4 skipped及官方Pi Base双会话原生复验，见最新验收记录；`14102 + 13 skipped` 属于前一源码快照历史。候选 `c4a5953` 已于2026-10-28经用户明确批准快进合入 main；T125 的整合验收与原任务工作树/分支清理已完成，见最新验收记录。上述原生证据仍保留各自来源范围，本次整合未重跑宿主。
 
 ## 从完整 workflow 请求位置恢复
 

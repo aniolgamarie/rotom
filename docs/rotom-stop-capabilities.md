@@ -1,6 +1,6 @@
 # Rotom 停止通道能力
 
-候选实现与分组验收已完成：基于 main `45953f0`，分支 `feat/tool-maintenance-workflows-20261026`；保留在任务分支，尚未合入 main；合入须另经人工批准。官方 Pi/OMP TUI/PTY、分组隔离回归及受影响最终复验均已有结果，见验收记录。
+候选 `c4a5953` 已于2026-10-28经用户明确批准从 main `45953f0` 快进合入；整合验收与原任务工作树/分支清理已完成。官方 Pi/OMP TUI/PTY、分组隔离回归及受影响最终复验均已有结果，见验收记录。
 
 当前候选为 DSH/Pi/OMP 的 Linux managed 运行接通精确 `stop_only`，前提是核实原 host/control 通道与部署；旧运行无通道仍拒绝。Pi/OMP 使用 inbox sidecar，保留旧 RunRecord 和 OMP owner 摘要兼容。完整分阶段命令、writer 限制及本轮分项证据见[维护流程](tool-maintenance-workflows.md)。不准入 force、其它平台、原 pane 或自动继续。
 

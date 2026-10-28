@@ -1,6 +1,6 @@
 # 按工具执行停止、更新与恢复
 
-状态：候选留在任务分支，尚未合入 main，合入须人工批准。新增位置恢复实现已写入，最终十二组无 trace 原生验收全部通过，公开准入限定六个精确 Linux managed 组合的两种位置。以下 2026-10-27 当前终端历史证据不涵盖新增位置路径：已补齐 DSH/Pi/OMP 官方宿主贯穿公开 CLI 的停止、实际 setup 更新、停止清单与当前终端恢复验收，并修复 OMP 退出记账与查询之间的短锁竞争；main 新 Pi 锁的 Base/Pro 也已单独核验，见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。基线 main `45953f0`；本文说明候选接口，日常入口仍按已部署绑定运行。
+状态：候选 `c4a5953` 已于2026-10-28经用户明确批准从 main `45953f0` 快进合入，整合验收与原任务工作树/分支清理已完成。新增位置恢复实现已写入，最终十二组无 trace 原生验收全部通过，公开准入限定六个精确 Linux managed 组合的两种位置。以下 2026-10-27 当前终端历史证据不涵盖新增位置路径：已补齐 DSH/Pi/OMP 官方宿主贯穿公开 CLI 的停止、实际 setup 更新、停止清单与当前终端恢复验收，并修复 OMP 退出记账与查询之间的短锁竞争；main 新 Pi 锁的 Base/Pro 也已单独核验，见[最新验收记录](../specs/008-rotom-command-experience/tool-workflow-validation.md)。本文说明已整合接口；日常入口仍按已部署绑定运行，合入不代替部署。
 
 ## 分阶段操作
 
@@ -30,7 +30,7 @@ DSH、Pi、OMP 共用明确选择后的流程：保存恢复清单 → 精确停
 
 停止 close 后与最终 fallback 的 status 沿本次原截止时间等待纯读短锁；已过期时只允许一次无竞争观察，竞争或其它未知仍保留 close/fence 的真实落盘状态，不重 close、请求或信号。独立的停止 status 默认 NB；维护 workflow 清单的首锁等待另按下文2秒上限处理。Herdr V1 使用 accepted 前最后核验的 caller，accepted 后正常清 pending 不会导致驻留交接误退 shell。
 
-本节描述实现语义，最终十二组无 trace 位置原生验收全部通过；[六组合、两位置及四项 work 入口矩阵](rotom-pane-capabilities.md#本轮精确组合验收清单)是实际支持范围。此前完整 delivery-verification 快照为14,166个唯一默认隔离测试：14,153 passed / 13 skipped / 0 failed；共享预算修正另有3740 passed / 4 skipped及官方Pi Base双会话原生复验；前一源码快照 `14102 + 13 skipped` 保留为历史。功能分支尚未合入 main，T125 待人工批准。
+本节描述实现语义，最终十二组无 trace 位置原生验收全部通过；[六组合、两位置及四项 work 入口矩阵](rotom-pane-capabilities.md#本轮精确组合验收清单)是实际支持范围。此前完整 delivery-verification 快照为14,166个唯一默认隔离测试：14,153 passed / 13 skipped / 0 failed；共享预算修正另有3740 passed / 4 skipped及官方Pi Base双会话原生复验；前一源码快照 `14102 + 13 skipped` 保留为历史。T125 的人工批准、main 整合验收与原任务工作树/分支清理已完成；本次整合的验证范围见最新验收记录。
 
 ## 精确停止与独立更新
 
@@ -133,7 +133,7 @@ Pi 的辅助 guard 观察只产生有来源的历史会话线索，不读会话�
 
 此前复审修正通过的 71 条 Node 测试、391 passed / 4 skipped Python 组及 11 项官方 Pi 分项保留原范围。真实 helper 的 TUI 启动拒绝和运行中失联均退出 4，PTY 属性恢复，见[分支复审](../specs/008-rotom-command-experience/branch-review.md)。
 
-以下是提交 `2cda58d` 阶段分别执行、有重叠的范围证据，不相加：tool workflow 162 passed；停止稳定组 165 passed；CLI 最终组 180 passed/4 skipped（较广阶段组 3451 passed/4 skipped）；Pi 观察组 250 passed；恢复组 21 passed。失败历史保留。UTF-8 header 最终组 78 passed；Pi 扩展 Node 最终组 43 passed。最终 workflow/resume/runtime/CLI 组为 353 passed / 4 skipped，旧 CLI/footer 组 99 passed，命令历史组 116 passed；最终集合对账为 13,561 passed / 12 skipped，未解决失败和未覆盖均为 0；分组覆盖与原失败复验见独立验收记录，main 合入另需人工批准。
+以下是提交 `2cda58d` 阶段分别执行、有重叠的范围证据，不相加：tool workflow 162 passed；停止稳定组 165 passed；CLI 最终组 180 passed/4 skipped（较广阶段组 3451 passed/4 skipped）；Pi 观察组 250 passed；恢复组 21 passed。失败历史保留。UTF-8 header 最终组 78 passed；Pi 扩展 Node 最终组 43 passed。最终 workflow/resume/runtime/CLI 组为 353 passed / 4 skipped，旧 CLI/footer 组 99 passed，命令历史组 116 passed；最终集合对账为 13,561 passed / 12 skipped，未解决失败和未覆盖均为 0；分组覆盖与原失败复验见独立验收记录；该阶段尚待 main 人工批准的状态为历史，当前整合结果见本文顶部及最新验收记录。
 
 提交 `2cda58d` 阶段的原生检查均使用授权隔离环境、未经修改的官方宿主和合成会话，无网络/模型请求：Pi 1.3.0 已验证精确 ID/缺失目标行为、公开扩展初次 claim/重复租约拒绝/`switch_session`、原 pidfd SIGTERM（143）；OMP 18.12.6 已验证精确路径/缺失拒绝、同 ID 写入分叉、原 pidfd SIGTERM（三个进程均 143）及释放后恢复原 ID 写入。官方 TUI/PTY 补验分别观察到请求的精确 ID、原 cwd、零终端输入和 raw mode；原 pidfd SIGTERM 后 Pi 返回 0、OMP 返回 143，两者终端属性均恢复。生产 Pi guard 的原生验证采用 RPC，TTY 采用只读公开观察扩展，不能合称一次真实全 CLI 维护链路。DSH 沿用原 main 验收证据。本轮默认 pytest 不启动官方宿主，不读取真实账号或会话。
 
