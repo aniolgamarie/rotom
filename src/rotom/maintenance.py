@@ -208,8 +208,10 @@ def dispatch(invocation, args):
     return code
   if command == "restore":
     location = "original" if getattr(args, "original", False) else "new-tab" if getattr(args, "new_tab", False) else "here"
-    result = workflow.status(workspace, batch_id)
+    from .restore_deadline import ReadyDeadline
     selected = getattr(args, "run", None)
+    deadline = ReadyDeadline(getattr(args, "wait_seconds", None) or 30) if location != "here" and selected is not None else None
+    result = workflow.status(workspace, batch_id)
     pending = [run for run, state in result["restores"].items() if state is None]
     if selected is None:
       def description(run):
@@ -219,15 +221,16 @@ def dispatch(invocation, args):
       selected = gateway.choose([(run, description(run))
         for run in pending], policy=policy, label=("选择本终端恢复的实例" if location == "here" else
           "选择恢复实例（" + location + "；须逐工具/Linux/Herdr/驻留准入，不发送继续）"))
-    return restore_selected(workspace, batch_id, selected, context, location=location)
+    options = {"deadline": deadline if deadline is not None else ReadyDeadline(getattr(args, "wait_seconds", None) or 30)} if location != "here" else {}
+    return restore_selected(workspace, batch_id, selected, context, location=location, **options)
   raise InputError(2)
 
 
-def restore_selected(workspace, batch_id, run_id, context, *, location="here"):
+def restore_selected(workspace, batch_id, run_id, context, *, location="here", deadline=None):
   """两种公开入口共用同一部署绑定、持久意图和防重门禁。"""
   if location != "here":
     from .pane_dispatch import dispatch_location
-    return dispatch_location(workspace, batch_id, run_id, context, location=location)
+    return dispatch_location(workspace, batch_id, run_id, context, location=location, deadline=deadline)
   gateway = context.input_gateway
   def launch(target, *, expected_deployment):
     from .resume import backend_for_workspace

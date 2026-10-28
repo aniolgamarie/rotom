@@ -351,7 +351,8 @@ def inside(args):
   def restore_tokens(batch, run, location):
     selection = ["--run", run] if isinstance(run, str) else ["--all"]
     return ["--no-input", "resume", args.tool, "--local", str(ws.local_path), "--profile", ws.profile,
-      "--stopped", "--batch", batch, *selection, "--" + location, "--format", "json"]
+      "--stopped", "--batch", batch, *selection, "--" + location,
+      "--wait-seconds", str(args.restore_wait_seconds), "--format", "json"]
   def start_herdr():
     nonlocal server, server_identity, client
     import shlex
@@ -781,6 +782,7 @@ def main(argv=None):
   parser.add_argument("--prepare-only", action="store_true")
   parser.add_argument("--work-entry-only", choices=("v1", "v2"), help="仅验收公开work新建Agent默认驻留/停止；不声明会话恢复")
   parser.add_argument("--paired", action="store_true", help="两个不同合成会话的同批次 --all 位置恢复")
+  parser.add_argument("--restore-wait-seconds", type=int, default=30, help="位置恢复等待预算秒数（1..300，默认30）")
   parser.add_argument("--diagnose-restore", action="store_true", help="仅restore_child自有agentcfg异常位置，不追踪官方宿主；诊断不算正式通过")
   parser.add_argument("--diagnose-initial", action="store_true", help="仅初始当前终端CLI的自有agentcfg异常位置，不追踪官方宿主；诊断不算正式通过")
   parser.add_argument("--diagnose", action="store_true", help="仅准备时记录仓库自有异常位置；不能替代正常原生验收")
@@ -803,6 +805,7 @@ def main(argv=None):
   parser.add_argument("--candidate-dispatch", type=Path, help="根代理审阅的私人精确门禁候选源码，只读绑定，不修改发行文件")
   parser.add_argument("--inside", action="store_true", help=argparse.SUPPRESS)
   args = parser.parse_args(argv)
+  if not 1 <= args.restore_wait_seconds <= 300: parser.error("--restore-wait-seconds requires 1..300")
   if not args.allow_host: parser.error("explicit --allow-host required")
   if args.diagnose and not args.prepare_only: parser.error("--diagnose requires --prepare-only")
   if args.paired and (args.tool == "dsh" or args.diagnose_stop2): parser.error("paired requires Pi/OMP without stop2 diagnostic")
@@ -871,7 +874,8 @@ def main(argv=None):
     *seed, *session_binding, *network_inputs, "--bind", str(args.root), "/p", *project_binding,
     "--tmpfs", "/p/i", "--tmpfs", "/p/cache", *native_cache_binding, "--bind", str(args.root / "work-shadow.py"), str(REPO / "src/termcfg/work.py"),
     *dispatch_binding, *lock_binding, "--chdir", str(REPO), str(venv / "bin/python"), "-B", str(Path(__file__).resolve()),
-    "--allow-host", "--inside", "--tool", args.tool, "--profile", args.profile]
+    "--allow-host", "--inside", "--tool", args.tool, "--profile", args.profile,
+    "--restore-wait-seconds", str(args.restore_wait_seconds)]
   if args.prepare_only: command.append("--prepare-only")
   if args.paired: command.append("--paired")
   if args.work_entry_only: command += ["--work-entry-only", args.work_entry_only]

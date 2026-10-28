@@ -332,7 +332,7 @@ def test_saved_workflow_location_rechecks_then_dispatches(history_case, monkeypa
   import sys
   state = history_case
   calls = []
-  def dispatch_location(ws, batch_id, run_id, context, *, location):
+  def dispatch_location(ws, batch_id, run_id, context, *, location, deadline=None):
     calls.append((ws, batch_id, run_id, location))
     return 19
   monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
@@ -363,7 +363,7 @@ def test_batch_all_aggregates_each_location_without_stdin(batch_history, monkeyp
   import sys
   state = batch_history
   calls = []
-  def dispatch_location(ws, batch_id, run_id, context, *, location):
+  def dispatch_location(ws, batch_id, run_id, context, *, location, deadline=None):
     assert len(state.loads) >= 2
     calls.append((run_id, location))
     print(json.dumps({"run_id": run_id, "handoff": True, "request_id": run_id}), file=context.input_gateway.stdout)
@@ -417,7 +417,7 @@ def test_batch_all_stops_on_first_unconfirmed_item_and_retains_prior_facts(batch
   third["session_ref"]["native_ref"] = "third-session"
   state.rows.append(third)
   calls = []
-  def dispatch_location(ws, batch_id, run_id, context, *, location):
+  def dispatch_location(ws, batch_id, run_id, context, *, location, deadline=None):
     calls.append(run_id)
     if len(calls) - 1 == failure_index:
       if failure == "exception": raise Conflict("synthetic private detail")
@@ -462,7 +462,7 @@ def test_batch_all_rechecks_every_target_before_first_dispatch(batch_history, mo
 def test_batch_all_human_output_is_per_item_without_json_fragments(batch_history, monkeypatch):
   import sys
   state = batch_history
-  def dispatch_location(ws, batch_id, run_id, context, *, location):
+  def dispatch_location(ws, batch_id, run_id, context, *, location, deadline=None):
     print(json.dumps({"handoff": True}), file=context.input_gateway.stdout)
     return 0
   monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
@@ -476,7 +476,7 @@ def test_batch_all_repeated_command_never_replays_previous_intents(batch_history
   import sys
   state = batch_history
   calls = []
-  def dispatch_location(ws, batch_id, run_id, context, *, location):
+  def dispatch_location(ws, batch_id, run_id, context, *, location, deadline=None):
     calls.append(run_id)
     next(row for row in state.rows if row["run_id"] == run_id).update(restorable=False, restore_status="unknown")
     print(json.dumps({"handoff": True}), file=context.input_gateway.stdout)
@@ -501,3 +501,137 @@ def test_batch_all_help_is_static_and_explains_exact_limits(history_case, capsys
     assert expected in text
   definition = cli._registry(cli.build_parser())[("resume",)]
   assert any(parameter.name == "all" for parameter in definition.parameters)
+
+
+@pytest.mark.parametrize("expire_stage", ["preflight", "first", "second-recheck"])
+def test_batch_ready_budget_is_shared_and_expired_items_not_dispatched(batch_history, monkeypatch, expire_stage):
+  import sys
+  from rotom import stopped
+  from rotom.restore_deadline import ReadyDeadline
+  state = batch_history
+  now = [10.0]
+  deadline = ReadyDeadline(2, clock=lambda: now[0])
+  validate = stopped._validated_row
+  checks = []
+  def checked(*args):
+    checks.append(args[1]["run_id"])
+    result = validate(*args)
+    if expire_stage == "preflight" or expire_stage == "second-recheck" and len(checks) == 4:
+      now[0] = 12
+    return result
+  monkeypatch.setattr(stopped, "_validated_row", checked)
+  calls = []
+  def dispatch_location(ws, batch_id, run_id, context, *, location, deadline):
+    assert deadline is shared
+    calls.append(run_id)
+    now[0] = 12 if expire_stage == "first" else 11
+    print(json.dumps({"handoff": True}), file=context.input_gateway.stdout)
+    return 0
+  shared = deadline
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
+  # 复用真实 CLI 产生的 context，再向批次入口注入可控时钟。
+  original = stopped._restore_all
+  def restore(context, batch_id, observed, location, **kwargs):
+    return original(context, batch_id, observed, location, deadline=shared)
+  monkeypatch.setattr(stopped, "_restore_all", restore)
+  assert cli.main([*state.prefix, "--batch", BATCH, "--all", "--new-tab"]) == 4
+  result = json.loads(state.streams.stdout.getvalue())
+  assert calls == ([] if expire_stage == "preflight" else [RUN])
+  assert result["results"][-1]["result"] == {"status": "not_dispatched", "reason": "restore_ready_timeout"} or (
+    expire_stage == "preflight" and result["results"][-1]["result"]["reason"] == "restore_ready_timeout")
+  if calls:
+    assert result["results"][0]["result"]["handoff"] is True
+
+
+def test_single_selected_restore_budget_excludes_interactive_selection(history_case, monkeypatch):
+  import sys
+  from rotom import stopped
+  from rotom.restore_deadline import ReadyDeadline
+  state = history_case
+  now = [10.0]
+  created = []
+  def deadline(seconds):
+    created.append(now[0])
+    return ReadyDeadline(seconds, clock=lambda: now[0])
+  monkeypatch.setattr(stopped, "ReadyDeadline", deadline)
+  from rotom.context import InputGateway
+  def choose(self, *args, **kwargs):
+    now[0] += 500
+    return "0"
+  monkeypatch.setattr(InputGateway, "choose", choose)
+  def dispatch_location(ws, batch_id, run_id, context, *, location, deadline):
+    assert deadline.remaining() == 120
+    assert deadline.expires_at == 630
+    return 0
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
+  state.streams = InputGateway(Stream(), Stream(), Stream())
+  assert cli.main(["--interactive", *state.prefix[1:], "--new-tab", "--wait-seconds", "120"]) == 0
+  assert created == [510]
+
+
+def test_batch_timeout_after_dispatch_retains_unknown_and_skips_later(batch_history, monkeypatch):
+  import sys
+  from termcfg.errors import TermcfgError
+  state = batch_history
+  calls = []
+  def dispatch_location(ws, batch_id, run_id, context, **kwargs):
+    calls.append(run_id)
+    raise TermcfgError(4, "restore_ready_timeout")
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
+  assert cli.main([*state.prefix, "--batch", BATCH, "--all", "--new-tab"]) == 4
+  results = json.loads(state.streams.stdout.getvalue())["results"]
+  assert calls == [RUN]
+  assert results[0]["result"] == {"status": "unknown", "reason": "restore_ready_timeout"}
+  assert results[1]["result"] == {"status": "not_dispatched", "reason": "restore_ready_timeout"}
+
+
+def test_batch_items_consume_one_cumulative_ready_budget(batch_history, monkeypatch):
+  import sys
+  from rotom import stopped
+  from rotom.restore_deadline import ReadyDeadline
+  state = batch_history
+  third = deepcopy(state.rows[1])
+  third.update(run_id="d" * 32, session_id="third-session")
+  third["session_ref"]["native_ref"] = "third-session"
+  state.rows.append(third)
+  now = [10.0]
+  shared = ReadyDeadline(2, clock=lambda: now[0])
+  original = stopped._restore_all
+  monkeypatch.setattr(stopped, "_restore_all", lambda context, batch_id, observed, location, **kwargs:
+    original(context, batch_id, observed, location, deadline=shared))
+  calls = []
+  def dispatch_location(ws, batch_id, run_id, context, *, location, deadline):
+    assert deadline is shared
+    calls.append((run_id, deadline.remaining()))
+    now[0] += 1
+    print(json.dumps({"handoff": True}), file=context.input_gateway.stdout)
+    return 0
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))
+  assert cli.main([*state.prefix, "--batch", BATCH, "--all", "--original"]) == 4
+  results = json.loads(state.streams.stdout.getvalue())["results"]
+  assert calls == [(RUN, 2), ("c" * 32, 1)]
+  assert all(item["result"]["handoff"] for item in results[:2])
+  assert results[2]["result"] == {"status": "not_dispatched", "reason": "restore_ready_timeout"}
+
+
+@pytest.mark.parametrize("selection", [["--run", RUN], ["--all"]])
+def test_explicit_target_initial_query_consumes_ready_budget(history_case, monkeypatch, selection):
+  import sys
+  from rotom import stopped
+  from rotom.restore_deadline import ReadyDeadline
+  state = history_case
+  now = [10.0]
+  monkeypatch.setattr(stopped, "ReadyDeadline", lambda seconds: ReadyDeadline(seconds, clock=lambda: now[0]))
+  original = stopped._query
+  def query(*args, **kwargs):
+    result = original(*args, **kwargs)
+    now[0] += 1
+    return result
+  monkeypatch.setattr(stopped, "_query", query)
+  monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(
+    dispatch_location=lambda *args, **kwargs: pytest.fail("expired query must not dispatch")))
+  assert cli.main([*state.prefix, "--batch", BATCH, *selection, "--original", "--wait-seconds", "1"]) == 4
+  results = json.loads(state.streams.stdout.getvalue())["results"]
+  assert len(results) == len(state.rows)
+  assert all(item["result"]["status"] == "not_dispatched" and
+    item["result"]["reason"] == "restore_ready_timeout" for item in results)

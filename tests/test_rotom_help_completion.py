@@ -78,6 +78,63 @@ def test_every_level_help_has_complete_static_contract(path, monkeypatch, capsys
     assert label in output
 
 
+NAMESPACE_PATHS = sorted({path[:length] for path in cli.COMMANDS for length in range(len(path))})
+
+
+@pytest.mark.parametrize("path", NAMESPACE_PATHS)
+def test_namespace_examples_are_distinct_registered_operations(path, monkeypatch, capsys):
+  import shlex
+  from agentcfg import config, workspace
+  monkeypatch.setattr(config, "read_local_document", forbid)
+  monkeypatch.setattr(workspace, "load_workspace", forbid)
+  assert cli.main([*path, "--help"]) == 0
+  output = capsys.readouterr().out
+  examples = [next(line.split("：", 1)[1] for line in output.splitlines() if line.startswith(label))
+    for label in ("最短示例：", "显式范围示例：")]
+  assert examples[0] != examples[1]
+  for example in examples:
+    tokens = shlex.split(example)
+    assert tokens.pop(0) == "rotom"
+    assert "--help" not in tokens and "-h" not in tokens
+    management, _ = cli._opaque_tail(tokens)
+    cli._duplicates(management)
+    parsed = cli.build_parser().parse_args(management)
+    assert parsed._command_path[:len(path)] == path
+    assert parsed._command_path in cli.COMMANDS
+    cli.validate_explicit_conditions(parsed)
+
+
+@pytest.mark.parametrize("prefix", [
+  ["resume", "pi", "--stopped", "--batch", "a" * 32, "--all", "--new-tab"],
+  ["agent", "--profile", "pi-base", "maintenance", "restore", "--batch", "a" * 32,
+    "--run", "b" * 32, "--original"],
+])
+@pytest.mark.parametrize("seconds", ["1", "30", "300"])
+def test_location_wait_budget_has_declared_range(prefix, seconds):
+  args = cli.build_parser().parse_args([*prefix, "--wait-seconds", seconds])
+  cli.validate_explicit_conditions(args)
+  assert args.wait_seconds == int(seconds)
+
+
+@pytest.mark.parametrize("seconds", ["0", "301", "-1", "1.5", "unknown"])
+def test_invalid_location_wait_budget_rejected_by_parser(seconds):
+  with pytest.raises(SystemExit) as error:
+    cli.build_parser().parse_args(["resume", "--stopped", "--new-tab", "--wait-seconds", seconds])
+  assert error.value.code == 2
+
+
+@pytest.mark.parametrize("tokens", [
+  ["resume", "dsh", "--session", "example", "--here"],
+  ["resume", "--stopped", "--list"],
+  ["resume", "--stopped", "--here"],
+  ["agent", "maintenance", "restore", "--batch", "a" * 32, "--here"],
+])
+def test_wait_budget_cannot_be_silently_ignored(tokens, monkeypatch):
+  from agentcfg import workspace
+  monkeypatch.setattr(workspace, "load_workspace", forbid)
+  assert cli.main(["--no-input", *tokens, "--wait-seconds", "30"]) == 2
+
+
 def test_effect_metadata_is_specific_to_actual_behavior():
   for definition in cli.COMMANDS.values():
     assert all("existing-backend-effects" not in effect for effect in definition.effects)

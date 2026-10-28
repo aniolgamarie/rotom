@@ -8,6 +8,9 @@ import unicodedata
 
 from agentcfg.presentation import _text
 from agentcfg.storage import Conflict
+from termcfg.errors import TermcfgError
+
+from .restore_deadline import ReadyDeadline
 
 from .context import Scope, InputGateway
 from .resume import _local_path
@@ -57,13 +60,17 @@ def _render(result, context):
 def dispatch(invocation, args):
   context = invocation.context
   gateway, policy = context.input_gateway, context.input_policy
+  location = "original" if args.original else "new-tab" if args.new_tab else "here"
+  deadline = None
+  if not args.list and location != "here" and (args.all or args.batch is not None and args.run is not None):
+    deadline = ReadyDeadline(getattr(args, "wait_seconds", None) or 30)
   result = _query(context.scope, batch_id=args.batch, run_id=args.run)
   if args.list:
     _render(result, context)
     return 4 if result["incomplete"] else 0
-  location = "original" if args.original else "new-tab" if args.new_tab else "here"
   if args.all:
-    return _restore_all(context, args.batch, result, location)
+    return _restore_all(context, args.batch, result, location,
+      deadline=deadline)
   label = ("选择在当前终端恢复的停止会话（不需要 Herdr，不发送继续）" if location == "here" else
     "选择停止会话恢复到" + ("原 pane" if location == "original" else "新标签页") + "（须逐工具/Linux/Herdr/驻留准入，不发送继续）")
   rows = [row for row in result["sessions"] if row["source"] == "workflow" and row["restorable"] is True]
@@ -78,10 +85,23 @@ def dispatch(invocation, args):
     choice = gateway.choose([(str(index), _description(row)) for index, row in enumerate(rows)],
       policy=policy, label=label)
     selected = rows[int(choice)]
-  workspace, row = _validated_row(context, selected)
+  if deadline is None and location != "here":
+    deadline = ReadyDeadline(getattr(args, "wait_seconds", None) or 30)
+  try:
+    if deadline is not None:
+      deadline.remaining()
+    workspace, row = _validated_row(context, selected)
+    if deadline is not None:
+      deadline.remaining()
+  except TermcfgError as error:
+    if error.reason != "restore_ready_timeout":
+      raise
+    _batch_result(context, selected["batch_id"], location, [{"run_id": selected["run_id"],
+      "exit_code": 4, "result": {"status": "not_dispatched", "reason": error.reason}}], reason=error.reason)
+    return 4
   if location != "here":
     from .pane_dispatch import dispatch_location
-    return dispatch_location(workspace, row["batch_id"], row["run_id"], context, location=location)
+    return dispatch_location(workspace, row["batch_id"], row["run_id"], context, location=location, deadline=deadline)
   from .maintenance import restore_selected
   return restore_selected(workspace, row["batch_id"], row["run_id"], context)
 
@@ -132,7 +152,7 @@ def _batch_result(context, batch_id, location, results, *, reason=None):
     print("加载待确认，不发送继续。", file=gateway.stdout)
 
 
-def _restore_all(context, batch_id, observed, location):
+def _restore_all(context, batch_id, observed, location, *, deadline=None):
   """只为整批明确目标建立独立位置请求，不让多个 TUI 共用输入。"""
   from agentcfg.sessions import SessionError
   from agentcfg.schema import ConfigError
@@ -140,6 +160,7 @@ def _restore_all(context, batch_id, observed, location):
   from agentcfg.storage import StateError
   from termcfg.errors import TermcfgError
   from .pane_dispatch import dispatch_location
+  deadline = deadline if deadline is not None else ReadyDeadline()
   rows = sorted(observed["sessions"], key=lambda row: row["run_id"])
   def untouched(reason):
     return [{"run_id": row["run_id"], "exit_code": None, "result": {
@@ -161,34 +182,45 @@ def _restore_all(context, batch_id, observed, location):
     if invalid:
       raise Conflict("完整批次不能恢复")
     for row in rows:
+      deadline.remaining()
       _validated_row(context, row)
-  except (StateError, ConfigError, CredentialError, SessionError, TermcfgError, OSError, ValueError):
+      deadline.remaining()
+  except (StateError, ConfigError, CredentialError, SessionError, TermcfgError, OSError, ValueError) as error:
+    if isinstance(error, TermcfgError) and error.reason == "restore_ready_timeout":
+      invalid = error.reason
     print("整批核验失败：存在不可恢复、来源不明、范围漂移或不完整记录；未派发任何项。", file=context.input_gateway.stderr)
     _batch_result(context, batch_id, location, untouched(invalid or "target-recheck-failed"), reason=invalid or "target-recheck-failed")
     return 4
   results = []
   stopped = False
+  timeout = False
   for selected in rows:
     if stopped:
       results.append({"run_id": selected["run_id"], "exit_code": None,
-        "result": {"status": "not_dispatched", "reason": "earlier-item-unconfirmed"}})
+        "result": {"status": "not_dispatched", "reason": "restore_ready_timeout" if timeout else "earlier-item-unconfirmed"}})
       continue
     stream = io.StringIO()
     gateway = context.input_gateway
     item_context = replace(context, output_mode="json",
       input_gateway=InputGateway(gateway.stdin, stream, gateway.stderr))
+    dispatch_started = False
     try:
+      deadline.remaining()
       workspace, row = _validated_row(context, selected)
-      code = dispatch_location(workspace, batch_id, row["run_id"], item_context, location=location)
+      deadline.remaining()
+      dispatch_started = True
+      code = dispatch_location(workspace, batch_id, row["run_id"], item_context, location=location, deadline=deadline)
       try:
         result = json.loads(stream.getvalue())
         if not isinstance(result, dict):
           raise ValueError()
       except (ValueError, TypeError):
         result = {"status": "unknown"}
-    except (StateError, ConfigError, CredentialError, SessionError, TermcfgError, OSError, ValueError):
-      code, result = 4, {"status": "unknown"}
+    except (StateError, ConfigError, CredentialError, SessionError, TermcfgError, OSError, ValueError) as error:
+      timeout = isinstance(error, TermcfgError) and error.reason == "restore_ready_timeout"
+      code, result = 4, ({"status": "unknown" if dispatch_started else "not_dispatched", "reason": error.reason} if timeout else {"status": "unknown"})
     results.append({"run_id": selected["run_id"], "exit_code": code, "result": result})
+    timeout = timeout or result.get("reason") == "restore_ready_timeout"
     stopped = code != 0 or result.get("status") == "unknown"
   _batch_result(context, batch_id, location, results, reason="item-unconfirmed" if stopped else None)
   return 4 if stopped else 0

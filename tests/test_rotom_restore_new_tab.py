@@ -301,3 +301,51 @@ def test_child_command_conflict_marks_failed_and_is_static(case, monkeypatch):
     transport.bootstrap_restore(json.dumps(value), client=api, execute=lambda *args: pytest.fail("changed"))
   assert store.receipt["phase"] == "failed"
   assert "private" not in str(error.value)
+
+
+def test_configurable_payload_above_sixty_seconds_preserves_absolute_deadline(case, monkeypatch):
+  from rotom.restore_deadline import ReadyDeadline
+  api, workspace, store, settings, _ = case
+  api.deadline = ReadyDeadline(120)
+  expires = api.deadline.deadline_ns
+  original = api.request
+  store.auto_handoff = True
+  def request(method, params=None):
+    result = original(method, params)
+    if method == "tab.create":
+      payload = transport.parse_payload(params["env"][transport.PAYLOAD_ENV])
+      assert payload["expires_at_ns"] == expires
+      assert payload["expires_at_ns"] > time.monotonic_ns() + 60_000_000_000
+      pane = api.panes[result["root_pane"]["pane_id"]]
+      pane["tokens"].update(transport._marker(store.request, payload))
+      store.receipt.update(phase="ready", terminal_ref=transport._reference(api, pane, store.request["cwd"]))
+    return result
+  api.request = request
+  assert transport.create_restore_tab(api, settings, store, workspace_id=workspace["workspace_id"])["handoff"]
+
+
+def test_bootstrap_same_deadline_does_not_wait_for_or_limit_host(case, monkeypatch):
+  api, _, store, _, value = case
+  store.receipt["phase"] = "dispatched"
+  store.auto_commit = True
+  monkeypatch.setenv("HERDR_PANE_ID", next(iter(api.panes)))
+  monkeypatch.setattr("os.chdir", lambda cwd: None)
+  now = [time.monotonic()]
+  value["expires_at_ns"] = int((now[0] + 120) * 1_000_000_000)
+  monkeypatch.setattr("rotom.restore_deadline.time.monotonic", lambda: now[0])
+  calls = []
+  def execute(*args):
+    assert api.deadline.deadline_ns == value["expires_at_ns"]
+    assert store.receipt["phase"] == "handoff"
+    now[0] += 500
+    calls.append(args)
+  assert transport.bootstrap_restore(json.dumps(value), client=api, execute=execute) == 0
+  assert len(calls) == 1 and store.receipt["phase"] == "handoff"
+
+
+def test_payload_over_300_seconds_and_expired_payload_are_rejected(case):
+  value = case[-1]
+  for expires in (time.monotonic_ns() - 1, time.monotonic_ns() + 301_000_000_000):
+    with pytest.raises(TermcfgError) as error:
+      transport.parse_payload(json.dumps({**value, "expires_at_ns": expires}))
+    assert error.value.code == 2

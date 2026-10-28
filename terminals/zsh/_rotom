@@ -23,7 +23,7 @@ local -A _rotom_commands=(
 local -A _rotom_options=(
   _root '-h --help --interactive --no-input'
   run '-h --help --machine --local --profile --cwd --inherit-env --unset-env --proxy'
-  resume '-h --help --machine --local --profile --session --here --original --new-tab --stopped --list --batch --run --format --all'
+  resume '-h --help --machine --local --profile --session --here --original --new-tab --stopped --list --batch --run --format --all --wait-seconds'
   agent '-h --help --machine --local --profile'
   'agent init-local' '-h --help --machine --profile'
   'agent profiles' '-h --help'
@@ -54,7 +54,7 @@ local -A _rotom_options=(
   'agent maintenance plan' '-h --help --operation --batch --run --session --label --format'
   'agent maintenance stop' '-h --help --operation --run --plan-id --session --label --wait-seconds --format'
   'agent maintenance execute' '-h --help --batch --plan-id --format'
-  'agent maintenance restore' '-h --help --batch --run --format --here --original --new-tab'
+  'agent maintenance restore' '-h --help --batch --run --format --here --original --new-tab --wait-seconds'
   'agent maintenance status' '-h --help --batch --format'
   'agent maintenance cancel' '-h --help --batch --format'
   term '-h --help --machine --json'

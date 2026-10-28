@@ -239,3 +239,89 @@ def test_original_ready_requires_parked_saved_run_even_for_found_candidate(live_
   monkeypatch.setattr(resident, "_verify_terminal", lambda ref: pytest.fail("invalid active/run candidate cannot reach terminal handoff"))
   with pytest.raises(Conflict): dispatch._original_ready(state.ws, state.run)
   assert store.read()["consumed_request_ids"] == []
+
+
+@pytest.mark.parametrize("location", ["original", "new-tab"])
+def test_expired_budget_never_reserves_or_contacts_endpoint(tmp_path, monkeypatch, location):
+  import json
+  from rotom.restore_deadline import ReadyDeadline
+  workspace, context = case(tmp_path)
+  now = [10.0]
+  deadline = ReadyDeadline(1, clock=lambda: now[0])
+  now[0] = 11
+  monkeypatch.setattr(dispatch, "_runtime", lambda *args: pytest.fail("expired must not inspect runtime"))
+  monkeypatch.setattr(dispatch, "reserve", lambda *args, **kwargs: pytest.fail("expired must not reserve"))
+  assert dispatch.dispatch_location(workspace, "a" * 32, "b" * 32, context,
+    location=location, deadline=deadline) == 4
+  assert json.loads(context.input_gateway.stdout.getvalue())["status"] == "not_dispatched"
+
+
+def test_original_fragmented_response_uses_remaining_budget_each_recv(tmp_path, monkeypatch):
+  import stat
+  import struct
+  from rotom.restore_deadline import ReadyDeadline
+  from termcfg.errors import TermcfgError
+  now = [10.0]
+  deadline = ReadyDeadline(2, clock=lambda: now[0])
+  manager = {"pid": 123, "birth_id": "synthetic"}
+  endpoint = str(tmp_path / "control.sock")
+  container = {"endpoint_identity": {"path": endpoint, "device": 1, "inode": 2},
+    "manager_identity": manager, "container_id": "a" * 32, "generation": 1}
+  opened, fstat, closed = dispatch.os.open, dispatch.os.fstat, dispatch.os.close
+  monkeypatch.setattr(dispatch.os, "open", lambda path, *args, **kwargs: -999 if path == endpoint else opened(path, *args, **kwargs))
+  monkeypatch.setattr(dispatch.os, "fstat", lambda fd: SimpleNamespace(st_mode=stat.S_IFSOCK | 0o600,
+    st_uid=dispatch.os.geteuid(), st_dev=1, st_ino=2) if fd == -999 else fstat(fd))
+  monkeypatch.setattr(dispatch.os, "close", lambda fd: None if fd == -999 else closed(fd))
+  monkeypatch.setattr(dispatch.run_owners, "observed_process_identity", lambda pid: manager)
+  timeouts, received, transitions = [], [], []
+  class Connection:
+    def __enter__(self): return self
+    def __exit__(self, *args): pass
+    def settimeout(self, value): timeouts.append(value)
+    def connect(self, path): now[0] += 0.2
+    def getsockopt(self, *args): return struct.pack("3i", 123, dispatch.os.geteuid(), 0)
+    def sendall(self, value): now[0] += 0.2
+    def recv(self, count):
+      received.append(count)
+      now[0] += 0.6
+      return b"x"
+  monkeypatch.setattr(dispatch.socket, "socket", lambda *args: Connection())
+  store = SimpleNamespace(root=tmp_path, read_receipt=lambda: {"phase": "prepared"},
+    transition=lambda old, new: transitions.append(new))
+  with pytest.raises(TermcfgError) as error:
+    dispatch._send_original(tmp_path, container, store, deadline=deadline)
+  assert error.value.reason == "restore_ready_timeout"
+  assert timeouts == pytest.approx([2, 1.8, 1.6, 1, 0.4])
+  assert len(received) == 3 and transitions == [{"phase": "dispatched"}]
+
+
+def test_original_terminal_verification_uses_same_remaining_deadline(live_container, monkeypatch):
+  from rotom import resident
+  from rotom.restore_deadline import ReadyDeadline
+  from termcfg import herdr
+  from termcfg.errors import TermcfgError
+  state = live_container
+  store = state.create(state="parked", run_id=state.run, child_identity=None)
+  value = store.read()
+  monkeypatch.setattr(dispatch, "container_for", lambda *args: (store.root, value))
+  monkeypatch.setattr(resident, "_source_identity", lambda: value["manager_code_identity"])
+  monkeypatch.setattr(dispatch.run_owners, "observed_process_identity", lambda pid: state.manager)
+  now = [10.0]
+  shared = ReadyDeadline(1, clock=lambda: now[0])
+  now[0] = 10.75
+  calls = []
+  class Client:
+    def __init__(self, socket_path, deadline, **kwargs):
+      assert deadline is shared
+      assert deadline.remaining() == 0.25
+    def __enter__(self): return self
+    def __exit__(self, *args): pass
+    def request(self, method, params):
+      calls.append(method)
+      now[0] = 11
+      shared.remaining()
+  monkeypatch.setattr(herdr, "HerdrClient", Client)
+  with pytest.raises(TermcfgError) as error:
+    dispatch._original_ready(state.ws, state.run, deadline=shared)
+  assert error.value.reason == "restore_ready_timeout"
+  assert calls == ["pane.get"]

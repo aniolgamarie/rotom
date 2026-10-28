@@ -50,10 +50,10 @@ def _source_identity():
   return source_digest(ROOT)
 
 
-def _verify_terminal(reference):
+def _verify_terminal(reference, *, deadline=None):
   from termcfg.herdr import HerdrClient, Deadline
   from termcfg.work import info
-  with HerdrClient(reference["socket_path"], Deadline(timeout=2),
+  with HerdrClient(reference["socket_path"], deadline if deadline is not None else Deadline(timeout=2),
       expected_identity=reference["server_identity"]) as client:
     pane = info(client.request("pane.get", {"pane_id": reference["pane_id"]}), "pane")
     cwd = pane.get("foreground_cwd") or pane.get("cwd")

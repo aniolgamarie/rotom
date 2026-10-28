@@ -112,6 +112,8 @@ def _future_agent(parser):
       child.add_argument("--label", action="append", metavar="RUN_ID=TITLE", help="用户备注可补缺少原生标题的会话；不自动生成摘要，可重复且每个运行一次")
     if name == "restore":
       child.add_argument("--run", action=UniqueSelector, help="恢复的一个运行；缺失时交互选择，非TTY必填")
+      child.add_argument("--wait-seconds", action=UniqueSelector, type=_wait_seconds,
+        help="仅位置恢复：准备和交接默认30秒，显式1–300秒；不限制交接后Agent运行")
       location = child.add_mutually_exclusive_group()
       for name in ("here", "original", "new-tab"):
         location.add_argument("--" + name, action="store_true")
@@ -160,6 +162,8 @@ def build_parser():
   resume.add_argument("--batch", action=UniqueSelector, help="停止记录的完整32位小写十六进制批次 ID；须 --stopped")
   resume.add_argument("--run", action=UniqueSelector, help="停止记录的完整32位小写十六进制运行 ID；须 --stopped")
   resume.add_argument("--all", action="store_true", help="逐项恢复指定完整 workflow 批次；须 --stopped --batch 和 --new-tab 或 --original，不接受 --run/--session/--list/--here")
+  resume.add_argument("--wait-seconds", action=UniqueSelector, type=_wait_seconds,
+    help="仅停止清单的位置恢复：整批准备和交接默认30秒，显式1–300秒，不按项目续期；不限制Agent运行")
   resume.add_argument("--format", choices=("auto", "human", "json"), default="auto")
   location = resume.add_mutually_exclusive_group()
   for name, description in (("here", "当前终端交接，保留会话原工作目录（默认）"),
@@ -449,6 +453,18 @@ def _default_help(path):
   return "显式条件优先；agent、term、work各自独立machine默认；root run使用按工具profile，管理agent使用机器默认。"
 
 
+def _namespace_examples(path, leaves):
+  """复用后代叶子示例；不适用机器范围的命令显式声明无输入策略。"""
+  import shlex
+  candidates = [_examples(key, leaf, actions) for key, (leaf, actions) in leaves.items()
+    if key[:len(path)] == path and key != ("agent", "usage")]
+  for shortest, scoped in candidates:
+    if shortest != scoped:
+      return shortest, scoped
+  shortest = candidates[0][0]
+  return shortest, shlex.join(["rotom", "--no-input", *shlex.split(shortest)[1:]])
+
+
 def _configure_static_help(parser):
   leaves = dict(parser_leaves(parser))
   def visit(current, path=(), purpose=None):
@@ -460,7 +476,7 @@ def _configure_static_help(parser):
       examples = _examples(path, leaf, actions)
       effects = command_effects(path)
     else:
-      examples = ("rotom " + " ".join(path) + " --help", "rotom " + " ".join(path) + " --help")
+      examples = _namespace_examples(path, leaves)
       effects = ("导航本身无联网、写入或启动；实际影响由所选叶子明确列出。",)
     position = "根--interactive/--no-input在命名空间前；run/resume选项在命令后；agent/work选择器在子命令前，term选择器可在子命令前后；init-local的agent选择器仅在init-local后。"
     lines = ["参数位置：" + position,
@@ -478,6 +494,8 @@ def _configure_static_help(parser):
       "原生帮助：run --后的全部token和agent usage全部尾部含--help属于宿主；管理说明请看agent --help。"]
     if path in (("run",), ("agent", "run")):
       lines.append("启动边界：普通启动在 Agent 退出后返回 shell；处于 Herdr 中也不会自动获得原 pane 恢复能力。通过 Rotom Herdr 专用入口新建、由已准入的驻留启动器托管的实例才保留原 pane；停止预览会显示位置诊断。")
+    if path in (("resume",), ("agent", "maintenance", "restore")):
+      lines.append("位置恢复等待：--wait-seconds 默认30秒、范围1–300秒；仅 --original/--new-tab 的准备和交接共享整批绝对期限，不按项目或I/O续期。超时保留已发生事实并停止后续派发，已交接的官方Agent继续运行；不限制其任务时长、不强杀、不重发。")
     if path == ("resume",):
       lines.append("停止记录：--stopped --list 只读列出 session ID、原 cwd、标题和阶段，不需要工具、session 或 TTY；坏记录保留已知行并返回4。--stopped 恢复在TTY缺少目标时只选择一次；非TTY单项恢复须完整 --batch 与 --run。不默认选最近；与 --session 冲突。--all 须完整 --batch 和 --original 或 --new-tab，只处理同一完整 workflow 批次；不接受 --run/--session/--list/--here。整批先核验，逐项独立交接，任一失败即停止后续派发；未执行项保留 not_dispatched。示例：rotom resume --stopped --batch bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb --all --new-tab。--list 不接受位置选项；--original/--new-tab 仅用于已保存完整 workflow 清单。位置交接不等于加载成功，启动前仍复核原文件与能力；旧 stop 快照仅显示人工核对命令，不参与快速恢复。普通 --session 恢复保持原行为。")
       lines.append("Herdr 边界：默认 --here 在当前终端恢复，不需要 Herdr。--original/--new-tab 仅用于已保存完整 workflow 清单，须逐工具/Linux/Herdr/驻留准入；仅安装 Herdr 也不会启用未准入的组合。普通 --session 仍仅支持 --here；旧快照须人工恢复。停止预览会逐项显示位置诊断，执行前重新核验。")
@@ -741,8 +759,12 @@ def validate_explicit_conditions(args):
         raise InputError(2)
       if runs is not None and (set(mapping) | set(labels)) - set(runs):
         raise InputError(2)
+      if path[-1] == "restore" and getattr(args, "wait_seconds", None) is not None and not (args.original or args.new_tab):
+        raise InputError(2)
   if path == ("resume",):
     stopped = getattr(args, "stopped", False)
+    if args.wait_seconds is not None and not (stopped and not args.list and (args.original or args.new_tab)):
+      raise InputError(2)
     if args.all and (not stopped or args.batch is None or args.run is not None or args.session is not None
         or args.list or not (args.original or args.new_tab)):
       raise InputError(2)

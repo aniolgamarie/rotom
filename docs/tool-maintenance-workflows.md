@@ -30,7 +30,7 @@ DSH、Pi、OMP 共用明确选择后的流程：保存恢复清单 → 精确停
 
 停止 close 后与最终 fallback 的 status 沿本次原截止时间等待纯读短锁；已过期时只允许一次无竞争观察，竞争或其它未知仍保留 close/fence 的真实落盘状态，不重 close、请求或信号。独立 status 默认 NB。Herdr V1 使用 accepted 前最后核验的 caller，accepted 后正常清 pending 不会导致驻留交接误退 shell。
 
-本节描述实现语义，最终十二组无 trace 位置原生验收全部通过；[六组合、两位置及四项 work 入口矩阵](rotom-pane-capabilities.md#本轮精确组合验收清单)是实际支持范围。最终 delivery-verification 的14,166个唯一默认隔离测试已完成：14,153 passed / 13 skipped / 0 failed；前一源码快照 `14102 + 13 skipped` 保留为历史。功能分支尚未合入 main，T125 待人工批准。
+本节描述实现语义，最终十二组无 trace 位置原生验收全部通过；[六组合、两位置及四项 work 入口矩阵](rotom-pane-capabilities.md#本轮精确组合验收清单)是实际支持范围。此前完整 delivery-verification 快照为14,166个唯一默认隔离测试：14,153 passed / 13 skipped / 0 failed；共享预算修正另有3740 passed / 4 skipped及官方Pi Base双会话原生复验；前一源码快照 `14102 + 13 skipped` 保留为历史。功能分支尚未合入 main，T125 待人工批准。
 
 ## 精确停止与独立更新
 
@@ -74,6 +74,8 @@ Pi/OMP 的 stop endpoint 保存为既有 inbox 的 sidecar，绑定原 run/manag
 --all 须完整 batch、非 here 位置，禁止 --run/--session/--list/--here。第一次分发前核验整批同 scope/profile/batch 的全部项，来源不明、坏记录或不可恢复项拒绝整批，不静默筛选；随后每项再重查原范围、精确会话、目录和部署。每项使用独立终端和一次意图，不共用 TUI 输入。遇非零或未知立即停止后续派发，未执行项明确 not_dispatched，先前创建/交接事实保留。JSON 只输出一个 `{batch_id,location,results,load_confirmation,continue_status}` 汇总，各结果保留 run_id、exit_code、result；全部交接返回0，其余返回4。不要将整体重试当成未执行项恢复，先查询原批次与位置事实。
 
 Herdr V1/V2 的新 DSH/Pi Agent 启动与符合驻留组合的新 tab 恢复可由薄 launcher 管理；普通 rotom run 不驻留。只停止 Agent 并保留 launcher/pane 才能等待原位恢复。parked 不持单次 Agent 租约、运行包或凭据环境；源码身份变化、pane 复用或丢失拒绝旧位置，不在线升级旧普通实例。
+
+位置恢复的 `--wait-seconds` 默认30秒，可显式设为1–300秒，仅用于 `--original` / `--new-tab` 的准备和交接。目标明确后开始计时，整批核验、逐项重查、Herdr/bootstrap及原位socket共用一个绝对单调截止时间，不按项目或响应分段续期；交互选择耗时不计入。到期后返回4，保留已发生及未知事实，后续项为 `not_dispatched`。已在期限内发出的请求可能稍后完成，超时不表示撤回，须先查询原批次，不自动重发或强杀。预算不限制已交接官方Agent的运行时长；普通 `--session`、`--here` 和只读 `--list` 不接受此参数。
 
 ## 恢复和 writer 的真实边界
 

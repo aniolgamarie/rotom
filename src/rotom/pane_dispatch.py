@@ -19,6 +19,8 @@ from agentcfg.storage import Conflict, StateError, Tree
 from termcfg.errors import TermcfgError
 from termcfg.work_config import ROOT
 
+from .restore_deadline import ReadyDeadline
+
 
 # 精确工具/运行包/位置须经原生验收后逐条加入；fake 测试不得修改发行准入。
 _ADMITTED = frozenset({
@@ -137,7 +139,7 @@ def container_for(workspace, run_id):
   return rows[0] if rows else None
 
 
-def _original_ready(workspace, run_id):
+def _original_ready(workspace, run_id, *, deadline=None):
   from .resident import _verify_terminal, _source_identity
   found = container_for(workspace, run_id)
   if found is None:
@@ -148,7 +150,7 @@ def _original_ready(workspace, run_id):
   if run_owners.observed_process_identity(value["manager_identity"]["pid"]) != value["manager_identity"]:
     raise SessionError(5, "original_launcher_lost")
   if (value["state"] != "parked" or value["run_id"] != run_id or value["child_identity"] is not None
-      or _verify_terminal(value["terminal_ref"]) is not True):
+      or _verify_terminal(value["terminal_ref"], **({"deadline": deadline} if deadline is not None else {})) is not True):
     raise Conflict("原 launcher/pane 不可用或结果未知；保留停止记录")
   endpoint = value["endpoint_identity"]
   if endpoint["path"] != str(root / "control.sock"):
@@ -191,8 +193,10 @@ def describe_options(workspace, run_id):
   return result
 
 
-def _send_original(root, container, store):
+def _send_original(root, container, store, *, deadline=None):
   """固定 socket inode 和内核 peer；只发送请求引用，不发送终端文本。"""
+  deadline = deadline if deadline is not None else ReadyDeadline()
+  deadline.remaining()
   endpoint = container["endpoint_identity"]
   fd = None
   try:
@@ -202,18 +206,21 @@ def _send_original(root, container, store):
         or (info.st_dev, info.st_ino) != (endpoint["device"], endpoint["inode"])):
       raise Conflict("原 launcher 控制端点身份变化")
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
-      connection.settimeout(3)
+      connection.settimeout(deadline.remaining(3))
       connection.connect(f"/proc/self/fd/{fd}")
       pid, uid, _ = struct.unpack("3i", connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
       if (uid != os.geteuid() or pid != container["manager_identity"]["pid"]
           or run_owners.observed_process_identity(pid) != container["manager_identity"]):
         raise Conflict("原 launcher 进程身份变化")
+      deadline.remaining()
       receipt = store.read_receipt()
       store.transition(receipt, {**receipt, "phase": "dispatched"})
+      connection.settimeout(deadline.remaining(3))
       connection.sendall(run_owners._encode({"schema_version": 1, "container_id": container["container_id"],
         "generation": container["generation"], "request_root": str(store.root)}))
       data = b""
       while not data.endswith(b"\n") and len(data) <= 8192:
+        connection.settimeout(deadline.remaining(3))
         part = connection.recv(8193 - len(data))
         if not part:
           break
@@ -235,33 +242,38 @@ def _send_original(root, container, store):
       os.close(fd)
 
 
-def dispatch_location(workspace, batch_id, run_id, context, *, location):
+def dispatch_location(workspace, batch_id, run_id, context, *, location, deadline=None):
   """先核验环境，再保留原恢复意图；创建/交接事实与加载确认分别输出。"""
+  deadline = deadline if deadline is not None else ReadyDeadline()
   gateway = context.input_gateway
   store = None
   reservation_started = False
   client = None
   stack = ExitStack()
   try:
+    deadline.remaining()
     if location not in ("original", "new-tab") or not _admitted(workspace.agent, _runtime(workspace), location):
       raise SessionError(5, "exact_location_combination_unavailable")
     if location == "original":
-      root, container = _original_ready(workspace, run_id)
+      root, container = _original_ready(workspace, run_id, deadline=deadline)
+      deadline.remaining()
       reservation_started = True
       store = reserve(workspace, batch_id, run_id, mode=location, terminal_ref=container["terminal_ref"])
-      result = _send_original(root, container, store)
+      result = _send_original(root, container, store, deadline=deadline)
     else:
-      from termcfg.herdr import Deadline, require_startup_evidence
+      from termcfg.herdr import require_startup_evidence
       from termcfg.work import connected
       from termcfg.work_config import read_settings
       from termcfg.restore_tabs import create_restore_tab
       settings = read_settings(local=workspace.local_path)
-      client, binary = stack.enter_context(connected(settings, Deadline(60), start=False))
+      deadline.remaining()
+      client, binary = stack.enter_context(connected(settings, deadline, start=False))
       caller_id = os.environ.get("HERDR_PANE_ID")
       if not caller_id:
         raise TermcfgError(5, "restore_requires_herdr_context", "rotom resume --stopped --list")
       pane = client.request("pane.current", {"caller_pane_id": caller_id})["pane"]
       require_startup_evidence(client, settings, binary)
+      deadline.remaining()
       reservation_started = True
       store = reserve(workspace, batch_id, run_id, mode=location)
       result = create_restore_tab(client, settings, store, workspace_id=pane["workspace_id"], caller_id=caller_id)
@@ -276,6 +288,15 @@ def dispatch_location(workspace, batch_id, run_id, context, *, location):
     print("所选恢复位置未完成：需要受支持的 Herdr 组合；原位还需保留 launcher/pane。结果未知不重发。", file=gateway.stderr)
     print("同范围当前终端命令（已有派发时请先查询原批次，勿重复执行）：" +
       shlex.join(_here(workspace, batch_id, run_id)), file=gateway.stderr)
+    timeout = isinstance(error, TermcfgError) and error.reason == "restore_ready_timeout"
+    result = {"status": "unknown" if reservation_started else "not_dispatched",
+      "location": location, "batch_id": batch_id, "run_id": run_id}
+    if timeout:
+      result["reason"] = "restore_ready_timeout"
+    if timeout and (context.output_mode == "json" or context.output_mode == "auto" and not gateway.stdout.isatty()):
+      print(json.dumps(result, ensure_ascii=False, sort_keys=True), file=gateway.stdout)
+    elif timeout:
+      print("恢复准备超时；" + ("结果未知，请查询原批次。" if reservation_started else "未派发。"), file=gateway.stderr)
     if reservation_started:
       print("恢复意图已保存或结果未知，请查询原批次与位置请求；可能已创建或交接，不自动重试。", file=gateway.stderr)
       status = ["rotom", "--no-input", "agent", "--local", str(workspace.local_path),

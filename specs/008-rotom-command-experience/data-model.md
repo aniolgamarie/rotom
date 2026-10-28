@@ -402,6 +402,8 @@ receipt 的主要路径为 prepared → dispatched → ready → committed → h
 
 CLI 批量汇总是展示结果，不是新的持久授权：`{batch_id, location, results:[{run_id, exit_code, result}], load_confirmation:"unknown", continue_status:"not_sent"}`。未派发项的 result.status 为 not_dispatched，交接结果不明为 unknown；此前已交接的结果保留。`location_diagnostics` 只附加在计划/交互预览中，不进入 plan_id；停止清单的 location_request 只投影既有位置记录。
 
+位置恢复的 `--wait-seconds` 默认30秒，可显式设为1–300秒，仅用于 `--original` / `--new-tab` 的准备和交接。目标明确后开始计时，整批核验、逐项重查、Herdr/bootstrap及原位socket共用一个绝对单调截止时间，不按项目或响应分段续期；交互选择耗时不计入。到期后返回4，保留已发生及未知事实，后续项为 `not_dispatched`。已在期限内发出的请求可能稍后完成，超时不表示撤回，须先查询原批次，不自动重发或强杀。预算不限制已交接官方Agent的运行时长；普通 `--session`、`--here` 和只读 `--list` 不接受此参数。
+
 以下 ContinueRequest 为独立输入能力的历史模型，不是本轮驻留或新标签页交付依赖。
 
 ContinueRequest 含新 run/op、SessionRef、批准文本摘要/固定模板身份、目标 ready 证据及

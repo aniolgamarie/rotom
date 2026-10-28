@@ -12,7 +12,7 @@ from agentcfg.secrets import CredentialError
 from agentcfg.sessions import SessionError
 
 from .errors import TermcfgError
-from .herdr import Deadline, HerdrClient, SUPPORTED_PROTOCOLS, require_startup_evidence
+from .herdr import HerdrClient, SUPPORTED_PROTOCOLS, require_startup_evidence
 from .work import info, tokens, report_tokens, source_digest, conflict
 from .work_config import ROOT, literal, resolve_executable
 
@@ -54,7 +54,7 @@ def parse_payload(text):
       if not Path(path).is_absolute() or str(Path(path)) != path or ".." in Path(path).parts:
         raise ValueError()
     now = time.monotonic_ns()
-    if not now < value["expires_at_ns"] <= now + 60_000_000_000:
+    if not now < value["expires_at_ns"] <= now + 300_000_000_000:
       raise ValueError()
     if Path(value["request_path"]).name != "request.json":
       raise ValueError()
@@ -112,6 +112,7 @@ def _matches(client, marker):
 
 def create_restore_tab(client, settings, store, *, workspace_id, caller_id=None, label="恢复会话"):
   """先持久化 dispatched，再单次创建；丢失响应只读协调。"""
+  client.deadline.remaining()
   request = _read(store, "read_request")
   receipt = _read(store, "read_receipt")
   if request["mode"] != "new-tab" or receipt["phase"] != "prepared":
@@ -120,8 +121,9 @@ def create_restore_tab(client, settings, store, *, workspace_id, caller_id=None,
     "request_digest": request_digest(request), "socket_path": client.socket_path,
     "endpoint_dev": client.identity[0], "endpoint_ino": client.identity[1],
     "source_digest": source_digest(), "rotom_root": str(ROOT),
-    "expires_at_ns": min(int(client.deadline.expires_at * 1_000_000_000), time.monotonic_ns() + 60_000_000_000)}
+    "expires_at_ns": getattr(client.deadline, "deadline_ns", int(client.deadline.expires_at * 1_000_000_000))}
   encoded = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+  client.deadline.remaining()
   parse_payload(encoded)
   _check_source(request, value)
   if settings.repo_root != ROOT:
@@ -143,11 +145,13 @@ def create_restore_tab(client, settings, store, *, workspace_id, caller_id=None,
       if any(current[key] != caller[key] for key in ("workspace_id", "tab_id", "pane_id", "terminal_id")):
         raise conflict("restore_launch_caller_changed")
   scope()
+  client.deadline.remaining()
   receipt = _transition(store, receipt, "dispatched")
   marker = _marker(request, value)
   reference = None
   try:
     try:
+      client.deadline.remaining()
       result = client.request("tab.create", {"workspace_id": workspace_id, "cwd": request["cwd"],
         "label": literal(label), "focus": False, "env": {PAYLOAD_ENV: encoded}})
       reference = _reference(client, result["root_pane"], request["cwd"])
@@ -183,10 +187,12 @@ def create_restore_tab(client, settings, store, *, workspace_id, caller_id=None,
       elif receipt["phase"] not in ("dispatched", "ready", "committed"):
         raise conflict("restore_launch_result_unknown")
       time.sleep(client.deadline.remaining(0.01))
-  except (TermcfgError, OSError, KeyError, ValueError, Conflict):
+  except (TermcfgError, OSError, KeyError, ValueError, Conflict) as error:
     receipt = _read(store, "read_receipt")
     if receipt["phase"] in ("dispatched", "ready", "committed"):
       _transition(store, receipt, "unknown", reason="restore_launch_result_unknown")
+    if isinstance(error, TermcfgError) and error.reason == "restore_ready_timeout":
+      raise error
     raise conflict("restore_launch_result_unknown") from None
 
 
@@ -195,8 +201,8 @@ def bootstrap_restore(text, *, client=None, execute=None):
   store = _store(Path(value["request_path"]).parent)
   request = _read(store, "read_request")
   _check_source(request, value)
-  deadline = Deadline(max(0, (value["expires_at_ns"] - time.monotonic_ns()) / 1_000_000_000))
-  deadline.expires_at = min(deadline.expires_at, value["expires_at_ns"] / 1_000_000_000)
+  from rotom.restore_deadline import ReadyDeadline
+  deadline = ReadyDeadline.from_expires_at_ns(value["expires_at_ns"])
   owned = client is None
   marked = False
   receipt = None
@@ -261,11 +267,15 @@ def bootstrap_restore(text, *, client=None, execute=None):
   except (TermcfgError, StateError, PathError, ConfigError, CredentialError, SessionError, OSError, KeyError, ValueError) as error:
     code = error.code if isinstance(error, (TermcfgError, SessionError)) else getattr(error, "exit_code", 4)
     code = code if code in (2, 3, 5) else 4
+    timed_out = isinstance(error, TermcfgError) and error.reason == "restore_ready_timeout"
     if marked:
       current = _read(store, "read_receipt")
       if current["phase"] in ("ready", "committed", "handoff") and current["terminal_ref"] == reference:
-        _transition(store, current, "failed", reason="restore_launch_failed",
-          exit_code=code if code in (2, 3, 5) else None)
+        if timed_out:
+          _transition(store, current, "unknown", reason="restore_launch_result_unknown")
+        else:
+          _transition(store, current, "failed", reason="restore_launch_failed",
+            exit_code=code if code in (2, 3, 5) else None)
     raise TermcfgError(code, "restore_launch_failed", "rotom resume --stopped --list") from None
   finally:
     if owned and client is not None:

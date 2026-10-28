@@ -39,7 +39,7 @@ Herdr 新 Agent 入口另有四项正式通过：
 
 OMP 没有默认 work type；它通过已准入的新标签页恢复建立 resident，随后可按同样门禁原位恢复。普通 shell、旧单次实例与普通 `--session` 位置恢复均不因此获得原位能力。
 
-最终 delivery-verification 的14,166个唯一默认隔离测试已完成：14,153 passed / 13 skipped / 0 failed；`14102 + 13 skipped` 属于前一源码快照历史。功能仍在任务分支，尚未合入 main，T125 待人工批准；位置与隔离验收不推导整合完成。
+此前完整 delivery-verification 快照为14,166个唯一默认隔离测试：14,153 passed / 13 skipped / 0 failed；共享预算修正另有3740 passed / 4 skipped及官方Pi Base双会话原生复验，见最新验收记录；`14102 + 13 skipped` 属于前一源码快照历史。功能仍在任务分支，尚未合入 main，T125 待人工批准；位置与隔离验收不推导整合完成。
 
 ## 从完整 workflow 请求位置恢复
 
@@ -54,6 +54,8 @@ OMP 没有默认 work type；它通过已准入的新标签页恢复建立 resid
 ```
 
 `--all` 必须指定 batch 和非 here 位置，不能带 --run/--session/--list/--here；整批须同 scope/profile/batch，任一坏记录、来源不明或不可恢复项都先拒绝整批。分发前逐项重查，各项独立终端、独立意图；首个失败或未知后停止后续项，未执行项标为 not_dispatched，保留此前结果。JSON 只有一个汇总，全部交接才返回0，否则4。默认 here 仍只交接一项，不争用 stdin。
+
+位置恢复的 `--wait-seconds` 默认30秒，可显式设为1–300秒，仅用于 `--original` / `--new-tab` 的准备和交接。目标明确后开始计时，整批核验、逐项重查、Herdr/bootstrap及原位socket共用一个绝对单调截止时间，不按项目或响应分段续期；交互选择耗时不计入。到期后返回4，保留已发生及未知事实，后续项为 `not_dispatched`。已在期限内发出的请求可能稍后完成，超时不表示撤回，须先查询原批次，不自动重发或强杀。预算不限制已交接官方Agent的运行时长；普通 `--session`、`--here` 和只读 `--list` 不接受此参数。
 
 原 workflow 的 restore-intent 先持久化，再建立目录0700/文件0600的位置请求。request 固定目录 device/inode、精确 session/cwd、scope、workflow/deployment 和 manager 源码身份，不包含任意 argv、环境、秘密或会话正文。新 tab 只调用一次公开 tab.create；payload 使用专用 ROTOM_RESTORE_LAUNCH_V1，ready/committed/handoff 与 child 的 executing CAS 分开。原 pane 通过私人 socket 与 manager 出生身份核验，只发送请求引用，不向 pane 注入文本。响应丢失或写后失败保留未知状态，不重发。
 

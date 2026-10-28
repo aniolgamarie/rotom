@@ -6,7 +6,7 @@
 
 驻留 parent 在 child 存活时不轮询 owner/Domain，退出后才核验出生身份及完整释放。active 位置只是按 child/manager 身份关联的候选，不能代替原位 parked/saved run 门禁。Domain 写事务默认仅首锁前等待 2 秒，显式 deadline 不续期；外部只读默认 NB，仅合作启动 package_guard/check_omp_launch 两处显式读预算。OMP 资源/anchor 选择和预留同写事务完成，提交后才返回 token，通用 reserve CAS 保持。停止最终查询复用原截止点，过期只作无竞争观察，不重 close/信号。V1 accepted 后正常清 pending，驻留包装使用 accepted 前最后核验的 caller。
 
-最终十二组无 trace 位置原生验收已通过，准入限六个精确 Linux managed 组合；最终默认隔离全量14,153 passed / 13 skipped / 0 failed（共14,166个唯一测试），前一快照 `14102 + 13 skipped` 保留为历史。功能尚未合入 main，T125 待人工批准。
+最终十二组无 trace 位置原生验收已通过，准入限六个精确 Linux managed 组合；此前完整隔离快照14,153 passed / 13 skipped（共14,166个唯一测试）；共享预算修正另有3740 passed / 4 skipped和官方Pi Base双会话原生复验，前一快照 `14102 + 13 skipped` 保留为历史。功能尚未合入 main，T125 待人工批准。
 
 ## 当前候选验证与操作
 
@@ -373,3 +373,14 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -B -m pytest -q -p no:cachepro
 ```
 
 Pi 准备可下载精确锁定公开依赖，宿主运行阶段禁网。DSH 仅用隔离 loopback 假模型，恢复输入为零但宿主可发辅助请求。OMP 首次使用公开 resume 加载合成历史；退出竞争的原生复验必须关闭 `--diagnose`。详细结果和失败历史见[验收记录](tool-workflow-validation.md)。
+
+## 位置恢复的共享等待预算
+
+完整 workflow 成功更新后，位置恢复可显式选择准备/交接预算；默认30秒，范围1–300秒。
+
+```sh
+./rotom --no-input resume pi --profile pi-base --stopped --batch BATCH_ID --all --new-tab --wait-seconds 120 --format json
+./rotom --no-input agent --profile pi-base maintenance restore --batch BATCH_ID --run RUN_ID --original --wait-seconds 30 --format json
+```
+
+整批只计算一次绝对期限，包含精确目标核验和终端握手，不按每项或socket分段响应续期。交互选择时间不计入。超时返回4并保留逐项事实，后续项不再派发；已有请求可能稍后交接，先查询原批次，不重发或强杀。Agent接管后的任务运行时长不受该预算限制。`--here`、普通 `--session` 和只读 `--list` 不接受此参数。

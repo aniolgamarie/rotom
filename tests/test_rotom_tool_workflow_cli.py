@@ -402,7 +402,8 @@ def test_maintenance_restore_location_dispatches_saved_workflow(command, capsys,
   state = command
   updated(state, capsys)
   calls = []
-  def dispatch_location(ws, batch_id, run_id, context, *, location):
+  def dispatch_location(ws, batch_id, run_id, context, *, location, deadline=None):
+    assert deadline is not None
     calls.append((ws, batch_id, run_id, location))
     return 19
   monkeypatch.setitem(sys.modules, "rotom.pane_dispatch", SimpleNamespace(dispatch_location=dispatch_location))

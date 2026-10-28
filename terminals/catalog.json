@@ -54,7 +54,7 @@
       "component": "zsh",
       "source": "terminals/zsh/_rotom",
       "destination": ".local/share/rotom/zsh/site-functions/_rotom",
-      "sha256": "9bb6a399076259cd2e23abe95fed17daab99427ada30a0b601a1e4d8ea43994b",
+      "sha256": "380bbe92d6919dd79875196d65d6d4beb67dd207b23bccce378ee79075639cf0",
       "mode": "0644"
     },
     {
