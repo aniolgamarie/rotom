@@ -14,7 +14,7 @@ def _local_path(scope):
     xdg_config_home() / "agentcfg" / "machines" / ((scope.machine or "default") + ".toml"))
 
 
-def load_known(scope):
+def load_known(scope, *, nonblocking=False):
   """只读所选机器的受管归属记录，不读取原生会话或模型/凭据。"""
   from agentcfg.lifecycle import observation_guard
   from agentcfg.dsh_sessions import scope_key
@@ -43,7 +43,13 @@ def load_known(scope):
           raise SessionError(4, "session_instance_missing")
         continue
     with observation_guard(workspace):
-      records = Registry(workspace.state_root / "run-owners", workspace.binding).snapshot()
+      registry = Registry(workspace.state_root / "run-owners", workspace.binding)
+      if nonblocking:
+        # Tab 查询不等待其它观察/写入；仍复用同一严格 reader，不创建元数据。
+        with registry._locked(nonblocking=True) as tree:
+          records, _ = registry._records(tree)
+      else:
+        records = registry.snapshot()
     rows.extend(from_run_records(records, scope=key, machine_ref=machine_ref, profile=scope.profile))
     if workspace.agent == "pi":
       from agentcfg.pi_session_observation import from_records

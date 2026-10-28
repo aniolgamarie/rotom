@@ -4,6 +4,9 @@ from pathlib import Path
 
 import pytest
 
+# 先绑定正常后端引用，避免惰性导入把临时workspace哨兵留给后续用例。
+from agentcfg import commands
+
 
 def test_profile_completion_validates_sources_without_loading_unrelated_catalog(monkeypatch, capsys):
   from agentcfg import workspace
@@ -248,7 +251,7 @@ def test_bad_selected_document_is_nonzero_without_partial_candidates(body, capsy
   assert capsys.readouterr().out == ""
 
 
-def test_unadmitted_sessions_and_missing_machines_are_empty_without_creation(tmp_path, sentinel_factory, capsys):
+def test_missing_session_machines_are_empty_without_creation(tmp_path, sentinel_factory, capsys):
   before = sentinel_factory(tmp_path)
   assert cli.main(["_complete", "--kind", "session", "--machine", "missing", "--tool", "dsh"]) == 0
   assert capsys.readouterr().out == ""
@@ -341,9 +344,11 @@ def test_completion_queries_do_not_write_cache_or_invoke_processes(tmp_path, mon
   monkeypatch.setattr(subprocess, "run", forbid)
   monkeypatch.setattr(subprocess, "Popen", forbid)
   monkeypatch.setattr(workspace, "load_workspace", forbid)
+  read_private_file = paths.read_private_file
   monkeypatch.setattr(paths, "read_private_file", forbid)
   assert cli.main(["_complete", "--kind", "tool"]) == 0
   assert candidates(capsys) == ["dsh", "omp", "pi"]
+  monkeypatch.setattr(paths, "read_private_file", read_private_file)
   assert cli.main(["_complete", "--kind", "session", "--machine", "fixture", "--tool", "pi"]) == 0
   assert capsys.readouterr().out == ""
   snapshot.assert_unchanged()
@@ -443,3 +448,11 @@ def test_documented_leaf_examples_match_real_registered_syntax(path):
     parsed = cli.build_parser().parse_args(management)
     assert parsed._command_path == path
     cli.validate_explicit_conditions(parsed)
+
+
+def test_completion_help_describes_admitted_readonly_sessions(capsys):
+  assert cli.main(["_complete", "--help"]) == 0
+  output = capsys.readouterr().out
+  assert "当前仅空结果" not in output
+  assert "session" in output and "tool" in output
+  assert "machine/local" in output and ("索引" in output or "元数据" in output)

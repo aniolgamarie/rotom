@@ -64,6 +64,10 @@ T054 的精确 Linux DSH `resume --here` 保持已有准入，加载仍待确认
 依据：[规格](spec.md)、[CLI 契约](contracts/cli.md)、[入口部署](contracts/entry-deployment.md)、
 [生命周期](contracts/lifecycle.md)、[数据模型](data-model.md)。
 
+## 从已有记录补全会话 ID
+
+输入 `./rotom resume pi --machine workstation --profile pi-base --session` 后按 Tab；也可换成显式 `--local` 路径。工具及 machine/local 必须明确，profile 可省略；不使用启动偏好。只提供同范围已有的非秘密历史 ID；跨归属歧义先缩小范围，无记录则无候选，不遍历原生正文或自动初始化。Tab 不启动恢复，选好 ID 后仍由普通恢复检查目录、部署和 writer；加载待确认、零自动继续保持。
+
 ## 普通恢复遇到已有未决请求
 
 ```sh

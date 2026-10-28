@@ -449,7 +449,7 @@ def _default_help(path):
   if path[:1] == ("config",):
     return "仅明确show/set/unset操作入口偏好；正常运行和菜单选择不保存偏好。"
   if path == ("_complete",):
-    return "不使用偏好；provider必须显式machine/local+profile，work-kind必须显式machine/local，session还须tool（当前仅空结果）。"
+    return "不使用偏好；provider必须显式machine/local+profile，work-kind必须显式machine/local；session须显式machine/local+tool，profile可选，只读同范围受管会话索引；歧义ID不补全，缺索引为空。"
   return "显式条件优先；agent、term、work各自独立machine默认；root run使用按工具profile，管理agent使用机器默认。"
 
 
@@ -497,6 +497,7 @@ def _configure_static_help(parser):
     if path in (("resume",), ("agent", "maintenance", "restore")):
       lines.append("位置恢复等待：--wait-seconds 默认30秒、范围1–300秒；仅 --original/--new-tab 的准备和交接共享整批绝对期限，不按项目或I/O续期。超时保留已发生事实并停止后续派发，已交接的官方Agent继续运行；不限制其任务时长、不强杀、不重发。")
     if path == ("resume",):
+      lines.append("会话补全：显式machine/local与工具后，Tab只读已有受管会话索引；profile可选用于过滤，不采用启动默认。不补全跨归属歧义ID，不读原生正文、不建索引；历史ID候选不表示当前已加载或可自动恢复。")
       lines.append("未决请求：普通恢复会核对同范围及完整会话引用的已有请求；原run仍active/unknown或缺完整退出事实时返回4，显示原run与同范围查询命令，不重复启动。旧run完整退出后，加载仍待确认不会阻止明确的新恢复。")
       lines.append("停止记录：--stopped --list 只读列出 session ID、原 cwd、标题和阶段，不需要工具、session 或 TTY；坏记录保留已知行并返回4。--stopped 恢复在TTY缺少目标时只选择一次；非TTY单项恢复须完整 --batch 与 --run。不默认选最近；与 --session 冲突。--all 须完整 --batch 和 --original 或 --new-tab，只处理同一完整 workflow 批次；不接受 --run/--session/--list/--here。整批先核验，逐项独立交接，任一失败即停止后续派发；未执行项保留 not_dispatched。示例：rotom resume --stopped --batch bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb --all --new-tab。--list 不接受位置选项；--original/--new-tab 仅用于已保存完整 workflow 清单。位置交接不等于加载成功，启动前仍复核原文件与能力；旧 stop 快照仅显示人工核对命令，不参与快速恢复。普通 --session 恢复保持原行为。")
       lines.append("Herdr 边界：默认 --here 在当前终端恢复，不需要 Herdr。--original/--new-tab 仅用于已保存完整 workflow 清单，须逐工具/Linux/Herdr/驻留准入；仅安装 Herdr 也不会启用未准入的组合。普通 --session 仍仅支持 --here；旧快照须人工恢复。停止预览会逐项显示位置诊断，执行前重新核验。")

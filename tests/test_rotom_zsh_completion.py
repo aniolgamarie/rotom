@@ -152,3 +152,17 @@ def test_agent_run_native_boundary_and_no_run_profile_preference_injection():
   guard = source.index('[[ "$token" == -- ]] && return 1', loop)
   capture = source.index('if [[ -z "$need" && "$token" == -* ]]; then', loop)
   assert guard < capture
+
+
+def test_session_query_passes_only_explicit_scope_tool_and_optional_profile():
+  source = frontend()
+  session = re.search(r'elif \[\[ "\$kind" == session \]\]; then\n(.*?)\n      fi', source, re.S)
+  assert session
+  branch = session.group(1)
+  assert '[[ -n "$tool" ]] || return 1' in branch
+  assert '[[ -n "$profile" ]] && query+=(--profile "$profile")' in branch
+  assert 'query+=(--tool "$tool")' in branch
+  assert '[[ -n "$profile" ]] || return 1' not in branch
+  assert '--session) [[ "$_rotom_path" == resume ]] && kind=session ;;' in source
+  # 会话正文、native HOME和cwd不能变成前端补全来源。
+  assert "native_home" not in source and "session.json" not in source

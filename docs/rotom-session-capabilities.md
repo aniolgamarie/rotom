@@ -43,6 +43,12 @@ Pi 的公开 guard/helper/扩展由 `locks/pi/session-control.json` 对三个自
 
 普通 `rotom resume TOOL --session SESSION_ID` 在启动前核对同一 scope/profile 和完整 SessionRef（工具、backend、native HOME、精确引用）的已有恢复请求。已有请求仍 active/unknown、只有 intent、缺退出事实或归属断链时返回4，不因新 CLI、新 coordinator、新 run、改 cwd 或原 run 引用而再次派发；能安全核验时列出原 run，并提供同范围 `instances list --format json` 查询命令。先查询和核验，不能删除请求或重复运行命令来清除 unknown。旧 run 已完整 `idle_confirmed`，且请求保存 launched 与退出码后，即使加载仍 unknown，也允许用户明确发起新请求；不同会话及不同 scope/profile/HOME 的合法并行仍可使用。这只覆盖 Rotom 保存的恢复请求，Pi 合作 claim、DSH 原生 writer 与 OMP 可能分叉的限制继续适用。
 
+## 会话 ID 补全
+
+在 `rotom resume pi --machine workstation --profile pi-base --session` 末尾按 Tab，可以从该范围已有的受管记录补全 ID。也可明确 `--local`；必须给出工具和机器/本地配置，profile 可省略，不采用启动偏好。同一裸 ID 对应多个 profile、native HOME、backend 或目录目标时不提供该候选；进一步指定 profile 可以缩小范围。
+
+候选只来自保存的会话观察，保留其历史性质，不表示当前已加载、文件仍存在或可自动恢复。没有已知索引时为空，可在官方 TUI 核对 ID 后显式请求恢复。查询不遍历原生会话目录、不读正文或凭据、不创建索引/缓存；必要实例/归属元数据采用只读非阻塞观察，竞争或坏记录时不输出部分候选。Tab 不执行恢复、停止或维护。
+
 ## 运行归属实现进度
 
 RunRecord 的严格 v1/v2 reader 与 v2 schema 已完成隔离验证；旧 v1 记录不自动升级，

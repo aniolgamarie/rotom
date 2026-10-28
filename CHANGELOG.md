@@ -24,6 +24,8 @@ Notable user-visible changes are recorded here. Unreleased entries describe repo
 
 ### Fixed
 
+- Strict schema checks reuse bounded, in-memory subtree proofs by exact content. Reference syntax reuse preserves validation against the current root; mutations, unsupported fields and invalid annotation targets remain rejected. No cache is persisted.
+- Session-ID completion now reads existing managed metadata for an explicit machine/local and tool, with an optional profile filter. Ambiguous full targets are omitted; missing metadata returns no candidates, while corrupt or busy metadata fails without partial output. Completion does not create an index, read transcripts or credentials, or launch a host. Task progress is maintained in one current summary.
 - Maintenance workflow metadata now waits briefly for the first lock instead of rejecting a concurrent sibling restore immediately. Position preparation preserves the original batch deadline, and stale plans or uncertain writes still fail without replaying an action.
 - Ordinary session resume now checks durable requests across separate CLI calls and new run IDs. A pending request for the same full session reference returns 4 with verified run references and a scoped query before another host can start. Complete owner release plus a saved native exit allows a new explicit request even while loading remains unconfirmed. Owner snapshots release their short lock before request scanning or persistence; Pi claim contention also returns 4, with its public source lock updated.
 

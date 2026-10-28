@@ -96,6 +96,10 @@ def _local_target(schema: dict, ref: str) -> dict:
   return target
 
 
+_SCHEMA_SUBTREES = {}
+_SCHEMA_SUBTREE_LIMIT = 512
+
+
 def _strict_schema(schema: dict) -> None:
   # 按内容缓存，调用方原地修改注入 schema 后仍会重新检查；限制缓存大小。
   _strict_schema_serialized(json.dumps(schema, sort_keys=True, allow_nan=False, separators=(",", ":")))
@@ -104,11 +108,33 @@ def _strict_schema(schema: dict) -> None:
 @lru_cache(maxsize=128)
 def _strict_schema_serialized(serialized: str) -> None:
   """仅支持显式类型/本地引用、闭合对象及已列出的 2020-12 关键字。"""
+  if _SCHEMA_SUBTREES.get(serialized) is True:
+    return
   schema = json.loads(serialized)
   meta = Draft202012Validator(Draft202012Validator.META_SCHEMA, registry=_LOCAL_REGISTRY,
                               format_checker=Draft202012Validator.FORMAT_CHECKER)
+
+  def meta_view(node):
+    if not isinstance(node, dict):
+      return node
+    content = json.dumps(node, sort_keys=True, allow_nan=False, separators=(",", ":"))
+    if content in _SCHEMA_SUBTREES:
+      # True是合法元schema输入；仅省去已完整验证的子树，strict visit仍检查原树。
+      return True
+    checked = dict(node)
+    for key in _SCHEMA_MAPS:
+      if isinstance(node.get(key), dict):
+        checked[key] = {name: meta_view(child) for name, child in node[key].items()}
+    for key in _SCHEMA_VALUES:
+      if key in node:
+        checked[key] = meta_view(node[key])
+    for key in _SCHEMA_LISTS:
+      if isinstance(node.get(key), list):
+        checked[key] = [meta_view(child) for child in node[key]]
+    return checked
+
   # 元 schema 自身递归验证全部子节点，不需在每个节点重新验证整棵子树。
-  meta.validate(schema)
+  meta.validate(meta_view(schema))
   meta_validated = set()
 
   def mark_meta(node):
@@ -128,6 +154,7 @@ def _strict_schema_serialized(serialized: str) -> None:
 
   mark_meta(schema)
   visited = set()
+  checked_nodes = []
 
   def visit(node):
     if not isinstance(node, dict) or not node or set(node) - _SCHEMA_KEYWORDS:
@@ -135,13 +162,14 @@ def _strict_schema_serialized(serialized: str) -> None:
     if id(node) in visited:
       return
     visited.add(id(node))
+    checked_nodes.append(node)
     if "$schema" in node and node["$schema"] != "https://json-schema.org/draft/2020-12/schema":
       raise ValueError()
     if "$ref" in node:
       target = _local_target(schema, node["$ref"])
       # 引用可指向 default 等注解内部；根元 schema 不会把该值当 schema 验证。
       if id(target) not in meta_validated:
-        meta.validate(target)
+        meta.validate(meta_view(target))
         mark_meta(target)
       visit(target)
     elif "type" not in node and any(key in node for key in ("allOf", "anyOf", "oneOf")):
@@ -165,6 +193,15 @@ def _strict_schema_serialized(serialized: str) -> None:
         visit(child)
 
   visit(schema)
+  # 完整根校验成功后才发布；未作为schema访问的default/examples不进入缓存。
+  # 含引用时只能复用元schema语法证明，strict visit仍须按本次原根解析。
+  # 仅无引用子树可作为独立schema完整复用；规范内容变化必重新验证。
+  for node in reversed(checked_nodes):
+    content = json.dumps(node, sort_keys=True, allow_nan=False, separators=(",", ":"))
+    _SCHEMA_SUBTREES.pop(content, None)
+    _SCHEMA_SUBTREES[content] = '"$ref":' not in content
+    if len(_SCHEMA_SUBTREES) > _SCHEMA_SUBTREE_LIMIT:
+      del _SCHEMA_SUBTREES[next(iter(_SCHEMA_SUBTREES))]
 
 
 def _read_schema(kind: str) -> dict:

@@ -298,16 +298,16 @@ def test_local_loader_only_reads_selected_owner_projection(tmp_path, monkeypatch
   assert set(tmp_path.rglob("*")) == before
 
 
-def test_help_completion_and_unrelated_command_do_not_import_resume_adapter(monkeypatch):
+def test_help_public_completion_and_unrelated_command_do_not_import_resume_adapter(monkeypatch):
   import builtins
   original = builtins.__import__
   def checked(name, *args, **kwargs):
     if name in ("resume", "rotom.resume", "agentcfg.dsh_sessions"):
-      pytest.fail("静态帮助、补全或无关命令不加载恢复后端")
+      pytest.fail("静态帮助、公共补全或无关命令不加载恢复后端")
     return original(name, *args, **kwargs)
   monkeypatch.setattr(builtins, "__import__", checked)
   assert cli.main(["resume", "--help"]) == 0
-  assert cli.main(["_complete", "--kind", "session", "--tool", "dsh", "--machine", "synthetic"]) == 0
+  assert cli.main(["_complete", "--kind", "tool"]) == 0
   assert cli.main(["config", "--help"]) == 0
 
 

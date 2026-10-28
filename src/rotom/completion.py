@@ -224,6 +224,33 @@ def _work_ids(args, path):
   return [key for key, value in named.items() if value["template"] in allowed]
 
 
+def _sessions(args, path):
+  """只投影已有受管索引；历史引用不授予加载、writer或恢复资格。"""
+  from agentcfg.schema import ConfigError
+  from agentcfg.sessions import SessionError, SessionIndex
+  from .context import Scope
+  from .resume import load_known
+  scope = Scope(machine=args.machine, local=str(path) if args.local is not None else None,
+    profile=args.profile, agent=args.tool)
+  try:
+    key, known = load_known(scope, nonblocking=True)
+  except ConfigError as error:
+    if error.code == "read":
+      # 只将安全读取器确认的缺文件视为空；权限/链接或坏配置不能伪装成缺索引。
+      from agentcfg.paths import read_private_file
+      read_private_file(path)
+    raise
+  except SessionError as error:
+    raise QueryError(error.code if type(error.code) is int and error.code in (2, 4, 5, 6) else 6) from None
+  groups = {}
+  for target in SessionIndex(known).candidates(scope=key, agent=args.tool, profile=args.profile):
+    groups.setdefault(target.ref.native_ref, []).append(target)
+  # 同裸ID的多profile/HOME/backend/cwd不能由一个补全值掩盖；不按时间选“最近”。
+  return [identifier for identifier, rows in groups.items() if len(rows) == 1
+    and rows[0].ref.backend == "managed" and rows[0].confirmation != "unknown"
+    and rows[0].cwd is not None and rows[0].cwd_status != "unknown"]
+
+
 def _validate_query(args):
   namespace = args.completion_namespace
   if args.machine is not None:
@@ -267,6 +294,8 @@ def _validate_query(args):
     raise QueryError(2)
   if args.kind == "session" and args.tool is None:
     raise QueryError(2)
+  if args.kind == "session" and args.command not in (None, "resume"):
+    raise QueryError(2)
   if args.kind == "preset" and args.command not in (None, "agent model enable", "agent model presets"):
     raise QueryError(2)
   return namespace
@@ -291,11 +320,10 @@ def collect(args):
     return list(KEYS)
   if args.kind == "machine":
     return _machine_ids(namespace)
-  if args.kind == "session":
-    # 当前未准入；即使用户给了ID范围，也不读取索引或原生存储。
-    return []
   path = _selected_path(args, namespace)
   try:
+    if args.kind == "session":
+      return _sessions(args, path)
     return _providers(args, path) if args.kind == "provider" else _work_ids(args, path)
   except FileNotFoundError:
     return []

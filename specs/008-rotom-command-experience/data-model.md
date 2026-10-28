@@ -115,6 +115,8 @@ metadata 的 ID/cwd 只记历史候选，不证明当前会话、加载、writer
 
 普通恢复在同一物理 SH 租约内先短锁读取严格 owner 快照并释放 owner 锁，再在独立请求目录锁内核验同一完整 SessionRef 的历史请求并发布新 intent。两只元数据锁不同时持有；扫描与 fsync 不占用 OMP 宿主登记的 owner NB 入口，不在请求锁内获取 Domain/物理锁。保留 owner 根目录句柄并在认领前后重核 inode/权限。合法 API 不复用 run ID，完整 idle 为单调终态；快照后新增 owner/请求若不在快照中按未决拒绝，旧 active/unknown 快照只会保守拒绝。请求锁串行化并发新认领，完整旧退出不会被 load unknown 阻挡。坏记录、孤立 intent、来源不符或可能已提交的失败均保留阻塞；只有首次真实锁竞争可在统一2秒预算内释放锁后重取，进入事务后的异常不重放。请求文件格式与 RunRecord v2 均不变化。
 
+补全使用现有 KnownSession 的只读投影，不引入会话数据库。先按显式scope/tool/profile筛选，再按完整SessionRef、profile、cwd及其可信度区分目标；相同裸ID仍有多个目标时不输出。只提供managed且会话/目录非unknown的历史候选；最终恢复仍独立核验原文件、目录、部署和写保护。必要物理/OMP协调身份元数据与owner索引读取均不创建且锁非阻塞，加载/继续状态不因此改变。
+
 WriterEvidence 记录后端/来源、会话键、有效期或租约身份与覆盖范围；不能将 Rotom 本地锁冒充原生外部 writer 排他。
 证据必须覆盖实际启动/发送；不能持久化一个旧的“无 writer”布尔值供未来批准使用。
 
