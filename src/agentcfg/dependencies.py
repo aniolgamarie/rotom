@@ -99,14 +99,19 @@ def recipe_digest(repository, adapter_id="dsh"):
     local_packages = {
       "vendor/rotom-dsh-cursor-terminal-0.1.2.tgz": ("cursor-terminal", ("package.json", "index.mjs")),
       "vendor/rotom-dsh-cursor-terminal-0.1.3.tgz": ("cursor-terminal", ("package.json", "index.mjs")),
+      "vendor/rotom-dsh-cursor-terminal-0.1.4.tgz": ("cursor-terminal", ("package.json", "index.mjs")),
       "vendor/rotom-dsh-review-context-0.1.0.tgz": ("review-context", ("package.json", "index.mjs", "cordis.patch.yml")),
       "vendor/rotom-dsh-review-context-0.1.1.tgz": ("review-context", ("package.json", "index.mjs", "cordis.patch.yml")),
       "vendor/rotom-dsh-review-context-0.2.0.tgz": ("review-context", ("package.json", "index.mjs", "reviewer.mjs", "cordis.patch.yml")),
+      "vendor/rotom-dsh-review-context-0.2.1.tgz": ("review-context", ("package.json", "index.mjs", "reviewer.mjs", "cordis.patch.yml")),
       "vendor/rotom-dsh-execution-environment-0.1.0.tgz": ("execution-environment", ("package.json", "index.mjs", "environment.mjs")),
       "vendor/rotom-dsh-execution-environment-0.1.1.tgz": ("execution-environment", ("package.json", "index.mjs", "environment.mjs")),
+      "vendor/rotom-dsh-execution-environment-0.1.2.tgz": ("execution-environment", ("package.json", "index.mjs", "environment.mjs")),
       "vendor/rotom-dsh-ssh-shell-env-0.1.0.tgz": ("ssh-shell-env", ("package.json", "index.mjs", "filter.mjs")),
+      "vendor/rotom-dsh-ssh-shell-env-0.1.1.tgz": ("ssh-shell-env", ("package.json", "index.mjs", "filter.mjs")),
       "vendor/rotom-dsh-ssh-subscription-auth-0.1.0.tgz": ("ssh-subscription-auth", ("package.json", "index.mjs", "cli.mjs")),
       "vendor/rotom-dsh-ssh-subscription-auth-0.1.1.tgz": ("ssh-subscription-auth", ("package.json", "index.mjs", "cli.mjs")),
+      "vendor/rotom-dsh-ssh-subscription-auth-0.1.2.tgz": ("ssh-subscription-auth", ("package.json", "index.mjs", "cli.mjs")),
     }
     if relative in local_packages:
       directory, files = local_packages[relative]
@@ -348,15 +353,19 @@ def lock_policy(repository, adapter_id="dsh", expected_adapter_version=None):
 
 
 def valid_release_age_exceptions(policy, packages):
-  """只允许选定 TUI 或同一 Core 发布的逐包精确例外，不接受通配符。"""
+  """只允许选定 TUI/Perry 或同一 Core 发布的逐包精确例外，不接受通配符。"""
   specs = policy.get("minimum_release_age_exclude", [])
   if not isinstance(specs, list) or not all(isinstance(spec, str) for spec in specs) or len(specs) != len(set(specs)):
     return False
   host = packages.get("@deepseek-ai/dsh", "")
   tui = packages.get("@deepseek-harness-tui/dsh-tui", "")
+  perry = packages.get("dsh-auto-review", "")
   for spec in specs:
     if (re.fullmatch(r"\d+\.\d+\.\d+", tui)
         and spec == "@deepseek-harness-tui/dsh-tui@" + tui):
+      continue
+    if (re.fullmatch(r"\d+\.\d+\.\d+", perry)
+        and spec == "dsh-auto-review@" + perry):
       continue
     if (re.fullmatch(r"\d+\.\d+\.\d+-(?:alpha|beta|rc)\.\d+", host)
         and re.fullmatch(r"@deepseek-ai/dsh(?:-[a-z0-9-]+)?@" + re.escape(host), spec)):

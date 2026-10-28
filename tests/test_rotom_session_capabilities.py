@@ -8,6 +8,7 @@ from agentcfg import sessions
 
 
 RUNTIME = "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d"
+CANDIDATE_RUNTIME = "a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353"
 KEY = {"agent": "dsh", "backend": "managed", "runtime_identity": RUNTIME,
   "observer_identity": "none", "platform": "linux", "location": "here"}
 NEW_PI_KEY = {"agent": "pi", "backend": "managed",
@@ -20,12 +21,13 @@ def query(**changes):
   return sessions.session_capability(**{**KEY, **changes})
 
 
-def test_exact_admitted_handoff_does_not_claim_loaded_or_automatic_input():
-  result = query()
+@pytest.mark.parametrize("identity", [RUNTIME, CANDIDATE_RUNTIME])
+def test_exact_admitted_handoff_does_not_claim_loaded_or_automatic_input(identity):
+  result = query(runtime_identity=identity)
   assert result.handoff == "admitted" and result.reason == "verified_linux_dsh_handoff"
   assert result.load_confirmation is False and result.automatic_continue is False and result.final_seal is False
   assert result.manual_guidance
-  assert all(getattr(result, key) == value for key, value in KEY.items())
+  assert all(getattr(result, key) == value for key, value in {**KEY, "runtime_identity": identity}.items())
   assert "admitted" in asdict(result).values()
 
 
@@ -34,8 +36,9 @@ def test_exact_admitted_handoff_does_not_claim_loaded_or_automatic_input():
   {"observer_identity": "plugin-example"}, {"observer_identity": "ready"},
   {"platform": "darwin"}, {"platform": "win32"}, {"platform": "Linux"},
   {"location": "original"}, {"location": "new-tab"}, {"location": "unknown"}])
-def test_every_other_exact_combination_is_unavailable_without_fallback(change):
-  result = query(**change)
+@pytest.mark.parametrize("identity", [RUNTIME, CANDIDATE_RUNTIME])
+def test_every_other_exact_combination_is_unavailable_without_fallback(change, identity):
+  result = query(**{"runtime_identity": identity, **change})
   assert result.handoff == "unavailable" and result.reason == "exact_combination_unavailable"
   assert result.load_confirmation is False and result.automatic_continue is False and result.final_seal is False
   assert result.manual_guidance
@@ -76,7 +79,7 @@ def test_current_full_dsh_lock_identity_must_match_reviewed_candidate():
   from agentcfg.dependencies import read_lock
   repository = Path(__file__).resolve().parents[1]
   lock = read_lock(repository, "dsh")
-  assert lock.identity == RUNTIME, "完整运行锁变化后必须重新审查候选能力组合"
+  assert lock.identity == CANDIDATE_RUNTIME, "完整运行锁变化后必须重新审查候选能力组合"
   assert query(runtime_identity=lock.identity).handoff == "admitted"
 
 

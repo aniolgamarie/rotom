@@ -17,7 +17,10 @@ from .storage import Conflict
 
 
 _ERROR = "DSH 停止通道或当前运行现场不能确认；保留事实且不重试"
-_RUNTIME = "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d"
+_RUNTIMES = frozenset({
+  "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d",
+  "a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353",
+})
 
 
 def _same(left, right):
@@ -84,7 +87,7 @@ def supported(record):
       and type(record.get("schema_version")) is int and record["schema_version"] == 2
       and record["agent"] in ("dsh", "pi", "omp") and record["backend"] == "managed"
       and (record["coordination_domain"] is not None) == (record["agent"] == "omp")
-      and (record["agent"] != "dsh" or record["deployed_identity"]["runtime"] == _RUNTIME))
+      and (record["agent"] != "dsh" or record["deployed_identity"]["runtime"] in _RUNTIMES))
   except Exception:
     return False
 

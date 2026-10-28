@@ -70,7 +70,7 @@ def test_optional_packages_are_already_locked_and_selected_for_local_default():
   assert profile["plugins"] == defaults["plugins"] + ["agent-teams"]
   packages = yaml.safe_load((ROOT / "locks/dsh/pnpm-lock.yaml").read_text())["packages"]
   for row in [TMUX, *WORKTREE]:
-    assert row["name"] + "@0.2.1-rc.2" in packages
+    assert row["name"] + "@0.2.1-rc.3" in packages
 
 
 def test_native_rows_retain_order_and_reject_duplicate_top_level_ids():

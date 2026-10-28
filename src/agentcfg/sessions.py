@@ -53,6 +53,9 @@ _SESSION_HANDOFF_ADMITTED = frozenset({(
   "dsh", "managed", "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d",
   "none", "linux", "here",
 ), (
+  "dsh", "managed", "a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353",
+  "none", "linux", "here",
+), (
   "pi", "managed", "62ac8348c34339599d280df5769ab0f8383a2f48c0885d84fa16c22a40a6b558",
   "e286d053f59613d94c8be14d89f3def12dafdc67ef54a9746d7d2229ce362d9a", "linux", "here",
 ), (

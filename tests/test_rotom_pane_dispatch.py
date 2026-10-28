@@ -325,3 +325,18 @@ def test_original_terminal_verification_uses_same_remaining_deadline(live_contai
     dispatch._original_ready(state.ws, state.run, deadline=shared)
   assert error.value.reason == "restore_ready_timeout"
   assert calls == ["pane.get"]
+
+
+@pytest.mark.parametrize("identity", [
+  "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d",
+  "a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353",
+])
+@pytest.mark.parametrize("location", ["new-tab", "original"])
+def test_dsh_location_admission_preserves_only_exact_linux_combinations(monkeypatch, identity, location):
+  monkeypatch.setattr(dispatch.sys, "platform", "linux")
+  assert dispatch._admitted("dsh", identity, location)
+  assert not dispatch._admitted("dsh", "0" * 64, location)
+  assert not dispatch._admitted("other", identity, location)
+  assert not dispatch._admitted("dsh", identity, "here")
+  monkeypatch.setattr(dispatch.sys, "platform", "darwin")
+  assert not dispatch._admitted("dsh", identity, location)

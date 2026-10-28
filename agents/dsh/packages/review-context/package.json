@@ -1,6 +1,6 @@
 {
   "name": "rotom-dsh-review-context",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "exports": {
@@ -15,9 +15,9 @@
     "cordis.patch.yml"
   ],
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent-preset": "0.2.1-rc.2",
-    "@deepseek-ai/dsh-agent-tool-presentation": "0.2.1-rc.2",
-    "@deepseek-ai/dsh-tools": "0.2.1-rc.2"
+    "@deepseek-ai/dsh-agent-preset": "0.2.1-rc.3",
+    "@deepseek-ai/dsh-agent-tool-presentation": "0.2.1-rc.3",
+    "@deepseek-ai/dsh-tools": "0.2.1-rc.3"
   },
   "dsh": {
     "bundle": {

@@ -179,7 +179,7 @@ def test_pnpm_only_lock_rejects_unexpected_npm_lock_and_plugin_drift(tmp_path):
     dep.read_lock(repository)
   unexpected.unlink()
   document = yaml.safe_load(lock.installer_resolution)
-  document["packages"].pop("dsh-auto-review@0.13.7")
+  document["packages"].pop("dsh-auto-review@0.15.0")
   with pytest.raises(DependencyError):
     dep.validate_installer_plugin_versions(repository, yaml.safe_dump(document).encode())
 
@@ -394,11 +394,29 @@ def test_core_release_age_exceptions_must_name_exact_selected_release(spec):
   assert dep.valid_release_age_exceptions({"minimum_release_age_exclude": ["@deepseek-ai/dsh-agent@0.2.1-rc.2"]}, packages)
 
 
-def test_release_age_exception_requires_package_in_complete_lock():
-  policy = {"minimum_release_age_exclude": ["@deepseek-ai/dsh-agent@0.2.1-rc.2"]}
+@pytest.mark.parametrize("version, spec, accepted", [
+  ("0.15.0", "dsh-auto-review@0.15.0", True),
+  ("0.15.0", "dsh-auto-review@0.14.0", False),
+  ("0.15.0", "dsh-auto-review@latest", False),
+  ("0.15.0", "dsh-auto-review@*", False),
+  ("0.15.0", "dsh-auto-review@^0.15.0", False),
+  ("latest", "dsh-auto-review@latest", False),
+  ("*", "dsh-auto-review@*", False),
+  ("^0.15.0", "dsh-auto-review@^0.15.0", False),
+  ("0.15.0-rc.1", "dsh-auto-review@0.15.0-rc.1", False),
+  ("0.15.0", "other-review@0.15.0", False),
+])
+def test_perry_release_age_exception_requires_exact_selected_stable_version(version, spec, accepted):
+  assert dep.valid_release_age_exceptions({"minimum_release_age_exclude": [spec]},
+    {"dsh-auto-review": version}) is accepted
+
+
+@pytest.mark.parametrize("spec", ["@deepseek-ai/dsh-agent@0.2.1-rc.2", "dsh-auto-review@0.15.0"])
+def test_release_age_exception_requires_package_in_complete_lock(spec):
+  policy = {"minimum_release_age_exclude": [spec]}
   with pytest.raises(ValueError, match="absent"):
     dep.validate_release_age_resolution(policy, yaml.safe_dump({"packages": {"fixture@1.0.0": {}}}))
-  dep.validate_release_age_resolution(policy, yaml.safe_dump({"packages": {"@deepseek-ai/dsh-agent@0.2.1-rc.2": {}}}))
+  dep.validate_release_age_resolution(policy, yaml.safe_dump({"packages": {spec: {}}}))
 
 
 @pytest.mark.parametrize("change", ["commit", "archive-content", "modified-source", "unknown-field", "build-commit", "build-repository", "build-patch"])
@@ -444,26 +462,26 @@ def test_current_recipe_uses_official_tui_and_opt_in_agent_teams():
   policy = dep.lock_policy(REPO)
   plugins = tomllib.loads((REPO / "agents/dsh/plugins.toml").read_text())["plugins"]
   agent = tomllib.loads((REPO / "agents/dsh/agent.toml").read_text())
-  assert policy["packages"]["@deepseek-harness-tui/dsh-tui"] == "0.16.1"
-  assert policy["upstream"]["tui"] == agent["tui_commit"] == "73ff99fbed56563bf154d719effd09f9f9725349"
-  assert plugins["tui"]["version"] == plugins["codex-auth"]["version"] == "0.16.1"
+  assert policy["packages"]["@deepseek-harness-tui/dsh-tui"] == "0.17.0"
+  assert policy["upstream"]["tui"] == agent["tui_commit"] == "103834cb1000a84569a71646fec7162f18a058c8"
+  assert plugins["tui"]["version"] == plugins["codex-auth"]["version"] == "0.17.0"
   assert dep.tui_source_receipt(REPO, policy) == b""
   assert "agent-teams" not in agent["defaults"]["plugins"]
   assert plugins["agent-teams"] == {"package": "@deepseek-ai/dsh-experimental-agent-team-profile",
-    "version": "0.2.1-rc.2", "bundled": False, "enabled": True, "requires": ["tui"], "conflicts": []}
+    "version": "0.2.1-rc.3", "bundled": False, "enabled": True, "requires": ["tui"], "conflicts": []}
   for name in ("dsh-experimental-agent-team-profile", "dsh-experimental-agent-team",
       "dsh-experimental-tool-agent-team", "dsh-experimental-client-ui-agent-team"):
-    assert policy["packages"]["@deepseek-ai/" + name] == "0.2.1-rc.2"
-    assert "@deepseek-ai/" + name + "@0.2.1-rc.2" in policy["minimum_release_age_exclude"]
+    assert policy["packages"]["@deepseek-ai/" + name] == "0.2.1-rc.3"
+    assert "@deepseek-ai/" + name + "@0.2.1-rc.3" in policy["minimum_release_age_exclude"]
 
 
-@pytest.mark.parametrize("directory, version", [("cursor-terminal", "0.1.3"), ("ssh-subscription-auth", "0.1.1")])
+@pytest.mark.parametrize("directory, version", [("cursor-terminal", "0.1.4"), ("ssh-subscription-auth", "0.1.2")])
 def test_declared_wrapper_metadata_requires_matching_archive(tmp_path, directory, version):
   repository = lock_repository(tmp_path)
   path = repository / "agents/dsh/packages" / directory / "package.json"
   metadata = json.loads(path.read_bytes())
   assert metadata["version"] == version
-  assert metadata["peerDependencies"]["@deepseek-harness-tui/dsh-tui"] == "0.16.1"
+  assert metadata["peerDependencies"]["@deepseek-harness-tui/dsh-tui"] == "0.17.0"
   dep.recipe_digest(repository)
   metadata["peerDependencies"]["@deepseek-harness-tui/dsh-tui"] = "0.0.0"
   path.write_text(json.dumps(metadata))

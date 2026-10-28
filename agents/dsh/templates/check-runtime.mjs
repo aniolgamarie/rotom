@@ -12,14 +12,14 @@ const manifest = (resolve, name) => JSON.parse(readFileSync(resolve.resolve(`${n
 const fail = () => { throw new Error("managed runtime package versions or module identities differ"); };
 for (const [name, version] of Object.entries(expected)) {
   const actual = manifest(require, name);
-  const localVersion = { "rotom-dsh-cursor-terminal": "0.1.3", "rotom-dsh-review-context": "0.2.0",
-    "rotom-dsh-execution-environment": "0.1.1", "rotom-dsh-ssh-shell-env": "0.1.0",
-    "rotom-dsh-ssh-subscription-auth": "0.1.1" }[name];
+  const localVersion = { "rotom-dsh-cursor-terminal": "0.1.4", "rotom-dsh-review-context": "0.2.1",
+    "rotom-dsh-execution-environment": "0.1.2", "rotom-dsh-ssh-shell-env": "0.1.1",
+    "rotom-dsh-ssh-subscription-auth": "0.1.2" }[name];
   if (actual.name !== name || actual.version !== (localVersion ?? version)) fail();
 }
 if (manifest(require, "@deepseek-ai/cordis").version !== "4.0.5"
     || manifest(require, "@deepseek-ai/schemastery").version !== "3.18.5"
-    || manifest(require, "@deepseek-harness-tui/dsh-tui").version !== "0.16.1") fail();
+    || manifest(require, "@deepseek-harness-tui/dsh-tui").version !== "0.17.0") fail();
 const tui = createRequire(require.resolve("@deepseek-harness-tui/dsh-tui/package.json"));
 const thin = createRequire(require.resolve("rotom-dsh-cursor-terminal"));
 const cursor = createRequire(thin.resolve("dsh-cursor-subscription"));
@@ -41,7 +41,7 @@ for (const resolve of [tui, thin, perry, reviewContext]) {
 if (!["3.18.5"].includes(manifest(cursor, "@deepseek-ai/schemastery").version)) fail();
 for (const name of ["dsh-agent", "dsh-session", "dsh-subagent", "dsh-tools", "dsh-user-approval", "dsh-brand"]) {
   const packageName = "@deepseek-ai/" + name;
-  if (manifest(perry, packageName).version !== "0.2.1-rc.2"
+  if (manifest(perry, packageName).version !== "0.2.1-rc.3"
       || realpathSync(perry.resolve(packageName)) !== realpathSync(require.resolve(packageName))) fail();
 }
 if (manifest(tui, "react").version.split(".")[0] !== "19"
@@ -50,12 +50,12 @@ const { LlmAdapter } = await import(pathToFileURL(require.resolve("@deepseek-ai/
 const { CursorAdapter } = await import(pathToFileURL(cursor.resolve("dsh-cursor-subscription")));
 const { TerminalCursorAdapter } = await import(pathToFileURL(require.resolve("rotom-dsh-cursor-terminal")));
 const review = await import(pathToFileURL(require.resolve("dsh-auto-review")));
-if (manifest(perry, "dsh-auto-review").version !== "0.13.7" || typeof review.apply !== "function") fail();
+if (manifest(perry, "dsh-auto-review").version !== "0.15.0" || typeof review.apply !== "function") fail();
 const reviewerRestriction = await import(pathToFileURL(require.resolve("rotom-dsh-review-context/reviewer")));
 if (typeof reviewerRestriction.apply !== "function") fail();
 for (const name of ["dsh-agent-preset", "dsh-agent-tool-presentation", "dsh-tools"]) {
   const packageName = "@deepseek-ai/" + name;
-  if (manifest(reviewContext, packageName).version !== "0.2.1-rc.2"
+  if (manifest(reviewContext, packageName).version !== "0.2.1-rc.3"
       || realpathSync(reviewContext.resolve(packageName)) !== realpathSync(require.resolve(packageName))) fail();
 }
 // 原生 preset 的文件搜索/jobs 和 spill 路径也必须能导入，不能只验证顶层 SDK。
@@ -74,7 +74,7 @@ for (const [name, services] of [
   ["dsh-experimental-client-ui-agent-team", ["cordis"]],
 ]) {
   const packageName = "@deepseek-ai/" + name;
-  if (manifest(require, packageName).version !== "0.2.1-rc.2") fail();
+  if (manifest(require, packageName).version !== "0.2.1-rc.3") fail();
   await import(pathToFileURL(require.resolve(packageName)));
   const team = createRequire(require.resolve(packageName));
   for (const service of services) {

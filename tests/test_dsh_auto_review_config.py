@@ -71,7 +71,7 @@ def test_review_toggle_disables_plugin_without_inserting_duplicate(enabled):
   fields = {a.target.selector: json.loads(a.content) for a in rendered if a.target.selector}
   assert fields["/auto-review/config/enableByDefault"] is True
   dependencies = adapter.dependency_plan(data(enabled)).requirements
-  assert "dsh-auto-review@0.13.7" in dependencies
+  assert "dsh-auto-review@0.15.0" in dependencies
   assert not any("rotom-dsh-review-context" in package or "file:" in package for package in dependencies)
 
 
@@ -168,7 +168,7 @@ def test_auto_review_options_reject_unknown_fields_and_invalid_values(options):
 def test_review_context_public_bundle_and_constant_tool():
   package = json.loads((ROOT / "agents/dsh/packages/review-context/package.json").read_text())
   assert package["dsh"] == {"bundle": {"patch": "./cordis.patch.yml"}}
-  assert package["peerDependencies"] == {"@deepseek-ai/" + name: "0.2.1-rc.2"
+  assert package["peerDependencies"] == {"@deepseek-ai/" + name: "0.2.1-rc.3"
     for name in ("dsh-tools", "dsh-agent-preset", "dsh-agent-tool-presentation")}
   assert package["exports"]["./reviewer"] == "./reviewer.mjs"
   patch = native.load((ROOT / "agents/dsh/packages/review-context/cordis.patch.yml").read_bytes())
@@ -247,7 +247,7 @@ def test_declared_context_archive_refuses_unpacked_source(tmp_path, name):
   repository = recipe_repository(tmp_path)
   path = repository / "agents/dsh/dependencies.json"
   document = json.loads(path.read_text())
-  document["dependencies"]["rotom-dsh-review-context"] = "file:vendor/rotom-dsh-review-context-0.2.0.tgz"
+  document["dependencies"]["rotom-dsh-review-context"] = "file:vendor/rotom-dsh-review-context-0.2.1.tgz"
   path.write_text(json.dumps(document))
   recipe_digest(repository)
   source = repository / "agents/dsh/packages/review-context" / name

@@ -372,3 +372,32 @@ def test_contract_rechecks_full_lock_even_when_top_level_versions_are_unchanged(
   contract = {**contract, "lock_identity": changed.identity}
   with pytest.raises(DependencyError):
     module._contract(workspace, contract)
+
+
+@pytest.mark.parametrize("identity, core, tui, accepted", [
+  ("e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d", "0.2.1-rc.2", "0.16.1", True),
+  ("a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353", "0.2.1-rc.3", "0.17.0", True),
+  ("e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d", "0.2.1-rc.3", "0.17.0", False),
+  ("a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353", "0.2.1-rc.2", "0.16.1", False),
+  ("a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353", "0.2.1-rc.4", "0.17.0", False),
+  ("a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353", "0.2.1-rc.3", "0.16.1", False),
+  ("0" * 64, "0.2.1-rc.3", "0.17.0", False),
+])
+def test_resume_contract_binds_versions_to_each_exact_runtime(tmp_path, monkeypatch, identity, core, tui, accepted):
+  import json
+  from types import SimpleNamespace
+  module = importlib.import_module("agentcfg.dsh_sessions")
+  monkeypatch.setattr(module, "sys", SimpleNamespace(platform="linux"))
+  lock = SimpleNamespace(identity=identity, package=json.dumps({"dependencies": {
+    "@deepseek-ai/dsh": core, "@deepseek-harness-tui/dsh-tui": tui}}).encode())
+  root = tmp_path / "runtime"
+  workspace = SimpleNamespace(agent="dsh", repository=tmp_path / "repo", instance=tmp_path / "instance",
+    backend=SimpleNamespace(read_lock=lambda repository: lock, root=lambda workspace, selected: root))
+  contract = {"lock_identity": identity, "runtime_identity": identity, "environment_policy": "isolated",
+    "argv": ["node", str(workspace.instance / "launch.mjs"), str(root),
+      str(workspace.instance / "dsh-home/agentcfg.patch.yml"), "--profile", "agentcfg"]}
+  if accepted:
+    assert module._contract(workspace, contract)[:3] == (lock, identity, root)
+  else:
+    with pytest.raises(DependencyError):
+      module._contract(workspace, contract)

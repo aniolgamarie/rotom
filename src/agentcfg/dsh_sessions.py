@@ -25,8 +25,12 @@ from .storage import Conflict, StateError, Tree, instance_lock
 
 _PROFILE_PATCH = "dsh-home/profiles/agentcfg/cordis.patch.yml"
 _PROFILE_ROWS = frozenset({"llm-pi-ai", "agent-default-model", "auto-review", "dsh-tui"})
-_PINNED_PACKAGES = {"@deepseek-ai/dsh": "0.2.1-rc.2",
-  "@deepseek-harness-tui/dsh-tui": "0.16.1"}
+_PINNED_PACKAGES = {
+  "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d": {"@deepseek-ai/dsh": "0.2.1-rc.2",
+    "@deepseek-harness-tui/dsh-tui": "0.16.1"},
+  "a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353": {"@deepseek-ai/dsh": "0.2.1-rc.3",
+    "@deepseek-harness-tui/dsh-tui": "0.17.0"},
+}
 
 
 def scope_key(binding):
@@ -146,9 +150,10 @@ def _contract(workspace, contract):
   """查询与启动共用固定组合/入口边界；不读取凭据或初始化运行包。"""
   lock = _admitted(workspace)
   dependencies = json.loads(lock.package)["dependencies"]
+  pinned = _PINNED_PACKAGES.get(lock.identity)
   identity = contract.get("runtime_identity", contract["lock_identity"])
   if (lock.identity != contract["lock_identity"] or identity != lock.identity
-      or any(dependencies.get(name) != version for name, version in _PINNED_PACKAGES.items())):
+      or pinned is None or any(dependencies.get(name) != version for name, version in pinned.items())):
     raise DependencyError("已部署运行组合尚未核验该恢复路径")
   root = workspace.backend.root(workspace, identity)
   expected = ("node", str(workspace.instance / "launch.mjs"), str(root),

@@ -356,6 +356,64 @@ def settings_migration_smoke(spec, env, project, workspace, lock, runtime, state
     http=dict(state), geometry=[[120, 32], [120, 32]])
 
 
+def prepare_inline_preference(argv, env, project, instance, state, result, evidence):
+  """首启完成上游迁移，再保存测试实例的原生 inline 偏好；不碰迁移标记。"""
+  settings = instance / "user-home/.dsh-tui/settings.json"
+  master, slave = pty.openpty()
+  before = termios.tcgetattr(slave)
+  fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 120, 0, 0))
+  child, output = None, bytearray()
+  try:
+    child = subprocess.Popen(list(argv), cwd=project, env=env, stdin=slave, stdout=slave, stderr=slave,
+      start_new_session=True)
+    def pump():
+      if select.select([master], [], [], 0.1)[0]:
+        output.extend(os.read(master, 65536))
+    deadline = time.monotonic() + 30
+    while (not settings.exists() or termios.tcgetattr(slave)[3] & termios.ICANON) and child.poll() is None and time.monotonic() < deadline:
+      pump()
+    if not settings.exists() or child.poll() is not None:
+      raise RuntimeError("INLINE_PREFERENCE_PREPARATION_FAILED")
+    deadline = time.monotonic() + 1
+    while time.monotonic() < deadline:
+      pump()
+    os.write(master, b"\r")
+    deadline = time.monotonic() + 0.7
+    while time.monotonic() < deadline:
+      pump()
+    for _ in range(2):
+      if child.poll() is None:
+        os.write(master, b"\x03")
+        deadline = time.monotonic() + 1
+        while child.poll() is None and time.monotonic() < deadline:
+          pump()
+    child.wait(timeout=10)
+    if child.returncode or before != termios.tcgetattr(slave) or state["requests"]:
+      raise RuntimeError("INLINE_PREFERENCE_PREPARATION_FAILED")
+    document = json.loads(settings.read_bytes())
+    assert document["version"] == 1 and isinstance(document["values"], dict)
+    document["values"]["fullscreen"] = False
+    settings.write_text(json.dumps(document) + "\n")
+    settings.chmod(0o600)
+    result["inline_preparation"] = {"exit": 0, "model_requests": 0,
+      "preference": {"fullscreen": False}, "method": "native settings file after first launch"}
+  finally:
+    if child is not None and child.poll() is None:
+      if os.getpgid(child.pid) == child.pid:
+        os.killpg(child.pid, signal.SIGTERM)
+      try:
+        child.wait(timeout=5)
+      except subprocess.TimeoutExpired:
+        if child.poll() is None and os.getpgid(child.pid) == child.pid:
+          os.killpg(child.pid, signal.SIGKILL)
+        child.wait()
+    os.close(master)
+    os.close(slave)
+    path = evidence / "inline-first-launch.log"
+    path.write_bytes(output)
+    path.chmod(0o600)
+
+
 def agentcfg_cli_argv(repo, machine, command, project=None):
   # --machine 接受配置名称，临时配置文件必须使用公开 --local 选择器。
   argv = [str(repo / "agentcfg"), "--local", str(machine), "--profile", "dsh-default", command]
@@ -407,6 +465,7 @@ def main():
   parser.add_argument("--maid-portrait", action="store_true", help="验证原生女仆立绘及伙伴皮肤优先级，仍使用假模型")
   parser.add_argument("--session-resume", action="store_true", help="验证原生模型偏好、公开 --resume 路由和短工具正文历史")
   parser.add_argument("--settings-migration", action="store_true", help="验证原生设置首导、重启与手动 effort，不调用真实模型")
+  parser.add_argument("--inline", action="store_true", help="以公开 fullscreen=false 验收终端普通屏、输入、工具和退出")
   args = parser.parse_args()
   if args.agent_teams and not args.agentcfg_cli:
     parser.error("--agent-teams 需要 --agentcfg-cli")
@@ -418,6 +477,8 @@ def main():
     parser.error("--session-resume 与 --maid-portrait 分别验收")
   if args.settings_migration and (args.agentcfg_cli or args.session_resume or args.maid_portrait):
     parser.error("--settings-migration 单独验收")
+  if args.inline and (args.session_resume or args.settings_migration or args.maid_portrait):
+    parser.error("--inline 只与普通交互或 --agentcfg-cli 组合验收")
   repo = Path(__file__).resolve().parents[1]
   sys.path.insert(0, str(repo / "src"))
   from agentcfg import commands, dependencies, runtime_packages
@@ -437,7 +498,8 @@ def main():
   cache.mkdir(mode=0o700, parents=True, exist_ok=True)
   result = {"kind": "native-pty-simulated-local-model", "stage": "prepare", "checks": {}, "lock_identity": lock.identity,
     "recipe": lock.metadata["recipe"], "platform": sys.platform, "agentcfg_cli": args.agentcfg_cli,
-    "fixture_flags": {"agent_teams": args.agent_teams, "session_resume": args.session_resume, "settings_migration": args.settings_migration},
+    "fixture_flags": {"agent_teams": args.agent_teams, "session_resume": args.session_resume,
+      "settings_migration": args.settings_migration, "inline": args.inline},
     "lock_files": {name: hashlib.sha256(value).hexdigest() for name, value in (("package.json", lock.package),
       ("package-lock.json", lock.resolution), ("pnpm-lock.yaml", lock.installer_resolution)) if value}, "color_environment": "COLORTERM=truecolor",
     "ssh": "NOT RUN", "tmux": "NOT RUN", "real_accounts": "NOT RUN"}
@@ -504,6 +566,9 @@ def main():
       if not args.agentcfg_cli:
         launch_argv = list(spec.argv)
       result.update(argv=launch_argv, native_argv=list(spec.argv), candidate_digest=candidate.generation)
+      if args.inline:
+        result["stage"] = "inline.preference"
+        prepare_inline_preference(launch_argv, child_env, project, workspace.instance, state, result, evidence)
       if args.settings_migration:
         result.update(candidate_digest=candidate.generation, node=node)
         settings_migration_smoke(spec, child_env, project, workspace, lock, native_runtime, state, result, transcript)
@@ -535,7 +600,8 @@ def main():
           visible = re.sub(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)", "", transcript.decode(errors="replace"))
           return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", visible)
         result["stage"] = "ui.welcome"
-        wait(lambda: "Say something, or type / for commands" in rendered_text() and not termios.tcgetattr(slave)[3] & termios.ICANON)
+        wait(lambda: "Saysomething,ortype/forcommand" in re.sub(r"\s+", "", rendered_text())
+          and not termios.tcgetattr(slave)[3] & termios.ICANON)
         # 原生 welcome 的输入框默认获焦点；空 Enter 只关闭启动页，不发送模型请求。
         ready_deadline = time.monotonic() + 1
         while time.monotonic() < ready_deadline:
@@ -562,6 +628,13 @@ def main():
           result["checks"]["native_maid_chat_header"] = "PASS"
         result["checks"]["welcome_empty_enter_no_model_call"] = "PASS"
         result["checks"]["native_ui_ready"] = "PASS"
+        if args.inline:
+          # 偏好异步载入前上游可能短暂开备用屏；实际聊天必须已返回普通屏。
+          switches = re.findall(rb"\x1b\[\?(?:47|1047|1049)([hl])", transcript)
+          if switches and switches[-1] != b"l":
+            raise RuntimeError("INLINE_ENTERED_ALTERNATE_SCREEN")
+          inline_chat_start = len(transcript)
+          result["inline_bootstrap_alternate_screen"] = b"h" in switches
         if args.agent_teams:
           result["stage"] = "ui.team-status"
           start = len(transcript)
@@ -635,10 +708,15 @@ def main():
           with Tree(workspace.state_root) as tree, instance_lock(tree):
             result["checks"]["cli_instance_lock_released"] = "PASS"
         result["checks"].update(ctrl_c_exit="PASS", termios_restored="PASS")
+        if args.inline:
+          # 真实聊天、工具和取消阶段不能重新进入备用屏。
+          if re.search(rb"\x1b\[\?(?:47|1047|1049)h", transcript[inline_chat_start:]):
+            raise RuntimeError("INLINE_ENTERED_ALTERNATE_SCREEN")
+          result["checks"]["inline_chat_normal_screen"] = "PASS"
         result["overall"], result["stage"] = "PASS", "complete"
     except Exception as error:
       result.update(overall="FAIL", error="FIXTURE_REJECTED" if state.get("error") else str(error) if isinstance(error, RuntimeError)
-        and str(error) in {"NODE_VERSION", "STAGE_TIMEOUT", "EXIT_OR_TTY_RESTORE", "FIXTURE_REJECTED", "WELCOME_EMPTY_SUBMIT", "THEME_RENDER_MISMATCH", "SESSION_MARKER_INVALID", "PROBE_FILE_MISMATCH", "CLI_PREPARATION_FAILED", "RUNTIME_PROJECTION_INVALID"} else "UI_SMOKE_FAILED", error_location=result["stage"], http=dict(state))
+        and str(error) in {"NODE_VERSION", "STAGE_TIMEOUT", "EXIT_OR_TTY_RESTORE", "FIXTURE_REJECTED", "WELCOME_EMPTY_SUBMIT", "THEME_RENDER_MISMATCH", "SESSION_MARKER_INVALID", "PROBE_FILE_MISMATCH", "CLI_PREPARATION_FAILED", "RUNTIME_PROJECTION_INVALID", "INLINE_ENTERED_ALTERNATE_SCREEN", "INLINE_PREFERENCE_PREPARATION_FAILED"} else "UI_SMOKE_FAILED", error_location=result["stage"], http=dict(state))
     finally:
       if child is not None and child.poll() is None:
         # 仅在自建 leader 尚未退出且组身份仍匹配时终止整个组，避免 PID 复用。

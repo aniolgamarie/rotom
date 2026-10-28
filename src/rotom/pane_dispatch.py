@@ -26,6 +26,8 @@ from .restore_deadline import ReadyDeadline
 _ADMITTED = frozenset({
   ("dsh", "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d", "new-tab"),
   ("dsh", "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d", "original"),
+  ("dsh", "a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353", "new-tab"),
+  ("dsh", "a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353", "original"),
   ("omp", "490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab-linux-x64", "new-tab"),
   ("omp", "490e6c90d0ef4d890bb2ab14e006dcd3a3f4d79b5e6ad0ca9fbf3e8f4ab610ab-linux-x64", "original"),
   ("pi", "2b087056df46cc4075d641f00a4a5af1b13820a89a72928fede81af15347bf84", "new-tab"),

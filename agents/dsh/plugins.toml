@@ -2,7 +2,7 @@ schema_version = 1
 
 [plugins.tui]
 package = "@deepseek-harness-tui/dsh-tui"
-version = "0.16.1"
+version = "0.17.0"
 bundled = false
 enabled = true
 requires = []
@@ -10,7 +10,7 @@ conflicts = []
 
 [plugins.codex-auth]
 package = "@deepseek-harness-tui/dsh-tui"
-version = "0.16.1"
+version = "0.17.0"
 bundled = true
 enabled = true
 requires = ["tui"]
@@ -18,7 +18,7 @@ conflicts = []
 
 [plugins.cursor-auth]
 package = "rotom-dsh-cursor-terminal"
-version = "0.1.3"
+version = "0.1.4"
 commit = "936fb5b40b8efb50a5bb2031c81f3c8f553bf7f8"
 bundled = false
 enabled = true
@@ -27,8 +27,8 @@ conflicts = []
 
 [plugins.auto-review]
 package = "dsh-auto-review"
-version = "0.13.7"
-commit = "c49f850aeb734f2f1f2f06de6546b22f3dc8f22f"
+version = "0.15.0"
+commit = "81b3655f25b75ca4eb2890cb5ff3f80c571a8ef5"
 bundled = false
 enabled = true
 requires = ["tui", "review-context"]
@@ -36,7 +36,7 @@ conflicts = []
 
 [plugins.review-context]
 package = "rotom-dsh-review-context"
-version = "0.2.0"
+version = "0.2.1"
 bundled = true
 enabled = true
 requires = ["tui"]
@@ -44,7 +44,7 @@ conflicts = []
 
 [plugins.tmux-context]
 package = "@deepseek-ai/dsh-tmux-context"
-version = "0.2.1-rc.2"
+version = "0.2.1-rc.3"
 bundled = false
 enabled = true
 requires = ["tui"]
@@ -52,7 +52,7 @@ conflicts = []
 
 [plugins.git-worktrees]
 package = "@deepseek-ai/dsh-experimental-tool-worktree"
-version = "0.2.1-rc.2"
+version = "0.2.1-rc.3"
 bundled = false
 enabled = true
 requires = ["tui"]
@@ -60,7 +60,7 @@ conflicts = []
 
 [plugins.ssh-subscription-auth]
 package = "rotom-dsh-ssh-subscription-auth"
-version = "0.1.1"
+version = "0.1.2"
 bundled = false
 enabled = true
 requires = []
@@ -68,7 +68,7 @@ conflicts = []
 
 [plugins.agent-teams]
 package = "@deepseek-ai/dsh-experimental-agent-team-profile"
-version = "0.2.1-rc.2"
+version = "0.2.1-rc.3"
 bundled = false
 enabled = true
 requires = ["tui"]

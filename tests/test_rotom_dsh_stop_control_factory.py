@@ -23,11 +23,11 @@ from test_rotom_runtime_observation import observation
 IDENTITY = "e4d56f338da80e7854193c17b3cad7fbcc5feaa4fb221efdc091867158da724d"
 
 
-@pytest.fixture
-def case(store, handle, monkeypatch):
+@pytest.fixture(params=[IDENTITY, "a4e31cef17c6a08e99dac3c42a0ba2985458720dd924010b01ba75d04b438353"], ids=["previous-runtime", "candidate-runtime"])
+def case(request, store, handle, monkeypatch):
   monkeypatch.setattr("agentcfg.stop_locks.time.monotonic_ns", lambda: 0)
   record = v2_record(store)
-  record["deployed_identity"]["runtime"] = IDENTITY
+  record["deployed_identity"]["runtime"] = request.param
   record["host_identity"] = deepcopy(HOST)
   record["process_observation"]["host_identity"] = deepcopy(HOST)
   write_record(store, record)

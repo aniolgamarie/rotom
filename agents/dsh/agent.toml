@@ -1,7 +1,7 @@
 schema_version = 1
 adapter_version = "dsh-1"
-upstream_commit = "687f282e8625c6b8d11ff58211a90524be2e4317"
-tui_commit = "73ff99fbed56563bf154d719effd09f9f9725349"
+upstream_commit = "1f81c047fc48fa190a683e469daa699857e9afe8"
+tui_commit = "103834cb1000a84569a71646fec7162f18a058c8"
 
 [defaults]
 providers = []

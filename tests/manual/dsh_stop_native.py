@@ -13,6 +13,7 @@ import pty
 import re
 import select
 import shutil
+import signal
 import struct
 import subprocess
 import sys
@@ -55,7 +56,8 @@ def candidate_launcher(original, workspace, registry, factory_for, previous_runs
     if (kwargs.get("resume") is not True or run_id in previous_runs
         or type(actual) is not run_owners.Registry or actual.root != registry.root
         or actual.binding_digest != registry.binding_digest
-        or "control_factory" in kwargs or kwargs.get("attempt") is None
+        or (kwargs.get("control_factory") is not None and not callable(kwargs["control_factory"]))
+        or kwargs.get("attempt") is None
         or not callable(kwargs.get("before_dispatch")) or not callable(kwargs.get("after_dispatch"))
         or type(pass_fds) is not tuple or len(pass_fds) < 2
         or any(type(fd) is not int or fd < 0 for fd in pass_fds)
@@ -72,6 +74,8 @@ def candidate_launcher(original, workspace, registry, factory_for, previous_runs
         or owner["lifecycle_state"] != "active"
         or run_owners._encode(kwargs.get("manager_identity")) != run_owners._encode(owner["manager_identity"])):
       raise RuntimeError("CANDIDATE_OWNER_BOUNDARY")
+    # 此模式独立验收恢复交接，显式换成测试自有停止通道；正常工厂另由 acceptance 验收。
+    kwargs.pop("control_factory", None)
     return original(spec, env, pass_fds, **kwargs,
       control_factory=factory_for(pass_fds[0], pass_fds[1]))
 
@@ -291,6 +295,7 @@ def phase(root, env, workspace, label, resume=None, fixture=None, candidate_resu
   stable_since = None
   stable_requests = None
   fixture_completed = False
+  resized_for_history = False
 
   def pump():
     if select.select([master], [], [], 0.1)[0]:
@@ -307,6 +312,13 @@ def phase(root, env, workspace, label, resume=None, fixture=None, candidate_resu
       pump()
       if fixture is not None:
         text = re.sub(r"\s+", "", visible(output))
+        observation = fixture_observation(fixture)
+        if (not resized_for_history and "ONE" in observation["responses"]
+            and "DONE_ONE" not in text and time.monotonic() - started >= 3):
+          # 原生增量帧会把正文拆成单字；改变测试窗宽取得完整重绘，不借标题证明历史。
+          resized_for_history = True
+          fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 34, 140, 0, 0))
+          os.killpg(child.pid, signal.SIGWINCH)
         if label == "start":
           if (not pasted and not termios.tcgetattr(slave)[3] & termios.ICANON
               and "fixture-not-real" in text and fixture_control_ready(folder, workspace.binding)):
@@ -316,7 +328,6 @@ def phase(root, env, workspace, label, resume=None, fixture=None, candidate_resu
           if pasted and not submitted and "CONCURRENCY_ONE" in text:
             submitted = True
             input_bytes += os.write(master, b"\r")
-          observation = fixture_observation(fixture)
           if (submitted and "ONE" in observation["responses"] and "DONE_ONE" in text
               and observation["error"] is None):
             if stable_since is None or stable_requests != observation["requests"]:
@@ -393,6 +404,7 @@ def phase(root, env, workspace, label, resume=None, fixture=None, candidate_resu
       target = None
     result["fixture"] = {"before": fixture_before, "after": after,
       "paste_attempted": pasted, "submit_attempted": submitted,
+      "resized_for_history": resized_for_history,
       "history_visible": "DONE_ONE" in text, "artifact_ids": ids,
       "history_target": target,
       "completed_before_stop": fixture_completed,
